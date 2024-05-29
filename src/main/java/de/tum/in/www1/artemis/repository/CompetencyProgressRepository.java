@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Profile(PROFILE_CORE)
 @Repository
@@ -39,6 +40,10 @@ public interface CompetencyProgressRepository extends JpaRepository<CompetencyPr
                 AND cp.user.id = :userId
             """)
     Optional<CompetencyProgress> findByCompetencyIdAndUserId(@Param("competencyId") long competencyId, @Param("userId") long userId);
+
+    default CompetencyProgress findByCompetencyIdAndUserIdOrElseThrow(long competencyId, long userId) {
+        return findByCompetencyIdAndUserId(competencyId, userId).orElseThrow(() -> new EntityNotFoundException("CompetencyProgress"));
+    }
 
     @Query("""
             SELECT cp
@@ -91,4 +96,12 @@ public interface CompetencyProgressRepository extends JpaRepository<CompetencyPr
     Long countByCompetencyAndProgressAndConfidenceGreaterThanEqual(@Param("competencyId") long competencyId, @Param("progress") double progress,
             @Param("confidence") double confidence);
 
+    @Query("""
+            SELECT cp
+            FROM CompetencyProgress cp
+                   LEFT JOIN cp.competency.learningPaths lPs
+            WHERE cp.user.id = :userId
+                AND :learningPathId = lPs.id
+            """)
+    Set<CompetencyProgress> findAllByUserIdAndLearningPathId(@Param("userId") long userId, @Param("learningPathId") long learningPathId);
 }

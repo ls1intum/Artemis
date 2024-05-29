@@ -1,5 +1,5 @@
 ---
-name: Feature Proposal (Developer)
+name: 📝 Feature Proposal (Developer)
 about: Software Engineering Process for a new feature
 title: "[Feature Proposal]"
 labels: feature-proposal

@@ -1,4 +1,5 @@
 import { Page, expect } from '@playwright/test';
+import { Dayjs } from 'dayjs';
 
 /**
  * A class which encapsulates UI selectors and actions for the exam management page.
@@ -106,6 +107,54 @@ export class ExamManagementPage {
         await this.page.locator('#student-exam .datatable-body-row', { hasText: username }).locator('.view-submission').click();
         await this.page.locator('.summery').click();
         await expect(this.page.locator('#exercise-result-score')).toHaveText(score, { useInnerText: true });
+    }
+
+    async openAnnouncementDialog() {
+        await this.page.locator('#announcement-create-button').click();
+    }
+
+    async typeAnnouncementMessage(message: string) {
+        await this.page.locator('.ace_text-input').fill(message);
+    }
+
+    async verifyAnnouncementContent(announcementTime: Dayjs, message: string, authorUsername: string) {
+        const announcementDialog = this.page.locator('.modal-content');
+        const timeFormat = 'MMM D, YYYY HH:mm';
+        const announcementTimeFormatted = announcementTime.format(timeFormat);
+        const announcementTimeAfterMinute = announcementTime.add(1, 'minute').format(timeFormat);
+        await expect(announcementDialog.locator('.date').getByText(new RegExp(`(${announcementTimeFormatted}|${announcementTimeAfterMinute})`))).toBeVisible();
+        await expect(announcementDialog.locator('.content').getByText(message)).toBeVisible();
+        await expect(announcementDialog.locator('.author').getByText(authorUsername)).toBeVisible();
+    }
+
+    async sendAnnouncement() {
+        await this.page.locator('button', { hasText: 'Send Announcement' }).click();
+    }
+
+    async openEditWorkingTimeDialog() {
+        await this.page.locator('#edit-working-time-button').click();
+    }
+
+    async changeExamWorkingTime(newWorkingTime: any) {
+        if (newWorkingTime.hours) {
+            await this.page.locator('#workingTimeHours').fill(newWorkingTime.hours.toString());
+        }
+        if (newWorkingTime.minutes) {
+            await this.page.locator('#workingTimeMinutes').fill(newWorkingTime.minutes.toString());
+        }
+        if (newWorkingTime.seconds) {
+            await this.page.locator('#workingTimeSeconds').fill(newWorkingTime.seconds.toString());
+        }
+    }
+
+    async verifyExamWorkingTimeChange(previousWorkingTime: any, newWorkingTime: any) {
+        await expect(this.page.locator('[data-testid="old-time"]').getByText(previousWorkingTime)).toBeVisible();
+        await expect(this.page.locator('[data-testid="new-time"]').getByText(newWorkingTime)).toBeVisible();
+    }
+
+    async confirmWorkingTimeChange(examTitle: string) {
+        await this.page.locator('#confirm-entity-name').fill(examTitle);
+        await this.page.locator('#confirm').click();
     }
 
     async clickEdit() {

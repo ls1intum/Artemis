@@ -521,7 +521,7 @@ public class ProgrammingExerciseTestService {
         if (language == SWIFT) {
             exercise.setPackageName("swiftTest");
         }
-        exercise.setProjectType(programmingLanguageFeature.projectTypes().isEmpty() ? null : programmingLanguageFeature.projectTypes().get(0));
+        exercise.setProjectType(programmingLanguageFeature.projectTypes().isEmpty() ? null : programmingLanguageFeature.projectTypes().getFirst());
         mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
         exercise.setChannelName("testchannel-pe");
         validateProgrammingExercise(request.postWithResponseBody("/api/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED));
@@ -686,7 +686,7 @@ public class ProgrammingExerciseTestService {
             exercise.setProjectType(ProjectType.GCC);
         }
         else {
-            exercise.setProjectType(programmingLanguageFeature.projectTypes().isEmpty() ? null : programmingLanguageFeature.projectTypes().get(0));
+            exercise.setProjectType(programmingLanguageFeature.projectTypes().isEmpty() ? null : programmingLanguageFeature.projectTypes().getFirst());
         }
         mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
         exercise.setChannelName("testchannel-pe");
@@ -695,8 +695,9 @@ public class ProgrammingExerciseTestService {
         exercise.setId(generatedExercise.getId());
         assertThat(exercise).isEqualTo(generatedExercise);
         var staticCodeAnalysisCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(generatedExercise.getId());
-        assertThat(staticCodeAnalysisCategories).usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise")
-                .isEqualTo(StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().get(exercise.getProgrammingLanguage()));
+        var defaultCategories = StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().get(exercise.getProgrammingLanguage()).stream()
+                .map(s -> s.toStaticCodeAnalysisCategory(exercise)).collect(Collectors.toSet());
+        assertThat(staticCodeAnalysisCategories).usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise").containsExactlyInAnyOrderElementsOf(defaultCategories);
         StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().get(exercise.getProgrammingLanguage()).forEach(config -> config.categoryMappings().forEach(mapping -> {
             assertThat(mapping.tool()).isNotNull();
             assertThat(mapping.category()).isNotNull();
@@ -873,46 +874,47 @@ public class ProgrammingExerciseTestService {
     }
 
     void updateBuildPlanURL() throws Exception {
-        MockedStatic<JenkinsBuildPlanUtils> mockedUtils = mockStatic(JenkinsBuildPlanUtils.class);
-        ArgumentCaptor<String> toBeReplacedCaptor = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<String> replacementCaptor = ArgumentCaptor.forClass(String.class);
-        mockedUtils.when(() -> JenkinsBuildPlanUtils.replaceScriptParameters(any(), toBeReplacedCaptor.capture(), replacementCaptor.capture())).thenCallRealMethod();
+        try (MockedStatic<JenkinsBuildPlanUtils> mockedUtils = mockStatic(JenkinsBuildPlanUtils.class)) {
+            ArgumentCaptor<String> toBeReplacedCaptor = ArgumentCaptor.forClass(String.class);
+            ArgumentCaptor<String> replacementCaptor = ArgumentCaptor.forClass(String.class);
+            mockedUtils.when(() -> JenkinsBuildPlanUtils.replaceScriptParameters(any(), toBeReplacedCaptor.capture(), replacementCaptor.capture())).thenCallRealMethod();
 
-        boolean staticCodeAnalysisEnabled = true;
-        // Setup exercises for import
-        ProgrammingExercise sourceExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(JAVA);
-        sourceExercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
-        sourceExercise.generateAndSetBuildPlanAccessSecret();
-        programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
-        programmingExerciseUtilService.addHintsToExercise(sourceExercise);
-        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
-        ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
-                courseUtilService.addEmptyCourse());
-        exerciseToBeImported.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
+            boolean staticCodeAnalysisEnabled = true;
+            // Setup exercises for import
+            ProgrammingExercise sourceExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(JAVA);
+            sourceExercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
+            sourceExercise.generateAndSetBuildPlanAccessSecret();
+            programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
+            programmingExerciseUtilService.addHintsToExercise(sourceExercise);
+            sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+            ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
+                    courseUtilService.addEmptyCourse());
+            exerciseToBeImported.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
 
-        // Mock requests
-        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
-        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
-        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
-        setupMocksForConsistencyChecksOnImport(sourceExercise);
+            // Mock requests
+            setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
+            setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
+            mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
+            setupMocksForConsistencyChecksOnImport(sourceExercise);
 
-        // Create request parameters
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("recreateBuildPlans", String.valueOf(false));
+            // Create request parameters
+            var params = new LinkedMultiValueMap<String, String>();
+            params.add("recreateBuildPlans", String.valueOf(false));
 
-        // Import the exercise and load all referenced entities
-        var importedExercise = request.postWithResponseBody("/api/programming-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, ProgrammingExercise.class, params,
-                HttpStatus.OK);
+            // Import the exercise and load all referenced entities
+            var importedExercise = request.postWithResponseBody("/api/programming-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, ProgrammingExercise.class,
+                    params, HttpStatus.OK);
 
-        // other calls are for repository URI replacements, we only care about build plan URL replacements
-        List<String> toBeReplacedURLs = toBeReplacedCaptor.getAllValues().subList(0, 2);
-        List<String> replacementURLs = replacementCaptor.getAllValues().subList(0, 2);
+            // other calls are for repository URI replacements, we only care about build plan URL replacements
+            List<String> toBeReplacedURLs = toBeReplacedCaptor.getAllValues().subList(0, 2);
+            List<String> replacementURLs = replacementCaptor.getAllValues().subList(0, 2);
 
-        assertThat(sourceExercise.getBuildPlanAccessSecret()).isNotEqualTo(importedExercise.getBuildPlanAccessSecret());
-        assertThat(toBeReplacedURLs.get(0)).contains(sourceExercise.getBuildPlanAccessSecret());
-        assertThat(toBeReplacedURLs.get(1)).contains(sourceExercise.getBuildPlanAccessSecret());
-        assertThat(replacementURLs.get(0)).contains(importedExercise.getBuildPlanAccessSecret());
-        assertThat(replacementURLs.get(1)).contains(importedExercise.getBuildPlanAccessSecret());
+            assertThat(sourceExercise.getBuildPlanAccessSecret()).isNotEqualTo(importedExercise.getBuildPlanAccessSecret());
+            assertThat(toBeReplacedURLs.getFirst()).contains(sourceExercise.getBuildPlanAccessSecret());
+            assertThat(toBeReplacedURLs.get(1)).contains(sourceExercise.getBuildPlanAccessSecret());
+            assertThat(replacementURLs.getFirst()).contains(importedExercise.getBuildPlanAccessSecret());
+            assertThat(replacementURLs.get(1)).contains(importedExercise.getBuildPlanAccessSecret());
+        }
     }
 
     // TEST
@@ -1094,10 +1096,13 @@ public class ProgrammingExerciseTestService {
                 HttpStatus.OK);
 
         // Assertions
-        var staticCodeAnalysisCategories = staticCodeAnalysisCategoryRepository.findWithExerciseByExerciseId(exerciseToBeImported.getId());
+        var staticCodeAnalysisCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(exerciseToBeImported.getId());
         assertThat(exerciseToBeImported.isStaticCodeAnalysisEnabled()).isTrue();
+        ProgrammingExercise finalSourceExercise = sourceExercise;
+        var defaultCategories = StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().get(sourceExercise.getProgrammingLanguage()).stream()
+                .map(s -> s.toStaticCodeAnalysisCategory(finalSourceExercise)).collect(Collectors.toSet());
         assertThat(staticCodeAnalysisCategories).usingRecursiveFieldByFieldElementComparatorOnFields("name", "state", "penalty", "maxPenalty")
-                .isEqualTo(StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().get(sourceExercise.getProgrammingLanguage()));
+                .containsExactlyInAnyOrderElementsOf(defaultCategories);
         assertThat(exerciseToBeImported.getMaxStaticCodeAnalysisPenalty()).isEqualTo(80);
     }
 
@@ -1195,7 +1200,7 @@ public class ProgrammingExerciseTestService {
         final Exam received = request.postWithResponseBody("/api/courses/" + course.getId() + "/exam-import", targetExam, Exam.class, HttpStatus.CREATED);
 
         // Extract the programming exercise from the exam
-        Exercise exerciseReceived = received.getExerciseGroups().get(0).getExercises().stream().findFirst().orElseThrow();
+        Exercise exerciseReceived = received.getExerciseGroups().getFirst().getExercises().stream().findFirst().orElseThrow();
         // Additionally, get the programming exercise from the server
         var importedExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences((ProgrammingExercise) exerciseReceived);
 
@@ -1204,11 +1209,11 @@ public class ProgrammingExerciseTestService {
         // Check server-exercise
         assertThat(importedExercise.getTitle()).isEqualTo(exerciseToBeImported.getTitle());
         assertThat(importedExercise.getShortName()).isEqualTo(exerciseToBeImported.getShortName());
-        assertThat(importedExercise.getExerciseGroup()).isNotEqualTo(targetExam.getExerciseGroups().get(0));
+        assertThat(importedExercise.getExerciseGroup()).isNotEqualTo(targetExam.getExerciseGroups().getFirst());
         // Check exercise send to client after importing
         assertThat(exerciseReceived.getTitle()).isEqualTo(exerciseToBeImported.getTitle());
         assertThat(exerciseReceived.getShortName()).isEqualTo(exerciseToBeImported.getShortName());
-        assertThat(exerciseReceived.getExerciseGroup()).isNotEqualTo(targetExam.getExerciseGroups().get(0));
+        assertThat(exerciseReceived.getExerciseGroup()).isNotEqualTo(targetExam.getExerciseGroups().getFirst());
 
         // Assert correct creation of test cases
         var importedTestCaseIds = importedExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).toList();
@@ -1239,11 +1244,11 @@ public class ProgrammingExerciseTestService {
         List<RevCommit> testRepoCommits = testRepo.getAllLocalCommits();
         assertThat(testRepoCommits).hasSize(2);
 
-        assertThat(testRepoCommits.get(0).getFullMessage()).isEqualTo("Update the structure oracle file.");
-        List<DiffEntry> changes = getChanges(testRepo.localGit.getRepository(), testRepoCommits.get(0));
+        assertThat(testRepoCommits.getFirst().getFullMessage()).isEqualTo("Update the structure oracle file.");
+        List<DiffEntry> changes = getChanges(testRepo.localGit.getRepository(), testRepoCommits.getFirst());
         assertThat(changes).hasSize(1);
-        assertThat(changes.get(0).getChangeType()).isEqualTo(DiffEntry.ChangeType.MODIFY);
-        assertThat(changes.get(0).getOldPath()).endsWith("test.json");
+        assertThat(changes.getFirst().getChangeType()).isEqualTo(DiffEntry.ChangeType.MODIFY);
+        assertThat(changes.getFirst().getOldPath()).endsWith("test.json");
 
         // Second time leads to a bad request because the file did not change
         var expectedHeaders = new HashMap<String, String>();
@@ -1544,18 +1549,26 @@ public class ProgrammingExerciseTestService {
         return request.get(url, expectedStatus, String.class);
     }
 
-    // Test
-
     /**
-     * Test that the export of the instructor material works as expected when no build plan exists (e.g. for jenkins setups at the moment)
-     * <p>
+     * Attempts to export a student repository and verifies that the file is (or is not) returned.
      *
-     * @param saveEmbeddedFiles whether embedded files should be saved or not, not saving them simulates that embedded files are no longer stored on the file system
-     * @throws Exception if the export fails
+     * @param authorized Whether to expect that the user is authorized.
      */
-    void exportProgrammingExerciseInstructorMaterial_shouldReturnFileWithoutBuildplan(boolean saveEmbeddedFiles) throws Exception {
-        exportProgrammingExerciseInstructorMaterial_shouldReturnFile(saveEmbeddedFiles, false);
+    void exportStudentRepository(boolean authorized) throws Exception {
+        HttpStatus expectedStatus = authorized ? HttpStatus.OK : HttpStatus.FORBIDDEN;
+        generateProgrammingExerciseForExport();
+        var participation = createStudentParticipationWithSubmission(INDIVIDUAL);
+        var url = "/api/programming-exercises/" + exercise.getId() + "/export-student-repository/" + participation.getId();
+        String zip = request.get(url, expectedStatus, String.class);
+        if (expectedStatus.is2xxSuccessful()) {
+            assertThat(zip).isNotNull();
+        }
+        else {
+            assertThat(zip).isNull();
+        }
     }
+
+    // Test
 
     /**
      * Test that the export of the instructor material works as expected with a build plan included (relevant for Gitlab/Jenkins setups).
@@ -1640,7 +1653,7 @@ public class ProgrammingExerciseTestService {
     void exportProgrammingExerciseInstructorMaterial_problemStatementShouldContainTestNames() throws Exception {
         programmingExerciseRepository.save(exercise);
         var tests = programmingExerciseUtilService.addTestCasesToProgrammingExercise(exercise);
-        var test = tests.get(0);
+        var test = tests.getFirst();
         exercise.setProblemStatement("[task][name](<testid>%s</testid>)".formatted(test.getId()));
         programmingExerciseRepository.save(exercise);
 
@@ -1838,7 +1851,7 @@ public class ProgrammingExerciseTestService {
         // Mock error when exporting a participation
         doThrow(exceptionToThrow).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUri()), any(Path.class), anyBoolean());
 
-        course = courseRepository.findByIdWithExercisesAndLecturesElseThrow(course.getId());
+        course = courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(course.getId());
         List<String> errors = new ArrayList<>();
         var optionalExportedCourse = courseExamExportService.exportCourse(course, courseArchivesDirPath, errors);
         assertThat(optionalExportedCourse).isPresent();
@@ -2071,7 +2084,8 @@ public class ProgrammingExerciseTestService {
 
         // Add a new student to the team
         User newStudent = userUtilService
-                .generateAndSaveActivatedUsers(userPrefix + "new-student", new String[] { "tumuser", "testgroup" }, Set.of(new Authority(Role.STUDENT.getAuthority())), 1).get(0);
+                .generateAndSaveActivatedUsers(userPrefix + "new-student", new String[] { "tumuser", "testgroup" }, Set.of(new Authority(Role.STUDENT.getAuthority())), 1)
+                .getFirst();
         newStudent = userRepo.save(newStudent);
         team.addStudents(newStudent);
 
@@ -2123,7 +2137,8 @@ public class ProgrammingExerciseTestService {
         // final String edxUsername = userPrefixEdx.get() + "student"; // TODO: Fix this (userPrefixEdx is missing)
         final String edxUsername = userPrefix + "ltinotpres" + "student";
 
-        User edxStudent = UserFactory.generateActivatedUsers(edxUsername, new String[] { "tumuser", "testgroup" }, Set.of(new Authority(Role.STUDENT.getAuthority())), 1).get(0);
+        User edxStudent = UserFactory.generateActivatedUsers(edxUsername, new String[] { "tumuser", "testgroup" }, Set.of(new Authority(Role.STUDENT.getAuthority())), 1)
+                .getFirst();
         edxStudent.setInternal(true);
         edxStudent.setPassword(passwordService.hashPassword(edxStudent.getPassword()));
         edxStudent = userRepo.save(edxStudent);
@@ -2180,26 +2195,6 @@ public class ProgrammingExerciseTestService {
         programmingExerciseRepository.save(exercise);
         programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
         programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
-    }
-
-    // TEST
-    void copyRepository_testConflictError() throws Exception {
-        setupTeamExercise();
-
-        // Create a team with students
-        Set<User> students = new HashSet<>(userRepo.searchByLoginOrNameInGroup("tumuser", userPrefix + "student"));
-        Team team = new Team().name("Team 1").shortName(userPrefix + teamShortName).exercise(exercise).students(students);
-        team = teamRepository.save(exercise, team);
-
-        assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents);
-
-        // test for Conflict exception
-        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), true);
-
-        // Start participation
-        participationService.startExercise(exercise, team, false);
-
-        // TODO add assertions
     }
 
     // TEST
@@ -2341,12 +2336,12 @@ public class ProgrammingExerciseTestService {
         assertThat(exercise).isEqualTo(generatedExercise);
         var templateSubmissions = submissionRepository.findAllByParticipationId(exercise.getTemplateParticipation().getId());
         assertThat(templateSubmissions).hasSize(1);
-        Optional<ProgrammingSubmission> templateSubmission = programmingSubmissionRepository.findById(templateSubmissions.get(0).getId());
+        Optional<ProgrammingSubmission> templateSubmission = programmingSubmissionRepository.findById(templateSubmissions.getFirst().getId());
         assertThat(templateSubmission.isPresent()).isTrue();
         assertThat(templateSubmission.get().getType()).isEqualTo(SubmissionType.INSTRUCTOR);
         var solutionSubmissions = submissionRepository.findAllByParticipationId(exercise.getSolutionParticipation().getId());
         assertThat(solutionSubmissions).hasSize(1);
-        Optional<ProgrammingSubmission> solutionSubmission = programmingSubmissionRepository.findById(solutionSubmissions.get(0).getId());
+        Optional<ProgrammingSubmission> solutionSubmission = programmingSubmissionRepository.findById(solutionSubmissions.getFirst().getId());
         assertThat(solutionSubmission.isPresent()).isTrue();
         assertThat(solutionSubmission.get().getType()).isEqualTo(SubmissionType.INSTRUCTOR);
         assertThat(programmingExerciseRepository.findById(exercise.getId())).isPresent();

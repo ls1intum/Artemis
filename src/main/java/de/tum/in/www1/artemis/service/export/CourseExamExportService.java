@@ -197,7 +197,7 @@ public class CourseExamExportService {
 
         // Export exam exercises
         notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Preparing to export exam exercises..."), null);
-        var exercises = examRepository.findAllExercisesByExamId(exam.getId());
+        var exercises = examRepository.findAllExercisesWithDetailsByExamId(exam.getId());
         List<Path> exportedExercises = exportExercises(notificationTopic, exercises, tempExamsDir, 0, exercises.size(), exportErrors, reportData);
 
         // Write report and error file
@@ -235,7 +235,8 @@ public class CourseExamExportService {
         List<Exam> courseExams = examRepository.findByCourseId(course.getId());
 
         // Calculate the amount of exercises for all exams
-        var examExercises = courseExams.stream().map(exam -> examRepository.findAllExercisesByExamId(exam.getId())).flatMap(Collection::stream).collect(Collectors.toSet());
+        var examExercises = courseExams.stream().map(exam -> examRepository.findAllExercisesWithDetailsByExamId(exam.getId())).flatMap(Collection::stream)
+                .collect(Collectors.toSet());
 
         int totalExercises = courseExercises.size() + examExercises.size();
         int progress = 0;
@@ -318,7 +319,7 @@ public class CourseExamExportService {
             // Export each exam. We first fetch its exercises and then export them.
             var exportedExams = new ArrayList<Path>();
             for (var exam : exams) {
-                var examExercises = examRepository.findAllExercisesByExamId(exam.getId());
+                var examExercises = examRepository.findAllExercisesWithDetailsByExamId(exam.getId());
                 var exportedExam = exportExam(notificationTopic, exam, examExercises, examsDir.toString(), currentProgress, totalExerciseCount, exportErrors, reportData);
                 exportedExams.addAll(exportedExam);
                 currentProgress += examExercises.size();
@@ -410,30 +411,23 @@ public class CourseExamExportService {
             submissionsExportOptions.setExportAllParticipants(true);
             try {
                 // Export programming exercise
-                if (exercise instanceof ProgrammingExercise programmingExercise) {
-                    // Download the repositories' template, solution, tests and students' repositories
-                    programmingExerciseExportService.exportProgrammingExerciseForArchival(programmingExercise, exportErrors, Optional.of(exerciseExportDir), reportData)
-                            .ifPresent(exportedExercises::add);
-                }
-                // Export the other exercises types
-                else if (exercise instanceof FileUploadExercise) {
-                    exportedExercises.add(fileUploadExerciseWithSubmissionsExportService.exportFileUploadExerciseWithSubmissions(exercise, submissionsExportOptions,
-                            exerciseExportDir, exportErrors, reportData));
-                }
-                else if (exercise instanceof TextExercise) {
-                    exportedExercises.add(textExerciseWithSubmissionsExportService.exportTextExerciseWithSubmissions(exercise, submissionsExportOptions, exerciseExportDir,
-                            exportErrors, reportData));
-                }
-                else if (exercise instanceof ModelingExercise) {
-                    exportedExercises.add(modelingExerciseWithSubmissionsExportService.exportModelingExerciseWithSubmissions(exercise, submissionsExportOptions, exerciseExportDir,
-                            exportErrors, reportData));
-                }
-                else if (exercise instanceof QuizExercise quizExercise) {
-                    exportedExercises.add(quizExerciseWithSubmissionsExportService.exportExerciseWithSubmissions(quizExercise, exerciseExportDir, exportErrors, reportData));
-
-                }
-                else {
-                    // Exercise is not supported so skip
+                switch (exercise) {
+                    case ProgrammingExercise programmingExercise ->
+                        // Download the repositories' template, solution, tests and students' repositories
+                        programmingExerciseExportService.exportProgrammingExerciseForArchival(programmingExercise, exportErrors, Optional.of(exerciseExportDir), reportData)
+                                .ifPresent(exportedExercises::add);
+                    case FileUploadExercise fileUploadExercise -> exportedExercises.add(fileUploadExerciseWithSubmissionsExportService
+                            .exportFileUploadExerciseWithSubmissions(fileUploadExercise, submissionsExportOptions, exerciseExportDir, exportErrors, reportData));
+                    case TextExercise textExercise -> exportedExercises.add(textExerciseWithSubmissionsExportService.exportTextExerciseWithSubmissions(textExercise,
+                            submissionsExportOptions, exerciseExportDir, exportErrors, reportData));
+                    case ModelingExercise modelingExercise -> exportedExercises.add(modelingExerciseWithSubmissionsExportService
+                            .exportModelingExerciseWithSubmissions(modelingExercise, submissionsExportOptions, exerciseExportDir, exportErrors, reportData));
+                    case QuizExercise quizExercise ->
+                        exportedExercises.add(quizExerciseWithSubmissionsExportService.exportExerciseWithSubmissions(quizExercise, exerciseExportDir, exportErrors, reportData));
+                    default -> {
+                        logMessageAndAppendToList("Failed to export exercise '" + exercise.getTitle() + "' (id: " + exercise.getId() + "): Exercise type not supported for export",
+                                exportErrors, null);
+                    }
                 }
             }
             catch (Exception e) {

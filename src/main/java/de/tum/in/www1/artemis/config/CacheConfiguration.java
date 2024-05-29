@@ -18,6 +18,7 @@ import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.boot.info.BuildProperties;
@@ -47,8 +48,10 @@ import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.spi.properties.ClusterProperty;
 import com.hazelcast.spring.cache.HazelcastCacheManager;
+import com.hazelcast.spring.context.SpringManagedContext;
 
 import de.tum.in.www1.artemis.service.HazelcastPathSerializer;
+import de.tum.in.www1.artemis.service.connectors.localci.LocalCIPriorityQueueComparator;
 import tech.jhipster.config.JHipsterProperties;
 import tech.jhipster.config.cache.PrefixedKeyGenerator;
 
@@ -110,7 +113,7 @@ public class CacheConfiguration {
     }
 
     @Bean
-    public CacheManager cacheManager(HazelcastInstance hazelcastInstance) {
+    public CacheManager cacheManager(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         log.debug("Starting HazelcastCacheManager");
         return new HazelcastCacheManager(hazelcastInstance);
     }
@@ -162,7 +165,7 @@ public class CacheConfiguration {
      * @param jHipsterProperties the jhipster properties
      * @return the created HazelcastInstance
      */
-    @Bean
+    @Bean(name = "hazelcastInstance")
     public HazelcastInstance hazelcastInstance(JHipsterProperties jHipsterProperties) {
         log.debug("Configuring Hazelcast");
         HazelcastInstance hazelCastInstance = Hazelcast.getHazelcastInstanceByName(instanceName);
@@ -181,13 +184,13 @@ public class CacheConfiguration {
         config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(true);
 
         // Allows using @SpringAware and therefore Spring Services in distributed tasks
-        config.setManagedContext(new ArtemisSpringManagedContext(applicationContext, env));
+        config.setManagedContext(new SpringManagedContext(applicationContext));
         config.setClassLoader(applicationContext.getClassLoader());
 
         config.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
 
         if (registration == null) {
-            log.info("No discovery service is set up, Hazelcast cannot create a cluster.");
+            log.info("No discovery service is set up, Hazelcast cannot create a multi-node cluster.");
             hazelcastBindOnlyOnInterface("127.0.0.1", config);
         }
         else {
@@ -271,7 +274,7 @@ public class CacheConfiguration {
         log.debug("Configure Build Job Queue synchronization in Hazelcast for Local CI");
         QueueConfig queueConfig = new QueueConfig("buildJobQueue");
         queueConfig.setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount());
-        queueConfig.setPriorityComparatorClassName("de.tum.in.www1.artemis.service.connectors.localci.LocalCIPriorityQueueComparator");
+        queueConfig.setPriorityComparatorClassName(LocalCIPriorityQueueComparator.class.getName());
         config.addQueueConfig(queueConfig);
     }
 
