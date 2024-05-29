@@ -14,6 +14,8 @@ export class SelfLearningFeedbackRequest implements BaseEntity {
     public result?: Result;
     public submission?: Submission;
 
+    // parsed objects from the server do not have a prototype by default, the method will not work
+    // you need to explicitly convert objects in order for this function to work
     public static isSelfLearningFeedbackRequest(obj: any): obj is SelfLearningFeedbackRequest {
         return obj instanceof SelfLearningFeedbackRequest;
     }
@@ -26,6 +28,7 @@ export class SelfLearningFeedbackRequest implements BaseEntity {
         return selfLearningFeedbackRequest.requestDateTime !== undefined && selfLearningFeedbackRequest.successful === false;
     }
 
+    // if there is a result - then the request was successful
     public static isCompletedAndSuccessful(selfLearningFeedbackRequest: SelfLearningFeedbackRequest): boolean {
         return selfLearningFeedbackRequest.result !== undefined;
     }

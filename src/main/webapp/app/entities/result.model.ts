@@ -57,6 +57,8 @@ export class Result implements BaseEntity {
         return that.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
     }
 
+    // parsed objects from the server do not have a prototype by default, the method will not work
+    // you need to explicitly convert objects in order for this function to work
     public static isResult(obj: any): obj is Result {
         return obj instanceof Result;
     }
