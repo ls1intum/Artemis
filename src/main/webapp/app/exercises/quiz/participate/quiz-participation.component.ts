@@ -32,7 +32,7 @@ import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.mo
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { onError } from 'app/shared/util/global.utils';
-import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
+import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { debounce } from 'lodash-es';
 import { captureException } from '@sentry/angular-ivy';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
@@ -98,7 +98,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     questionScores = {};
     quizId: number;
     courseId: number;
-    interval: any;
+    interval?: number;
+    autoSaveInterval?: number;
+    autoSaveTimer = 0;
     quizStarted = false;
     startDate: dayjs.Dayjs | undefined;
     endDate: dayjs.Dayjs | undefined;
@@ -166,14 +168,15 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             });
         });
         // update displayed times in UI regularly
-        this.interval = setInterval(() => {
+        this.interval = window.setInterval(() => {
             this.updateDisplayedTimes();
             this.checkForQuizEnd();
         }, UI_RELOAD_TIME);
     }
 
     ngOnDestroy() {
-        clearInterval(this.interval);
+        window.clearInterval(this.interval);
+        window.clearInterval(this.autoSaveInterval);
         /**
          * unsubscribe from all subscribed websocket channels when page is closed
          */
@@ -220,6 +223,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         });
 
         this.subscribeToWebsocketChannels();
+        this.setupAutoSave();
 
         // load the quiz (and existing submission if quiz has started)
         this.participationService.findParticipationForCurrentUser(this.quizId).subscribe({
@@ -294,6 +298,17 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 this.onSubmit();
             }, quizExercise.duration! * 1000),
         );
+    }
+
+    setupAutoSave(): void {
+        window.clearInterval(this.autoSaveInterval);
+        this.autoSaveInterval = window.setInterval(() => {
+            // TODO: Exclude certain conditions where autosave should not be triggered
+            this.autoSaveTimer++;
+            if (this.autoSaveTimer >= AUTOSAVE_EXERCISE_INTERVAL) {
+                this.onAutoSave();
+            }
+        }, AUTOSAVE_CHECK_INTERVAL);
     }
 
     /**
@@ -746,16 +761,19 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * Callback method to be triggered when the user changes any of the answers in the quiz (in sub components based on the question type)
      */
     onSelectionChanged() {
-        this.applySelection();
+        this.unsavedChanges = true;
+    }
 
-        if (!this.disconnected) {
-            // this.isSaving = true;
+    onAutoSave(): void {
+        this.autoSaveTimer = 0;
+        if (this.unsavedChanges && !this.disconnected) {
+            this.applySelection();
             this.submission.submissionDate = this.serverDateService.now();
             // TODO: Send submission to server, not saving. (this.sendWebsocket(this.submission);)
+            // Upon receiving the response:
             this.unsavedChanges = false;
             this.updateSubmissionTime();
-        } else {
-            this.unsavedChanges = true;
+            // TODO error handling
         }
     }
 
