@@ -11,7 +11,7 @@ import { SimpleChanges } from '@angular/core';
 import { ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-build-plan-checkout-directories.component';
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
 
-describe('ProgrammingExerciseBuildDetailsComponent', () => {
+describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
     let component: ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent;
     let fixture: ComponentFixture<ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent>;
     let programmingExerciseService: ProgrammingExerciseService;
