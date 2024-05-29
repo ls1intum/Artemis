@@ -3,6 +3,21 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <changeSet id="20240522170000" author="anzinger">
+
+        <!--
+            Change Set for adding a new column (dashboard_enabled) to the course table for enabling or disabling the course analytics dashboard
+        -->
+
+        <addColumn tableName="course">
+            <column defaultValueBoolean="false" name="student_course_analytics_dashboard_enabled" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <!--
+            Change Set for adding Competency JOL (competency_jol) for storing the JOL values of the competencies
+        -->
+
         <createTable tableName="competency_jol">
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="competency_jolPK"/>
