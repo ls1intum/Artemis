@@ -73,7 +73,7 @@ public class PrerequisiteResource {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         }
 
-        var prerequisites = prerequisiteRepository.findByCourseIdOrderByTitle(courseId);
+        var prerequisites = prerequisiteRepository.findByCourseIdOrderById(courseId);
 
         return ResponseEntity.ok(prerequisites.stream().map(PrerequisiteResponseDTO::of).toList());
     }

@@ -345,7 +345,7 @@ public class CompetencyService {
      * @return The found competency
      */
     public List<Competency> findCompetenciesWithProgressForUserByCourseId(Long courseId, Long userId) {
-        List<Competency> competencies = competencyRepository.findByCourseId(courseId);
+        List<Competency> competencies = competencyRepository.findByCourseIdOrderById(courseId);
         var progress = competencyProgressRepository.findByCompetenciesAndUser(competencies, userId).stream()
                 .collect(Collectors.toMap(completion -> completion.getCompetency().getId(), completion -> completion));
 

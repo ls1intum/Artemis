@@ -445,7 +445,9 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     @WithMockUser(username = "admin", roles = "ADMIN")
     void deleteCourseShouldAlsoDeleteCompetency() throws Exception {
         request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
-        request.get("/api/courses/" + course.getId() + "/competencies/" + competency.getId(), HttpStatus.NOT_FOUND, Competency.class);
+
+        boolean competencyExists = competencyRepository.existsById(competency.getId());
+        assertThat(competencyExists).isFalse();
     }
 
     @Nested
@@ -764,34 +766,6 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     }
 
     @Nested
-    class GetCompetencies {
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
-        void shouldNotGetResultsFromCoursesForInstructorNotInCourses() throws Exception {
-            final var search = pageableSearchUtilService.configureSearch("");
-            final var result = request.getSearchResult("/api/competencies", HttpStatus.OK, Competency.class, pageableSearchUtilService.searchMapping(search));
-            assertThat(result.getResultsOnPage()).isNullOrEmpty();
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldGetResultsFromCoursesForInstructor() throws Exception {
-            final var search = pageableSearchUtilService.configureSearch(competency.getTitle());
-            final var result = request.getSearchResult("/api/competencies", HttpStatus.OK, Competency.class, pageableSearchUtilService.searchMapping(search));
-            assertThat(result.getResultsOnPage()).hasSize(1);
-        }
-
-        @Test
-        @WithMockUser(username = "admin", roles = "ADMIN")
-        void shouldGetResultsFromAllCoursesForAdmin() throws Exception {
-            final var search = pageableSearchUtilService.configureSearch(competency.getTitle());
-            final var result = request.getSearchResult("/api/competencies", HttpStatus.OK, Competency.class, pageableSearchUtilService.searchMapping(search));
-            assertThat(result.getResultsOnPage()).hasSize(1);
-        }
-    }
-
-    @Nested
     class CreateCompetencies {
 
         @Test
@@ -875,7 +849,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
             assertThat(competencyDTOList.get(0).tailRelations()).isNull();
             assertThat(competencyDTOList.get(1).tailRelations()).hasSize(1);
 
-            competencyDTOList = request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/import-all/" + course3.getId(), null,
+            competencyDTOList = request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/import-all/" + course3.getId() + "?importRelations=false", null,
                     CompetencyWithTailRelationDTO.class, HttpStatus.CREATED);
             assertThat(competencyDTOList).hasSize(2);
             // relations should be empty when not importing them

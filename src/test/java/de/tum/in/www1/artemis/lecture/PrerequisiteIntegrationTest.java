@@ -74,7 +74,7 @@ class PrerequisiteIntegrationTest extends AbstractSpringIntegrationIndependentTe
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void shouldReturnPrerequisites() throws Exception {
             prerequisiteUtilService.createPrerequisites(course, 5);
-            var prerequisites = prerequisiteRepository.findByCourseIdOrderByTitle(course.getId());
+            var prerequisites = prerequisiteRepository.findByCourseIdOrderById(course.getId());
             var expectedPrerequisites = prerequisites.stream().map(PrerequisiteResponseDTO::of).toList();
 
             List<PrerequisiteResponseDTO> actualPrerequisites = request.getList(url(course.getId()), HttpStatus.OK, PrerequisiteResponseDTO.class);
@@ -89,7 +89,7 @@ class PrerequisiteIntegrationTest extends AbstractSpringIntegrationIndependentTe
             course.setEnrollmentEnabled(true);
             courseRepository.save(course);
             prerequisiteUtilService.createPrerequisites(course, 5);
-            var prerequisites = prerequisiteRepository.findByCourseIdOrderByTitle(course.getId());
+            var prerequisites = prerequisiteRepository.findByCourseIdOrderById(course.getId());
             var expectedPrerequisites = prerequisites.stream().map(PrerequisiteResponseDTO::of).toList();
 
             List<PrerequisiteResponseDTO> actualPrerequisites = request.getList(url(course.getId()), HttpStatus.OK, PrerequisiteResponseDTO.class);

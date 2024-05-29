@@ -162,6 +162,6 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long>, J
 
     long countByCourse(Course course);
 
-    List<Competency> findByCourseId(long courseId);
+    List<Competency> findByCourseIdOrderById(long courseId);
 
 }
