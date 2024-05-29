@@ -30,19 +30,19 @@ describe('IrisStatusService', () => {
         expect(service).toBeTruthy();
         const req = httpMock.expectOne('api/iris/status');
         expect(req.request.method).toBe('GET');
-        req.flush({ active: true, rateLimitInfo: { limit: 100, remaining: 50, reset: 0 } });
+        req.flush({ active: true, rateLimitInfo: { currentMessageCount: 100, rateLimit: 50, rateLimitTimeframeHours: 0 } });
     });
 
     it('should get active status', fakeAsync(() => {
         let isActive: boolean;
         service.getActiveStatus().subscribe((active) => {
             isActive = active;
+            expect(isActive).toBeTrue();
         });
-        tick();
-        expect(isActive).toBeTrue();
         const req = httpMock.expectOne('api/iris/status');
         expect(req.request.method).toBe('GET');
-        req.flush({ active: true, rateLimitInfo: { limit: 100, remaining: 50, reset: 0 } });
+        req.flush({ active: true, rateLimitInfo: { currentMessageCount: 100, rateLimit: 50, rateLimitTimeframeHours: 0 } });
+        tick();
     }));
 
     it('should get current rate limit info', fakeAsync(() => {
@@ -52,11 +52,11 @@ describe('IrisStatusService', () => {
         let rateLimitInfo: IrisRateLimitInformation;
         service.currentRatelimitInfo().subscribe((info) => {
             rateLimitInfo = info;
+            expect(rateLimitInfo).toEqual(testRateLimitInfo);
         });
-        tick();
-        expect(rateLimitInfo).toEqual(testRateLimitInfo);
         const req = httpMock.expectOne('api/iris/status');
         expect(req.request.method).toBe('GET');
-        req.flush({ active: true, rateLimitInfo: { limit: 100, remaining: 50, reset: 0 } });
+        req.flush({ active: true, rateLimitInfo: { currentMessageCount: 100, rateLimit: 50, rateLimitTimeframeHours: 0 } });
+        tick();
     }));
 });

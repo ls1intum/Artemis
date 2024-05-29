@@ -60,6 +60,10 @@ describe('IrisChatService', () => {
         wsMock = TestBed.inject(IrisWebsocketService) as jest.Mocked<IrisWebsocketService>;
     });
 
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
     it('should change to an course chat and start new session', fakeAsync(() => {
         const httpStub = jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithEmptyConversation));
         const wsStub = jest.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());

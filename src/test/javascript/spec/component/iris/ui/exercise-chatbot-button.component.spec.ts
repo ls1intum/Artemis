@@ -1,33 +1,47 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { Overlay } from '@angular/cdk/overlay';
 import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
-import { Subject } from 'rxjs';
-import { IrisChatSessionService } from 'app/iris/chat-session.service';
-import { IrisHttpChatSessionService } from 'app/iris/http-chat-session.service';
+import { Subject, of } from 'rxjs';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { ActivatedRoute } from '@angular/router';
-import { IrisStateStore } from 'app/iris/state-store.service';
-import { ActiveConversationMessageLoadedAction, NumNewMessagesResetAction, SessionReceivedAction } from 'app/iris/state-store.model';
-import { mockServerMessage } from './../../../helpers/sample/iris-sample-data';
+import { mockServerSessionHttpResponseWithId, mockWebsocketServerMessage } from '../../../helpers/sample/iris-sample-data';
 import { IrisExerciseChatbotButtonComponent } from 'app/iris/exercise-chatbot/exercise-chatbot-button.component';
+import { IrisChatHttpService } from 'app/iris/iris-chat-http.service';
+import { ChatServiceMode, IrisChatService } from 'app/iris/iris-chat.service';
 import { IrisLogoComponent } from 'app/iris/iris-logo/iris-logo.component';
+import { IrisWebsocketService } from 'app/iris/iris-websocket.service';
+import { IrisStatusService } from 'app/iris/iris-status.service';
+import { UserService } from 'app/core/user/user.service';
+import dayjs from 'dayjs/esm';
 
 describe('ExerciseChatbotButtonComponent', () => {
     let component: IrisExerciseChatbotButtonComponent;
     let fixture: ComponentFixture<IrisExerciseChatbotButtonComponent>;
-    let sessionService: IrisChatSessionService;
-    let stateStore: IrisStateStore;
+    let chatService: IrisChatService;
+    let chatHttpServiceMock: jest.Mocked<IrisChatHttpService>;
+    let wsServiceMock: jest.Mocked<IrisWebsocketService>;
     let mockDialog: MatDialog;
     let mockOverlay: Overlay;
     let mockActivatedRoute: ActivatedRoute;
     let mockDialogClose: any;
     let mockParamsSubject: any;
+
+    const statusMock = {
+        currentRatelimitInfo: jest.fn().mockReturnValue(of({})),
+        handleRateLimitInfo: jest.fn(),
+    };
+    const userMock = {
+        acceptIris: jest.fn(),
+    };
+    const accountMock = {
+        userIdentity: { irisAccepted: dayjs() },
+    };
 
     beforeEach(async () => {
         mockParamsSubject = new Subject();
@@ -57,12 +71,16 @@ describe('ExerciseChatbotButtonComponent', () => {
             imports: [FormsModule, FontAwesomeModule, HttpClientTestingModule],
             declarations: [IrisExerciseChatbotButtonComponent, MockComponent(IrisLogoComponent), MockPipe(ArtemisTranslatePipe)],
             providers: [
-                IrisHttpChatSessionService,
-                IrisStateStore,
+                IrisChatService,
+                MockProvider(IrisChatHttpService),
+                MockProvider(IrisWebsocketService),
                 { provide: MatDialog, useValue: mockDialog },
                 { provide: Overlay, useValue: mockOverlay },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },
+                { provide: IrisStatusService, useValue: statusMock },
+                { provide: UserService, useValue: userMock },
+                { provide: AccountService, useValue: accountMock },
             ],
         })
             .compileComponents()
@@ -70,8 +88,9 @@ describe('ExerciseChatbotButtonComponent', () => {
                 fixture = TestBed.createComponent(IrisExerciseChatbotButtonComponent);
                 component = fixture.componentInstance;
                 fixture.detectChanges();
-                sessionService = fixture.debugElement.injector.get(IrisChatSessionService);
-                stateStore = fixture.debugElement.injector.get(IrisStateStore);
+                chatService = fixture.debugElement.injector.get(IrisChatService);
+                chatHttpServiceMock = TestBed.inject(IrisChatHttpService) as jest.Mocked<IrisChatHttpService>;
+                wsServiceMock = TestBed.inject(IrisWebsocketService) as jest.Mocked<IrisWebsocketService>;
             });
     });
 
@@ -79,14 +98,19 @@ describe('ExerciseChatbotButtonComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should subscribe to route.params and call sessionService.getCurrentSessionOrCreate', waitForAsync(async () => {
+    it('should subscribe to route.params and call chatService.switchTo', fakeAsync(() => {
+        jest.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(123)));
+        jest.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of());
         const mockExerciseId = 123;
-        const spy = jest.spyOn(sessionService, 'getCurrentSessionOrCreate');
+        const spy = jest.spyOn(chatService, 'switchTo');
 
-        mockParamsSubject.next(mockExerciseId);
-        await fixture.whenStable();
+        mockParamsSubject.next({
+            exerciseId: mockExerciseId,
+        });
+        fixture.whenStable();
+        tick();
 
-        expect(spy).toHaveBeenCalled();
+        expect(spy).toHaveBeenCalledExactlyOnceWith(ChatServiceMode.TUTOR, mockExerciseId);
     }));
 
     it('should close the dialog when destroying the object', () => {
@@ -100,43 +124,34 @@ describe('ExerciseChatbotButtonComponent', () => {
         expect(mockDialogClose).toHaveBeenCalled();
     });
 
-    it('should show new message indicator when chatbot is closed', () => {
+    it('should show new message indicator when chatbot is closed', fakeAsync(() => {
         // given
-        stateStore.dispatch(new SessionReceivedAction(0, []));
+        jest.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(123)));
+        jest.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketServerMessage));
+        chatService.switchTo(ChatServiceMode.TUTOR, 123);
 
         // when
-        stateStore.dispatch(new ActiveConversationMessageLoadedAction(mockServerMessage));
+        fixture.detectChanges();
+        tick();
 
         // then
-        fixture.detectChanges();
         const unreadIndicatorElement: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');
         expect(unreadIndicatorElement).not.toBeNull();
-    });
+    }));
 
-    it('should not show new message indicator when chatbot is open', () => {
+    it('should not show new message indicator when chatbot is open', fakeAsync(() => {
         // given
-        stateStore.dispatch(new SessionReceivedAction(0, []));
+        jest.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(123)));
+        jest.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketServerMessage));
+        chatService.switchTo(ChatServiceMode.TUTOR, 123);
         component.openChat();
 
         // when
-        stateStore.dispatch(new ActiveConversationMessageLoadedAction(mockServerMessage));
+        fixture.detectChanges();
+        tick();
 
         // then
-        fixture.detectChanges();
         const unreadIndicatorElement: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');
         expect(unreadIndicatorElement).toBeNull();
-    });
-
-    it('should call action to reset number of new messages when close chat', () => {
-        // given
-        jest.spyOn(stateStore, 'dispatch');
-        stateStore.dispatch(new SessionReceivedAction(0, []));
-        component.openChat();
-
-        // when
-        component.handleButtonClick();
-        fixture.detectChanges();
-        // then
-        expect(stateStore.dispatch).toHaveBeenCalledWith(new NumNewMessagesResetAction());
-    });
+    }));
 });
