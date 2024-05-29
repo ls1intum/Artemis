@@ -141,8 +141,8 @@ export class CompetencyAccordionComponent implements OnChanges {
             return undefined;
         }
 
-        const competencyExercises = this.metrics.competencyMetrics?.exercises?.[this.competency.id] ?? [];
-        const completedExercises = competencyExercises.filter((exerciseId) => this.metrics.exerciseMetrics?.completed?.includes(exerciseId)).length ?? 0;
+        const competencyExercises = this.metrics.competencyMetrics?.exercises?.[this.competency.id];
+        const completedExercises = competencyExercises?.filter((exerciseId) => this.metrics.exerciseMetrics?.completed?.includes(exerciseId)).length ?? 0;
         if (!competencyExercises) {
             return undefined;
         }
