@@ -31,6 +31,9 @@ import de.tum.in.www1.artemis.web.rest.CompetencyResource;
 import de.tum.in.www1.artemis.web.rest.dto.competency.PrerequisiteRequestDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.PrerequisiteResponseDTO;
 
+/**
+ * REST controller for managing {@link de.tum.in.www1.artemis.domain.competency.Prerequisite Prerequisite} entities.
+ */
 @Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")

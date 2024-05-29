@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.dto.competency.PrerequisiteRequestDTO;
 
 /**
- * Service for managing prerequisite competencies.
+ * Service for managing {@link Prerequisite} competencies.
  */
 @Profile(PROFILE_CORE)
 @Service

@@ -10,6 +10,9 @@ import org.springframework.data.repository.query.Param;
 import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+/**
+ * Spring Data JPA repository for the {@link CourseCompetency} entity.
+ */
 public interface CourseCompetencyRepository extends JpaRepository<CourseCompetency, Long> {
 
     @Query("""

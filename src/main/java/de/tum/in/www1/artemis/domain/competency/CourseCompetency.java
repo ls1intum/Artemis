@@ -26,7 +26,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import de.tum.in.www1.artemis.domain.Course;
 
-// TODO: javadoc for this?
+/**
+ * CourseCompetency is an abstract class for all competency types that are part of a course.
+ * It is extended by {@link Competency} and {@link Prerequisite}
+ */
 @Entity
 @Table(name = "course_competency")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
