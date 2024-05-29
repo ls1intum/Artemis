@@ -86,9 +86,11 @@ public class CompetencyJolService {
         jol.setUser(userRepository.findById(userId).orElseThrow());
         jol.setValue(jolValue);
         jol.setJudgementTime(judgementTime);
-        final var progress = competencyProgressRepository.findByCompetencyIdAndUserId(competencyId, userId).orElseThrow();
-        jol.setCompetencyProgress(progress.getProgress());
-        jol.setCompetencyConfidence(progress.getConfidence());
+        final var progress = competencyProgressRepository.findByCompetencyIdAndUserId(competencyId, userId);
+        if (progress.isPresent()) {
+            jol.setCompetencyProgress(progress.get().getProgress());
+            jol.setCompetencyConfidence(progress.get().getConfidence());
+        }
         return jol;
     }
 

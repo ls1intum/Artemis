@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyJolDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.CompetencyInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.CompetencyProgressDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.MapEntryLongLong;
@@ -87,10 +88,16 @@ public interface CompetencyMetricsRepository extends JpaRepository<Competency, L
      * @return the competency judgement of learning values for the user in the competencies
      */
     @Query("""
-            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.MapEntryLongLong(jol.competency.id, jol.value)
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyJolDTO(jol.competency.id, jol.value, jol.judgementTime, jol.competencyProgress, jol.competencyConfidence)
             FROM CompetencyJol jol
             WHERE jol.user.id = :userId
-            AND jol.competency.id IN :competencyIds
+                AND jol.competency.id IN :competencyIds
+                AND jol.judgementTime = (
+                    SELECT MAX(jol2.judgementTime)
+                    FROM CompetencyJol jol2
+                    WHERE jol2.user.id = jol.user.id
+                        AND jol2.competency.id = jol.competency.id
+                       )
             """)
-    Set<MapEntryLongLong> findAllCompetencyJolValuesForUserByCompetencyIds(@Param("userId") long userId, @Param("competencyIds") Set<Long> competencyIds);
+    Set<CompetencyJolDTO> findAllCompetencyJolValuesForUserByCompetencyIds(@Param("userId") long userId, @Param("competencyIds") Set<Long> competencyIds);
 }

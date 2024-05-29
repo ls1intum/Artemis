@@ -57,6 +57,14 @@ export class Competency implements BaseEntity {
     constructor() {}
 }
 
+export class CompetencyJol {
+    competencyId: number;
+    jolValue: number;
+    judgementTime: string;
+    competencyProgress?: number;
+    competencyConfidence?: number;
+}
+
 export interface CompetencyImportResponseDTO extends BaseEntity {
     title?: string;
     description?: string;
