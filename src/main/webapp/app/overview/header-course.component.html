@@ -16,20 +16,11 @@
                         </div>
                     }
                 </div>
-                @if (!this.router.url.startsWith('/course-management') && course.isAtLeastTutor) {
-                    <div class="d-flex align-items-center justify-content-center manage-button-container" id="manage-button">
-                        <a class="btn btn-secondary manage-button" [routerLink]="['/course-management', course.id]">
-                            {{ 'artemisApp.courseOverview.manage' | artemisTranslate }}
-                        </a>
-                    </div>
-                }
-                @if (this.router.url.startsWith('/course-management')) {
-                    <div class="d-flex align-items-center justify-content-center manage-button-container" id="student-view-button">
-                        <a class="btn btn-secondary manage-button" [routerLink]="['/courses', course.id]">
-                            {{ 'artemisApp.courseOverview.studentView' | artemisTranslate }}
-                        </a>
-                    </div>
-                }
+                <div class="d-flex align-items-center justify-content-center manage-button-container" id="student-view-button">
+                    <a class="btn btn-secondary manage-button" [routerLink]="['/courses', course.id]">
+                        {{ 'artemisApp.courseOverview.studentView' | artemisTranslate }}
+                    </a>
+                </div>
             </div>
         </div>
         @if (course.courseIcon) {

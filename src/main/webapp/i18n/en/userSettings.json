@@ -16,7 +16,8 @@
                 "fullName": "Full Name",
                 "login": "Login",
                 "email": "Email",
-                "joinedArtemis": "Joined Artemis on"
+                "joinedArtemis": "Joined Artemis on",
+                "sshKey": "Public SSH Key"
             },
             "categories": {
                 "NOTIFICATION_SETTINGS": "Notification Settings",

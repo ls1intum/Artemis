@@ -14,7 +14,7 @@ import org.eclipse.jgit.nls.TranslationBundle;
 /**
  * Translation bundle for JGit http server
  */
-@SuppressWarnings("MissingSummary") public class HttpServerText extends TranslationBundle {
+public class HttpServerText extends TranslationBundle {
 
     /**
      * Get an instance of this translation bundle
@@ -28,7 +28,6 @@ import org.eclipse.jgit.nls.TranslationBundle;
     // @formatter:off
 	/***/ public String alreadyInitializedByContainer;
 	/***/ public String cannotGetLengthOf;
-	/***/ public String clientHas175ChunkedEncodingBug;
 	/***/ public String encodingNotSupportedByThisLibrary;
 	/***/ public String expectedRepositoryAttribute;
 	/***/ public String filterMustNotBeNull;

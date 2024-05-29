@@ -29,10 +29,10 @@ import de.tum.in.www1.artemis.repository.BuildJobRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.connectors.localci.buildagent.SharedQueueProcessingService;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildConfig;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.JobTimingInfo;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.RepositoryInfo;
 import de.tum.in.www1.artemis.service.dto.FinishedBuildJobDTO;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
@@ -40,11 +40,11 @@ import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.PageableSearchDTO;
 
 class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
-    protected LocalCIBuildJobQueueItem job1;
+    protected BuildJobQueueItem job1;
 
-    protected LocalCIBuildJobQueueItem job2;
+    protected BuildJobQueueItem job2;
 
-    protected LocalCIBuildAgentInformation agent1;
+    protected BuildAgentInformation agent1;
 
     protected BuildJob finishedJob1;
 
@@ -59,11 +59,11 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @Autowired
     private BuildLogEntryService buildLogEntryService;
 
-    protected IQueue<LocalCIBuildJobQueueItem> queuedJobs;
+    protected IQueue<BuildJobQueueItem> queuedJobs;
 
-    protected IMap<String, LocalCIBuildJobQueueItem> processingJobs;
+    protected IMap<String, BuildJobQueueItem> processingJobs;
 
-    protected IMap<String, LocalCIBuildAgentInformation> buildAgentInformation;
+    protected IMap<String, BuildAgentInformation> buildAgentInformation;
 
     @Autowired
     protected BuildJobRepository buildJobRepository;
@@ -83,14 +83,14 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
 
-        job1 = new LocalCIBuildJobQueueItem("1", "job1", "address1", 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
-        job2 = new LocalCIBuildJobQueueItem("2", "job2", "address1", 2, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
+        job1 = new BuildJobQueueItem("1", "job1", "address1", 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
+        job2 = new BuildJobQueueItem("2", "job2", "address1", 2, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
         String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
-        agent1 = new LocalCIBuildAgentInformation(memberAddress, 1, 0, new ArrayList<>(List.of(job1)), false, new ArrayList<>(List.of(job2)));
-        LocalCIBuildJobQueueItem finishedJobQueueItem1 = new LocalCIBuildJobQueueItem("3", "job3", "address1", 3, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo,
-                jobTimingInfo, buildConfig, null);
-        LocalCIBuildJobQueueItem finishedJobQueueItem2 = new LocalCIBuildJobQueueItem("4", "job4", "address1", 4, course.getId() + 1, 1, 1, 1, BuildStatus.FAILED, repositoryInfo,
-                jobTimingInfo, buildConfig, null);
+        agent1 = new BuildAgentInformation(memberAddress, 1, 0, new ArrayList<>(List.of(job1)), false, new ArrayList<>(List.of(job2)));
+        BuildJobQueueItem finishedJobQueueItem1 = new BuildJobQueueItem("3", "job3", "address1", 3, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo,
+                buildConfig, null);
+        BuildJobQueueItem finishedJobQueueItem2 = new BuildJobQueueItem("4", "job4", "address1", 4, course.getId() + 1, 1, 1, 1, BuildStatus.FAILED, repositoryInfo, jobTimingInfo,
+                buildConfig, null);
         var result1 = new Result().successful(true).rated(true).score(100D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
         var result2 = new Result().successful(false).rated(true).score(0D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
 
@@ -182,14 +182,14 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetBuildAgentDetails_returnsAgent() throws Exception {
-        var retrievedAgent = request.get("/api/admin/build-agent?agentName=" + agent1.name(), HttpStatus.OK, LocalCIBuildAgentInformation.class);
+        var retrievedAgent = request.get("/api/admin/build-agent?agentName=" + agent1.name(), HttpStatus.OK, BuildAgentInformation.class);
         assertThat(retrievedAgent.name()).isEqualTo(agent1.name());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testCancelProcessingBuildJob() throws Exception {
-        LocalCIBuildJobQueueItem buildJob = processingJobs.get(job1.id());
+        BuildJobQueueItem buildJob = processingJobs.get(job1.id());
         request.delete("/api/admin/cancel-job/" + buildJob.id(), HttpStatus.NO_CONTENT);
     }
 
@@ -215,7 +215,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCancelBuildJobForCourse() throws Exception {
-        LocalCIBuildJobQueueItem buildJob = processingJobs.get(job1.id());
+        BuildJobQueueItem buildJob = processingJobs.get(job1.id());
         request.delete("/api/courses/" + course.getId() + "/cancel-job/" + buildJob.id(), HttpStatus.NO_CONTENT);
     }
 

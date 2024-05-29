@@ -34,6 +34,8 @@ export class CoursesComponent implements OnInit, OnDestroy {
     // Icons
     faPenAlt = faPenAlt;
 
+    coursesLoaded = false;
+
     constructor(
         private courseService: CourseManagementService,
         private guidedTourService: GuidedTourService,
@@ -61,7 +63,11 @@ export class CoursesComponent implements OnInit, OnDestroy {
         this.courseService.findAllForDashboard().subscribe({
             next: (res: HttpResponse<CoursesForDashboardDTO>) => {
                 if (res.body) {
+                    this.coursesLoaded = true;
                     const courses: Course[] = [];
+                    if (res.body.courses === undefined || res.body.courses.length === 0) {
+                        return;
+                    }
                     res.body.courses.forEach((courseDto: CourseForDashboardDTO) => {
                         courses.push(courseDto.course);
                     });
