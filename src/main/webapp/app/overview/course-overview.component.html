@@ -2,7 +2,7 @@
     <div class="vw-100 bg-body">
         <mat-sidenav-container
             class="vw-100"
-            [ngClass]="{ 'sidenav-height-dev': !isProduction || isTestServer, 'container-closed': isNavbarCollapsed, 'exam-is-active': isExamStarted }"
+            [ngClass]="{ 'sidenav-height-dev': !isProduction || isTestServer, 'container-closed': isNavbarCollapsed, 'exam-height exam-is-active': isExamStarted }"
         >
             <mat-sidenav
                 #sidenav
@@ -88,7 +88,7 @@
                     </div>
                 </div>
             </mat-sidenav>
-            <mat-sidenav-content [ngClass]="{ 'sidenav-height-dev': !isProduction || isTestServer }">
+            <mat-sidenav-content [ngClass]="{ 'sidenav-height-dev': !isProduction || isTestServer, 'exam-height': isExamStarted }">
                 <div class="dropdown-content" [hidden]="!dropdownOpen" [style.top.px]="dropdownOffset" [ngClass]="{ fixedContentSize: hiddenItems.length >= 3 }">
                     @for (hiddenItem of hiddenItems; track hiddenItem) {
                         <li class="dropdown-li">

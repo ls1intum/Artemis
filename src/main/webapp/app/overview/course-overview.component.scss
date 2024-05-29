@@ -1,5 +1,6 @@
 $menu-width-closed: 64px;
 $menu-width-open: 220px;
+$breadcrumb-height: 32px; // needed to make the exam fullscreen
 
 .sidebar-container {
     width: $menu-width-open;
@@ -26,8 +27,13 @@ $menu-width-open: 220px;
 
 .mat-drawer-container {
     height: calc(100vh - var(--sidebar-footer-height-prod));
+
     &.sidenav-height-dev {
         height: calc(100vh - var(--sidebar-footer-height-dev));
+    }
+
+    &.exam-height {
+        height: calc(100vh - var(--sidebar-footer-height-dev) + $breadcrumb-height);
     }
 
     @media (max-width: 768px) {
@@ -43,6 +49,10 @@ $menu-width-open: 220px;
         &.sidenav-height-dev {
             height: calc(100vh - var(--sidebar-footer-height-dev));
         }
+        &.exam-height {
+            height: calc(100vh - var(--sidebar-footer-height-dev) + $breadcrumb-height);
+        }
+
         @media (max-width: 768px) {
             height: calc(100vh - var(--sidebar-footer-height-prod)) !important;
         }
@@ -62,6 +72,10 @@ $menu-width-open: 220px;
 
         &.sidenav-height-dev {
             height: calc(100vh - var(--sidebar-footer-height-dev));
+        }
+
+        &.exam-height {
+            height: calc(100vh - var(--sidebar-footer-height-dev) + $breadcrumb-height);
         }
 
         @media (max-width: 768px) {
@@ -85,7 +99,6 @@ $menu-width-open: 220px;
             width: 100vw;
             margin-left: 0px !important;
             overflow: auto;
-            //height: 100vh;
         }
     }
 
