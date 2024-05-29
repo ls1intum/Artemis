@@ -676,7 +676,7 @@ public class CompetencyResource {
     }
 
     /**
-     * GET courses/:courseId/competencies/:competencyId/jol : Gets the judgement of learning for a competency
+     * GET courses/:courseId/competencies/:competencyId/jol : Gets the latest judgement of learning for a competency
      *
      * @param courseId     the id of the course for which the competency belongs
      * @param competencyId the id of the competency for which to set the judgement of learning
@@ -695,7 +695,7 @@ public class CompetencyResource {
     }
 
     /**
-     * GET courses/:courseId/competencies/jol : Gets the judgement of learning for all competencies of a course
+     * GET courses/:courseId/competencies/jol : Gets the latest judgement of learning for all competencies of a course
      *
      * @param courseId the id of the course for which the competency belongs
      * @return the ResponseEntity with status 200 (OK) and body the judgement of learning values for all competencies of the course as a map from competency id to jol value

@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.competency;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.jupiter.api.AfterEach;
@@ -69,7 +70,7 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         public void shouldReturnBadRequestForInvalidValue() throws Exception {
-            sendRequest(competency[0].getId(), (short) 1337, HttpStatus.BAD_REQUEST);
+            sendRequest(competency[0].getId(), (short) 123, HttpStatus.BAD_REQUEST);
         }
 
         @Test
@@ -97,7 +98,7 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         public void shouldUpdateJOL() throws Exception {
-            competencyUtilService.createJOL(competency[0], student, (short) 1337, ZonedDateTime.now().minusDays(1));
+            competencyUtilService.createJOL(competency[0], student, (short) 123, ZonedDateTime.now().minusDays(1));
             short jolValue = 3;
             sendRequest(competency[0].getId(), jolValue, HttpStatus.OK);
             final var jol = competencyJOLRepository.findLatestByCompetencyIdAndUserId(competency[0].getId(), student.getId());
@@ -139,7 +140,7 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         public void shouldReturnValue() throws Exception {
-            short jolValue = 1337;
+            short jolValue = 123;
             competencyUtilService.createJOL(competency[0], student, jolValue, ZonedDateTime.now());
             final var jol = sendRequest(competency[0].getId(), HttpStatus.OK);
             assertThat(jol).isEqualTo(jolValue);
@@ -153,8 +154,21 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
             return "/api/courses/" + courseId + "/competencies/jol";
         }
 
-        private Map<?, ?> sendRequest(HttpStatus status) throws Exception {
-            return request.get(apiURL(), status, Map.class);
+        @SuppressWarnings("unchecked") // Ok because of generic request response type
+        private Map<Long, Short> sendRequest(HttpStatus status) throws Exception {
+            final var response = request.get(apiURL(), status, Map.class);
+            if (response == null) {
+                return null;
+            }
+            // Java interprets the returned map as a Map<String, Integer> instead of Map<Long, Integer> so we use the following workaround
+            final var jolMap = new HashMap<Long, Short>();
+
+            response.forEach((key, value) -> {
+                if (key instanceof String skey && value instanceof Integer ival) {
+                    jolMap.put(Long.parseLong(skey), ival.shortValue());
+                }
+            });
+            return jolMap;
         }
 
         @Test
@@ -166,14 +180,13 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         public void shouldReturnValues() throws Exception {
-            final var jolValues = new Short[] { 1337, 8, null };
+            final var jolValues = new Short[] { 123, 8 };
             competencyUtilService.createJOL(competency[0], student, jolValues[0], ZonedDateTime.now());
             competencyUtilService.createJOL(competency[1], student, jolValues[1], ZonedDateTime.now());
-            final var jol = sendRequest(HttpStatus.OK);
-            assertThat(jol).isNotNull();
-            // Java interprets the returned map as a Map<String, Integer> instead of Map<Long, Integer> so we use the following workaround
-            final var expectedMap = Map.of(competency[0].getId().toString(), jolValues[0], competency[1].getId().toString(), jolValues[1]);
-            assertThat(jol).isEqualTo(expectedMap);
+            final var jolMap = sendRequest(HttpStatus.OK);
+            assertThat(jolMap).isNotNull();
+            final var expectedMap = Map.of(competency[0].getId(), jolValues[0], competency[1].getId(), jolValues[1]);
+            assertThat(jolMap).isEqualTo(expectedMap);
         }
     }
 }
