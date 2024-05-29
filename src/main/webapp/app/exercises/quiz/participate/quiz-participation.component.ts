@@ -83,7 +83,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     disconnected = false;
     unsavedChanges = false;
 
-    sendWebsocket?: (submission: QuizSubmission) => void;
     showingResult = false;
     userScore: number;
 
@@ -110,7 +109,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     /**
      * Websocket channels
      */
-    submissionChannel: string;
     participationChannel: string;
     quizExerciseChannel: string;
     quizBatchChannel: string;
@@ -183,9 +181,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             clearTimeout(timeout);
         });
 
-        if (this.submissionChannel) {
-            this.jhiWebsocketService.unsubscribe('/user' + this.submissionChannel);
-        }
         if (this.participationChannel) {
             this.jhiWebsocketService.unsubscribe(this.participationChannel);
         }
@@ -209,7 +204,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.websocketSubscription = this.jhiWebsocketService.connectionState.subscribe((status) => {
             if (status.connected && this.disconnected) {
                 // if the disconnect happened during the live quiz and there are unsaved changes, we trigger a selection changed event to save the submission on the server
-                if (this.unsavedChanges && this.sendWebsocket) {
+                if (this.unsavedChanges) {
+                    // TODO: A reconnect should trigger an autosave.
                     this.onSelectionChanged();
                 }
                 // if the quiz was not yet started, we might have missed the quiz start => refresh
@@ -304,28 +300,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * subscribe to any outstanding websocket channels
      */
     subscribeToWebsocketChannels() {
-        if (!this.submissionChannel) {
-            this.submissionChannel = '/topic/quizExercise/' + this.quizId + '/submission';
-
-            // submission channel => react to new submissions
-            this.jhiWebsocketService.subscribe('/user' + this.submissionChannel);
-            this.jhiWebsocketService.receive('/user' + this.submissionChannel).subscribe({
-                next: (payload) => {
-                    if (payload.error) {
-                        this.onSaveError(payload.error);
-                    }
-                },
-                error: (error) => {
-                    this.onSaveError(error);
-                },
-            });
-
-            // save answers (submissions) through websocket
-            this.sendWebsocket = (submission: QuizSubmission) => {
-                this.jhiWebsocketService.send(this.submissionChannel, submission);
-            };
-        }
-
         if (!this.participationChannel) {
             this.participationChannel = '/user/topic/exercise/' + this.quizId + '/participation';
             // TODO: subscribe for new results instead if this is what we are actually interested in
@@ -773,16 +747,15 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      */
     onSelectionChanged() {
         this.applySelection();
-        if (this.sendWebsocket) {
-            if (!this.disconnected) {
-                // this.isSaving = true;
-                this.submission.submissionDate = this.serverDateService.now();
-                this.sendWebsocket(this.submission);
-                this.unsavedChanges = false;
-                this.updateSubmissionTime();
-            } else {
-                this.unsavedChanges = true;
-            }
+
+        if (!this.disconnected) {
+            // this.isSaving = true;
+            this.submission.submissionDate = this.serverDateService.now();
+            // TODO: Send submission to server, not saving. (this.sendWebsocket(this.submission);)
+            this.unsavedChanges = false;
+            this.updateSubmissionTime();
+        } else {
+            this.unsavedChanges = true;
         }
     }
 
