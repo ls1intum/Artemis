@@ -303,7 +303,14 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     setupAutoSave(): void {
         window.clearInterval(this.autoSaveInterval);
         this.autoSaveInterval = window.setInterval(() => {
-            // TODO: Exclude certain conditions where autosave should not be triggered
+            if (this.waitingForQuizStart) {
+                // The quiz has not started. No need to autosave yet.
+                return;
+            } else if (this.remainingTimeSeconds < 0 || this.submission.submitted) {
+                // The quiz is over or the submission has been submitted. We can stop trying to autosave.
+                window.clearInterval(this.autoSaveInterval);
+                return;
+            }
             this.autoSaveTimer++;
             if (this.autoSaveTimer >= AUTOSAVE_EXERCISE_INTERVAL) {
                 this.onAutoSave();
