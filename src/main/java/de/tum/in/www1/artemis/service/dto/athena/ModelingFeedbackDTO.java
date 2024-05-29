@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ModelingFeedbackDTO(long id, long exerciseId, long submissionId, String title, String description, double credits, Long structuredGradingInstructionId,
-        List<String> elementIds) implements Feedback {
+        List<String> elementIds) implements FeedbackBaseDTO {
 
     /**
      * Creates a ModelingFeedbackDTO from a Feedback object

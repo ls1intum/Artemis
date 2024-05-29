@@ -43,6 +43,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamSession;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.exam.event.ExamLiveEvent;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExamLiveEventRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
@@ -571,8 +572,8 @@ public class StudentExamResource {
 
         studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, currentUser, studentExam.isTestRun(), false);
 
-        List<ExamLiveEventBaseDTO> examLiveEvents = examLiveEventRepository.findAllByStudentExamIdOrGlobalByExamId(examId, studentExam.getId()).stream()
-                .map(de.tum.in.www1.artemis.domain.exam.event.ExamLiveEvent::asDTO).toList();
+        List<ExamLiveEventBaseDTO> examLiveEvents = examLiveEventRepository.findAllByStudentExamIdOrGlobalByExamId(examId, studentExam.getId()).stream().map(ExamLiveEvent::asDTO)
+                .toList();
 
         log.debug("getExamLiveEvents done in {}ms for user {}", System.currentTimeMillis() - start, currentUser.getLogin());
         return ResponseEntity.ok(examLiveEvents);

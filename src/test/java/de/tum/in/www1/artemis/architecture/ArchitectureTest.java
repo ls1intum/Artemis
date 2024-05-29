@@ -225,11 +225,6 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
-    void foo() {
-
-    }
-
-    @Test
     void testGsonExclusion() {
         // TODO: Replace all uses of gson with Jackson and check that gson is not used any more
         var gsonUsageRule = noClasses().should().accessClassesThat().resideInAnyPackage("com.google.gson..").because("we use an alternative JSON parsing library.");

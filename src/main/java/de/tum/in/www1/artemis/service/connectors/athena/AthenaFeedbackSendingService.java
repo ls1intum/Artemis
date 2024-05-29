@@ -12,9 +12,12 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.exception.NetworkingException;
 import de.tum.in.www1.artemis.service.dto.athena.ExerciseBaseDTO;
-import de.tum.in.www1.artemis.service.dto.athena.Feedback;
+import de.tum.in.www1.artemis.service.dto.athena.FeedbackBaseDTO;
 import de.tum.in.www1.artemis.service.dto.athena.SubmissionBaseDTO;
 
 /**
@@ -44,7 +47,7 @@ public class AthenaFeedbackSendingService {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private record RequestDTO(ExerciseBaseDTO exercise, SubmissionBaseDTO submission, List<Feedback> feedbacks) {
+    private record RequestDTO(ExerciseBaseDTO exercise, SubmissionBaseDTO submission, List<FeedbackBaseDTO> feedbacks) {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -60,8 +63,7 @@ public class AthenaFeedbackSendingService {
      * @param feedbacks  the feedback given by the tutor
      */
     @Async
-    public void sendFeedback(de.tum.in.www1.artemis.domain.Exercise exercise, de.tum.in.www1.artemis.domain.Submission submission,
-            List<de.tum.in.www1.artemis.domain.Feedback> feedbacks) {
+    public void sendFeedback(Exercise exercise, Submission submission, List<Feedback> feedbacks) {
         sendFeedback(exercise, submission, feedbacks, 1);
     }
 
@@ -75,8 +77,7 @@ public class AthenaFeedbackSendingService {
      * @param maxRetries number of retries before the request will be canceled
      */
     @Async
-    public void sendFeedback(de.tum.in.www1.artemis.domain.Exercise exercise, de.tum.in.www1.artemis.domain.Submission submission,
-            List<de.tum.in.www1.artemis.domain.Feedback> feedbacks, int maxRetries) {
+    public void sendFeedback(Exercise exercise, Submission submission, List<Feedback> feedbacks, int maxRetries) {
         if (!exercise.areFeedbackSuggestionsEnabled()) {
             throw new IllegalArgumentException("The exercise does not have feedback suggestions enabled.");
         }
@@ -93,8 +94,7 @@ public class AthenaFeedbackSendingService {
         try {
             // Only send manual feedback from tutors to Athena
             final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
-                    feedbacks.stream().filter(de.tum.in.www1.artemis.domain.Feedback::isManualFeedback)
-                            .map((feedback) -> athenaDTOConverterService.ofFeedback(exercise, submission.getId(), feedback)).toList());
+                    feedbacks.stream().filter(Feedback::isManualFeedback).map((feedback) -> athenaDTOConverterService.ofFeedback(exercise, submission.getId(), feedback)).toList());
             ResponseDTO response = connector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedbacks", request, maxRetries);
             log.info("Athena responded to feedback: {}", response.data);
         }

@@ -94,7 +94,7 @@ public class AssessmentService {
      */
     public Result updateAssessmentAfterComplaint(Result originalResult, Exercise exercise, AssessmentUpdateBaseDTO assessmentUpdate) {
         if (assessmentUpdate.complaintResponse() == null) {
-            throw new BadRequestAlertException("Feedbacks and complaint response must not be null.", "AssessmentUpdate", "notnull");
+            throw new BadRequestAlertException("Complaint response must not be null.", "AssessmentUpdate", "notnull");
         }
         // Save the complaint response
         ComplaintResponse complaintResponse = complaintResponseService.resolveComplaint(assessmentUpdate.complaintResponse());

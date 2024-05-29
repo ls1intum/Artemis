@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ProgrammingFeedbackDTO(long id, long exerciseId, long submissionId, String title, String description, double credits, Long structuredGradingInstructionId,
-        String filePath, Integer lineStart, Integer lineEnd) implements Feedback {
+        String filePath, Integer lineStart, Integer lineEnd) implements FeedbackBaseDTO {
 
     /**
      * Creates a ProgrammingFeedbackDTO from a Feedback object

@@ -11,7 +11,7 @@ import de.tum.in.www1.artemis.domain.TextBlock;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record TextFeedbackDTO(long id, long exerciseId, long submissionId, String title, String description, double credits, Long structuredGradingInstructionId,
-        Integer indexStart, Integer indexEnd) implements Feedback {
+        Integer indexStart, Integer indexEnd) implements FeedbackBaseDTO {
 
     /**
      * Creates a TextFeedbackDTO from a Feedback object
