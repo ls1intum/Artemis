@@ -567,6 +567,12 @@ public class ParticipationService {
             Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserLogin(exercise.getId(), username);
             return optionalTeam.flatMap(team -> studentParticipationRepository.findOneByExerciseIdAndTeamId(exercise.getId(), team.getId()));
         }
+
+        if (exercise.isExamExercise() && exercise.getExamViaExerciseGroupOrCourseMember().isTestExam()) {
+            // TODO Michal Kawka without submission
+            return studentParticipationRepository.findLatestWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
+        }
+
         return studentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), username);
     }
 
