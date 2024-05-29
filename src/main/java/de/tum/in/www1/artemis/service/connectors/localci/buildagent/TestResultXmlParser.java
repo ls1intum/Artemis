@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.localci.buildagent;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
@@ -66,9 +67,7 @@ class TestResultXmlParser {
     record TestSuite(@JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "testcase") List<TestCase> testCases) {
 
         TestSuite {
-            if (testCases == null) {
-                testCases = Collections.emptyList();
-            }
+            testCases = Objects.requireNonNullElse(testCases, Collections.emptyList());
         }
     }
 
