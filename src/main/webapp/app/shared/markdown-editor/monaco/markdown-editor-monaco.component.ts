@@ -108,6 +108,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             this.adjustEditorDimensions();
         });
         this.resizeObserver.observe(this.wrapper.nativeElement);
+        // Fixes a bug where the footer would disappear after switching to the preview tab
+        if (this.fileUploadFooter?.nativeElement) {
+            this.resizeObserver.observe(this.fileUploadFooter.nativeElement);
+        }
         [this.defaultActions, this.headerActions.actions, this.domainActions].flat().forEach((action) => {
             if (action.id === MonacoFullscreenAction.ID) {
                 (<MonacoFullscreenAction>action).element = this.wrapper.nativeElement;
@@ -128,6 +132,11 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     getEditorHeight(targetHeight?: number): number {
         const wrapperHeight = this.wrapper.nativeElement.clientHeight;
         const fileUploadFooterHeight = this.fileUploadFooter?.nativeElement?.clientHeight ?? 0;
+        if (!this.fileUploadFooter?.nativeElement) {
+            console.error('no file upload footer: ' + this.fileUploadFooter + ' ' + this.fileUploadFooter?.nativeElement);
+        } else {
+            console.error('file upload footer: ' + this.fileUploadFooter.nativeElement.clientHeight);
+        }
         const actionPaletteHeight = this.actionPalette?.nativeElement?.clientHeight ?? 0;
         console.log('Height: ' + wrapperHeight + '( target: ' + targetHeight + ') - ' + fileUploadFooterHeight + ' - ' + actionPaletteHeight);
         return (targetHeight ?? wrapperHeight) - fileUploadFooterHeight - actionPaletteHeight;
