@@ -26,6 +26,7 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
     prerequisites: Competency[] = [];
     parentParamSubscription: Subscription;
     judgementOfLearningMap: { [key: number]: CompetencyJol } = {};
+    promptForJolRatingMap: { [key: number]: boolean } = {};
 
     isCollapsed = true;
     faAngleDown = faAngleDown;
@@ -106,9 +107,13 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
             this.competencyService.getJoLAllForCourse(this.courseId),
         ]).subscribe({
             next: ([competencies, prerequisites, judgementOfLearningMap]) => {
+                console.log(competencies);
                 this.competencies = competencies.body!;
                 this.prerequisites = prerequisites.body!;
                 this.judgementOfLearningMap = judgementOfLearningMap.body!;
+                this.promptForJolRatingMap = Object.fromEntries(
+                    this.competencies.map((competency) => [competency.id, CompetencyJol.shouldPromptForJol(competency, competency.userProgress?.last(), this.competencies)]),
+                );
 
                 // Also update the course, so we do not need to fetch again next time
                 if (this.course) {
