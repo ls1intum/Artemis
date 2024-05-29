@@ -27,7 +27,6 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
 
     courseShortName?: string;
     checkoutDirectories?: CheckoutDirectoriesDto;
-    auxiliaryRepositoryCheckoutDirectories: string[] = [];
 
     ngOnInit() {
         this.updateCourseShortName();
