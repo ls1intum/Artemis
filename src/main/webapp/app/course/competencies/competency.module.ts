@@ -18,7 +18,7 @@ import { CompetencyRecommendationDetailComponent } from 'app/course/competencies
 import { CourseDescriptionFormComponent } from 'app/course/competencies/generate-competencies/course-description-form.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { IrisModule } from 'app/iris/iris.module';
-import { CompetencyImportCourseComponent } from 'app/course/competencies/competency-management/competency-import-course.component';
+import { ImportAllCompetenciesComponent } from 'app/course/competencies/competency-management/import-all-competencies.component';
 import { CompetencySearchComponent } from 'app/course/competencies/import-competencies/competency-search.component';
 import { ImportCompetenciesTableComponent } from 'app/course/competencies/import-competencies/import-competencies-table.component';
 import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select/taxonomy-select.component';
@@ -54,7 +54,7 @@ import { ImportPrerequisitesComponent } from 'app/course/competencies/import-com
         CompetencyManagementComponent,
         CompetencyCardComponent,
         CompetenciesPopoverComponent,
-        CompetencyImportCourseComponent,
+        ImportAllCompetenciesComponent,
         ImportCompetenciesTableComponent,
         TaxonomySelectComponent,
         CompetencyRelationGraphComponent,

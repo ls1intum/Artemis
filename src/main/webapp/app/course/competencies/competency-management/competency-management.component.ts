@@ -18,7 +18,7 @@ import { Subject, Subscription, forkJoin } from 'rxjs';
 import { faFileImport, faPencilAlt, faPlus, faRobot, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { CompetencyImportCourseComponent, ImportAllFromCourseResult } from 'app/course/competencies/competency-management/competency-import-course.component';
+import { ImportAllCompetenciesComponent, ImportAllFromCourseResult } from 'app/course/competencies/competency-management/import-all-competencies.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { PROFILE_IRIS } from 'app/app.constants';
@@ -172,7 +172,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
      * Opens a modal for selecting a course to import all competencies from.
      */
     openImportAllModal() {
-        const modalRef = this.modalService.open(CompetencyImportCourseComponent, { size: 'lg', backdrop: 'static' });
+        const modalRef = this.modalService.open(ImportAllCompetenciesComponent, { size: 'lg', backdrop: 'static' });
         //unary operator is necessary as otherwise courseId is seen as a string and will not match.
         modalRef.componentInstance.disabledIds = [+this.courseId];
         modalRef.result.then((result: ImportAllFromCourseResult) => {
