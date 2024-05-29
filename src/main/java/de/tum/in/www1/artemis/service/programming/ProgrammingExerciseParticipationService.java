@@ -175,8 +175,7 @@ public class ProgrammingExerciseParticipationService {
                 participationOptional = studentParticipationRepository.findLatestWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, isTestRun);
             }
             else {
-                // TODO Michal Kawka without submissions
-                participationOptional = studentParticipationRepository.findLatestWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, isTestRun);
+                participationOptional = studentParticipationRepository.findLatestByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, isTestRun);
             }
         }
         else {

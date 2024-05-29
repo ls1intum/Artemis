@@ -569,8 +569,7 @@ public class ParticipationService {
         }
 
         if (exercise.isExamExercise() && exercise.getExamViaExerciseGroupOrCourseMember().isTestExam()) {
-            // TODO Michal Kawka without submission
-            return studentParticipationRepository.findLatestWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
+            return studentParticipationRepository.findLatestByExerciseIdAndStudentLogin(exercise.getId(), username);
         }
 
         return studentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), username);

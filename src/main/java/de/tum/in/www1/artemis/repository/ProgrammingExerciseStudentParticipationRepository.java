@@ -91,6 +91,16 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
 
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLoginAndTestRun(long exerciseId, String username, boolean testRun);
 
+    @Query("""
+            SELECT participation
+            FROM ProgrammingExerciseStudentParticipation participation
+            WHERE participation.exercise.id = :exerciseId
+                AND participation.student.login = :username
+                AND participation.testRun = :testRun
+                AND participation.id = (SELECT MAX(p2.id) FROM StudentParticipation p2 WHERE p2.exercise.id = :exerciseId AND p2.student.login = :username)
+            """)
+    Optional<ProgrammingExerciseStudentParticipation> findLatestByExerciseIdAndStudentLoginAndTestRun(long exerciseId, String username, boolean testRun);
+
     @EntityGraph(type = LOAD, attributePaths = { "team.students" })
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndTeamId(long exerciseId, long teamId);
 

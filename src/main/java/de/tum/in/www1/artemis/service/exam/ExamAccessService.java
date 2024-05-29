@@ -86,9 +86,12 @@ public class ExamAccessService {
                 // For the start of the exam, the exercises are not needed. They are later loaded via StudentExamResource
                 studentExam.setExercises(null);
             }
-            // TODO Michal Kawka I think we should throw an error if the list has more than one element, since it's a violation
-            else {
+            else if (unfinishedStudentExams.size() == 1) {
                 studentExam = unfinishedStudentExams.getFirst();
+            }
+            else {
+                throw new IllegalStateException(
+                        "User " + currentUser.getId() + " has " + unfinishedStudentExams.size() + " unfinished test exams for exam " + examId + " in course " + courseId);
             }
             // Check that the current user is registered for the test exam. Otherwise, the student can self-register
             examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course, exam.getId(), currentUser);
