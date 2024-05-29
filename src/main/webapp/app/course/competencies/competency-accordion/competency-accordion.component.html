@@ -45,11 +45,11 @@
             </div>
             <div class="competency-rings-container py-2">
                 <jhi-competency-rings
-                    [class.muted-competency-rings]="this.jolRating === undefined"
+                    [class.muted-competency-rings]="promptForRating && this.jolRating === undefined"
                     [confidence]="this.confidence"
                     [progress]="this.progress"
                     [mastery]="this.mastery"
-                    [hideProgress]="this.jolRating === undefined"
+                    [hideProgress]="promptForRating && this.jolRating === undefined"
                     [playAnimation]="false"
                 />
             </div>
@@ -75,15 +75,17 @@
                 <jhi-course-exercise-row [course]="course" [exercise]="exercise" />
             }
         }
-        <div [class.pt-3]="course && (nextExercises.length > 0 || nextLectureUnits.length > 0)">
-            <jhi-judgement-of-learning-rating
-                [competencyId]="competency.id"
-                [courseId]="course?.id"
-                [mastery]="mastery"
-                [rating]="jolRating"
-                (ratingChange)="onRatingChange($event)"
-            />
-        </div>
+        @if (promptForRating) {
+            <div [class.pt-3]="course && (nextExercises.length > 0 || nextLectureUnits.length > 0)">
+                <jhi-judgement-of-learning-rating
+                    [competencyId]="competency.id"
+                    [courseId]="course?.id"
+                    [mastery]="mastery"
+                    [rating]="jolRating"
+                    (ratingChange)="onRatingChange($event)"
+                />
+            </div>
+        }
         <button
             (click)="navigateToCompetencyDetailPage($event)"
             class="btn btn-primary w-100 my-2"
