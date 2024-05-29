@@ -22,6 +22,14 @@ public interface CourseCompetencyRepository extends JpaRepository<CourseCompeten
             """)
     List<CourseCompetency> findAllByIdAndUserIsAtLeastEditorInCourse(@Param("courseCompetencyIds") List<Long> courseCompetencyIds, @Param("groups") Set<String> groups);
 
+    /**
+     * Finds a list of competencies by id and verifies that the user is at least editor in the respective courses.
+     * If any of the competencies are not accessible, throws a {@link EntityNotFoundException}
+     *
+     * @param courseCompetencyIds the ids of the course competencies to find
+     * @param userGroups          the userGroups of the user to check
+     * @return the list of course competencies
+     */
     default List<CourseCompetency> findAllByIdAndUserIsAtLeastEditorInCourseElseThrow(List<Long> courseCompetencyIds, Set<String> userGroups) {
         var courseCompetencies = findAllByIdAndUserIsAtLeastEditorInCourse(courseCompetencyIds, userGroups);
         if (courseCompetencies.size() != courseCompetencyIds.size()) {
@@ -30,6 +38,12 @@ public interface CourseCompetencyRepository extends JpaRepository<CourseCompeten
         return courseCompetencies;
     }
 
+    /**
+     * Finds a list of course competencies by id. If any of them do not exist throws a {@link EntityNotFoundException}
+     *
+     * @param courseCompetencyIds the ids of the course competencies to find
+     * @return the list of course competencies
+     */
     default List<CourseCompetency> findAllByIdElseThrow(List<Long> courseCompetencyIds) {
         var courseCompetencies = findAllById(courseCompetencyIds);
         if (courseCompetencies.size() != courseCompetencyIds.size()) {

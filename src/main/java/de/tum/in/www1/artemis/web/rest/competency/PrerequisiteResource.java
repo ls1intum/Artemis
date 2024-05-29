@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.competency.PrerequisiteService;
-import de.tum.in.www1.artemis.web.rest.CompetencyResource;
 import de.tum.in.www1.artemis.web.rest.dto.competency.PrerequisiteRequestDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.PrerequisiteResponseDTO;
 
@@ -39,7 +38,7 @@ import de.tum.in.www1.artemis.web.rest.dto.competency.PrerequisiteResponseDTO;
 @RequestMapping("api/")
 public class PrerequisiteResource {
 
-    private static final Logger log = LoggerFactory.getLogger(CompetencyResource.class);
+    private static final Logger log = LoggerFactory.getLogger(PrerequisiteResource.class);
 
     private final PrerequisiteService prerequisiteService;
 

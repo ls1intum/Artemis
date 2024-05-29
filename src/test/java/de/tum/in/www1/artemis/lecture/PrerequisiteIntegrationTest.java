@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.competency.PrerequisiteRequestDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.PrerequisiteResponseDTO;
 
-public class PrerequisiteIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class PrerequisiteIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "prerequisiteintegrationtest";
 

@@ -18,31 +18,15 @@ public interface PrerequisiteRepository extends JpaRepository<Prerequisite, Long
 
     Optional<Prerequisite> findByIdAndCourseId(long prerequisiteId, long courseId);
 
-    Long countByCourseId(long courseId);
-
-    boolean existsByIdAndCourseId(long prerequisiteId, long courseId);
-
     /**
+     * Finds a prerequisite with the given id in the course of the given id. If it does not exist throws a {@link EntityNotFoundException}
      *
-     * @param prerequisiteId
-     * @param courseId
-     * @return
-     * @throws EntityNotFoundException
+     * @param prerequisiteId the id of the prerequisite to find
+     * @param courseId       the id of the course
+     * @return the prerequisite
      */
-    default Prerequisite findByIdAndCourseIdElseThrow(long prerequisiteId, long courseId) throws EntityNotFoundException {
+    default Prerequisite findByIdAndCourseIdElseThrow(long prerequisiteId, long courseId) {
         return findByIdAndCourseId(prerequisiteId, courseId).orElseThrow(() -> new EntityNotFoundException("Prerequisite", prerequisiteId));
-    }
-
-    /**
-     *
-     * @param prerequisiteId
-     * @param courseId
-     * @throws EntityNotFoundException
-     */
-    default void existsByIdAndCourseIdElseThrow(long prerequisiteId, long courseId) throws EntityNotFoundException {
-        if (!existsByIdAndCourseId(prerequisiteId, courseId)) {
-            throw new EntityNotFoundException("Prerequisite", prerequisiteId);
-        }
     }
 
     long countByCourse(Course course);
