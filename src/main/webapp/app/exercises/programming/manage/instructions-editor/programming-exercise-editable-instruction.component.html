@@ -23,12 +23,9 @@
     }
     @if (exercise) {
         <jhi-markdown-editor-monaco
-            [style.flex-grow]="1"
-            [style.flex-shrink]="1"
-            [style.overflow]="'auto'"
+            class="overflow-auto flex-grow-1"
             [domainActions]="domainActions"
-            [style.height.px]="editorHeight"
-            [minHeightEditor]="500"
+            [initialEditorHeight]="initialEditorHeight"
             [markdown]="exercise.problemStatement"
             (onPreviewSelect)="generateHtml()"
             (markdownChange)="updateProblemStatement($event)"

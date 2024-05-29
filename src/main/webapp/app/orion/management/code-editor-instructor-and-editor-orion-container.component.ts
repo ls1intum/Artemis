@@ -13,6 +13,7 @@ import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.
 import { OrionState } from 'app/shared/orion/orion';
 import { faCircleNotch, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 
 @Component({
     selector: 'jhi-code-editor-instructor-orion',
@@ -76,4 +77,6 @@ export class CodeEditorInstructorAndEditorOrionContainerComponent extends CodeEd
         this.orionConnectorService.isBuilding(true);
         this.orionConnectorService.buildAndTestLocally();
     }
+
+    protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 }

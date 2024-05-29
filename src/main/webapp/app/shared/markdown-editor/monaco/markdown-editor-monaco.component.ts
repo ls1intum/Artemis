@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
+import { AfterContentInit, AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { NgbNavChangeEvent } from '@ng-bootstrap/ng-bootstrap';
@@ -28,7 +28,7 @@ import { MonacoFullscreenAction } from 'app/shared/monaco-editor/model/actions/m
     templateUrl: './markdown-editor-monaco.component.html',
     styleUrls: ['./markdown-editor-monaco.component.scss', '../markdown-editor.component.scss'],
 })
-export class MarkdownEditorMonacoComponent implements AfterViewInit, OnDestroy {
+export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterViewInit, OnDestroy {
     @ViewChild(MonacoEditorComponent, { static: false }) monacoEditor: MonacoEditorComponent;
     @ViewChild('wrapper', { static: true }) wrapper: ElementRef<HTMLDivElement>;
     @ViewChild('fileUploadFooter', { static: false }) fileUploadFooter?: ElementRef<HTMLDivElement>;
@@ -43,13 +43,13 @@ export class MarkdownEditorMonacoComponent implements AfterViewInit, OnDestroy {
     _markdown?: string;
 
     @Input()
-    minHeightEditor: number = MarkdownEditorHeight.SMALL.valueOf();
-
-    @Input()
     enableFileUpload = true;
 
     @Input()
-    growToFit = false;
+    enableResize = true;
+
+    @Input()
+    initialEditorHeight?: MarkdownEditorHeight;
 
     @Input()
     defaultActions: MonacoEditorAction[] = [
@@ -87,6 +87,7 @@ export class MarkdownEditorMonacoComponent implements AfterViewInit, OnDestroy {
     uniqueMarkdownEditorId: string;
     faQuestionCircle = faQuestionCircle;
     resizeObserver?: ResizeObserver;
+    targetWrapperHeight?: number;
 
     constructor(
         private alertService: AlertService,
@@ -95,7 +96,13 @@ export class MarkdownEditorMonacoComponent implements AfterViewInit, OnDestroy {
         this.uniqueMarkdownEditorId = 'markdown-editor-' + uuid();
     }
 
+    ngAfterContentInit(): void {
+        // Setting the desired height is done here to avoid an ExpressionChangedAfterItHasBeenCheckedError.
+        this.targetWrapperHeight = this.initialEditorHeight?.valueOf();
+    }
+
     ngAfterViewInit(): void {
+        this.adjustEditorDimensions();
         this.monacoEditor.changeModel('markdown-content.custom-md', this._markdown, 'custom-md');
         this.resizeObserver = new ResizeObserver(() => {
             this.adjustEditorDimensions();
@@ -118,20 +125,20 @@ export class MarkdownEditorMonacoComponent implements AfterViewInit, OnDestroy {
         this.markdownChange.emit(text);
     }
 
-    getEditorHeight(): number {
-        const wrapperHeight = this.wrapper?.nativeElement?.clientHeight ?? 400;
+    getEditorHeight(targetHeight?: number): number {
+        const wrapperHeight = this.wrapper.nativeElement.clientHeight;
         const fileUploadFooterHeight = this.fileUploadFooter?.nativeElement?.clientHeight ?? 0;
         const actionPaletteHeight = this.actionPalette?.nativeElement?.clientHeight ?? 0;
-        console.log('Height: ' + wrapperHeight + ' - ' + fileUploadFooterHeight + ' - ' + actionPaletteHeight);
-        return wrapperHeight - fileUploadFooterHeight - actionPaletteHeight;
+        console.log('Height: ' + wrapperHeight + '( target: ' + targetHeight + ') - ' + fileUploadFooterHeight + ' - ' + actionPaletteHeight);
+        return (targetHeight ?? wrapperHeight) - fileUploadFooterHeight - actionPaletteHeight;
     }
 
     getEditorWidth(): number {
         return this.wrapper?.nativeElement?.clientWidth ?? 0;
     }
 
-    adjustEditorDimensions(): void {
-        this.monacoEditor.layoutWithFixedSize(this.getEditorWidth(), this.getEditorHeight());
+    adjustEditorDimensions(t?: number): void {
+        this.monacoEditor.layoutWithFixedSize(this.getEditorWidth(), this.getEditorHeight(t));
     }
 
     onNavChanged(event: NgbNavChangeEvent) {

@@ -10,7 +10,7 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { hasExerciseChanged } from 'app/exercises/shared/exercise/exercise.utils';
-import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
+import { MarkdownEditorComponent, MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
@@ -64,6 +64,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     // If the programming exercise is being created, some features have to be disabled (saving the problemStatement & querying test cases).
     @Input() editMode = true;
     @Input() enableResize = true;
+    @Input() initialEditorHeight?: MarkdownEditorHeight;
     @Input() showSaveButton = false;
     @Input() templateParticipation: Participation;
     @Input() forceRender: Observable<void>;
@@ -289,4 +290,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         this.statusFooter.nativeElement.style.height = footerHeight + 'px'; */
         this.markdownEditorMonaco?.adjustEditorDimensions();
     }
+
+    protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 }
