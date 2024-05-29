@@ -13,7 +13,6 @@ import { MonacoUrlAction } from 'app/shared/monaco-editor/model/actions/monaco-u
 import { MonacoAttachmentAction } from 'app/shared/monaco-editor/model/actions/monaco-attachment.action';
 import { MonacoUnorderedListAction } from 'app/shared/monaco-editor/model/actions/monaco-unordered-list.action';
 import { MonacoOrderedListAction } from 'app/shared/monaco-editor/model/actions/monaco-ordered-list.action';
-import { MultiOptionCommand } from 'app/shared/markdown-editor/commands/multiOptionCommand';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { v4 as uuid } from 'uuid';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
@@ -32,6 +31,8 @@ import { MonacoFullscreenAction } from 'app/shared/monaco-editor/model/actions/m
 export class MarkdownEditorMonacoComponent implements AfterViewInit, OnDestroy {
     @ViewChild(MonacoEditorComponent, { static: false }) monacoEditor: MonacoEditorComponent;
     @ViewChild('wrapper', { static: true }) wrapper: ElementRef<HTMLDivElement>;
+    @ViewChild('fileUploadFooter', { static: false }) fileUploadFooter?: ElementRef<HTMLDivElement>;
+    @ViewChild('actionPalette', { static: false }) actionPalette?: ElementRef<HTMLElement>;
 
     @Input()
     set markdown(value: string | undefined) {
@@ -50,7 +51,6 @@ export class MarkdownEditorMonacoComponent implements AfterViewInit, OnDestroy {
     @Input()
     growToFit = false;
 
-    // TODO: Register these actions with the editor!
     @Input()
     defaultActions: MonacoEditorAction[] = [
         new MonacoBoldAction('Bold', 'todo'),
@@ -97,12 +97,14 @@ export class MarkdownEditorMonacoComponent implements AfterViewInit, OnDestroy {
 
     ngAfterViewInit(): void {
         this.monacoEditor.changeModel('markdown-content.custom-md', this._markdown, 'custom-md');
-        this.monacoEditor.layoutWithFixedSize(100, 400);
         this.resizeObserver = new ResizeObserver(() => {
-            this.monacoEditor.layout();
+            this.adjustEditorDimensions();
         });
         this.resizeObserver.observe(this.wrapper.nativeElement);
         [this.defaultActions, this.headerActions.actions, this.domainActions].flat().forEach((action) => {
+            if (action.id === MonacoFullscreenAction.ID) {
+                (<MonacoFullscreenAction>action).element = this.wrapper.nativeElement;
+            }
             this.monacoEditor.registerAction(action);
         });
     }
@@ -116,10 +118,26 @@ export class MarkdownEditorMonacoComponent implements AfterViewInit, OnDestroy {
         this.markdownChange.emit(text);
     }
 
+    getEditorHeight(): number {
+        const wrapperHeight = this.wrapper?.nativeElement?.clientHeight ?? 400;
+        const fileUploadFooterHeight = this.fileUploadFooter?.nativeElement?.clientHeight ?? 0;
+        const actionPaletteHeight = this.actionPalette?.nativeElement?.clientHeight ?? 0;
+        console.log('Height: ' + wrapperHeight + ' - ' + fileUploadFooterHeight + ' - ' + actionPaletteHeight);
+        return wrapperHeight - fileUploadFooterHeight - actionPaletteHeight;
+    }
+
+    getEditorWidth(): number {
+        return this.wrapper?.nativeElement?.clientWidth ?? 0;
+    }
+
+    adjustEditorDimensions(): void {
+        this.monacoEditor.layoutWithFixedSize(this.getEditorWidth(), this.getEditorHeight());
+    }
+
     onNavChanged(event: NgbNavChangeEvent) {
         this.inPreviewMode = event.nextId === 'editor_preview';
         if (!this.inPreviewMode) {
-            this.monacoEditor.layoutWithFixedSize(100, 400);
+            this.adjustEditorDimensions();
             this.monacoEditor.focus();
         } else {
             this.onPreviewSelect.emit();
@@ -169,6 +187,4 @@ export class MarkdownEditorMonacoComponent implements AfterViewInit, OnDestroy {
             );
         });
     }
-
-    protected readonly MultiOptionCommand = MultiOptionCommand;
 }

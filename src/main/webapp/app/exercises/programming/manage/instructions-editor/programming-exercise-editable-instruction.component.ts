@@ -283,10 +283,10 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         return annotations;
     };
 
-    resizeHeight(height: number) {
-        const footerHeight = this.statusFooter.nativeElement.getBoundingClientRect().height;
+    resizeHeight() {
+        /*const footerHeight = this.statusFooter.nativeElement.getBoundingClientRect().height;
         this.editorHeight = height - footerHeight - 42; // TODO: 42 is the height of the header, should be calculated dynamically
-        this.statusFooter.nativeElement.style.height = footerHeight + 'px';
-        this.markdownEditorMonaco?.monacoEditor.layoutWithFixedSize(0, this.editorHeight);
+        this.statusFooter.nativeElement.style.height = footerHeight + 'px'; */
+        this.markdownEditorMonaco?.adjustEditorDimensions();
     }
 }

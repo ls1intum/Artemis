@@ -55,6 +55,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     onResizeHeight(height: number) {
-        this.editableInstructions.resizeHeight(height);
+        console.log(height);
+        this.editableInstructions.resizeHeight();
     }
 }

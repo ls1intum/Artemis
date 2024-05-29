@@ -1,3 +1,28 @@
+// TODO: Unused?
 .markdown-editor-wrapper-fit {
     height: 100%;
+}
+
+.file-upload-footer-input {
+    // cannot be set to 'display: false' or similar
+    // input value would not be sent
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+    z-index: -1;
+}
+
+.file-upload-footer-label {
+    cursor: pointer;
+    width: 100%;
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0.15em 0.15em 0;
+
+    .upload-subtitle {
+        font-size: 12px;
+        color: var(--bs-secondary);
+    }
 }
