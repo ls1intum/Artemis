@@ -171,7 +171,7 @@ public class FileService implements DisposableBean {
      * @return the sanitized filename
      */
     public static String sanitizeFilename(String filename) {
-        return filename.replaceAll("[^a-zA-Z\\d.\\-]", "_").replaceAll("\\.+", ".");
+        return filename.replaceAll("[^a-zA-Z\\d.\\-_]", "_").replaceAll("\\.+", ".");
     }
 
     /**
@@ -298,7 +298,7 @@ public class FileService implements DisposableBean {
      */
     public Path copyExistingFileToTarget(Path oldFilePath, Path targetFolder) {
         if (oldFilePath != null && !pathContains(oldFilePath, Path.of(("files/temp")))) {
-            String filename = oldFilePath.getFileName().toString();
+            String filename = sanitizeFilename(oldFilePath.getFileName().toString());
             try {
                 Path target = targetFolder.resolve(generateFilename(generateTargetFilenameBase(targetFolder), filename, false));
                 FileUtils.copyFile(oldFilePath.toFile(), target.toFile());
