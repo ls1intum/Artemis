@@ -37,7 +37,7 @@
                 DECLARE max_id BIGINT;
             BEGIN
                 max_id := (SELECT (MAX(id)) as id FROM competency);
-                INSERT INTO competency (id, description, title, course_id, taxonomy, mastery_threshold, soft_due_date, optional, linked_standardized_competency_id, discriminator, linked_competency_id)
+                INSERT INTO competency (id, description, title, course_id, taxonomy, mastery_threshold, soft_due_date, optional, linked_standardized_competency_id, discriminator, linked_course_competency_id)
                 SELECT (max_id + row_number() over ()) as id, description, title, competency_course.course_id AS course_id, taxonomy, mastery_threshold, soft_due_date, optional, linked_standardized_competency_id, 'PREREQUISITE', competency.id as linked_competency_id
                 FROM competency
                      RIGHT JOIN competency_course ON competency.id = competency_course.competency_id;
@@ -51,7 +51,7 @@
         <!-- (MySQL) To get a new id, we set a variable to the maximum id of the 'competency' table and increment it on every inserted row -->
         <sql dbms="mysql">
             SELECT @max_id := MAX(id) FROM competency;
-            INSERT INTO competency (id, description, title, course_id, taxonomy, mastery_threshold, soft_due_date, optional, linked_standardized_competency_id, discriminator, linked_competency_id)
+            INSERT INTO competency (id, description, title, course_id, taxonomy, mastery_threshold, soft_due_date, optional, linked_standardized_competency_id, discriminator, linked_course_competency_id)
             SELECT (@max_id := @max_id + 1) as id, description, title, competency_course.course_id as course_id, taxonomy, mastery_threshold, soft_due_date, optional, linked_standardized_competency_id, 'PREREQUISITE', competency.id as linked_competency_id
             FROM competency
                 RIGHT JOIN competency_course on competency.id = competency_course.competency_id;
