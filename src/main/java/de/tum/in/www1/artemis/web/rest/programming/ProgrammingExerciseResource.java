@@ -882,6 +882,9 @@ public class ProgrammingExerciseResource {
     /**
      * GET programming-exercises/repository-checkout-directories
      *
+     * @param programmingLanguage for which the checkout directories should be retrieved
+     * @param checkoutSolution    whether the checkout solution repository shall be checked out during the template and submission build plan,
+     *                                if not supplied set to true as default
      * @return a DTO containing the checkout directories for the exercise, solution, and tests repository
      *         for the requested programming language for the submission and solution build.
      */

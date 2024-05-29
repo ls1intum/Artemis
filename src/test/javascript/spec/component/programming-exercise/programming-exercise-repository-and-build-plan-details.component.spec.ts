@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { CheckoutDirectoriesDto } from 'app/entities/checkout-directories-dto';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
@@ -10,6 +9,11 @@ import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary
 import { SimpleChanges } from '@angular/core';
 import { ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-build-plan-checkout-directories.component';
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 
 describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
     let component: ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent;
@@ -42,10 +46,25 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
         },
     };
 
+    const OCAML_CHECKOUT_DIRECTORIES_WITHOUT_SOLUTION_CHECKOUT: CheckoutDirectoriesDto = {
+        submissionBuildPlanCheckoutDirectories: {
+            exerciseCheckoutDirectory: '/assignment',
+            testCheckoutDirectory: 'tests',
+        },
+        solutionBuildPlanCheckoutDirectories: {
+            solutionCheckoutDirectory: '/assignment',
+            testCheckoutDirectory: 'tests',
+        },
+    };
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent, MockComponent(HelpIconComponent), ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent],
-            providers: [{ provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService }],
+            imports: [ArtemisSharedComponentModule, ArtemisSharedCommonModule],
+            providers: [
+                { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -57,13 +76,19 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
                 component.programmingExercise = { id: 1, shortName: 'shortName' } as ProgrammingExercise;
                 component.isLocal = true;
 
-                jest.spyOn(programmingExerciseService, 'getCheckoutDirectoriesForProgrammingLanguage').mockImplementation((programmingLanguage: ProgrammingLanguage) => {
-                    if (programmingLanguage === ProgrammingLanguage.JAVA) {
-                        return of(JAVA_CHECKOUT_DIRECTORIES);
-                    }
+                jest.spyOn(programmingExerciseService, 'getCheckoutDirectoriesForProgrammingLanguage').mockImplementation(
+                    (programmingLanguage: ProgrammingLanguage, checkoutSolution: boolean) => {
+                        if (programmingLanguage === ProgrammingLanguage.JAVA) {
+                            return of(JAVA_CHECKOUT_DIRECTORIES);
+                        }
 
-                    return of(OCAML_CHECKOUT_DIRECTORIES);
-                });
+                        if (programmingLanguage === ProgrammingLanguage.OCAML && !checkoutSolution) {
+                            return of(OCAML_CHECKOUT_DIRECTORIES_WITHOUT_SOLUTION_CHECKOUT);
+                        }
+
+                        return of(OCAML_CHECKOUT_DIRECTORIES);
+                    },
+                );
             });
     });
 
@@ -141,6 +166,7 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
     it('should update checkout directories when selectedProgrammingLanguage changes', () => {
         jest.spyOn(programmingExerciseService, 'getCheckoutDirectoriesForProgrammingLanguage');
 
+        component.programmingLanguage = ProgrammingLanguage.OCAML;
         component.ngOnChanges({
             programmingLanguage: {
                 previousValue: ProgrammingLanguage.JAVA,
@@ -149,8 +175,26 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
         } as unknown as SimpleChanges);
 
         // assertion to check if ngOnChanges was executed properly and updated the checkout directories
-        expect(programmingExerciseService.getCheckoutDirectoriesForProgrammingLanguage).toHaveBeenCalled();
+        expect(programmingExerciseService.getCheckoutDirectoriesForProgrammingLanguage).toHaveBeenCalledWith(ProgrammingLanguage.OCAML, true);
         expect(component.checkoutDirectories?.submissionBuildPlanCheckoutDirectories?.solutionCheckoutDirectory).toBe('/solution'); // was null before with JAVA as programming language
+    });
+
+    it('should update checkout directories when checkoutSolution flag changes', () => {
+        jest.spyOn(programmingExerciseService, 'getCheckoutDirectoriesForProgrammingLanguage');
+
+        component.programmingLanguage = ProgrammingLanguage.OCAML;
+        component.checkoutSolutionRepository = false;
+        component.ngOnChanges({
+            checkoutSolutionRepository: {
+                previousValue: true,
+                currentValue: false,
+            },
+        } as unknown as SimpleChanges);
+
+        // assertion to check if ngOnChanges was executed properly and updated the checkout directories
+        expect(programmingExerciseService.getCheckoutDirectoriesForProgrammingLanguage).toHaveBeenCalledWith(ProgrammingLanguage.OCAML, false);
+        // solution checkout directory was /solution before with OCaml as programming language and solution checkout allowed
+        expect(component.checkoutDirectories?.submissionBuildPlanCheckoutDirectories?.solutionCheckoutDirectory).toBeUndefined();
     });
 
     it('should update auxiliary repository directories on changes', () => {
