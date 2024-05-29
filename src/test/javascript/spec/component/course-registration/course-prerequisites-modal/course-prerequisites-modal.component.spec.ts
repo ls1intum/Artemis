@@ -3,18 +3,17 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { of } from 'rxjs';
-import { Competency } from 'app/entities/competency.model';
-import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CoursePrerequisitesModalComponent } from 'app/overview/course-registration/course-registration-prerequisites-modal/course-prerequisites-modal.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyCardStubComponent } from '../../competencies/competency-card-stub.component';
+import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 
 describe('CoursePrerequisitesModal', () => {
     let coursePrerequisitesModalComponentFixture: ComponentFixture<CoursePrerequisitesModalComponent>;
     let coursePrerequisitesModalComponent: CoursePrerequisitesModalComponent;
-    let competencyService: CompetencyService;
+    let prerequisiteService: PrerequisiteService;
 
     const activeModalStub = {
         close: () => {},
@@ -40,7 +39,7 @@ describe('CoursePrerequisitesModal', () => {
                 coursePrerequisitesModalComponentFixture = TestBed.createComponent(CoursePrerequisitesModalComponent);
                 coursePrerequisitesModalComponent = coursePrerequisitesModalComponentFixture.componentInstance;
                 coursePrerequisitesModalComponentFixture.componentInstance.courseId = 1;
-                competencyService = TestBed.inject(CompetencyService);
+                prerequisiteService = TestBed.inject(PrerequisiteService);
             });
     });
 
@@ -49,12 +48,7 @@ describe('CoursePrerequisitesModal', () => {
     });
 
     it('should load prerequisites and display a card for each of them', () => {
-        const prerequisitesOfCourseResponse: HttpResponse<Competency[]> = new HttpResponse({
-            body: [{}, {}],
-            status: 200,
-        });
-
-        const getAllPrerequisitesForCourseSpy = jest.spyOn(competencyService, 'getAllPrerequisitesForCourse').mockReturnValue(of(prerequisitesOfCourseResponse));
+        const getAllPrerequisitesForCourseSpy = jest.spyOn(prerequisiteService, 'getAllPrerequisitesForCourse').mockReturnValue(of([{}, {}]));
 
         coursePrerequisitesModalComponentFixture.detectChanges();
 

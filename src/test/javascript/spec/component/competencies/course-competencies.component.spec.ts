@@ -17,6 +17,7 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { CompetencyCardStubComponent } from './competency-card-stub.component';
+import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 
 class MockActivatedRoute {
     parent: any;
@@ -41,6 +42,7 @@ describe('CourseCompetencies', () => {
     let courseCompetenciesComponentFixture: ComponentFixture<CourseCompetenciesComponent>;
     let courseCompetenciesComponent: CourseCompetenciesComponent;
     let competencyService: CompetencyService;
+    let prerequisiteService: PrerequisiteService;
     const mockCourseStorageService = {
         getCourse: () => {},
         setCourses: () => {},
@@ -68,6 +70,7 @@ describe('CourseCompetencies', () => {
                 courseCompetenciesComponentFixture = TestBed.createComponent(CourseCompetenciesComponent);
                 courseCompetenciesComponent = courseCompetenciesComponentFixture.componentInstance;
                 competencyService = TestBed.inject(CompetencyService);
+                prerequisiteService = TestBed.inject(PrerequisiteService);
                 const accountService = TestBed.inject(AccountService);
                 const user = new User();
                 user.login = 'testUser';
@@ -121,16 +124,12 @@ describe('CourseCompetencies', () => {
         competency.lectureUnits = [textUnit];
         competency.userProgress = [{ progress: 70, confidence: 45 } as CompetencyProgress];
 
-        const prerequisitesOfCourseResponse: HttpResponse<Competency[]> = new HttpResponse({
-            body: [{}],
-            status: 200,
-        });
         const competenciesOfCourseResponse: HttpResponse<Competency[]> = new HttpResponse({
             body: [competency, {}],
             status: 200,
         });
 
-        const getAllPrerequisitesForCourseSpy = jest.spyOn(competencyService, 'getAllPrerequisitesForCourse').mockReturnValue(of(prerequisitesOfCourseResponse));
+        const getAllPrerequisitesForCourseSpy = jest.spyOn(prerequisiteService, 'getAllPrerequisitesForCourse').mockReturnValue(of([{}]));
         const getAllForCourseSpy = jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(competenciesOfCourseResponse));
 
         courseCompetenciesComponent.isCollapsed = false;
