@@ -12,11 +12,11 @@
                 </a>
             }
             <div ngbDropdown class="d-inline">
-                <button id="importDropdown" class="btn btn-primary" ngbDropdownToggle>
+                <button id="importCompetenciesDropdown" class="btn btn-primary" ngbDropdownToggle>
                     <fa-icon [icon]="faFileImport" />
                     {{ 'artemisApp.competency.manageCompetencies.importButton' | artemisTranslate }}
                 </button>
-                <div ngbDropdownMenu aria-labelledby="importDropdown">
+                <div ngbDropdownMenu aria-labelledby="importCompetenciesDropdown">
                     <button class="btn" id="competencyImportAllButton" (click)="openImportAllModal()" ngbDropdownItem>
                         <fa-icon [icon]="faFileImport" />
                         <span>{{ 'artemisApp.competency.manageCompetencies.importAllButton' | artemisTranslate }}</span>
@@ -139,9 +139,12 @@
         }
     </div>
     <div class="d-flex flex-wrap mt-4">
-        <h2 jhiTranslate="artemisApp.competency.prerequisite.title"></h2>
+        <h2 jhiTranslate="artemisApp.prerequisite.title"></h2>
         <div class="ms-auto text-truncate justify-content-end">
-            <!-- TODO: add new prerequisite import button -->
+            <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'competency-management', 'import-prerequisites']">
+                <fa-icon [icon]="faFileImport" />
+                <span jhiTranslate="artemisApp.prerequisite.manage.importButton"></span>
+            </a>
         </div>
     </div>
     <!-- TODO: new table will be added when create/edit will be added -->
@@ -181,19 +184,24 @@
                                 </div>
                             </td>
                             <td class="col">
-                                @if (prerequisite.linkedCourseCompetency?.course) {
+                                @if (prerequisite.linkedCourseCompetency?.course?.id) {
                                     <div>
-                                        <a [routerLink]="['/course-management', prerequisite.linkedCourseCompetency.course.id, 'competency-management']">{{
-                                            prerequisite.linkedCourseCompetency.course.title
+                                        <a [routerLink]="['/course-management', prerequisite.linkedCourseCompetency!.course!.id!, 'competency-management']">{{
+                                            prerequisite.linkedCourseCompetency!.course!.title ?? ('artemisApp.competency.course' | artemisTranslate)
                                         }}</a>
                                     </div>
                                 }
                             </td>
                             <td class="col text-end">
-                                <!-- TODO: replace with real delete button -->
-                                <button class="btn btn-secondary btn-sm" (click)="removePrerequisite(prerequisite.id!)">
+                                <button
+                                    jhiDeleteButton
+                                    [entityTitle]="prerequisite.title ?? ''"
+                                    [deleteQuestion]="'artemisApp.prerequisite.manage.delete.question'"
+                                    [deleteConfirmationText]="'artemisApp.prerequisite.manage.delete.typeNameToConfirm'"
+                                    (delete)="deletePrerequisite(prerequisite.id!)"
+                                    [dialogError]="dialogError"
+                                >
                                     <fa-icon [icon]="faTrash" />
-                                    {{ 'entity.action.remove' | artemisTranslate }}
                                 </button>
                             </td>
                         </tr>
@@ -201,7 +209,7 @@
                 </tbody>
             </table>
         } @else {
-            <span>{{ 'artemisApp.competency.prerequisite.empty' | artemisTranslate }}</span>
+            <span jhiTranslate="artemisApp.prerequisite.empty"></span>
         }
     </div>
 </div>

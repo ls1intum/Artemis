@@ -39,7 +39,7 @@ export class PrerequisiteService {
             .pipe(map((resp) => (resp.body ? this.convertResponseDTOToPrerequisite(resp.body) : undefined)));
     }
 
-    removePrerequisite(prerequisiteId: number, courseId: number) {
+    deletePrerequisite(prerequisiteId: number, courseId: number) {
         return this.httpClient.delete<void>(`${this.resourceURL}/courses/${courseId}/competencies/prerequisites/${prerequisiteId}`, { observe: 'response' });
     }
 

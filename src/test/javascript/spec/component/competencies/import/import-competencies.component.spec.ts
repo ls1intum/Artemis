@@ -15,7 +15,7 @@ import { HttpResponse } from '@angular/common/http';
 import { ImportCompetenciesTableStubComponent } from './import-competencies-table-stub.component';
 import { CompetencySearchStubComponent } from './competency-search-stub.component';
 import { By } from '@angular/platform-browser';
-import { CompetencyFilter, PageableSearch } from 'app/shared/table/pageable-table';
+import { CourseCompetencyFilter, PageableSearch } from 'app/shared/table/pageable-table';
 
 describe('ImportCompetenciesComponent', () => {
     let componentFixture: ComponentFixture<ImportCompetenciesComponent>;
@@ -124,7 +124,7 @@ describe('ImportCompetenciesComponent', () => {
         componentFixture.detectChanges();
 
         const competencySearchComponent: CompetencySearchStubComponent = componentFixture.debugElement.query(By.directive(CompetencySearchStubComponent)).componentInstance;
-        competencySearchComponent.searchChange.emit({} as CompetencyFilter);
+        competencySearchComponent.searchChange.emit({} as CourseCompetencyFilter);
 
         expect(filterChangeSpy).toHaveBeenCalledOnce();
     });

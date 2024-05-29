@@ -177,7 +177,7 @@ describe('CompetencyManagementComponent', () => {
         const removePrerequisiteSpy = jest.spyOn(competencyService, 'removePrerequisite').mockReturnValue(of(new HttpResponse({ body: {}, status: 200 })));
         fixture.detectChanges();
 
-        component.removePrerequisite(123);
+        component.deletePrerequisite(123);
 
         expect(removePrerequisiteSpy).toHaveBeenCalledOnce();
         expect(removePrerequisiteSpy).toHaveBeenCalledWith(123, 1);

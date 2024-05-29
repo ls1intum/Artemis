@@ -40,8 +40,12 @@
                 }
                 @if (isPrerequisite && competency.linkedCourseCompetency?.course) {
                     <div>
-                        <span class="badge bg-primary">{{ competency.linkedCourseCompetency.course.title }}</span>
-                        <span class="badge bg-secondary">{{ competency.linkedCourseCompetency.course.semester }}</span>
+                        @if (competency.linkedCourseCompetency!.course!.title) {
+                            <span class="badge bg-primary">{{ competency.linkedCourseCompetency!.course!.title! }}</span>
+                        }
+                        @if (competency.linkedCourseCompetency!.course!.semester) {
+                            <span class="badge bg-secondary">{{ competency.linkedCourseCompetency!.course!.semester! }}</span>
+                        }
                     </div>
                 }
                 <ng-content />

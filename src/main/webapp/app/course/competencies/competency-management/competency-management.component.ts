@@ -12,7 +12,7 @@ import {
     getIcon,
 } from 'app/entities/competency.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { filter, finalize, map, switchMap } from 'rxjs/operators';
+import { filter, map, switchMap } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject, Subscription, forkJoin } from 'rxjs';
 import { faFileImport, faPencilAlt, faPlus, faRobot, faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -104,15 +104,16 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Remove a prerequisite from the course
+     * Deletes a prerequisite from the course
      *
      * @param prerequisiteId the id of the prerequisite
      */
-    removePrerequisite(prerequisiteId: number) {
-        this.prerequisiteService.removePrerequisite(prerequisiteId, this.courseId).subscribe({
+    deletePrerequisite(prerequisiteId: number) {
+        this.prerequisiteService.deletePrerequisite(prerequisiteId, this.courseId).subscribe({
             next: () => {
-                const index = this.prerequisites.findIndex((prerequisite) => prerequisite.id === prerequisiteId);
-                this.prerequisites.splice(index, 1);
+                this.alertService.success('artemisApp.prerequisite.manage.deleted');
+                this.prerequisites = this.prerequisites.filter((prerequisite) => prerequisite.id !== prerequisiteId);
+                this.dialogErrorSource.next('');
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });
@@ -139,43 +140,32 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
      */
     loadData() {
         this.isLoading = true;
-        this.prerequisiteService.getAllPrerequisitesForCourse(this.courseId).subscribe({
-            next: (prerequisites) => {
+        const relationsObservable = this.competencyService.getCompetencyRelations(this.courseId);
+        const prerequisitesObservable = this.prerequisiteService.getAllPrerequisitesForCourse(this.courseId);
+        const competencyProgressObservable = this.competencyService.getAllForCourse(this.courseId).pipe(
+            switchMap((res) => {
+                this.competencies = res.body!;
+
+                const progressObservable = this.competencies.map((lg) => {
+                    return this.competencyService.getCourseProgress(lg.id!, this.courseId);
+                });
+
+                return forkJoin(progressObservable);
+            }),
+        );
+        forkJoin([relationsObservable, prerequisitesObservable, competencyProgressObservable]).subscribe({
+            next: ([competencyRelations, prerequisites, competencyProgressResponses]) => {
                 this.prerequisites = prerequisites;
+                this.relations = (competencyRelations.body ?? []).map((relationDTO) => dtoToCompetencyRelation(relationDTO));
+
+                for (const competencyProgressResponse of competencyProgressResponses) {
+                    const courseCompetencyProgress: CourseCompetencyProgress = competencyProgressResponse.body!;
+                    this.competencies.find((competency) => competency.id === courseCompetencyProgress.competencyId)!.courseProgress = courseCompetencyProgress;
+                }
+                this.isLoading = false;
             },
             error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
         });
-        this.competencyService
-            .getAllForCourse(this.courseId)
-            .pipe(
-                switchMap((res) => {
-                    this.competencies = res.body!;
-
-                    const relationsObservable = this.competencyService.getCompetencyRelations(this.courseId);
-
-                    const progressObservable = this.competencies.map((lg) => {
-                        return this.competencyService.getCourseProgress(lg.id!, this.courseId);
-                    });
-
-                    return forkJoin([relationsObservable, forkJoin(progressObservable)]);
-                }),
-            )
-            .pipe(
-                finalize(() => {
-                    this.isLoading = false;
-                }),
-            )
-            .subscribe({
-                next: ([competencyRelations, competencyProgressResponses]) => {
-                    this.relations = (competencyRelations.body ?? []).map((relationDTO) => dtoToCompetencyRelation(relationDTO));
-
-                    for (const competencyProgressResponse of competencyProgressResponses) {
-                        const courseCompetencyProgress: CourseCompetencyProgress = competencyProgressResponse.body!;
-                        this.competencies.find((competency) => competency.id === courseCompetencyProgress.competencyId)!.courseProgress = courseCompetencyProgress;
-                    }
-                },
-                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            });
     }
 
     /**

@@ -14,12 +14,12 @@
                 <div class="exercise-row-container mb-3">
                     <div class="control-label" (click)="isCollapsed = !isCollapsed">
                         <fa-icon class="pe-3" [icon]="isCollapsed ? faAngleDown : faAngleUp" />
-                        <span>{{ 'artemisApp.competency.prerequisite.title' | artemisTranslate }}: {{ countPrerequisites }}</span>
+                        <span>{{ 'artemisApp.prerequisite.title' | artemisTranslate }}: {{ countPrerequisites }}</span>
                     </div>
                     @if (!isCollapsed) {
                         <div>
                             @for (prerequisite of prerequisites; track identify(i, prerequisite); let i = $index) {
-                                <jhi-competency-card [competency]="prerequisite" [courseId]="prerequisite.linked" [isPrerequisite]="true" />
+                                <jhi-competency-card [competency]="prerequisite" [courseId]="prerequisite.linkedCourseCompetency?.course?.id" [isPrerequisite]="true" />
                             }
                         </div>
                     }
