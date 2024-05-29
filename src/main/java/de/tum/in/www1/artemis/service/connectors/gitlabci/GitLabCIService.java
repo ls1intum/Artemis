@@ -327,6 +327,6 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public CheckoutDirectoriesDTO getCheckoutDirectories(ProgrammingLanguage programmingLanguage, boolean checkoutSolution) {
-        throw new UnsupportedOperationException("Method not implemented, consult the build plans in GitLab for the checkout directories.");
+        throw new UnsupportedOperationException("Method not implemented, consult the build plans in GitLab for more information on the checkout directories.");
     }
 }
