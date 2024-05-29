@@ -7,6 +7,8 @@ import { LocalStorageService } from 'ngx-webstorage';
 export class CourseAccessStorageService {
     private static readonly STORAGE_KEY = 'artemis.courseAccess';
     private static readonly STORAGE_KEY_DROPDOWN = 'artemis.courseAccessDropdown';
+    private static readonly MAX_RECENTLY_ACCESSED_COURSES_OVERVIEW = 3;
+    private static readonly MAX_RECENTLY_ACCESSED_COURSES_DROPDOWN = 5;
 
     constructor(private localStorage: LocalStorageService) {}
 
@@ -15,7 +17,7 @@ export class CourseAccessStorageService {
 
         courseAccessMap[courseId] = Date.now();
 
-        if (Object.keys(courseAccessMap).length > 3) {
+        if (Object.keys(courseAccessMap).length > CourseAccessStorageService.MAX_RECENTLY_ACCESSED_COURSES_OVERVIEW) {
             const oldestEntry = Object.entries(courseAccessMap).reduce((prev, curr) => (prev[1] < curr[1] ? prev : curr));
             delete courseAccessMap[oldestEntry[0]];
         }
@@ -35,8 +37,8 @@ export class CourseAccessStorageService {
         const courseAccessMap: { [key: number]: number } = this.localStorage.retrieve(CourseAccessStorageService.STORAGE_KEY_DROPDOWN) || {};
 
         courseAccessMap[courseId] = Date.now();
-
-        if (Object.keys(courseAccessMap).length > 6) {
+        // we add +1 because the current course should not be displayed in the dropdown and therefore gets removed from the list later
+        if (Object.keys(courseAccessMap).length > CourseAccessStorageService.MAX_RECENTLY_ACCESSED_COURSES_DROPDOWN + 1) {
             const oldestEntry = Object.entries(courseAccessMap).reduce((prev, curr) => (prev[1] < curr[1] ? prev : curr));
             delete courseAccessMap[oldestEntry[0]];
         }
