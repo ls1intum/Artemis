@@ -54,7 +54,7 @@ describe('Quiz Participation Service', () => {
         const mockSubmission = new QuizSubmission();
         mockSubmission.id = 1;
         mockSubmission.scoreInPoints = 10;
-        service.submitForLiveMode(mockSubmission, exerciseId).subscribe((res) => {
+        service.saveOrSubmitForLiveMode(mockSubmission, exerciseId, true).subscribe((res) => {
             expect(res.body!.id).toBe(1);
             expect(res.body!.scoreInPoints).toBe(10);
         });

@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/
 import dayjs from 'dayjs/esm';
 import isMobile from 'ismobilejs-es5';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs';
+import { Subscription, take } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
@@ -310,6 +310,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 return;
             }
             this.autoSaveTimer++;
+            // TODO: Trigger autosave when remaining time is 1s?
             if (this.autoSaveTimer >= AUTOSAVE_EXERCISE_INTERVAL) {
                 this.onAutoSave();
             }
@@ -774,11 +775,17 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         if (this.unsavedChanges && !this.disconnected) {
             this.applySelection();
             this.submission.submissionDate = this.serverDateService.now();
-            // TODO: Send submission to server, not saving. (this.sendWebsocket(this.submission);)
-            // Upon receiving the response:
-            this.unsavedChanges = false;
-            this.updateSubmissionTime();
-            // TODO error handling
+            this.quizParticipationService
+                .saveOrSubmitForLiveMode(this.submission, this.quizId, false)
+                .pipe(take(1))
+                .subscribe({
+                    next: () => {
+                        // TODO: Do we need the response for anything here?
+                        this.unsavedChanges = false;
+                        this.updateSubmissionTime();
+                    },
+                    error: (error: HttpErrorResponse) => this.onSaveError(error.message), // TODO: Test this. It's not super clear what onSaveError expects.
+                });
         }
     }
 
@@ -888,7 +895,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                     // copy submission and send it through websocket with 'submitted = true'
                     const quizSubmission = new QuizSubmission();
                     quizSubmission.submittedAnswers = this.submission.submittedAnswers;
-                    this.quizParticipationService.submitForLiveMode(quizSubmission, this.quizId).subscribe({
+                    this.quizParticipationService.saveOrSubmitForLiveMode(quizSubmission, this.quizId, true).subscribe({
                         next: (response: HttpResponse<QuizSubmission>) => {
                             this.submission = response.body!;
                             this.isSubmitting = false;
