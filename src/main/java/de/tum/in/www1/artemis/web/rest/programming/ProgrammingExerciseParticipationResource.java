@@ -51,7 +51,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @RequestMapping("api/")
 public class ProgrammingExerciseParticipationResource {
 
-    private static final String ENTITY_NAME = "programmingExerciseParticipation";
+    private static final String ENTITY_NAME = "programmingExerciseParticipationRessource";
 
     /**
      * A valid commitId is a 40 digits hexadecimal number
