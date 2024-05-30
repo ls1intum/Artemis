@@ -103,7 +103,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             this.editorLabel = 'uploadFile';
         }
 
-        this.beforeDueDate = !this.exercise.dueDate || dayjs().isBefore(this.exercise.dueDate);
+        this.beforeDueDate = !this.exercise.dueDate || dayjs().isBefore(this.exercise.dueDate) || dayjs().isBefore(this.gradedParticipation?.individualDueDate);
     }
 
     /**
