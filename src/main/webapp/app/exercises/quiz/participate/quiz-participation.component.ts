@@ -904,6 +904,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                         next: (response: HttpResponse<QuizSubmission>) => {
                             this.submission = response.body!;
                             this.isSubmitting = false;
+                            this.unsavedChanges = false;
                             this.updateSubmissionTime();
                             this.applySubmission();
                             if (this.quizExercise.quizMode !== QuizMode.SYNCHRONIZED) {
