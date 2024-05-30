@@ -115,8 +115,8 @@ export class CompetencyAccordionComponent implements OnChanges {
         this.nextLectureUnits = competencyLectureUnits
             .filter((lectureUnitId) => !completedLectureUnits.includes(lectureUnitId))
             .flatMap((lectureUnitId) => this.metrics.lectureUnitStudentMetricsDTO?.lectureUnitInformation?.[lectureUnitId] ?? [])
-            .filter((lectureUnit) => dayjs(lectureUnit.releaseDate).isBefore(dayjs()))
-            .sort((a, b) => dayjs(a.releaseDate).diff(dayjs(b.releaseDate)));
+            .filter((lectureUnit) => lectureUnit.releaseDate?.isBefore(dayjs()))
+            .sort((a, b) => (a.releaseDate?.isBefore(b?.releaseDate) ? -1 : 1));
     }
 
     calculateProgressValues() {
@@ -143,7 +143,7 @@ export class CompetencyAccordionComponent implements OnChanges {
 
         const competencyExercises = this.metrics.competencyMetrics?.exercises?.[this.competency.id];
         const completedExercises = competencyExercises?.filter((exerciseId) => this.metrics.exerciseMetrics?.completed?.includes(exerciseId)).length ?? 0;
-        if (!competencyExercises) {
+        if (competencyExercises === undefined || competencyExercises.length === 0) {
             return undefined;
         }
         const progress = (completedExercises / competencyExercises.length) * 100;
@@ -156,11 +156,14 @@ export class CompetencyAccordionComponent implements OnChanges {
         }
 
         const competencyLectureUnits = this.metrics.competencyMetrics?.lectureUnits?.[this.competency.id];
-        const completedLectureUnits = competencyLectureUnits?.filter((lectureUnitId) => this.metrics.lectureUnitStudentMetricsDTO?.completed?.includes(lectureUnitId)).length ?? 0;
-        if (!competencyLectureUnits) {
+        const releasedLectureUnits = competencyLectureUnits?.filter((lectureUnitId) =>
+            this.metrics.lectureUnitStudentMetricsDTO?.lectureUnitInformation?.[lectureUnitId]?.releaseDate?.isBefore(dayjs()),
+        );
+        const completedLectureUnits = releasedLectureUnits?.filter((lectureUnitId) => this.metrics.lectureUnitStudentMetricsDTO?.completed?.includes(lectureUnitId)).length ?? 0;
+        if (releasedLectureUnits === undefined || releasedLectureUnits.length === 0) {
             return undefined;
         }
-        const progress = (completedLectureUnits / competencyLectureUnits.length) * 100;
+        const progress = (completedLectureUnits / releasedLectureUnits.length) * 100;
         return round(progress, 1);
     }
 

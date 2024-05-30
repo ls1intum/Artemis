@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
-import { ExerciseInformation, LectureUnitInformation, StudentMetrics } from 'app/entities/student-metrics.model';
+import { CompetencyMetrics, ExerciseInformation, LectureUnitInformation, StudentMetrics } from 'app/entities/student-metrics.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
+import { CompetencyJol } from 'app/entities/competency.model';
 
 @Injectable({ providedIn: 'root' })
 export class CourseDashboardService {
@@ -31,6 +32,7 @@ export class CourseDashboardService {
                     }
                     if (response.body.competencyMetrics && response.body.competencyMetrics.competencyInformation) {
                         response.body.competencyMetrics.competencyInformation = this.convertToCompetencyInformation(response.body.competencyMetrics.competencyInformation);
+                        response.body.competencyMetrics.jolValues = this.filterJolWhereMasteryChanged(response.body.competencyMetrics);
                     }
                 }
                 return response;
@@ -73,6 +75,16 @@ export class CourseDashboardService {
                 return acc;
             },
             {} as { [key: string]: LectureUnitInformation },
+        );
+    }
+
+    private filterJolWhereMasteryChanged(competencyMetrics: CompetencyMetrics): { [key: string]: CompetencyJol } {
+        return Object.fromEntries(
+            Object.entries(competencyMetrics.jolValues ?? {}).filter(([key, value]) => {
+                const progress = competencyMetrics.progress?.[key];
+                const confidence = competencyMetrics.confidence?.[key];
+                return value.competencyProgress === progress && value.competencyConfidence === confidence;
+            }),
         );
     }
 

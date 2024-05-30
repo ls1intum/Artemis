@@ -110,7 +110,14 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
             next: ([competencies, prerequisites, judgementOfLearningMap]) => {
                 this.competencies = competencies.body!;
                 this.prerequisites = prerequisites.body!;
-                this.judgementOfLearningMap = judgementOfLearningMap.body!;
+
+                const competenciesMap: { [key: number]: Competency } = Object.fromEntries(this.competencies.map((competency) => [competency.id, competency]));
+                this.judgementOfLearningMap = Object.fromEntries(
+                    Object.entries(judgementOfLearningMap.body!).filter(([key, value]) => {
+                        const progress = competenciesMap[Number(key)]?.userProgress?.first();
+                        return value.competencyProgress === progress?.progress && value.competencyConfidence === progress?.confidence;
+                    }),
+                );
                 this.promptForJolRatingMap = Object.fromEntries(
                     this.competencies.map((competency) => [competency.id, CompetencyJol.shouldPromptForJol(competency, competency.userProgress?.first(), this.competencies)]),
                 );
