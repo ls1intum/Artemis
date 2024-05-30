@@ -291,7 +291,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * fetch the finished build jobs from the server
+     * fetch the finished build jobs from the server by creating observable
      */
     FetchFinishedBuildJobs() {
         this.isLoading = true;
@@ -332,6 +332,9 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Method to trigger the loading of the finished build jobs by pushing a new value to the search observable
+     */
     triggerLoadFinishedJobs() {
         if (!this.finishedBuildJobFilter.searchTerm || this.finishedBuildJobFilter.searchTerm.length >= 3) {
             this.search.next();
@@ -437,6 +440,10 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Method to build the agent addresses for the typeahead search.
+     * @param text$
+     */
     typeaheadSearch: OperatorFunction<string, readonly string[]> = (text$: Observable<string>) => {
         const buildAgentAddresses = this.buildAgentAddresses;
         const debouncedText$ = text$.pipe(debounceTime(200), distinctUntilChanged());
@@ -448,11 +455,17 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
         );
     };
 
+    /**
+     * Method to reset the filter.
+     */
     applyFilter() {
         this.loadFinishedBuildJobs();
         this.modalService.dismissAll();
     }
 
+    /**
+     * Method to load the filter values from the local storage if they exist.
+     */
     loadFilterFromLocalStorage() {
         // Iterate over all keys of the filter and load the values from the local storage if they exist.
         for (const key in FishedBuildJobFilterStorageKey) {
@@ -476,6 +489,9 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Method to remove the build agent address filter and store the selected build agent address in the local store if required.
+     */
     filterBuildAgentAddressChanged() {
         if (this.finishedBuildJobFilter.buildAgentAddress) {
             this.localStorage.store(FishedBuildJobFilterStorageKey.buildAgentAddress, this.finishedBuildJobFilter.buildAgentAddress);
@@ -484,6 +500,9 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Method to remove the build start date filter and store the selected build start date in the local store if required.
+     */
     filterDateChanged() {
         if (!this.finishedBuildJobFilter.buildStartDateFilterFrom?.isValid()) {
             this.finishedBuildJobFilter.buildStartDateFilterFrom = undefined;
@@ -499,6 +518,9 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Method to remove the build duration filter and store the selected build duration in the local store if required.
+     */
     filterDurationChanged() {
         if (this.finishedBuildJobFilter.buildDurationFilterLowerBound) {
             this.localStorage.store(FishedBuildJobFilterStorageKey.buildDurationFilterLowerBound, this.finishedBuildJobFilter.buildDurationFilterLowerBound);
