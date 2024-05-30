@@ -105,10 +105,10 @@ export class CompetencyService {
      * @param competencyId the id of the competency for which to get the JoL value
      * @return an Observable of HttpResponse containing the JoL value or null if not set
      */
-    getJoL(courseId: number, competencyId: number): Observable<HttpResponse<number>> {
+    getJoL(courseId: number, competencyId: number): Observable<HttpResponse<CompetencyJol>> {
         return this.httpClient
-            .get<number>(`${this.resourceURL}/courses/${courseId}/competencies/${competencyId}/jol`, { observe: 'response' })
-            .pipe(map((res: HttpResponse<number>) => res));
+            .get<CompetencyJol>(`${this.resourceURL}/courses/${courseId}/competencies/${competencyId}/jol`, { observe: 'response' })
+            .pipe(map((res: HttpResponse<CompetencyJol>) => res));
     }
 
     create(competency: Competency, courseId: number): Observable<EntityResponseType> {

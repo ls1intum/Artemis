@@ -83,7 +83,7 @@
                         [hideProgress]="judgementOfLearningEnabled && promptForJolRating && judgementOfLearning === undefined"
                     />
                 </div>
-                @if (!judgementOfLearningEnabled || judgementOfLearning !== undefined) {
+                @if (!promptForJolRating || !judgementOfLearningEnabled || judgementOfLearning !== undefined) {
                     <jhi-side-panel class="d-block mt-3" [panelHeader]="'artemisApp.competency.table.panelHeader' | artemisTranslate">
                         <div class="row mb-1 g-0">
                             <div class="col-7">{{ 'artemisApp.competency.progress' | artemisTranslate }} <jhi-help-icon text="artemisApp.competency.progressDescription" /></div>
@@ -107,7 +107,7 @@
                             [competencyId]="competency.id"
                             [courseId]="courseId"
                             [mastery]="mastery"
-                            [rating]="judgementOfLearning"
+                            [rating]="judgementOfLearning?.jolValue"
                             (ratingChange)="onRatingChange($event)"
                         />
                     </div>

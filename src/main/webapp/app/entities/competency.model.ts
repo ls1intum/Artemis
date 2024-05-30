@@ -65,11 +65,6 @@ export class CompetencyJol {
     competencyConfidence?: number;
 
     static shouldPromptForJol(competency: Competency, progress: CompetencyProgress | undefined, courseCompetencies: Competency[]): boolean {
-        // If there is no progress, we cannot determine if we should prompt for JOL
-        if (progress === undefined || progress.progress === undefined) {
-            return false;
-        }
-
         const currentDate = dayjs();
         const softDueDateMinusOneDay = competency.softDueDate?.subtract(1, 'day');
         const competencyProgress = progress?.progress ?? 0;
@@ -82,8 +77,11 @@ export class CompetencyJol {
         // Filter previous competencies (those with soft due date in the past)
         const previousCompetencies = courseCompetencies.filter((c) => c.softDueDate && c.softDueDate.isBefore(currentDate));
         if (previousCompetencies.length === 0) {
-            // No previous competencies, we should prompt for JOL?
-            return true;
+            if (softDueDateMinusOneDay) {
+                return false;
+            } else {
+                return competencyProgress >= 0.2;
+            }
         }
 
         // Calculate the average progress of all previous competencies

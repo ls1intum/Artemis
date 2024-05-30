@@ -27,7 +27,7 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     courseId?: number;
     isLoading = false;
     competency: Competency;
-    judgementOfLearning: number | undefined;
+    judgementOfLearning: CompetencyJol | undefined;
     promptForJolRating = false;
     showFireworks = false;
     paramsSubscription: Subscription;
@@ -165,6 +165,12 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     }
 
     onRatingChange(newRating: number) {
-        this.judgementOfLearning = newRating;
+        this.judgementOfLearning = {
+            competencyId: this.competencyId!,
+            jolValue: newRating,
+            judgementTime: dayjs().toString(),
+            competencyProgress: this.progress,
+            competencyConfidence: this.confidence,
+        } satisfies CompetencyJol;
     }
 }
