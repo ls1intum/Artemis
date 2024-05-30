@@ -2,11 +2,13 @@ package de.tum.in.www1.artemis.service.connectors.localci;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.annotation.PostConstruct;
 
@@ -14,6 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -23,11 +27,14 @@ import com.hazelcast.cp.lock.FencedLock;
 import com.hazelcast.map.IMap;
 import com.hazelcast.topic.ITopic;
 
+import de.tum.in.www1.artemis.domain.BuildJob;
 import de.tum.in.www1.artemis.repository.BuildJobRepository;
 import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 /**
  * Includes methods for managing and retrieving the shared build job queue and build agent information. Also contains methods for cancelling build jobs.
@@ -277,6 +284,29 @@ public class SharedQueueManagementService {
         finally {
             sharedLock.unlock();
         }
+    }
+
+    /**
+     * Get all finished build jobs that match the search criteria.
+     *
+     * @param search   the search criteria
+     * @param courseId the id of the course
+     * @return the page of build jobs
+     */
+    public Page<BuildJob> getFilteredFinishedBuildJobs(FinishedBuildJobPageableSearchDTO search, Long courseId) {
+        final Page<BuildJob> page = buildJobRepository.findAllByFilterCriteria(search.getBuildStatus(), search.getBuildAgentAddress(), search.getStartDate(), search.getEndDate(),
+                search.getSearchTerm(), courseId, PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.BUILD_JOB));
+        List<BuildJob> filteredBuildJobs = page.get().filter(buildJob -> {
+            Duration buildDuration = Duration.between(buildJob.getBuildStartDate(), buildJob.getBuildCompletionDate());
+            if (search.getBuildDurationUpper() != 0) {
+                return buildDuration.toSeconds() >= search.getBuildDurationLower() && buildDuration.toSeconds() <= search.getBuildDurationUpper();
+            }
+            else {
+                return buildDuration.toSeconds() >= search.getBuildDurationLower();
+            }
+        }).collect(Collectors.toList());
+
+        return new PageImpl<>(filteredBuildJobs, page.getPageable(), filteredBuildJobs.size());
     }
 
 }

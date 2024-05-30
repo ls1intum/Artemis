@@ -2,15 +2,12 @@ package de.tum.in.www1.artemis.web.rest.admin;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
 
-import java.time.Duration;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,15 +20,12 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.BuildJob;
-import de.tum.in.www1.artemis.repository.BuildJobRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.connectors.localci.SharedQueueManagementService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
 import de.tum.in.www1.artemis.service.dto.FinishedBuildJobDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
-import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.PageableSearchDTO;
-import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 import tech.jhipster.web.util.PaginationUtil;
 
 @Profile(PROFILE_LOCALCI)
@@ -41,13 +35,10 @@ public class AdminBuildJobQueueResource {
 
     private final SharedQueueManagementService localCIBuildJobQueueService;
 
-    private final BuildJobRepository buildJobRepository;
-
     private static final Logger log = LoggerFactory.getLogger(AdminBuildJobQueueResource.class);
 
-    public AdminBuildJobQueueResource(SharedQueueManagementService localCIBuildJobQueueService, BuildJobRepository buildJobRepository) {
+    public AdminBuildJobQueueResource(SharedQueueManagementService localCIBuildJobQueueService) {
         this.localCIBuildJobQueueService = localCIBuildJobQueueService;
-        this.buildJobRepository = buildJobRepository;
     }
 
     /**
@@ -174,38 +165,14 @@ public class AdminBuildJobQueueResource {
      */
     @GetMapping("finished-jobs")
     @EnforceAdmin
-    public ResponseEntity<List<FinishedBuildJobDTO>> getFinishedBuildJobs(PageableSearchDTO<String> search) {
-        log.debug("REST request to get a page of finished build jobs");
-        final Page<BuildJob> page = buildJobRepository.findAll(PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.BUILD_JOB));
-        Page<FinishedBuildJobDTO> finishedBuildJobDTOs = FinishedBuildJobDTO.fromBuildJobsPage(page);
-        log.debug("Found {} finished build jobs", finishedBuildJobDTOs.getTotalElements());
-        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
-        return new ResponseEntity<>(finishedBuildJobDTOs.getContent(), headers, HttpStatus.OK);
-    }
-
-    @GetMapping("finished-jobs-custom")
-    @EnforceAdmin
     public ResponseEntity<List<FinishedBuildJobDTO>> getFinishedBuildJobsCustom(FinishedBuildJobPageableSearchDTO search) {
         log.debug("REST request to get a page of finished build jobs with build status {}, build agent address {}, start date {} and end date {}", search.getBuildStatus(),
                 search.getBuildAgentAddress(), search.getStartDate(), search.getEndDate());
 
-        final Page<BuildJob> page = buildJobRepository.findAllByBuildStatusAndBuildAgentAddressAndBuildStartDateBetween(search.getBuildStatus(), search.getBuildAgentAddress(),
-                search.getStartDate(), search.getEndDate(), search.getSearchTerm(), PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.BUILD_JOB));
-        List<BuildJob> filteredBuildJobs = page.get().filter(buildJob -> {
-            Duration buildDuration = Duration.between(buildJob.getBuildStartDate(), buildJob.getBuildCompletionDate());
-            if (search.getBuildDurationUpper() != 0) {
-                return buildDuration.toSeconds() >= search.getBuildDurationLower() && buildDuration.toSeconds() <= search.getBuildDurationUpper();
-            }
-            else {
-                return buildDuration.toSeconds() >= search.getBuildDurationLower();
-            }
-        }).collect(Collectors.toList());
+        Page<BuildJob> buildJobPage = localCIBuildJobQueueService.getFilteredFinishedBuildJobs(search, null);
 
-        Page<BuildJob> filteredPage = new PageImpl<>(filteredBuildJobs, page.getPageable(), filteredBuildJobs.size());
-
-        Page<FinishedBuildJobDTO> finishedBuildJobDTOs = FinishedBuildJobDTO.fromBuildJobsPage(filteredPage);
-        log.debug("Found {} finished build jobs", finishedBuildJobDTOs.getTotalElements());
-        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        Page<FinishedBuildJobDTO> finishedBuildJobDTOs = FinishedBuildJobDTO.fromBuildJobsPage(buildJobPage);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), buildJobPage);
         return new ResponseEntity<>(finishedBuildJobDTOs.getContent(), headers, HttpStatus.OK);
     }
 }

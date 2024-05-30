@@ -41,12 +41,13 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSp
             AND (:buildAgentAddress IS null OR b.buildAgentAddress = :buildAgentAddress)
             AND (:startDate IS null OR b.buildStartDate >= :startDate)
             AND (:endDate IS null OR b.buildStartDate <= :endDate)
-            AND (:searchTerm IS null OR (str(b.courseId) LIKE %:searchTerm% OR b.repositoryName LIKE %:searchTerm% OR c.title LIKE %:searchTerm%))
+            AND (:searchTerm IS null OR (b.repositoryName LIKE %:searchTerm% OR c.title LIKE %:searchTerm%))
+            AND (:courseId IS null OR b.courseId = :courseId)
             """)
     @EntityGraph(attributePaths = { "result", "result.participation", "result.participation.exercise", "result.submission" })
-    Page<BuildJob> findAllByBuildStatusAndBuildAgentAddressAndBuildStartDateBetween(@Param("buildStatus") BuildStatus buildStatus,
-            @Param("buildAgentAddress") String buildAgentAddress, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate,
-            @Param("searchTerm") String searchTerm, Pageable pageable);
+    Page<BuildJob> findAllByFilterCriteria(@Param("buildStatus") BuildStatus buildStatus, @Param("buildAgentAddress") String buildAgentAddress,
+            @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("searchTerm") String searchTerm, @Param("courseId") Long courseId,
+            Pageable pageable);
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild(
