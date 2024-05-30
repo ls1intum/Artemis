@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -116,5 +117,25 @@ public abstract class QuizQuestionStatistic implements QuizQuestionComponent<Qui
 
     public void setParticipantsUnrated(Integer participantsUnrated) {
         this.participantsUnrated = participantsUnrated;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        QuizQuestionStatistic quizQuestionStatistic = (QuizQuestionStatistic) obj;
+        if (quizQuestionStatistic.getId() == null || getId() == null) {
+            return false;
+        }
+        return Objects.equals(getId(), quizQuestionStatistic.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(getId());
     }
 }
