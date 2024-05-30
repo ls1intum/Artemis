@@ -293,7 +293,6 @@ public class SharedQueueManagementService {
      * @return the page of build jobs
      */
     public Page<BuildJob> getFilteredFinishedBuildJobs(FinishedBuildJobPageableSearchDTO search, Long courseId) {
-        final Page<BuildJob> ignored = buildJobRepository.findAll(PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.BUILD_JOB));
         final Page<BuildJob> page = buildJobRepository.findAllByFilterCriteria(search.getBuildStatus(), search.getBuildAgentAddress(), search.getStartDate(), search.getEndDate(),
                 search.getSearchTerm(), courseId, PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.BUILD_JOB));
         List<BuildJob> filteredBuildJobs = page.get().filter(buildJob -> {
