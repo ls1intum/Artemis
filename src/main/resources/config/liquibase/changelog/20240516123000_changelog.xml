@@ -10,7 +10,6 @@
         <!-- Update the discriminator column to include the new subtype -->
         <update tableName="iris_sub_settings">
             <column name="discriminator" value="ingestion"/>
-            <where>discriminator IS NULL</where>
         </update>
     </changeSet>
 

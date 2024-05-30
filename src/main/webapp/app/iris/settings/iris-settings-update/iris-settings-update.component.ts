@@ -51,7 +51,7 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     COURSE = IrisSettingsType.COURSE;
     EXERCISE = IrisSettingsType.EXERCISE;
     isAdmin: boolean;
-    lectureChat: boolean = false;
+    lectureChat = false;
 
     constructor(
         private irisSettingsService: IrisSettingsService,
