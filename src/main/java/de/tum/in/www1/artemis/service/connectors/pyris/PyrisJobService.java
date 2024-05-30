@@ -80,7 +80,7 @@ public class PyrisJobService {
     public String addIngestionWebhookJob() {
         var token = generateJobIdToken();
         var job = new IngestionWebhookJob(token);
-        long timeoutWebhookJob = 20;
+        long timeoutWebhookJob = 60;
         TimeUnit unitWebhookJob = TimeUnit.MINUTES;
         jobMap.put(token, job, timeoutWebhookJob, unitWebhookJob);
         return token;
@@ -103,6 +103,15 @@ public class PyrisJobService {
      */
     public PyrisJob getJob(String token) {
         return jobMap.get(token);
+    }
+
+    /**
+     * Get the job of a token.
+     *
+     * @return the whole map of jobs
+     */
+    public IMap<String, PyrisJob> getAllJobs() {
+        return jobMap;
     }
 
     /**
