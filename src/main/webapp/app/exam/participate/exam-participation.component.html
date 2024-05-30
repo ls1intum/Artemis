@@ -3,7 +3,7 @@
 }
 @if (exam) {
     @if (isVisible() && !isGracePeriodOver() && !this.studentExam?.submitted && !examStartConfirmed) {
-        <div class="px-3 py-3">
+        <div class="px-3 py-3 scrollable-content content-height-dev">
             <jhi-exam-participation-cover [startView]="true" [exam]="exam" [studentExam]="studentExam" [testRunStartTime]="testStartTime" (onExamStarted)="examStarted($event)" />
         </div>
     }
