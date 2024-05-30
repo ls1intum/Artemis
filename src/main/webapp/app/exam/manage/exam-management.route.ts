@@ -65,7 +65,6 @@ import { RepositoryViewComponent } from 'app/localvc/repository-view/repository-
 import { LocalVCGuard } from 'app/localvc/localvc-guard.service';
 import { CommitHistoryComponent } from 'app/localvc/commit-history/commit-history.component';
 import { CommitDetailsViewComponent } from 'app/localvc/commit-details-view/commit-details-view.component';
-import { ExamParticipationCoverComponent } from 'app/exam/participate/exam-cover/exam-participation-cover.component';
 
 export const examManagementRoute: Routes = [
     {
@@ -373,15 +372,6 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/test-runs/:testRunId/conduction',
-        component: ExamParticipationCoverComponent,
-        data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.exam.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':examId/test-runs/:testRunId/conduction/participation',
         component: ExamParticipationComponent,
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
