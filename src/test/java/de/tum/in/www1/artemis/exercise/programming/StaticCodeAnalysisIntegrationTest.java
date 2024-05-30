@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -37,7 +38,8 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
-import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
+import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisIssue;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseFeedbackCreationService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
 class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -55,6 +57,9 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
 
     @Autowired
     private CourseRepository courseRepository;
+
+    @Autowired
+    private ProgrammingExerciseFeedbackCreationService feedbackCreationService;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -310,8 +315,9 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
         var result = new Result();
         var feedbackForInactiveCategory = ProgrammingExerciseFactory.createSCAFeedbackWithInactiveCategory(result);
         result.addFeedback(feedbackForInactiveCategory);
-        var filteredFeedback = staticCodeAnalysisCategoryRepository.categorizeScaFeedback(result, List.of(feedbackForInactiveCategory), programmingExerciseSCAEnabled);
-        assertThat(filteredFeedback).isEmpty();
+        var feedbacks = new ArrayList<>(List.of(feedbackForInactiveCategory));
+        feedbackCreationService.categorizeScaFeedback(result, feedbacks, programmingExerciseSCAEnabled);
+        assertThat(feedbacks).isEmpty();
         assertThat(result.getFeedbacks()).isEmpty();
     }
 
@@ -321,12 +327,12 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
         var feedback = new Feedback().result(result).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("SPOTBUGS").detailText("{\"category\": \"BAD_PRACTICE\"}")
                 .type(FeedbackType.AUTOMATIC).positive(false);
         result.addFeedback(feedback);
-        var filteredFeedback = staticCodeAnalysisCategoryRepository.categorizeScaFeedback(result, List.of(feedback), programmingExerciseSCAEnabled);
-        assertThat(filteredFeedback).hasSize(1);
-        assertThat(result.getFeedbacks()).containsExactlyInAnyOrderElementsOf(filteredFeedback);
+        var feedbacks = new ArrayList<>(List.of(feedback));
+        feedbackCreationService.categorizeScaFeedback(result, feedbacks, programmingExerciseSCAEnabled);
+        assertThat(feedbacks).hasSize(1);
+        assertThat(result.getFeedbacks()).containsExactlyInAnyOrderElementsOf(feedbacks);
         assertThat(result.getFeedbacks().getFirst().getStaticCodeAnalysisCategory()).isEqualTo("Bad Practice");
-        assertThat(new ObjectMapper().readValue(result.getFeedbacks().getFirst().getDetailText(), StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue.class).getPenalty())
-                .isEqualTo(3.0);
+        assertThat(new ObjectMapper().readValue(result.getFeedbacks().getFirst().getDetailText(), StaticCodeAnalysisIssue.class).penalty()).isEqualTo(3.0);
     }
 
     @Test

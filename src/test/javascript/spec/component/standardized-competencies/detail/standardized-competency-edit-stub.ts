@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { KnowledgeArea, StandardizedCompetencyDTO } from 'app/entities/competency/standardized-competency.model';
+import { KnowledgeArea, Source, StandardizedCompetencyDTO } from 'app/entities/competency/standardized-competency.model';
 import { Observable } from 'rxjs';
 
 @Component({
@@ -8,6 +8,7 @@ import { Observable } from 'rxjs';
 })
 export class StandardizedCompetencyEditStubComponent {
     @Input() knowledgeAreas: KnowledgeArea[] = [];
+    @Input() sources: Source[] = [];
     @Input() competency: StandardizedCompetencyDTO;
     @Input() isEditing = false;
     @Input() dialogError: Observable<string>;

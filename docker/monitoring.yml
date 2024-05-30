@@ -9,7 +9,7 @@
 services:
   prometheus:
     container_name: artemis-prometheus
-    image: docker.io/prom/prometheus:v2.34.0
+    image: docker.io/prom/prometheus:v2.52.0
     pull_policy: if_not_present
     volumes:
         - ./monitoring/prometheus/:/etc/prometheus/
@@ -25,7 +25,7 @@ services:
     network_mode: 'host' # to test locally running service
   grafana:
     container_name: artemis-grafana
-    image: docker.io/grafana/grafana:9.0.2
+    image: docker.io/grafana/grafana:10.1.10
     pull_policy: if_not_present
     volumes:
       - ./monitoring/grafana/provisioning/:/etc/grafana/provisioning/

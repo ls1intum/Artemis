@@ -2,7 +2,7 @@
     <h2 jhiTranslate="artemisApp.standardizedCompetency.manage.import.title"></h2>
     <div class="card mt-3">
         <div class="card-header d-flex align-items-center mw-100 clickable" (click)="toggleCollapse()">
-            <div class="icon-container me-2">
+            <div class="me-2">
                 <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!isCollapsed" />
             </div>
             <h5 class="mb-0" jhiTranslate="artemisApp.standardizedCompetency.manage.import.format.title"></h5>
@@ -38,7 +38,12 @@
             </jhi-knowledge-area-tree>
             @if (selectedCompetency) {
                 <div style="background-color: var(--overview-light-background-color)" class="card d-flex flex-grow-1 w-100 h-100 p-3 ms-1">
-                    <jhi-standardized-competency-detail [competency]="selectedCompetency" [knowledgeAreaTitle]="knowledgeAreaTitle" (onClose)="closeCompetencyDetails()" />
+                    <jhi-standardized-competency-detail
+                        [competency]="selectedCompetency"
+                        [knowledgeAreaTitle]="knowledgeAreaTitle"
+                        [sourceString]="sourceString"
+                        (onClose)="closeCompetencyDetails()"
+                    />
                 </div>
             }
         </div>

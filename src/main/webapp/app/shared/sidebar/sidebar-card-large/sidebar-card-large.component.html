@@ -1,8 +1,8 @@
 <div
-    id="test-sidebar-card"
+    id="test-sidebar-card-large"
     class="pointer rounded-3 col-12 px-1 pt-5 pb-3 border-start border-5 highlight-card bg-module"
     [routerLink]="itemSelected ? '../' + sidebarItem?.id : './' + sidebarItem?.id"
-    (click)="emitStoreLastSelectedItem(sidebarItem.id)"
+    (click)="emitStoreAndRefresh(sidebarItem.id)"
     [routerLinkActive]="'bg-selected border-selected'"
 >
     <jhi-sidebar-card-item [sidebarType]="sidebarType" [sidebarItem]="sidebarItem" />
