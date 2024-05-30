@@ -80,6 +80,18 @@ public class DragAndDropQuestion extends QuizQuestion {
         return dropLocations;
     }
 
+    public DragAndDropQuestion addDropLocation(DropLocation dropLocation) {
+        this.dropLocations.add(dropLocation);
+        dropLocation.setQuestion(this);
+        return this;
+    }
+
+    public DragAndDropQuestion removeDropLocation(DropLocation dropLocation) {
+        this.dropLocations.remove(dropLocation);
+        dropLocation.setQuestion(null);
+        return this;
+    }
+
     public void setDropLocations(List<DropLocation> dropLocations) {
         this.dropLocations = dropLocations;
     }
@@ -88,12 +100,36 @@ public class DragAndDropQuestion extends QuizQuestion {
         return dragItems;
     }
 
+    public DragAndDropQuestion addDragItem(DragItem dragItem) {
+        this.dragItems.add(dragItem);
+        dragItem.setQuestion(this);
+        return this;
+    }
+
+    public DragAndDropQuestion removeDragItem(DragItem dragItem) {
+        this.dragItems.remove(dragItem);
+        dragItem.setQuestion(null);
+        return this;
+    }
+
     public void setDragItems(List<DragItem> dragItems) {
         this.dragItems = dragItems;
     }
 
     public List<DragAndDropMapping> getCorrectMappings() {
         return correctMappings;
+    }
+
+    public DragAndDropQuestion addCorrectMapping(DragAndDropMapping dragAndDropMapping) {
+        this.correctMappings.add(dragAndDropMapping);
+        dragAndDropMapping.setQuestion(this);
+        return this;
+    }
+
+    public DragAndDropQuestion removeCorrectMapping(DragAndDropMapping dragAndDropMapping) {
+        this.correctMappings.remove(dragAndDropMapping);
+        dragAndDropMapping.setQuestion(null);
+        return this;
     }
 
     public void setCorrectMappings(List<DragAndDropMapping> dragAndDropMappings) {
@@ -116,14 +152,14 @@ public class DragAndDropQuestion extends QuizQuestion {
         }
 
         // A drag item can either be a text or a picture, but not both or none
-        for (DragItem dragItem : content.getDragItems()) {
+        for (DragItem dragItem : getDragItems()) {
             if (StringUtils.isEmpty(dragItem.getText()) == StringUtils.isEmpty(dragItem.getPictureFilePath())) {
                 return false;
             }
         }
 
         // check if at least one correct mapping exists
-        return content.getCorrectMappings() != null && !content.getCorrectMappings().isEmpty();
+        return getCorrectMappings() != null && !getCorrectMappings().isEmpty();
 
         // TODO: (?) Add checks for "is solvable" and "no misleading correct mapping" --> look at the implementation in the client
     }

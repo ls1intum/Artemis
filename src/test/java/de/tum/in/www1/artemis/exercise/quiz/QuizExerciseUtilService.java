@@ -51,6 +51,7 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmittedAnswerRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.service.FilePathService;
+import de.tum.in.www1.artemis.service.quiz.QuizExerciseService;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
@@ -107,6 +108,9 @@ public class QuizExerciseUtilService {
 
     @Autowired
     private QuizScheduleService quizScheduleService;
+
+    @Autowired
+    private QuizExerciseService quizExerciseService;
 
     /**
      * Creates and saves a course with one quiz exercise with the title "Title".
@@ -177,7 +181,7 @@ public class QuizExerciseUtilService {
      */
     public QuizExercise createAndSaveQuiz(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
         QuizExercise quizExercise = createQuiz(releaseDate, dueDate, quizMode);
-        quizExerciseRepository.save(quizExercise);
+        quizExerciseService.save(quizExercise);
 
         return quizExercise;
     }
