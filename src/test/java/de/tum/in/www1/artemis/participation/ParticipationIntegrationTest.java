@@ -69,6 +69,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizPointStatistic;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestion;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestionStatistic;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSpot;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSubmittedAnswer;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSubmittedText;
@@ -93,6 +94,8 @@ import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 import de.tum.in.www1.artemis.service.quiz.QuizBatchService;
+import de.tum.in.www1.artemis.service.quiz.QuizExerciseService;
+import de.tum.in.www1.artemis.service.quiz.QuizIdAssigner;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
@@ -163,6 +166,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Autowired
     private ExamRepository examRepository;
+
+    @Autowired
+    private QuizExerciseService quizExerciseService;
 
     @Captor
     private ArgumentCaptor<Result> resultCaptor;
@@ -1423,9 +1429,19 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         quizExercise.addQuestions(QuizExerciseFactory.createShortAnswerQuestion());
         quizExercise.setDuration(600);
         quizExercise.setQuizPointStatistic(new QuizPointStatistic());
+        ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(0);
+
+        if (saQuestion.getQuizQuestionStatistic() == null) {
+            saQuestion.initializeStatistic();
+        }
+
+        quizExerciseService.fixReferenceShortAnswer(saQuestion);
+        quizExerciseService.restoreCorrectMappingsFromIndicesShortAnswer(saQuestion);
+        QuizIdAssigner.assignIds(((ShortAnswerQuestionStatistic) saQuestion.getQuizQuestionStatistic()).getShortAnswerSpotCounters());
+
         quizExercise = exerciseRepo.save(quizExercise);
 
-        ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(0);
+        saQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(0);
         List<ShortAnswerSpot> spots = saQuestion.getSpots();
         ShortAnswerSubmittedAnswer submittedAnswer = new ShortAnswerSubmittedAnswer();
         submittedAnswer.setQuizQuestion(saQuestion);

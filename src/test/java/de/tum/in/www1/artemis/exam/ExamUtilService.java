@@ -37,8 +37,14 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
+import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestionStatistic;
+import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceQuestion;
+import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceQuestionStatistic;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizPool;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestion;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestionStatistic;
 import de.tum.in.www1.artemis.exercise.fileupload.FileUploadExerciseFactory;
 import de.tum.in.www1.artemis.exercise.fileupload.FileUploadExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.modeling.ModelingExerciseFactory;
@@ -63,6 +69,8 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
+import de.tum.in.www1.artemis.service.quiz.QuizExerciseService;
+import de.tum.in.www1.artemis.service.quiz.QuizIdAssigner;
 import de.tum.in.www1.artemis.service.quiz.QuizPoolService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
@@ -135,6 +143,9 @@ public class ExamUtilService {
 
     @Autowired
     private QuizPoolService quizPoolService;
+
+    @Autowired
+    private QuizExerciseService quizExerciseService;
 
     /**
      * Creates and saves a course with an exam and an exercise group with all exercise types excluding programming exercises.
@@ -778,6 +789,10 @@ public class ExamUtilService {
         }
 
         QuizExercise quizExercise2 = QuizExerciseFactory.createQuizForExam(exerciseGroup1);
+
+        updateQuizQuestions(quizExercise1);
+        updateQuizQuestions(quizExercise2);
+
         exerciseGroup1.setExercises(Set.of(quizExercise1, quizExercise2));
         exerciseRepo.save(quizExercise1);
         exerciseRepo.save(quizExercise2);
@@ -872,6 +887,7 @@ public class ExamUtilService {
             var exerciseGroup3 = exam.getExerciseGroups().get(2 + (withProgrammingExercise ? 1 : 0));
             // Programming exercises need a proper setup for 'prepare exam start' to work
             QuizExercise quizExercise = QuizExerciseFactory.createQuizForExam(exerciseGroup3);
+            updateQuizQuestions(quizExercise);
             exerciseRepo.save(quizExercise);
             exerciseGroup3.setExercises(Set.of(quizExercise));
         }
@@ -1114,6 +1130,30 @@ public class ExamUtilService {
     public StudentExam addExerciseToStudentExam(StudentExam studentExam, Exercise exercise) {
         studentExam.addExercise(exercise);
         return studentExamRepository.save(studentExam);
+    }
+
+    private void updateQuizQuestions(QuizExercise quizExercise) {
+        for (var quizQuestion : quizExercise.getQuizQuestions()) {
+            if (quizQuestion.getQuizQuestionStatistic() == null) {
+                quizQuestion.initializeStatistic();
+            }
+
+            if (quizQuestion instanceof MultipleChoiceQuestion multipleChoiceQuestion) {
+                quizExerciseService.fixReferenceMultipleChoice(multipleChoiceQuestion);
+                QuizIdAssigner.assignIds(multipleChoiceQuestion.getAnswerOptions());
+                QuizIdAssigner.assignIds(((MultipleChoiceQuestionStatistic) multipleChoiceQuestion.getQuizQuestionStatistic()).getAnswerCounters());
+            }
+            else if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
+                quizExerciseService.fixReferenceDragAndDrop(dragAndDropQuestion);
+                quizExerciseService.restoreCorrectMappingsFromIndicesDragAndDrop(dragAndDropQuestion);
+                QuizIdAssigner.assignIds(((DragAndDropQuestionStatistic) dragAndDropQuestion.getQuizQuestionStatistic()).getDropLocationCounters());
+            }
+            else if (quizQuestion instanceof ShortAnswerQuestion shortAnswerQuestion) {
+                quizExerciseService.fixReferenceShortAnswer(shortAnswerQuestion);
+                quizExerciseService.restoreCorrectMappingsFromIndicesShortAnswer(shortAnswerQuestion);
+                QuizIdAssigner.assignIds(((ShortAnswerQuestionStatistic) shortAnswerQuestion.getQuizQuestionStatistic()).getShortAnswerSpotCounters());
+            }
+        }
     }
 
 }
