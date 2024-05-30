@@ -186,7 +186,7 @@ public class CompetencyUtilService {
      * @param confidence    The confidence of the CompetencyJOL
      * @return The persisted CompetencyJOL
      */
-    public CompetencyJol createJOL(Competency competency, User user, short value, ZonedDateTime judgementTime, Double progress, Double confidence) {
+    public CompetencyJol createJol(Competency competency, User user, short value, ZonedDateTime judgementTime, double progress, double confidence) {
         CompetencyJol jol = new CompetencyJol();
         jol.setCompetency(competency);
         jol.setUser(user);

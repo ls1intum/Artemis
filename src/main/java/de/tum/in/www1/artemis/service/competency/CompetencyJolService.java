@@ -5,12 +5,14 @@ import static java.util.stream.Collectors.toMap;
 
 import java.time.ZonedDateTime;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.competency.CompetencyJol;
+import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 import de.tum.in.www1.artemis.repository.CompetencyProgressRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -67,30 +69,32 @@ public class CompetencyJolService {
             throw new BadRequestAlertException("Invalid judgement of learning value", ENTITY_NAME, "invalidJolValue");
         }
 
-        final var jol = createCompetencyJol(competencyId, userId, jolValue, ZonedDateTime.now());
+        final var competencyProgress = competencyProgressRepository.findByCompetencyIdAndUserId(competencyId, userId);
+        final var jol = createCompetencyJol(competencyId, userId, jolValue, ZonedDateTime.now(), competencyProgress);
         competencyJolRepository.save(jol);
     }
 
     /**
      * Create a new CompetencyJOL.
+     * <p>
+     * If no competency progress is provided, the progress and confidence level are set to 0.
      *
-     * @param competencyId  the id of the competency
-     * @param userId        the id of the user
-     * @param jolValue      the judgement of learning value
-     * @param judgementTime the time of the judgement
+     * @param competencyId       the id of the competency
+     * @param userId             the id of the user
+     * @param jolValue           the judgement of learning value
+     * @param judgementTime      the time of the judgement
+     * @param competencyProgress the progress and confidence level of the competency for the user at the current time
      * @return the created CompetencyJol (not persisted)
      */
-    public CompetencyJol createCompetencyJol(long competencyId, long userId, short jolValue, ZonedDateTime judgementTime) {
+    public CompetencyJol createCompetencyJol(long competencyId, long userId, short jolValue, ZonedDateTime judgementTime, Optional<CompetencyProgress> competencyProgress) {
+
         final var jol = new CompetencyJol();
         jol.setCompetency(competencyRepository.findById(competencyId).orElseThrow());
         jol.setUser(userRepository.findById(userId).orElseThrow());
         jol.setValue(jolValue);
         jol.setJudgementTime(judgementTime);
-        final var progress = competencyProgressRepository.findByCompetencyIdAndUserId(competencyId, userId);
-        if (progress.isPresent()) {
-            jol.setCompetencyProgress(progress.get().getProgress());
-            jol.setCompetencyConfidence(progress.get().getConfidence());
-        }
+        jol.setCompetencyProgress(competencyProgress.map(CompetencyProgress::getProgress).orElse(0.0));
+        jol.setCompetencyConfidence(competencyProgress.map(CompetencyProgress::getConfidence).orElse(0.0));
         return jol;
     }
 

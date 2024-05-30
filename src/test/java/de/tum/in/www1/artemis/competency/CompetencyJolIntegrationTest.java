@@ -116,7 +116,7 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         public void shouldUpdateJOL() throws Exception {
-            competencyUtilService.createJOL(competency[0], student, (short) 123, ZonedDateTime.now().minusDays(1), 0.0, 0.0);
+            competencyUtilService.createJol(competency[0], student, (short) 123, ZonedDateTime.now().minusDays(1), 0.0, 0.0);
             short jolValue = 3;
             sendRequest(competency[0].getId(), jolValue, HttpStatus.OK);
             final var jol = competencyJOLRepository.findLatestByCompetencyIdAndUserId(competency[0].getId(), student.getId());
@@ -161,7 +161,7 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         public void shouldReturnValue() throws Exception {
             short jolValue = 123;
-            competencyUtilService.createJOL(competency[0], student, jolValue, ZonedDateTime.now(), 0.25, 0.25);
+            competencyUtilService.createJol(competency[0], student, jolValue, ZonedDateTime.now(), 0.25, 0.25);
             final var jol = sendRequest(competency[0].getId(), HttpStatus.OK);
             assertThat(jol.jolValue()).isEqualTo(jolValue);
         }
@@ -187,8 +187,8 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         public void shouldReturnValues() throws Exception {
-            final var jol0 = competencyUtilService.createJOL(competency[0], student, (short) 123, ZonedDateTime.now(), 0.25, 0.25);
-            final var jol1 = competencyUtilService.createJOL(competency[1], student, (short) 8, ZonedDateTime.now(), null, null);
+            final var jol0 = competencyUtilService.createJol(competency[0], student, (short) 123, ZonedDateTime.now(), 0.25, 0.25);
+            final var jol1 = competencyUtilService.createJol(competency[1], student, (short) 8, ZonedDateTime.now(), 0.1, 0.2);
             final var jolMap = sendRequest(HttpStatus.OK);
             assertThat(jolMap).isNotNull();
             final var expectedMap = Map.of(competency[0].getId(), CompetencyJolDTO.of(jol0), competency[1].getId(), CompetencyJolDTO.of(jol1));
@@ -197,6 +197,8 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
                 assertThat(val.competencyId()).isEqualTo(expValue.competencyId());
                 assertThat(val.jolValue()).isEqualTo(expValue.jolValue());
                 assertThat(val.judgementTime()).isEqualTo(expValue.judgementTime());
+                assertThat(val.competencyProgress()).isEqualTo(expValue.competencyProgress());
+                assertThat(val.competencyConfidence()).isEqualTo(expValue.competencyConfidence());
             });
         }
     }
