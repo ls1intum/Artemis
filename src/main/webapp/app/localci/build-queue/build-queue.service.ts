@@ -6,6 +6,7 @@ import { throwError } from 'rxjs';
 import { BuildJob, FinishedBuildJob } from 'app/entities/build-job.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { HttpResponse } from '@angular/common/http';
+import { FinishedBuildJobFilter } from 'app/localci/build-queue/build-queue.component';
 
 @Injectable({ providedIn: 'root' })
 export class BuildQueueService {
@@ -131,6 +132,18 @@ export class BuildQueueService {
     getFinishedBuildJobs(req?: any): Observable<HttpResponse<FinishedBuildJob[]>> {
         const options = createRequestOption(req);
         return this.http.get<FinishedBuildJob[]>(`${this.adminResourceUrl}/finished-jobs`, { params: options, observe: 'response' }).pipe(
+            catchError((err) => {
+                return throwError(() => new Error(`Failed to get all finished build jobs\n${err.message}`));
+            }),
+        );
+    }
+
+    getCustomFinishedBuildJobs(req?: any, filter?: FinishedBuildJobFilter): Observable<HttpResponse<FinishedBuildJob[]>> {
+        let options = createRequestOption(req);
+        if (filter) {
+            options = filter.addHttpParams(options);
+        }
+        return this.http.get<FinishedBuildJob[]>(`${this.adminResourceUrl}/finished-jobs-custom`, { params: options, observe: 'response' }).pipe(
             catchError((err) => {
                 return throwError(() => new Error(`Failed to get all finished build jobs\n${err.message}`));
             }),

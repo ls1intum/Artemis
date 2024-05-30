@@ -35,12 +35,13 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSp
     Page<BuildJob> findAll(Pageable pageable);
 
     @Query("""
-            SELECT b FROM BuildJob b
+            SELECT b
+            FROM BuildJob b JOIN Course c ON b.courseId = c.id
             WHERE (:buildStatus IS null OR b.buildStatus = :buildStatus)
             AND (:buildAgentAddress IS null OR b.buildAgentAddress = :buildAgentAddress)
             AND (:startDate IS null OR b.buildStartDate >= :startDate)
             AND (:endDate IS null OR b.buildStartDate <= :endDate)
-            AND (:searchTerm IS null OR (str(b.courseId) LIKE %:searchTerm% OR b.repositoryName LIKE %:searchTerm%))
+            AND (:searchTerm IS null OR (str(b.courseId) LIKE %:searchTerm% OR b.repositoryName LIKE %:searchTerm% OR c.title LIKE %:searchTerm%))
             """)
     @EntityGraph(attributePaths = { "result", "result.participation", "result.participation.exercise", "result.submission" })
     Page<BuildJob> findAllByBuildStatusAndBuildAgentAddressAndBuildStartDateBetween(@Param("buildStatus") BuildStatus buildStatus,

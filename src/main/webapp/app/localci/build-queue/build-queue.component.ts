@@ -16,13 +16,16 @@ import { NgbModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { HttpParams } from '@angular/common/http';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Observable, OperatorFunction, Subject, merge } from 'rxjs';
-import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 
-class FinishedBuildJobFilter {
+export class FinishedBuildJobFilter {
     status?: string = undefined;
     buildAgentAddress?: string = undefined;
     buildStartDateFilterFrom?: dayjs.Dayjs = undefined;
     buildStartDateFilterTo?: dayjs.Dayjs = undefined;
+    buildDurationFilterLowerBound?: number = undefined;
+    buildDurationFilterUpperBound?: number = undefined;
+    searchTerm?: string = undefined;
 
     /**
      * Adds the http param options
@@ -40,6 +43,12 @@ class FinishedBuildJobFilter {
         }
         if (this.buildStartDateFilterTo) {
             options = options.append('buildStartDateFilterTo', this.buildStartDateFilterTo.toISOString());
+        }
+        if (this.buildDurationFilterLowerBound) {
+            options = options.append('buildDurationFilterLowerBound', this.buildDurationFilterLowerBound.toString());
+        }
+        if (this.buildDurationFilterUpperBound) {
+            options = options.append('buildDurationFilterUpperBound', this.buildDurationFilterUpperBound.toString());
         }
         return options;
     }
@@ -70,6 +79,13 @@ class FinishedBuildJobFilter {
         }
         return dayjs(this.buildStartDateFilterFrom).isBefore(dayjs(this.buildStartDateFilterTo));
     }
+
+    get areDurationFiltersValid(): boolean {
+        if (!this.buildDurationFilterLowerBound || !this.buildDurationFilterUpperBound) {
+            return true;
+        }
+        return this.buildDurationFilterLowerBound < this.buildDurationFilterUpperBound;
+    }
 }
 
 enum BuildJobStatusFilter {
@@ -84,6 +100,8 @@ enum FishedBuildJobFilterStorageKey {
     BUILD_AGENT_ADDRESS = 'artemis.buildQueue.finishedBuildJobFilterBuildAgentAddress',
     BUILD_START_DATE_FILTER_FROM = 'artemis.buildQueue.finishedBuildJobFilterBuildStartDateFilterFrom',
     BUILD_START_DATE_FILTER_TO = 'artemis.buildQueue.finishedBuildJobFilterBuildStartDateFilterTo',
+    BUILD_DURATION_FILTER_LOWER_BOUND = 'artemis.buildQueue.finishedBuildJobFilterBuildDurationFilterLowerBound',
+    BUILD_DURATION_FILTER_UPPER_BOUND = 'artemis.buildQueue.finishedBuildJobFilterBuildDurationFilterUpperBound',
 }
 
 @Component({
@@ -120,6 +138,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     faFilter = faFilter;
     focus$ = new Subject<string>();
     click$ = new Subject<string>();
+    isLoading = false;
 
     constructor(
         private route: ActivatedRoute,
@@ -254,42 +273,52 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      * Load the finished build jobs from the server
      */
     loadFinishedBuildJobs() {
-        this.route.paramMap.pipe(take(1)).subscribe((params) => {
-            const courseId = Number(params.get('courseId'));
-            if (courseId) {
-                this.buildQueueService
-                    .getFinishedBuildJobsByCourseId(courseId, {
-                        page: this.page,
-                        pageSize: this.itemsPerPage,
-                        sortingOrder: this.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
-                        sortedColumn: this.predicate,
-                    })
-                    .subscribe({
-                        next: (res: HttpResponse<FinishedBuildJob[]>) => {
-                            this.onSuccess(res.body || [], res.headers);
-                        },
-                        error: (res: HttpErrorResponse) => {
-                            onError(this.alertService, res);
-                        },
-                    });
-            } else {
-                this.buildQueueService
-                    .getFinishedBuildJobs({
-                        page: this.page,
-                        pageSize: this.itemsPerPage,
-                        sortingOrder: this.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
-                        sortedColumn: this.predicate,
-                    })
-                    .subscribe({
-                        next: (res: HttpResponse<FinishedBuildJob[]>) => {
-                            this.onSuccess(res.body || [], res.headers);
-                        },
-                        error: (res: HttpErrorResponse) => {
-                            onError(this.alertService, res);
-                        },
-                    });
-            }
-        });
+        this.route.paramMap
+            .pipe(
+                take(1),
+                tap(() => (this.isLoading = true)),
+            )
+            .subscribe((params) => {
+                const courseId = Number(params.get('courseId'));
+                if (courseId) {
+                    this.buildQueueService
+                        .getFinishedBuildJobsByCourseId(courseId, {
+                            page: this.page,
+                            pageSize: this.itemsPerPage,
+                            sortingOrder: this.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
+                            sortedColumn: this.predicate,
+                        })
+                        .subscribe({
+                            next: (res: HttpResponse<FinishedBuildJob[]>) => {
+                                this.onSuccess(res.body || [], res.headers);
+                            },
+                            error: (res: HttpErrorResponse) => {
+                                onError(this.alertService, res);
+                            },
+                        });
+                } else {
+                    this.buildQueueService
+                        .getFinishedBuildJobs({
+                            page: this.page,
+                            pageSize: this.itemsPerPage,
+                            sortingOrder: this.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
+                            sortedColumn: this.predicate,
+                        })
+                        .subscribe({
+                            next: (res: HttpResponse<FinishedBuildJob[]>) => {
+                                this.onSuccess(res.body || [], res.headers);
+                            },
+                            error: (res: HttpErrorResponse) => {
+                                onError(this.alertService, res);
+                            },
+                        });
+                }
+            });
+    }
+
+    // Placeholder method to avoid linting error
+    doNothing() {
+        // do nothing
     }
 
     /**
@@ -299,6 +328,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      * @private
      */
     private onSuccess(finishedBuildJobs: FinishedBuildJob[], headers: HttpHeaders) {
+        this.isLoading = false;
         this.totalItems = Number(headers.get('X-Total-Count'));
         this.finishedBuildJobs = finishedBuildJobs;
         this.setFinishedBuildJobsDuration();
@@ -420,12 +450,23 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
         this.modalService.dismissAll();
     }
 
+    filterBuildAgentAddressChanged() {
+        if (this.finishedBuildJobFilter.buildAgentAddress) {
+            this.localStorage.store(FishedBuildJobFilterStorageKey.BUILD_AGENT_ADDRESS, this.finishedBuildJobFilter.buildAgentAddress);
+        }
+    }
+
     filterDateChanged() {
         if (this.finishedBuildJobFilter.areDatesValid) {
             this.localStorage.store(FishedBuildJobFilterStorageKey.BUILD_START_DATE_FILTER_FROM, this.finishedBuildJobFilter.buildStartDateFilterFrom?.toISOString());
             this.localStorage.store(FishedBuildJobFilterStorageKey.BUILD_START_DATE_FILTER_TO, this.finishedBuildJobFilter.buildStartDateFilterTo?.toISOString());
-        } else {
-            this.alertService.error('artemisApp.buildQueue.finishedBuildJobFilter.invalidDates');
+        }
+    }
+
+    filterDurationChanged() {
+        if (this.finishedBuildJobFilter.areDurationFiltersValid) {
+            this.localStorage.store(FishedBuildJobFilterStorageKey.BUILD_DURATION_FILTER_LOWER_BOUND, this.finishedBuildJobFilter.buildDurationFilterLowerBound);
+            this.localStorage.store(FishedBuildJobFilterStorageKey.BUILD_DURATION_FILTER_UPPER_BOUND, this.finishedBuildJobFilter.buildDurationFilterUpperBound);
         }
     }
 }

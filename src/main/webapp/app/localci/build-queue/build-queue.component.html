@@ -415,10 +415,27 @@
     <div class="d-flex justify-content-between">
         <div style="display: flex; align-items: center">
             <h3 id="build-queue-finished-heading" jhiTranslate="artemisApp.buildQueue.finishedBuildJobs" style="margin-right: 20px"></h3>
+            <div class="form-group form-inline my-0 mx-1">
+                <input
+                    class="form-control ms-3"
+                    type="text"
+                    name="searchTerm"
+                    id="field_searchTerm"
+                    formControlName="searchControl"
+                    [(ngModel)]="finishedBuildJobFilter.searchTerm"
+                    (focusout)="doNothing()"
+                />
+                <button class="btn btn-primary ms-3" (click)="doNothing()">
+                    <span jhiTranslate="artemisApp.userManagement.search"></span>
+                </button>
+            </div>
             <button class="btn btn-primary" (click)="refresh()">
                 <fa-icon [icon]="faSync" />
                 <span jhiTranslate="metrics.refresh.button"></span>
             </button>
+            @if (this.isLoading) {
+                <span class="ms-3" jhiTranslate="artemisApp.userManagement.loading"></span>
+            }
         </div>
         <div>
             <button
@@ -726,6 +743,7 @@
                         [ngbTypeahead]="search"
                         (focus)="focus$.next($any($event).target.value)"
                         (click)="clickEvents($event, addressTypeahead)"
+                        (change)="filterBuildAgentAddressChanged()"
                         #addressTypeahead="ngbTypeahead"
                     />
                 </div>
@@ -762,9 +780,29 @@
                             [shouldDisplayTimeZoneWarning]="false"
                             [(ngModel)]="finishedBuildJobFilter.buildStartDateFilterTo"
                             [error]="!finishedBuildJobFilter.areDatesValid"
+                            (valueChange)="filterDateChanged()"
                         />
                         @if (!finishedBuildJobFilter.areDatesValid) {
                             <span class="invalid-feedback"> {{ 'artemisApp.buildQueue.filter.buildStartDate.invalidDate' | artemisTranslate }}</span>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="row finished-build-jobs-filter-border-bottom">
+                <div class="col d-flex flex-row pb-1">
+                    <h5 class="my-0">{{ 'artemisApp.buildQueue.filter.buildDuration.title' | artemisTranslate }}</h5>
+                </div>
+            </div>
+            <div class="row finished-build-jobs-filter-background-accent">
+                <div class="col container px-3 my-0 py-2">
+                    <div class="input-group">
+                        <span class="input-group-text" jhiTranslate="artemisApp.buildQueue.filter.buildDuration.lowerBound"></span>
+                        <input type="number" class="form-control" [(ngModel)]="finishedBuildJobFilter.buildDurationFilterLowerBound" (change)="filterDurationChanged()" />
+                        <span class="input-group-text" jhiTranslate="artemisApp.buildQueue.filter.buildDuration.upperBound"></span>
+                        <input type="number" class="form-control" [(ngModel)]="finishedBuildJobFilter.buildDurationFilterUpperBound" (change)="filterDurationChanged()" />
+                        @if (!finishedBuildJobFilter.areDurationFiltersValid) {
+                            <span class="invalid-feedback"> {{ 'artemisApp.buildQueue.filter.buildDuration.invalidState' | artemisTranslate }}</span>
                         }
                     </div>
                 </div>

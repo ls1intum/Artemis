@@ -193,7 +193,12 @@ public class AdminBuildJobQueueResource {
                 search.getStartDate(), search.getEndDate(), search.getSearchTerm(), PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.BUILD_JOB));
         List<BuildJob> filteredBuildJobs = page.get().filter(buildJob -> {
             Duration buildDuration = Duration.between(buildJob.getBuildStartDate(), buildJob.getBuildCompletionDate());
-            return buildDuration.toSeconds() >= search.getBuildDurationLower() && buildDuration.toSeconds() <= search.getBuildDurationUpper();
+            if (search.getBuildDurationUpper() != 0) {
+                return buildDuration.toSeconds() >= search.getBuildDurationLower() && buildDuration.toSeconds() <= search.getBuildDurationUpper();
+            }
+            else {
+                return buildDuration.toSeconds() >= search.getBuildDurationLower();
+            }
         }).collect(Collectors.toList());
 
         Page<BuildJob> filteredPage = new PageImpl<>(filteredBuildJobs, page.getPageable(), filteredBuildJobs.size());

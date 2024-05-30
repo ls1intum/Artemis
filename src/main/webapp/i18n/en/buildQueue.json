@@ -43,6 +43,16 @@
                     "to": "To",
                     "invalidDate": "From date must be before to date"
                 },
+                "buildDuration": {
+                    "title": "Build Duration (in seconds)",
+                    "lowerBound": "Lower Bound",
+                    "upperBound": "Upper Bound",
+                    "invalidState": "Lower bound must be less than upper bound"
+                },
+                "search": {
+                    "title": "Search",
+                    "placeholder": "Search for build job"
+                },
                 "none": "None",
                 "close": "Close",
                 "apply": "Apply",
