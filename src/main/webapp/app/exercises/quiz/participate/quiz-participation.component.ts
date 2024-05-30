@@ -793,7 +793,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         if (resetAutoSaveTimer) {
             this.autoSaveTimer = 0;
         }
-        if (this.unsavedChanges) {
+        if (this.unsavedChanges && !this.isSubmitting) {
             this.applySelection();
             this.submission.submissionDate = this.serverDateService.now();
             this.quizParticipationService
