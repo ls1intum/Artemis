@@ -7,7 +7,6 @@ import java.util.Optional;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.quiz.QuizPool;
@@ -21,7 +20,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizPool;
 public interface QuizPoolRepository extends JpaRepository<QuizPool, Long> {
 
     @EntityGraph(attributePaths = { "exam", "quizQuestions", "quizQuestions.quizQuestionStatistic" })
-    Optional<QuizPool> findWithEagerQuizQuestionsByExamId(@Param("examId") Long examId);
+    Optional<QuizPool> findWithEagerQuizQuestionsByExamId(long examId);
 
     /**
      * Find the quiz pool for the given exam id
