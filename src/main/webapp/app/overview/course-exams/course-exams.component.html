@@ -6,9 +6,7 @@
 
         @if (examSelected) {
             <div class="vw-100 module-bg rounded-3">
-                <div class="card-body">
-                    <router-outlet (deactivate)="onSubRouteDeactivate()" />
-                </div>
+                <router-outlet (deactivate)="onSubRouteDeactivate()" />
             </div>
         } @else {
             <div class="vw-100 module-bg rounded-3 p-3 d-flex justify-content-between">
