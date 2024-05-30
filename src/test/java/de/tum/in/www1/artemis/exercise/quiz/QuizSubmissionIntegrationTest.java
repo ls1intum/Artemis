@@ -46,16 +46,19 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.quiz.AnswerOption;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropMapping;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
+import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestionStatistic;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropSubmittedAnswer;
 import de.tum.in.www1.artemis.domain.quiz.DragItem;
 import de.tum.in.www1.artemis.domain.quiz.DropLocation;
 import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceQuestion;
+import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceQuestionStatistic;
 import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceSubmittedAnswer;
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestion;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestionStatistic;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSpot;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSubmittedAnswer;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSubmittedText;
@@ -71,6 +74,7 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.quiz.QuizBatchService;
 import de.tum.in.www1.artemis.service.quiz.QuizExerciseService;
+import de.tum.in.www1.artemis.service.quiz.QuizIdAssigner;
 import de.tum.in.www1.artemis.service.quiz.QuizStatisticService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
@@ -165,6 +169,29 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     void testQuizSubmitUnactiveQuizWebsocket() {
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusDays(1), null, QuizMode.SYNCHRONIZED);
         quizExercise.duration(240);
+
+        for (var quizQuestion : quizExercise.getQuizQuestions()) {
+            if (quizQuestion.getQuizQuestionStatistic() == null) {
+                quizQuestion.initializeStatistic();
+            }
+
+            if (quizQuestion instanceof MultipleChoiceQuestion multipleChoiceQuestion) {
+                quizExerciseService.fixReferenceMultipleChoice(multipleChoiceQuestion);
+                QuizIdAssigner.assignIds(multipleChoiceQuestion.getAnswerOptions());
+                QuizIdAssigner.assignIds(((MultipleChoiceQuestionStatistic) multipleChoiceQuestion.getQuizQuestionStatistic()).getAnswerCounters());
+            }
+            else if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
+                quizExerciseService.fixReferenceDragAndDrop(dragAndDropQuestion);
+                quizExerciseService.restoreCorrectMappingsFromIndicesDragAndDrop(dragAndDropQuestion);
+                QuizIdAssigner.assignIds(((DragAndDropQuestionStatistic) dragAndDropQuestion.getQuizQuestionStatistic()).getDropLocationCounters());
+            }
+            else if (quizQuestion instanceof ShortAnswerQuestion shortAnswerQuestion) {
+                quizExerciseService.fixReferenceShortAnswer(shortAnswerQuestion);
+                quizExerciseService.restoreCorrectMappingsFromIndicesShortAnswer(shortAnswerQuestion);
+                QuizIdAssigner.assignIds(((ShortAnswerQuestionStatistic) shortAnswerQuestion.getQuizQuestionStatistic()).getShortAnswerSpotCounters());
+            }
+        }
+
         quizExerciseRepository.save(quizExercise);
 
         QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, null);

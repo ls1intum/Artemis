@@ -490,6 +490,28 @@ public class QuizExerciseUtilService {
     public QuizExercise createAndSaveQuizWithAllQuestionTypes(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, QuizMode quizMode) {
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(releaseDate, dueDate, assessmentDueDate, quizMode, course);
         QuizExerciseFactory.addAllQuestionTypesToQuizExercise(quizExercise);
+
+        for (var quizQuestion : quizExercise.getQuizQuestions()) {
+            if (quizQuestion.getQuizQuestionStatistic() == null) {
+                quizQuestion.initializeStatistic();
+            }
+
+            if (quizQuestion instanceof MultipleChoiceQuestion multipleChoiceQuestion) {
+                quizExerciseService.fixReferenceMultipleChoice(multipleChoiceQuestion);
+                QuizIdAssigner.assignIds(multipleChoiceQuestion.getAnswerOptions());
+                QuizIdAssigner.assignIds(((MultipleChoiceQuestionStatistic) multipleChoiceQuestion.getQuizQuestionStatistic()).getAnswerCounters());
+            }
+            else if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
+                quizExerciseService.fixReferenceDragAndDrop(dragAndDropQuestion);
+                quizExerciseService.restoreCorrectMappingsFromIndicesDragAndDrop(dragAndDropQuestion);
+                QuizIdAssigner.assignIds(((DragAndDropQuestionStatistic) dragAndDropQuestion.getQuizQuestionStatistic()).getDropLocationCounters());
+            }
+            else if (quizQuestion instanceof ShortAnswerQuestion shortAnswerQuestion) {
+                quizExerciseService.fixReferenceShortAnswer(shortAnswerQuestion);
+                quizExerciseService.restoreCorrectMappingsFromIndicesShortAnswer(shortAnswerQuestion);
+                QuizIdAssigner.assignIds(((ShortAnswerQuestionStatistic) shortAnswerQuestion.getQuizQuestionStatistic()).getShortAnswerSpotCounters());
+            }
+        }
         return quizExerciseRepository.save(quizExercise);
     }
 
