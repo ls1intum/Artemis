@@ -684,7 +684,7 @@ public class CourseTestService {
         course = courseRepo.save(course);
 
         Set<Prerequisite> prerequisites = new HashSet<>();
-        prerequisites.add(prerequisiteUtilService.createPrerequisite(courseUtilService.createCourse()));
+        prerequisites.add(prerequisiteUtilService.createPrerequisite(course));
         course.setPrerequisites(prerequisites);
         course = courseRepo.save(course);
 
