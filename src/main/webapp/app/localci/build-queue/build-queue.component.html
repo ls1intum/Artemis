@@ -421,11 +421,10 @@
                     type="text"
                     name="searchTerm"
                     id="field_searchTerm"
-                    formControlName="searchControl"
                     [(ngModel)]="finishedBuildJobFilter.searchTerm"
-                    (focusout)="doNothing()"
+                    (focusout)="triggerLoadFinishedJobs()"
                 />
-                <button class="btn btn-primary ms-3" (click)="doNothing()">
+                <button class="btn btn-primary ms-3" (click)="triggerLoadFinishedJobs()">
                     <span jhiTranslate="artemisApp.userManagement.search"></span>
                 </button>
             </div>
@@ -740,7 +739,7 @@
                         class="form-control"
                         [placeholder]="'artemisApp.buildQueue.filter.buildAgentAddress' | artemisTranslate"
                         [(ngModel)]="finishedBuildJobFilter.buildAgentAddress"
-                        [ngbTypeahead]="search"
+                        [ngbTypeahead]="typeaheadSearch"
                         (focus)="focus$.next($any($event).target.value)"
                         (click)="clickEvents($event, addressTypeahead)"
                         (change)="filterBuildAgentAddressChanged()"
@@ -763,13 +762,11 @@
                         <jhi-date-time-picker
                             id="field_startDate"
                             [shouldDisplayTimeZoneWarning]="false"
+                            [labelName]="''"
                             [(ngModel)]="finishedBuildJobFilter.buildStartDateFilterFrom"
                             [error]="!finishedBuildJobFilter.areDatesValid"
                             (valueChange)="filterDateChanged()"
                         />
-                        @if (!finishedBuildJobFilter.areDatesValid) {
-                            <span class="invalid-feedback"> {{ 'artemisApp.buildQueue.filter.buildStartDate.invalidDate' | artemisTranslate }}</span>
-                        }
                     </div>
                     <div class="input-group">
                         <div class="input-group-append form-item-prepend">
@@ -778,6 +775,7 @@
                         <jhi-date-time-picker
                             id="field_endDate"
                             [shouldDisplayTimeZoneWarning]="false"
+                            [labelName]="''"
                             [(ngModel)]="finishedBuildJobFilter.buildStartDateFilterTo"
                             [error]="!finishedBuildJobFilter.areDatesValid"
                             (valueChange)="filterDateChanged()"

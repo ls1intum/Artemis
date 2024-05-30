@@ -26,7 +26,38 @@
                 "status": "Status",
                 "buildLogs": "Build Logs"
             },
-            "cancelAll": "Alle abbrechen"
+            "cancelAll": "Alle abbrechen",
+            "filter": {
+                "title": "BuildJobs Filter",
+                "buildStatus": {
+                    "title": "Build Status",
+                    "cancelled": "Abgebrochen",
+                    "failed": "Fehlgeschlagen",
+                    "error": "Fehler",
+                    "successful": "Erfolgreich"
+                },
+                "buildAgentAddress": "Build Agent Adresse",
+                "buildStartDate": {
+                    "title": "Build Startdatum",
+                    "from": "Von",
+                    "to": "Bis",
+                    "invalidDate": "Von-Datum muss vor dem Bis-Datum liegen"
+                },
+                "buildDuration": {
+                    "title": "Build Dauer (in Sekunden)",
+                    "lowerBound": "Untere Grenze",
+                    "upperBound": "Obere Grenze",
+                    "invalidState": "Die untere Grenze muss kleiner als die obere Grenze sein"
+                },
+                "search": {
+                    "title": "Suche",
+                    "placeholder": "Suche nach Buildjob"
+                },
+                "none": "Keine",
+                "close": "Schließen",
+                "apply": "Anwenden",
+                "open": "Filter ({{ num }})"
+            }
         }
     }
 }

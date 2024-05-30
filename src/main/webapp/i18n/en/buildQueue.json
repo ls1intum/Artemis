@@ -56,7 +56,7 @@
                 "none": "None",
                 "close": "Close",
                 "apply": "Apply",
-                "open": "Open"
+                "open": "Filter ({{ num }})"
             }
         }
     }
