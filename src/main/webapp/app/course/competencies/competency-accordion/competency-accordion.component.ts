@@ -74,8 +74,8 @@ export class CompetencyAccordionComponent implements OnChanges {
             this.promptForRating = CompetencyJol.shouldPromptForJol(
                 this.competency satisfies Competency,
                 {
-                    progress: this.progress,
-                    confidence: this.confidence,
+                    progress: this.metrics.competencyMetrics?.progress?.[this.competency.id],
+                    confidence: this.metrics.competencyMetrics?.confidence?.[this.competency.id],
                 },
                 courseCompetencies,
             );
