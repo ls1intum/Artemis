@@ -207,6 +207,9 @@ public class MultipleChoiceQuestion extends QuizQuestion {
         // check answer options
         if (getAnswerOptions() != null) {
             for (AnswerOption answerOption : getAnswerOptions()) {
+                if (answerOption.getExplanation().length() > 500) {
+                    return false;
+                }
                 if (answerOption.isIsCorrect()) {
                     correctAnswerCount++;
                 }
