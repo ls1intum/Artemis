@@ -310,7 +310,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 return;
             }
             this.autoSaveTimer++;
-            if (this.autoSaveTimer >= AUTOSAVE_EXERCISE_INTERVAL / 3) {
+            if (this.autoSaveTimer >= AUTOSAVE_EXERCISE_INTERVAL) {
                 this.triggerSave();
             }
         }, AUTOSAVE_CHECK_INTERVAL);
