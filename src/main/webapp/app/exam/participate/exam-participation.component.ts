@@ -217,6 +217,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         });
     }
 
+    navigateToSummary() {
+        this.loadAndDisplaySummary();
+        window.location.reload();
+    }
+
     canDeactivate() {
         return this.loggedOut || this.isOver() || !this.studentExam || this.handInEarly || !this.examStartConfirmed;
     }
@@ -376,6 +381,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     if (this.testRunId) {
                         // If this is a test run, forward the user directly to the exam summary
                         this.router.navigate(['course-management', this.courseId, 'exams', this.examId, 'test-runs', this.testRunId, 'summary']);
+                    }
+
+                    if (this.testExam) {
+                        window.location.reload();
                     }
 
                     this.examSummaryButtonTimer = setInterval(() => {

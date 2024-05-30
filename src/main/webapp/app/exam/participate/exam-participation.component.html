@@ -124,7 +124,7 @@
             </div>
         }
         @if (this.studentExam?.submitted && !showExamSummary && !loadingExam) {
-            <div class="submissionSuccessfulHint">
+            <div class="submissionSuccessfulHint pb-3">
                 <fa-icon [icon]="faCheckCircle" class="check" />
                 <h2 jhiTranslate="artemisApp.examParticipation.submissionSuccessful.title"></h2>
                 <p jhiTranslate="artemisApp.examParticipation.submissionSuccessful.noActionRequired"></p>
@@ -134,7 +134,7 @@
                     id="showExamSummaryButton"
                     class="btn btn-primary"
                     [disabled]="examSummaryButtonSecondsLeft"
-                    (click)="loadAndDisplaySummary()"
+                    (click)="navigateToSummary()"
                     jhiTranslate="artemisApp.examParticipation.submissionSuccessful.button"
                     [translateValues]="{ countdown: examSummaryButtonSecondsLeft ? ' (' + examSummaryButtonSecondsLeft + ')' : '' }"
                 ></button>
