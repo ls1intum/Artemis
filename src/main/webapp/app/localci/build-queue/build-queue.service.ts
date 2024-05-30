@@ -143,7 +143,7 @@ export class BuildQueueService {
         if (filter) {
             options = filter.addHttpParams(options);
         }
-        return this.http.get<FinishedBuildJob[]>(`${this.adminResourceUrl}/finished-jobs-custom`, { params: options, observe: 'response' }).pipe(
+        return this.http.get<FinishedBuildJob[]>(`${this.adminResourceUrl}/finished-jobs`, { params: options, observe: 'response' }).pipe(
             catchError((err) => {
                 return throwError(() => new Error(`Failed to get all finished build jobs\n${err.message}`));
             }),
