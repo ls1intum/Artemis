@@ -49,6 +49,10 @@ Create a file ``src/main/resources/config/application-local.yml`` with the follo
                image-architecture: arm64
                # Only necessary on Windows:
                docker-connection-uri: tcp://localhost:2375
+       eureka:
+           client:
+               register-with-eureka: false
+               fetch-registry: false
 
 The values configured here are sufficient for a basic Artemis setup that allows for running programming exercises with Integrated Code Lifecycle.
 
