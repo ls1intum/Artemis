@@ -99,7 +99,7 @@ class QuizCacheTest extends AbstractSpringIntegrationIndependentTest {
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now().minusHours(5), null, quizMode);
         quizExercise.setDuration(360);
         quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(ZonedDateTime.now().minusMinutes(5)));
-        quizExercise = quizExerciseRepository.save(quizExercise);
+        quizExercise = quizExerciseService.save(quizExercise);
         final long exerciseId = quizExercise.getId();
 
         // create a local cache exists to save the exercise in
@@ -128,7 +128,7 @@ class QuizCacheTest extends AbstractSpringIntegrationIndependentTest {
     void testProcessSubmission(boolean submitted, boolean deleted) {
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(1), null, QuizMode.SYNCHRONIZED);
         quizExercise.duration(240);
-        quizExerciseRepository.save(quizExercise);
+        quizExerciseService.save(quizExercise);
 
         QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, submitted, null);
         String username = TEST_PREFIX + "student1";
