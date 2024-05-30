@@ -80,8 +80,18 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
             next: ([competencyResp, judgementOfLearningResp]) => {
                 const competencies = competencyResp.body!;
                 this.competency = competencies.find((c) => c.id === this.competencyId)!;
-                this.judgementOfLearning = judgementOfLearningResp.body ?? undefined;
-                this.promptForJolRating = CompetencyJol.shouldPromptForJol(this.competency, this.competency.userProgress?.first(), competencies);
+                const progress = this.competency.userProgress?.first();
+                this.promptForJolRating = CompetencyJol.shouldPromptForJol(this.competency, progress, competencies);
+                const judgementOfLearning = judgementOfLearningResp.body ?? undefined;
+                if (
+                    judgementOfLearning &&
+                    progress &&
+                    (judgementOfLearning.competencyProgress !== progress.progress || judgementOfLearning.competencyConfidence !== progress.confidence)
+                ) {
+                    this.judgementOfLearning = undefined;
+                } else {
+                    this.judgementOfLearning = judgementOfLearning;
+                }
 
                 if (this.competency && this.competency.exercises) {
                     // Add exercises as lecture units for display

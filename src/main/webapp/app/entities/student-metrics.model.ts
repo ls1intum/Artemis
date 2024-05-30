@@ -53,7 +53,7 @@ export class LectureUnitInformation {
     public id: number;
     public lectureId: number;
     public name: string;
-    public releaseDate: dayjs.Dayjs;
+    public releaseDate?: dayjs.Dayjs;
     public type: LectureUnitType;
 }
 
