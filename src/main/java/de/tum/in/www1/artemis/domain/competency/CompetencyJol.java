@@ -38,6 +38,12 @@ public class CompetencyJol extends DomainObject {
     @Column(name = "judgement_time", nullable = false)
     private ZonedDateTime judgementTime;
 
+    @Column(name = "competency_progress")
+    private Double competencyProgress;
+
+    @Column(name = "competency_confidence")
+    private Double competencyConfidence;
+
     public Competency getCompetency() {
         return this.competency;
     }
@@ -68,5 +74,21 @@ public class CompetencyJol extends DomainObject {
 
     public void setJudgementTime(ZonedDateTime judgementTime) {
         this.judgementTime = judgementTime;
+    }
+
+    public Double getCompetencyProgress() {
+        return this.competencyProgress;
+    }
+
+    public void setCompetencyProgress(Double progress) {
+        this.competencyProgress = progress;
+    }
+
+    public Double getCompetencyConfidence() {
+        return this.competencyConfidence;
+    }
+
+    public void setCompetencyConfidence(Double confidence) {
+        this.competencyConfidence = confidence;
     }
 }

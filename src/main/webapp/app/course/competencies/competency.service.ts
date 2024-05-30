@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import {
     Competency,
     CompetencyImportResponseDTO,
+    CompetencyJol,
     CompetencyProgress,
     CompetencyRelation,
     CompetencyRelationDTO,
@@ -66,10 +67,10 @@ export class CompetencyService {
      * @param courseId the id of the course for which the JoL values should be fetched
      * @return an Observable of HttpResponse containing a map from competency id to JoL value
      */
-    getJoLAllForCourse(courseId: number): Observable<HttpResponse<{ [key: number]: number }>> {
+    getJoLAllForCourse(courseId: number): Observable<HttpResponse<{ [key: number]: CompetencyJol }>> {
         return this.httpClient
-            .get<{ [key: number]: number }>(`${this.resourceURL}/courses/${courseId}/competencies/jol`, { observe: 'response' })
-            .pipe(map((res: HttpResponse<{ [key: number]: number }>) => res));
+            .get<{ [key: number]: CompetencyJol }>(`${this.resourceURL}/courses/${courseId}/competencies/jol`, { observe: 'response' })
+            .pipe(map((res: HttpResponse<{ [key: number]: CompetencyJol }>) => res));
     }
 
     getProgress(competencyId: number, courseId: number, refresh = false) {

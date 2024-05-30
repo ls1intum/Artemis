@@ -36,7 +36,7 @@ public interface CompetencyJolRepository extends JpaRepository<CompetencyJol, Lo
     Optional<CompetencyJol> findLatestByCompetencyIdAndUserId(long competencyId, long userId);
 
     @Query("""
-            SELECT new de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyJolDTO(c.competency.id, c.value, c.judgementTime)
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyJolDTO(c.competency.id, c.value, c.judgementTime, c.competencyProgress, c.competencyConfidence)
             FROM CompetencyJol c
             WHERE c.user.id = :userId
                 AND c.competency.course.id = :courseId
