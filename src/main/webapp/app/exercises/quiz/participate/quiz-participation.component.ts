@@ -207,8 +207,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.websocketSubscription = this.jhiWebsocketService.connectionState.subscribe((status) => {
             if (status.connected && this.disconnected) {
                 // if the disconnect happened during the live quiz and there are unsaved changes, we trigger a selection changed event to save the submission on the server
-                // TODO: This changes the timer. Maybe we don't want that?
-                this.onAutoSave();
+                // TODO: Do we want this to affect the timer?
+                this.triggerSave(false);
                 // if the quiz was not yet started, we might have missed the quiz start => refresh
                 if (this.quizBatch && !this.quizBatch.started) {
                     this.refreshQuiz(true);
@@ -299,22 +299,25 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     }
 
     setupAutoSave(): void {
-        window.clearInterval(this.autoSaveInterval);
+        // Clear existing autosaves - only one may run at a time
+        this.stopAutoSave();
         this.autoSaveInterval = window.setInterval(() => {
             if (this.waitingForQuizStart) {
                 // The quiz has not started. No need to autosave yet.
                 return;
-            } else if (this.remainingTimeSeconds < 0 || this.submission.submitted) {
-                // The quiz is over or the submission has been submitted. We can stop trying to autosave.
+            } else if (this.isQuizOverOrSubmitted()) {
                 this.stopAutoSave();
                 return;
             }
             this.autoSaveTimer++;
-            // TODO: Trigger autosave when remaining time is 1s?
-            if (this.autoSaveTimer >= AUTOSAVE_EXERCISE_INTERVAL) {
-                this.onAutoSave();
+            if (this.autoSaveTimer >= AUTOSAVE_EXERCISE_INTERVAL / 3) {
+                this.triggerSave();
             }
         }, AUTOSAVE_CHECK_INTERVAL);
+    }
+
+    isQuizOverOrSubmitted(): boolean {
+        return this.remainingTimeSeconds < 0 || (this.submission.submitted ?? false);
     }
 
     stopAutoSave(): void {
@@ -372,12 +375,17 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      */
     updateDisplayedTimes() {
         const translationBasePath = 'artemisApp.showStatistic.';
+        let quizAboutToEnd = false;
         // update remaining time
         if (this.endDate) {
             const endDate = this.endDate;
             if (endDate.isAfter(this.serverDateService.now())) {
                 // quiz is still running => calculate remaining seconds and generate text based on that
-                this.remainingTimeSeconds = endDate.diff(this.serverDateService.now(), 'seconds');
+                // Get the diff as a floating point number in seconds
+                const diff = endDate.diff(this.serverDateService.now(), 'seconds', true);
+                // Round the diff down to the nearest second for better readability
+                this.remainingTimeSeconds = Math.floor(diff);
+                quizAboutToEnd = diff <= 1;
                 this.remainingTimeText = this.relativeTimeText(this.remainingTimeSeconds);
             } else {
                 // quiz is over => set remaining seconds to negative, to deactivate 'Submit' button
@@ -421,6 +429,12 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             }
         } else {
             this.timeUntilStart = '';
+        }
+
+        // TODO: move?
+        if (quizAboutToEnd && !this.isQuizOverOrSubmitted() && this.autoSaveInterval) {
+            this.stopAutoSave();
+            this.triggerSave();
         }
     }
 
@@ -775,8 +789,10 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.unsavedChanges = true;
     }
 
-    onAutoSave(): void {
-        this.autoSaveTimer = 0;
+    triggerSave(resetAutoSaveTimer = true): void {
+        if (resetAutoSaveTimer) {
+            this.autoSaveTimer = 0;
+        }
         if (this.unsavedChanges) {
             this.applySelection();
             this.submission.submissionDate = this.serverDateService.now();
