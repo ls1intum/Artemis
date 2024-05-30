@@ -76,7 +76,7 @@ public abstract class QuizService<T extends QuizConfiguration> {
      *
      * @param multipleChoiceQuestion the MultipleChoiceQuestion which references are to be fixed
      */
-    private void fixReferenceMultipleChoice(MultipleChoiceQuestion multipleChoiceQuestion) {
+    public void fixReferenceMultipleChoice(MultipleChoiceQuestion multipleChoiceQuestion) {
         MultipleChoiceQuestionStatistic multipleChoiceQuestionStatistic = (MultipleChoiceQuestionStatistic) multipleChoiceQuestion.getQuizQuestionStatistic();
         fixComponentReference(multipleChoiceQuestion, multipleChoiceQuestion.getAnswerOptions(), answerOption -> {
             multipleChoiceQuestionStatistic.addAnswerOption(answerOption);
@@ -90,7 +90,7 @@ public abstract class QuizService<T extends QuizConfiguration> {
      *
      * @param dragAndDropQuestion the DragAndDropQuestion which references are to be fixed
      */
-    private void fixReferenceDragAndDrop(DragAndDropQuestion dragAndDropQuestion) {
+    public void fixReferenceDragAndDrop(DragAndDropQuestion dragAndDropQuestion) {
         DragAndDropQuestionStatistic dragAndDropQuestionStatistic = (DragAndDropQuestionStatistic) dragAndDropQuestion.getQuizQuestionStatistic();
         fixComponentReference(dragAndDropQuestion, dragAndDropQuestion.getDropLocations(), dropLocation -> {
             dragAndDropQuestionStatistic.addDropLocation(dropLocation);
@@ -105,7 +105,7 @@ public abstract class QuizService<T extends QuizConfiguration> {
      *
      * @param shortAnswerQuestion the ShortAnswerQuestion which references are to be fixed
      */
-    private void fixReferenceShortAnswer(ShortAnswerQuestion shortAnswerQuestion) {
+    public void fixReferenceShortAnswer(ShortAnswerQuestion shortAnswerQuestion) {
         ShortAnswerQuestionStatistic shortAnswerQuestionStatistic = (ShortAnswerQuestionStatistic) shortAnswerQuestion.getQuizQuestionStatistic();
         fixComponentReference(shortAnswerQuestion, shortAnswerQuestion.getSpots(), shortAnswerSpot -> {
             shortAnswerQuestionStatistic.addSpot(shortAnswerSpot);
@@ -250,7 +250,7 @@ public abstract class QuizService<T extends QuizConfiguration> {
      *
      * @param dragAndDropQuestion the question for which to perform these actions
      */
-    private void restoreCorrectMappingsFromIndicesDragAndDrop(DragAndDropQuestion dragAndDropQuestion) {
+    public void restoreCorrectMappingsFromIndicesDragAndDrop(DragAndDropQuestion dragAndDropQuestion) {
         QuizIdAssigner.assignIds(dragAndDropQuestion.getDragItems());
         QuizIdAssigner.assignIds(dragAndDropQuestion.getDropLocations());
         QuizIdAssigner.assignIds(dragAndDropQuestion.getCorrectMappings());
@@ -271,7 +271,7 @@ public abstract class QuizService<T extends QuizConfiguration> {
      *
      * @param shortAnswerQuestion the question for which to perform these actions
      */
-    private void restoreCorrectMappingsFromIndicesShortAnswer(ShortAnswerQuestion shortAnswerQuestion) {
+    public void restoreCorrectMappingsFromIndicesShortAnswer(ShortAnswerQuestion shortAnswerQuestion) {
         // Assign IDs to spots
         QuizIdAssigner.assignIds(shortAnswerQuestion.getSpots());
         QuizIdAssigner.assignIds(shortAnswerQuestion.getSolutions());
