@@ -42,6 +42,15 @@
                                     [courseId]="courseId"
                                     (importFinished)="loadTutorialGroups()"
                                 />
+                                <button id="exportDialogButton" (click)="exportTutorialGroupsToCSV()" type="button" class="btn">
+                                    <span class="d-none d-md-inline">Basic Export Tutorial Groups</span>
+                                </button>
+                                <jhi-tutorial-groups-export-button
+                                    ngbDropDownItem
+                                    ngbTooltip="{{ 'artemisApp.tutorialGroupExportDialog.explanations.description' | artemisTranslate }}"
+                                    [courseId]="courseId"
+                                    (exportFinished)="loadTutorialGroups()"
+                                />
                             </div>
                         </div>
                     </div>

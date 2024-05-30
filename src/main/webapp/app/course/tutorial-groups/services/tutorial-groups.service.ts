@@ -170,4 +170,19 @@ export class TutorialGroupsService {
             return tutorialGroup;
         }
     }
+
+    /**
+     * Export tutorial groups for a specific course to a CSV file.
+     *
+     * @param courseId the id of the course for which the tutorial groups should be exported
+     * @param fields   the list of fields to include in the CSV export
+     * @return an Observable containing the CSV file as a Blob
+     */
+    exportTutorialGroupsToCSV(courseId: number, fields: string[]): Observable<Blob> {
+        const params = { fields };
+        return this.httpClient.get(`${this.resourceURL}/courses/${courseId}/tutorial-groups/export`, {
+            params,
+            responseType: 'blob',
+        });
+    }
 }

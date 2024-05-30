@@ -4,11 +4,14 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupResource.TutorialGroupImportErrors.MULTIPLE_REGISTRATIONS;
 import static jakarta.persistence.Persistence.getPersistenceUtil;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -19,6 +22,8 @@ import java.util.stream.Collectors;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -610,6 +615,84 @@ public class TutorialGroupService {
         var userOptional = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(studentDto.registrationNumber())
                 .or(() -> userRepository.findUserWithGroupsAndAuthoritiesByLogin(studentDto.login()));
         return userOptional.isPresent() && userOptional.get().getGroups().contains(studentCourseGroupName) ? userOptional : Optional.empty();
+    }
+
+    /**
+     * Export all tutorial groups for a specific course and user to a CSV format.
+     *
+     * @param course The course for which the tutorial groups should be exported.
+     * @param user   The user for whom the transient properties of the tutorial groups should be set.
+     * @param fields The list of fields to include in the CSV export.
+     * @return A CSV string representing the tutorial groups for the given course and user.
+     * @throws IOException if an I/O error occurs during CSV generation.
+     */
+    public String exportTutorialGroupsToCSV(Course course, User user, List<String> fields) throws IOException {
+        Set<TutorialGroup> tutorialGroups = findAllForCourse(course, user);
+
+        StringWriter out = new StringWriter();
+        CSVFormat csvFormat = CSVFormat.DEFAULT.withHeader(fields.toArray(new String[0]));
+        try (CSVPrinter printer = new CSVPrinter(out, csvFormat)) {
+            for (TutorialGroup tutorialGroup : tutorialGroups) {
+                for (String field : fields) {
+                    switch (field) {
+                        case "ID":
+                            printer.print(tutorialGroup.getId());
+                            break;
+                        case "Title":
+                            printer.print(tutorialGroup.getTitle());
+                            break;
+                        case "Campus":
+                            printer.print(tutorialGroup.getCampus());
+                            break;
+                        case "Language":
+                            printer.print(tutorialGroup.getLanguage());
+                            break;
+                        case "Additional Information":
+                            printer.print(tutorialGroup.getAdditionalInformation());
+                            break;
+                        case "Capacity":
+                            printer.print(tutorialGroup.getCapacity());
+                            break;
+                        case "Is Online":
+                            printer.print(tutorialGroup.getIsOnline());
+                            break;
+                        case "Day of Week":
+                            int dayOfWeek = tutorialGroup.getTutorialGroupSchedule().getDayOfWeek();
+                            printer.print(getDayOfWeekString(dayOfWeek));
+                            break;
+                        case "Start Time":
+                            printer.print(tutorialGroup.getTutorialGroupSchedule().getStartTime());
+                            break;
+                        default:
+                            printer.print("");
+                    }
+                }
+                printer.println();
+            }
+        }
+
+        return out.toString();
+    }
+
+    public String getDayOfWeekString(int dayOfWeek) {
+        switch (dayOfWeek) {
+            case 1:
+                return "Monday";
+            case 2:
+                return "Tuesday";
+            case 3:
+                return "Wednesday";
+            case 4:
+                return "Thursday";
+            case 5:
+                return "Friday";
+            case 6:
+                return "Saturday";
+            case 7:
+                return "Sunday";
+            default:
+                throw new IllegalArgumentException("Invalid day of the week: " + dayOfWeek);
+        }
     }
 
 }
