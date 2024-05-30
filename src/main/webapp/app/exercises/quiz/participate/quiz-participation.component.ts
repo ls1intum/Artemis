@@ -306,7 +306,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 return;
             } else if (this.remainingTimeSeconds < 0 || this.submission.submitted) {
                 // The quiz is over or the submission has been submitted. We can stop trying to autosave.
-                window.clearInterval(this.autoSaveInterval);
+                this.stopAutoSave();
                 return;
             }
             this.autoSaveTimer++;
@@ -315,6 +315,11 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 this.onAutoSave();
             }
         }, AUTOSAVE_CHECK_INTERVAL);
+    }
+
+    stopAutoSave(): void {
+        window.clearInterval(this.autoSaveInterval);
+        this.autoSaveInterval = undefined;
     }
 
     /**
