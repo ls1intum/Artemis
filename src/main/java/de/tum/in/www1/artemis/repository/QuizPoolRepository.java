@@ -5,8 +5,8 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizPool;
 @Repository
 public interface QuizPoolRepository extends JpaRepository<QuizPool, Long> {
 
-    @Query("SELECT qe FROM QuizPool qe JOIN FETCH qe.exam e JOIN FETCH qe.quizQuestions qq JOIN FETCH qq.quizQuestionStatistic WHERE e.id = :examId")
+    @EntityGraph(attributePaths = { "exam", "quizQuestions", "quizQuestions.quizQuestionStatistic" })
     Optional<QuizPool> findWithEagerQuizQuestionsByExamId(@Param("examId") Long examId);
 
     /**
