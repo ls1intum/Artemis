@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.config.Constants;
 @Component
 public class TheiaInfoContributor implements InfoContributor {
 
-    @Value("${theia.portal-url:}")
+    @Value("${theia.portal-url}")
     private URL theiaPortalURL;
 
     @Override

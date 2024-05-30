@@ -58,7 +58,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     repositoryLink: string;
 
     theiaEnabled: boolean = false;
-    theiaPortalURL: string = '';
+    theiaPortalURL: string;
 
     // Icons
     faFolderOpen = faFolderOpen;
