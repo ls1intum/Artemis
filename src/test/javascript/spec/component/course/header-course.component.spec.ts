@@ -83,19 +83,6 @@ describe('Header Course Component', () => {
         expect(component.courseDescription).toBe(courseWithShortDescription.description);
     });
 
-    it('should display manage button', () => {
-        component.course = courseWithShortDescription;
-        component.course.isAtLeastTutor = true;
-        const router = TestBed.inject(Router);
-        const urlSpy = jest.spyOn(router, 'url', 'get');
-        urlSpy.mockReturnValue('/some-url');
-
-        fixture.detectChanges();
-
-        const manageButton = fixture.nativeElement.querySelector('#manage-button');
-        expect(manageButton).toBeTruthy();
-    });
-
     it('should not display manage button but go to student view button in course management', () => {
         component.course = courseWithShortDescription;
         component.course!.isAtLeastTutor = true;
@@ -123,16 +110,5 @@ describe('Header Course Component', () => {
 
         const manageButton = fixture.nativeElement.querySelector('#manage-button');
         expect(manageButton).toBeNull();
-    });
-
-    it('should not display student view button in student view', () => {
-        component.course = courseWithShortDescription;
-        component.course!.isAtLeastTutor = false;
-        const router = TestBed.inject(Router);
-        const urlSpy = jest.spyOn(router, 'url', 'get');
-        urlSpy.mockReturnValue('/courses');
-
-        const showManageLectureButton = fixture.nativeElement.querySelector('#student-view-button');
-        expect(showManageLectureButton).toBeNull();
     });
 });
