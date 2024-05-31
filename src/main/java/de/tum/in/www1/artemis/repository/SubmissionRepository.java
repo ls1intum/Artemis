@@ -69,6 +69,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      */
     List<Submission> findAllByParticipationId(long participationId);
 
+    Optional<Submission> findByParticipationIdOrderBySubmissionDateDesc(long participationId);
+
     List<Submission> findByParticipation_Exercise_ExerciseGroup_Exam_Id(long examId);
 
     /**
@@ -448,7 +450,6 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return a new submission for the given type connected to the given participation
      */
     default Submission initializeSubmission(Participation participation, Exercise exercise, SubmissionType submissionType) {
-
         Submission submission;
         if (exercise instanceof ProgrammingExercise) {
             submission = new ProgrammingSubmission();
@@ -471,7 +472,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
         submission.setType(submissionType);
         submission.setParticipation(participation);
-        save(submission);
+        submission = save(submission);
         participation.addSubmission(submission);
         return submission;
     }
