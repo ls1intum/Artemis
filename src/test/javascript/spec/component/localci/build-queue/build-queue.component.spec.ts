@@ -493,6 +493,22 @@ describe('BuildQueueComponent', () => {
         expect(component.finishedBuildJobs).toEqual(mockFinishedJobs);
     });
 
+    it('should set build job duration', () => {
+        // Mock ActivatedRoute to return no course ID
+        mockActivatedRoute.paramMap = of(new Map([]));
+
+        mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(of(mockFinishedJobsResponse));
+
+        component.ngOnInit();
+
+        for (const finishedBuildJob of component.finishedBuildJobs) {
+            const { buildDuration, buildCompletionDate, buildStartDate } = finishedBuildJob;
+            if (buildDuration && buildCompletionDate && buildStartDate) {
+                expect(buildDuration).toEqual(buildCompletionDate.diff(buildStartDate, 'milliseconds') / 1000);
+            }
+        }
+    });
+
     it('should save filter in local storage', () => {
         component.finishedBuildJobFilter = new FinishedBuildJobFilter();
         component.finishedBuildJobFilter.buildAgentAddress = 'agent1';
@@ -529,19 +545,24 @@ describe('BuildQueueComponent', () => {
         expect(mockLocalStorageService.retrieve(FishedBuildJobFilterStorageKey.status)).toBeUndefined();
     });
 
-    it('should set build job duration', () => {
-        // Mock ActivatedRoute to return no course ID
-        mockActivatedRoute.paramMap = of(new Map([]));
+    it('should validate correctly', () => {
+        component.finishedBuildJobFilter = new FinishedBuildJobFilter();
+        component.finishedBuildJobFilter.buildDurationFilterLowerBound = 1;
+        component.finishedBuildJobFilter.buildStartDateFilterFrom = dayjs('2023-01-01');
 
-        mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(of(mockFinishedJobs));
+        expect(component.finishedBuildJobFilter.areDatesValid).toBeTruthy();
+        expect(component.finishedBuildJobFilter.areDurationFiltersValid).toBeTruthy();
 
-        component.ngOnInit();
+        component.finishedBuildJobFilter.buildDurationFilterUpperBound = 2;
+        component.finishedBuildJobFilter.buildStartDateFilterTo = dayjs('2023-01-02');
 
-        for (const finishedBuildJob of component.finishedBuildJobs) {
-            const { buildDuration, buildCompletionDate, buildStartDate } = finishedBuildJob;
-            if (buildDuration && buildCompletionDate && buildStartDate) {
-                expect(buildDuration).toEqual(buildCompletionDate.diff(buildStartDate, 'milliseconds') / 1000);
-            }
-        }
+        expect(component.finishedBuildJobFilter.areDatesValid).toBeTruthy();
+        expect(component.finishedBuildJobFilter.areDurationFiltersValid).toBeTruthy();
+
+        component.finishedBuildJobFilter.buildDurationFilterLowerBound = 3;
+        component.finishedBuildJobFilter.buildStartDateFilterFrom = dayjs('2023-01-03');
+
+        expect(component.finishedBuildJobFilter.areDatesValid).toBeFalsy();
+        expect(component.finishedBuildJobFilter.areDurationFiltersValid).toBeFalsy();
     });
 });
