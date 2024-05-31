@@ -74,7 +74,7 @@ The following screenshot illustrates the first section of the form. It consists 
 The following screenshot illustrates the second section of the form. It consists of:
 
 - **Enable automatic assessment suggestions**: When enabled, Artemis tries to automatically suggest assessments for diagram elements based on previously graded submissions for this exercise.
-- **Automatic assessment suggestions enabled**: When enabled, Artemis tries to automatically suggest assessments for diagram elements using the Athena service.
+- **Enable feedback suggestions from Athena**: When enabled, Artemis tries to automatically suggest assessments for diagram elements using the Athena service.
 - **Problem Statement**: The task description of the exercise as seen by students.
 - **Assessment Instructions**: Instructions for instructors while assessing the submission.
 
