@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
-import { ExerciseInformation, LectureUnitInformation, StudentMetrics } from 'app/entities/student-metrics.model';
+import { CompetencyMetrics, ExerciseInformation, LectureUnitInformation, StudentMetrics } from 'app/entities/student-metrics.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
+import { CompetencyJol } from 'app/entities/competency.model';
 
 @Injectable({ providedIn: 'root' })
 export class CourseDashboardService {
@@ -29,6 +30,10 @@ export class CourseDashboardService {
                             response.body.lectureUnitStudentMetricsDTO.lectureUnitInformation,
                         );
                     }
+                    if (response.body.competencyMetrics && response.body.competencyMetrics.competencyInformation) {
+                        response.body.competencyMetrics.competencyInformation = this.convertToCompetencyInformation(response.body.competencyMetrics.competencyInformation);
+                        response.body.competencyMetrics.jolValues = this.filterJolWhereMasteryChanged(response.body.competencyMetrics);
+                    }
                 }
                 return response;
             }),
@@ -45,20 +50,12 @@ export class CourseDashboardService {
                 const exerciseCategories = (categories[key] as (string | null)[]).flatMap((category) => (category ? (JSON.parse(category) as ExerciseCategory) : []));
                 const exercise = exerciseInformation[key];
                 acc[key] = {
-                    id: exercise.id,
-                    title: exercise.title,
-                    shortName: exercise.shortName,
+                    ...exercise,
                     startDate: dayjs(exercise.start),
                     dueDate: exercise.due ? dayjs(exercise.due) : undefined,
-                    maxPoints: exercise.maxPoints,
                     type: this.mapToExerciseType(exercise.type),
-                    includedInOverallScore: exercise.includedInOverallScore,
-                    exerciseMode: exercise.exerciseMode,
                     categories: exerciseCategories,
-                    difficulty: exercise.difficulty,
                     studentAssignedTeamId: teamId ? teamId?.[key] : undefined,
-                    allowOnlineEditor: exercise.allowOnlineEditor,
-                    allowOfflineIde: exercise.allowOfflineIde,
                 };
                 return acc;
             },
@@ -71,15 +68,37 @@ export class CourseDashboardService {
             (acc, key) => {
                 const lectureUnit = lectureUnitInformation[key];
                 acc[key] = {
-                    id: lectureUnit.id,
-                    lectureId: lectureUnit.lectureId,
-                    name: lectureUnit.name,
+                    ...lectureUnit,
                     releaseDate: dayjs(lectureUnit.releaseDate),
                     type: this.mapToLectureUnitType(lectureUnit.type),
                 };
                 return acc;
             },
             {} as { [key: string]: LectureUnitInformation },
+        );
+    }
+
+    private filterJolWhereMasteryChanged(competencyMetrics: CompetencyMetrics): { [key: string]: CompetencyJol } {
+        return Object.fromEntries(
+            Object.entries(competencyMetrics.jolValues ?? {}).filter(([key, value]) => {
+                const progress = competencyMetrics.progress?.[key];
+                const confidence = competencyMetrics.confidence?.[key];
+                return value.competencyProgress === progress && value.competencyConfidence === confidence;
+            }),
+        );
+    }
+
+    private convertToCompetencyInformation(competencyInformation: { [key: string]: any }): { [key: string]: any } {
+        return Object.keys(competencyInformation).reduce(
+            (acc, key) => {
+                const competency = competencyInformation[key];
+                acc[key] = {
+                    ...competency,
+                    softDueDate: competency.softDueDate ? dayjs(competency.softDueDate) : undefined,
+                };
+                return acc;
+            },
+            {} as { [key: string]: any },
         );
     }
 

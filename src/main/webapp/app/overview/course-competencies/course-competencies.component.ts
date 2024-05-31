@@ -26,6 +26,7 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
     prerequisites: Competency[] = [];
     parentParamSubscription: Subscription;
     judgementOfLearningMap: { [key: number]: CompetencyJol } = {};
+    promptForJolRatingMap: { [key: number]: boolean } = {};
 
     isCollapsed = true;
     faAngleDown = faAngleDown;
@@ -108,13 +109,24 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
             next: ([competencies, prerequisites, judgementOfLearningMap]) => {
                 this.competencies = competencies.body!;
                 this.prerequisites = prerequisites.body!;
-                this.judgementOfLearningMap = judgementOfLearningMap.body!;
+
+                const competenciesMap: { [key: number]: Competency } = Object.fromEntries(this.competencies.map((competency) => [competency.id, competency]));
+                this.judgementOfLearningMap = Object.fromEntries(
+                    Object.entries(judgementOfLearningMap.body!).filter(([key, value]) => {
+                        const progress = competenciesMap[Number(key)]?.userProgress?.first();
+                        return value.competencyProgress === progress?.progress && value.competencyConfidence === progress?.confidence;
+                    }),
+                );
+                this.promptForJolRatingMap = Object.fromEntries(
+                    this.competencies.map((competency) => [competency.id, CompetencyJol.shouldPromptForJol(competency, competency.userProgress?.first(), this.competencies)]),
+                );
 
                 // Also update the course, so we do not need to fetch again next time
                 if (this.course) {
                     this.course.competencies = this.competencies;
                     this.course.prerequisites = this.prerequisites;
                     this.course.judgementOfLearningMap = this.judgementOfLearningMap;
+                    this.course.promptForJolRatingMap = this.promptForJolRatingMap;
                 }
                 this.isLoading = false;
             },

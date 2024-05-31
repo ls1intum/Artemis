@@ -63,6 +63,37 @@ export class CompetencyJol {
     judgementTime: string;
     competencyProgress?: number;
     competencyConfidence?: number;
+
+    static shouldPromptForJol(competency: Competency, progress: CompetencyProgress | undefined, courseCompetencies: Competency[]): boolean {
+        const currentDate = dayjs();
+        const softDueDateMinusOneDay = competency.softDueDate?.subtract(1, 'day');
+        const competencyProgress = progress?.progress ?? 0;
+
+        // Condition 1: Current Date >= Competency Soft Due Date - 1 Days && Competency Progress >= 20%
+        if (softDueDateMinusOneDay && currentDate.isAfter(softDueDateMinusOneDay) && competencyProgress >= 20) {
+            return true;
+        }
+
+        // Filter previous competencies (those with soft due date in the past)
+        const previousCompetencies = courseCompetencies.filter((c) => c.softDueDate && c.softDueDate.isBefore(currentDate));
+        if (previousCompetencies.length === 0) {
+            if (softDueDateMinusOneDay) {
+                return false;
+            } else {
+                return competencyProgress >= 20;
+            }
+        }
+
+        // Calculate the average progress of all previous competencies
+        const totalPreviousProgress = previousCompetencies.reduce((sum, c) => {
+            const progress = c.userProgress?.first()?.progress ?? 0;
+            return sum + progress;
+        }, 0);
+        const avgPreviousProgress = totalPreviousProgress / previousCompetencies.length;
+
+        // Condition 2: Competency Progress >= 0.8 * Avg. Progress of all previous competencies
+        return competencyProgress >= 0.8 * avgPreviousProgress;
+    }
 }
 
 export interface CompetencyImportResponseDTO extends BaseEntity {
