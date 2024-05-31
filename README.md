@@ -109,7 +109,7 @@ The following members of the project management team are responsible for specifi
 |--------------------------------|-----------------------------------------------------------------------------------------------------|
 | Programming exercises          | [@krusche](https://github.com/krusche)                                                              |
 | Integrated code lifecycle      | [@krusche](https://github.com/krusche)                                                              |
-| Quiz exercises                 | [@Santia-go](https://github.com/Santia-go)                                                          |
+| Quiz exercises                 | [@FelixTJDietrich](https://github.com/FelixTJDietrich)                                                          |
 | Modeling exercises (+ Apollon) | [@krusche](https://github.com/krusche)                                                              |
 | Text exercises                 | [@maximiliansoelch](https://github.com/maximiliansoelch)                                            |
 | File upload exercises          | [@maximiliansoelch](https://github.com/maximiliansoelch)                                            |
@@ -125,12 +125,13 @@ The following members of the project management team are responsible for specifi
 | Learning analytics             | [@bassner](https://github.com/bassner)                                                              |
 | Adaptive learning              | [@bassner](https://github.com/bassner) [@maximiliananzinger](https://github.com/maximiliananzinger) |
 | Learning paths                 | [@maximiliananzinger](https://github.com/maximiliananzinger)                                        |
-| Tutorial Groups                | [@Santia-go](https://github.com/Santia-go)                                                          |
+| Tutorial Groups                | [@FelixTJDietrich](https://github.com/FelixTJDietrich)                                                          |
 | Iris                           | [@bassner](https://github.com/bassner)                                                              |
 | Scalability                    | [@mtze](https://github.com/mtze)                                                                    |
 | Usability                      | [@rabeatwork](https://github.com/rabeatwork)                                                        |
 | Performance                    | [@rabeatwork](https://github.com/rabeatwork)                                                        |
 | Infrastructure                 | [@mtze](https://github.com/mtze)                                                                    |
+| Development process            | [@FelixTJDietrich](https://github.com/FelixTJDietrich) |
 | Mobile apps (iOS + Android)    | [@krusche](https://github.com/krusche) [@maximiliansoelch](https://github.com/maximiliansoelch)     |
 
 
@@ -157,7 +158,7 @@ Refer to [Using JHipster in production](http://www.jhipster.tech/production) for
 The following command can automate the deployment to a server. The example shows the deployment to the main Artemis test server (which runs a virtual machine):
 
 ```shell
-./artemis-server-cli deploy username@artemistest.ase.in.tum.de -w build/libs/Artemis-7.1.0.war
+./artemis-server-cli deploy username@artemistest.ase.in.tum.de -w build/libs/Artemis-7.1.1.war
 ```
 
 ## Architecture

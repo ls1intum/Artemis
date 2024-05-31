@@ -36,17 +36,17 @@ import com.github.dockerjava.api.command.StopContainerCmd;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 
-import de.tum.in.www1.artemis.config.localvcci.LocalCIConfiguration;
-import de.tum.in.www1.artemis.service.connectors.localci.buildagent.LocalCIDockerService;
+import de.tum.in.www1.artemis.config.icl.BuildAgentConfiguration;
+import de.tum.in.www1.artemis.service.connectors.localci.buildagent.BuildAgentDockerService;
 import de.tum.in.www1.artemis.util.FixMissingServletPathProcessor;
 
 /**
- * This class is used to overwrite the configuration of the local CI system ({@link LocalCIConfiguration}).
+ * This class is used to overwrite the configuration of the local CI system ({@link BuildAgentConfiguration}).
  * In particular, it provides a DockerClient Bean that has all methods used in the tests mocked.
  */
 @TestConfiguration
-@Import(LocalCIConfiguration.class) // Fall back to the default configuration if no overwrite is provided here.
-public class LocalCITestConfiguration {
+@Import(BuildAgentConfiguration.class) // Fall back to the default configuration if no overwrite is provided here.
+public class TestBuildAgentConfiguration {
 
     /**
      * Provide a mocked DockerClient Bean that returns a mock value for all methods used.
@@ -67,8 +67,8 @@ public class LocalCITestConfiguration {
         PullImageCmd pullImageCmd = mock(PullImageCmd.class);
         doReturn(pullImageCmd).when(dockerClient).pullImageCmd(anyString());
         doReturn(pullImageCmd).when(pullImageCmd).withPlatform(anyString());
-        LocalCIDockerService.MyPullImageResultCallback callback1 = mock(LocalCIDockerService.MyPullImageResultCallback.class);
-        doReturn(callback1).when(pullImageCmd).exec(any(LocalCIDockerService.MyPullImageResultCallback.class));
+        BuildAgentDockerService.MyPullImageResultCallback callback1 = mock(BuildAgentDockerService.MyPullImageResultCallback.class);
+        doReturn(callback1).when(pullImageCmd).exec(any(BuildAgentDockerService.MyPullImageResultCallback.class));
         doReturn(null).when(callback1).awaitCompletion();
 
         String dummyContainerId = "1234567890";
