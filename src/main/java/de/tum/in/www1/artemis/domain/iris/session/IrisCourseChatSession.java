@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain.iris.session;
 
+import java.util.Optional;
+
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
@@ -41,6 +43,6 @@ public class IrisCourseChatSession extends IrisChatSession {
 
     @Override
     public String toString() {
-        return "IrisCourseChatSession{" + "user=" + getUser().getLogin() + "," + "course=" + course + '}';
+        return "IrisCourseChatSession{" + "user=" + Optional.ofNullable(getUser()).map(User::getLogin).orElse("null") + "," + "course=" + course + '}';
     }
 }
