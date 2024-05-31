@@ -156,8 +156,8 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
             throw new QuizSubmissionException("The quiz is not active");
         }
 
-        var submission = quizSubmissionRepository.findByExerciseIdAndStudentLogin(exerciseId, userLogin).orElseThrow();
-        if (submission.isSubmitted()) {
+        var submission = quizSubmissionRepository.findByExerciseIdAndStudentLogin(exerciseId, userLogin);
+        if (submission.isPresent() && submission.get().isSubmitted()) {
             // the old submission has not yet been processed, so don't allow a new one yet
             throw new QuizSubmissionException("You have already submitted the quiz");
         }
