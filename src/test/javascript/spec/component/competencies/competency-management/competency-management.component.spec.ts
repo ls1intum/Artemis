@@ -169,16 +169,16 @@ describe('CompetencyManagementComponent', () => {
     });
 
     it('should delete prerequisite', () => {
-        const removePrerequisiteSpy = jest.spyOn(prerequisiteService, 'deletePrerequisite').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
+        const deletePrerequisiteSpy = jest.spyOn(prerequisiteService, 'deletePrerequisite').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
         fixture.detectChanges();
 
         component.deletePrerequisite(123);
 
-        expect(removePrerequisiteSpy).toHaveBeenCalledOnce();
-        expect(removePrerequisiteSpy).toHaveBeenCalledWith(123, 1);
+        expect(deletePrerequisiteSpy).toHaveBeenCalledOnce();
+        expect(deletePrerequisiteSpy).toHaveBeenCalledWith(123, 1);
     });
 
-    it('should open and import modal and update values', () => {
+    it('should open import modal and update values', () => {
         const modalResult: ImportAllFromCourseResult = {
             courseForImportDTO: { id: 1 },
             importRelations: false,

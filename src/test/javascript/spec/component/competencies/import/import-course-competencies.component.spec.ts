@@ -1,9 +1,7 @@
 import { ArtemisTestModule } from '../../../test.module';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { ImportCourseCompetenciesComponent } from 'app/course/competencies/import-competencies/import-course-competencies.component';
-import { ButtonComponent } from 'app/shared/components/button.component';
 import { FormsModule } from 'app/forms/forms.module';
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
@@ -12,8 +10,6 @@ import { CompetencyService } from 'app/course/competencies/competency.service';
 import { of } from 'rxjs';
 import { Competency } from 'app/entities/competency.model';
 import { HttpResponse } from '@angular/common/http';
-import { ImportCompetenciesTableStubComponent } from './import-competencies-table-stub.component';
-import { CompetencySearchStubComponent } from './competency-search-stub.component';
 import { PageableSearch } from 'app/shared/table/pageable-table';
 import { Component } from '@angular/core';
 import { SortService } from 'app/shared/service/sort.service';
@@ -35,13 +31,7 @@ describe('ImportCourseCompetenciesComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule],
-            declarations: [
-                ImportCourseCompetenciesComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(ButtonComponent),
-                ImportCompetenciesTableStubComponent,
-                CompetencySearchStubComponent,
-            ],
+            declarations: [ImportCourseCompetenciesComponent],
             providers: [
                 {
                     provide: ActivatedRoute,
