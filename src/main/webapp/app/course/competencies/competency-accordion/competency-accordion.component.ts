@@ -99,7 +99,7 @@ export class CompetencyAccordionComponent implements OnChanges {
     }
 
     calculateProgressValues() {
-        this.jolRating = this.metrics.competencyMetrics?.jolValues?.[this.competency.id];
+        this.jolRating = this.metrics.competencyMetrics?.jolValues?.[this.competency.id].jolValue;
         this.exercisesProgress = this.calculateExercisesProgress();
         this.lectureUnitsProgress = this.calculateLectureUnitsProgress();
         const userProgress = this.getUserProgress();
@@ -157,7 +157,11 @@ export class CompetencyAccordionComponent implements OnChanges {
         if (this.metrics.competencyMetrics) {
             this.metrics.competencyMetrics.jolValues = {
                 ...this.metrics.competencyMetrics.jolValues,
-                [this.competency.id]: newRating,
+                [this.competency.id]: {
+                    competencyId: this.competency.id,
+                    jolValue: newRating,
+                    judgementTime: dayjs().toString(),
+                },
             };
             this.calculateProgressValues();
         }

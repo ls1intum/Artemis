@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.competency;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.Map;
 
 import org.junit.jupiter.api.AfterEach;
@@ -15,7 +16,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 import de.tum.in.www1.artemis.repository.competency.CompetencyJolRepository;
+import de.tum.in.www1.artemis.service.feature.Feature;
+import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyJolDTO;
 
 class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -25,9 +30,17 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
     private CompetencyUtilService competencyUtilService;
 
     @Autowired
+    private CompetencyProgressUtilService competencyProgressUtilService;
+
+    @Autowired
     private CompetencyJolRepository competencyJOLRepository;
 
+    @Autowired
+    private FeatureToggleService featureToggleService;
+
     private final Competency[] competency = new Competency[3];
+
+    private CompetencyProgress competencyProgress;
 
     private Competency competencyNotInCourse;
 
@@ -37,14 +50,18 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     @BeforeEach
     public void setup() {
+        featureToggleService.enableFeature(Feature.StudentCourseAnalyticsDashboard);
+
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         final var course = courseUtilService.createCourse();
         courseId = course.getId();
         competency[0] = competencyUtilService.createCompetency(course);
         competency[1] = competencyUtilService.createCompetency(course);
         competency[2] = competencyUtilService.createCompetency(course);
+
         competencyNotInCourse = competencyUtilService.createCompetency(null);
         student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        competencyProgress = competencyProgressUtilService.createCompetencyProgress(competency[0], student, 0.25, 0.25);
 
         userUtilService.addStudent(TEST_PREFIX + "otherstudents", TEST_PREFIX + "otherstudent1");
     }
@@ -52,6 +69,7 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
     @AfterEach
     public void tearDown() {
         competencyJOLRepository.deleteAll();
+        featureToggleService.disableFeature(Feature.StudentCourseAnalyticsDashboard);
     }
 
     @Nested
@@ -61,59 +79,63 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
             return "/api/courses/" + courseId + "/competencies/" + competencyId + "/jol/" + jolValue;
         }
 
-        private void sendRequest(long competencyId, int jolValue, HttpStatus status) throws Exception {
+        private void sendRequest(long competencyId, short jolValue, HttpStatus status) throws Exception {
             request.put(apiURL(competencyId, jolValue), null, status);
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         public void shouldReturnBadRequestForInvalidValue() throws Exception {
-            sendRequest(competency[0].getId(), 1337, HttpStatus.BAD_REQUEST);
+            sendRequest(competency[0].getId(), (short) 123, HttpStatus.BAD_REQUEST);
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         public void shouldReturnBadRequestForCompetencyNotInCourse() throws Exception {
-            sendRequest(competencyNotInCourse.getId(), 3, HttpStatus.BAD_REQUEST);
+            sendRequest(competencyNotInCourse.getId(), (short) 3, HttpStatus.BAD_REQUEST);
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "otherstudent1", roles = "USER")
         public void shouldReturnForbiddenForStudentNotInCourse() throws Exception {
-            sendRequest(competency[0].getId(), 3, HttpStatus.FORBIDDEN);
+            sendRequest(competency[0].getId(), (short) 3, HttpStatus.FORBIDDEN);
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         public void shouldCreateJOL() throws Exception {
-            int jolValue = 3;
+            short jolValue = 3;
             sendRequest(competency[0].getId(), jolValue, HttpStatus.OK);
-            final var jol = competencyJOLRepository.findByCompetencyIdAndUserId(competency[0].getId(), student.getId());
+            final var jol = competencyJOLRepository.findLatestByCompetencyIdAndUserId(competency[0].getId(), student.getId());
             assertThat(jol).isPresent();
             assertThat(jol.get().getValue()).isEqualTo(jolValue);
+            assertThat(jol.get().getCompetencyConfidence()).isEqualTo(competencyProgress.getConfidence());
+            assertThat(jol.get().getCompetencyProgress()).isEqualTo(competencyProgress.getProgress());
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         public void shouldUpdateJOL() throws Exception {
-            competencyUtilService.createJOL(competency[0], student, 1337);
-            int jolValue = 3;
+            competencyUtilService.createJol(competency[0], student, (short) 123, ZonedDateTime.now().minusDays(1), 0.0, 0.0);
+            short jolValue = 3;
             sendRequest(competency[0].getId(), jolValue, HttpStatus.OK);
-            final var jol = competencyJOLRepository.findByCompetencyIdAndUserId(competency[0].getId(), student.getId());
+            final var jol = competencyJOLRepository.findLatestByCompetencyIdAndUserId(competency[0].getId(), student.getId());
             assertThat(jol).isPresent();
             assertThat(jol.get().getValue()).isEqualTo(jolValue);
+            assertThat(jol.get().getCompetencyConfidence()).isEqualTo(competencyProgress.getConfidence());
+            assertThat(jol.get().getCompetencyProgress()).isEqualTo(competencyProgress.getProgress());
         }
     }
 
     @Nested
-    class GetJudgementOfLearningForCompetency {
+    class GetLatestJudgementOfLearningForCompetency {
 
         private String apiURL(long competencyId) {
             return "/api/courses/" + courseId + "/competencies/" + competencyId + "/jol";
         }
 
-        private Integer sendRequest(long competencyId, HttpStatus status) throws Exception {
-            return request.get(apiURL(competencyId), status, Integer.class);
+        private CompetencyJolDTO sendRequest(long competencyId, HttpStatus status) throws Exception {
+            return request.get(apiURL(competencyId), status, CompetencyJolDTO.class);
         }
 
         @Test
@@ -138,22 +160,22 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         public void shouldReturnValue() throws Exception {
-            final var jolValue = 1337;
-            competencyUtilService.createJOL(competency[0], student, jolValue);
+            short jolValue = 123;
+            competencyUtilService.createJol(competency[0], student, jolValue, ZonedDateTime.now(), 0.25, 0.25);
             final var jol = sendRequest(competency[0].getId(), HttpStatus.OK);
-            assertThat(jol).isEqualTo(jolValue);
+            assertThat(jol.jolValue()).isEqualTo(jolValue);
         }
     }
 
     @Nested
-    class GetJudgementOfLearningForCourse {
+    class GetLatestJudgementOfLearningForCourse {
 
         private String apiURL() {
             return "/api/courses/" + courseId + "/competencies/jol";
         }
 
-        private Map<?, ?> sendRequest(HttpStatus status) throws Exception {
-            return request.get(apiURL(), status, Map.class);
+        private Map<Long, CompetencyJolDTO> sendRequest(HttpStatus status) throws Exception {
+            return request.getMap(apiURL(), status, Long.class, CompetencyJolDTO.class);
         }
 
         @Test
@@ -165,14 +187,19 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         public void shouldReturnValues() throws Exception {
-            final var jolValues = new Integer[] { 1337, 8, null };
-            competencyUtilService.createJOL(competency[0], student, jolValues[0]);
-            competencyUtilService.createJOL(competency[1], student, jolValues[1]);
-            final var jol = sendRequest(HttpStatus.OK);
-            assertThat(jol).isNotNull();
-            // Java interprets the returned map as a Map<String, Integer> instead of Map<Long, Integer> so we use the following workaround
-            final var expectedMap = Map.of(competency[0].getId().toString(), jolValues[0], competency[1].getId().toString(), jolValues[1]);
-            assertThat(jol).isEqualTo(expectedMap);
+            final var jol0 = competencyUtilService.createJol(competency[0], student, (short) 123, ZonedDateTime.now(), 0.25, 0.25);
+            final var jol1 = competencyUtilService.createJol(competency[1], student, (short) 8, ZonedDateTime.now(), 0.1, 0.2);
+            final var jolMap = sendRequest(HttpStatus.OK);
+            assertThat(jolMap).isNotNull();
+            final var expectedMap = Map.of(competency[0].getId(), CompetencyJolDTO.of(jol0), competency[1].getId(), CompetencyJolDTO.of(jol1));
+            expectedMap.forEach((expKey, expValue) -> {
+                final var val = jolMap.get(expKey);
+                assertThat(val.competencyId()).isEqualTo(expValue.competencyId());
+                assertThat(val.jolValue()).isEqualTo(expValue.jolValue());
+                assertThat(val.judgementTime()).isEqualTo(expValue.judgementTime());
+                assertThat(val.competencyProgress()).isEqualTo(expValue.competencyProgress());
+                assertThat(val.competencyConfidence()).isEqualTo(expValue.competencyConfidence());
+            });
         }
     }
 }

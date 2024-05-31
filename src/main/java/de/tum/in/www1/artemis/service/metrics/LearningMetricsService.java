@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.repository.metrics.CompetencyMetricsRepository;
 import de.tum.in.www1.artemis.repository.metrics.ExerciseMetricsRepository;
 import de.tum.in.www1.artemis.repository.metrics.LectureUnitMetricsRepository;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyJolDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.CompetencyInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.CompetencyProgressDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.CompetencyStudentMetricsDTO;
@@ -149,7 +150,7 @@ public class LearningMetricsService {
         final var competencyConfidenceMap = competencyProgress.stream().collect(toMap(CompetencyProgressDTO::competencyId, CompetencyProgressDTO::confidence));
 
         final var competencyJolValues = competencyMetricsRepository.findAllCompetencyJolValuesForUserByCompetencyIds(userId, competencyIds);
-        final var competencyJolValuesMap = competencyJolValues.stream().collect(toMap(MapEntryLongLong::key, e -> (int) e.value()));
+        final var competencyJolValuesMap = competencyJolValues.stream().collect(toMap(CompetencyJolDTO::competencyId, identity()));
 
         return new CompetencyStudentMetricsDTO(competencyInfoMap, exerciseMap, lectureUnitMap, competencyProgressMap, competencyConfidenceMap, competencyJolValuesMap);
     }
