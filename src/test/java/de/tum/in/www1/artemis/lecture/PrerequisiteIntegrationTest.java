@@ -205,6 +205,32 @@ class PrerequisiteIntegrationTest extends AbstractSpringIntegrationIndependentTe
         }
 
         @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void shouldImportPrerequisitesAsAdmin() throws Exception {
+            var prerequisites = prerequisiteUtilService.createPrerequisites(course, 5);
+            prerequisites.addAll(prerequisiteUtilService.createPrerequisites(course, 5));
+            var prerequisiteIds = prerequisites.stream().map(DomainObject::getId).toList();
+
+            var expectedPrerequisites = prerequisites.stream().map(prerequisite -> {
+                prerequisite.setLinkedCourseCompetency(prerequisite);
+                return PrerequisiteResponseDTO.of(prerequisite);
+            }).toList();
+
+            var actualPrerequisites = request.postListWithResponseBody(url(course2.getId()), prerequisiteIds, PrerequisiteResponseDTO.class, HttpStatus.CREATED);
+
+            assertThat(actualPrerequisites).usingRecursiveFieldByFieldElementComparatorIgnoringFields("id").containsAll(expectedPrerequisites);
+            assertThat(actualPrerequisites).hasSameSizeAs(expectedPrerequisites);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        void shouldReturnNotFoundIfCompetencyDoesNotExist() throws Exception {
+            var prerequisite = prerequisiteUtilService.createPrerequisite(course);
+            // one of the competencies does not exist, this should lead to a not found error
+            request.post(url(course2.getId()), List.of(-1000, prerequisite.getId()), HttpStatus.NOT_FOUND);
+        }
+
+        @Test
         @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
         void shouldReturnBadRequestWhenImportingFromSameCourse() throws Exception {
             var prerequisites = prerequisiteUtilService.createPrerequisites(course, 4);
