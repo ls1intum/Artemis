@@ -12,7 +12,7 @@ artemis:
   bcrypt-salt-rounds: 11  # The number of salt rounds for the bcrypt password hashing. Lower numbers make it faster but more unsecure and vice versa.
   # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
   user-management:
-    use-external: false
+    use-external: true
     password-reset:
       credential-provider: <provider> # The credential provider which users can log in though (e.g. TUMonline)
       links: # The password reset links for different languages
