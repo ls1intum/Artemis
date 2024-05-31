@@ -70,7 +70,7 @@ export class CompetencyJol {
         const competencyProgress = progress?.progress ?? 0;
 
         // Condition 1: Current Date >= Competency Soft Due Date - 1 Days && Competency Progress >= 20%
-        if (softDueDateMinusOneDay && currentDate.isAfter(softDueDateMinusOneDay) && competencyProgress >= 0.2) {
+        if (softDueDateMinusOneDay && currentDate.isAfter(softDueDateMinusOneDay) && competencyProgress >= 20) {
             return true;
         }
 
@@ -80,7 +80,7 @@ export class CompetencyJol {
             if (softDueDateMinusOneDay) {
                 return false;
             } else {
-                return competencyProgress >= 0.2;
+                return competencyProgress >= 20;
             }
         }
 
