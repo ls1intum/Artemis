@@ -508,20 +508,23 @@ public class QuizExerciseResource {
                             .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizNotSynchronized", "Quiz is not synchronized.")).build();
                 }
 
+                var quizBatch = quizBatchService.getOrCreateSynchronizedQuizBatch(quizExercise);
                 // check if quiz hasn't already started
-                if (quizBatchService.getOrCreateSynchronizedQuizBatch(quizExercise).isStarted()) {
+                if (quizBatch.isStarted()) {
                     return ResponseEntity.badRequest()
                             .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizAlreadyStarted", "Quiz has already started.")).build();
                 }
 
                 // set release date to now, truncated to seconds
                 var now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
-                quizBatchService.getOrCreateSynchronizedQuizBatch(quizExercise).setStartTime(now);
+                quizBatch.setStartTime(now);
+                quizBatchRepository.save(quizBatch);
                 if (quizExercise.getReleaseDate() != null && quizExercise.getReleaseDate().isAfter(now)) {
                     // preserve null and valid releaseDates for quiz start lifecycle event
                     quizExercise.setReleaseDate(now);
                 }
                 quizExercise.setDueDate(now.plusSeconds(quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS));
+                quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, quizBatch, "start-now");
             }
             case "end-now" -> {
                 // editors may not end the quiz

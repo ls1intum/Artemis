@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.repository.QuizBatchRepository;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.scheduled.ScheduleService;
@@ -30,10 +31,14 @@ public class QuizScheduleService {
 
     private final ScheduleService scheduleService;
 
-    public QuizScheduleService(QuizMessagingService quizMessagingService, QuizExerciseRepository quizExerciseRepository, ScheduleService scheduleService) {
+    private final QuizBatchRepository quizBatchRepository;
+
+    public QuizScheduleService(QuizMessagingService quizMessagingService, QuizExerciseRepository quizExerciseRepository, ScheduleService scheduleService,
+            QuizBatchRepository quizBatchRepository) {
         this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.scheduleService = scheduleService;
+        this.quizBatchRepository = quizBatchRepository;
     }
 
     /**
@@ -83,12 +88,9 @@ public class QuizScheduleService {
         quizBatch.setStartTime(ZonedDateTime.now());
         quizExercise.setQuizBatches(Set.of(quizBatch));
 
+        quizBatchRepository.save(quizBatch);
+
         SecurityUtils.setAuthorizationObject();
         quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, quizBatch, "start-now");
-    }
-
-    public void updateQuizExercise(QuizExercise quizExercise) {
-        cancelScheduledQuizStart(quizExercise.getId());
-        scheduleQuizStart(quizExercise.getId());
     }
 }
