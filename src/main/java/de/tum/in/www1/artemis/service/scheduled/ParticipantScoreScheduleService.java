@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_SCHEDULING;
 import static de.tum.in.www1.artemis.config.StartupDelayConfig.PARTICIPATION_SCORES_SCHEDULE_DELAY_SEC;
 
 import java.time.Instant;
@@ -58,7 +59,7 @@ import de.tum.in.www1.artemis.service.util.RoundingUtil;
  * @see de.tum.in.www1.artemis.service.listeners.ResultListener
  */
 @Service
-@Profile("scheduling")
+@Profile(PROFILE_SCHEDULING)
 public class ParticipantScoreScheduleService {
 
     public static int DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;

@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.quiz;
 
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_SCHEDULING;
 
 import java.time.ZonedDateTime;
 import java.util.Set;
@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.scheduled.ScheduleService;
 
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_SCHEDULING)
 @Service
 public class QuizScheduleService {
 

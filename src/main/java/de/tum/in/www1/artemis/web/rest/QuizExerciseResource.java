@@ -65,6 +65,7 @@ import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
@@ -72,7 +73,6 @@ import de.tum.in.www1.artemis.service.quiz.QuizBatchService;
 import de.tum.in.www1.artemis.service.quiz.QuizExerciseImportService;
 import de.tum.in.www1.artemis.service.quiz.QuizExerciseService;
 import de.tum.in.www1.artemis.service.quiz.QuizMessagingService;
-import de.tum.in.www1.artemis.service.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.service.quiz.QuizStatisticService;
 import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -114,7 +114,7 @@ public class QuizExerciseResource {
 
     private final ExamDateService examDateService;
 
-    private final QuizScheduleService quizScheduleService;
+    private final InstanceMessageSendService instanceMessageSendService;
 
     private final QuizStatisticService quizStatisticService;
 
@@ -142,11 +142,11 @@ public class QuizExerciseResource {
 
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizMessagingService quizMessagingService, QuizExerciseRepository quizExerciseRepository,
             UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
-            ExerciseDeletionService exerciseDeletionService, ExamDateService examDateService, QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService,
-            QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService,
-            GroupNotificationScheduleService groupNotificationScheduleService, StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService,
-            QuizBatchRepository quizBatchRepository, SubmissionRepository submissionRepository, FileService fileService, ChannelService channelService,
-            ChannelRepository channelRepository) {
+            ExerciseDeletionService exerciseDeletionService, ExamDateService examDateService, InstanceMessageSendService instanceMessageSendService,
+            QuizStatisticService quizStatisticService, QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService,
+            GroupNotificationService groupNotificationService, GroupNotificationScheduleService groupNotificationScheduleService,
+            StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService, QuizBatchRepository quizBatchRepository,
+            SubmissionRepository submissionRepository, FileService fileService, ChannelService channelService, ChannelRepository channelRepository) {
         this.quizExerciseService = quizExerciseService;
         this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -156,7 +156,7 @@ public class QuizExerciseResource {
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.examDateService = examDateService;
-        this.quizScheduleService = quizScheduleService;
+        this.instanceMessageSendService = instanceMessageSendService;
         this.quizStatisticService = quizStatisticService;
         this.quizExerciseImportService = quizExerciseImportService;
         this.authCheckService = authCheckService;
@@ -477,7 +477,7 @@ public class QuizExerciseResource {
         batch = quizBatchService.save(batch);
 
         // ensure that there is no scheduler that thinks the batch hasn't started yet
-        quizScheduleService.updateQuizExercise(quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId()));
+        instanceMessageSendService.sendQuizExerciseStartSchedule(quizExercise.getId());
 
         quizExercise.setQuizBatches(Set.of(batch));
         quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, batch, "start-batch");
@@ -572,7 +572,7 @@ public class QuizExerciseResource {
         quizExercise = quizExerciseRepository.saveAndFlush(quizExercise);
         // reload the quiz exercise with questions and statistics to prevent problems with proxy objects
         quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
-        quizScheduleService.updateQuizExercise(quizExercise);
+        instanceMessageSendService.sendQuizExerciseStartSchedule(quizExercise.getId());
 
         // get the batch for synchronized quiz exercises and start-now action; otherwise it doesn't matter
         var quizBatch = quizBatchService.getQuizBatchForStudentByLogin(quizExercise, "any").orElse(null);
