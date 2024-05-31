@@ -10,7 +10,7 @@
     @if (studentExam) {
         <!-- exam participation -->
         @if (isVisible() && isActive() && !isOver() && examStartConfirmed) {
-            <div class="card-body">
+            <div [ngClass]="{ 'card-body': !testRunId }">
                 <!-- exam nav -->
                 <jhi-exam-navigation-bar
                     id="exam-navigation-bar"

@@ -1,6 +1,6 @@
 $menu-width-closed: 64px;
 $menu-width-open: 220px;
-$breadcrumb-height: 32px; // needed to make the exam fullscreen
+$breadcrumb-height: 34px; // needed to make the exam fullscreen
 
 .sidebar-container {
     width: $menu-width-open;
@@ -32,12 +32,16 @@ $breadcrumb-height: 32px; // needed to make the exam fullscreen
         height: calc(100vh - var(--sidebar-footer-height-dev));
     }
 
-    &.exam-height {
-        height: calc(100vh - var(--sidebar-footer-height-dev) + $breadcrumb-height);
-    }
-
     @media (max-width: 768px) {
         height: calc(100vh - var(--sidebar-footer-height-prod)) !important;
+    }
+
+    &.exam-wrapper {
+        height: calc(100vh - var(--sidebar-footer-height-prod) + $breadcrumb-height);
+
+        &.exam-height-dev {
+            height: calc(100vh - var(--sidebar-footer-height-dev) + $breadcrumb-height);
+        }
     }
 
     .mat-drawer {
@@ -48,9 +52,6 @@ $breadcrumb-height: 32px; // needed to make the exam fullscreen
 
         &.sidenav-height-dev {
             height: calc(100vh - var(--sidebar-footer-height-dev));
-        }
-        &.exam-height {
-            height: calc(100vh - var(--sidebar-footer-height-dev) + $breadcrumb-height);
         }
 
         @media (max-width: 768px) {
@@ -70,12 +71,16 @@ $breadcrumb-height: 32px; // needed to make the exam fullscreen
             width 0.2s ease-in-out,
             margin-left 0.2s ease-in-out !important;
 
-        &.sidenav-height-dev {
-            height: calc(100vh - var(--sidebar-footer-height-dev));
+        &.exam-wrapper {
+            height: calc(100vh - var(--sidebar-footer-height-prod) + $breadcrumb-height);
+
+            &.exam-height-dev {
+                height: calc(100vh - var(--sidebar-footer-height-dev) + $breadcrumb-height);
+            }
         }
 
-        &.exam-height {
-            height: calc(100vh - var(--sidebar-footer-height-dev) + $breadcrumb-height);
+        &.sidenav-height-dev {
+            height: calc(100vh - var(--sidebar-footer-height-dev));
         }
 
         @media (max-width: 768px) {
