@@ -65,15 +65,7 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
 
     private setCourse(course?: Course) {
         this.course = course;
-        // Note: this component is only shown if there are at least 1 competencies or at least 1 prerequisites, so if they do not exist, we load the data from the server
-        if (this.course && ((this.course.competencies && this.course.competencies.length > 0) || (this.course.prerequisites && this.course.prerequisites.length > 0))) {
-            this.competencies = this.course.competencies || [];
-            this.prerequisites = this.course.prerequisites || [];
-            this.judgementOfLearningMap = this.course.judgementOfLearningMap || {};
-            this.promptForJolRatingMap = this.course.promptForJolRatingMap || {};
-        } else {
-            this.loadData();
-        }
+        this.loadData();
     }
 
     get countCompetencies() {
@@ -126,8 +118,6 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
                 if (this.course) {
                     this.course.competencies = this.competencies;
                     this.course.prerequisites = this.prerequisites;
-                    this.course.judgementOfLearningMap = this.judgementOfLearningMap;
-                    this.course.promptForJolRatingMap = this.promptForJolRatingMap;
                 }
                 this.isLoading = false;
             },
