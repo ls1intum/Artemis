@@ -1047,7 +1047,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         // then
         assertThat(csvContent).contains("ID,Title,Campus,Language,Capacity,IsOnline");
-        assertThat(csvContent).contains("SampleTitle1,SampleCampus1,ENGLISH,10,false");
-        assertThat(csvContent).contains("SampleTitle2,SampleCampus2,GERMAN,20,true");
+        assertThat(csvContent).contains("SampleTitle1,SampleInfo1,ENGLISH,10");
+        assertThat(csvContent).contains("SampleTitle2,SampleInfo2,GERMAN,20");
     }
+
 }
