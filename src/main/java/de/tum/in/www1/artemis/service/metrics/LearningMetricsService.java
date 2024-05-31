@@ -91,12 +91,13 @@ public class LearningMetricsService {
         final var score = exerciseMetricsRepository.findScore(exerciseIds, userId);
         final var scoreMap = score.stream().collect(toMap(ScoreDTO::exerciseId, ScoreDTO::score));
 
-        final var latestSubmissions = exerciseMetricsRepository.findLatestSubmissionDates(exerciseIds);
+        final var exerciseIdsWithDueDate = exerciseIds.stream().filter(exerciseInfoMap::containsKey).filter(id -> exerciseInfoMap.get(id).due() != null).collect(toSet());
+        final var latestSubmissions = exerciseMetricsRepository.findLatestSubmissionDates(exerciseIdsWithDueDate);
         final ToDoubleFunction<ResourceTimestampDTO> relativeTime = dto -> toRelativeTime(exerciseInfoMap.get(dto.id()).start(), exerciseInfoMap.get(dto.id()).due(),
                 dto.timestamp());
         final var averageLatestSubmissionMap = latestSubmissions.stream().collect(groupingBy(ResourceTimestampDTO::id, averagingDouble(relativeTime)));
 
-        final var latestSubmissionOfUser = exerciseMetricsRepository.findLatestSubmissionDatesForUser(exerciseIds, userId);
+        final var latestSubmissionOfUser = exerciseMetricsRepository.findLatestSubmissionDatesForUser(exerciseIdsWithDueDate, userId);
         final var latestSubmissionMap = latestSubmissionOfUser.stream().collect(toMap(ResourceTimestampDTO::id, relativeTime::applyAsDouble));
 
         final var completedExerciseIds = exerciseMetricsRepository.findAllCompletedExerciseIdsForUserByExerciseIds(userId, exerciseIds);
