@@ -1,5 +1,6 @@
-:orphan:
 .. _generation_of_assessment_suggestions_for_modeling_exercises :
+
+:orphan:
 
 Generation of Assessment Suggestions for Modeling Exercises
 ===========================================================
