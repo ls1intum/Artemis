@@ -4,7 +4,7 @@ import static de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisSt
 import static de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageStateDTO.IN_PROGRESS;
 import static de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageStateDTO.NOT_STARTED;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -96,14 +96,13 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         setupExercise();
 
-        /*
-         * irisRequestMockProvider.mockRunResponse(dto -> {
-         * assertThat(dto.settings().authenticationToken()).isNotNull();
-         * assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages()));
-         * pipelineDone.set(true);
-         * });
-         */
-        fail("This test is not yet implemented. Implement it and remove the fail call.");
+        irisRequestMockProvider.mockRunResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages()));
+
+            pipelineDone.set(true);
+        });
 
         request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.CREATED);
 
@@ -138,19 +137,21 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         setupExercise();
 
-        /*
-         * irisRequestMockProvider.mockRunResponse(dto -> {
-         * assertThat(dto.settings().authenticationToken()).isNotNull();
-         * assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World 1", dto.initialStages()));
-         * pipelineDone.set(true);
-         * });
-         * irisRequestMockProvider.mockRunResponse(dto -> {
-         * assertThat(dto.settings().authenticationToken()).isNotNull();
-         * assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World 2", dto.initialStages()));
-         * pipelineDone.set(true);
-         * });
-         */
-        fail("This test is not yet implemented. Implement it and remove the fail call.");
+        irisRequestMockProvider.mockRunResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World 1", dto.initialStages()));
+
+            pipelineDone.set(true);
+        });
+
+        irisRequestMockProvider.mockRunResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World 2", dto.initialStages()));
+
+            pipelineDone.set(true);
+        });
 
         request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend1, HttpStatus.CREATED);
 
@@ -242,14 +243,13 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         setupExercise();
 
-        /*
-         * irisRequestMockProvider.mockRunResponse(dto -> {
-         * assertThat(dto.settings().authenticationToken()).isNotNull();
-         * assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages()));
-         * pipelineDone.set(true);
-         * });
-         */
-        fail("This test is not yet implemented. Implement it and remove the fail call.");
+        irisRequestMockProvider.mockRunResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages()));
+
+            pipelineDone.set(true);
+        });
 
         var irisMessage = irisMessageService.saveMessage(messageToSend, irisSession, IrisMessageSender.USER);
         request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/resend", null, HttpStatus.OK);
@@ -267,14 +267,13 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         setupExercise();
 
-        /*
-         * irisRequestMockProvider.mockRunResponse(dto -> {
-         * assertThat(dto.settings().authenticationToken()).isNotNull();
-         * assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages()));
-         * pipelineDone.set(true);
-         * });
-         */
-        fail("This test is not yet implemented. Implement it and remove the fail call.");
+        irisRequestMockProvider.mockRunResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages()));
+
+            pipelineDone.set(true);
+        });
 
         var globalSettings = irisSettingsService.getGlobalSettings();
         globalSettings.getIrisChatSettings().setRateLimit(1);
@@ -380,7 +379,6 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
     private void sendStatus(String jobId, String result, List<PyrisStageDTO> stages) throws Exception {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of("Authorization", List.of("Bearer " + jobId))));
-        request.postWithoutResponseBody("/api/public/pyris/pipelines/exercise-chat/runs/" + jobId + "/status", new PyrisChatStatusUpdateDTO(result, stages), HttpStatus.OK,
-                headers);
+        request.postWithoutResponseBody("/api/public/pyris/pipelines/tutor-chat/runs/" + jobId + "/status", new PyrisChatStatusUpdateDTO(result, stages), HttpStatus.OK, headers);
     }
 }

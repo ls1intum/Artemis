@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.service.iris.session.IrisExerciseChatSessionServic
 
 class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
 
-    private static final String TEST_PREFIX = "irissessionactivationintegration";
+    private static final String TEST_PREFIX = "irisexercisesessionactivation";
 
     @Autowired
     private IrisExerciseChatSessionService irisExerciseChatSessionService;
@@ -42,13 +42,13 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createSessionUnauthorized() throws Exception {
-        request.post(tutorChatUrl(exercise.getId()), null, HttpStatus.FORBIDDEN);
+        request.post(exerciseChatUrl(exercise.getId()), null, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void getCurrentSessionUnauthorized() throws Exception {
-        request.get(tutorChatUrl(exercise.getId()), HttpStatus.FORBIDDEN, IrisSession.class);
+        request.get(exerciseChatUrl(exercise.getId()), HttpStatus.FORBIDDEN, IrisSession.class);
     }
 
     @Test
@@ -81,7 +81,7 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
         return content;
     }
 
-    private static String tutorChatUrl(long sessionId) {
-        return "/api/iris/tutor-chat/" + sessionId + "/sessions";
+    private static String exerciseChatUrl(long sessionId) {
+        return "/api/iris/exercise-chat/" + sessionId + "/sessions";
     }
 }

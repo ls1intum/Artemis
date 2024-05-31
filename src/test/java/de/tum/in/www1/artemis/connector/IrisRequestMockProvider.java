@@ -29,7 +29,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisHealthStatusDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisModelDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.tutorChat.PyrisTutorChatPipelineExecutionDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.exercise.PyrisExerciseChatPipelineExecutionDTO;
 
 @Component
 @Profile("iris")
@@ -78,14 +78,14 @@ public class IrisRequestMockProvider {
         }
     }
 
-    public void mockRunResponse(Consumer<PyrisTutorChatPipelineExecutionDTO> responseConsumer) {
+    public void mockRunResponse(Consumer<PyrisExerciseChatPipelineExecutionDTO> responseConsumer) {
         // @formatter:off
         mockServer
                 .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/tutor-chat/default/run"))
                 .andExpect(method(HttpMethod.POST))
                 .andRespond(request -> {
                     var mockRequest = (MockClientHttpRequest) request;
-                    var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisTutorChatPipelineExecutionDTO.class);
+                    var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisExerciseChatPipelineExecutionDTO.class);
                     responseConsumer.accept(dto);
                     return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
                 });

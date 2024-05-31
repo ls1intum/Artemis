@@ -536,6 +536,10 @@ public class User extends AbstractAuditingEntity implements Participant {
         return irisAccepted;
     }
 
+    public void setIrisAcceptedTimestamp(@Nullable ZonedDateTime irisAccepted) {
+        this.irisAccepted = irisAccepted;
+    }
+
     @Nullable
     public String getSshPublicKey() {
         return sshPublicKey;
