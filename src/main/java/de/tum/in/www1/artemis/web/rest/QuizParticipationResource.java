@@ -13,10 +13,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SubmittedAnswerRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.in.www1.artemis.service.ParticipationService;
@@ -38,10 +42,17 @@ public class QuizParticipationResource {
 
     private final UserRepository userRepository;
 
-    public QuizParticipationResource(QuizExerciseRepository quizExerciseRepository, ParticipationService participationService, UserRepository userRepository) {
+    private final ResultRepository resultRepository;
+
+    private final SubmittedAnswerRepository submittedAnswerRepository;
+
+    public QuizParticipationResource(QuizExerciseRepository quizExerciseRepository, ParticipationService participationService, UserRepository userRepository,
+            ResultRepository resultRepository, SubmittedAnswerRepository submittedAnswerRepository) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.participationService = participationService;
         this.userRepository = userRepository;
+        this.resultRepository = resultRepository;
+        this.submittedAnswerRepository = submittedAnswerRepository;
     }
 
     /**
@@ -61,6 +72,16 @@ public class QuizParticipationResource {
         }
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        return ResponseEntity.ok(participationService.startExerciseWithInitializationDate(exercise, user, true, ZonedDateTime.now()));
+        StudentParticipation participation = participationService.startExercise(exercise, user, true);
+        // TODO: Refactor
+        Result result = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true).orElse(null);
+        if (result != null) {
+            // find the submitted answers (they are NOT loaded eagerly anymore)
+            var quizSubmission = (QuizSubmission) result.getSubmission();
+            var submittedAnswers = submittedAnswerRepository.findBySubmission(quizSubmission);
+            quizSubmission.setSubmittedAnswers(submittedAnswers);
+            participation.addResult(result);
+        }
+        return ResponseEntity.ok(participation);
     }
 }
