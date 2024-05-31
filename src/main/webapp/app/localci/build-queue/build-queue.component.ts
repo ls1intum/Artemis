@@ -64,16 +64,6 @@ export class FinishedBuildJobFilter {
     }
 
     /**
-     * Resets the filter.
-     */
-    reset() {
-        this.status = undefined;
-        this.buildAgentAddress = undefined;
-        this.buildStartDateFilterFrom = undefined;
-        this.buildStartDateFilterTo = undefined;
-    }
-
-    /**
      * Checks if the dates are valid.
      */
     get areDatesValid(): boolean {
@@ -98,7 +88,7 @@ enum BuildJobStatusFilter {
     CANCELLED = 'CANCELLED',
 }
 
-enum FishedBuildJobFilterStorageKey {
+export enum FishedBuildJobFilterStorageKey {
     status = 'artemis.buildQueue.finishedBuildJobFilterStatus',
     buildAgentAddress = 'artemis.buildQueue.finishedBuildJobFilterBuildAgentAddress',
     buildStartDateFilterFrom = 'artemis.buildQueue.finishedBuildJobFilterBuildStartDateFilterFrom',
