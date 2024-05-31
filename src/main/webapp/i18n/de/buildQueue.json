@@ -51,7 +51,8 @@
                 },
                 "search": {
                     "title": "Suche",
-                    "placeholder": "Suche nach Buildjob"
+                    "placeholder": "Suche nach Buildjob",
+                    "loading": "Laden..."
                 },
                 "none": "Keine",
                 "close": "Schließen",

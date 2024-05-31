@@ -17,6 +17,7 @@ import { HttpParams } from '@angular/common/http';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Observable, OperatorFunction, Subject, merge } from 'rxjs';
 import { debounceTime, distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators';
+import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 
 export class FinishedBuildJobFilter {
     status?: string = undefined;
@@ -153,7 +154,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
         this.loadFinishedBuildJobs();
         this.search
             .pipe(
-                debounceTime(1000),
+                debounceTime(UI_RELOAD_TIME),
                 tap(() => (this.isLoading = true)),
                 switchMap(() => this.FetchFinishedBuildJobs()),
             )

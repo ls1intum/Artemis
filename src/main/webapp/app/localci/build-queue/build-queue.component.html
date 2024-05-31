@@ -425,7 +425,7 @@
                     (focusout)="triggerLoadFinishedJobs()"
                 />
                 <button class="btn btn-primary ms-3" (click)="triggerLoadFinishedJobs()">
-                    <span jhiTranslate="artemisApp.userManagement.search"></span>
+                    <span jhiTranslate="artemisApp.buildQueue.filter.search.title"></span>
                 </button>
             </div>
             <button class="btn btn-primary" (click)="refresh()">
@@ -433,7 +433,7 @@
                 <span jhiTranslate="metrics.refresh.button"></span>
             </button>
             @if (this.isLoading) {
-                <span class="ms-3" jhiTranslate="artemisApp.userManagement.loading"></span>
+                <span class="ms-3" jhiTranslate="artemisApp.buildQueue.filter.search.loading"></span>
             }
         </div>
         <div>

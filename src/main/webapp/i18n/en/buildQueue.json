@@ -51,7 +51,8 @@
                 },
                 "search": {
                     "title": "Search",
-                    "placeholder": "Search for build job"
+                    "placeholder": "Search for build job",
+                    "loading": "Loading..."
                 },
                 "none": "None",
                 "close": "Close",
