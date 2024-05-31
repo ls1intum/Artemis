@@ -53,7 +53,7 @@ export class LectureUnitInformation {
     public id: number;
     public lectureId: number;
     public name: string;
-    public releaseDate: dayjs.Dayjs;
+    public releaseDate?: dayjs.Dayjs;
     public type: LectureUnitType;
 }
 
@@ -71,7 +71,7 @@ export class CompetencyInformation {
     public title: string;
     public description: string;
     public taxonomy: CompetencyTaxonomy;
-    public softDueDate?: string;
+    public softDueDate?: dayjs.Dayjs;
     public optional: boolean;
     public masteryThreshold: number;
 }

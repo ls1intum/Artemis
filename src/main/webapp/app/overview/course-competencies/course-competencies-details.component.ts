@@ -1,7 +1,7 @@
 import dayjs from 'dayjs/esm';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Competency, CompetencyProgress, getIcon } from 'app/entities/competency.model';
+import { Competency, CompetencyJol, CompetencyProgress, getIcon } from 'app/entities/competency.model';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -27,7 +27,8 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     courseId?: number;
     isLoading = false;
     competency: Competency;
-    judgementOfLearning: number | undefined;
+    judgementOfLearning: CompetencyJol | undefined;
+    promptForJolRating = false;
     showFireworks = false;
     paramsSubscription: Subscription;
 
@@ -75,10 +76,22 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
 
     private loadData() {
         this.isLoading = true;
-        forkJoin([this.competencyService.findById(this.competencyId!, this.courseId!), this.competencyService.getJoL(this.courseId!, this.competencyId!)]).subscribe({
+        forkJoin([this.competencyService.getAllForCourse(this.courseId!), this.competencyService.getJoL(this.courseId!, this.competencyId!)]).subscribe({
             next: ([competencyResp, judgementOfLearningResp]) => {
-                this.competency = competencyResp.body!;
-                this.judgementOfLearning = judgementOfLearningResp.body ?? undefined;
+                const competencies = competencyResp.body!;
+                this.competency = competencies.find((c) => c.id === this.competencyId)!;
+                const progress = this.competency.userProgress?.first();
+                this.promptForJolRating = CompetencyJol.shouldPromptForJol(this.competency, progress, competencies);
+                const judgementOfLearning = judgementOfLearningResp.body ?? undefined;
+                if (
+                    judgementOfLearning &&
+                    progress &&
+                    (judgementOfLearning.competencyProgress !== progress.progress || judgementOfLearning.competencyConfidence !== progress.confidence)
+                ) {
+                    this.judgementOfLearning = undefined;
+                } else {
+                    this.judgementOfLearning = judgementOfLearning;
+                }
 
                 if (this.competency && this.competency.exercises) {
                     // Add exercises as lecture units for display
@@ -162,6 +175,12 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     }
 
     onRatingChange(newRating: number) {
-        this.judgementOfLearning = newRating;
+        this.judgementOfLearning = {
+            competencyId: this.competencyId!,
+            jolValue: newRating,
+            judgementTime: dayjs().toString(),
+            competencyProgress: this.progress,
+            competencyConfidence: this.confidence,
+        } satisfies CompetencyJol;
     }
 }

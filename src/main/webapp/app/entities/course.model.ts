@@ -112,6 +112,7 @@ export class Course implements BaseEntity {
     public competencies?: Competency[];
     public prerequisites?: Competency[];
     public judgementOfLearningMap?: { [key: number]: CompetencyJol }; // competencyId -> judgement
+    public promptForJolRatingMap?: { [key: number]: boolean }; // competencyId -> promptForRating
     public learningPathsEnabled?: boolean;
     public learningPaths?: LearningPath[];
     public exams?: Exam[];

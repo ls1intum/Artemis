@@ -12,10 +12,10 @@ import { CompetencyService } from 'app/course/competencies/competency.service';
     templateUrl: './judgement-of-learning-rating.component.html',
 })
 export class JudgementOfLearningRatingComponent {
-    @Input() courseId?: number;
+    @Input() courseId: number | undefined;
     @Input() competencyId: number;
-    @Input() rating?: number;
-    @Input() mastery?: number;
+    @Input() rating: number | undefined;
+    @Input() mastery: number | undefined;
 
     @Output() ratingChange = new EventEmitter<number>();
 

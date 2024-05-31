@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { faFilePdf, faList } from '@fortawesome/free-solid-svg-icons';
-import { CompetencyProgress, getConfidence, getIcon, getMastery, getProgress } from 'app/entities/competency.model';
+import { Competency, CompetencyJol, CompetencyProgress, getConfidence, getIcon, getMastery, getProgress } from 'app/entities/competency.model';
 import { Course } from 'app/entities/course.model';
 import { Router } from '@angular/router';
 import { CompetencyInformation, LectureUnitInformation, StudentMetrics } from 'app/entities/student-metrics.model';
@@ -37,6 +37,7 @@ export class CompetencyAccordionComponent implements OnChanges {
     mastery: number = 0;
     progress: number = 0;
     jolRating?: number;
+    promptForRating = false;
 
     protected readonly faList = faList;
     protected readonly faPdf = faFilePdf;
@@ -58,6 +59,26 @@ export class CompetencyAccordionComponent implements OnChanges {
             this.setNextExercises();
             this.setNextLessonUnits();
             this.calculateProgressValues();
+
+            const courseCompetencies = Object.values(this.metrics.competencyMetrics?.competencyInformation ?? {}).map((competency) => {
+                return {
+                    ...competency,
+                    userProgress: [
+                        {
+                            progress: this.metrics.competencyMetrics?.progress?.[competency.id] ?? 0,
+                            confidence: this.metrics.competencyMetrics?.confidence?.[competency.id] ?? 0,
+                        },
+                    ],
+                } satisfies Competency;
+            });
+            this.promptForRating = CompetencyJol.shouldPromptForJol(
+                this.competency satisfies Competency,
+                {
+                    progress: this.metrics.competencyMetrics?.progress?.[this.competency.id],
+                    confidence: this.metrics.competencyMetrics?.confidence?.[this.competency.id],
+                },
+                courseCompetencies,
+            );
         }
     }
 
@@ -94,12 +115,13 @@ export class CompetencyAccordionComponent implements OnChanges {
         this.nextLectureUnits = competencyLectureUnits
             .filter((lectureUnitId) => !completedLectureUnits.includes(lectureUnitId))
             .flatMap((lectureUnitId) => this.metrics.lectureUnitStudentMetricsDTO?.lectureUnitInformation?.[lectureUnitId] ?? [])
-            .filter((lectureUnit) => dayjs(lectureUnit.releaseDate).isBefore(dayjs()))
-            .sort((a, b) => dayjs(a.releaseDate).diff(dayjs(b.releaseDate)));
+            .filter((lectureUnit) => lectureUnit.releaseDate?.isBefore(dayjs()))
+            .sort((a, b) => (a.releaseDate?.isBefore(b?.releaseDate) ? -1 : 1));
     }
 
     calculateProgressValues() {
-        this.jolRating = this.metrics.competencyMetrics?.jolValues?.[this.competency.id].jolValue;
+        const jol = this.metrics.competencyMetrics?.jolValues?.[this.competency.id];
+        this.jolRating = jol?.jolValue;
         this.exercisesProgress = this.calculateExercisesProgress();
         this.lectureUnitsProgress = this.calculateLectureUnitsProgress();
         const userProgress = this.getUserProgress();
@@ -121,7 +143,7 @@ export class CompetencyAccordionComponent implements OnChanges {
 
         const competencyExercises = this.metrics.competencyMetrics?.exercises?.[this.competency.id];
         const completedExercises = competencyExercises?.filter((exerciseId) => this.metrics.exerciseMetrics?.completed?.includes(exerciseId)).length ?? 0;
-        if (!competencyExercises) {
+        if (competencyExercises === undefined || competencyExercises.length === 0) {
             return undefined;
         }
         const progress = (completedExercises / competencyExercises.length) * 100;
@@ -134,11 +156,14 @@ export class CompetencyAccordionComponent implements OnChanges {
         }
 
         const competencyLectureUnits = this.metrics.competencyMetrics?.lectureUnits?.[this.competency.id];
-        const completedLectureUnits = competencyLectureUnits?.filter((lectureUnitId) => this.metrics.lectureUnitStudentMetricsDTO?.completed?.includes(lectureUnitId)).length ?? 0;
-        if (!competencyLectureUnits) {
+        const releasedLectureUnits = competencyLectureUnits?.filter((lectureUnitId) =>
+            this.metrics.lectureUnitStudentMetricsDTO?.lectureUnitInformation?.[lectureUnitId]?.releaseDate?.isBefore(dayjs()),
+        );
+        const completedLectureUnits = releasedLectureUnits?.filter((lectureUnitId) => this.metrics.lectureUnitStudentMetricsDTO?.completed?.includes(lectureUnitId)).length ?? 0;
+        if (releasedLectureUnits === undefined || releasedLectureUnits.length === 0) {
             return undefined;
         }
-        const progress = (completedLectureUnits / competencyLectureUnits.length) * 100;
+        const progress = (completedLectureUnits / releasedLectureUnits.length) * 100;
         return round(progress, 1);
     }
 
