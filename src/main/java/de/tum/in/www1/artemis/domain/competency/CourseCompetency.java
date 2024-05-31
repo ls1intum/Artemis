@@ -1,21 +1,15 @@
 package de.tum.in.www1.artemis.domain.competency;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.Set;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.DiscriminatorType;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 import org.hibernate.annotations.Cache;
@@ -58,22 +52,9 @@ public abstract class CourseCompetency extends BaseCompetency {
     private Course course;
 
     @ManyToOne
-    @JoinColumn(name = "linked_standardized_competency_id")
-    @JsonIgnoreProperties({ "competencies" })
-    private StandardizedCompetency linkedStandardizedCompetency;
-
-    @ManyToOne
     @JoinColumn(name = "linked_course_competency_id")
     @JsonIgnoreProperties({ "competencies" })
     private CourseCompetency linkedCourseCompetency;
-
-    @OneToMany(mappedBy = "competency", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
-    @JsonIgnoreProperties({ "user", "competency" })
-    private Set<CompetencyProgress> userProgress = new HashSet<>();
-
-    @ManyToMany(mappedBy = "competencies")
-    @JsonIgnoreProperties({ "competencies", "course" })
-    private Set<LearningPath> learningPaths = new HashSet<>();
 
     public CourseCompetency() {
     }
@@ -117,35 +98,11 @@ public abstract class CourseCompetency extends BaseCompetency {
         this.course = course;
     }
 
-    public StandardizedCompetency getLinkedStandardizedCompetency() {
-        return linkedStandardizedCompetency;
-    }
-
-    public void setLinkedStandardizedCompetency(StandardizedCompetency linkedStandardizedCompetency) {
-        this.linkedStandardizedCompetency = linkedStandardizedCompetency;
-    }
-
     public CourseCompetency getLinkedCourseCompetency() {
         return linkedCourseCompetency;
     }
 
     public void setLinkedCourseCompetency(CourseCompetency linkedCourseCompetency) {
         this.linkedCourseCompetency = linkedCourseCompetency;
-    }
-
-    public Set<CompetencyProgress> getUserProgress() {
-        return userProgress;
-    }
-
-    public void setUserProgress(Set<CompetencyProgress> userProgress) {
-        this.userProgress = userProgress;
-    }
-
-    public Set<LearningPath> getLearningPaths() {
-        return learningPaths;
-    }
-
-    public void setLearningPaths(Set<LearningPath> learningPaths) {
-        this.learningPaths = learningPaths;
     }
 }
