@@ -6,14 +6,14 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTestModule } from '../../../test.module';
-import { CompetencyImportCourseComponent } from 'app/course/competencies/competency-management/competency-import-course.component';
+import { ImportAllCompetenciesComponent } from 'app/course/competencies/competency-management/import-all-competencies.component';
 import { Course } from 'app/entities/course.model';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
-describe('CompetencyImportCourseComponent', () => {
-    let fixture: ComponentFixture<CompetencyImportCourseComponent>;
-    let component: CompetencyImportCourseComponent;
+describe('ImportAllCompetenciesComponent', () => {
+    let fixture: ComponentFixture<ImportAllCompetenciesComponent>;
+    let component: ImportAllCompetenciesComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -21,7 +21,7 @@ describe('CompetencyImportCourseComponent', () => {
             declarations: [
                 MockPipe(ArtemisTranslatePipe),
                 MockRouter,
-                CompetencyImportCourseComponent,
+                ImportAllCompetenciesComponent,
                 MockComponent(ButtonComponent),
                 MockDirective(SortByDirective),
                 MockDirective(SortDirective),
@@ -29,7 +29,7 @@ describe('CompetencyImportCourseComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(CompetencyImportCourseComponent);
+                fixture = TestBed.createComponent(ImportAllCompetenciesComponent);
                 component = fixture.componentInstance;
             });
     });

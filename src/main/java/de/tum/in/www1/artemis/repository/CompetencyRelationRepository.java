@@ -82,7 +82,7 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
     @Query(value = """
             WITH RECURSIVE transitive_closure(id) AS
             (
-                (SELECT competency.id FROM course_competency WHERE competency.id = :competencyId)
+                (SELECT competency.id FROM course_competency competency WHERE competency.id = :competencyId)
                 UNION
                 (
                     SELECT CASE

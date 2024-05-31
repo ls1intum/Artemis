@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
-import { CompetencyService } from 'app/course/competencies/competency.service';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { CoursePrerequisitesModalComponent } from 'app/overview/course-registration/course-registration-prerequisites-modal/course-prerequisites-modal.component';
@@ -26,7 +25,7 @@ describe('CoursePrerequisitesModal', () => {
             declarations: [CoursePrerequisitesModalComponent, CompetencyCardStubComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(AlertService),
-                MockProvider(CompetencyService),
+                MockProvider(PrerequisiteService),
                 {
                     provide: NgbActiveModal,
                     useValue: activeModalStub,

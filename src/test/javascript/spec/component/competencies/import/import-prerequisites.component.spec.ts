@@ -2,7 +2,7 @@ import { ArtemisTestModule } from '../../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { ImportCompetenciesComponent } from 'app/course/competencies/import-competencies/import-competencies.component';
+import { ImportPrerequisitesComponent } from 'app/course/competencies/import-competencies/import-prerequisites.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { FormsModule } from 'app/forms/forms.module';
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
@@ -10,21 +10,20 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { of } from 'rxjs';
-import { CompetencyWithTailRelationDTO } from 'app/entities/competency.model';
-import { HttpResponse } from '@angular/common/http';
 import { ImportCompetenciesTableComponent } from 'app/course/competencies/import-competencies/import-competencies-table.component';
 import { CompetencySearchComponent } from 'app/course/competencies/import-competencies/competency-search.component';
+import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 
-describe('ImportCompetenciesComponent', () => {
-    let componentFixture: ComponentFixture<ImportCompetenciesComponent>;
-    let component: ImportCompetenciesComponent;
-    let competencyService: CompetencyService;
+describe('ImportPrerequisitesComponent', () => {
+    let componentFixture: ComponentFixture<ImportPrerequisitesComponent>;
+    let component: ImportPrerequisitesComponent;
+    let prerequisiteService: PrerequisiteService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule],
             declarations: [
-                ImportCompetenciesComponent,
+                ImportPrerequisitesComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(ButtonComponent),
                 MockComponent(ImportCompetenciesTableComponent),
@@ -41,9 +40,9 @@ describe('ImportCompetenciesComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                componentFixture = TestBed.createComponent(ImportCompetenciesComponent);
+                componentFixture = TestBed.createComponent(ImportPrerequisitesComponent);
                 component = componentFixture.componentInstance;
-                competencyService = TestBed.inject(CompetencyService);
+                prerequisiteService = TestBed.inject(PrerequisiteService);
             });
     });
 
@@ -56,12 +55,12 @@ describe('ImportCompetenciesComponent', () => {
         expect(component).toBeDefined();
     });
 
-    it('should import competencies on submit', () => {
-        const competencyDTOs: CompetencyWithTailRelationDTO[] = [{ competency: { id: 1 } }, { competency: { id: 2 } }];
-        const importBulkSpy = jest.spyOn(competencyService, 'importBulk').mockReturnValue(
-            of({
-                body: competencyDTOs,
-            } as HttpResponse<CompetencyWithTailRelationDTO[]>),
+    it('should import prerequisites on submit', () => {
+        const importBulkSpy = jest.spyOn(prerequisiteService, 'importPrerequisites').mockReturnValue(
+            of([
+                { id: 1, title: 'competency1' },
+                { id: 1, title: 'competency2' },
+            ]),
         );
         const router: Router = TestBed.inject(Router);
         const navigateSpy = jest.spyOn(router, 'navigate');

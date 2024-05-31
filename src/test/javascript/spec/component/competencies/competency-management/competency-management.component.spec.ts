@@ -21,7 +21,7 @@ import { By } from '@angular/platform-browser';
 import '@angular/localize/init';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { CompetencyImportCourseComponent, ImportAllFromCourseResult } from 'app/course/competencies/competency-management/competency-import-course.component';
+import { ImportAllCompetenciesComponent, ImportAllFromCourseResult } from 'app/course/competencies/competency-management/import-all-competencies.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
@@ -53,7 +53,7 @@ describe('CompetencyManagementComponent', () => {
                 MockHasAnyAuthorityDirective,
                 CompetencyRelationGraphStubComponent,
                 MockComponent(DocumentationButtonComponent),
-                MockComponent(CompetencyImportCourseComponent),
+                MockComponent(ImportAllCompetenciesComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(HtmlForMarkdownPipe),
                 MockPipe(ArtemisDatePipe),
@@ -169,16 +169,16 @@ describe('CompetencyManagementComponent', () => {
     });
 
     it('should delete prerequisite', () => {
-        const removePrerequisiteSpy = jest.spyOn(prerequisiteService, 'deletePrerequisite').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
+        const deletePrerequisiteSpy = jest.spyOn(prerequisiteService, 'deletePrerequisite').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
         fixture.detectChanges();
 
         component.deletePrerequisite(123);
 
-        expect(removePrerequisiteSpy).toHaveBeenCalledOnce();
-        expect(removePrerequisiteSpy).toHaveBeenCalledWith(123, 1);
+        expect(deletePrerequisiteSpy).toHaveBeenCalledOnce();
+        expect(deletePrerequisiteSpy).toHaveBeenCalledWith(123, 1);
     });
 
-    it('should open and import modal and update values', () => {
+    it('should open import modal and update values', () => {
         const modalResult: ImportAllFromCourseResult = {
             courseForImportDTO: { id: 1 },
             importRelations: false,
@@ -202,7 +202,7 @@ describe('CompetencyManagementComponent', () => {
         const importButton = fixture.debugElement.query(By.css('#competencyImportAllButton'));
         importButton.nativeElement.click();
 
-        expect(modalService.open).toHaveBeenCalledWith(CompetencyImportCourseComponent, { size: 'lg', backdrop: 'static' });
+        expect(modalService.open).toHaveBeenCalledWith(ImportAllCompetenciesComponent, { size: 'lg', backdrop: 'static' });
         expect(modalRef.componentInstance.disabledIds).toEqual([1]);
         expect(component.competencies).toHaveLength(existingCompetencies + 2);
         expect(component.relations).toHaveLength(existingRelations + 1);

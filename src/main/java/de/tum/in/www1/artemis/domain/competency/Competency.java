@@ -4,9 +4,14 @@ import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 
@@ -20,21 +25,41 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 @DiscriminatorValue("COMPETENCY")
 public class Competency extends CourseCompetency {
 
-    // TODO: move to CourseCompetency in next step of refactoring
+    // TODO: move properties (linkedStandardizedCompetency, exercises, lectureUnits, userProgress, learningPaths) to CourseCompetency when refactoring
+    @ManyToOne
+    @JoinColumn(name = "linked_standardized_competency_id")
+    @JsonIgnoreProperties({ "competencies" })
+    private StandardizedCompetency linkedStandardizedCompetency;
+
     @ManyToMany(mappedBy = "competencies")
     @JsonIgnoreProperties({ "competencies", "course" })
     private Set<Exercise> exercises = new HashSet<>();
 
-    // TODO: move to CourseCompetency in next step of refactoring
     @ManyToMany(mappedBy = "competencies")
     @JsonIgnoreProperties("competencies")
     private Set<LectureUnit> lectureUnits = new HashSet<>();
+
+    @OneToMany(mappedBy = "competency", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @JsonIgnoreProperties({ "user", "competency" })
+    private Set<CompetencyProgress> userProgress = new HashSet<>();
+
+    @ManyToMany(mappedBy = "competencies")
+    @JsonIgnoreProperties({ "competencies", "course" })
+    private Set<LearningPath> learningPaths = new HashSet<>();
 
     public Competency() {
     }
 
     public Competency(String title, String description, ZonedDateTime softDueDate, Integer masteryThreshold, CompetencyTaxonomy taxonomy, boolean optional) {
         super(title, description, softDueDate, masteryThreshold, taxonomy, optional);
+    }
+
+    public StandardizedCompetency getLinkedStandardizedCompetency() {
+        return linkedStandardizedCompetency;
+    }
+
+    public void setLinkedStandardizedCompetency(StandardizedCompetency linkedStandardizedCompetency) {
+        this.linkedStandardizedCompetency = linkedStandardizedCompetency;
     }
 
     public Set<Exercise> getExercises() {
@@ -91,6 +116,22 @@ public class Competency extends CourseCompetency {
         }
         this.lectureUnits.remove(lectureUnit);
         lectureUnit.getCompetencies().remove(this);
+    }
+
+    public Set<CompetencyProgress> getUserProgress() {
+        return userProgress;
+    }
+
+    public void setUserProgress(Set<CompetencyProgress> userProgress) {
+        this.userProgress = userProgress;
+    }
+
+    public Set<LearningPath> getLearningPaths() {
+        return learningPaths;
+    }
+
+    public void setLearningPaths(Set<LearningPath> learningPaths) {
+        this.learningPaths = learningPaths;
     }
 
     /**
