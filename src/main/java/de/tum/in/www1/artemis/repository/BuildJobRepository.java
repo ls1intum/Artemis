@@ -38,6 +38,9 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSp
             SELECT b
             FROM BuildJob b LEFT JOIN Course c ON b.courseId = c.id
             LEFT JOIN FETCH b.result r
+            LEFT JOIN FETCH r.participation p
+            LEFT JOIN FETCH p.exercise
+            LEFT JOIN FETCH r.submission
             WHERE (:buildStatus IS NULL OR b.buildStatus = :buildStatus)
             AND (:buildAgentAddress IS NULL OR b.buildAgentAddress = :buildAgentAddress)
             AND (:startDate IS NULL OR b.buildStartDate >= :startDate)
