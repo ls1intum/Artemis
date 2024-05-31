@@ -214,82 +214,44 @@ Once you're done assessing the solution, you can either:
 Automatic Assessment Suggestions
 --------------------------------
 If the checkbox ``Automatic assessment suggestions enabled`` is checked for a modeling exercise, Artemis generates
-assessment suggestions for submissions using the Athena Service. This section provides insights into how the
-suggestion generation works on a technical level and how exercises are set up best to receive the most accurate suggestions.
+assessment suggestions for submissions using the Athena service. This section provides insights into how suggestions
+are retrieved in Artemis and how to apply them in the exercise grading process.
 
 .. note::
-   To learn how to set up an instance of the Athena Service and configure your Artemis installation accordingly, please consult the section :ref:`Athena Service <athena_service>`.
+   To learn how to set up an instance of the Athena service and configure your Artemis installation accordingly, please refer to the section :ref:`Athena Service <athena_service>`.
 
-Assessment Suggestion Retrieval
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 After clicking on |assess-submission| on one of the submission entries on the Submissions and Assessments Page,
 assessment suggestions are loaded automatically as indicated by the following loading indicator:
 
 .. figure:: modeling/assessment-suggestions-loading-indicator.png
           :align: center
-          :scale: 40%
+          :scale: 50%
 
-Once assessment suggestions have been retrieved, a notice on top of the page indicates that the submission currently viewed
+Once assessment suggestions have been retrieved, a notice on top of the page indicates that the current submission
 contains assessment suggestions created via generative AI.
 
 .. figure:: modeling/assessment-suggestions-notice.png
           :align: center
 
-The suggestions themselves are shown as follows:
+The suggestions themselves are shown as follows. If a suggestion directly references a diagram element, a dialog showing
+the suggested grading score for this specific suggestion as well as a suggestion on what could be improved is
+attached to the corresponding element. In this example, a remark is made that an element is present in the evaluated
+BPMN diagram without being mentioned in the problem statement.
 
-.. figure:: modeling/assessment-suggestions-example.png
+.. figure:: modeling/referenced-assessment-suggestion.png
           :align: center
+          :scale: 50%
 
-Suggestion Generation Process
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-This section intends to provide insights into how the generation of automated feedback suggestions works for modeling
-exercises. The modeling feedback module generates feedback through the following process:
+If a suggestion addresses a more general aspect of the diagram, multiple diagram elements at once, or elements that are
+missing from the diagram, the suggestion is shown in a card overview below the diagram. These unreferenced suggestions
+can be accepted or discarded via buttons on the individual suggestion cards.
 
-1. **Feedback Request Reception:** Upon receiving a feedback request, the corresponding modeling submission is serialized into an appropriate exchange format. The format selection depends on the submission type. For BPMN diagrams, BPMN 2.0 XML is used as it is well understood by Large Language Models. IDs of diagram elements are shortened during serialization, resulting in a serialized feedback model and a mapping dictionary for the shortened identifiers.
-
-2. **Prompt Input Collection:** The module gathers all required input to query the connected language model. This includes:
-
-- Number of points and bonus points achievable
-- Grading instructions
-- Problem statement
-- Explanation of the submission format
-- Optional example solution
-- Serialized submission
-
-3. **Prompt Template Filling:** The collected input is used to fill in the prompt template. If the prompt exceeds the language model's token limit, omittable features are removed in the following order: example solution, grading instructions, and problem statement. The system can still provide improvement suggestions without detailed grading instructions.
-
-4. **Token Limit Check:** If the prompt remains too long after removing omittable features, feedback generation is aborted. Otherwise, the prompt is executed on the connected language model.
-
-5. **Response Parsing:** The model's response is parsed into a dictionary representation. Feedback items are mapped back to their original element IDs, ensuring correct attachment to referenced elements.
-
-.. figure:: modeling/modeling-llm-activity.svg
+.. figure:: modeling/unreferenced-assessment-suggestion.png
           :align: center
+          :scale: 50%
 
-Optimizing Exercises for Automated Assessment
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-To get the best possible assessment suggestions for a modeling exercise, a few best practises should be considered.
-As the current version of the module for generating suggestions for modeling exercises is based on a large language model,
-when composing grading instructions for an exercise, it is advisable to follow similar strategies as for prompt engineering
-an LLM: https://platform.openai.com/docs/guides/prompt-engineering
-
-The following listing shows exemplary grading instructions for a BPMN process modeling exercise. The instructions
-explicitly list all aspects Athena should be aware and how credits should be assigned accordingly. Instructions formulated
-as explicitly as this tend to yield high quality assessment suggestions.
-
-.. code-block:: html
-
-    Evaluate the following 10 criteria:
-
-    1. Give 1 point if all elements described in the problem statement are present in the submission, 0 otherwise.
-    2. Give 1 point if the outgoing flows from an exclusive gateway are also labeled if there is more than one outgoing flow from the exclusive gateway, 0 otherwise.
-    3. Give 1 point if a start-event is present in the student's submission, 0 otherwise.
-    4. Give 1 point if an end-event is present in the student's submission, 0 otherwise.
-    5. Give 0 points if the activities in the diagram are not in the correct order according to the problem statement, 1 otherwise.
-    6. Give 1 point if all pools and swimlanes are labeled, 0 otherwise.
-    7. Give 1 point if the submission does not contain elements that are not described in the problem statement, 0 otherwise.
-    8. Give 1 point if all diagram elements are connected, 0 otherwise.
-    9. Give 1 point if all tasks are named in the "Verb Object"-format where a name consists of a verb followed by the object, 0 otherwise.
-    10. Give 1 point if no sequence flows connect elements in two different pools, 0 otherwise.
+To learn how automatic suggestions are generated and how exercises can be optimized for automatic evaluation, please
+refer to :ref:`Generation of Assessment Suggestions for Modeling Exercises<generation_of_assessment_suggestions_for_modeling_exercises>`.
 
 .. |edit| image:: modeling/edit.png
     :scale: 75
