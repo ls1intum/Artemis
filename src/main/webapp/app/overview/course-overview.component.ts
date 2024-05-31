@@ -248,10 +248,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
     }
 
-    onIconClick() {
-        this.dropdownCourses = !this.dropdownCourses;
-    }
-
     /** Listen click event whether on outside of the container to close the dropdown menu */
     @HostListener('document:click', ['$event'])
     onCloseDropdownClick(event: MouseEvent) {
@@ -259,6 +255,15 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         if (this.dropdownCourses && !clickedInsideContainer) {
             this.dropdownCourses = false;
         }
+    }
+
+    toggleCourseDropdown() {
+        const courseTitleElement = document.querySelector('.course-title') as HTMLElement;
+        if (courseTitleElement) {
+            const courseTitleHeight = courseTitleElement.offsetHeight;
+            document.documentElement.style.setProperty('--course-title-height', `${courseTitleHeight}px`);
+        }
+        this.dropdownCourses = !this.dropdownCourses;
     }
 
     /** Update sidebar item's hidden property based on the window height to display three-dots */
@@ -322,6 +327,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     /** Navigate to a new Course */
     switchCourse(course: Course) {
+        this.dropdownCourses = false;
         this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
             this.router.navigate(['courses', course.id]);
         });
@@ -730,6 +736,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.vcSubscription?.unsubscribe();
         this.subscription?.unsubscribe();
         this.profileSubscription?.unsubscribe();
+        this.subscription.unsubscribe();
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
     }

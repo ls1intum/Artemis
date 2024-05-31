@@ -260,21 +260,17 @@ jhi-secured-image {
     }
 }
 
-#courseIcon {
-    cursor: pointer;
-}
-
-#courseIconCustom {
-    cursor: pointer;
-}
-
-#dropdownCourses {
+.dropdown-courses {
     overflow-y: auto;
     position: absolute;
     background-color: var(--dropdown-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
+    border: 0.25rem solid var(--border-color);
+    border-radius: 0.25rem;
+    margin-left: 0.25rem;
     z-index: 1000000;
+    min-width: 204px;
+    max-width: 294px;
+    top: calc(3.5rem + var(--course-title-height));
     ul {
         margin: 0;
         display: flex;
@@ -290,7 +286,7 @@ jhi-secured-image {
     a {
         text-decoration: none;
         color: var(--bs-body-color);
-        padding: 1rem;
+        padding: 0.5rem;
         display: flex;
         &:hover {
             background-color: var(--sidebar-card-selected-bg);
@@ -304,6 +300,6 @@ jhi-secured-image {
     }
 }
 
-#dropdownCourses.active {
+.dropdown-courses.active {
     display: block;
 }
