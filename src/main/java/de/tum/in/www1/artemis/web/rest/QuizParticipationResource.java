@@ -13,10 +13,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SubmittedAnswerRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.in.www1.artemis.service.ParticipationService;
@@ -38,28 +42,46 @@ public class QuizParticipationResource {
 
     private final UserRepository userRepository;
 
-    public QuizParticipationResource(QuizExerciseRepository quizExerciseRepository, ParticipationService participationService, UserRepository userRepository) {
+    private final ResultRepository resultRepository;
+
+    private final SubmittedAnswerRepository submittedAnswerRepository;
+
+    public QuizParticipationResource(QuizExerciseRepository quizExerciseRepository, ParticipationService participationService, UserRepository userRepository,
+            ResultRepository resultRepository, SubmittedAnswerRepository submittedAnswerRepository) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.participationService = participationService;
         this.userRepository = userRepository;
+        this.resultRepository = resultRepository;
+        this.submittedAnswerRepository = submittedAnswerRepository;
     }
 
+    /**
+     * POST /quiz-exercises/{exerciseId}/start-participation : start the quiz exercise participation
+     *
+     * @param exerciseId the id of the quiz exercise
+     * @return The created participation
+     */
     @PostMapping("quiz-exercises/{exerciseId}/start-participation")
     @EnforceAtLeastStudentInExercise
-    public ResponseEntity<Participation> startParticipation(@PathVariable Long exerciseId) {
-        log.debug("REST request to start Exercise : {}", exerciseId);
+    public ResponseEntity<StudentParticipation> startParticipation(@PathVariable Long exerciseId) {
+        log.debug("REST request to start quiz exercise participation : {}", exerciseId);
         QuizExercise exercise = quizExerciseRepository.findByIdElseThrow(exerciseId);
 
         if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
             throw new AccessForbiddenException("Students cannot start an exercise before the release date");
         }
-        if (!Boolean.TRUE.equals(exercise.isIsOpenForPractice()) && exercise.getDueDate() != null && exercise.getDueDate().isBefore(ZonedDateTime.now())) {
-            throw new AccessForbiddenException("Students cannot start an exercise after the due date");
-        }
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        participationService.startExerciseWithInitializationDate(exercise, user, false, ZonedDateTime.now());
-
-        return null;
+        StudentParticipation participation = participationService.startExercise(exercise, user, true);
+        // TODO: Refactor
+        Result result = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true).orElse(null);
+        if (result != null) {
+            // find the submitted answers (they are NOT loaded eagerly anymore)
+            var quizSubmission = (QuizSubmission) result.getSubmission();
+            var submittedAnswers = submittedAnswerRepository.findBySubmission(quizSubmission);
+            quizSubmission.setSubmittedAnswers(submittedAnswers);
+            participation.addResult(result);
+        }
+        return ResponseEntity.ok(participation);
     }
 }

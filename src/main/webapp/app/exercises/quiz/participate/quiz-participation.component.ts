@@ -162,7 +162,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                         this.initShowSolution();
                         break;
                     case 'live':
-                        this.initLiveMode();
+                        this.refreshQuiz();
                         break;
                 }
             });
@@ -224,7 +224,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.setupAutoSave();
 
         // load the quiz (and existing submission if quiz has started)
-        this.participationService.findParticipationForCurrentUser(this.quizId).subscribe({
+        this.participationService.startQuizParticipation(this.quizId).subscribe({
             next: (response: HttpResponse<StudentParticipation>) => {
                 this.updateParticipationFromServer(response.body!);
             },
@@ -611,7 +611,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      */
     updateParticipationFromServer(participation: StudentParticipation) {
         if (participation) {
-            this.applyQuizFull(participation.exercise as QuizExercise);
+            this.applyQuizFull(this.quizExercise ?? (participation.exercise as QuizExercise));
         }
 
         // apply submission if it exists

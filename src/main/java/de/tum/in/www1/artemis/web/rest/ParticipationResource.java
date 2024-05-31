@@ -989,11 +989,13 @@ public class ParticipationResource {
             return null;
         }
 
-        Participation participation = optionalParticipation.get();
-
+        StudentParticipation participation = optionalParticipation.get();
         Optional<Submission> optionalSubmission = submissionRepository.findByParticipationIdOrderBySubmissionDateDesc(participation.getId());
-        optionalSubmission.ifPresent(submission -> participation.setSubmissions(Set.of(submission)));
+        if (optionalSubmission.isPresent()) {
+            Result result = new Result().submission(optionalSubmission.get());
+            participation.addResult(result);
+        }
 
-        return optionalParticipation.get();
+        return participation;
     }
 }
