@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +20,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
+import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmittedAnswerRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -46,13 +48,16 @@ public class QuizParticipationResource {
 
     private final SubmittedAnswerRepository submittedAnswerRepository;
 
+    private final QuizSubmissionRepository quizSubmissionRepository;
+
     public QuizParticipationResource(QuizExerciseRepository quizExerciseRepository, ParticipationService participationService, UserRepository userRepository,
-            ResultRepository resultRepository, SubmittedAnswerRepository submittedAnswerRepository) {
+            ResultRepository resultRepository, SubmittedAnswerRepository submittedAnswerRepository, QuizSubmissionRepository quizSubmissionRepository) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.participationService = participationService;
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.submittedAnswerRepository = submittedAnswerRepository;
+        this.quizSubmissionRepository = quizSubmissionRepository;
     }
 
     /**
@@ -73,15 +78,21 @@ public class QuizParticipationResource {
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         StudentParticipation participation = participationService.startExercise(exercise, user, true);
-        // TODO: Refactor
-        Result result = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true).orElse(null);
-        if (result != null) {
-            // find the submitted answers (they are NOT loaded eagerly anymore)
-            var quizSubmission = (QuizSubmission) result.getSubmission();
+
+        Optional<Result> optionalResult = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true);
+        Result result;
+        if (optionalResult.isPresent()) {
+            var quizSubmission = (QuizSubmission) optionalResult.get().getSubmission();
             var submittedAnswers = submittedAnswerRepository.findBySubmission(quizSubmission);
             quizSubmission.setSubmittedAnswers(submittedAnswers);
-            participation.addResult(result);
+            result = optionalResult.get();
         }
+        else {
+            result = new Result();
+            result.setSubmission(quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()));
+        }
+
+        participation.addResult(result);
         return ResponseEntity.ok(participation);
     }
 }
