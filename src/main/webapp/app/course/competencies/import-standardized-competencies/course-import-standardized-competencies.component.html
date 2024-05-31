@@ -38,6 +38,7 @@
                 <div style="background-color: var(--overview-light-background-color)" class="card d-flex flex-grow-1 w-100 h-100 p-3 ms-1">
                     <jhi-standardized-competency-detail
                         [competency]="selectedCompetency"
+                        [sourceString]="sourceString"
                         [knowledgeAreaTitle]="selectedCompetency.knowledgeAreaTitle ?? ''"
                         (onClose)="closeCompetencyDetails()"
                     />
