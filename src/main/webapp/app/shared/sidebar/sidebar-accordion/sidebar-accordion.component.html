@@ -9,7 +9,7 @@
                 {{ 'artemisApp.courseOverview.sidebar.' + groupKey | artemisTranslate | titlecase }}
                 ({{ (groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length }})
             </div>
-            <div class="icon-container pe-3">
+            <div class="pe-3">
                 <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!collapseState[groupKey]" />
             </div>
         </div>
@@ -17,7 +17,8 @@
         <div id="test-accordion-item-content" [ngbCollapse]="collapseState[groupKey]" class="p-2 bg-body">
             @for (sidebarItem of groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue; let last = $last; track sidebarItem) {
                 <div [ngClass]="{ 'mb-2': !last }">
-                    <jhi-sidebar-card [itemSelected]="itemSelected" [sidebarType]="sidebarType" class="pb-1" [sidebarItem]="sidebarItem" />
+                    <!-- loading sidebarCard with help of a directive depending on its size input-->
+                    <div jhiSidebarCard [size]="sidebarItem.size" [itemSelected]="itemSelected" [sidebarType]="sidebarType" [sidebarItem]="sidebarItem"></div>
                 </div>
             }
         </div>

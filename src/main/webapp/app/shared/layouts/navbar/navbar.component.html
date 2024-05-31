@@ -347,14 +347,26 @@
                             >
                         }
                         @if (breadcrumb && !breadcrumb.translate) {
-                            <a
-                                class="breadcrumb-link"
-                                id="bread-crumb-plain-{{ i }}"
-                                [routerLink]="breadcrumb.uri"
-                                routerLinkActive="active"
-                                [routerLinkActiveOptions]="{ exact: true }"
-                                >{{ breadcrumb.label }}</a
-                            >
+                            @if (isBuildAgentDetails) {
+                                <a
+                                    class="breadcrumb-link"
+                                    id="bread-crumb-{{ i }}"
+                                    [routerLink]="breadcrumb.uri"
+                                    routerLinkActive="active"
+                                    [routerLinkActiveOptions]="{ exact: true }"
+                                    [queryParams]="{ agentName: agentName }"
+                                    >{{ breadcrumb.label }}</a
+                                >
+                            } @else {
+                                <a
+                                    class="breadcrumb-link"
+                                    id="bread-crumb-plain-{{ i }}"
+                                    [routerLink]="breadcrumb.uri"
+                                    routerLinkActive="active"
+                                    [routerLinkActiveOptions]="{ exact: true }"
+                                    >{{ breadcrumb.label }}</a
+                                >
+                            }
                         }
                     </li>
                 }

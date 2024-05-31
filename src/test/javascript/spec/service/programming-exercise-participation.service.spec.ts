@@ -145,7 +145,7 @@ describe('ProgrammingExerciseParticipation Service', () => {
             files.set('file1', 'content1');
             files.set('file2', 'content2');
             service.getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(exerciseId, participationId, commitId, repositoryType).subscribe();
-            const expectedURL = `${resourceUrl}${exerciseId}/participation/${participationId}/files-content-commit-details/${commitId}?repositoryType=${repositoryType}`;
+            const expectedURL = `${resourceUrl}${exerciseId}/files-content-commit-details/${commitId}?repositoryType=${repositoryType}&participationId=${participationId}`;
             const req = httpMock.expectOne({ method: 'GET', url: expectedURL });
             req.flush(files);
             tick();

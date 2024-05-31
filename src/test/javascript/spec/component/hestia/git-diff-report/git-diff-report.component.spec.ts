@@ -6,6 +6,9 @@ import { GitDiffLineStatComponent } from 'app/exercises/programming/hestia/git-d
 import { GitDiffReportComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report.component';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
+import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { GitDiffFilePanelComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-file-panel.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
 
 describe('ProgrammingExerciseGitDiffReport Component', () => {
     let comp: GitDiffReportComponent;
@@ -13,8 +16,14 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [GitDiffReportComponent, MockPipe(ArtemisTranslatePipe), MockComponent(GitDiffLineStatComponent)],
+            imports: [ArtemisTestModule, NgbTooltipMocksModule],
+            declarations: [
+                GitDiffReportComponent,
+                MockComponent(ButtonComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(GitDiffFilePanelComponent),
+                MockComponent(GitDiffLineStatComponent),
+            ],
             providers: [],
         }).compileComponents();
         fixture = TestBed.createComponent(GitDiffReportComponent);
@@ -139,5 +148,66 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
         comp.ngOnInit();
         expect(comp.addedLineCount).toBe(0);
         expect(comp.removedLineCount).toBe(1);
+    });
+
+    it('should record for each path whether the diff is ready', () => {
+        const filePath1 = 'src/a.java';
+        const filePath2 = 'src/b.java';
+        const entries: ProgrammingExerciseGitDiffEntry[] = [
+            { filePath: 'src/a.java', previousStartLine: 3 },
+            { filePath: 'src/b.java', startLine: 1 },
+            { filePath: 'src/a.java', startLine: 2 },
+            { filePath: 'src/a.java', previousStartLine: 4 },
+            { filePath: 'src/b.java', startLine: 2 },
+            { filePath: 'src/a.java', startLine: 1 },
+        ];
+        comp.solutionFileContentByPath = new Map<string, string>();
+        comp.solutionFileContentByPath.set(filePath1, 'some file content');
+        comp.solutionFileContentByPath.set(filePath2, 'some other file content');
+        comp.templateFileContentByPath = comp.solutionFileContentByPath;
+        comp.report = { entries } as ProgrammingExerciseGitDiffReport;
+        fixture.detectChanges();
+        // Initialization
+        expect(comp.allDiffsReady).toBeFalse();
+        expect(comp.diffInformationForPaths[0].diffReady).toBeFalse();
+        expect(comp.diffInformationForPaths[1].diffReady).toBeFalse();
+        // First file ready
+        comp.onDiffReady(filePath1, true);
+        expect(comp.allDiffsReady).toBeFalse();
+        expect(comp.diffInformationForPaths[0].diffReady).toBeTrue();
+        expect(comp.diffInformationForPaths[1].diffReady).toBeFalse();
+        // Second file ready
+        comp.onDiffReady(filePath2, true);
+        expect(comp.allDiffsReady).toBeTrue();
+        expect(comp.diffInformationForPaths[0].diffReady).toBeTrue();
+        expect(comp.diffInformationForPaths[1].diffReady).toBeTrue();
+    });
+
+    it('should correctly identify renamed files', () => {
+        const originalFilePath1 = 'src/original-a.java';
+        const originalFilePath2 = 'src/original-b.java';
+        const renamedFilePath1 = 'src/renamed-without-changes.java';
+        const renamedFilePath2 = 'src/renamed-with-changes.java';
+        const notRenamedFilePath = 'src/not-renamed.java';
+        const entries: ProgrammingExerciseGitDiffEntry[] = [
+            { filePath: renamedFilePath1, previousFilePath: originalFilePath1 },
+            { filePath: renamedFilePath2, previousFilePath: originalFilePath2, startLine: 1 },
+            { filePath: notRenamedFilePath, previousFilePath: notRenamedFilePath, startLine: 1 },
+        ];
+        const defaultContent = 'some content that might change';
+        const modifiedContent = 'some content that has changed';
+        comp.report = { entries } as ProgrammingExerciseGitDiffReport;
+        const originalFileContents = new Map<string, string>();
+        const modifiedFileContents = new Map<string, string>();
+        [originalFilePath1, originalFilePath2, notRenamedFilePath].forEach((path) => {
+            originalFileContents.set(path, defaultContent);
+            modifiedFileContents.set(path, path === originalFilePath1 ? defaultContent : modifiedContent);
+        });
+        comp.templateFileContentByPath = originalFileContents;
+        comp.solutionFileContentByPath = modifiedFileContents;
+
+        fixture.detectChanges();
+
+        expect(comp.renamedFilePaths).toEqual({ [renamedFilePath1]: originalFilePath1, [renamedFilePath2]: originalFilePath2 });
     });
 });

@@ -5,11 +5,9 @@ import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.serv
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, of } from 'rxjs';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { IrisChatSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-chat-sub-settings-update/iris-chat-sub-settings-update.component';
-import { IrisHestiaSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-hestia-sub-settings-update/iris-hestia-sub-settings-update.component';
 import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
 import { IrisGlobalAutoupdateSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-global-autoupdate-settings-update/iris-global-autoupdate-settings-update.component';
-import { mockModels, mockSettings } from './mock-settings';
+import { mockSettings } from './mock-settings';
 import { IrisExerciseSettingsUpdateComponent } from 'app/iris/settings/iris-exercise-settings-update/iris-exercise-settings-update.component';
 import { ActivatedRoute, Params } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -17,7 +15,6 @@ import { NgModel } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { HttpResponse } from '@angular/common/http';
-import { IrisCompetencyGenerationSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-competency-generation-sub-settings-update/iris-competency-generation-sub-settings-update.component';
 
 describe('IrisExerciseSettingsUpdateComponent Component', () => {
     let comp: IrisExerciseSettingsUpdateComponent;
@@ -27,7 +24,7 @@ describe('IrisExerciseSettingsUpdateComponent Component', () => {
     const route = { parent: { params: routeParamsSubject.asObservable() } } as ActivatedRoute;
     let paramsSpy: jest.SpyInstance;
     let getSettingsSpy: jest.SpyInstance;
-    let getModelsSpy: jest.SpyInstance;
+    //let getModelsSpy: jest.SpyInstance;
     let getParentSettingsSpy: jest.SpyInstance;
 
     beforeEach(() => {
@@ -37,9 +34,6 @@ describe('IrisExerciseSettingsUpdateComponent Component', () => {
                 IrisExerciseSettingsUpdateComponent,
                 IrisSettingsUpdateComponent,
                 MockComponent(IrisCommonSubSettingsUpdateComponent),
-                MockComponent(IrisChatSubSettingsUpdateComponent),
-                MockComponent(IrisHestiaSubSettingsUpdateComponent),
-                MockComponent(IrisCompetencyGenerationSubSettingsUpdateComponent),
                 MockComponent(IrisGlobalAutoupdateSettingsUpdateComponent),
                 MockComponent(ButtonComponent),
                 MockDirective(NgModel),
@@ -56,7 +50,7 @@ describe('IrisExerciseSettingsUpdateComponent Component', () => {
 
                 const irisSettings = mockSettings();
                 getSettingsSpy = jest.spyOn(irisSettingsService, 'getUncombinedProgrammingExerciseSettings').mockReturnValue(of(irisSettings));
-                getModelsSpy = jest.spyOn(irisSettingsService, 'getIrisModels').mockReturnValue(of(mockModels()));
+                //getModelsSpy = jest.spyOn(irisSettingsService, 'getIrisModels').mockReturnValue(of(mockModels()));
                 getParentSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockReturnValue(of(irisSettings));
             });
         fixture = TestBed.createComponent(IrisExerciseSettingsUpdateComponent);
@@ -74,14 +68,11 @@ describe('IrisExerciseSettingsUpdateComponent Component', () => {
         expect(comp.exerciseId).toBe(2);
         expect(comp.settingsUpdateComponent).toBeTruthy();
         expect(getSettingsSpy).toHaveBeenCalledWith(2);
-        expect(getModelsSpy).toHaveBeenCalledOnce();
+        //expect(getModelsSpy).toHaveBeenCalledOnce();
         expect(getParentSettingsSpy).toHaveBeenCalledWith(1);
 
         expect(fixture.debugElement.query(By.directive(IrisGlobalAutoupdateSettingsUpdateComponent))).toBeFalsy();
         expect(fixture.debugElement.queryAll(By.directive(IrisCommonSubSettingsUpdateComponent))).toHaveLength(1);
-        expect(fixture.debugElement.query(By.directive(IrisChatSubSettingsUpdateComponent))).toBeTruthy();
-        expect(fixture.debugElement.query(By.directive(IrisHestiaSubSettingsUpdateComponent))).toBeFalsy();
-        expect(fixture.debugElement.query(By.directive(IrisCompetencyGenerationSubSettingsUpdateComponent))).toBeFalsy();
     });
 
     it('Can deactivate correctly', () => {

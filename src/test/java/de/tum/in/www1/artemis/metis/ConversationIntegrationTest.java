@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.service.dto.ResponsibleUserDTO;
@@ -211,7 +211,10 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_ONLY);
         List<ConversationDTO> channels = request.getList("/api/courses/" + exampleCourseId + "/conversations", HttpStatus.OK, ConversationDTO.class);
 
-        channels.forEach(conv -> assertThat(conv instanceof ChannelDTO ch && ch.getIsCourseWide()));
+        assertThat(channels).allSatisfy(ch -> {
+            assertThat(ch).isInstanceOf(ChannelDTO.class);
+            assertThat(((ChannelDTO) ch).getIsCourseWide()).isTrue();
+        });
 
         // cleanup
         conversationMessageRepository.deleteById(post.getId());

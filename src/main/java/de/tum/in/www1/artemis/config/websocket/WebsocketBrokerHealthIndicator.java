@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.config.websocket;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,9 +27,8 @@ public class WebsocketBrokerHealthIndicator implements HealthIndicator, Applicat
 
     @Override
     public Health health() {
-        Map<String, Object> additionalInformation = new HashMap<>();
-        additionalInformation.put("ipAddresses", brokerAddresses);
-        return new ConnectorHealth(isBrokerAvailable, additionalInformation).asActuatorHealth();
+        Map<String, Object> additionalInformation = Map.of("ipAddresses", brokerAddresses);
+        return new ConnectorHealth(isBrokerAvailable, additionalInformation, null).asActuatorHealth();
     }
 
     @Override

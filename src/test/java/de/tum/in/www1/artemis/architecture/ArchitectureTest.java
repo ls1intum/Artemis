@@ -14,7 +14,6 @@ import static com.tngtech.archunit.core.domain.JavaClass.Predicates.type;
 import static com.tngtech.archunit.core.domain.JavaCodeUnit.Predicates.constructor;
 import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameMatching;
 import static com.tngtech.archunit.core.domain.properties.HasOwner.Predicates.With.owner;
-import static com.tngtech.archunit.core.domain.properties.HasType.Predicates.rawType;
 import static com.tngtech.archunit.lang.SimpleConditionEvent.violated;
 import static com.tngtech.archunit.lang.conditions.ArchPredicates.are;
 import static com.tngtech.archunit.lang.conditions.ArchPredicates.have;
@@ -44,6 +43,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -73,6 +73,7 @@ import com.tngtech.archunit.library.GeneralCodingRules;
 import de.tum.in.www1.artemis.AbstractArtemisIntegrationTest;
 import de.tum.in.www1.artemis.authorization.AuthorizationTestService;
 import de.tum.in.www1.artemis.config.ApplicationConfiguration;
+import de.tum.in.www1.artemis.config.ConditionalMetricsExclusionConfiguration;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryResource;
@@ -88,6 +89,8 @@ import de.tum.in.www1.artemis.web.rest.repository.RepositoryResource;
  * </ul>
  */
 class ArchitectureTest extends AbstractArchitectureTest {
+
+    private static final Logger log = LoggerFactory.getLogger(ArchitectureTest.class);
 
     @Test
     void testNoJUnit4() {
@@ -208,8 +211,9 @@ class ArchitectureTest extends AbstractArchitectureTest {
         // TODO: Replace all uses of gson with Jackson and check that gson is not used any more
         var gsonUsageRule = noClasses().should().accessClassesThat().resideInAnyPackage("com.google.gson..").because("we use an alternative JSON parsing library.");
         var result = gsonUsageRule.evaluate(allClasses);
+        log.info("Current number of Gson usages: {}", result.getFailureReport().getDetails().size());
         // TODO: reduce the following number to 0
-        assertThat(result.getFailureReport().getDetails()).hasSize(733);
+        assertThat(result.getFailureReport().getDetails()).hasSizeLessThanOrEqualTo(664);
     }
 
     /**
@@ -236,7 +240,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
     void ensureSpringComponentsAreProfileAnnotated() {
         ArchRule rule = classes().that().areAnnotatedWith(Controller.class).or().areAnnotatedWith(RestController.class).or().areAnnotatedWith(Repository.class).or()
                 .areAnnotatedWith(Service.class).or().areAnnotatedWith(Component.class).or().areAnnotatedWith(Configuration.class).and()
-                .doNotBelongToAnyOf(ApplicationConfiguration.class).should(beProfileAnnotated())
+                .doNotBelongToAnyOf(ApplicationConfiguration.class, ConditionalMetricsExclusionConfiguration.class).should(beProfileAnnotated())
                 .because("we want to be able to exclude these classes from application startup by specifying profiles");
 
         rule.check(productionClasses);
@@ -253,7 +257,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
             @Override
             public void check(T item, ConditionEvents events) {
-                var annotation = item.getAnnotations().stream().filter(rawType(JsonInclude.class)).findAny().orElseThrow();
+                var annotation = findJavaAnnotation(item, JsonInclude.class);
                 var valueProperty = annotation.tryGetExplicitlyDeclaredProperty("value");
                 if (valueProperty.isEmpty()) {
                     // @JsonInclude() is ok since it allows explicitly including properties
@@ -294,9 +298,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
         @Override
         public void check(JavaClass item, ConditionEvents events) {
             item.getDirectDependenciesFromSelf().stream().map(Dependency::getTargetClass).filter(targetClass -> targetClass.isAnnotatedWith(RestController.class))
-                    .forEach(targetClass -> {
-                        events.add(violated(item, "%s imports the RestController %s".formatted(item.getName(), targetClass.getName())));
-                    });
+                    .forEach(targetClass -> events.add(violated(item, "%s imports the RestController %s".formatted(item.getName(), targetClass.getName()))));
         }
     };
 
