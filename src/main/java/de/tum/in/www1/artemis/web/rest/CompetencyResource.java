@@ -57,11 +57,14 @@ import de.tum.in.www1.artemis.service.competency.CompetencyJolService;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.competency.CompetencyRelationService;
 import de.tum.in.www1.artemis.service.competency.CompetencyService;
+import de.tum.in.www1.artemis.service.feature.Feature;
+import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.iris.session.IrisCompetencyGenerationSessionService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.CourseCompetencyProgressDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyImportResponseDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyJolDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.CompetencyPageableSearchDTO;
@@ -664,8 +667,9 @@ public class CompetencyResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @PutMapping("courses/{courseId}/competencies/{competencyId}/jol/{jolValue}")
+    @FeatureToggle(Feature.StudentCourseAnalyticsDashboard)
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<Void> setJudgementOfLearning(@PathVariable long courseId, @PathVariable long competencyId, @PathVariable int jolValue) {
+    public ResponseEntity<Void> setJudgementOfLearning(@PathVariable long courseId, @PathVariable long competencyId, @PathVariable short jolValue) {
         log.debug("REST request to set judgement of learning for competency: {}", competencyId);
 
         final var userId = userRepository.getUserIdElseThrow();
@@ -676,37 +680,39 @@ public class CompetencyResource {
     }
 
     /**
-     * GET courses/:courseId/competencies/:competencyId/jol : Gets the judgement of learning for a competency
+     * GET courses/:courseId/competencies/:competencyId/jol : Gets the latest judgement of learning for a competency
      *
      * @param courseId     the id of the course for which the competency belongs
      * @param competencyId the id of the competency for which to set the judgement of learning
      * @return the ResponseEntity with status 200 (OK) and body the judgement of learning value or null if not set
      */
     @GetMapping("courses/{courseId}/competencies/{competencyId}/jol")
+    @FeatureToggle(Feature.StudentCourseAnalyticsDashboard)
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<Integer> getJudgementOfLearningForCompetency(@PathVariable long courseId, @PathVariable long competencyId) {
+    public ResponseEntity<CompetencyJolDTO> getLatestJudgementOfLearningForCompetency(@PathVariable long courseId, @PathVariable long competencyId) {
         log.debug("REST request to get judgement of learning for competency: {}", competencyId);
 
         final var userId = userRepository.getUserIdElseThrow();
         competencyService.checkIfCompetencyBelongsToCourse(competencyId, courseId);
-        final var jol = competencyJolRepository.findJolValueByCompetencyIdAndUserId(competencyId, userId);
+        final var jol = competencyJolRepository.findLatestByCompetencyIdAndUserId(competencyId, userId);
 
-        return ResponseEntity.ok(jol.orElse(null));
+        return ResponseEntity.ok(jol.map(CompetencyJolDTO::of).orElse(null));
     }
 
     /**
-     * GET courses/:courseId/competencies/jol : Gets the judgement of learning for all competencies of a course
+     * GET courses/:courseId/competencies/jol : Gets the latest judgement of learning for all competencies of a course
      *
      * @param courseId the id of the course for which the competency belongs
      * @return the ResponseEntity with status 200 (OK) and body the judgement of learning values for all competencies of the course as a map from competency id to jol value
      */
     @GetMapping("courses/{courseId}/competencies/jol")
+    @FeatureToggle(Feature.StudentCourseAnalyticsDashboard)
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<Map<Long, Integer>> getJudgementOfLearningForCourse(@PathVariable long courseId) {
+    public ResponseEntity<Map<Long, CompetencyJolDTO>> getLatestJudgementOfLearningForCourse(@PathVariable long courseId) {
         log.debug("REST request to get judgement of learning for competencies of course: {}", courseId);
 
         final var userId = userRepository.getUserIdElseThrow();
-        final var jols = competencyJolService.getJudgementOfLearningForUserByCourseId(userId, courseId);
+        final var jols = competencyJolService.getLatestJudgementOfLearningForUserByCourseId(userId, courseId);
 
         return ResponseEntity.ok(jols);
     }

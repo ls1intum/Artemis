@@ -12,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.competency.CompetencyJol;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyJolDTO;
 
 /**
  * Spring Data JPA repository for the {@link CompetencyJol} entity.
@@ -20,21 +21,31 @@ import de.tum.in.www1.artemis.domain.competency.CompetencyJol;
 @Repository
 public interface CompetencyJolRepository extends JpaRepository<CompetencyJol, Long> {
 
-    Optional<CompetencyJol> findByCompetencyIdAndUserId(long competencyId, long userId);
-
     @Query("""
-            SELECT c.value
+            SELECT c
             FROM CompetencyJol c
             WHERE c.competency.id = :competencyId
                 AND c.user.id = :userId
+                AND c.judgementTime = (
+                    SELECT MAX(c2.judgementTime)
+                    FROM CompetencyJol c2
+                    WHERE c2.competency.id = c.competency.id
+                        AND c2.user.id = c.user.id
+                )
             """)
-    Optional<Integer> findJolValueByCompetencyIdAndUserId(@Param("competencyId") long competencyId, @Param("userId") long userId);
+    Optional<CompetencyJol> findLatestByCompetencyIdAndUserId(long competencyId, long userId);
 
     @Query("""
-            SELECT new de.tum.in.www1.artemis.repository.competency.JolValueEntry(c.competency.id, c.value)
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyJolDTO(c.competency.id, c.value, c.judgementTime, c.competencyProgress, c.competencyConfidence)
             FROM CompetencyJol c
             WHERE c.user.id = :userId
                 AND c.competency.course.id = :courseId
+                AND c.judgementTime = (
+                    SELECT MAX(c2.judgementTime)
+                    FROM CompetencyJol c2
+                    WHERE c2.user.id = c.user.id
+                        AND c2.competency.id = c.competency.id
+                )
             """)
-    Set<JolValueEntry> findJolValuesForUserByCourseId(@Param("userId") long userId, @Param("courseId") long courseId);
+    Set<CompetencyJolDTO> findLatestJolValuesForUserByCourseId(@Param("userId") long userId, @Param("courseId") long courseId);
 }

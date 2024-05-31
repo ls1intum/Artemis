@@ -1,4 +1,4 @@
-import { CompetencyTaxonomy } from 'app/entities/competency.model';
+import { CompetencyJol, CompetencyTaxonomy } from 'app/entities/competency.model';
 import { DifficultyLevel, ExerciseMode, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
@@ -63,7 +63,7 @@ export class CompetencyMetrics {
     public lectureUnits?: { [key: number]: number[] }; // Lecture Unit ID -> Competency IDs
     public progress?: { [key: number]: number }; // Competency ID -> progress
     public confidence?: { [key: number]: number }; // Competency ID -> confidence
-    public jolValues?: { [key: number]: number }; // Competency ID -> JOL value
+    public jolValues?: { [key: number]: CompetencyJol }; // Competency ID -> JOL value
 }
 
 export class CompetencyInformation {
