@@ -418,7 +418,7 @@ public class QuizExerciseResource {
             throw new AccessForbiddenException();
         }
 
-        var submissions = submissionRepository.countByExerciseIdAndStudentLogin(quizExerciseId, user.getLogin());
+        int submissions = submissionRepository.countByExerciseIdAndStudentLogin(quizExerciseId, user.getLogin());
         if (quizExercise.getAllowedNumberOfAttempts() != null && submissions >= quizExercise.getAllowedNumberOfAttempts()) {
             throw new BadRequestAlertException("Maximum number of attempts reached.", ENTITY_NAME, "quizAttemptsExceeded");
         }

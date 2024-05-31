@@ -169,7 +169,7 @@ public class ScheduleService {
     }
 
     /**
-     * cancels all futures tasks, only us this for testing purposes
+     * cancels all futures tasks, only use this for testing purposes
      */
     public void clearAllTasks() {
         scheduledParticipationTasks.values().forEach(futures -> futures.forEach(future -> future.cancel(true)));

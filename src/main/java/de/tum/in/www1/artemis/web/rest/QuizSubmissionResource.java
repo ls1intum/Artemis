@@ -88,6 +88,7 @@ public class QuizSubmissionResource {
 
     /**
      * TODO: Decide if we want to use this endpoint for both submit and save. If so, we may want to use PUT instead of POST
+     * TODO: Don't trust the user submitted values
      * POST /exercises/:exerciseId/submissions/live : Submit a new quizSubmission for live mode.
      *
      * @param exerciseId     the id of the exercise for which to init a participation

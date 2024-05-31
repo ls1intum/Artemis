@@ -17,11 +17,15 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.exception.QuizJoinException;
 import de.tum.in.www1.artemis.repository.QuizBatchRepository;
+import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -39,8 +43,11 @@ public class QuizBatchService {
 
     private final QuizBatchRepository quizBatchRepository;
 
-    public QuizBatchService(QuizBatchRepository quizBatchRepository) {
+    private final QuizSubmissionRepository quizSubmissionRepository;
+
+    public QuizBatchService(QuizBatchRepository quizBatchRepository, QuizSubmissionRepository quizSubmissionRepository) {
         this.quizBatchRepository = quizBatchRepository;
+        this.quizSubmissionRepository = quizSubmissionRepository;
     }
 
     /**
@@ -103,7 +110,18 @@ public class QuizBatchService {
             throw new QuizJoinException("quizBatchExpired", "Batch has expired");
         }
 
-        // TODO: join the batch in the database
+        StudentParticipation participation = new StudentParticipation();
+        participation.setInitializationDate(ZonedDateTime.now());
+        participation.setParticipant(user);
+        participation.setExercise(quizExercise);
+        participation.setInitializationState(InitializationState.FINISHED);
+
+        QuizSubmission quizSubmission = new QuizSubmission();
+        quizSubmission.setQuizBatch(quizBatch.getId());
+        quizSubmission.setParticipation(participation);
+
+        quizSubmissionRepository.save(quizSubmission);
+
         return quizBatch;
     }
 

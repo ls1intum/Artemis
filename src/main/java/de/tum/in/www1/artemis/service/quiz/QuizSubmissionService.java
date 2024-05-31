@@ -48,14 +48,18 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
 
     private final QuizBatchService quizBatchService;
 
+    private final QuizStatisticService quizStatisticService;
+
     public QuizSubmissionService(QuizSubmissionRepository quizSubmissionRepository, ResultRepository resultRepository, SubmissionVersionService submissionVersionService,
-            QuizExerciseRepository quizExerciseRepository, ParticipationService participationService, QuizBatchService quizBatchService) {
+            QuizExerciseRepository quizExerciseRepository, ParticipationService participationService, QuizBatchService quizBatchService,
+            QuizStatisticService quizStatisticService) {
         super(submissionVersionService);
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.resultRepository = resultRepository;
         this.quizExerciseRepository = quizExerciseRepository;
         this.participationService = participationService;
         this.quizBatchService = quizBatchService;
+        this.quizStatisticService = quizStatisticService;
     }
 
     /**
@@ -101,7 +105,8 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         result.setParticipation(participation);
 
         // add result to statistics
-        // TODO: store the statistic directly in the database
+        quizStatisticService.recalculateStatistics(quizExercise);
+
         log.debug("submit practice quiz finished: {}", quizSubmission);
         return result;
     }
@@ -133,7 +138,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         quizSubmission.setSubmissionDate(ZonedDateTime.now());
 
         // save submission to HashMap
-        // TODO: store the submission directly in the database
+        quizSubmissionRepository.save(quizSubmission);
 
         log.info("{} Saved quiz submission for user {} in quiz {} after {} µs ", logText, userLogin, exerciseId, (System.nanoTime() - start) / 1000);
         return quizSubmission;
