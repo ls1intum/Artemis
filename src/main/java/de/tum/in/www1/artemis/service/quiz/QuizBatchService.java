@@ -206,6 +206,10 @@ public class QuizBatchService {
      * @return the batch that the user currently takes part in or empty
      */
     public Optional<QuizBatch> getQuizBatchForStudentByLogin(QuizExercise quizExercise, String login) {
-        return quizBatchRepository.findAllByQuizExerciseAndStudentLogin(quizExercise, login).stream().findFirst();
+        Optional<QuizBatch> optionalQuizBatch = quizBatchRepository.findAllByQuizExerciseAndStudentLogin(quizExercise, login).stream().findFirst();
+        if (optionalQuizBatch.isEmpty() && quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
+            return Optional.of(getOrCreateSynchronizedQuizBatch(quizExercise));
+        }
+        return optionalQuizBatch;
     }
 }
