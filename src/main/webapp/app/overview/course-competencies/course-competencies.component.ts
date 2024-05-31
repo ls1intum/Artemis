@@ -70,7 +70,6 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
             this.competencies = this.course.competencies || [];
             this.prerequisites = this.course.prerequisites || [];
             this.judgementOfLearningMap = this.course.judgementOfLearningMap || {};
-            this.promptForJolRatingMap = this.course.promptForJolRatingMap || {};
         } else {
             this.loadData();
         }
