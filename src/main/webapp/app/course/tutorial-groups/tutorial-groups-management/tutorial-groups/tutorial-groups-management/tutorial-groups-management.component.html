@@ -29,25 +29,20 @@
                             <div ngbDropdownMenu>
                                 @if (course?.tutorialGroupsConfiguration) {
                                     <a
-                                        ngbDropDownItem
+                                        ngbDropdownItem
                                         class="btn"
                                         [routerLink]="['/course-management', courseId, 'tutorial-groups', 'configuration', course!.tutorialGroupsConfiguration!.id, 'edit']"
                                     >
-                                        <span class="d-none d-md-inline">{{ 'artemisApp.pages.tutorialGroupsManagement.editConfigurationButton' | artemisTranslate }}</span>
+                                        <span>{{ 'artemisApp.pages.tutorialGroupsManagement.editConfigurationButton' | artemisTranslate }}</span>
                                     </a>
                                 }
                                 <jhi-tutorial-groups-import-button
-                                    ngbDropDownItem
                                     ngbTooltip="{{ 'artemisApp.tutorialGroupImportDialog.explanations.description' | artemisTranslate }}"
                                     [courseId]="courseId"
                                     (importFinished)="loadTutorialGroups()"
                                 />
-                                <button id="exportDialogButton" (click)="exportTutorialGroupsToCSV()" type="button" class="btn">
-                                    <span class="d-none d-md-inline">Basic Export Tutorial Groups</span>
-                                </button>
                                 <jhi-tutorial-groups-export-button
-                                    ngbDropDownItem
-                                    ngbTooltip="{{ 'artemisApp.tutorialGroupExportDialog.explanations.description' | artemisTranslate }}"
+                                    ngbTooltip="{{ 'artemisApp.tutorialGroupExportDialog.toolTip' | artemisTranslate }}"
                                     [courseId]="courseId"
                                     (exportFinished)="loadTutorialGroups()"
                                 />

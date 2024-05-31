@@ -36,18 +36,6 @@ export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
 
     tutorialGroupFreeDays: TutorialGroupFreePeriod[] = [];
 
-    selectedFields: string[] = ['ID'];
-    availableFields = [
-        { name: 'ID', value: 'ID' },
-        { name: 'Title', value: 'Title' },
-        { name: 'Campus', value: 'Campus' },
-        { name: 'Language', value: 'Language' },
-        { name: 'Additional Information', value: 'Additional Information' },
-        { name: 'Capacity', value: 'Capacity' },
-        { name: 'Is Online', value: 'Is Online' },
-        { name: 'Day of Week', value: 'Day of Week' },
-    ];
-
     constructor(
         private tutorialGroupService: TutorialGroupsService,
         private router: Router,
@@ -105,19 +93,5 @@ export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             })
             .add(() => this.cdr.detectChanges());
-    }
-
-    exportTutorialGroupsToCSV(): void {
-        this.tutorialGroupService.exportTutorialGroupsToCSV(this.courseId, this.selectedFields).subscribe({
-            next: (blob: Blob) => {
-                const a = document.createElement('a');
-                const objectUrl = URL.createObjectURL(blob);
-                a.href = objectUrl;
-                a.download = 'tutorial-groups.csv';
-                a.click();
-                URL.revokeObjectURL(objectUrl);
-            },
-            error: (res: HttpErrorResponse) => onError(this.alertService, res),
-        });
     }
 }

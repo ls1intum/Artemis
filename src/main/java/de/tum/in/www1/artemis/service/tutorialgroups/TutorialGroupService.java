@@ -663,6 +663,9 @@ public class TutorialGroupService {
                         case "Start Time":
                             printer.print(tutorialGroup.getTutorialGroupSchedule().getStartTime());
                             break;
+                        case "Location":
+                            printer.print(tutorialGroup.getTutorialGroupSchedule().getLocation());
+                            break;
                         default:
                             printer.print("");
                     }

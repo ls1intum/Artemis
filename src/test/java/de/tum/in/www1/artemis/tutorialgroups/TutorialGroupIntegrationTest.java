@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -25,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -998,4 +1000,54 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         request.delete(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId) + "/deregister/" + student2.getLogin(), HttpStatus.FORBIDDEN);
     }
 
+    @Test
+    void testDayOfWeekConversion() {
+        // This is a utility test that directly verifies the day of week conversion logic
+        assertThat(tutorialGroupService.getDayOfWeekString(1)).isEqualTo("Monday");
+        assertThat(tutorialGroupService.getDayOfWeekString(2)).isEqualTo("Tuesday");
+        assertThat(tutorialGroupService.getDayOfWeekString(3)).isEqualTo("Wednesday");
+        assertThat(tutorialGroupService.getDayOfWeekString(4)).isEqualTo("Thursday");
+        assertThat(tutorialGroupService.getDayOfWeekString(5)).isEqualTo("Friday");
+        assertThat(tutorialGroupService.getDayOfWeekString(6)).isEqualTo("Saturday");
+        assertThat(tutorialGroupService.getDayOfWeekString(7)).isEqualTo("Sunday");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportTutorialGroupsToCSV() throws Exception {
+        // when
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("fields", "ID,Title,Campus,Language");
+
+        String url = UriComponentsBuilder.fromPath("/api/courses/" + exampleCourseId + "/tutorial-groups/export").queryParams(params).toUriString();
+        String csvContent = request.get(url, HttpStatus.OK, String.class);
+
+        // then
+        assertThat(csvContent).contains("ID,Title,Campus,Language");
+        assertThat(csvContent).contains("LoremIpsum1");
+        assertThat(csvContent).contains("LoremIpsum2");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCSVContentWithSampleData() throws Exception {
+        // given
+        List<TutorialGroup> tutorialGroups = new ArrayList<>();
+        tutorialGroups
+                .add(tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle1", "SampleCampus1", 10, false, "SampleInfo1", "ENGLISH", tutor1, Set.of(student1)));
+        tutorialGroups
+                .add(tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle2", "SampleCampus2", 20, true, "SampleInfo2", "GERMAN", tutor1, Set.of(student2)));
+
+        // when
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("fields", "ID,Title,Campus,Language,Capacity,IsOnline");
+
+        String url = UriComponentsBuilder.fromPath("/api/courses/" + exampleCourseId + "/tutorial-groups/export").queryParams(params).toUriString();
+        String csvContent = request.get(url, HttpStatus.OK, String.class);
+
+        // then
+        assertThat(csvContent).contains("ID,Title,Campus,Language,Capacity,IsOnline");
+        assertThat(csvContent).contains("SampleTitle1,SampleCampus1,ENGLISH,10,false");
+        assertThat(csvContent).contains("SampleTitle2,SampleCampus2,GERMAN,20,true");
+    }
 }

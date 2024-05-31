@@ -1,15 +1,27 @@
-<button id="exportDialogButton" (click)="openTutorialGroupExportDialog($event)" type="button" class="btn">
-    <span class="d-none d-md-inline">{{ 'artemisApp.tutorialGroupExportDialog.exportButton' | artemisTranslate }}</span>
-</button>
+<button (click)="openExportDialog($event)" ngbDropdownItem>{{ 'artemisApp.tutorialGroupExportDialog.buttonHeader' | artemisTranslate }}</button>
 
-<ng-template #warning let-warning>
+<ng-template #exportDialog let-modal>
     <div class="modal-header">
-        <h4 class="modal-title">{{ 'artemisApp.tutorialGroupExportDialog.warning' | artemisTranslate }}</h4>
+        <h4 class="modal-title">{{ 'artemisApp.tutorialGroupExportDialog.header' | artemisTranslate }}</h4>
+        <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('cancel')"></button>
     </div>
     <div class="modal-body">
-        <p>{{ 'artemisApp.tutorialGroupExportDialog.finishedWarning' | artemisTranslate }}</p>
+        <form>
+            <p>{{ 'artemisApp.tutorialGroupExportDialog.description' | artemisTranslate }}</p>
+            @for (field of availableFields; track field) {
+                <div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" [value]="field.value" (change)="onFieldSelectionChange($event)" />
+                        <label class="form-check-label">{{ field.name }}</label>
+                    </div>
+                </div>
+            }
+        </form>
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-light" (click)="warning.close()">Ok</button>
+        <button type="button" class="btn btn-secondary" (click)="modal.dismiss('cancel')">{{ 'artemisApp.tutorialGroupExportDialog.cancel' | artemisTranslate }}</button>
+        <button type="button" class="btn btn-primary" (click)="exportCSV(modal)" [disabled]="selectedFields.length === 0">
+            {{ 'artemisApp.tutorialGroupExportDialog.export' | artemisTranslate }}
+        </button>
     </div>
 </ng-template>
