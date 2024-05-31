@@ -76,10 +76,14 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
 
     private loadData() {
         this.isLoading = true;
-        forkJoin([this.competencyService.getAllForCourse(this.courseId!), this.competencyService.getJoL(this.courseId!, this.competencyId!)]).subscribe({
-            next: ([competencyResp, judgementOfLearningResp]) => {
-                const competencies = competencyResp.body!;
-                this.competency = competencies.find((c) => c.id === this.competencyId)!;
+        forkJoin([
+            this.competencyService.findById(this.competencyId!, this.courseId!),
+            this.competencyService.getAllForCourse(this.courseId!),
+            this.competencyService.getJoL(this.courseId!, this.competencyId!),
+        ]).subscribe({
+            next: ([competencyResp, courseCompetenciesResp, judgementOfLearningResp]) => {
+                this.competency = competencyResp.body!;
+                const competencies = courseCompetenciesResp.body!;
                 const progress = this.competency.userProgress?.first();
                 this.promptForJolRating = CompetencyJol.shouldPromptForJol(this.competency, progress, competencies);
                 const judgementOfLearning = judgementOfLearningResp.body ?? undefined;
