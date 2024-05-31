@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -44,10 +44,16 @@ public class QuizParticipationResource {
         this.userRepository = userRepository;
     }
 
+    /**
+     * POST /quiz-exercises/{exerciseId}/start-participation : start the quiz exercise participation
+     *
+     * @param exerciseId the id of the quiz exercise
+     * @return The created participation
+     */
     @PostMapping("quiz-exercises/{exerciseId}/start-participation")
     @EnforceAtLeastStudentInExercise
-    public ResponseEntity<Participation> startParticipation(@PathVariable Long exerciseId) {
-        log.debug("REST request to start Exercise : {}", exerciseId);
+    public ResponseEntity<StudentParticipation> startParticipation(@PathVariable Long exerciseId) {
+        log.debug("REST request to start quiz exercise participation : {}", exerciseId);
         QuizExercise exercise = quizExerciseRepository.findByIdElseThrow(exerciseId);
 
         if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
@@ -58,8 +64,6 @@ public class QuizParticipationResource {
         }
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        participationService.startExerciseWithInitializationDate(exercise, user, false, ZonedDateTime.now());
-
-        return null;
+        return ResponseEntity.ok(participationService.startExerciseWithInitializationDate(exercise, user, false, ZonedDateTime.now()));
     }
 }
