@@ -8,10 +8,11 @@ Best practices for writing tests in Playwright
 
     Page objects are a design pattern that helps to abstract the details of the page structure and interactions. They
     encapsulate the page elements and their interactions with the page. This makes the tests more readable and
-    maintainable. Page objects are stored in the ``support/pageobjects`` folder. Each page object stores an instance of
-    the Playwright page object instances of other page objects and defines methods performing common user actions or
-    returning frequently used locators.
-    Page objects are defined as fixtures to make them easily accessible in tests without caring about their
+    maintainable.
+    Page objects are stored in the ``support/pageobjects`` folder. Each page object is implemented as a class containing
+    a Playwright page instance and may have instances of other page objects as well. Page object classes provide methods
+    performing common user actions or returning frequently used locators.
+    Page objects are registered as fixtures to make them easily accessible in tests without caring about their
     initialization and teardown.
 
 2. **Use fixtures**:
