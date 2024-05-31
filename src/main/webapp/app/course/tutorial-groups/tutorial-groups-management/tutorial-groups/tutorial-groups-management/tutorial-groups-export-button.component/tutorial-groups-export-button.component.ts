@@ -75,7 +75,6 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
     }
 
     exportCSV(modal: NgbModalRef) {
-        console.log(this.selectedFields);
         this.tutorialGroupsService.exportTutorialGroupsToCSV(this.courseId, this.selectedFields).subscribe({
             next: (blob: Blob) => {
                 const a = document.createElement('a');
