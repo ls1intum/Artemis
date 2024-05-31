@@ -130,8 +130,14 @@ describe('CourseCompetencies', () => {
             status: 200,
         });
 
+        const joLOfCourseResponse: HttpResponse<{ [key: number]: number }> = new HttpResponse({
+            body: {} as { [key: number]: number },
+            status: 200,
+        });
+
         const getAllPrerequisitesForCourseSpy = jest.spyOn(competencyService, 'getAllPrerequisitesForCourse').mockReturnValue(of(prerequisitesOfCourseResponse));
         const getAllForCourseSpy = jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(competenciesOfCourseResponse));
+        const getJoLAllForCourseSpy = jest.spyOn(competencyService, 'getJoLAllForCourse').mockReturnValue(of(joLOfCourseResponse));
 
         courseCompetenciesComponent.isCollapsed = false;
         courseCompetenciesComponentFixture.detectChanges();
@@ -140,6 +146,7 @@ describe('CourseCompetencies', () => {
         expect(competencyCards).toHaveLength(3); // 1 prerequisite and 2 competencies
         expect(getAllPrerequisitesForCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
+        expect(getJoLAllForCourseSpy).toHaveBeenCalledOnce();
         expect(courseCompetenciesComponent.competencies).toHaveLength(2);
     });
 });
