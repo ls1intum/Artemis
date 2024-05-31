@@ -15,6 +15,8 @@ import { TriggeredByPushTo } from 'app/entities/repository-info.model';
 import { waitForAsync } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { SortingOrder } from 'app/shared/table/pageable-table';
+import { LocalStorageService } from 'ngx-webstorage';
+import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 
 describe('BuildQueueComponent', () => {
     let component: BuildQueueComponent;
@@ -233,6 +235,16 @@ describe('BuildQueueComponent', () => {
         sortingOrder: SortingOrder.DESCENDING,
     };
 
+    const filterOptions = {
+        buildAgentAddress: undefined,
+        buildDurationFilterLowerBound: undefined,
+        buildDurationFilterUpperBound: undefined,
+        buildStartDateFilterFrom: undefined,
+        buildStartDateFilterTo: undefined,
+        searchTerm: undefined,
+        status: undefined,
+    };
+
     beforeEach(waitForAsync(() => {
         mockActivatedRoute = { params: of({ courseId: testCourseId }) };
 
@@ -244,6 +256,7 @@ describe('BuildQueueComponent', () => {
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },
                 { provide: AccountService, useValue: accountServiceMock },
                 { provide: DataTableComponent, useClass: DataTableComponent },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
             ],
         }).compileComponents();
     }));
@@ -308,7 +321,7 @@ describe('BuildQueueComponent', () => {
         // Expectations: The service methods are called with the test course ID
         expect(mockBuildQueueService.getQueuedBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId);
         expect(mockBuildQueueService.getRunningBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId);
-        expect(mockBuildQueueService.getFinishedBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId, request);
+        expect(mockBuildQueueService.getFinishedBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId, request, filterOptions);
 
         // Expectations: The component's properties are set with the mock data
         expect(component.queuedBuildJobs).toEqual(mockQueuedJobs);
@@ -455,7 +468,7 @@ describe('BuildQueueComponent', () => {
 
         component.ngOnInit();
 
-        expect(mockBuildQueueService.getFinishedBuildJobs).toHaveBeenCalledWith(request);
+        expect(mockBuildQueueService.getFinishedBuildJobs).toHaveBeenCalledWith(request, filterOptions);
         expect(component.finishedBuildJobs).toEqual(mockFinishedJobs);
     });
 
@@ -467,7 +480,7 @@ describe('BuildQueueComponent', () => {
 
         component.ngOnInit();
 
-        expect(mockBuildQueueService.getFinishedBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId, request);
+        expect(mockBuildQueueService.getFinishedBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId, request, filterOptions);
         expect(component.finishedBuildJobs).toEqual(mockFinishedJobs);
     });
 

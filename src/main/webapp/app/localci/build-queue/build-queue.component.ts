@@ -294,26 +294,35 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      * fetch the finished build jobs from the server by creating observable
      */
     FetchFinishedBuildJobs() {
-        this.isLoading = true;
-        const courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        if (courseId) {
-            return this.buildQueueService.getFinishedBuildJobsByCourseId(courseId, {
-                page: this.page,
-                pageSize: this.itemsPerPage,
-                sortingOrder: this.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
-                sortedColumn: this.predicate,
-            });
-        } else {
-            return this.buildQueueService.getCustomFinishedBuildJobs(
-                {
-                    page: this.page,
-                    pageSize: this.itemsPerPage,
-                    sortingOrder: this.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
-                    sortedColumn: this.predicate,
-                },
-                this.finishedBuildJobFilter,
-            );
-        }
+        return this.route.paramMap.pipe(
+            take(1),
+            tap(() => (this.isLoading = true)),
+            switchMap((params) => {
+                const courseId = Number(params.get('courseId'));
+                if (courseId) {
+                    return this.buildQueueService.getFinishedBuildJobsByCourseId(
+                        courseId,
+                        {
+                            page: this.page,
+                            pageSize: this.itemsPerPage,
+                            sortingOrder: this.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
+                            sortedColumn: this.predicate,
+                        },
+                        this.finishedBuildJobFilter,
+                    );
+                } else {
+                    return this.buildQueueService.getFinishedBuildJobs(
+                        {
+                            page: this.page,
+                            pageSize: this.itemsPerPage,
+                            sortingOrder: this.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
+                            sortedColumn: this.predicate,
+                        },
+                        this.finishedBuildJobFilter,
+                    );
+                }
+            }),
+        );
     }
 
     /**

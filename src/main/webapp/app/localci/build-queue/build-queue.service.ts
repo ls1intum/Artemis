@@ -128,17 +128,9 @@ export class BuildQueueService {
     /**
      * Get all finished build jobs
      * @param req The query request
+     * @param filter The filter to apply
      */
-    getFinishedBuildJobs(req?: any): Observable<HttpResponse<FinishedBuildJob[]>> {
-        const options = createRequestOption(req);
-        return this.http.get<FinishedBuildJob[]>(`${this.adminResourceUrl}/finished-jobs`, { params: options, observe: 'response' }).pipe(
-            catchError((err) => {
-                return throwError(() => new Error(`Failed to get all finished build jobs\n${err.message}`));
-            }),
-        );
-    }
-
-    getCustomFinishedBuildJobs(req?: any, filter?: FinishedBuildJobFilter): Observable<HttpResponse<FinishedBuildJob[]>> {
+    getFinishedBuildJobs(req?: any, filter?: FinishedBuildJobFilter): Observable<HttpResponse<FinishedBuildJob[]>> {
         let options = createRequestOption(req);
         if (filter) {
             options = filter.addHttpParams(options);
@@ -154,9 +146,13 @@ export class BuildQueueService {
      * Get all finished build jobs associated with a course
      * @param courseId the id of the course
      * @param req The query request
+     * @param filter The filter to apply
      */
-    getFinishedBuildJobsByCourseId(courseId: number, req?: any): Observable<HttpResponse<FinishedBuildJob[]>> {
-        const options = createRequestOption(req);
+    getFinishedBuildJobsByCourseId(courseId: number, req?: any, filter?: FinishedBuildJobFilter): Observable<HttpResponse<FinishedBuildJob[]>> {
+        let options = createRequestOption(req);
+        if (filter) {
+            options = filter.addHttpParams(options);
+        }
         return this.http.get<FinishedBuildJob[]>(`${this.resourceUrl}/courses/${courseId}/finished-jobs`, { params: options, observe: 'response' }).pipe(
             catchError((err) => {
                 return throwError(() => new Error(`Failed to get all finished build jobs in course ${courseId}\n${err.message}`));
