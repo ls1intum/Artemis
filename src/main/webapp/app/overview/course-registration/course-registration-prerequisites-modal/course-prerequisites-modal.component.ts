@@ -1,9 +1,9 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { finalize } from 'rxjs/operators';
-import { Competency } from 'app/entities/competency.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
+import { Prerequisite } from 'app/entities/prerequisite.model';
 
 @Component({
     selector: 'jhi-course-prerequisites-modal',
@@ -15,7 +15,7 @@ export class CoursePrerequisitesModalComponent implements OnInit {
     courseId: number;
 
     isLoading = false;
-    prerequisites: Competency[] = [];
+    prerequisites: Prerequisite[] = [];
 
     constructor(
         private alertService: AlertService,
@@ -50,15 +50,6 @@ export class CoursePrerequisitesModalComponent implements OnInit {
                     this.alertService.error(error);
                 },
             });
-    }
-
-    /**
-     * Calculates a unique identity for each competency card shown in the component
-     * @param index The index in the list
-     * @param competency The competency of the current iteration
-     */
-    identify(index: number, competency: Competency) {
-        return `${index}-${competency.id}`;
     }
 
     /**
