@@ -135,8 +135,6 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
     @BeforeEach
     void init() {
-        // do not use the schedule service based on a time interval in the tests, because this would result in flaky tests that run much slower
-        quizScheduleService.stopSchedule();
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, 0, 1);
     }
 

@@ -170,7 +170,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @AfterEach
     void stopQuizScheduler() {
-        quizScheduleService.stopSchedule();
+        scheduleService.clearAllTasks();
     }
 
     @AfterEach

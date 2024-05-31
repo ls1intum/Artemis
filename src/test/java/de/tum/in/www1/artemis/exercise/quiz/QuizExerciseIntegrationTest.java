@@ -175,7 +175,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @BeforeEach
     void init() {
-        quizScheduleService.stopSchedule();
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
     }
 
