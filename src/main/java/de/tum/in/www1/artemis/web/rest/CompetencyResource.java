@@ -43,7 +43,6 @@ import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.repository.competency.CompetencyJolRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
@@ -64,7 +63,7 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.CourseCompetencyProgressDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyImportResponseDTO;
-import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyJolDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyJolPairDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.CompetencyPageableSearchDTO;
@@ -112,14 +111,11 @@ public class CompetencyResource {
 
     private final CompetencyJolService competencyJolService;
 
-    private final CompetencyJolRepository competencyJolRepository;
-
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CompetencyRepository competencyRepository, CompetencyRelationRepository competencyRelationRepository, CompetencyService competencyService,
             CompetencyProgressRepository competencyProgressRepository, CompetencyProgressService competencyProgressService, ExerciseService exerciseService,
             LectureUnitService lectureUnitService, CompetencyRelationService competencyRelationService,
-            Optional<IrisCompetencyGenerationSessionService> irisCompetencyGenerationSessionService, CompetencyJolService competencyJolService,
-            CompetencyJolRepository competencyJolRepository) {
+            Optional<IrisCompetencyGenerationSessionService> irisCompetencyGenerationSessionService, CompetencyJolService competencyJolService) {
         this.courseRepository = courseRepository;
         this.competencyRelationRepository = competencyRelationRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -133,7 +129,6 @@ public class CompetencyResource {
         this.competencyRelationService = competencyRelationService;
         this.irisCompetencyGenerationSessionService = irisCompetencyGenerationSessionService;
         this.competencyJolService = competencyJolService;
-        this.competencyJolRepository = competencyJolRepository;
     }
 
     /**
@@ -680,35 +675,35 @@ public class CompetencyResource {
     }
 
     /**
-     * GET courses/:courseId/competencies/:competencyId/jol : Gets the latest judgement of learning for a competency
+     * GET courses/:courseId/competencies/:competencyId/jol : Gets the latest (current and prior) judgement of learning for a competency
      *
      * @param courseId     the id of the course for which the competency belongs
      * @param competencyId the id of the competency for which to set the judgement of learning
-     * @return the ResponseEntity with status 200 (OK) and body the judgement of learning value or null if not set
+     * @return the ResponseEntity with status 200 (OK) and body the judgement of learning values
      */
     @GetMapping("courses/{courseId}/competencies/{competencyId}/jol")
     @FeatureToggle(Feature.StudentCourseAnalyticsDashboard)
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<CompetencyJolDTO> getLatestJudgementOfLearningForCompetency(@PathVariable long courseId, @PathVariable long competencyId) {
+    public ResponseEntity<CompetencyJolPairDTO> getLatestJudgementOfLearningForCompetency(@PathVariable long courseId, @PathVariable long competencyId) {
         log.debug("REST request to get judgement of learning for competency: {}", competencyId);
 
         final var userId = userRepository.getUserIdElseThrow();
         competencyService.checkIfCompetencyBelongsToCourse(competencyId, courseId);
-        final var jol = competencyJolRepository.findLatestByCompetencyIdAndUserId(competencyId, userId);
+        final var jol = competencyJolService.getLatestJudgementOfLearningPairForUserByCompetencyId(userId, competencyId);
 
-        return ResponseEntity.ok(jol.map(CompetencyJolDTO::of).orElse(null));
+        return ResponseEntity.ok(jol);
     }
 
     /**
-     * GET courses/:courseId/competencies/jol : Gets the latest judgement of learning for all competencies of a course
+     * GET courses/:courseId/competencies/jol : Gets the latest (current and prior) judgement of learning for all competencies of a course
      *
      * @param courseId the id of the course for which the competency belongs
-     * @return the ResponseEntity with status 200 (OK) and body the judgement of learning values for all competencies of the course as a map from competency id to jol value
+     * @return the ResponseEntity with status 200 (OK) and body the judgement of learning values for all competencies of the course as a map from competency id to jol value pairs
      */
     @GetMapping("courses/{courseId}/competencies/jol")
     @FeatureToggle(Feature.StudentCourseAnalyticsDashboard)
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<Map<Long, CompetencyJolDTO>> getLatestJudgementOfLearningForCourse(@PathVariable long courseId) {
+    public ResponseEntity<Map<Long, CompetencyJolPairDTO>> getLatestJudgementOfLearningForCourse(@PathVariable long courseId) {
         log.debug("REST request to get judgement of learning for competencies of course: {}", courseId);
 
         final var userId = userRepository.getUserIdElseThrow();

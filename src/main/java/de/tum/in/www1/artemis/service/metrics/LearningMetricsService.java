@@ -150,9 +150,14 @@ public class LearningMetricsService {
         final var competencyProgressMap = competencyProgress.stream().collect(toMap(CompetencyProgressDTO::competencyId, CompetencyProgressDTO::progress));
         final var competencyConfidenceMap = competencyProgress.stream().collect(toMap(CompetencyProgressDTO::competencyId, CompetencyProgressDTO::confidence));
 
-        final var competencyJolValues = competencyMetricsRepository.findAllCompetencyJolValuesForUserByCompetencyIds(userId, competencyIds);
-        final var competencyJolValuesMap = competencyJolValues.stream().collect(toMap(CompetencyJolDTO::competencyId, identity()));
+        final var currentJolValues = competencyMetricsRepository.findAllLatestCompetencyJolValuesForUserByCompetencyIds(userId, competencyIds);
+        final var currentJolValuesMap = currentJolValues.stream().collect(toMap(CompetencyJolDTO::competencyId, identity()));
 
-        return new CompetencyStudentMetricsDTO(competencyInfoMap, exerciseMap, lectureUnitMap, competencyProgressMap, competencyConfidenceMap, competencyJolValuesMap);
+        final var currentJolIds = currentJolValues.stream().map(CompetencyJolDTO::id).collect(toSet());
+        final var priorJolValues = competencyMetricsRepository.findAllLatestCompetencyJolValuesForUserByCompetencyIdsExcludeJolIds(userId, competencyIds, currentJolIds);
+        final var priorJolValuesMap = priorJolValues.stream().collect(toMap(CompetencyJolDTO::competencyId, identity()));
+
+        return new CompetencyStudentMetricsDTO(competencyInfoMap, exerciseMap, lectureUnitMap, competencyProgressMap, competencyConfidenceMap, currentJolValuesMap,
+                priorJolValuesMap);
     }
 }

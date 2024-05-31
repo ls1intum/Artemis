@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 import de.tum.in.www1.artemis.repository.competency.CompetencyJolRepository;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
-import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyJolDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyJolPairDTO;
 
 class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -134,8 +134,8 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
             return "/api/courses/" + courseId + "/competencies/" + competencyId + "/jol";
         }
 
-        private CompetencyJolDTO sendRequest(long competencyId, HttpStatus status) throws Exception {
-            return request.get(apiURL(competencyId), status, CompetencyJolDTO.class);
+        private CompetencyJolPairDTO sendRequest(long competencyId, HttpStatus status) throws Exception {
+            return request.get(apiURL(competencyId), status, CompetencyJolPairDTO.class);
         }
 
         @Test
@@ -152,18 +152,26 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void shouldReturnNullWhenNotExists() throws Exception {
+        void shouldReturnNullForBothWhenNotExists() throws Exception {
             final var jol = sendRequest(competency[0].getId(), HttpStatus.OK);
-            assertThat(jol).isNull();
+            assertThat(jol.current()).isNull();
+            assertThat(jol.prior()).isNull();
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void shouldReturnValue() throws Exception {
-            short jolValue = 123;
-            competencyUtilService.createJol(competency[0], student, jolValue, ZonedDateTime.now(), 0.25, 0.25);
-            final var jol = sendRequest(competency[0].getId(), HttpStatus.OK);
-            assertThat(jol.jolValue()).isEqualTo(jolValue);
+            short jolValue1 = 123;
+            competencyUtilService.createJol(competency[0], student, jolValue1, ZonedDateTime.now().minusDays(1), 0.25, 0.25);
+            final var jol1 = sendRequest(competency[0].getId(), HttpStatus.OK);
+            assertThat(jol1.current().jolValue()).isEqualTo(jolValue1);
+            assertThat(jol1.prior()).isNull();
+
+            short jolValue2 = 111;
+            competencyUtilService.createJol(competency[0], student, jolValue2, ZonedDateTime.now(), 0.25, 0.25);
+            final var jol2 = sendRequest(competency[0].getId(), HttpStatus.OK);
+            assertThat(jol2.current().jolValue()).isEqualTo(jolValue2);
+            assertThat(jol2.prior().jolValue()).isEqualTo(jolValue1);
         }
     }
 
@@ -174,8 +182,8 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
             return "/api/courses/" + courseId + "/competencies/jol";
         }
 
-        private Map<Long, CompetencyJolDTO> sendRequest(HttpStatus status) throws Exception {
-            return request.getMap(apiURL(), status, Long.class, CompetencyJolDTO.class);
+        private Map<Long, CompetencyJolPairDTO> sendRequest(HttpStatus status) throws Exception {
+            return request.getMap(apiURL(), status, Long.class, CompetencyJolPairDTO.class);
         }
 
         @Test
@@ -187,18 +195,31 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void shouldReturnValues() throws Exception {
-            final var jol0 = competencyUtilService.createJol(competency[0], student, (short) 123, ZonedDateTime.now(), 0.25, 0.25);
+            final var jol00 = competencyUtilService.createJol(competency[0], student, (short) 123, ZonedDateTime.now().minusDays(1), 0.25, 0.25);
+            final var jol01 = competencyUtilService.createJol(competency[0], student, (short) 123, ZonedDateTime.now(), 0.23, 0.22);
             final var jol1 = competencyUtilService.createJol(competency[1], student, (short) 8, ZonedDateTime.now(), 0.1, 0.2);
             final var jolMap = sendRequest(HttpStatus.OK);
             assertThat(jolMap).isNotNull();
-            final var expectedMap = Map.of(competency[0].getId(), CompetencyJolDTO.of(jol0), competency[1].getId(), CompetencyJolDTO.of(jol1));
+            final var expectedMap = Map.of(competency[0].getId(), CompetencyJolPairDTO.of(jol01, jol00), competency[1].getId(), CompetencyJolPairDTO.of(jol1, null));
             expectedMap.forEach((expKey, expValue) -> {
-                final var val = jolMap.get(expKey);
-                assertThat(val.competencyId()).isEqualTo(expValue.competencyId());
-                assertThat(val.jolValue()).isEqualTo(expValue.jolValue());
-                assertThat(val.judgementTime()).isEqualTo(expValue.judgementTime());
-                assertThat(val.competencyProgress()).isEqualTo(expValue.competencyProgress());
-                assertThat(val.competencyConfidence()).isEqualTo(expValue.competencyConfidence());
+                final var current = jolMap.get(expKey).current();
+                final var expCurrent = expValue.current();
+                assertThat(current.competencyId()).isEqualTo(expCurrent.competencyId());
+                assertThat(current.jolValue()).isEqualTo(expCurrent.jolValue());
+                assertThat(current.competencyProgress()).isEqualTo(expCurrent.competencyProgress());
+                assertThat(current.competencyConfidence()).isEqualTo(expCurrent.competencyConfidence());
+
+                final var prior = jolMap.get(expKey).prior();
+                final var expPrior = expValue.prior();
+                if (expPrior == null) {
+                    assertThat(prior).isNull();
+                }
+                else {
+                    assertThat(prior.competencyId()).isEqualTo(expPrior.competencyId());
+                    assertThat(prior.jolValue()).isEqualTo(expPrior.jolValue());
+                    assertThat(prior.competencyProgress()).isEqualTo(expPrior.competencyProgress());
+                    assertThat(prior.competencyConfidence()).isEqualTo(expPrior.competencyConfidence());
+                }
             });
         }
     }

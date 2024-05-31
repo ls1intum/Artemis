@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.competency;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toSet;
 
 import java.time.ZonedDateTime;
 import java.util.Map;
@@ -18,6 +19,7 @@ import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.competency.CompetencyJolRepository;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyJolDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyJolPairDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
@@ -99,13 +101,35 @@ public class CompetencyJolService {
     }
 
     /**
+     * Get the current and prior judgement of learning for a user and a competency.
+     *
+     * @param userId       the id of the user
+     * @param competencyId the id of the competency
+     * @return the current and prior judgement of learning
+     */
+    public CompetencyJolPairDTO getLatestJudgementOfLearningPairForUserByCompetencyId(long userId, long competencyId) {
+        final var currentJol = competencyJolRepository.findLatestByCompetencyIdAndUserId(competencyId, userId);
+        if (currentJol.isEmpty()) {
+            return new CompetencyJolPairDTO(null, null);
+        }
+        final var priorJol = competencyJolRepository.findLatestByCompetencyIdAndUserIdExceptJolId(competencyId, userId, currentJol.get().getId());
+        return CompetencyJolPairDTO.of(currentJol.get(), priorJol.orElse(null));
+    }
+
+    /**
      * Get a users latest judgement of learning for all competencies of a course.
      *
      * @param userId   the id of the user
      * @param courseId the id of the course
-     * @return a map from competency id to judgement of learning
+     * @return a map from competency id to current and prior judgement of learning
      */
-    public Map<Long, CompetencyJolDTO> getLatestJudgementOfLearningForUserByCourseId(long userId, long courseId) {
-        return competencyJolRepository.findLatestJolValuesForUserByCourseId(userId, courseId).stream().collect(toMap(CompetencyJolDTO::competencyId, Function.identity()));
+    public Map<Long, CompetencyJolPairDTO> getLatestJudgementOfLearningForUserByCourseId(long userId, long courseId) {
+        final var currentJols = competencyJolRepository.findLatestJolValuesForUserByCourseId(userId, courseId).stream()
+                .collect(toMap(CompetencyJolDTO::competencyId, Function.identity()));
+        final var currentJolIds = currentJols.values().stream().map(CompetencyJolDTO::id).collect(toSet());
+        final var priorJols = competencyJolRepository.findLatestJolValuesForUserByCourseIdExcludeJolIds(userId, courseId, currentJolIds).stream()
+                .collect(toMap(CompetencyJolDTO::competencyId, Function.identity()));
+        return currentJols.keySet().stream().collect(toMap(competencyId -> currentJols.get(competencyId).competencyId(),
+                competencyId -> new CompetencyJolPairDTO(currentJols.get(competencyId), priorJols.get(competencyId))));
     }
 }
