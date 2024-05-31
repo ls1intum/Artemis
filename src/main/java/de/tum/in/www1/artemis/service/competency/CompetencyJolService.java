@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +20,7 @@ import de.tum.in.www1.artemis.repository.CompetencyProgressRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.competency.CompetencyJolRepository;
+import de.tum.in.www1.artemis.service.iris.session.IrisCourseChatSessionService;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyJolDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyJolPairDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -29,6 +32,8 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @Service
 public class CompetencyJolService {
 
+    private static final Logger log = LoggerFactory.getLogger(CompetencyJolService.class);
+
     private final String ENTITY_NAME = "CompetencyJol";
 
     private final CompetencyJolRepository competencyJolRepository;
@@ -39,12 +44,15 @@ public class CompetencyJolService {
 
     private final UserRepository userRepository;
 
+    private final Optional<IrisCourseChatSessionService> irisCourseChatSessionService;
+
     public CompetencyJolService(CompetencyJolRepository competencyJolRepository, CompetencyRepository competencyRepository,
-            CompetencyProgressRepository competencyProgressRepository, UserRepository userRepository) {
+            CompetencyProgressRepository competencyProgressRepository, UserRepository userRepository, Optional<IrisCourseChatSessionService> irisCourseChatSessionService) {
         this.competencyJolRepository = competencyJolRepository;
         this.competencyRepository = competencyRepository;
         this.competencyProgressRepository = competencyProgressRepository;
         this.userRepository = userRepository;
+        this.irisCourseChatSessionService = irisCourseChatSessionService;
     }
 
     /**
@@ -74,6 +82,18 @@ public class CompetencyJolService {
         final var competencyProgress = competencyProgressRepository.findByCompetencyIdAndUserId(competencyId, userId);
         final var jol = createCompetencyJol(competencyId, userId, jolValue, ZonedDateTime.now(), competencyProgress);
         competencyJolRepository.save(jol);
+
+        irisCourseChatSessionService.ifPresent(service -> {
+            // Inform Iris so it can send a message to the user
+            try {
+                if (userId % 3 > 0) { // HD3-GROUPS: Iris groups are 1 & 2
+                    service.onJudgementOfLearningSet(jol);
+                }
+            }
+            catch (Exception e) {
+                log.warn("Something went wrong while sending the judgement of learning to Iris", e);
+            }
+        });
     }
 
     /**

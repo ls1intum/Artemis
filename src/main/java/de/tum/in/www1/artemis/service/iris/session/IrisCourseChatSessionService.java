@@ -1,16 +1,23 @@
 package de.tum.in.www1.artemis.service.iris.session;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.competency.CompetencyJol;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCourseChatSession;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
+import de.tum.in.www1.artemis.repository.iris.IrisCourseChatSessionRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -42,17 +49,20 @@ public class IrisCourseChatSessionService implements IrisChatBasedFeatureInterfa
 
     private final IrisRateLimitService rateLimitService;
 
+    private final IrisCourseChatSessionRepository irisCourseChatSessionRepository;
+
     private final PyrisPipelineService pyrisPipelineService;
 
     public IrisCourseChatSessionService(IrisMessageService irisMessageService, IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService,
             AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository, IrisRateLimitService rateLimitService,
-            PyrisPipelineService pyrisPipelineService) {
+            IrisCourseChatSessionRepository irisCourseChatSessionRepository, PyrisPipelineService pyrisPipelineService) {
         this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.authCheckService = authCheckService;
         this.irisSessionRepository = irisSessionRepository;
         this.rateLimitService = rateLimitService;
+        this.irisCourseChatSessionRepository = irisCourseChatSessionRepository;
         this.pyrisPipelineService = pyrisPipelineService;
     }
 
@@ -66,6 +76,7 @@ public class IrisCourseChatSessionService implements IrisChatBasedFeatureInterfa
      */
     @Override
     public void checkHasAccessTo(User user, IrisCourseChatSession session) {
+        user.hasAcceptedIrisElseThrow();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, session.getCourse(), user);
         if (!Objects.equals(session.getUser(), user)) {
             throw new AccessForbiddenException("Iris Session", session.getId());
@@ -100,9 +111,13 @@ public class IrisCourseChatSessionService implements IrisChatBasedFeatureInterfa
      */
     @Override
     public void requestAndHandleResponse(IrisCourseChatSession session) {
+        requestAndHandleResponse(session, "default", null);
+    }
+
+    private void requestAndHandleResponse(IrisCourseChatSession session, String variant, CompetencyJol competencyJol) {
         var chatSession = (IrisCourseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
 
-        pyrisPipelineService.executeCourseChatPipeline("default", chatSession);
+        pyrisPipelineService.executeCourseChatPipeline(variant, chatSession, competencyJol);
     }
 
     /**
@@ -122,5 +137,78 @@ public class IrisCourseChatSessionService implements IrisChatBasedFeatureInterfa
         else {
             irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages());
         }
+    }
+
+    /**
+     * Triggers the course chat in response to a new judgement of learning.
+     * If the course chat is not enabled for the course, nothing happens.
+     *
+     * @param competencyJol The judgement of learning instance to trigger the course chat for
+     */
+    public void onJudgementOfLearningSet(CompetencyJol competencyJol) {
+        var course = competencyJol.getCompetency().getCourse();
+        if (!irisSettingsService.isEnabledFor(IrisSubSettingsType.CHAT, course)) {
+            return;
+        }
+        var user = competencyJol.getUser();
+        user.hasAcceptedIrisElseThrow();
+        var session = getCurrentSessionOrCreateIfNotExistsInternal(course, user, false);
+        CompletableFuture.runAsync(() -> requestAndHandleResponse(session, "jol", competencyJol));
+    }
+
+    /**
+     * Gets the current Iris session for the course and user.
+     * If no session exists or if the last session is from a different day, a new one is created.
+     *
+     * @param course                      The course to get the session for
+     * @param user                        The user to get the session for
+     * @param sendInitialMessageIfCreated Whether to send an initial message from Iris if a new session is created
+     * @return The current Iris session
+     */
+    public IrisCourseChatSession getCurrentSessionOrCreateIfNotExists(Course course, User user, boolean sendInitialMessageIfCreated) {
+        user.hasAcceptedIrisElseThrow();
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, course);
+        return getCurrentSessionOrCreateIfNotExistsInternal(course, user, sendInitialMessageIfCreated);
+    }
+
+    private IrisCourseChatSession getCurrentSessionOrCreateIfNotExistsInternal(Course course, User user, boolean sendInitialMessageIfCreated) {
+        var sessionOptional = irisCourseChatSessionRepository.findLatestByCourseIdAndUserIdWithMessages(course.getId(), user.getId(), Pageable.ofSize(1)).stream().findFirst();
+        if (sessionOptional.isPresent()) {
+            var session = sessionOptional.get();
+
+            // if session is of today we can continue it; otherwise create a new one
+            if (session.getCreationDate().withZoneSameInstant(ZoneId.systemDefault()).toLocalDate().isEqual(LocalDate.now(ZoneId.systemDefault()))) {
+                checkHasAccessTo(user, session);
+                return session;
+            }
+        }
+
+        // create a new session with an initial message from Iris
+        return createSessionInternal(course, user, sendInitialMessageIfCreated);
+    }
+
+    /**
+     * Creates a new Iris session for the course and user.
+     *
+     * @param course             The course to create the session for
+     * @param user               The user to create the session for
+     * @param sendInitialMessage Whether to send an initial message from Iris
+     * @return The created Iris session
+     */
+    public IrisCourseChatSession createSession(Course course, User user, boolean sendInitialMessage) {
+        user.hasAcceptedIrisElseThrow();
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, course);
+        return createSessionInternal(course, user, sendInitialMessage);
+    }
+
+    private IrisCourseChatSession createSessionInternal(Course course, User user, boolean sendInitialMessage) {
+        var session = irisCourseChatSessionRepository.save(new IrisCourseChatSession(course, user));
+
+        if (sendInitialMessage) {
+            // Run async to allow the session to be returned immediately
+            CompletableFuture.runAsync(() -> requestAndHandleResponse(session));
+        }
+
+        return session;
     }
 }
