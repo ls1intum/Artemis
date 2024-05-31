@@ -6,19 +6,19 @@
             "importButton": "Übunsgruppen importieren",
             "dialogTitle": "Übungsgruppen importieren",
             "explanations": {
-                "description": "Dieser Dialog kann verwendet werden, um Übungsgruppen und deren Registrierungen aus einer CSV-Datei zu importieren. Dabei werden Übungsgruppen erstellt, wenn sie noch nicht existieren. Die Studierende werden von ihrer aktuellen Übungsgruppe abgemeldet und in der neuen Übungsgruppe registriert.",
-                "requirements": "Jede Zeile muss immer einen Wert für den Übungsgruppen Titel enthalten. Wenn nicht nur Übungsgruppen erstellt werden sollen, sondern auch die Registrierungen von Studierenden, muss die Zeile einen Wert für die Immatrikulationsnummer oder für den Benutzernamen enthalten. Dies ist erforderlich, um den Studierenden zu identifizieren. Werte für den Nachnamen und Vornamen sind optional. Die erste Zeile muss die Spaltennamen angeben!"
+                "description": "Dieses Dialogfeld ermöglicht es, Tutoriumsgruppen und Studentenregistrierungen aus einer CSV-Datei zu importieren. Wenn eine Tutoriumsgruppe noch nicht existiert, wird sie erstellt. Wenn Studenten in der CSV-Datei aufgeführt sind, werden sie von ihrer aktuellen Tutoriumsgruppe in die neue, in der CSV-Datei angegebene Gruppe verschoben.",
+                "requirements": "Jede Zeile muss den Titel der Tutoriumsgruppe enthalten. Um Studenten zu registrieren, muss jede Zeile entweder eine Matrikelnummer oder einen Login-Wert enthalten. Vor- und Nachname sind optional. Die oberste Zeile der CSV-Datei muss die Überschriften angeben."
             },
             "supportedHeaderNames": {
                 "label": "Unterstützte Spaltennamen (Versionen mit Leerzeichen, Unterstrichen, Bindestrichen und Grossbuchstaben werden ebenfalls unterstützt): ",
                 "alwaysRequired": "Immer erforderlich (um die Übungsgruppe zu identifizieren): ",
                 "requiredIfStudentRegistration": "Eines davon ist erforderlich, wenn Studierende registriert werden sollen (um Studierende zu identifizieren): ",
                 "alwaysOptional": "Immer optional (nur für Anzeigzwecke): ",
-                "tutorialGroupTitle": "Für den Tiel der Übungsgruppe: {{ headers }}",
-                "registrationNumber": "Für die Immatrikulationsnummer: {{ headers }}",
-                "login": "Für den Benutznermane: {{ headers }}",
-                "firstName": "Für den Vornamen: {{ headers }}",
-                "lastName": "Für den Nachnamen: {{ headers }}"
+                "tutorialGroupTitle": "Für den Tiel der Übungsgruppe: Übungsgruppe",
+                "registrationNumber": "Für die Immatrikulationsnummer: Matrikelnummer",
+                "login": "Für den Benutznermane: Benutzername",
+                "firstName": "Für den Vornamen: Vorname",
+                "lastName": "Für den Nachnamen: Nachname oder Familienname"
             },
             "errorMessages": {
                 "genericErrorMessage": "Import von Übungsgruppen sind fehlgeschlagen!",
@@ -56,9 +56,14 @@
                 }
             },
             "table": {
+                "example1": "Beispiel CSV-Format (mindestens):",
+                "example2": "Beispiel CSV-Format zur Registrierung von Studenten mit Matrikelnummer:",
+                "example3": "Beispiel CSV-Format zur Registrierung von Studenten mit Login:",
                 "showNotImportedButton": "Nicht importierte Registrierungen",
                 "showImportedButton": "Importierte Registrierungen",
                 "showAllButton": "Alle Registrierungen",
+                "groupA": "Gruppe A",
+                "groupB": "Gruppe B",
                 "columns": {
                     "title": "Übungsgruppe",
                     "registrationNumber": "Matrikelnummer",

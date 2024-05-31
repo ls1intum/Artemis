@@ -6,19 +6,19 @@
             "importButton": "Import Tutorial Groups",
             "dialogTitle": "Import Tutorial Group Registrations",
             "explanations": {
-                "description": "This dialog can be used to import tutorial groups and their registrations from a CSV file. Tutorial Groups will be created if they do not exist yet. Students will be deregistered from their current tutorial group and registered in the new one.",
-                "requirements": "Each row must always contain a value for the tutorial group title. If you want to not only create tutorial groups but also register students, the row must contain a value for either matriculation number or login. This is needed to identify the student. Values for last and first name are optional. The top row must specify the header!"
+                "description": "This dialog allows you to import tutorial groups and student registrations from a CSV file. If a tutorial group does not exist, it will be created. If students are listed in the csv then they will be moved from their current tutorial group to the new one specified in the CSV file.",
+                "requirements": "Each row must include a value for the tutorial group title. To register students, each row must include a value for either the matriculation number or the login. First and last names are optional. The top row of the CSV file must specify the headers."
             },
             "supportedHeaderNames": {
                 "label": "Supported header names (versions with spaces, underscores, hyphens and uppercase letters are also supported): ",
                 "alwaysRequired": "Always required (to identify tutorial group): ",
                 "requiredIfStudentRegistration": "One of those is required if you want to register students (to identify students) :",
                 "alwaysOptional": "Always optional (just for display purposes): ",
-                "tutorialGroupTitle": "For tutorial group title: {{ headers }}",
-                "registrationNumber": "For matriculation number: {{ headers }}",
-                "login": "For login: {{ headers }}",
-                "firstName": "For first Name: {{ headers }}",
-                "lastName": "For last Name: {{ headers }}"
+                "tutorialGroupTitle": "For tutorial group title: Tutorial Group Title",
+                "registrationNumber": "For matriculation number: Registration Number",
+                "login": "For login: Login",
+                "firstName": "For first Name: first name",
+                "lastName": "For last Name: last name or family name"
             },
             "errorMessages": {
                 "genericErrorMessage": "Import of tutorial groups failed!",
@@ -56,9 +56,14 @@
                 }
             },
             "table": {
+                "example1": "Example CSV Format (minimum):",
+                "example2": "Example CSV Format to register students with registration number:",
+                "example3": "Example CSV Format to register students with login:",
                 "showNotImportedButton": "Not imported registrations",
                 "showImportedButton": "Imported registrations",
                 "showAllButton": "All registrations",
+                "groupA": "Group A",
+                "groupB": "Group B",
                 "columns": {
                     "title": "Tutorial Group",
                     "registrationNumber": "Matriculation Number",
