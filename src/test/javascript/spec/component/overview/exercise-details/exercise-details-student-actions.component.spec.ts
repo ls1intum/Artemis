@@ -500,31 +500,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         }),
     );
 
-    // until a policy is set
-    it.skip('assureConditionsSatisfied should alert and return false if not all hidden tests have passed', () => {
-        jest.spyOn(window, 'alert').mockImplementation(() => {});
-        comp.exercise = {
-            type: ExerciseType.PROGRAMMING,
-            dueDate: dayjs().subtract(5, 'minutes'),
-            studentParticipations: [
-                {
-                    id: 2,
-                    results: [
-                        {
-                            assessmentType: AssessmentType.AUTOMATIC,
-                            score: 80,
-                        },
-                    ],
-                },
-            ] as StudentParticipation[],
-        } as ProgrammingExercise;
-
-        const result = comp.assureConditionsSatisfied();
-
-        expect(window.alert).toHaveBeenCalledWith('artemisApp.exercise.notEnoughPoints');
-        expect(result).toBeFalse();
-    });
-
     it('assureConditionsSatisfied should alert and return false if the feedback request has already been sent', () => {
         jest.spyOn(window, 'alert').mockImplementation(() => {});
         comp.exercise = {
