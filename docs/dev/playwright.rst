@@ -53,7 +53,7 @@ Best practices for writing tests in Playwright
     that matches multiple elements on the page. To ensure uniqueness, use locators based on the element's
     ``data-testid``, ``id``, unique ``class`` or a combination of these attributes.
 
-    Avoid using the ``nth()`` method or the ``nth-child`` selector, s they rely on the element’s position in the DOM
+    Avoid using the ``nth()`` method or the ``nth-child`` selector, as they rely on the element’s position in the DOM
     hierarchy. Use these methods only when iterating over multiple similar elements.
 
     Avoid using locators that are prone to change. If a component lacks a unique selector,
