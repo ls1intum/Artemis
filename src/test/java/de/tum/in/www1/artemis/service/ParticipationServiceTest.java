@@ -15,7 +15,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
@@ -37,6 +36,7 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.BuildLogEntryRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
@@ -64,6 +64,12 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
 
     @Autowired
     private UserUtilService userUtilService;
+
+    @Autowired
+    private ResultService resultService;
+
+    @Autowired
+    private ResultRepository resultRepository;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
@@ -123,15 +129,23 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetBuildJobIdsForResultsOfParticipation() throws Exception {
+    void testGetBuildJobsForResultsOfParticipation() throws Exception {
         Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1");
         participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, uriService, versionControlService, continuousIntegrationService);
 
         StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(programmingExercise, student.orElseThrow(),
                 SubmissionType.EXTERNAL);
 
-        var resultMap = request.get("/api/participations/" + participation.getId() + "/results/build-job-ids", HttpStatus.OK, Map.class);
-        assertThat(resultMap).size().isEqualTo(0);
+        List<Result> results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participation.getId());
+
+        Map<Long, String> resultBuildJobMap = resultService.getLogsAvailabilityForResults(results);
+        assertThat(resultBuildJobMap).hasSize(0);
+        assertThat(participation).isNotNull();
+        assertThat(participation.getSubmissions()).hasSize(1);
+        assertThat(participation.getStudent()).contains(student.get());
+        ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) participation.findLatestSubmission().orElseThrow();
+        assertThat(programmingSubmission.getType()).isEqualTo(SubmissionType.EXTERNAL);
+        assertThat(programmingSubmission.getResults()).isNullOrEmpty();
     }
 
     @Test

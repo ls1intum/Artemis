@@ -12,13 +12,12 @@ import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
-
-import com.google.common.base.Strings;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
@@ -136,10 +135,10 @@ public class CompetencyService {
      */
     public SearchResultPageDTO<Competency> getOnPageWithSizeForImport(final CompetencyPageableSearchDTO search, final User user) {
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.COMPETENCY);
-        final String title = Strings.isNullOrEmpty(search.getTitle()) ? null : search.getTitle();
-        final String description = Strings.isNullOrEmpty(search.getDescription()) ? null : search.getDescription();
-        final String courseTitle = Strings.isNullOrEmpty(search.getCourseTitle()) ? null : search.getCourseTitle();
-        final String semester = Strings.isNullOrEmpty(search.getSemester()) ? null : search.getSemester();
+        final String title = StringUtils.isEmpty(search.getTitle()) ? null : search.getTitle();
+        final String description = StringUtils.isEmpty(search.getDescription()) ? null : search.getDescription();
+        final String courseTitle = StringUtils.isEmpty(search.getCourseTitle()) ? null : search.getCourseTitle();
+        final String semester = StringUtils.isEmpty(search.getSemester()) ? null : search.getSemester();
 
         final Page<Competency> competencyPage;
         if (authCheckService.isAdmin(user)) {
