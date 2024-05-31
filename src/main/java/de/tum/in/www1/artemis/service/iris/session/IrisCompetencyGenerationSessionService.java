@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service.iris.session;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +15,6 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyTaxonomy;
-import de.tum.in.www1.artemis.domain.iris.message.IrisJsonMessageContent;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
@@ -27,11 +25,9 @@ import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
+import de.tum.in.www1.artemis.service.connectors.pyris.PyrisConnectorService;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
-import de.tum.in.www1.artemis.service.iris.exception.IrisParseResponseException;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
-import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
  * Service to handle the Competency generation subsytem of Iris.
@@ -42,7 +38,7 @@ public class IrisCompetencyGenerationSessionService implements IrisButtonBasedFe
 
     private static final Logger log = LoggerFactory.getLogger(IrisCompetencyGenerationSessionService.class);
 
-    private final IrisConnectorService irisConnectorService;
+    private final PyrisConnectorService pyrisConnectorService;
 
     private final IrisSettingsService irisSettingsService;
 
@@ -56,10 +52,10 @@ public class IrisCompetencyGenerationSessionService implements IrisButtonBasedFe
 
     private final IrisMessageRepository irisMessageRepository;
 
-    public IrisCompetencyGenerationSessionService(IrisConnectorService irisConnectorService, IrisSettingsService irisSettingsService, IrisSessionRepository irisSessionRepository,
+    public IrisCompetencyGenerationSessionService(PyrisConnectorService pyrisConnectorService, IrisSettingsService irisSettingsService, IrisSessionRepository irisSessionRepository,
             AuthorizationCheckService authCheckService, IrisCompetencyGenerationSessionRepository irisCompetencyGenerationSessionRepository, IrisMessageService irisMessageService,
             IrisMessageRepository irisMessageRepository) {
-        this.irisConnectorService = irisConnectorService;
+        this.pyrisConnectorService = pyrisConnectorService;
         this.irisSettingsService = irisSettingsService;
         this.irisSessionRepository = irisSessionRepository;
         this.authCheckService = authCheckService;
@@ -115,29 +111,8 @@ public class IrisCompetencyGenerationSessionService implements IrisButtonBasedFe
 
     @Override
     public List<Competency> executeRequest(IrisCompetencyGenerationSession session) {
-        var userMessageContent = irisMessageRepository.findFirstWithContentBySessionIdAndSenderOrderBySentAtDesc(session.getId(), IrisMessageSender.USER).getContent().getFirst();
-        if (!(userMessageContent instanceof IrisTextMessageContent) || userMessageContent.getContentAsString() == null) {
-            throw new InternalServerErrorException("Unable to get last user message!");
-        }
-        var courseDescription = userMessageContent.getContentAsString();
-
-        var parameters = new CompetencyGenerationDTO(courseDescription, CompetencyTaxonomy.values());
-        var irisSettings = irisSettingsService.getCombinedIrisSettingsFor(session.getCourse(), false);
-        try {
-            var response = irisConnectorService.sendRequestV2(irisSettings.irisCompetencyGenerationSettings().getTemplate().getContent(),
-                    irisSettings.irisCompetencyGenerationSettings().getPreferredModel(), parameters).get();
-            var llmMessage = session.newMessage();
-            llmMessage.setSender(IrisMessageSender.LLM);
-            llmMessage.addContent(new IrisJsonMessageContent(response.content()));
-
-            irisSessionRepository.save(session);
-
-            return toCompetencies(response.content());
-        }
-        catch (InterruptedException | ExecutionException e) {
-            log.error("Unable to generate competencies", e);
-            throw new InternalServerErrorException("Unable to generate competencies: " + e.getMessage());
-        }
+        // TODO: Re-add in a future PR. Remember to reenable the test cases!
+        return null;
     }
 
     @Override
@@ -150,7 +125,7 @@ public class IrisCompetencyGenerationSessionService implements IrisButtonBasedFe
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.COMPETENCY_GENERATION, irisSession.getCourse());
     }
 
-    private List<Competency> toCompetencies(JsonNode content) throws IrisParseResponseException {
+    private List<Competency> toCompetencies(JsonNode content) {
         List<Competency> competencies = new ArrayList<>();
         for (JsonNode node : content.get("competencies")) {
             try {

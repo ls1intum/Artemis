@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 
@@ -15,9 +15,11 @@ export class GitDiffFilePanelComponent implements OnInit {
 
     @Input() solutionFileContent: string | undefined;
 
-    @Input() numberOfContextLines = 3;
-
     @Input() diffForTemplateAndSolution = true;
+
+    @Input() allowSplitView = true;
+
+    @Output() onDiffReady = new EventEmitter<boolean>();
 
     previousFilePath: string | undefined;
     filePath: string | undefined;

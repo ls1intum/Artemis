@@ -4,63 +4,64 @@
         @case (ExerciseType.QUIZ) {
             <div class="btn-group">
                 @if (isStartPracticeAvailable()) {
-                    <button
-                        jhi-exercise-action-button
-                        [buttonIcon]="faRedo"
-                        [buttonLabel]="'artemisApp.exerciseActions.practice' | artemisTranslate"
-                        [buttonLoading]="!!exercise.loading"
-                        [smallButton]="smallButtons"
-                        [hideLabelMobile]="false"
-                        [routerLink]="['/courses', courseId, 'quiz-exercises', exercise.id, 'practice']"
-                    ></button>
+                    <ng-container
+                        [ngTemplateOutlet]="quizActionButton"
+                        [ngTemplateOutletContext]="{ $implicit: { icon: faRedo, label: 'artemisApp.exerciseActions.practice', quizMode: 'practice', hideLabelMobile: false } }"
+                    />
                 }
                 @if (quizNotStarted || gradedParticipation?.initializationState === InitializationState.INITIALIZED) {
-                    <button
-                        [id]="'open-exercise-' + exercise.id"
-                        jhi-exercise-action-button
-                        [buttonIcon]="faPlayCircle"
-                        [buttonLabel]="'artemisApp.exerciseActions.openQuiz' | artemisTranslate"
-                        [buttonLoading]="!!exercise.loading"
-                        [smallButton]="smallButtons"
-                        [hideLabelMobile]="false"
-                        [routerLink]="['/courses', courseId, 'quiz-exercises', exercise.id, 'live']"
-                    ></button>
+                    <ng-container
+                        [ngTemplateOutlet]="quizActionButton"
+                        [ngTemplateOutletContext]="{
+                            $implicit: {
+                                id: 'open-exercise-' + exercise.id,
+                                icon: faPlayCircle,
+                                label: 'artemisApp.exerciseActions.openQuiz',
+                                quizMode: 'live',
+                                hideLabelMobile: false
+                            }
+                        }"
+                    />
                 }
                 @if (uninitializedQuiz) {
-                    <button
-                        id="student-quiz-start-{{ exercise.id }}"
-                        [id]="'start-exercise-' + exercise.id"
-                        jhi-exercise-action-button
-                        [buttonIcon]="faPlayCircle"
-                        [buttonLabel]="'artemisApp.exerciseActions.startQuiz' | artemisTranslate"
-                        [buttonLoading]="!!exercise.loading"
-                        [smallButton]="smallButtons"
-                        [hideLabelMobile]="false"
-                        [routerLink]="['/courses', courseId, 'quiz-exercises', exercise.id, 'live']"
-                    ></button>
+                    <ng-container
+                        [ngTemplateOutlet]="quizActionButton"
+                        [ngTemplateOutletContext]="{
+                            $implicit: {
+                                id: 'start-exercise-' + exercise.id,
+                                icon: faPlayCircle,
+                                label: 'artemisApp.exerciseActions.startQuiz',
+                                quizMode: 'live',
+                                hideLabelMobile: false
+                            }
+                        }"
+                    />
                 }
                 @if (gradedParticipation?.initializationState === InitializationState.FINISHED && !gradedParticipation?.results?.length) {
-                    <button
-                        id="view-submission"
-                        jhi-exercise-action-button
-                        [buttonIcon]="faEye"
-                        [buttonLabel]="'artemisApp.exerciseActions.viewSubmissions' | artemisTranslate"
-                        [outlined]="true"
-                        [buttonLoading]="!!exercise.loading"
-                        [smallButton]="smallButtons"
-                        [routerLink]="['/courses', courseId, 'quiz-exercises', exercise.id, 'live']"
-                    ></button>
+                    <ng-container
+                        [ngTemplateOutlet]="quizActionButton"
+                        [ngTemplateOutletContext]="{
+                            $implicit: {
+                                icon: faEye,
+                                label: 'artemisApp.exerciseActions.viewSubmissions',
+                                quizMode: 'live',
+                                outlined: true
+                            }
+                        }"
+                    />
                 }
                 @if (gradedParticipation?.results?.length) {
-                    <button
-                        jhi-exercise-action-button
-                        [buttonIcon]="faEye"
-                        [buttonLabel]="'artemisApp.exerciseActions.viewResults' | artemisTranslate"
-                        [outlined]="true"
-                        [buttonLoading]="!!exercise.loading"
-                        [smallButton]="smallButtons"
-                        [routerLink]="['/courses', courseId, 'quiz-exercises', exercise.id, 'live']"
-                    ></button>
+                    <ng-container
+                        [ngTemplateOutlet]="quizActionButton"
+                        [ngTemplateOutletContext]="{
+                            $implicit: {
+                                icon: faEye,
+                                label: 'artemisApp.exerciseActions.viewResults',
+                                quizMode: 'live',
+                                outlined: true
+                            }
+                        }"
+                    />
                 }
             </div>
         }
@@ -114,7 +115,7 @@
                                 [loading]="!!exercise.loading"
                                 [smallButtons]="smallButtons"
                                 [participations]="exercise.studentParticipations!"
-                                [courseAndExerciseNavigationUrlSegment]="['/courses', courseId, 'programming-exercises', exercise.id, 'code-editor']"
+                                [courseAndExerciseNavigationUrlSegment]="['/courses', courseId, 'exercises', 'programming-exercises', exercise.id, 'code-editor']"
                                 [exercise]="exercise"
                             />
                         }
@@ -138,20 +139,30 @@
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.openRepository"></span>
                             </a>
                         }
-                        @if (exercise.allowManualFeedbackRequests) {
-                            <span tabindex="0" [ngbTooltip]="'artemisApp.exerciseActions.requestFeedbackTooltip' | artemisTranslate">
-                                <button
+                        @if (exercise.allowFeedbackRequests) {
+                            @if (athenaEnabled) {
+                                <a
                                     class="btn btn-primary"
-                                    [class.btn-sm]="smallButtons"
-                                    jhi-exercise-action-button
-                                    [overwriteDisabled]="isFeedbackRequestButtonDisabled()"
-                                    [id]="'request-feedback-' + exercise.id"
                                     (click)="requestFeedback()"
+                                    [class.btn-sm]="smallButtons"
+                                    [id]="'request-feedback-' + exercise.id"
+                                    [ngbTooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip' | artemisTranslate"
                                 >
-                                    <fa-icon [icon]="faComment" />
-                                    <span class="d-none d-md-inline">{{ 'artemisApp.exerciseActions.requestFeedback' | artemisTranslate }}</span>
-                                </button>
-                            </span>
+                                    <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
+                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback">Send automatic feedback request</span>
+                                </a>
+                            } @else {
+                                <a
+                                    class="btn btn-primary"
+                                    (click)="requestFeedback()"
+                                    [class.btn-sm]="smallButtons"
+                                    [id]="'request-feedback-' + exercise.id"
+                                    [ngbTooltip]="'artemisApp.exerciseActions.requestManualFeedbackTooltip' | artemisTranslate"
+                                >
+                                    <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
+                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestManualFeedback">Send manual feedback request</span>
+                                </a>
+                            }
                         }
                     </ng-container>
                 }
@@ -242,7 +253,7 @@
                         [buttonLoading]="!!exercise.loading"
                         [smallButton]="smallButtons"
                         [hideLabelMobile]="false"
-                        [routerLink]="['/courses', courseId, exercise.type + '-exercises', exercise.id, 'participate', gradedParticipation!.id]"
+                        [routerLink]="['/courses', courseId, 'exercises', exercise.type + '-exercises', exercise.id, 'participate', gradedParticipation!.id]"
                     ></button>
                 }
             </div>
@@ -250,3 +261,17 @@
         <!-- MODELING/TEXT/FILE UPLOAD EXERCISE ACTIONS END -->
     }
 </div>
+
+<ng-template #quizActionButton let-button>
+    <button
+        jhi-exercise-action-button
+        [id]="button.id"
+        [buttonIcon]="button.icon"
+        [buttonLabel]="button.label | artemisTranslate"
+        [buttonLoading]="!!exercise.loading"
+        [smallButton]="smallButtons"
+        [hideLabelMobile]="button.hideLabelMobile"
+        [outlined]="button.outlined"
+        [routerLink]="['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, button.quizMode]"
+    ></button>
+</ng-template>

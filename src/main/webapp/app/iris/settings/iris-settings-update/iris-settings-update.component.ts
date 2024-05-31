@@ -76,7 +76,8 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     loadIrisSettings(): void {
         this.isLoading = true;
         this.loadIrisSettingsObservable().subscribe((settings) => {
-            this.loadIrisModels();
+            //this.loadIrisModels();
+            this.isLoading = false;
             if (!settings) {
                 this.alertService.error('artemisApp.iris.settings.error.noSettings');
             }

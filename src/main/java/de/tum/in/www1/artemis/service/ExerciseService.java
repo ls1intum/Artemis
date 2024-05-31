@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
@@ -58,6 +59,9 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.exam.ExamLiveEventsService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
+import de.tum.in.www1.artemis.service.quiz.QuizBatchService;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewExerciseStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
@@ -117,7 +121,9 @@ public class ExerciseService {
 
     private final QuizBatchService quizBatchService;
 
-    private final ParticipantScoreService participantScoreService;
+    private final ExamLiveEventsService examLiveEventsService;
+
+    private final GroupNotificationScheduleService groupNotificationScheduleService;
 
     public ExerciseService(ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, QuizScheduleService quizScheduleService,
             AuditEventRepository auditEventRepository, TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository,
@@ -125,7 +131,8 @@ public class ExerciseService {
             SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, UserRepository userRepository,
             ComplaintRepository complaintRepository, TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository,
             GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository, RatingService ratingService, ExerciseDateService exerciseDateService,
-            ExampleSubmissionRepository exampleSubmissionRepository, QuizBatchService quizBatchService, ParticipantScoreService participantScoreService) {
+            ExampleSubmissionRepository exampleSubmissionRepository, QuizBatchService quizBatchService, ExamLiveEventsService examLiveEventsService,
+            GroupNotificationScheduleService groupNotificationScheduleService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
@@ -147,7 +154,8 @@ public class ExerciseService {
         this.ratingService = ratingService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.quizBatchService = quizBatchService;
-        this.participantScoreService = participantScoreService;
+        this.examLiveEventsService = examLiveEventsService;
+        this.groupNotificationScheduleService = groupNotificationScheduleService;
     }
 
     /**
@@ -668,9 +676,9 @@ public class ExerciseService {
      * @param exercise        exercise to update *
      */
     public void checkExerciseIfStructuredGradingInstructionFeedbackUsed(Set<GradingCriterion> gradingCriteria, Exercise exercise) {
-        List<Feedback> feedback = feedbackRepository.findFeedbackByExerciseGradingCriteria(gradingCriteria);
+        boolean hasFeedbackFromStructuredGradingInstructionUsed = feedbackRepository.hasFeedbackByExerciseGradingCriteria(gradingCriteria);
 
-        if (!feedback.isEmpty()) {
+        if (hasFeedbackFromStructuredGradingInstructionUsed) {
             exercise.setGradingInstructionFeedbackUsed(true);
         }
     }
@@ -766,22 +774,6 @@ public class ExerciseService {
     }
 
     /**
-     * Checks if the user has achieved the minimum score.
-     *
-     * @param exercise the exercise that should be checked
-     * @param user     the user for which to check the score
-     * @param minScore the minimum score that should be achieved
-     * @return true if the user achieved the minimum score, false otherwise
-     */
-    public boolean hasScoredAtLeast(@NotNull Exercise exercise, @NotNull User user, double minScore) {
-        final var score = participantScoreService.getStudentAndTeamParticipationScoresAsDoubleStream(user, Set.of(exercise)).max();
-        if (score.isEmpty()) {
-            return false;
-        }
-        return score.getAsDouble() >= minScore;
-    }
-
-    /**
      * Removes competency from all exercises.
      *
      * @param exercises  set of exercises
@@ -790,5 +782,22 @@ public class ExerciseService {
     public void removeCompetency(@NotNull Set<Exercise> exercises, @NotNull Competency competency) {
         exercises.forEach(exercise -> exercise.getCompetencies().remove(competency));
         exerciseRepository.saveAll(exercises);
+    }
+
+    /**
+     * Notifies students about exercise changes.
+     * For course exercises, notifications are used. For exam exercises, live events are used instead.
+     *
+     * @param originalExercise the original exercise
+     * @param updatedExercise  the updated exercise
+     * @param notificationText custom notification text
+     */
+    public void notifyAboutExerciseChanges(Exercise originalExercise, Exercise updatedExercise, String notificationText) {
+        if (originalExercise.isCourseExercise()) {
+            groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(originalExercise, updatedExercise, notificationText);
+        }
+        else if (originalExercise.isExamExercise() && !StringUtils.equals(originalExercise.getProblemStatement(), updatedExercise.getProblemStatement())) {
+            this.examLiveEventsService.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText);
+        }
     }
 }

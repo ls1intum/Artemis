@@ -239,6 +239,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 LEFT JOIN FETCH p.results r
                 LEFT JOIN FETCH r.submission s
                 LEFT JOIN FETCH p.submissions
+                LEFT JOIN FETCH r.assessmentNote
             WHERE p.exercise.id = :exerciseId
                 AND (
                     r.id = (SELECT MAX(p_r.id) FROM p.results p_r)
@@ -246,7 +247,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                     OR r IS NULL
                 )
             """)
-    Set<StudentParticipation> findByExerciseIdWithLatestAndManualResults(@Param("exerciseId") long exerciseId);
+    Set<StudentParticipation> findByExerciseIdWithLatestAndManualResultsAndAssessmentNote(@Param("exerciseId") long exerciseId);
 
     /**
      * Get all participations for a team exercise with each manual and latest results (determined by id).
@@ -279,6 +280,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 LEFT JOIN FETCH p.results r
                 LEFT JOIN FETCH r.submission s
                 LEFT JOIN FETCH p.submissions
+                LEFT JOIN FETCH r.assessmentNote
             WHERE p.exercise.id = :exerciseId
                 AND (
                     r.id = (SELECT MAX(p_r.id) FROM p.results p_r WHERE p_r.rated = TRUE)
@@ -286,7 +288,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                     OR r IS NULL
                 )
             """)
-    Set<StudentParticipation> findByExerciseIdWithLatestAndManualRatedResults(@Param("exerciseId") long exerciseId);
+    Set<StudentParticipation> findByExerciseIdWithLatestAndManualRatedResultsAndAssessmentNote(@Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT DISTINCT p
@@ -1147,7 +1149,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             WHERE p.exercise.course.id = :courseId
                 AND p.presentationScore IS NOT NULL
                 AND (p.student.id IN :studentIds OR ts.id IN :studentIds)
-            GROUP BY COALESCE(p.student.id, ts.id)
+            GROUP BY id
             """)
     Set<IdToPresentationScoreSum> sumPresentationScoreByStudentIdsAndCourseId(@Param("courseId") long courseId, @Param("studentIds") Set<Long> studentIds);
 

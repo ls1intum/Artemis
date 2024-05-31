@@ -10,7 +10,7 @@ import { Exam } from 'app/entities/exam.model';
 import { Commands } from '../../support/commands';
 import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 import { ExamExerciseGroupCreationPage } from '../../support/pageobjects/exam/ExamExerciseGroupCreationPage';
-import { ExamParticipation } from '../../support/pageobjects/exam/ExamParticipation';
+import { ExamParticipationPage } from '../../support/pageobjects/exam/ExamParticipationPage';
 import { ExamNavigationBar } from '../../support/pageobjects/exam/ExamNavigationBar';
 import { ExamStartEndPage } from '../../support/pageobjects/exam/ExamStartEndPage';
 import { ExamManagementPage } from '../../support/pageobjects/exam/ExamManagementPage';
@@ -164,11 +164,10 @@ test.describe('Exam assessment', () => {
         });
 
         test('Assesses quiz automatically', async ({ page, login, examManagement, courseAssessment, examParticipation }) => {
-            test.fixme();
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
             if (dayjs().isBefore(examEnd)) {
-                await page.waitForTimeout(examEnd.diff(dayjs(), 'ms') + 1000);
+                await page.waitForTimeout(examEnd.diff(dayjs(), 'ms') + 10000);
             }
             await examManagement.openAssessmentDashboard(course.id!, exam.id!, 60000);
             await page.goto(`/course-management/${course.id}/exams/${exam.id}/assessment-dashboard`);
@@ -177,7 +176,7 @@ test.describe('Exam assessment', () => {
             if (dayjs().isBefore(resultDate)) {
                 await page.waitForTimeout(resultDate.diff(dayjs(), 'ms') + 1000);
             }
-            await examManagement.checkQuizSubmission(course.id!, exam.id!, studentOneName, '50%');
+            await examManagement.checkQuizSubmission(course.id!, exam.id!, studentOneName, '[5 / 10 Points] 50%');
             await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
             await examParticipation.checkResultScore('50%');
         });
@@ -308,7 +307,7 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
     const textExerciseEditor = new TextEditorPage(page);
     const examNavigation = new ExamNavigationBar(page);
     const examStartEnd = new ExamStartEndPage(page);
-    const examParticipation = new ExamParticipation(
+    const examParticipation = new ExamParticipationPage(
         courseList,
         courseOverview,
         examNavigation,
@@ -360,7 +359,7 @@ async function makeExamSubmission(
     exam: Exam,
     exercise: Exercise,
     page: Page,
-    examParticipation: ExamParticipation,
+    examParticipation: ExamParticipationPage,
     examNavigation: ExamNavigationBar,
     examStartEnd: ExamStartEndPage,
 ) {

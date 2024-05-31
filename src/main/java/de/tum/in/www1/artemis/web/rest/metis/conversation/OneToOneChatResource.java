@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.OneToOneChatDTO;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/courses")
+@RequestMapping("api/courses/")
 public class OneToOneChatResource extends ConversationManagementResource {
 
     private static final Logger log = LoggerFactory.getLogger(OneToOneChatResource.class);

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.localci;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
+
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -24,14 +26,14 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.localci.SharedQueueManagementService;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
 import de.tum.in.www1.artemis.service.dto.FinishedBuildJobDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 import tech.jhipster.web.util.PaginationUtil;
 
-@Profile("localci")
+@Profile(PROFILE_LOCALCI)
 @RestController
 @RequestMapping("api/")
 public class BuildJobQueueResource {
@@ -62,13 +64,13 @@ public class BuildJobQueueResource {
      */
     @GetMapping("courses/{courseId}/queued-jobs")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<LocalCIBuildJobQueueItem>> getQueuedBuildJobsForCourse(@PathVariable long courseId) {
+    public ResponseEntity<List<BuildJobQueueItem>> getQueuedBuildJobsForCourse(@PathVariable long courseId) {
         log.debug("REST request to get the queued build jobs for course {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
             throw new AccessForbiddenException("You are not allowed to access queued build jobs of this course!");
         }
-        List<LocalCIBuildJobQueueItem> buildJobQueue = localCIBuildJobQueueService.getQueuedJobsForCourse(courseId);
+        List<BuildJobQueueItem> buildJobQueue = localCIBuildJobQueueService.getQueuedJobsForCourse(courseId);
         return ResponseEntity.ok(buildJobQueue);
     }
 
@@ -80,13 +82,13 @@ public class BuildJobQueueResource {
      */
     @GetMapping("courses/{courseId}/running-jobs")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<LocalCIBuildJobQueueItem>> getRunningBuildJobsForCourse(@PathVariable long courseId) {
+    public ResponseEntity<List<BuildJobQueueItem>> getRunningBuildJobsForCourse(@PathVariable long courseId) {
         log.debug("REST request to get the running build jobs for course {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
             throw new AccessForbiddenException("You are not allowed to access running build jobs of this course!");
         }
-        List<LocalCIBuildJobQueueItem> runningBuildJobs = localCIBuildJobQueueService.getProcessingJobsForCourse(courseId);
+        List<BuildJobQueueItem> runningBuildJobs = localCIBuildJobQueueService.getProcessingJobsForCourse(courseId);
         return ResponseEntity.ok(runningBuildJobs);
     }
 
@@ -159,7 +161,7 @@ public class BuildJobQueueResource {
      * @param search   the search criteria
      * @return the page of finished build jobs
      */
-    @GetMapping("/courses/{courseId}/finished-jobs")
+    @GetMapping("courses/{courseId}/finished-jobs")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<List<FinishedBuildJobDTO>> getFinishedBuildJobsForCourse(@PathVariable long courseId, PageableSearchDTO<String> search) {
         log.debug("REST request to get the finished build jobs for course {}", courseId);
