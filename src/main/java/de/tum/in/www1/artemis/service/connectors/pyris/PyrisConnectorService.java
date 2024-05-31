@@ -65,6 +65,13 @@ public class PyrisConnectorService {
         }
     }
 
+    /**
+     * Executes a pipeline with the given feature and variant
+     *
+     * @param feature      The feature name of the pipeline to execute
+     * @param variant      The variant of the feature to execute
+     * @param executionDTO The DTO sent as a body for the execution
+     */
     public void executePipeline(String feature, String variant, Object executionDTO) {
         var endpoint = "/api/v1/pipelines/" + feature + "/" + variant + "/run";
         try {
