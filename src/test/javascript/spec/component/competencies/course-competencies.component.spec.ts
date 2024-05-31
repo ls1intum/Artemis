@@ -130,14 +130,9 @@ describe('CourseCompetencies', () => {
             status: 200,
         });
 
-        const joLOfCourseResponse: HttpResponse<{ [key: number]: number }> = new HttpResponse({
-            body: {} as { [key: number]: number },
-            status: 200,
-        });
-
         const getAllPrerequisitesForCourseSpy = jest.spyOn(competencyService, 'getAllPrerequisitesForCourse').mockReturnValue(of(prerequisitesOfCourseResponse));
         const getAllForCourseSpy = jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(competenciesOfCourseResponse));
-        const getJoLAllForCourseSpy = jest.spyOn(competencyService, 'getJoLAllForCourse').mockReturnValue(of(joLOfCourseResponse));
+        const getJoLAllForCourseSpy = jest.spyOn(competencyService, 'getJoLAllForCourse');
 
         courseCompetenciesComponent.isCollapsed = false;
         courseCompetenciesComponentFixture.detectChanges();

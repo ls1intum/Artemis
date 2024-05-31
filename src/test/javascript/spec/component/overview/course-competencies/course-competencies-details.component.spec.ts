@@ -103,7 +103,6 @@ describe('CourseCompetenciesDetails', () => {
             lectureUnits: [new TextUnit()],
             exercises: [{ id: 5 } as TextExercise],
         } as Competency;
-        jest.spyOn(competencyService, 'getJoL').mockReturnValue(of(new HttpResponse({ body: 0 })));
         const findByIdSpy = jest.spyOn(competencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
 
         fixture.detectChanges();
@@ -123,7 +122,6 @@ describe('CourseCompetenciesDetails', () => {
             exercises: [{ id: 5 } as ModelingExercise],
         } as Competency;
 
-        jest.spyOn(competencyService, 'getJoL').mockReturnValue(of(new HttpResponse({ body: 0 })));
         const findByIdSpy = jest.spyOn(competencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
 
         fixture.detectChanges();
@@ -145,7 +143,6 @@ describe('CourseCompetenciesDetails', () => {
                 } as CompetencyProgress,
             ],
         } as Competency;
-        jest.spyOn(competencyService, 'getJoL').mockReturnValue(of(new HttpResponse({ body: 0 })));
         const findByIdSpy = jest.spyOn(competencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
 
         fixture.detectChanges();
