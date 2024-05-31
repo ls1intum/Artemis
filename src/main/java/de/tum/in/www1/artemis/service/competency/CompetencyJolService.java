@@ -42,10 +42,10 @@ public class CompetencyJolService {
 
     private final UserRepository userRepository;
 
-    private final IrisCourseChatSessionService irisCourseChatSessionService;
+    private final Optional<IrisCourseChatSessionService> irisCourseChatSessionService;
 
     public CompetencyJolService(CompetencyJolRepository competencyJolRepository, CompetencyRepository competencyRepository,
-            CompetencyProgressRepository competencyProgressRepository, UserRepository userRepository, IrisCourseChatSessionService irisCourseChatSessionService) {
+            CompetencyProgressRepository competencyProgressRepository, UserRepository userRepository, Optional<IrisCourseChatSessionService> irisCourseChatSessionService) {
         this.competencyJolRepository = competencyJolRepository;
         this.competencyRepository = competencyRepository;
         this.competencyProgressRepository = competencyProgressRepository;
@@ -81,15 +81,17 @@ public class CompetencyJolService {
         final var jol = createCompetencyJol(competencyId, userId, jolValue, ZonedDateTime.now(), competencyProgress);
         competencyJolRepository.save(jol);
 
-        // Inform Iris so it can send a message to the user
-        try {
-            if (userId % 3 > 0) { // HD3-GROUPS: Iris groups are 1 & 2
-                irisCourseChatSessionService.onJudgementOfLearningSet(jol);
+        irisCourseChatSessionService.ifPresent(service -> {
+            // Inform Iris so it can send a message to the user
+            try {
+                if (userId % 3 > 0) { // HD3-GROUPS: Iris groups are 1 & 2
+                    service.onJudgementOfLearningSet(jol);
+                }
             }
-        }
-        catch (Exception e) {
-            log.warn("Something went wrong while sending the judgement of learning to Iris", e);
-        }
+            catch (Exception e) {
+                log.warn("Something went wrong while sending the judgement of learning to Iris", e);
+            }
+        });
     }
 
     /**
