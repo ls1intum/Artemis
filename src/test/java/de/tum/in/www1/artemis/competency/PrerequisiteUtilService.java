@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.competency.Prerequisite;
 import de.tum.in.www1.artemis.repository.PrerequisiteRepository;
-import de.tum.in.www1.artemis.web.rest.dto.competency.PrerequisiteRequestDTO;
 
 @Service
 public class PrerequisiteUtilService {
@@ -59,16 +58,5 @@ public class PrerequisiteUtilService {
             prerequisites.add(createPrerequisite(course, String.valueOf(i)));
         }
         return prerequisites;
-    }
-
-    /**
-     * Creates a PrerequisiteRequestDTO from a prerequisite
-     *
-     * @param prerequisite the prerequisite to conver
-     * @return the created PrerequisiteRequestDTO
-     */
-    public PrerequisiteRequestDTO prerequisiteToRequestDTO(Prerequisite prerequisite) {
-        return new PrerequisiteRequestDTO(prerequisite.getTitle(), prerequisite.getDescription(), prerequisite.getTaxonomy(), prerequisite.getSoftDueDate(),
-                prerequisite.getMasteryThreshold(), prerequisite.isOptional());
     }
 }
