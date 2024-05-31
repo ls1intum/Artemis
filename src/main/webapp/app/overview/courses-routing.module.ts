@@ -230,15 +230,13 @@ const routes: Routes = [
                 canActivate: [UserRouteAccessService],
                 children: [
                     {
-                        path: '',
-                        loadChildren: () => import('../overview/course-exams/course-exams.module').then((m) => m.CourseExamsModule),
-                    },
-                    {
                         path: ':examId',
                         component: ExamParticipationComponent,
                         data: {
                             authorities: [Authority.USER],
                             pageTitle: 'overview.exams',
+                            hasSidebar: true,
+                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                         loadChildren: () => import('../exam/participate/exam-participation.module').then((m) => m.ArtemisExamParticipationModule),

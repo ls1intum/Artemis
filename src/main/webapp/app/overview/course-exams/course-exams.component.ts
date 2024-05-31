@@ -98,7 +98,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     navigateToExam() {
         const upcomingExam = this.courseOverviewService.getUpcomingExam([...this.realExamsOfCourse, ...this.testExamsOfCourse]);
         const lastSelectedExam = this.getLastSelectedExam();
-        const examId = this.route.snapshot.params.examId;
+        const examId = this.route.firstChild?.snapshot.params.examId;
         if (!examId && lastSelectedExam) {
             this.router.navigate([lastSelectedExam], { relativeTo: this.route, replaceUrl: true });
         } else if (!examId && upcomingExam) {
