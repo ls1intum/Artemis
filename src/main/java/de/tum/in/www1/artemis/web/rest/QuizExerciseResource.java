@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.beans.PropertyEditorSupport;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -23,8 +24,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -38,6 +41,7 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.QuizAction;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
@@ -169,6 +173,23 @@ public class QuizExerciseResource {
         this.fileService = fileService;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
+    }
+
+    @InitBinder
+    public void initBinder(WebDataBinder binder) {
+        binder.registerCustomEditor(QuizAction.class, new PropertyEditorSupport() {
+
+            @Override
+            public void setAsText(String text) {
+                for (QuizAction action : QuizAction.values()) {
+                    if (action.getValue().equals(text)) {
+                        setValue(action);
+                        return;
+                    }
+                }
+                throw new IllegalArgumentException("Invalid value for QuizAction: " + text);
+            }
+        });
     }
 
     /**
@@ -480,7 +501,7 @@ public class QuizExerciseResource {
         instanceMessageSendService.sendQuizExerciseStartSchedule(quizExercise.getId());
 
         quizExercise.setQuizBatches(Set.of(batch));
-        quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, batch, "start-batch");
+        quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, batch, QuizAction.START_BATCH);
 
         return ResponseEntity.ok(batch);
     }
@@ -494,14 +515,14 @@ public class QuizExerciseResource {
      */
     @PutMapping("quiz-exercises/{quizExerciseId}/{action}")
     @EnforceAtLeastEditor
-    public ResponseEntity<QuizExercise> performActionForQuizExercise(@PathVariable Long quizExerciseId, @PathVariable String action) {
+    public ResponseEntity<QuizExercise> performActionForQuizExercise(@PathVariable Long quizExerciseId, @PathVariable QuizAction action) {
         log.debug("REST request to perform action {} on quiz exercise {}", action, quizExerciseId);
         var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, quizExercise, user);
 
         switch (action) {
-            case "start-now" -> {
+            case START_NOW -> {
                 // only synchronized quiz exercises can be started like this
                 if (quizExercise.getQuizMode() != QuizMode.SYNCHRONIZED) {
                     return ResponseEntity.badRequest()
@@ -525,7 +546,7 @@ public class QuizExerciseResource {
                 }
                 quizExercise.setDueDate(now.plusSeconds(quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS));
             }
-            case "end-now" -> {
+            case END_NOW -> {
                 // editors may not end the quiz
                 authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, quizExercise, user);
                 // only synchronized quiz exercises can be started like this
@@ -537,7 +558,7 @@ public class QuizExerciseResource {
                 // set release date to now, truncated to seconds because the database only stores seconds
                 quizExerciseService.endQuiz(quizExercise, ZonedDateTime.now());
             }
-            case "set-visible" -> {
+            case SET_VISIBLE -> {
                 // check if quiz is already visible
                 if (quizExercise.isVisibleToStudents()) {
                     return ResponseEntity.badRequest()
@@ -547,7 +568,7 @@ public class QuizExerciseResource {
                 // set quiz to visible
                 quizExercise.setReleaseDate(ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS));
             }
-            case "open-for-practice" -> {
+            case OPEN_FOR_PRACTICE -> {
                 // check if quiz has ended
                 if (!quizExercise.isQuizEnded()) {
                     return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizNotEndedYet", "Quiz hasn't ended yet."))
@@ -564,8 +585,9 @@ public class QuizExerciseResource {
                 quizExercise.setIsOpenForPractice(true);
                 groupNotificationService.notifyStudentGroupAboutExercisePractice(quizExercise);
             }
-            default -> {
-                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "unknownAction", "Unknown action: " + action))
+            case START_BATCH -> {
+                // Use the start-batch endpoint for starting batches instead
+                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizBatchActionNotAllowed", "Action not allowed."))
                         .build();
             }
         }

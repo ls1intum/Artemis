@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.quiz;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.in.www1.artemis.domain.enumeration.QuizAction.START_NOW;
 
 import java.time.ZonedDateTime;
 import java.util.Set;
@@ -89,6 +90,6 @@ public class QuizScheduleService {
         quizBatchRepository.save(quizBatch);
 
         SecurityUtils.setAuthorizationObject();
-        quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, quizBatch, "start-now");
+        quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, quizBatch, START_NOW);
     }
 }
