@@ -59,11 +59,8 @@ public class QuizParticipationResource {
         if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
             throw new AccessForbiddenException("Students cannot start an exercise before the release date");
         }
-        if (!Boolean.TRUE.equals(exercise.isIsOpenForPractice()) && exercise.getDueDate() != null && exercise.getDueDate().isBefore(ZonedDateTime.now())) {
-            throw new AccessForbiddenException("Students cannot start an exercise after the due date");
-        }
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        return ResponseEntity.ok(participationService.startExerciseWithInitializationDate(exercise, user, false, ZonedDateTime.now()));
+        return ResponseEntity.ok(participationService.startExerciseWithInitializationDate(exercise, user, true, ZonedDateTime.now()));
     }
 }
