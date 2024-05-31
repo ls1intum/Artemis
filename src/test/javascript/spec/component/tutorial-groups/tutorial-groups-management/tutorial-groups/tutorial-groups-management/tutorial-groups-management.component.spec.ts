@@ -37,6 +37,15 @@ class MockTutorialGroupsImportButtonComponent {
     @Output() importFinished: EventEmitter<void> = new EventEmitter();
 }
 
+@Component({
+    selector: 'jhi-tutorial-groups-export-button',
+    template: '',
+})
+class MockTutorialGroupsExportButtonComponent {
+    @Input() courseId: number;
+    @Output() exportFinished: EventEmitter<void> = new EventEmitter();
+}
+
 describe('TutorialGroupsManagementComponent', () => {
     let fixture: ComponentFixture<TutorialGroupsManagementComponent>;
     let component: TutorialGroupsManagementComponent;
@@ -66,6 +75,7 @@ describe('TutorialGroupsManagementComponent', () => {
                 MockComponent(FaIconComponent),
                 MockRouterLinkDirective,
                 MockTutorialGroupsImportButtonComponent,
+                MockTutorialGroupsExportButtonComponent,
             ],
             providers: [
                 MockProvider(TutorialGroupsConfigurationService),
