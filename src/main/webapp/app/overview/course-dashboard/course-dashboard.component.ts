@@ -17,6 +17,7 @@ import dayjs from 'dayjs/esm';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { CompetencyAccordionToggleEvent } from 'app/course/competencies/competency-accordion/competency-accordion.component';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-course-dashboard',
@@ -59,18 +60,23 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
         private courseDashboardService: CourseDashboardService,
         private irisSettingsService: IrisSettingsService,
         private profileService: ProfileService,
+        private accountService: AccountService,
     ) {}
 
     ngOnInit(): void {
         this.paramSubscription = this.route.parent?.parent?.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
-            this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                if (profileInfo?.activeProfiles.includes(PROFILE_IRIS)) {
-                    this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
-                        this.irisEnabled = !!settings?.irisChatSettings?.enabled;
-                    });
-                }
-            });
+
+            // HD3-GROUPS: Experiment groups for IRIS are 1 & 2. Disable for group 0
+            if (this.accountService.userIdentity?.id! % 3 > 0) {
+                this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                    if (profileInfo?.activeProfiles.includes(PROFILE_IRIS)) {
+                        this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
+                            this.irisEnabled = !!settings?.irisChatSettings?.enabled;
+                        });
+                    }
+                });
+            }
         });
         this.setCourse(this.courseStorageService.getCourse(this.courseId));
 
