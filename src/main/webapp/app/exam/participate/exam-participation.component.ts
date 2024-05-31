@@ -43,6 +43,7 @@ import {
     WorkingTimeUpdateEvent,
 } from 'app/exam/participate/exam-participation-live-events.service';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -98,6 +99,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     websocketSubscription?: Subscription;
     workingTimeUpdateEventsSubscription?: Subscription;
     problemStatementUpdateEventsSubscription?: Subscription;
+    profileSubscription?: Subscription;
+
+    isProduction = true;
+    isTestServer = false;
 
     // Icons
     faCheckCircle = faCheckCircle;
@@ -150,6 +155,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         private courseStorageService: CourseStorageService,
         private examExerciseUpdateService: ExamExerciseUpdateService,
         private examManagementService: ExamManagementService,
+        private profileService: ProfileService,
     ) {
         // show only one synchronization error every 5s
         this.errorSubscription = this.synchronizationAlert.pipe(throttleTime(5000)).subscribe(() => {
@@ -203,6 +209,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // listen to connect / disconnect events
         this.websocketSubscription = this.websocketService.connectionState.subscribe((status) => {
             this.connected = status.connected;
+        });
+
+        this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
+            this.isProduction = profileInfo?.inProduction;
+            this.isTestServer = profileInfo.testServer ?? false;
         });
     }
 
