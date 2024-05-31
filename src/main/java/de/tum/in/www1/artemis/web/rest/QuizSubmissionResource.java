@@ -32,10 +32,9 @@ import de.tum.in.www1.artemis.exception.QuizSubmissionException;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
-import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
@@ -96,7 +95,7 @@ public class QuizSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
     @PostMapping("exercises/{exerciseId}/submissions/live")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInExercise
     public ResponseEntity<QuizSubmission> saveOrSubmitForLiveMode(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission,
             @RequestParam(name = "submit") boolean submit) {
         log.debug("REST request to save or submit QuizSubmission for live mode : {}", quizSubmission);
@@ -123,7 +122,7 @@ public class QuizSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
     @PostMapping("exercises/{exerciseId}/submissions/practice")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInExercise
     public ResponseEntity<Result> submitForPractice(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission) {
         log.debug("REST request to submit QuizSubmission for practice : {}", quizSubmission);
 
@@ -186,7 +185,7 @@ public class QuizSubmissionResource {
      * @return the ResponseEntity with status 200 and body the result or the appropriate error code.
      */
     @PostMapping("exercises/{exerciseId}/submissions/preview")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise
     public ResponseEntity<Result> submitForPreview(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission) {
         log.debug("REST request to submit QuizSubmission for preview : {}", quizSubmission);
 
@@ -196,7 +195,6 @@ public class QuizSubmissionResource {
         }
 
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, quizExercise, null);
 
         // update submission
         quizSubmission.setSubmitted(true);
@@ -225,7 +223,7 @@ public class QuizSubmissionResource {
      * @return the ResponseEntity with status 200 and body the result or the appropriate error code.
      */
     @PutMapping("exercises/{exerciseId}/submissions/exam")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInExercise
     public ResponseEntity<QuizSubmission> submitQuizForExam(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission) {
         long start = System.currentTimeMillis();
         log.debug("REST request to submit QuizSubmission for exam : {}", quizSubmission);
