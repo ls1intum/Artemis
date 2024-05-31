@@ -128,7 +128,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
      */
     protected void verifyWebsocketActivityWasExactly(IrisExerciseChatSession session, ArgumentMatcher<?>... matchers) {
         var userLogin = session.getUser().getLogin();
-        var topicSuffix = "sessions/" + session.getId();
+        var topicSuffix = "" + session.getId();
         for (ArgumentMatcher<?> callDescriptor : matchers) {
             verifyMessageWasSentOverWebsocket(userLogin, topicSuffix, callDescriptor);
         }
