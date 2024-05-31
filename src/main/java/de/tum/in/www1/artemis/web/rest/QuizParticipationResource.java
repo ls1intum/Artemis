@@ -90,7 +90,7 @@ public class QuizParticipationResource {
         }
         else {
             result = new Result();
-            result.setSubmission(quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()));
+            result.setSubmission(quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationIdOrderBySubmissionDateDesc(participation.getId()));
         }
 
         participation.setResults(Set.of(result));
