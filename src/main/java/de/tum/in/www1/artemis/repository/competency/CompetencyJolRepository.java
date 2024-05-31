@@ -36,16 +36,16 @@ public interface CompetencyJolRepository extends JpaRepository<CompetencyJol, Lo
     Optional<CompetencyJol> findLatestByCompetencyIdAndUserId(@Param("competencyId") long competencyId, @Param("userId") long userId);
 
     @Query("""
-            SELECT new de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyJolDTO(c.competency.id, c.value, c.judgementTime, c.competencyProgress, c.competencyConfidence)
-            FROM CompetencyJol c
-            WHERE c.user.id = :userId
-                AND c.competency.course.id = :courseId
-                AND c.judgementTime = (
-                    SELECT MAX(c2.judgementTime)
-                    FROM CompetencyJol c2
-                    WHERE c2.user.id = c.user.id
-                        AND c2.competency.id = c.competency.id
-                )
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyJolDTO(jol.competency.id, jol.value, jol.judgementTime, jol.competencyProgress, jol.competencyConfidence)
+            FROM CompetencyJol jol
+            WHERE jol.user.id = :userId
+                AND jol.competency.course.id = :courseId
+                AND jol.judgementTime = (
+                    SELECT MAX(jol2.judgementTime)
+                    FROM CompetencyJol jol2
+                    WHERE jol2.user.id = jol.user.id
+                        AND jol2.competency.id = jol.competency.id
+                    )
             """)
     Set<CompetencyJolDTO> findLatestJolValuesForUserByCourseId(@Param("userId") long userId, @Param("courseId") long courseId);
 }

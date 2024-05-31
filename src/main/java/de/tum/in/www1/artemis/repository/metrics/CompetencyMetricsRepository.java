@@ -97,7 +97,7 @@ public interface CompetencyMetricsRepository extends JpaRepository<Competency, L
                     FROM CompetencyJol jol2
                     WHERE jol2.user.id = jol.user.id
                         AND jol2.competency.id = jol.competency.id
-                       )
+                    )
             """)
     Set<CompetencyJolDTO> findAllCompetencyJolValuesForUserByCompetencyIds(@Param("userId") long userId, @Param("competencyIds") Set<Long> competencyIds);
 }
