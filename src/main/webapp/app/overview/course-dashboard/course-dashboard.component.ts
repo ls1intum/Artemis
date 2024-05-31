@@ -117,7 +117,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                     }
                     if (response.body.competencyMetrics) {
                         this.competencies = Object.values(response.body.competencyMetrics?.competencyInformation ?? {}).sort((a, b) => {
-                            return a?.softDueDate?.isBefore(b.softDueDate) ? -1 : 1;
+                            return a.id < b.id ? -1 : 1;
                         });
                         this.hasCompetencies = this.competencies.length > 0;
                     }
