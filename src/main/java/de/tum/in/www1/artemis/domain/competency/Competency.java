@@ -25,17 +25,16 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 @DiscriminatorValue("COMPETENCY")
 public class Competency extends CourseCompetency {
 
+    // TODO: move properties (linkedStandardizedCompetency, exercises, lectureUnits, userProgress, learningPaths) to CourseCompetency when refactoring
     @ManyToOne
     @JoinColumn(name = "linked_standardized_competency_id")
     @JsonIgnoreProperties({ "competencies" })
     private StandardizedCompetency linkedStandardizedCompetency;
 
-    // TODO: move to CourseCompetency in next step of refactoring
     @ManyToMany(mappedBy = "competencies")
     @JsonIgnoreProperties({ "competencies", "course" })
     private Set<Exercise> exercises = new HashSet<>();
 
-    // TODO: move to CourseCompetency in next step of refactoring
     @ManyToMany(mappedBy = "competencies")
     @JsonIgnoreProperties("competencies")
     private Set<LectureUnit> lectureUnits = new HashSet<>();
