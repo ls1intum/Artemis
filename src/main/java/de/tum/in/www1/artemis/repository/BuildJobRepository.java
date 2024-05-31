@@ -45,7 +45,7 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSp
             AND (:buildAgentAddress IS NULL OR b.buildAgentAddress = :buildAgentAddress)
             AND (:startDate IS NULL OR b.buildStartDate >= :startDate)
             AND (:endDate IS NULL OR b.buildStartDate <= :endDate)
-            AND (:searchTerm IS NULL OR (b.repositoryName LIKE %:searchTerm%))
+            AND (:searchTerm IS NULL OR (b.repositoryName LIKE %:searchTerm% OR c.title LIKE %:searchTerm%))
             AND (:courseId IS NULL OR b.courseId = :courseId)
             """)
     Page<BuildJob> findAllByFilterCriteria(@Param("buildStatus") BuildStatus buildStatus, @Param("buildAgentAddress") String buildAgentAddress,
