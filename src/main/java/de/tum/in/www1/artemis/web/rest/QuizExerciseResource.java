@@ -175,8 +175,13 @@ public class QuizExerciseResource {
         this.channelRepository = channelRepository;
     }
 
+    /**
+     * Initialize the data binder for the quiz action enumeration
+     *
+     * @param binder the WebDataBinder for this controller
+     */
     @InitBinder
-    public void initBinder(WebDataBinder binder) {
+    protected void initBinder(WebDataBinder binder) {
         binder.registerCustomEditor(QuizAction.class, new PropertyEditorSupport() {
 
             @Override
