@@ -42,8 +42,8 @@ public interface ExerciseMetricsRepository extends JpaRepository<Exercise, Long>
                 e.difficulty,
                 e.mode,
                 e.class,
-                case when Type(e) = ProgrammingExercise then TREAT(e AS ProgrammingExercise).allowOnlineEditor else null end,
-                case when Type(e) = ProgrammingExercise then TREAT(e AS ProgrammingExercise).allowOfflineIde else null end
+                CASE WHEN TYPE(e) = ProgrammingExercise THEN TREAT(e AS ProgrammingExercise).allowOnlineEditor ELSE NULL END,
+                CASE WHEN TYPE(e) = ProgrammingExercise THEN TREAT(e AS ProgrammingExercise).allowOfflineIde ELSE NULL END
             )
             FROM Exercise e
             WHERE e.course.id = :courseId

@@ -49,7 +49,7 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
     private long courseId;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         featureToggleService.enableFeature(Feature.StudentCourseAnalyticsDashboard);
 
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
@@ -67,7 +67,7 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         competencyJOLRepository.deleteAll();
         featureToggleService.disableFeature(Feature.StudentCourseAnalyticsDashboard);
     }
@@ -85,25 +85,25 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        public void shouldReturnBadRequestForInvalidValue() throws Exception {
+        void shouldReturnBadRequestForInvalidValue() throws Exception {
             sendRequest(competency[0].getId(), (short) 123, HttpStatus.BAD_REQUEST);
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        public void shouldReturnBadRequestForCompetencyNotInCourse() throws Exception {
+        void shouldReturnBadRequestForCompetencyNotInCourse() throws Exception {
             sendRequest(competencyNotInCourse.getId(), (short) 3, HttpStatus.BAD_REQUEST);
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "otherstudent1", roles = "USER")
-        public void shouldReturnForbiddenForStudentNotInCourse() throws Exception {
+        void shouldReturnForbiddenForStudentNotInCourse() throws Exception {
             sendRequest(competency[0].getId(), (short) 3, HttpStatus.FORBIDDEN);
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        public void shouldCreateJOL() throws Exception {
+        void shouldCreateJOL() throws Exception {
             short jolValue = 3;
             sendRequest(competency[0].getId(), jolValue, HttpStatus.OK);
             final var jol = competencyJOLRepository.findLatestByCompetencyIdAndUserId(competency[0].getId(), student.getId());
@@ -115,7 +115,7 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        public void shouldUpdateJOL() throws Exception {
+        void shouldUpdateJOL() throws Exception {
             competencyUtilService.createJol(competency[0], student, (short) 123, ZonedDateTime.now().minusDays(1), 0.0, 0.0);
             short jolValue = 3;
             sendRequest(competency[0].getId(), jolValue, HttpStatus.OK);
@@ -140,26 +140,26 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        public void shouldReturnBadRequestForCompetencyNotInCourse() throws Exception {
+        void shouldReturnBadRequestForCompetencyNotInCourse() throws Exception {
             sendRequest(competencyNotInCourse.getId(), HttpStatus.BAD_REQUEST);
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "otherstudent1", roles = "USER")
-        public void shouldReturnForbiddenForStudentNotInCourse() throws Exception {
+        void shouldReturnForbiddenForStudentNotInCourse() throws Exception {
             sendRequest(competency[0].getId(), HttpStatus.FORBIDDEN);
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        public void shouldReturnNullWhenNotExists() throws Exception {
+        void shouldReturnNullWhenNotExists() throws Exception {
             final var jol = sendRequest(competency[0].getId(), HttpStatus.OK);
             assertThat(jol).isNull();
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        public void shouldReturnValue() throws Exception {
+        void shouldReturnValue() throws Exception {
             short jolValue = 123;
             competencyUtilService.createJol(competency[0], student, jolValue, ZonedDateTime.now(), 0.25, 0.25);
             final var jol = sendRequest(competency[0].getId(), HttpStatus.OK);
@@ -180,13 +180,13 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "otherstudent1", roles = "USER")
-        public void shouldReturnForbiddenForStudentNotInCourse() throws Exception {
+        void shouldReturnForbiddenForStudentNotInCourse() throws Exception {
             sendRequest(HttpStatus.FORBIDDEN);
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        public void shouldReturnValues() throws Exception {
+        void shouldReturnValues() throws Exception {
             final var jol0 = competencyUtilService.createJol(competency[0], student, (short) 123, ZonedDateTime.now(), 0.25, 0.25);
             final var jol1 = competencyUtilService.createJol(competency[1], student, (short) 8, ZonedDateTime.now(), 0.1, 0.2);
             final var jolMap = sendRequest(HttpStatus.OK);
