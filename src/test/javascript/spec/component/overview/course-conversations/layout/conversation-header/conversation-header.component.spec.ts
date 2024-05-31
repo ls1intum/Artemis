@@ -120,6 +120,19 @@ examples.forEach((activeConversation) => {
             detailDialogTest('info', ConversationDetailTabs.INFO);
         }));
 
+        it('should toggle search when search button is pressed', fakeAsync(() => {
+            const searchButton = fixture.debugElement.nativeElement.querySelector('.search');
+            expect(searchButton).toBeTruthy();
+
+            const toggleSearchSpy = jest.spyOn(component, 'toggleSearchBar');
+            fixture.detectChanges();
+            searchButton.click();
+
+            fixture.whenStable().then(() => {
+                expect(toggleSearchSpy).toHaveBeenCalledOnce();
+            });
+        }));
+
         if (activeConversation instanceof ChannelDTO && activeConversation.subType !== ChannelSubType.GENERAL) {
             it(
                 'should navigate to ' + activeConversation.subType,

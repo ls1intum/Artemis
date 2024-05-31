@@ -1,30 +1,16 @@
-<div class="me-0 mt-2 row justify-content-between" [ngClass]="previewMode ? 'mb-2' : ''">
-    <!-- Post reactions -->
-    @if (!previewMode) {
-        <div class="col-auto ps-3 pe-0">
-            <jhi-post-reactions-bar
-                [lastReadDate]="lastReadDate"
-                [readOnlyMode]="readOnlyMode"
-                [posting]="posting"
-                [(showAnswers)]="showAnswers"
-                [sortedAnswerPosts]="sortedAnswerPosts"
-                [isCourseMessagesPage]="isCourseMessagesPage"
-                [isThreadSidebar]="isThreadSidebar"
-                (openPostingCreateEditModal)="createAnswerPostModal.open()"
-                (openThread)="openThread.emit()"
-            />
-        </div>
-    }
-    <!-- Post tags -->
-    <div class="col-auto ps-3 pe-0">
-        @for (tag of tags; track tag) {
-            <span class="post-tag px-1 me-1">
-                {{ tag }}
-            </span>
-        }
-    </div>
-</div>
 @if (showAnswers) {
+    <div class="d-flex align-items-center mt-2">
+        <div class="reply-count me-2">
+            {{
+                sortedAnswerPosts.length === 1
+                    ? ('artemisApp.metis.singleAnswer' | artemisTranslate)
+                    : ('artemisApp.metis.multipleAnswers' | artemisTranslate: { number: sortedAnswerPosts.length })
+            }}
+        </div>
+        <div class="flex-grow-1">
+            <hr class="m-0" />
+        </div>
+    </div>
     <ng-container class="list-answer-post">
         @for (answerPost of sortedAnswerPosts; track answerPostTrackByFn($index, answerPost); let isLastAnswer = $last) {
             <jhi-answer-post

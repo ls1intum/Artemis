@@ -29,7 +29,8 @@
             <div
                 id="scrollableDiv"
                 #container
-                class="{{ totalNumberOfPosts !== 0 ? 'posting-infinite-scroll-container' : '' }}"
+                class="body-bg"
+                [class]="totalNumberOfPosts !== 0 ? 'posting-infinite-scroll-container' : ''"
                 infinite-scroll
                 [scrollWindow]="false"
                 (scrolledUp)="fetchNextPage()"
@@ -37,18 +38,20 @@
                 <!-- list of all top level posts -->
                 <!-- answers are opened in the thread sidebar -->
                 @for (post of posts; track postsTrackByFn($index, post)) {
-                    <jhi-posting-thread
-                        #postingThread
-                        [lastReadDate]="post.conversation?.lastMessageDate"
-                        [hasChannelModerationRights]="!!getAsChannel(post.conversation)?.hasChannelModerationRights"
-                        [id]="'item-' + post.id"
-                        [post]="post"
-                        [showAnswers]="false"
-                        [readOnlyMode]="!!getAsChannel(post.conversation)?.isArchived"
-                        [isCourseMessagesPage]="true"
-                        [isCommunicationPage]="true"
-                        (openThread)="setPostForThread($event)"
-                    />
+                    <div class="pt-2">
+                        <jhi-posting-thread
+                            #postingThread
+                            [lastReadDate]="post.conversation?.lastMessageDate"
+                            [hasChannelModerationRights]="!!getAsChannel(post.conversation)?.hasChannelModerationRights"
+                            [id]="'item-' + post.id"
+                            [post]="post"
+                            [showAnswers]="false"
+                            [readOnlyMode]="!!getAsChannel(post.conversation)?.isArchived"
+                            [isCourseMessagesPage]="true"
+                            [isCommunicationPage]="true"
+                            (openThread)="setPostForThread($event)"
+                        />
+                    </div>
                 }
             </div>
         </div>

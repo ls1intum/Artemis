@@ -25,7 +25,14 @@
                     </div>
                 }
             }
-            <div>
+            <div class="d-flex">
+                <div class="btn-toolbar p-2" role="toolbar">
+                    <div class="btn-group me-2" role="group">
+                        <button type="button" class="btn btn-outline-secondary search" (click)="toggleSearchBar()">
+                            <fa-icon [icon]="faSearch" />
+                        </button>
+                    </div>
+                </div>
                 <div class="btn-toolbar p-2" role="toolbar">
                     <div class="btn-group me-2" role="group">
                         @if (activeConversationAsChannel?.subTypeReferenceId) {

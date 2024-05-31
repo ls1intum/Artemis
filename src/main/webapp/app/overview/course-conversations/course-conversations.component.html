@@ -91,8 +91,8 @@
             }
             <div class="col pe-0 flex-grow-1" [ngClass]="{ 'card-border': true }" style="min-width: 200px">
                 @if (activeConversation) {
-                    <jhi-conversation-header />
-                    <jhi-conversation-messages (openThread)="postInThread = $event" [course]="course" />
+                    <jhi-conversation-header (collapseSearch)="collapseChannelSearch()" />
+                    <jhi-conversation-messages (openThread)="postInThread = $event" [course]="course" [searchbarCollapsed]="channelSearchCollapsed" />
                 } @else {
                     <jhi-course-wide-search (openThread)="postInThread = $event" [courseWideSearchConfig]="courseWideSearchConfig" />
                 }

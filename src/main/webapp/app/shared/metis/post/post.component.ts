@@ -1,4 +1,4 @@
-import { AfterContentChecked, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild } from '@angular/core';
+import { AfterContentChecked, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild, ViewContainerRef } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -12,6 +12,8 @@ import { isMessagingEnabled, isMessagingOrCommunicationEnabled } from 'app/entit
 import { Router } from '@angular/router';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 
 @Component({
     selector: 'jhi-post',
@@ -27,12 +29,18 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     @Input() modalRef?: NgbModalRef;
     @Input() showAnswers: boolean;
     @Output() openThread = new EventEmitter<void>();
+    @ViewChild('createAnswerPostModal') createAnswerPostModalComponent: AnswerPostCreateEditModalComponent;
+    @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef: ViewContainerRef;
     @ViewChild('postFooter') postFooterComponent: PostFooterComponent;
 
     displayInlineInput = false;
     routerLink: RouteComponents;
     queryParams = {};
     showAnnouncementIcon = false;
+    sortedAnswerPosts: AnswerPost[];
+    tags: string[];
+    createdAnswerPost: AnswerPost;
+    isAtLeastTutorInCourse: boolean;
 
     pageType: PageType;
     contextInformation: ContextInformation;
@@ -59,6 +67,9 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         super.ngOnInit();
         this.pageType = this.metisService.getPageType();
         this.contextInformation = this.metisService.getContextInformation(this.posting);
+        this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
+        this.sortAnswerPosts();
+        this.updateTags();
     }
 
     /**
@@ -69,6 +80,8 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.routerLink = this.metisService.getLinkForPost();
         this.queryParams = this.metisService.getQueryParamsForPost(this.posting);
         this.showAnnouncementIcon = (getAsChannelDTO(this.posting.conversation)?.isAnnouncementChannel && this.isCommunicationPage) ?? false;
+        this.sortAnswerPosts();
+        this.updateTags();
     }
 
     /**
@@ -105,6 +118,33 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
      */
     openCreateAnswerPostModal() {
         this.postFooterComponent.openCreateAnswerPostModal();
+    }
+
+    /**
+     * sorts answerPosts by two criteria
+     * 1. criterion: resolvesPost -> true comes first
+     * 2. criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
+     */
+    sortAnswerPosts(): void {
+        if (!this.posting.answers) {
+            this.sortedAnswerPosts = [];
+            return;
+        }
+        this.sortedAnswerPosts = this.posting.answers.sort(
+            (answerPostA, answerPostB) =>
+                Number(answerPostB.resolvesPost) - Number(answerPostA.resolvesPost) || answerPostA.creationDate!.valueOf() - answerPostB.creationDate!.valueOf(),
+        );
+    }
+
+    /**
+     * sets the current post tags, empty error if none exit
+     */
+    private updateTags(): void {
+        if (this.posting.tags) {
+            this.tags = this.posting.tags;
+        } else {
+            this.tags = [];
+        }
     }
 
     /**

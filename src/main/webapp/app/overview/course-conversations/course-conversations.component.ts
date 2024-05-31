@@ -29,6 +29,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     postInThread?: Post;
     activeConversation?: ConversationDTO = undefined;
     conversationsOfUser: ConversationDTO[] = [];
+    channelSearchCollapsed = false;
 
     // set undefined so nothing gets displayed until isCodeOfConductAccepted is loaded
     isCodeOfConductAccepted?: boolean;
@@ -201,5 +202,9 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             filterToOwn: false,
             filterToAnsweredOrReacted: false,
         });
+    }
+
+    collapseChannelSearch() {
+        this.channelSearchCollapsed = !this.channelSearchCollapsed;
     }
 }

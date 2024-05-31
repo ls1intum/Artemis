@@ -1,14 +1,15 @@
-<div class="row justify-content-between my-1">
-    <div class="col-auto pe-0">
+<div class="d-flex justify-content-between my-1">
+    <div class="align-items-center">
         <span class="posting-header header-author-date">
             @if (posting.author) {
                 <span class="posting-author-role" ngbTooltip="{{ userAuthorityTooltip | artemisTranslate }}">
-                    <fa-icon [icon]="userAuthorityIcon" />
+                    <span id="role-badge" class="badge" [class]="'badge-' + userAuthority"> </span>
                 </span>
                 <span class="posting-author">
                     {{ posting.author!.name }}
                 </span>
             }
+            <span class="px-1"> - </span>
             @if (postingIsOfToday) {
                 <span class="today-flag">{{ todayFlag | artemisTranslate }}</span>
             }
@@ -16,10 +17,23 @@
                 {{ postingIsOfToday ? (posting.creationDate | artemisDate: 'time') : (posting.creationDate | artemisDate: 'short-date') }}
             </span>
         </span>
+        @if (posting.resolved) {
+            <fa-icon
+                [icon]="faCheckSquare"
+                iconSize="xs"
+                class="col-auto pe-0 resolved px-1"
+                [ngbTooltip]="'artemisApp.metis.post.postMarkedAsResolvedTooltip' | artemisTranslate"
+            />
+        }
+        @if (!!isCourseMessagesPage && (!lastReadDate || (lastReadDate && posting.creationDate && posting.creationDate.isAfter(lastReadDate))) && !isAuthorOfPosting) {
+            <span class="badge bg-secondary hideAfter5Seconds">{{ 'global.generic.new' | artemisTranslate }}</span>
+        }
+    </div>
+    <div class="mx-2 my-1">
         @if (mayEditOrDelete) {
             <fa-icon
                 size="xs"
-                class="ms-1 editIcon clickable icon"
+                class="ms-1 mx-2 allign-right editIcon clickable icon"
                 [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate"
                 [icon]="faPencilAlt"
                 (click)="posting.title !== '' ? createEditModal.open() : isModalOpen.emit()"

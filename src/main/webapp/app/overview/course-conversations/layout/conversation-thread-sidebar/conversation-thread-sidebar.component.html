@@ -6,11 +6,7 @@
         </div>
         <div class="card">
             <!-- header -->
-            <div
-                class="card-header d-flex bg-primary text-white"
-                [ngbTooltip]="'artemisApp.conversationsLayout.threadSideBar.close' | artemisTranslate"
-                (click)="closePostThread.emit()"
-            >
+            <div class="card-header d-flex" [ngbTooltip]="'artemisApp.conversationsLayout.threadSideBar.close' | artemisTranslate" (click)="closePostThread.emit()">
                 <div class="row flex-grow-1">
                     <div class="col">
                         <h5 class="mb-0 fw-medium" jhiTranslate="artemisApp.conversationsLayout.threadSideBar.label"></h5>
@@ -21,18 +17,20 @@
                 </div>
             </div>
             <!-- body -->
-            <div class="card-body pt-0 scrollbar wrapper-scroll-y">
+            <div class="pt-0 scrollbar wrapper-scroll-y">
                 @if (post !== undefined) {
                     <div class="my-2">
-                        <jhi-post
-                            [readOnlyMode]="readOnlyMode"
-                            [posting]="post"
-                            [showAnswers]="true"
-                            [isCourseMessagesPage]="true"
-                            [isThreadSidebar]="true"
-                            [lastReadDate]="conversation?.lastReadDate"
-                            [hasChannelModerationRights]="hasChannelModerationRights"
-                        />
+                        <div class="card-body body-bg">
+                            <jhi-post
+                                [readOnlyMode]="readOnlyMode"
+                                [posting]="post"
+                                [showAnswers]="true"
+                                [isCourseMessagesPage]="true"
+                                [isThreadSidebar]="true"
+                                [lastReadDate]="conversation?.lastReadDate"
+                                [hasChannelModerationRights]="hasChannelModerationRights"
+                            />
+                        </div>
                         <div class="message-input">
                             @if (!readOnlyMode) {
                                 <jhi-message-reply-inline-input [posting]="createdAnswerPost" (onCreate)="createdAnswerPost = createEmptyAnswerPost()" />

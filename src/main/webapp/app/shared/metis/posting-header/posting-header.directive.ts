@@ -2,8 +2,6 @@ import { Posting } from 'app/entities/metis/posting.model';
 import { Directive, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
 import { UserRole } from 'app/shared/metis/metis.util';
 
 @Directive()
@@ -18,7 +16,7 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
     isAuthorOfPosting: boolean;
     postingIsOfToday: boolean;
     todayFlag: string | undefined;
-    userAuthorityIcon: IconProp;
+    userAuthority: string;
     userAuthorityTooltip: string;
 
     protected constructor(protected metisService: MetisService) {}
@@ -54,13 +52,13 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
         const toolTipTranslationPath = 'artemisApp.metis.userAuthorityTooltips.';
 
         if (!this.posting.authorRole || this.posting.authorRole === UserRole.USER) {
-            this.userAuthorityIcon = faUser;
+            this.userAuthority = 'student';
             this.userAuthorityTooltip = toolTipTranslationPath + 'student';
         } else if (this.posting.authorRole === UserRole.INSTRUCTOR) {
-            this.userAuthorityIcon = faUserGraduate;
+            this.userAuthority = 'instructor';
             this.userAuthorityTooltip = toolTipTranslationPath + 'instructor';
         } else if (this.posting.authorRole === UserRole.TUTOR) {
-            this.userAuthorityIcon = faUserCheck;
+            this.userAuthority = 'tutor';
             this.userAuthorityTooltip = toolTipTranslationPath + 'ta';
         }
     }

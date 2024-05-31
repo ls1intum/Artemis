@@ -1,4 +1,68 @@
 <div class="me-0 row">
+    @if (!isCourseMessagesPage) {
+        <!-- start discussion -->
+        @if (sortedAnswerPosts.length === 0) {
+            <div class="col-auto p-0">
+                <button class="reaction-button clickable reply-btn" (click)="openPostingCreateEditModal.emit()" [disabled]="readOnlyMode">
+                    <jhi-emoji [emoji]="speechBalloonId" />
+                    <span class="emoji-count">{{ 'artemisApp.metis.reply' | artemisTranslate }}</span>
+                </button>
+            </div>
+        }
+        <!-- expand answers -->
+        @if (!showAnswers && sortedAnswerPosts.length > 0) {
+            <div class="col-auto p-0">
+                <button class="reaction-button clickable expand-answers-btn" (click)="showAnswersChange.emit(true)">
+                    <jhi-emoji [emoji]="speechBalloonId" />
+                    <span class="emoji-count">{{
+                        sortedAnswerPosts.length === 1
+                            ? ('artemisApp.metis.showSingleAnswer' | artemisTranslate)
+                            : ('artemisApp.metis.showMultipleAnswers' | artemisTranslate: { number: sortedAnswerPosts.length })
+                    }}</span>
+                </button>
+                @if (isCourseMessagesPage && getShowNewMessageIcon()) {
+                    <span class="badge bg-secondary hideAfter5Seconds">{{ 'global.generic.new' | artemisTranslate }}</span>
+                }
+            </div>
+        }
+        <!-- collapse answers -->
+        @if (showAnswers && sortedAnswerPosts.length > 0) {
+            <div class="col-auto p-0">
+                <button class="reaction-button clickable collapse-answers-btn" [class.reaction-button--reacted]="showAnswers" (click)="showAnswersChange.emit(false)">
+                    <jhi-emoji [emoji]="closeCrossId" />
+                    <span class="emoji-count">{{ 'artemisApp.metis.collapseAnswers' | artemisTranslate }}</span>
+                </button>
+            </div>
+        }
+    } @else {
+        @if (!isThreadSidebar) {
+            <!-- start discussion -->
+            @if (sortedAnswerPosts.length === 0) {
+                <div class="col-auto p-0">
+                    <button class="reaction-button clickable reply-btn" (click)="openThread.emit()">
+                        <fa-icon [icon]="faArrowRight" />
+                        <span class="emoji-count px-2">{{ 'artemisApp.conversationsLayout.threadSideBar.reply' | artemisTranslate }} </span>
+                    </button>
+                </div>
+            }
+            <!-- expand answers -->
+            @if (!showAnswers && sortedAnswerPosts.length > 0) {
+                <div class="col-auto p-0">
+                    <button class="reaction-button clickable expand-answers-btn" (click)="openThread.emit()">
+                        <fa-icon [icon]="faArrowRight" />
+                        <span class="emoji-count px-2">{{
+                            sortedAnswerPosts.length === 1
+                                ? ('artemisApp.metis.showSingleAnswer' | artemisTranslate)
+                                : ('artemisApp.metis.showMultipleAnswers' | artemisTranslate: { number: sortedAnswerPosts.length })
+                        }}</span>
+                    </button>
+                    @if (getShowNewMessageIcon()) {
+                        <span class="badge bg-secondary hideAfter5Seconds">{{ 'global.generic.new' | artemisTranslate }}</span>
+                    }
+                </div>
+            }
+        }
+    }
     @for (reactionMetaData of reactionMetaDataMap | keyvalue; track reactionMetaData) {
         <div class="col-auto p-0">
             <button
@@ -54,69 +118,5 @@
                 <jhi-emoji [emoji]="pinEmojiId" [ngbTooltip]="pinTooltip | artemisTranslate" [placement]="'auto'" />
             </button>
         </div>
-    }
-    @if (!isCourseMessagesPage) {
-        <!-- start discussion -->
-        @if (sortedAnswerPosts.length === 0) {
-            <div class="col-auto p-0">
-                <button class="reaction-button clickable reply-btn" (click)="openPostingCreateEditModal.emit()" [disabled]="readOnlyMode">
-                    <jhi-emoji [emoji]="speechBalloonId" />
-                    <span class="emoji-count">{{ 'artemisApp.metis.reply' | artemisTranslate }}</span>
-                </button>
-            </div>
-        }
-        <!-- expand answers -->
-        @if (!showAnswers && sortedAnswerPosts.length > 0) {
-            <div class="col-auto p-0">
-                <button class="reaction-button clickable expand-answers-btn" (click)="showAnswersChange.emit(true)">
-                    <jhi-emoji [emoji]="speechBalloonId" />
-                    <span class="emoji-count">{{
-                        sortedAnswerPosts.length === 1
-                            ? ('artemisApp.metis.showSingleAnswer' | artemisTranslate)
-                            : ('artemisApp.metis.showMultipleAnswers' | artemisTranslate: { number: sortedAnswerPosts.length })
-                    }}</span>
-                </button>
-                @if (isCourseMessagesPage && getShowNewMessageIcon()) {
-                    <span class="badge bg-secondary hideAfter5Seconds">{{ 'global.generic.new' | artemisTranslate }}</span>
-                }
-            </div>
-        }
-        <!-- collapse answers -->
-        @if (showAnswers && sortedAnswerPosts.length > 0) {
-            <div class="col-auto p-0">
-                <button class="reaction-button clickable collapse-answers-btn" [class.reaction-button--reacted]="showAnswers" (click)="showAnswersChange.emit(false)">
-                    <jhi-emoji [emoji]="closeCrossId" />
-                    <span class="emoji-count">{{ 'artemisApp.metis.collapseAnswers' | artemisTranslate }}</span>
-                </button>
-            </div>
-        }
-    } @else {
-        @if (!isThreadSidebar) {
-            <!-- start discussion -->
-            @if (sortedAnswerPosts.length === 0) {
-                <div class="col-auto p-0">
-                    <button class="reaction-button clickable reply-btn" (click)="openThread.emit()">
-                        <jhi-emoji [emoji]="speechBalloonId" />
-                        <span class="emoji-count">{{ 'artemisApp.conversationsLayout.threadSideBar.reply' | artemisTranslate }}</span>
-                    </button>
-                </div>
-            }
-            <!-- expand answers -->
-            @if (!showAnswers && sortedAnswerPosts.length > 0) {
-                <div class="col-auto p-0">
-                    <button class="reaction-button clickable expand-answers-btn" (click)="openThread.emit()">
-                        <jhi-emoji [emoji]="speechBalloonId" />
-                        <span class="emoji-count">{{
-                            sortedAnswerPosts.length === 1
-                                ? ('artemisApp.metis.showSingleAnswer' | artemisTranslate)
-                                : ('artemisApp.metis.showMultipleAnswers' | artemisTranslate: { number: sortedAnswerPosts.length })
-                        }}</span>
-                    </button>
-                    @if (getShowNewMessageIcon()) {
-                        <span class="badge bg-secondary hideAfter5Seconds">{{ 'global.generic.new' | artemisTranslate }}</span>
-                    }
-                </div>
-            }
-        }
     }
 </div>

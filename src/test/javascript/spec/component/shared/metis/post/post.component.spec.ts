@@ -3,7 +3,7 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { DebugElement } from '@angular/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { PostComponent } from 'app/shared/metis/post/post.component';
-import { getElement } from '../../../../helpers/utils/general.utils';
+import { getElement, getElements } from '../../../../helpers/utils/general.utils';
 import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
 import { PostHeaderComponent } from 'app/shared/metis/posting-header/post-header/post-header.component';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
@@ -12,7 +12,19 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PageType } from 'app/shared/metis/metis.util';
 import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
-import { metisChannel, metisCourse, metisPostExerciseUser1, metisPostLectureUser1, metisPostTechSupport, metisUser1 } from '../../../../helpers/sample/metis-sample-data';
+import {
+    metisChannel,
+    metisCourse,
+    metisPostExerciseUser1,
+    metisPostLectureUser1,
+    metisPostLectureUser2,
+    metisPostTechSupport,
+    metisTags,
+    metisUser1,
+    post,
+    sortedAnswerArray,
+    unsortedAnswerArray,
+} from '../../../../helpers/sample/metis-sample-data';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';
 import { RouterTestingModule } from '@angular/router/testing';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -24,6 +36,8 @@ import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat
 import { HttpResponse } from '@angular/common/http';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
+import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -34,6 +48,7 @@ describe('PostComponent', () => {
     let metisServiceGetQueryParamsSpy: jest.SpyInstance;
     let metisServiceGetPageTypeStub: jest.SpyInstance;
     let router: MockRouter;
+    const updatedTags = ['tag1', 'tag2', 'tag3'];
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -51,6 +66,8 @@ describe('PostComponent', () => {
                 MockComponent(PostHeaderComponent),
                 MockComponent(PostingContentComponent),
                 MockComponent(PostFooterComponent),
+                MockComponent(AnswerPostCreateEditModalComponent),
+                MockComponent(PostReactionsBarComponent),
                 MockRouterLinkDirective,
                 MockQueryParamsDirective,
                 TranslatePipeMock,
@@ -78,25 +95,56 @@ describe('PostComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should display resolved icon on resolved post header', () => {
-        component.posting = metisPostExerciseUser1;
-        component.posting.resolved = true;
-
+    it('should initialize post tags correctly', () => {
+        component.posting = metisPostLectureUser2;
+        component.posting.tags = metisTags;
         component.ngOnInit();
-        fixture.detectChanges();
-
-        expect(getElement(debugElement, '.resolved')).not.toBeNull();
+        expect(component.tags).toEqual(metisTags);
     });
 
-    it('should not display resolved icon on unresolved post header', () => {
-        // per default not resolved
+    it('should initialize post without tags correctly', () => {
         component.posting = metisPostExerciseUser1;
-        component.posting.resolved = false;
+        component.ngOnInit();
+        expect(component.tags).toEqual([]);
+    });
 
+    it('should update post tags correctly', () => {
+        component.posting = metisPostLectureUser1;
+        component.ngOnInit();
+        component.posting.tags = updatedTags;
+        component.ngOnChanges();
+        expect(component.tags).toEqual(updatedTags);
+    });
+
+    it('should have a tag shown for each post tag', () => {
+        component.posting = metisPostLectureUser1;
+        component.posting.tags = metisTags;
         component.ngOnInit();
         fixture.detectChanges();
+        const tags = getElements(fixture.debugElement, '.post-tag');
+        expect(tags).toHaveLength(metisTags.length);
+    });
 
-        expect(getElement(debugElement, '.resolved')).toBeNull();
+    it('should sort answers', () => {
+        component.posting = post;
+        component.posting.answers = unsortedAnswerArray;
+        component.sortAnswerPosts();
+        expect(component.sortedAnswerPosts).toEqual(sortedAnswerArray);
+    });
+
+    it('should not sort empty array of answers', () => {
+        component.posting = post;
+        component.posting.answers = unsortedAnswerArray;
+        component.posting.answers = undefined;
+        component.sortAnswerPosts();
+        expect(component.sortedAnswerPosts).toEqual([]);
+    });
+
+    it('should sort answers on changes', () => {
+        component.posting = post;
+        component.posting.answers = unsortedAnswerArray;
+        component.ngOnChanges();
+        expect(component.sortedAnswerPosts).toEqual(sortedAnswerArray);
     });
 
     it('should contain a post header', () => {

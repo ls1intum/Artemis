@@ -2,7 +2,7 @@
     <div class="col-auto pe-0">
         <span class="posting-header header-author-date">
             <span class="posting-author-role" ngbTooltip="{{ userAuthorityTooltip | artemisTranslate }}">
-                <fa-icon [icon]="userAuthorityIcon" />
+                <span class="badge" [class]="'badge-' + userAuthority"> </span>
             </span>
             <span class="posting-author">
                 {{ posting.author!.name }}

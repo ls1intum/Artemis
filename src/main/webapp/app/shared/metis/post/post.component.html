@@ -1,82 +1,105 @@
-<div class="d-flex align-items-center">
-    <jhi-post-header
-        [previewMode]="previewMode"
-        [readOnlyMode]="readOnlyMode"
-        [posting]="posting"
-        [isCourseMessagesPage]="isCourseMessagesPage"
-        [isCommunicationPage]="isCommunicationPage"
-        [hasChannelModerationRights]="hasChannelModerationRights"
-        (isModalOpen)="displayInlineInput = true"
-        [lastReadDate]="lastReadDate"
-    />
-    <div class="resolution-indicator ps-3">
-        @if (posting.resolved) {
-            <fa-icon [icon]="faCheckSquare" iconSize="xs" class="col-auto pe-0 resolved" [ngbTooltip]="'artemisApp.metis.post.postMarkedAsResolvedTooltip' | artemisTranslate" />
-        }
+<div class="row module-bg mb-1 pb-1 rounded-2" [class]="!isThreadSidebar ? 'mx-0' : ''">
+    <div class="align-items-center">
+        <jhi-post-header
+            [previewMode]="previewMode"
+            [readOnlyMode]="readOnlyMode"
+            [posting]="posting"
+            [isCourseMessagesPage]="isCourseMessagesPage"
+            [isCommunicationPage]="isCommunicationPage"
+            [hasChannelModerationRights]="hasChannelModerationRights"
+            (isModalOpen)="displayInlineInput = true"
+            [lastReadDate]="lastReadDate"
+        />
     </div>
-</div>
-<div class="row align-items-center">
-    <div class="col">
-        <div class="mb-1">
-            @if (showAnnouncementIcon) {
-                <fa-icon
-                    [icon]="faBullhorn"
-                    iconSize="xs"
-                    class="col-auto pe-0 announcement-icon"
-                    [ngbTooltip]="'artemisApp.metis.post.postMarkedAsAnnouncementTooltip' | artemisTranslate"
+    <div class="row align-items-center">
+        <div class="col">
+            <div class="mb-1">
+                @if (showAnnouncementIcon) {
+                    <fa-icon
+                        [icon]="faBullhorn"
+                        iconSize="xs"
+                        class="col-auto pe-0 announcement-icon"
+                        [ngbTooltip]="'artemisApp.metis.post.postMarkedAsAnnouncementTooltip' | artemisTranslate"
+                    />
+                }
+                <!-- in the course discussion overview as well as in the preview mode during similarity check, the context (lecture, exercise, course-wide topic) is shown -->
+                <!-- not shown in course messages page -->
+                @if (isCommunicationPage && (pageType === PageType.OVERVIEW || previewMode)) {
+                    <span class="col-auto">
+                        @if (contextInformation.routerLinkComponents) {
+                            <a
+                                class="linked-context-information"
+                                [routerLink]="contextInformation.routerLinkComponents"
+                                [queryParams]="contextInformation.queryParams"
+                                (click)="onNavigateToContext($event)"
+                                routerLinkActive="active"
+                                >{{ contextInformation.displayName }}</a
+                            >
+                        }
+                        @if (!contextInformation.routerLinkComponents) {
+                            <span class="context-information">{{ contextInformation.displayName }}:</span>
+                        }
+                    </span>
+                }
+                <!-- post title not shown for plagiarism cases -->
+                @if (pageType !== PageType.PLAGIARISM_CASE_INSTRUCTOR && pageType !== PageType.PLAGIARISM_CASE_STUDENT) {
+                    <span class="col-auto">
+                        @if (posting.title?.length) {
+                            <span class="post-title">{{ posting.title }}</span>
+                        }
+                        <!-- show id only on communication page -->
+                        @if (!isCourseMessagesPage && isCommunicationPage) {
+                            <a class="reference-hash" [routerLink]="routerLink" [queryParams]="queryParams" (click)="onNavigateToPostById($event)" routerLinkActive="active"
+                                >#{{ posting.id }}</a
+                            >
+                        }
+                    </span>
+                }
+            </div>
+            @if (!displayInlineInput) {
+                <jhi-posting-content
+                    [previewMode]="previewMode"
+                    [content]="posting.content"
+                    [author]="posting.author"
+                    [isEdited]="!!posting.updatedDate"
+                    [posting]="posting"
+                    [isReply]="false"
+                    (userReferenceClicked)="onUserReferenceClicked($event)"
+                    (channelReferenceClicked)="onChannelReferenceClicked($event)"
                 />
             }
-            <!-- in the course discussion overview as well as in the preview mode during similarity check, the context (lecture, exercise, course-wide topic) is shown -->
-            <!-- not shown in course messages page -->
-            @if (isCommunicationPage && (pageType === PageType.OVERVIEW || previewMode)) {
-                <span class="col-auto">
-                    @if (contextInformation.routerLinkComponents) {
-                        <a
-                            class="linked-context-information"
-                            [routerLink]="contextInformation.routerLinkComponents"
-                            [queryParams]="contextInformation.queryParams"
-                            (click)="onNavigateToContext($event)"
-                            routerLinkActive="active"
-                            >{{ contextInformation.displayName }}</a
-                        >
-                    }
-                    @if (!contextInformation.routerLinkComponents) {
-                        <span class="context-information">{{ contextInformation.displayName }}:</span>
-                    }
-                </span>
-            }
-            <!-- post title not shown for plagiarism cases -->
-            @if (pageType !== PageType.PLAGIARISM_CASE_INSTRUCTOR && pageType !== PageType.PLAGIARISM_CASE_STUDENT) {
-                <span class="col-auto">
-                    @if (posting.title?.length) {
-                        <span class="post-title">{{ posting.title }}</span>
-                    }
-                    <!-- show id only on communication page -->
-                    @if (!isCourseMessagesPage && isCommunicationPage) {
-                        <a class="reference-hash" [routerLink]="routerLink" [queryParams]="queryParams" (click)="onNavigateToPostById($event)" routerLinkActive="active"
-                            >#{{ posting.id }}</a
-                        >
-                    }
+        </div>
+    </div>
+    @if (displayInlineInput && !readOnlyMode) {
+        <jhi-message-inline-input [posting]="posting" (isModalOpen)="displayInlineInput = false" />
+    }
+    <div class="me-0 mt-2 row justify-content-between" [ngClass]="previewMode ? 'mb-2' : ''">
+        <!-- Post reactions -->
+        @if (!previewMode) {
+            <div class="col-auto ps-3 pe-0">
+                <jhi-post-reactions-bar
+                    [lastReadDate]="lastReadDate"
+                    [readOnlyMode]="readOnlyMode"
+                    [posting]="posting"
+                    [(showAnswers)]="showAnswers"
+                    [sortedAnswerPosts]="sortedAnswerPosts"
+                    [isCourseMessagesPage]="isCourseMessagesPage"
+                    [isThreadSidebar]="isThreadSidebar"
+                    (openPostingCreateEditModal)="openCreateAnswerPostModal()"
+                    (openThread)="openThread.emit()"
+                />
+            </div>
+        }
+        <!-- Post tags -->
+        <div class="col-auto ps-3 pe-0">
+            @for (tag of tags; track tag) {
+                <span class="post-tag px-1 me-1">
+                    {{ tag }}
                 </span>
             }
         </div>
-        @if (!displayInlineInput) {
-            <jhi-posting-content
-                [previewMode]="previewMode"
-                [content]="posting.content"
-                [author]="posting.author"
-                [isEdited]="!!posting.updatedDate"
-                [posting]="posting"
-                [isReply]="false"
-                (userReferenceClicked)="onUserReferenceClicked($event)"
-                (channelReferenceClicked)="onChannelReferenceClicked($event)"
-            />
-        }
     </div>
 </div>
-@if (displayInlineInput && !readOnlyMode) {
-    <jhi-message-inline-input [posting]="posting" (isModalOpen)="displayInlineInput = false" />
-}
 <jhi-post-footer
     #postFooter
     [readOnlyMode]="readOnlyMode"
@@ -86,6 +109,7 @@
     [showAnswers]="showAnswers"
     [isCourseMessagesPage]="isCourseMessagesPage"
     [isThreadSidebar]="isThreadSidebar"
+    [sortedAnswerPosts]="sortedAnswerPosts"
     (openThread)="openThread.emit()"
     [lastReadDate]="lastReadDate"
     (userReferenceClicked)="onUserReferenceClicked($event)"

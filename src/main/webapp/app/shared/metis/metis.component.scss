@@ -18,11 +18,11 @@
 }
 
 .posting-header {
-    font-size: 11px;
+    font-size: 12px;
 
     .posting-author {
-        font-size: 13px;
-        font-weight: 500;
+        font-size: 14px;
+        font-weight: 700;
         padding-right: 5px;
     }
 
@@ -33,6 +33,38 @@
 
 .resolved {
     color: var(--metis-green);
+}
+
+.badge {
+    color: white;
+    font-size: 10px;
+    padding: 4px 5px;
+    text-align: center;
+    border-radius: 5px;
+}
+
+.badge-student {
+    background-color: #17a2b8;
+}
+
+.badge-student::before {
+    content: 'Student';
+}
+
+.badge-tutor {
+    background-color: darkorange;
+}
+
+.badge-tutor::before {
+    content: 'Tutor';
+}
+
+.badge-instructor {
+    background-color: darkred;
+}
+
+.badge-instructor::before {
+    content: 'Instructor';
 }
 
 .reference {

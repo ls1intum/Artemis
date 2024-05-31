@@ -1050,6 +1050,10 @@ body.transparent-background {
     background-color: var(--module-bg);
 }
 
+.body-bg {
+    background-color: var(--bs-body-bg);
+}
+
 .scrollable-content {
     height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height));
     overflow-y: auto;

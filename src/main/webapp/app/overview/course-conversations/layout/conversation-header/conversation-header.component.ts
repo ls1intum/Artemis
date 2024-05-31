@@ -1,5 +1,5 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import { Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
+import { faSearch, faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
@@ -26,6 +26,8 @@ import { MetisService } from 'app/shared/metis/metis.service';
 export class ConversationHeaderComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
 
+    @Output() collapseSearch = new EventEmitter<void>();
+
     INFO = ConversationDetailTabs.INFO;
     MEMBERS = ConversationDetailTabs.MEMBERS;
 
@@ -38,6 +40,7 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
 
     faUserPlus = faUserPlus;
     faUserGroup = faUserGroup;
+    faSearch = faSearch;
 
     constructor(
         private modalService: NgbModal,
@@ -105,5 +108,9 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
                     complete: () => {},
                 });
             });
+    }
+
+    toggleSearchBar() {
+        this.collapseSearch.emit();
     }
 }
