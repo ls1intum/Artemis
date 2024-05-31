@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.competency.CompetencyJol;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCourseChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisExerciseChatSession;
@@ -36,6 +37,7 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageStat
 import de.tum.in.www1.artemis.service.iris.exception.IrisException;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
 import de.tum.in.www1.artemis.service.metrics.LearningMetricsService;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyJolDTO;
 
 /**
  * Service responsible for executing the various Pyris pipelines in a type-safe manner.
@@ -171,20 +173,24 @@ public class PyrisPipelineService {
      * It provides specific data for the course chat pipeline, including:
      * - The full course with the participation of the student
      * - The metrics of the student in the course
+     * - The competency JoL if this is due to a JoL set event
      * <p>
      *
      * @see PyrisPipelineService#executeChatPipeline for more details on the pipeline execution process.
      *
-     * @param variant the variant of the pipeline
-     * @param session the chat session
+     * @param variant       the variant of the pipeline
+     * @param session       the chat session
+     * @param competencyJol if this is due to a JoL set event, this must be the newly created competencyJoL
      */
-    public void executeCourseChatPipeline(String variant, IrisCourseChatSession session) {
+    public void executeCourseChatPipeline(String variant, IrisCourseChatSession session, CompetencyJol competencyJol) {
         var courseId = session.getCourse().getId();
         var studentId = session.getUser().getId();
         executeChatPipeline(variant, session, "course-chat", base -> {
             var fullCourse = loadCourseWithParticipationOfStudent(courseId, studentId);
             var metrics = learningMetricsService.getStudentCourseMetrics(session.getUser().getId(), courseId);
-            return new PyrisCourseChatPipelineExecutionDTO(base.chatHistory(), base.user(), base.settings(), base.initialStages(), PyrisExtendedCourseDTO.of(fullCourse), metrics);
+            var jolDto = competencyJol == null ? null : CompetencyJolDTO.of(competencyJol);
+            return new PyrisCourseChatPipelineExecutionDTO(base.chatHistory(), base.user(), base.settings(), base.initialStages(), PyrisExtendedCourseDTO.of(fullCourse), metrics,
+                    jolDto);
         }, () -> pyrisJobService.addCourseChatJob(courseId, session.getId()));
     }
 

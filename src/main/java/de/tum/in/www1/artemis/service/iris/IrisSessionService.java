@@ -72,9 +72,7 @@ public class IrisSessionService {
         if (user == null) {
             user = userRepository.getUserWithGroupsAndAuthorities();
         }
-        if (user.getIrisAcceptedTimestamp() == null) {
-            throw new AccessForbiddenException("The user has not accepted the Iris privacy policy yet.");
-        }
+        user.hasAcceptedIrisElseThrow();
         var wrapper = getIrisSessionSubService(session);
         wrapper.irisSubFeatureInterface.checkHasAccessTo(user, wrapper.irisSession);
     }
