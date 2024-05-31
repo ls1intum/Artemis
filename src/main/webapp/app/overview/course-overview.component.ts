@@ -115,6 +115,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     profileSubscription?: Subscription;
     showRefreshButton: boolean = false;
     isExamStarted = false;
+    private examStartedSubscription: Subscription;
 
     // Properties to track hidden items for dropdown menu
     dropdownOpen: boolean = false;
@@ -204,7 +205,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             this.isProduction = profileInfo?.inProduction;
             this.isTestServer = profileInfo.testServer ?? false;
         });
-        this.examParticipationService.examIsStarted$.subscribe((isStarted) => {
+        this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted) => {
             this.isExamStarted = isStarted;
         });
         this.getCollapseStateFromStorage();
@@ -691,6 +692,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.vcSubscription?.unsubscribe();
         this.subscription?.unsubscribe();
         this.profileSubscription?.unsubscribe();
+        this.examStartedSubscription?.unsubscribe();
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
     }

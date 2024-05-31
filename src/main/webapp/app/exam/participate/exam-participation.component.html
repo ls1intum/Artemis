@@ -134,7 +134,7 @@
                     id="showExamSummaryButton"
                     class="btn btn-primary"
                     [disabled]="examSummaryButtonSecondsLeft"
-                    (click)="navigateToSummary()"
+                    (click)="loadAndDisplaySummary()"
                     jhiTranslate="artemisApp.examParticipation.submissionSuccessful.button"
                     [translateValues]="{ countdown: examSummaryButtonSecondsLeft ? ' (' + examSummaryButtonSecondsLeft + ')' : '' }"
                 ></button>

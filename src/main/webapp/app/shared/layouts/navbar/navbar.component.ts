@@ -134,6 +134,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private authStateSubscription: Subscription;
     private routerEventSubscription: Subscription;
     private queryParamsSubscription: Subscription;
+    private examStartedSubscription: Subscription;
     private studentExam?: StudentExam;
     private examId?: number;
     private routeExamId = 0;
@@ -242,7 +243,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             this.studentExam = studentExam;
             this.checkExamActive();
         });
-        this.examParticipationService.examIsStarted$.subscribe((isStarted) => {
+        this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted) => {
             this.isExamStarted = isStarted;
         });
 
@@ -256,6 +257,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         }
         if (this.routerEventSubscription) {
             this.routerEventSubscription.unsubscribe();
+        }
+        if (this.examStartedSubscription) {
+            this.examStartedSubscription.unsubscribe();
         }
         if (this.examActiveCheckFuture) {
             clearTimeout(this.examActiveCheckFuture);

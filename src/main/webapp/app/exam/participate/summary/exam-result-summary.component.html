@@ -1,4 +1,4 @@
-<div>
+<div id="exam-results-title">
     <h2>
         <ng-container>
             {{ 'artemisApp.exam.examSummary.examResults' | artemisTranslate }}
@@ -17,7 +17,7 @@
     </div>
 }
 @if (studentExam?.exam) {
-    <div id="exam-results-title">
+    <div>
         <jhi-exam-general-information
             [exam]="studentExam.exam!"
             [studentExam]="studentExam"

@@ -342,11 +342,12 @@ export class ExamParticipationService {
         this.examExerciseIds = examExerciseIds;
     }
 
-    startExam() {
+    setExamLayout() {
         this.examIsStartedSubject.next(true);
     }
 
-    resetExam() {
+    resetExamLayout() {
         this.examIsStartedSubject.next(false);
+        document.documentElement.style.setProperty('--header-height', '68px'); // Set back to default value, because exam nav bar changes this property within the exam
     }
 }

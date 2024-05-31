@@ -215,11 +215,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             },
             error: () => (this.loadingExam = false),
         });
-    }
-
-    navigateToSummary() {
-        this.loadAndDisplaySummary();
-        window.location.reload();
+        if (!this.testExam) {
+            this.examParticipationService.resetExamLayout();
+        }
     }
 
     canDeactivate() {
@@ -261,7 +259,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             studentExam.workingTime = this.studentExam?.workingTime ?? studentExam.workingTime;
             this.studentExam = studentExam;
 
-            this.examParticipationService.startExam();
+            this.examParticipationService.setExamLayout();
             // provide exam-participation.service with exerciseId information (e.g. needed for exam notifications)
             const exercises: Exercise[] = this.studentExam.exercises!;
             const exerciseIds = exercises.map((exercise) => exercise.id).filter(Number) as number[];
@@ -384,7 +382,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     }
 
                     if (this.testExam) {
-                        window.location.reload();
+                        this.examParticipationService.resetExamLayout();
                     }
 
                     this.examSummaryButtonTimer = setInterval(() => {
@@ -539,7 +537,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.websocketSubscription?.unsubscribe();
         this.workingTimeUpdateEventsSubscription?.unsubscribe();
         this.problemStatementUpdateEventsSubscription?.unsubscribe();
-        this.examParticipationService.resetExam();
+        this.examParticipationService.resetExamLayout();
         window.clearInterval(this.autoSaveInterval);
     }
 
