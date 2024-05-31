@@ -102,14 +102,12 @@
                     </jhi-side-panel>
                 }
                 @if (judgementOfLearningEnabled && promptForJolRating && competency.id !== undefined) {
-                    <div class="mt-3">
-                        <jhi-judgement-of-learning-rating
-                            [competencyId]="competency.id"
-                            [courseId]="courseId"
-                            [mastery]="mastery"
-                            [rating]="judgementOfLearning?.jolValue ?? undefined"
-                            (ratingChange)="onRatingChange($event)"
-                        />
+                    <div class="mt-3 d-flex justify-content-center">
+                        <a
+                            [routerLink]="['/courses', courseId, 'dashboard']"
+                            class="btn btn-info"
+                            jhiTranslate="artemisApp.courseStudentDashboard.judgementOfLearning.redirectButton"
+                        ></a>
                     </div>
                 }
             </div>

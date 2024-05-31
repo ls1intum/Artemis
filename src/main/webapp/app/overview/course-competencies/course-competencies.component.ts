@@ -3,9 +3,9 @@ import { CompetencyService } from 'app/course/competencies/competency.service';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Competency, CompetencyJol } from 'app/entities/competency.model';
-import { Subscription, forkJoin } from 'rxjs';
+import { Observable, Subscription, forkJoin } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
@@ -94,25 +94,32 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
      */
     loadData() {
         this.isLoading = true;
-        forkJoin([
-            this.competencyService.getAllForCourse(this.courseId),
-            this.competencyService.getAllPrerequisitesForCourse(this.courseId),
-            this.competencyService.getJoLAllForCourse(this.courseId),
-        ]).subscribe({
-            next: ([competencies, prerequisites, judgementOfLearningMap]) => {
-                this.competencies = competencies.body!;
-                this.prerequisites = prerequisites.body!;
 
-                const competenciesMap: { [key: number]: Competency } = Object.fromEntries(this.competencies.map((competency) => [competency.id, competency]));
-                this.judgementOfLearningMap = Object.fromEntries(
-                    Object.entries(judgementOfLearningMap.body!).filter(([key, value]) => {
-                        const progress = competenciesMap[Number(key)]?.userProgress?.first();
-                        return value.competencyProgress === (progress?.progress ?? 0) && value.competencyConfidence === (progress?.confidence ?? 0);
-                    }),
-                );
-                this.promptForJolRatingMap = Object.fromEntries(
-                    this.competencies.map((competency) => [competency.id, CompetencyJol.shouldPromptForJol(competency, competency.userProgress?.first(), this.competencies)]),
-                );
+        const observables = [this.competencyService.getAllForCourse(this.courseId), this.competencyService.getAllPrerequisitesForCourse(this.courseId)] as Observable<
+            HttpResponse<Competency[] | { [key: number]: CompetencyJol }>
+        >[];
+
+        if (this.dashboardFeatureActive) {
+            observables.push(this.competencyService.getJoLAllForCourse(this.courseId));
+        }
+
+        forkJoin(observables).subscribe({
+            next: ([competencies, prerequisites, judgementOfLearningMap]) => {
+                this.competencies = competencies.body! as Competency[];
+                this.prerequisites = prerequisites.body! as Competency[];
+
+                if (this.dashboardFeatureActive) {
+                    const competenciesMap: { [key: number]: Competency } = Object.fromEntries(this.competencies.map((competency) => [competency.id, competency]));
+                    this.judgementOfLearningMap = Object.fromEntries(
+                        Object.entries((judgementOfLearningMap?.body! ?? {}) as { [key: number]: CompetencyJol }).filter(([key, value]) => {
+                            const progress = competenciesMap[Number(key)]?.userProgress?.first();
+                            return value.competencyProgress === (progress?.progress ?? 0) && value.competencyConfidence === (progress?.confidence ?? 0);
+                        }),
+                    );
+                    this.promptForJolRatingMap = Object.fromEntries(
+                        this.competencies.map((competency) => [competency.id, CompetencyJol.shouldPromptForJol(competency, competency.userProgress?.first(), this.competencies)]),
+                    );
+                }
 
                 // Also update the course, so we do not need to fetch again next time
                 if (this.course) {

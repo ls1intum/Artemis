@@ -5,13 +5,13 @@ import { Competency, CompetencyJol, CompetencyProgress, getIcon } from 'app/enti
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
-import { Subscription, combineLatest, forkJoin } from 'rxjs';
+import { Observable, Subscription, combineLatest, forkJoin } from 'rxjs';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { Course } from 'app/entities/course.model';
@@ -76,17 +76,22 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
 
     private loadData() {
         this.isLoading = true;
-        forkJoin([
-            this.competencyService.findById(this.competencyId!, this.courseId!),
-            this.competencyService.getAllForCourse(this.courseId!),
-            this.competencyService.getJoL(this.courseId!, this.competencyId!),
-        ]).subscribe({
+
+        const observables = [this.competencyService.findById(this.competencyId!, this.courseId!), this.competencyService.getAllForCourse(this.courseId!)] as Observable<
+            HttpResponse<Competency | Competency[] | CompetencyJol>
+        >[];
+
+        if (this.dashboardFeatureActive) {
+            observables.push(this.competencyService.getJoL(this.courseId!, this.competencyId!));
+        }
+
+        forkJoin(observables).subscribe({
             next: ([competencyResp, courseCompetenciesResp, judgementOfLearningResp]) => {
-                this.competency = competencyResp.body!;
-                const competencies = courseCompetenciesResp.body!;
+                this.competency = competencyResp.body! as Competency;
+                const competencies = courseCompetenciesResp.body! as Competency[];
                 const progress = this.competency.userProgress?.first();
                 this.promptForJolRating = CompetencyJol.shouldPromptForJol(this.competency, progress, competencies);
-                const judgementOfLearning = judgementOfLearningResp.body ?? undefined;
+                const judgementOfLearning = (judgementOfLearningResp?.body ?? undefined) as CompetencyJol | undefined;
                 if (
                     judgementOfLearning &&
                     progress &&
