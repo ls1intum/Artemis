@@ -1,9 +1,9 @@
-import { Prerequisite, PrerequisiteResponseDTO } from 'app/entities/prerequisite.model';
+import { Prerequisite, PrerequisiteRequestDTO, PrerequisiteResponseDTO } from 'app/entities/prerequisite.model';
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, map } from 'rxjs';
-import { CourseCompetency } from 'app/entities/competency.model';
-import { convertDateFromServer } from 'app/utils/date.utils';
+import { CourseCompetency, DEFAULT_MASTERY_THRESHOLD } from 'app/entities/competency.model';
+import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 
 @Injectable({
     providedIn: 'root',
@@ -25,6 +25,20 @@ export class PrerequisiteService {
         //TODO: send title to entityTitleService when we allow prerequisite detail view.
     }
 
+    createPrerequisite(prerequisite: Prerequisite, prerequisiteId: number, courseId: number): Observable<Prerequisite | undefined> {
+        const prerequisiteDTO = this.convertToRequestDTO(prerequisite);
+        return this.httpClient
+            .post<PrerequisiteResponseDTO>(`${this.resourceURL}/courses/${courseId}/competencies/prerequisites/${prerequisiteId}`, prerequisiteDTO, { observe: 'response' })
+            .pipe(map((resp) => (resp.body ? this.convertResponseDTOToPrerequisite(resp.body) : undefined)));
+    }
+
+    updatePrerequisite(prerequisite: Prerequisite, prerequisiteId: number, courseId: number): Observable<Prerequisite | undefined> {
+        const prerequisiteDTO = this.convertToRequestDTO(prerequisite);
+        return this.httpClient
+            .post<PrerequisiteResponseDTO>(`${this.resourceURL}/courses/${courseId}/competencies/prerequisites/${prerequisiteId}`, prerequisiteDTO, { observe: 'response' })
+            .pipe(map((resp) => (resp.body ? this.convertResponseDTOToPrerequisite(resp.body) : undefined)));
+    }
+
     deletePrerequisite(prerequisiteId: number, courseId: number) {
         return this.httpClient.delete<void>(`${this.resourceURL}/courses/${courseId}/competencies/prerequisites/${prerequisiteId}`, { observe: 'response' });
     }
@@ -40,6 +54,23 @@ export class PrerequisiteService {
                     return resp.body.map((prerequisiteDTO) => this.convertResponseDTOToPrerequisite(prerequisiteDTO));
                 }),
             );
+    }
+
+    /**
+     * Converts a Prerequisite to a PrerequisiteRequestDTO and converts the date to a string
+     * @param prerequisite the prerequisite to convert
+     * @return the PrerequisiteRequestDTO
+     */
+    convertToRequestDTO(prerequisite: Prerequisite) {
+        const dto: PrerequisiteRequestDTO = {
+            title: prerequisite.title,
+            description: prerequisite.description,
+            taxonomy: prerequisite.taxonomy,
+            masteryThreshold: prerequisite.masteryThreshold ?? DEFAULT_MASTERY_THRESHOLD,
+            optional: prerequisite.optional,
+            softDueDate: convertDateFromClient(prerequisite.softDueDate),
+        };
+        return dto;
     }
 
     /**
