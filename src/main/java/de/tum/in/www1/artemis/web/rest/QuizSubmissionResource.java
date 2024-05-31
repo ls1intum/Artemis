@@ -93,6 +93,7 @@ public class QuizSubmissionResource {
      *
      * @param exerciseId     the id of the exercise for which to init a participation
      * @param quizSubmission the quizSubmission to submit
+     * @param submit         flag to determine if the submission should be submitted or saved
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
     @PostMapping("exercises/{exerciseId}/submissions/live")
