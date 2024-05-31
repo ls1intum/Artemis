@@ -16,9 +16,12 @@ import de.tum.in.www1.artemis.competency.PrerequisiteUtilService;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.competency.CompetencyTaxonomy;
+import de.tum.in.www1.artemis.domain.competency.Prerequisite;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.PrerequisiteRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.web.rest.dto.competency.PrerequisiteRequestDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.PrerequisiteResponseDTO;
 
 class PrerequisiteIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -100,6 +103,50 @@ class PrerequisiteIntegrationTest extends AbstractSpringIntegrationIndependentTe
         void shouldNotReturnPrerequisitesForStudentNotInCourse() throws Exception {
             request.get(url(course2.getId()), HttpStatus.FORBIDDEN, PrerequisiteResponseDTO.class);
         }
+    }
+
+    @Nested
+    class CreatePrerequisite {
+
+        private static String url(long courseId) {
+            return PrerequisiteIntegrationTest.baseUrl(courseId);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        void shouldCreatePrerequisite() throws Exception {
+            var prerequisite = new Prerequisite("title", "description", null, 66, CompetencyTaxonomy.ANALYZE, false);
+            var requestBody = prerequisiteUtilService.prerequisiteToRequestDTO(prerequisite);
+
+            var actualPrerequisite = request.postWithResponseBody(url(course.getId()), requestBody, PrerequisiteResponseDTO.class, HttpStatus.CREATED);
+
+            var expectedPrerequisite = new PrerequisiteResponseDTO(actualPrerequisite.id(), prerequisite.getTitle(), prerequisite.getDescription(), prerequisite.getTaxonomy(),
+                    prerequisite.getSoftDueDate(), prerequisite.getMasteryThreshold(), prerequisite.isOptional(), null);
+            assertThat(actualPrerequisite).usingRecursiveComparison().ignoringFields("id").isEqualTo(expectedPrerequisite);
+        }
+
+    }
+
+    @Nested
+    class UpdatePrerequisite {
+
+        private static String url(long courseId, long prerequisiteId) {
+            return PrerequisiteIntegrationTest.baseUrl(courseId) + "/" + prerequisiteId;
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        void shouldUpdatePrerequisite() throws Exception {
+            var existingPrerequisite = prerequisiteUtilService.createPrerequisite(course);
+            var updateDTO = new PrerequisiteRequestDTO("new title", "new description", CompetencyTaxonomy.ANALYZE, null, 1, true);
+
+            var updatedPrerequisite = request.putWithResponseBody(url(course.getId(), existingPrerequisite.getId()), updateDTO, PrerequisiteResponseDTO.class, HttpStatus.OK);
+
+            assertThat(updatedPrerequisite).usingRecursiveComparison().comparingOnlyFields("title", "description", "taxonomy", "softDueDate", "masteryThreshold", "optional")
+                    .isEqualTo(updateDTO);
+            assertThat(updatedPrerequisite.id()).isEqualTo(existingPrerequisite.getId());
+        }
+
     }
 
     @Nested
