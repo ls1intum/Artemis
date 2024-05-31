@@ -61,8 +61,8 @@ export class CompetencyJol {
     competencyId: number;
     jolValue: number;
     judgementTime: string;
-    competencyProgress?: number;
-    competencyConfidence?: number;
+    competencyProgress: number;
+    competencyConfidence: number;
 
     static shouldPromptForJol(competency: Competency, progress: CompetencyProgress | undefined, courseCompetencies: Competency[]): boolean {
         const currentDate = dayjs();

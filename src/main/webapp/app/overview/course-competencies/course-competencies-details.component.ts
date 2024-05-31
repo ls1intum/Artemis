@@ -86,7 +86,7 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
                 if (
                     judgementOfLearning &&
                     progress &&
-                    (judgementOfLearning.competencyProgress !== progress.progress || judgementOfLearning.competencyConfidence !== progress.confidence)
+                    (judgementOfLearning.competencyProgress !== (progress?.progress ?? 0) || judgementOfLearning.competencyConfidence !== (progress?.confidence ?? 0))
                 ) {
                     this.judgementOfLearning = undefined;
                 } else {

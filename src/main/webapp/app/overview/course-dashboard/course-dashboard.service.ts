@@ -81,8 +81,8 @@ export class CourseDashboardService {
     private filterJolWhereMasteryChanged(competencyMetrics: CompetencyMetrics): { [key: string]: CompetencyJol } {
         return Object.fromEntries(
             Object.entries(competencyMetrics.jolValues ?? {}).filter(([key, value]) => {
-                const progress = competencyMetrics.progress?.[key];
-                const confidence = competencyMetrics.confidence?.[key];
+                const progress = competencyMetrics?.progress?.[key] ?? 0;
+                const confidence = competencyMetrics?.confidence?.[key] ?? 0;
                 return value.competencyProgress === progress && value.competencyConfidence === confidence;
             }),
         );

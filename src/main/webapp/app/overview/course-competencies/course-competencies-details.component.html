@@ -107,7 +107,7 @@
                             [competencyId]="competency.id"
                             [courseId]="courseId"
                             [mastery]="mastery"
-                            [rating]="judgementOfLearning?.jolValue"
+                            [rating]="judgementOfLearning?.jolValue ?? undefined"
                             (ratingChange)="onRatingChange($event)"
                         />
                     </div>

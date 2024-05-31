@@ -70,6 +70,7 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
             this.competencies = this.course.competencies || [];
             this.prerequisites = this.course.prerequisites || [];
             this.judgementOfLearningMap = this.course.judgementOfLearningMap || {};
+            this.promptForJolRatingMap = this.course.promptForJolRatingMap || {};
         } else {
             this.loadData();
         }
@@ -114,7 +115,7 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
                 this.judgementOfLearningMap = Object.fromEntries(
                     Object.entries(judgementOfLearningMap.body!).filter(([key, value]) => {
                         const progress = competenciesMap[Number(key)]?.userProgress?.first();
-                        return value.competencyProgress === progress?.progress && value.competencyConfidence === progress?.confidence;
+                        return value.competencyProgress === (progress?.progress ?? 0) && value.competencyConfidence === (progress?.confidence ?? 0);
                     }),
                 );
                 this.promptForJolRatingMap = Object.fromEntries(

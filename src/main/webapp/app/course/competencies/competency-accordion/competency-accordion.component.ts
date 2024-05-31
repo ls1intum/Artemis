@@ -186,6 +186,8 @@ export class CompetencyAccordionComponent implements OnChanges {
                     competencyId: this.competency.id,
                     jolValue: newRating,
                     judgementTime: dayjs().toString(),
+                    competencyProgress: this.progress,
+                    competencyConfidence: this.confidence,
                 },
             };
             this.calculateProgressValues();
