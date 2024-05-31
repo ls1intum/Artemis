@@ -524,7 +524,6 @@ public class QuizExerciseResource {
                     quizExercise.setReleaseDate(now);
                 }
                 quizExercise.setDueDate(now.plusSeconds(quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS));
-                quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, quizBatch, "start-now");
             }
             case "end-now" -> {
                 // editors may not end the quiz
