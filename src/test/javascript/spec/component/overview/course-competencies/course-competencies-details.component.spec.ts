@@ -38,6 +38,11 @@ describe('CourseCompetenciesDetails', () => {
 
     let competencyService: CompetencyService;
 
+    const parentParams = { courseId: 1 };
+    const parentRoute = { parent: { parent: { params: of(parentParams) } } } as any as ActivatedRoute;
+    // example route looks like: /courses/1/competencies/10
+    const route = { params: of({ competencyId: 10 }), parent: parentRoute } as any as ActivatedRoute;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, HttpClientTestingModule, MockModule(NgbTooltipModule)],
@@ -63,9 +68,7 @@ describe('CourseCompetenciesDetails', () => {
                 MockProvider(AlertService),
                 {
                     provide: ActivatedRoute,
-                    useValue: {
-                        params: of({ competencyId: '1', courseId: '1' }),
-                    },
+                    useValue: route,
                 },
                 { provide: Router, useValue: MockRouter },
             ],
