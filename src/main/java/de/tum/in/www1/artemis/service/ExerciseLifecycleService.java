@@ -16,6 +16,9 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
+import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
+import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.service.util.Tuple;
 
 @Profile(PROFILE_CORE)
@@ -46,6 +49,28 @@ public class ExerciseLifecycleService {
         final ScheduledFuture<?> future = scheduler.schedule(task, lifecycleDate.toInstant());
         log.debug("Scheduled Task for Exercise \"{}\" (#{}) to trigger on {}.", exercise.getTitle(), exercise.getId(), lifecycle);
         return future;
+    }
+
+    /**
+     * Allow to schedule a {@code Runnable} task in the lifecycle of a quiz exercise. ({@code ExerciseLifecycle}) Tasks are performed in a background thread managed by a
+     * {@code TaskScheduler}. See {@code TaskSchedulingConfiguration}. <b>Important:</b> Scheduled tasks are not persisted across application restarts. Therefore, schedule your
+     * events from both your application logic (e.g. exercise modification) and on application startup. You can use the {@code PostConstruct} Annotation to call one service method
+     * on startup.
+     *
+     * @param exercise  QuizExercise
+     * @param batch     QuizBatch
+     * @param lifecycle ExerciseLifecycle
+     * @param task      Runnable
+     * @return The {@code ScheduledFuture<?>} allows to later cancel the task or check whether it has been executed.
+     */
+    public ScheduledFuture<?> scheduleTask(QuizExercise exercise, QuizBatch batch, ExerciseLifecycle lifecycle, Runnable task) {
+        if (exercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
+            log.debug("Scheduled Task for synchronized QuizExercise \"{}\" (#{}) to trigger on {}.", exercise.getTitle(), exercise.getId(), lifecycle);
+            return scheduler.schedule(task, batch.getStartTime().toInstant());
+        }
+        else {
+            return scheduleTask(exercise, lifecycle, task);
+        }
     }
 
     /**

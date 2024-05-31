@@ -51,7 +51,7 @@ public class QuizScheduleService {
                 // TODO: quiz cleanup: it should be possible to schedule quiz batches in BATCHED mode
                 var quizBatch = quizExercise.getQuizBatches().stream().findAny();
                 if (quizBatch.isPresent() && quizBatch.get().getStartTime() != null && quizBatch.get().getStartTime().isAfter(ZonedDateTime.now())) {
-                    scheduleService.scheduleTask(quizExercise, ExerciseLifecycle.START, () -> executeQuizStartNowTask(quizExerciseId));
+                    scheduleService.scheduleTask(quizExercise, quizBatch.get(), ExerciseLifecycle.START, () -> executeQuizStartNowTask(quizExerciseId));
                 }
             }
         }

@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.exception.QuizJoinException;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.QuizBatchRepository;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 
@@ -45,9 +46,12 @@ public class QuizBatchService {
 
     private final QuizSubmissionRepository quizSubmissionRepository;
 
-    public QuizBatchService(QuizBatchRepository quizBatchRepository, QuizSubmissionRepository quizSubmissionRepository) {
+    private final ParticipationRepository participationRepository;
+
+    public QuizBatchService(QuizBatchRepository quizBatchRepository, QuizSubmissionRepository quizSubmissionRepository, ParticipationRepository participationRepository) {
         this.quizBatchRepository = quizBatchRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
+        this.participationRepository = participationRepository;
     }
 
     /**
@@ -115,6 +119,8 @@ public class QuizBatchService {
         participation.setParticipant(user);
         participation.setExercise(quizExercise);
         participation.setInitializationState(InitializationState.FINISHED);
+
+        participationRepository.save(participation);
 
         QuizSubmission quizSubmission = new QuizSubmission();
         quizSubmission.setQuizBatch(quizBatch.getId());
