@@ -169,18 +169,18 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
         fixture.detectChanges();
         // Initialization
         expect(comp.allDiffsReady).toBeFalse();
-        expect(comp.diffsReadyByPath[filePath1]).toBeFalse();
-        expect(comp.diffsReadyByPath[filePath2]).toBeFalse();
+        expect(comp.diffInformationForPaths[0].diffReady).toBeFalse();
+        expect(comp.diffInformationForPaths[1].diffReady).toBeFalse();
         // First file ready
         comp.onDiffReady(filePath1, true);
         expect(comp.allDiffsReady).toBeFalse();
-        expect(comp.diffsReadyByPath[filePath1]).toBeTrue();
-        expect(comp.diffsReadyByPath[filePath2]).toBeFalse();
+        expect(comp.diffInformationForPaths[0].diffReady).toBeTrue();
+        expect(comp.diffInformationForPaths[1].diffReady).toBeFalse();
         // Second file ready
         comp.onDiffReady(filePath2, true);
         expect(comp.allDiffsReady).toBeTrue();
-        expect(comp.diffsReadyByPath[filePath1]).toBeTrue();
-        expect(comp.diffsReadyByPath[filePath2]).toBeTrue();
+        expect(comp.diffInformationForPaths[0].diffReady).toBeTrue();
+        expect(comp.diffInformationForPaths[1].diffReady).toBeTrue();
     });
 
     it('should correctly identify renamed files', () => {

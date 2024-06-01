@@ -414,6 +414,9 @@ public class SubmissionService {
      * @param feedbacks the feedbacks which are copied
      */
     private void copyFeedbackToResult(Result result, List<Feedback> feedbacks) {
+        if (feedbacks == null) {
+            return;
+        }
         feedbacks.forEach(feedback -> {
             Feedback newFeedback = feedbackService.copyFeedback(feedback);
             result.addFeedback(newFeedback);

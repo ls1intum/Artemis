@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'com.github.johnrengelman.shadow' version '7.1.0'
+    id 'application'
 }
 
 group 'de.tum.in.www1.artemis'
@@ -10,22 +10,23 @@ repositories {
     mavenCentral()
 }
 
+evaluationDependsOn(':')
+
 dependencies {
-    implementation 'com.thoughtworks.qdox:qdox:2.0-M9'
-    implementation 'org.springframework.boot:spring-boot-starter-web:2.5.4'
-    testImplementation 'junit:junit:4.13.2'
+    implementation rootProject.ext.qDoxVersionReusable
+    implementation rootProject.ext.springBootStarterWeb
 }
 
 test {
     useJUnitPlatform()
 }
 
-jar {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    manifest {
-        attributes 'Main-Class': 'analysisOfEndpointConnections.AnalysisOfEndpointConnections'
-    }
-    from {
-        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+application {
+    mainClassName = 'de.tum.cit.endpointanalysis.AnalysisOfEndpointConnections'
+}
+
+run {
+    if (project.hasProperty('appArgs')) {
+        args = project.appArgs.split(' ')
     }
 }

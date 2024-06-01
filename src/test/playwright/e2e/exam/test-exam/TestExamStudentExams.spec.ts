@@ -6,7 +6,7 @@ import { Exercise, ExerciseType } from '../../../support/constants';
 import dayjs from 'dayjs';
 import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
-import { ExamParticipation } from '../../../support/pageobjects/exam/ExamParticipation';
+import { ExamParticipationPage } from '../../../support/pageobjects/exam/ExamParticipationPage';
 import { ExamNavigationBar } from '../../../support/pageobjects/exam/ExamNavigationBar';
 
 // Common primitives
@@ -115,7 +115,7 @@ test.describe('Test Exam - student exams', () => {
         exam: Exam,
         toStart: boolean,
         toSubmit: boolean,
-        examParticipation: ExamParticipation,
+        examParticipation: ExamParticipationPage,
         examNavigation: ExamNavigationBar,
     ) {
         if (!toStart) {
