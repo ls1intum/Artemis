@@ -386,8 +386,7 @@ class ProgrammingExerciseIntegrationTestService {
         // Export with excludePracticeSubmissions
         var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString()).toList();
         final var path = "/api/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/" + String.join(",", participationIds);
-        var exportOptions = new RepositoryExportOptionsDTO();
-        exportOptions.setExcludePracticeSubmissions(excludePracticeSubmissions);
+        var exportOptions = new RepositoryExportOptionsDTO(false, false, false, null, true, false, false, false, false);
 
         downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
         assertThat(downloadedFile).exists();
@@ -437,8 +436,7 @@ class ProgrammingExerciseIntegrationTestService {
         final var path = "/api/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/"
                 + String.join(",", List.of(participation.get().getId().toString()));
         // all options false by default, only test if export works at all
-        var exportOptions = new RepositoryExportOptionsDTO();
-        exportOptions.setAddParticipantName(true);
+        var exportOptions = new RepositoryExportOptionsDTO(false, false, false, null, false, true, false, false, false);
 
         downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
         assertThat(downloadedFile).exists();
@@ -481,8 +479,7 @@ class ProgrammingExerciseIntegrationTestService {
         final var path = "/api/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/"
                 + String.join(",", List.of(participation.get().getId().toString()));
         // all options false by default, only test if export works at all
-        var exportOptions = new RepositoryExportOptionsDTO();
-        exportOptions.setAddParticipantName(true);
+        var exportOptions = new RepositoryExportOptionsDTO(false, false, false, null, false, true, false, false, false);
 
         downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
         assertThat(downloadedFile).exists();
@@ -536,8 +533,7 @@ class ProgrammingExerciseIntegrationTestService {
 
         // Rest call
         final var path = "/api/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/" + participation1.getId();
-        var exportOptions = getOptions();
-        exportOptions.setAddParticipantName(false);
+        var exportOptions = new RepositoryExportOptionsDTO(false, false, false, null, false, true, false, false, false);
         downloadedFile = request.postWithResponseBodyFile(path, getOptions(), HttpStatus.OK);
         assertThat(downloadedFile).exists();
 
@@ -600,14 +596,7 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     private RepositoryExportOptionsDTO getOptions() {
-        final var repositoryExportOptions = new RepositoryExportOptionsDTO();
-        repositoryExportOptions.setFilterLateSubmissions(true);
-        repositoryExportOptions.setExcludePracticeSubmissions(false);
-        repositoryExportOptions.setCombineStudentCommits(true);
-        repositoryExportOptions.setAnonymizeRepository(true);
-        repositoryExportOptions.setAddParticipantName(true);
-        repositoryExportOptions.setNormalizeCodeStyle(true);
-        return repositoryExportOptions;
+        return new RepositoryExportOptionsDTO(false, true, false, null, false, true, true, true, true);
     }
 
     void testProgrammingExerciseDelete() throws Exception {
@@ -1485,8 +1474,7 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     void exportSubmissionsByStudentLogins_exportAllAsTutor_forbidden() throws Exception {
-        final var options = getOptions();
-        options.setExportAllParticipants(true);
+        final var options = new RepositoryExportOptionsDTO(true, true, false, null, false, true, true, true, true);
         request.post(getDefaultAPIEndpointForExportRepos(), options, HttpStatus.FORBIDDEN);
     }
 
@@ -1543,15 +1531,8 @@ class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockTriggerBuild(programmingExercise.getSolutionParticipation());
         mockDelegate.mockTriggerBuild(programmingExercise.getTemplateParticipation());
         final var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
-        final var updates = testCases.stream().map(testCase -> {
-            final var testCaseUpdate = new ProgrammingExerciseTestCaseDTO();
-            testCaseUpdate.setId(testCase.getId());
-            testCaseUpdate.setVisibility(Visibility.AFTER_DUE_DATE);
-            testCaseUpdate.setWeight(testCase.getId() + 42.0);
-            testCaseUpdate.setBonusMultiplier(testCase.getId() + 1.0);
-            testCaseUpdate.setBonusPoints(testCase.getId() + 2.0);
-            return testCaseUpdate;
-        }).toList();
+        final var updates = testCases.stream().map(testCase -> new ProgrammingExerciseTestCaseDTO(testCase.getId(), testCase.getId() + 42.0, testCase.getId() + 1.0,
+                testCase.getId() + 2.0, Visibility.AFTER_DUE_DATE)).toList();
         final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
 
         final var testCasesResponse = request.patchWithResponseBody("/api" + endpoint, updates, new TypeReference<List<ProgrammingExerciseTestCase>>() {
@@ -1575,15 +1556,8 @@ class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockTriggerBuildFailed(programmingExercise.getTemplateParticipation());
 
         final var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
-        final var updates = testCases.stream().map(testCase -> {
-            final var testCaseUpdate = new ProgrammingExerciseTestCaseDTO();
-            testCaseUpdate.setId(testCase.getId());
-            testCaseUpdate.setVisibility(Visibility.AFTER_DUE_DATE);
-            testCaseUpdate.setWeight(testCase.getId() + 42.0);
-            testCaseUpdate.setBonusMultiplier(testCase.getId() + 1.0);
-            testCaseUpdate.setBonusPoints(testCase.getId() + 2.0);
-            return testCaseUpdate;
-        }).toList();
+        final var updates = testCases.stream().map(testCase -> new ProgrammingExerciseTestCaseDTO(testCase.getId(), testCase.getId() + 42.0, testCase.getId() + 1.0,
+                testCase.getId() + 2.0, Visibility.AFTER_DUE_DATE)).toList();
         final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
 
         final var testCasesResponse = request.patchWithResponseBody("/api" + endpoint, updates, new TypeReference<List<ProgrammingExerciseTestCase>>() {
@@ -1593,14 +1567,14 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     void updateTestCases_nonExistingExercise_notFound() throws Exception {
-        final var update = new ProgrammingExerciseTestCaseDTO();
+        final var update = new ProgrammingExerciseTestCaseDTO(null, null, null, null, null);
         final var endpoint = "/programming-exercises/" + (programmingExercise.getId() + 1337) + "/update-test-cases";
         request.patchWithResponseBody("/api" + endpoint, List.of(update), String.class, HttpStatus.NOT_FOUND);
     }
 
     void updateTestCases_instructorInWrongCourse_forbidden() throws Exception {
         userUtilService.addInstructor("other-instructors", userPrefix + "other-instructor");
-        final var update = new ProgrammingExerciseTestCaseDTO();
+        final var update = new ProgrammingExerciseTestCaseDTO(null, null, null, null, null);
         final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
 
         request.patchWithResponseBody("/api" + endpoint, List.of(update), String.class, HttpStatus.FORBIDDEN);
@@ -1608,15 +1582,8 @@ class ProgrammingExerciseIntegrationTestService {
 
     void updateTestCases_testCaseWeightSmallerThanZero_badRequest() throws Exception {
         final var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
-        final var updates = testCases.stream().map(testCase -> {
-            final var testCaseUpdate = new ProgrammingExerciseTestCaseDTO();
-            testCaseUpdate.setId(testCase.getId());
-            testCaseUpdate.setVisibility(Visibility.AFTER_DUE_DATE);
-            testCaseUpdate.setWeight(-1.);
-            testCaseUpdate.setBonusMultiplier(testCase.getId() + 1.0);
-            testCaseUpdate.setBonusPoints(testCase.getId() + 2.0);
-            return testCaseUpdate;
-        }).toList();
+        final var updates = testCases.stream()
+                .map(testCase -> new ProgrammingExerciseTestCaseDTO(testCase.getId(), -1., testCase.getId() + 1.0, testCase.getId() + 2.0, Visibility.AFTER_DUE_DATE)).toList();
         final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
 
         request.patchWithResponseBody("/api" + endpoint, updates, String.class, HttpStatus.BAD_REQUEST);
@@ -1625,7 +1592,9 @@ class ProgrammingExerciseIntegrationTestService {
     void updateTestCases_testCaseMultiplierSmallerThanZero_badRequest() throws Exception {
         final var testCases = List.copyOf(programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()));
         final var updates = transformTestCasesToDto(testCases);
-        updates.get(0).setBonusMultiplier(-1.0);
+        var firstUpdate = updates.getFirst();
+        firstUpdate = new ProgrammingExerciseTestCaseDTO(firstUpdate.id(), firstUpdate.weight(), -1.0, firstUpdate.bonusPoints(), firstUpdate.visibility());
+        updates.set(0, firstUpdate);
         final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
 
         request.performMvcRequest(
@@ -1650,26 +1619,22 @@ class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockTriggerBuild(programmingExercise.getTemplateParticipation());
 
         final var updates = transformTestCasesToDto(testCases);
-        updates.get(0).setBonusPoints(null);
+        var firstUpdate = updates.getFirst();
+        firstUpdate = new ProgrammingExerciseTestCaseDTO(firstUpdate.id(), firstUpdate.weight(), firstUpdate.bonusMultiplier(), null, firstUpdate.visibility());
+        updates.set(0, firstUpdate);
+
         final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
 
         final var testCasesResponse = request.patchWithResponseBody("/api" + endpoint, updates, new TypeReference<List<ProgrammingExerciseTestCase>>() {
         }, HttpStatus.OK);
-        final var updatedTestCase = testCasesResponse.stream().filter(testCase -> testCase.getId().equals(updates.get(0).getId())).findFirst().orElseThrow();
+        final var updatedTestCase = testCasesResponse.stream().filter(testCase -> testCase.getId().equals(updates.get(0).id())).findFirst().orElseThrow();
         assertThat(updatedTestCase.getBonusPoints()).isZero();
         assertThat(testCasesResponse.stream().filter(testCase -> !testCase.getId().equals(updatedTestCase.getId()))).allMatch(testCase -> testCase.getBonusPoints() == 1d);
     }
 
     private static List<ProgrammingExerciseTestCaseDTO> transformTestCasesToDto(Collection<ProgrammingExerciseTestCase> testCases) {
-        return testCases.stream().map(testCase -> {
-            final var testCaseUpdate = new ProgrammingExerciseTestCaseDTO();
-            testCaseUpdate.setId(testCase.getId());
-            testCaseUpdate.setVisibility(testCase.getVisibility());
-            testCaseUpdate.setWeight(testCase.getWeight());
-            testCaseUpdate.setBonusMultiplier(testCase.getBonusMultiplier());
-            testCaseUpdate.setBonusPoints(testCase.getBonusPoints());
-            return testCaseUpdate;
-        }).toList();
+        return testCases.stream().map(testCase -> new ProgrammingExerciseTestCaseDTO(testCase.getId(), testCase.getWeight(), testCase.getBonusMultiplier(),
+                testCase.getBonusPoints(), testCase.getVisibility())).toList();
     }
 
     void resetTestCaseWeights_asInstructor() throws Exception {

@@ -7,6 +7,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Optional;
@@ -37,8 +38,8 @@ class JenkinsInternalUriServiceTest extends AbstractSpringIntegrationJenkinsGitl
     void initTestCase() throws Exception {
         vcsRepositoryUri = new VcsRepositoryUri("http://localhost:80/some-repo.git");
         ciUrl = "http://localhost:8080/some-ci-path";
-        internalVcsUrl = new URL("http://1.2.3.4:123");
-        internalCiUrl = new URL("http://5.6.7.8:123");
+        internalVcsUrl = new URI("http://1.2.3.4:123").toURL();
+        internalCiUrl = new URI("http://5.6.7.8:123").toURL();
         ReflectionTestUtils.setField(jenkinsInternalUrlService, "internalVcsUrl", Optional.empty());
         ReflectionTestUtils.setField(jenkinsInternalUrlService, "internalCiUrl", Optional.empty());
     }
@@ -93,8 +94,8 @@ class JenkinsInternalUriServiceTest extends AbstractSpringIntegrationJenkinsGitl
 
     @Test
     void testGetUrlOnInternalUrlWithoutPort() throws Exception {
-        ReflectionTestUtils.setField(jenkinsInternalUrlService, "internalCiUrl", Optional.of(new URL("http://www.host.name.com/")));
-        ReflectionTestUtils.setField(jenkinsInternalUrlService, "internalVcsUrl", Optional.of(new URL("http://www.hostname.com/")));
+        ReflectionTestUtils.setField(jenkinsInternalUrlService, "internalCiUrl", Optional.of(new URI("http://www.host.name.com/").toURL()));
+        ReflectionTestUtils.setField(jenkinsInternalUrlService, "internalVcsUrl", Optional.of(new URI("http://www.hostname.com/").toURL()));
 
         var newVcsUrl = jenkinsInternalUrlService.toInternalVcsUrl(vcsRepositoryUri);
         assertThat(newVcsUrl).hasToString("http://www.hostname.com/some-repo.git");
