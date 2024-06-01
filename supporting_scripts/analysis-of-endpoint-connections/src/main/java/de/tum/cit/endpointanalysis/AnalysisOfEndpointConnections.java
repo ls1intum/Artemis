@@ -1,23 +1,23 @@
 package de.tum.cit.endpointanalysis;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import com.thoughtworks.qdox.JavaProjectBuilder;
-import com.thoughtworks.qdox.model.JavaAnnotation;
-import com.thoughtworks.qdox.model.JavaClass;
-import com.thoughtworks.qdox.model.JavaMethod;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.thoughtworks.qdox.JavaProjectBuilder;
+import com.thoughtworks.qdox.model.JavaAnnotation;
+import com.thoughtworks.qdox.model.JavaClass;
+import com.thoughtworks.qdox.model.JavaMethod;
 
 public class AnalysisOfEndpointConnections {
 
@@ -38,8 +38,8 @@ public class AnalysisOfEndpointConnections {
     }
 
     private static void analyzeServerEndpoints(String[] filePaths) {
-        final Set<String> httpMethodClasses = Set.of(GetMapping.class.getName(), PostMapping.class.getName(), PutMapping.class.getName(),
-            DeleteMapping.class.getName(), PatchMapping.class.getName(), RequestMapping.class.getName());
+        final Set<String> httpMethodClasses = Set.of(GetMapping.class.getName(), PostMapping.class.getName(), PutMapping.class.getName(), DeleteMapping.class.getName(),
+                PatchMapping.class.getName(), RequestMapping.class.getName());
 
         JavaProjectBuilder builder = new JavaProjectBuilder();
         for (String filePath : filePaths) {
@@ -65,8 +65,8 @@ public class AnalysisOfEndpointConnections {
                 for (JavaAnnotation annotation : method.getAnnotations()) {
                     if (httpMethodClasses.contains(annotation.getType().getFullyQualifiedName())) {
                         System.out.println("Endpoint: " + method.getName());
-                        System.out
-                                .println(annotation.getType().getFullyQualifiedName().equals(RequestMapping.class.getName()) ? "RequestMapping·method: " + annotation.getProperty("method")
+                        System.out.println(
+                                annotation.getType().getFullyQualifiedName().equals(RequestMapping.class.getName()) ? "RequestMapping·method: " + annotation.getProperty("method")
                                         : "HTTP method annotation: " + annotation.getType().getName());
                         System.out.println("Path: " + annotation.getProperty("value"));
                         System.out.println("Line: " + method.getLineNumber());
