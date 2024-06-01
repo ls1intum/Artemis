@@ -6,8 +6,8 @@
             "importButton": "Übunsgruppen importieren",
             "dialogTitle": "Übungsgruppen importieren",
             "explanations": {
-                "description": "Dieses Dialogfeld ermöglicht es, Tutoriumsgruppen und Studentenregistrierungen aus einer CSV-Datei zu importieren. Wenn eine Tutoriumsgruppe noch nicht existiert, wird sie erstellt. Wenn Studenten in der CSV-Datei aufgeführt sind, werden sie von ihrer aktuellen Tutoriumsgruppe in die neue, in der CSV-Datei angegebene Gruppe verschoben.",
-                "requirements": "Jede Zeile muss den Titel der Tutoriumsgruppe enthalten. Um Studenten zu registrieren, muss jede Zeile entweder eine Matrikelnummer oder einen Login-Wert enthalten. Vor- und Nachname sind optional. Die oberste Zeile der CSV-Datei muss die Überschriften angeben."
+                "description": "Dieses Dialogfeld ermöglicht es, Tutoriumsgruppen und Studierendenregistrierungen aus einer CSV-Datei zu importieren. Wenn eine Tutoriumsgruppe noch nicht existiert, wird sie erstellt. Wenn Studierende in der CSV-Datei aufgeführt sind, werden sie von ihrer aktuellen Tutoriumsgruppe in die neue, in der CSV-Datei angegebene, Gruppe verschoben.",
+                "requirements": "Jede Zeile muss den Titel der Tutoriumsgruppe enthalten. Um Studenten zu registrieren, muss jede Zeile entweder eine Matrikelnummer oder einen Anmeldenamen enthalten. Vor- und Nachname sind optional. Die oberste Zeile der CSV-Datei muss die Spaltennamen angeben."
             },
             "supportedHeaderNames": {
                 "label": "Unterstützte Spaltennamen (Versionen mit Leerzeichen, Unterstrichen, Bindestrichen und Grossbuchstaben werden ebenfalls unterstützt): ",
@@ -16,7 +16,7 @@
                 "alwaysOptional": "Immer optional (nur für Anzeigzwecke): ",
                 "tutorialGroupTitle": "Für den Tiel der Übungsgruppe: Übungsgruppe",
                 "registrationNumber": "Für die Immatrikulationsnummer: Matrikelnummer",
-                "login": "Für den Benutznermane: Benutzername",
+                "login": "Für den Anmeldename: Anmeldename",
                 "firstName": "Für den Vornamen: Vorname",
                 "lastName": "Für den Nachnamen: Nachname oder Familienname"
             },
@@ -24,13 +24,13 @@
                 "genericErrorMessage": "Import von Übungsgruppen sind fehlgeschlagen!",
                 "withoutTitle": "Die folgenden Zeilen enthalten keinen Übungsgruppen Titel: ",
                 "invalidTitle": "Die folgenden Zeilen haben einen ungültigen Titel für die Übungsgruppe (Titel dürfen nur Buchstaben, Zahlen, Leerzeichen und Bindestriche und maximal 19 Zeichen enthalten): ",
-                "noIdentificationInformation": "Die folgenden Zeilen geben einen Benutzer an, enthalten jedoch keinen Benutzernamen oder Immatrikulationsnummer: ",
-                "duplicatedLogins": "Die folgenden Benutzernamen werden mehreren Übungsgruppen zugeordnet: ",
+                "noIdentificationInformation": "Die folgenden Zeilen geben einen Benutzer an, enthalten jedoch keinen Anmeldenamen oder Immatrikulationsnummer: ",
+                "duplicatedLogins": "Die folgenden Anmeldenamen werden mehreren Übungsgruppen zugeordnet: ",
                 "duplicatedRegistrationNumbers": "Die folgenden Immatrikulationsnummern werden mehreren Übungsgruppen zugeordnet: "
             },
             "serverErrors": {
                 "notitle": "Kein Übungsgruppen Titel",
-                "nologinorregistrationnumber": "Kein Benutzername oder Immatrikulationsnummer",
+                "nologinorregistrationnumber": "Kein Anmeldename oder Immatrikulationsnummer",
                 "nouserfound": "Kein passender Studierender im Kurs gefunden",
                 "multipleregistrations": "Mehrere Registrierungen in CSV für Studierenden"
             },
@@ -57,8 +57,8 @@
             },
             "table": {
                 "example1": "Beispiel CSV-Format (mindestens):",
-                "example2": "Beispiel CSV-Format zur Registrierung von Studenten mit Matrikelnummer:",
-                "example3": "Beispiel CSV-Format zur Registrierung von Studenten mit Login:",
+                "example2": "Beispiel CSV-Format zur Registrierung von Studierenden mit Matrikelnummer:",
+                "example3": "Beispiel CSV-Format zur Registrierung von Studierenden mit Login:",
                 "showNotImportedButton": "Nicht importierte Registrierungen",
                 "showImportedButton": "Importierte Registrierungen",
                 "showAllButton": "Alle Registrierungen",
@@ -67,7 +67,7 @@
                 "columns": {
                     "title": "Übungsgruppe",
                     "registrationNumber": "Matrikelnummer",
-                    "login": "Benutzername",
+                    "login": "Anmeldename",
                     "firstName": "Vorname",
                     "lastName": "Nachname",
                     "error": "Fehler"

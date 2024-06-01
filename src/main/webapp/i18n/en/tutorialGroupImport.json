@@ -6,7 +6,7 @@
             "importButton": "Import Tutorial Groups",
             "dialogTitle": "Import Tutorial Group Registrations",
             "explanations": {
-                "description": "This dialog allows you to import tutorial groups and student registrations from a CSV file. If a tutorial group does not exist, it will be created. If students are listed in the csv then they will be moved from their current tutorial group to the new one specified in the CSV file.",
+                "description": "This dialog allows you to import tutorial groups and student registrations from a CSV file. If a tutorial group does not exist, it will be created. If students are listed in the CSV then they will be moved from their current tutorial group to the new one specified in the CSV file.",
                 "requirements": "Each row must include a value for the tutorial group title. To register students, each row must include a value for either the matriculation number or the login. First and last names are optional. The top row of the CSV file must specify the headers."
             },
             "supportedHeaderNames": {
