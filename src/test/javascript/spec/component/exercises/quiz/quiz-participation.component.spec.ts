@@ -134,6 +134,7 @@ describe('QuizParticipationComponent', () => {
     let httpMock: HttpTestingController;
     let exerciseService: QuizExerciseService;
     let participationService: ParticipationService;
+    let quizExerciseService: QuizExerciseService;
 
     describe('live mode', () => {
         beforeEach(() => {
@@ -174,8 +175,10 @@ describe('QuizParticipationComponent', () => {
                     participationService = fixture.debugElement.injector.get(ParticipationService);
                     const participation: StudentParticipation = { exercise: { ...quizExercise } };
                     participationSpy = jest
-                        .spyOn(participationService, 'findParticipationForCurrentUser')
+                        .spyOn(participationService, 'startQuizParticipation')
                         .mockReturnValue(of({ body: participation } as HttpResponse<StudentParticipation>));
+                    quizExerciseService = fixture.debugElement.injector.get(QuizExerciseService);
+                    jest.spyOn(quizExerciseService, 'findForStudent').mockReturnValue(of({ body: { ...quizExercise } } as HttpResponse<QuizExercise>));
                     httpMock = fixture.debugElement.injector.get(HttpTestingController);
                 });
         });
@@ -218,7 +221,7 @@ describe('QuizParticipationComponent', () => {
                 },
             ];
             participationSpy = jest
-                .spyOn(participationService, 'findParticipationForCurrentUser')
+                .spyOn(participationService, 'startQuizParticipation')
                 .mockReturnValue(of({ body: { exercise: individualQuizExercise } } as HttpResponse<StudentParticipation>));
             fixture.detectChanges();
 
@@ -243,7 +246,7 @@ describe('QuizParticipationComponent', () => {
                 },
             ];
             participationSpy = jest
-                .spyOn(participationService, 'findParticipationForCurrentUser')
+                .spyOn(participationService, 'startQuizParticipation')
                 .mockReturnValue(of({ body: { exercise: notIndividualQuizExercise } } as HttpResponse<StudentParticipation>));
             fixture.detectChanges();
 
@@ -331,9 +334,7 @@ describe('QuizParticipationComponent', () => {
             exerciseService = fixture.debugElement.injector.get(QuizExerciseService);
             const participationService = fixture.debugElement.injector.get(ParticipationService);
             const participation: StudentParticipation = { exercise: { ...quizExercise, quizBatches: [], quizMode, quizStarted: false } as QuizExercise };
-            participationSpy = jest
-                .spyOn(participationService, 'findParticipationForCurrentUser')
-                .mockReturnValue(of({ body: participation } as HttpResponse<StudentParticipation>));
+            participationSpy = jest.spyOn(participationService, 'startQuizParticipation').mockReturnValue(of({ body: participation } as HttpResponse<StudentParticipation>));
 
             fixture.detectChanges();
 
@@ -358,7 +359,7 @@ describe('QuizParticipationComponent', () => {
             const individualQuizExercise = { ...quizExercise };
             individualQuizExercise.quizMode = QuizMode.INDIVIDUAL;
             participationSpy = jest
-                .spyOn(participationService, 'findParticipationForCurrentUser')
+                .spyOn(participationService, 'startQuizParticipation')
                 .mockReturnValue(of({ body: { exercise: individualQuizExercise } } as HttpResponse<StudentParticipation>));
             fixture.detectChanges();
 
@@ -439,17 +440,10 @@ describe('QuizParticipationComponent', () => {
             expect(component.showingResult).toBeTrue();
         });
 
-        it.skip('should update on selection changes', () => {
-            // TODO: This is no longer the case.
-            const webSocketService = fixture.debugElement.injector.get(JhiWebsocketService);
-            const webSocketSpy = jest.spyOn(webSocketService, 'send').mockImplementation();
-            const applySpy = jest.spyOn(component, 'applySelection');
+        it('should mark changes as unsaved when an answer changes', () => {
             fixture.detectChanges();
-
             component.onSelectionChanged();
-
-            expect(applySpy).toHaveBeenCalledOnce();
-            expect(webSocketSpy).toHaveBeenCalledOnce();
+            expect(component.unsavedChanges).toBeTrue();
         });
 
         it('should react to errors', () => {
@@ -481,19 +475,6 @@ describe('QuizParticipationComponent', () => {
             component.applyQuizFull(quizToApply);
             expect(component.quizExercise).toEqual(quizToApply);
             expect(component.quizExercise.releaseDate!.toString()).toBe(releaseDate.toString());
-        });
-
-        it('should apply participation', () => {
-            const submission: QuizSubmission = { id: 1, submissionDate: dayjs().subtract(10, 'minutes'), submittedAnswers: [] };
-            const result: Result = { id: 1, submission };
-            const endedQuizExercise = { ...quizExercise, quizEnded: true };
-            const participation: StudentParticipation = { exercise: endedQuizExercise, results: [result] };
-
-            component.quizExercise = quizExercise;
-            component.updateParticipationFromServer(participation);
-
-            expect(component.submission.id).toBe(submission.id);
-            expect(component.quizExercise.quizEnded).toBeTrue();
         });
     });
 
