@@ -32,7 +32,7 @@ public class AnalysisOfEndpointConnections {
             return;
         }
         String[] filePaths = args[0].split("\n");
-        String[] serverFiles = Arrays.stream(filePaths).map(filePath -> "../../" + filePath).filter(filePath -> new File(filePath).exists() && filePath.endsWith(".java"))
+        String[] serverFiles = Arrays.stream(filePaths).map(filePath -> Paths.get("..", "..", filePath).toString()).filter(filePath -> Files.exists(Paths.get(filePath)) && filePath.endsWith(".java"))
                 .toArray(String[]::new);
         analyzeServerEndpoints(serverFiles);
     }
