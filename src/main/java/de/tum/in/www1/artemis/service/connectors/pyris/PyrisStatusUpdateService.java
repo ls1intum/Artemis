@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageStateDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageState;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.tutorChat.PyrisTutorChatStatusUpdateDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.PyrisJob;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.TutorChatJob;
@@ -38,7 +38,7 @@ public class PyrisStatusUpdateService {
         irisChatSessionService.handleStatusUpdate(job, statusUpdate);
 
         var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state)
-                .allMatch(state -> state == PyrisStageStateDTO.DONE || state == PyrisStageStateDTO.ERROR || state == PyrisStageStateDTO.SKIPPED);
+                .allMatch(state -> state == PyrisStageState.DONE || state == PyrisStageState.ERROR || state == PyrisStageState.SKIPPED);
         if (isDone) {
             pyrisJobService.removeJob(job.jobId());
         }

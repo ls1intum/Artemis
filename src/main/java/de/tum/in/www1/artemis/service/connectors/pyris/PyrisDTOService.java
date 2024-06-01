@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisBuildLogEntryDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisFeedbackDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisJsonMessageContentDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisMessageContentDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisMessageContentBaseDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisMessageDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisProgrammingExerciseDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisResultDTO;
@@ -98,7 +98,7 @@ public class PyrisDTOService {
     public List<PyrisMessageDTO> toPyrisDTO(List<IrisMessage> messages) {
         return messages.stream().map(message -> {
             var content = message.getContent().stream().map(messageContent -> {
-                PyrisMessageContentDTO result = null;
+                PyrisMessageContentBaseDTO result = null;
                 if (messageContent.getClass().equals(IrisTextMessageContent.class)) {
                     result = new PyrisTextMessageContentDTO(messageContent.getContentAsString());
                 }
