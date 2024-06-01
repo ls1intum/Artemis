@@ -101,14 +101,6 @@
             "@angular/forms": "^18.0.0",
             "@angular/router": "^18.0.0"
         },
-        "ngx-infinite-scroll": {
-            "@angular/cdk": "^18.0.0",
-            "@angular/common": "^18.0.0",
-            "@angular/core": "^18.0.0",
-            "@angular/localize": "^18.0.0",
-            "@angular/forms": "^18.0.0",
-            "@angular/router": "^18.0.0"
-        },
         "ngx-webstorage": {
             "@angular/cdk": "^18.0.0",
             "@angular/common": "^18.0.0",
@@ -149,7 +141,6 @@
             "d3-selection": "^3.0.0",
             "d3-transition": "^3.0.0"
         },
-        "ajv": "8.13.0",
         "axios": "1.7.2",
         "critters": "0.0.22",
         "debug": "4.3.4",
@@ -162,7 +153,7 @@
         },
         "tough-cookie": "4.1.4",
         "undici": "6.18.1",
-        "vite": "5.2.11",
+        "vite": "5.2.12",
         "webpack-dev-middleware": "7.2.1",
         "word-wrap": "1.2.5",
         "yargs-parser": "21.1.1"
