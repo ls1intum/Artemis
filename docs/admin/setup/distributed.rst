@@ -585,17 +585,17 @@ You can make following adaptations to the ``application-prod.yml``:
 
 Furthermore, you will need some configuration related to version control and continuous integration.
 
-3. Build agents require access to the VC server. Therefore, you need to add Artemis admin credentials so the build agent can access the repositories:
+3. Build agents require access to the VC server. Therefore, you need to add credentials so the build agent can access the repositories.
+These credentials are used to clone repositories via HTTPS. You must also add these credentials to the localvc nodes.
 
     .. code-block:: yaml
 
         artemis:
             version-control:
-                url: <url-to-your-vc-server>
                 default-branch: main # The branch that should be used as default branch for all newly created repositories. This does NOT have to be equal to the default branch of the VCS
                 # Artemis admin credentials
-                user: <artemis-admin>
-                password: <artemis-admin-password>
+                build-agent-git-username: buildjob_user # Replace with more secure credentials for production. Required for https access to localvc
+                build-agent-git-password: buildjob_password # Replace with more secure credentials for production. Required for https access to localvc. You can otherwise use an ssh key
 
 4. Configuration related to the execution of build jobs:
 

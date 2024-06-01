@@ -7,9 +7,8 @@ artemis:
     repo-clone-path: ./repos
     repo-download-clone-path: ./repos-download
     version-control:
-        url: http://localhost:8000  # TODO: is this really needed for build agents?
-        build-agent-git-username: buildjob_user # Required for https access to localvc
-        build-agent-git-password: buildjob_password # Required for https access to localvc. You can otherwise use a token, or ssh key
+        build-agent-git-username: buildjob_user # Replace with more secure credentials for production. Required for https access to localvc
+        build-agent-git-password: buildjob_password # Replace with more secure credentials for production. Required for https access to localvc. You can otherwise use an ssh key
     continuous-integration:
         docker-connection-uri: unix:///var/run/docker.sock
         specify-concurrent-builds: false

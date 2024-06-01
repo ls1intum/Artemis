@@ -26,7 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.util.Pair;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -199,8 +198,9 @@ public class LocalVCServletService {
 
         // If it is a fetch request, we check if it is the build agent that is fetching the repository.
         if (repositoryAction == RepositoryActionType.READ) {
-            Pair<String, String> usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
-            if (usernameAndPassword.getFirst().equals(buildAgentGitUsername) && usernameAndPassword.getSecond().equals(buildAgentGitPassword)) {
+            UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
+            if (Objects.equals(usernameAndPassword.username(), buildAgentGitUsername) && Objects.equals(usernameAndPassword.password(), buildAgentGitPassword)) {
+                // Authentication successful, no further checks needed
                 return;
             }
         }
@@ -237,10 +237,10 @@ public class LocalVCServletService {
 
     private User authenticateUser(String authorizationHeader) throws LocalVCAuthException {
 
-        Pair<String, String> usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
+        UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
 
-        String username = usernameAndPassword.getFirst();
-        String password = usernameAndPassword.getSecond();
+        String username = usernameAndPassword.username();
+        String password = usernameAndPassword.password();
 
         var user = userRepository.findOneByLogin(username);
 
@@ -320,7 +320,7 @@ public class LocalVCServletService {
         return new String(Base64.getDecoder().decode(basicAuthCredentialsEncoded[1]));
     }
 
-    private Pair<String, String> extractUsernameAndPassword(String authorizationHeader) throws LocalVCAuthException {
+    private UsernameAndPassword extractUsernameAndPassword(String authorizationHeader) throws LocalVCAuthException {
         String basicAuthCredentials = checkAuthorizationHeader(authorizationHeader);
         int separatorIndex = basicAuthCredentials.indexOf(":");
 
@@ -330,7 +330,7 @@ public class LocalVCServletService {
         String username = basicAuthCredentials.substring(0, separatorIndex);
         String password = basicAuthCredentials.substring(separatorIndex + 1);
 
-        return Pair.of(username, password);
+        return new UsernameAndPassword(username, password);
     }
 
     /**
@@ -615,5 +615,8 @@ public class LocalVCServletService {
     public static String getDefaultBranchOfRepository(Repository repository) {
         Path repositoryFolderPath = repository.getDirectory().toPath();
         return LocalVCService.getDefaultBranchOfRepository(repositoryFolderPath.toString());
+    }
+
+    record UsernameAndPassword(String username, String password) {
     }
 }
