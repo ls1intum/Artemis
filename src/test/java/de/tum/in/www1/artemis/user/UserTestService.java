@@ -713,11 +713,11 @@ public class UserTestService {
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
 
-        assertThat(dto.getPassword()).isNotEmpty();
+        assertThat(dto.password()).isNotEmpty();
 
         User currentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
-        assertThat(passwordService.checkPasswordMatch(dto.getPassword(), currentUser.getPassword())).isTrue();
+        assertThat(passwordService.checkPasswordMatch(dto.password(), currentUser.getPassword())).isTrue();
         assertThat(passwordService.checkPasswordMatch(password, currentUser.getPassword())).isFalse();
         assertThat(currentUser.getActivated()).isTrue();
         assertThat(currentUser.isInternal()).isTrue();
@@ -735,7 +735,7 @@ public class UserTestService {
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
 
-        assertThat(dto.getPassword()).isNull();
+        assertThat(dto.password()).isNull();
 
         User currentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
@@ -754,7 +754,7 @@ public class UserTestService {
         userRepository.save(user);
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
-        assertThat(dto.getPassword()).isNull();
+        assertThat(dto.password()).isNull();
 
         User currentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(currentUser.getPassword()).isEqualTo(password);
@@ -773,7 +773,7 @@ public class UserTestService {
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
 
-        assertThat(dto.getPassword()).isNull();
+        assertThat(dto.password()).isNull();
 
         User currentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
