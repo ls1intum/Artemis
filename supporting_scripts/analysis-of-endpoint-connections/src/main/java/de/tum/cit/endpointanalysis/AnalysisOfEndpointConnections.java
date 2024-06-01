@@ -1,7 +1,8 @@
 package de.tum.cit.endpointanalysis;
 
 import java.io.File;
-import java.nio.file.Path;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -33,7 +34,8 @@ public class AnalysisOfEndpointConnections {
             return;
         }
         String[] filePaths = args[0].split("\n");
-        String[] serverFiles = Arrays.stream(filePaths).filter(filePath -> Path.of("..", "..", filePath).toFile().exists() && filePath.endsWith(".java")).toArray(String[]::new);
+        String[] serverFiles = Arrays.stream(filePaths).map(filePath -> Paths.get("..", "..", filePath).toString()).filter(filePath -> Files.exists(Paths.get(filePath)) && filePath.endsWith(".java"))
+                .toArray(String[]::new);
         analyzeServerEndpoints(serverFiles);
     }
 
