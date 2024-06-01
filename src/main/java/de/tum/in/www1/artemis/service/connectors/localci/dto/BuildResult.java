@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestwiseCov
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.BuildJobDTOInterface;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
-import de.tum.in.www1.artemis.service.dto.TestCaseDTOInterface;
+import de.tum.in.www1.artemis.service.dto.TestCaseBaseDTO;
 
 /**
  * Represents all the information returned by the local CI system about a build.
@@ -156,15 +156,16 @@ public class BuildResult extends AbstractBuildResultNotificationDTO implements S
      * @param failedTests     list of failed tests.
      * @param successfulTests list of successful tests.
      */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record LocalCIJobDTO(List<LocalCITestJobDTO> failedTests, List<LocalCITestJobDTO> successfulTests) implements BuildJobDTOInterface, Serializable {
 
         @Override
-        public List<? extends TestCaseDTOInterface> getFailedTests() {
+        public List<? extends TestCaseBaseDTO> getFailedTests() {
             return failedTests;
         }
 
         @Override
-        public List<? extends TestCaseDTOInterface> getSuccessfulTests() {
+        public List<? extends TestCaseBaseDTO> getSuccessfulTests() {
             return successfulTests;
         }
     }
@@ -175,7 +176,8 @@ public class BuildResult extends AbstractBuildResultNotificationDTO implements S
      * @param name   name of the test case.
      * @param errors list of error messages.
      */
-    public record LocalCITestJobDTO(String name, List<String> errors) implements TestCaseDTOInterface, Serializable {
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record LocalCITestJobDTO(String name, List<String> errors) implements TestCaseBaseDTO, Serializable {
 
         @Override
         public String getName() {
