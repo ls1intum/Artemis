@@ -53,10 +53,9 @@ public class PyrisStatusUpdateService {
     public void handleStatusUpdate(PyrisJob job, PyrisLectureIngestionStatusUpdateDTO statusUpdate) {
         log.info("Ingestion job status updated with result: {}", statusUpdate.result());
         var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state)
-                .allMatch(state -> state == PyrisStageStateDTO.DONE || state == PyrisStageStateDTO.ERROR || state == PyrisStageStateDTO.SKIPPED);
+                .allMatch(state -> state == PyrisStageState.DONE || state == PyrisStageState.ERROR || state == PyrisStageState.SKIPPED);
         if (isDone) {
             pyrisJobService.removeJob(job.jobId());
         }
     }
 }
-// this class is failing because it says PyrisStageStateDTO is not imported
