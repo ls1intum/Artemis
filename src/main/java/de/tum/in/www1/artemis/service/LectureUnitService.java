@@ -42,8 +42,6 @@ import de.tum.in.www1.artemis.service.connectors.pyris.PyrisWebhookService;
 @Service
 public class LectureUnitService {
 
-    private final Optional<PyrisWebhookService> pyrisWebhookService;
-
     private final LectureUnitRepository lectureUnitRepository;
 
     private final LectureRepository lectureRepository;
@@ -58,10 +56,11 @@ public class LectureUnitService {
 
     private final ExerciseRepository exerciseRepository;
 
-    public LectureUnitService(Optional<PyrisWebhookService> pyrisWebhookService, LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository,
-            CompetencyRepository competencyRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository, FileService fileService, SlideRepository slideRepository,
-            ExerciseRepository exerciseRepository) {
-        this.pyrisWebhookService = pyrisWebhookService;
+    private final Optional<PyrisWebhookService> pyrisWebhookService;
+
+    public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, CompetencyRepository competencyRepository,
+            LectureUnitCompletionRepository lectureUnitCompletionRepository, FileService fileService, SlideRepository slideRepository, ExerciseRepository exerciseRepository,
+            Optional<PyrisWebhookService> pyrisWebhookService) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.competencyRepository = competencyRepository;
@@ -69,6 +68,7 @@ public class LectureUnitService {
         this.fileService = fileService;
         this.slideRepository = slideRepository;
         this.exerciseRepository = exerciseRepository;
+        this.pyrisWebhookService = pyrisWebhookService;
     }
 
     /**

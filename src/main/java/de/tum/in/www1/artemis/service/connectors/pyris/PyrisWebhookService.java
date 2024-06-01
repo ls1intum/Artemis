@@ -8,8 +8,6 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -19,15 +17,13 @@ import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisPipelineExecutionSettingsDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureIngestionWebhook.PyrisLectureUnitWebhookDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureIngestionWebhook.PyrisWebhookLectureIngestionExecutionDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureingestionwebhook.PyrisLectureUnitWebhookDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 
 @Service
 @Profile("iris")
 public class PyrisWebhookService {
-
-    private static final Logger log = LoggerFactory.getLogger(PyrisWebhookService.class);
 
     private final PyrisConnectorService pyrisConnectorService;
 
@@ -61,37 +57,24 @@ public class PyrisWebhookService {
     }
 
     private PyrisLectureUnitWebhookDTO processAttachmentForUpdate(AttachmentUnit attachmentUnit) {
-        try {
-            int lectureUnitId = attachmentUnit.hashCode();
-            String lectureUnitName = attachmentUnit.getName();
-            int lectureId = attachmentUnit.getLecture().hashCode();
-            String lectureTitle = attachmentUnit.getLecture().getTitle();
-            int courseId = attachmentUnit.getLecture().getCourse().hashCode();
-            String courseTitle = attachmentUnit.getLecture().getCourse().getTitle();
-            String courseDescription = attachmentUnit.getLecture().getCourse().getDescription() == null ? "" : attachmentUnit.getLecture().getCourse().getDescription();
-            String base64EncodedPdf = attachmentToBase64(attachmentUnit);
-            return new PyrisLectureUnitWebhookDTO(true, artemisBaseUrl, base64EncodedPdf, lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle,
-                    courseDescription);
+        int lectureUnitId = attachmentUnit.hashCode();
+        String lectureUnitName = attachmentUnit.getName();
+        int lectureId = attachmentUnit.getLecture().hashCode();
+        String lectureTitle = attachmentUnit.getLecture().getTitle();
+        int courseId = attachmentUnit.getLecture().getCourse().hashCode();
+        String courseTitle = attachmentUnit.getLecture().getCourse().getTitle();
+        String courseDescription = attachmentUnit.getLecture().getCourse().getDescription() == null ? "" : attachmentUnit.getLecture().getCourse().getDescription();
+        String base64EncodedPdf = attachmentToBase64(attachmentUnit);
+        return new PyrisLectureUnitWebhookDTO(true, artemisBaseUrl, base64EncodedPdf, lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle,
+                courseDescription);
 
-        }
-        catch (Exception e) {
-            log.error("Failed to process attachment for unit: {}", attachmentUnit.getName(), e);
-            return null;
-        }
     }
 
     private PyrisLectureUnitWebhookDTO processAttachmentForDeletion(AttachmentUnit attachmentUnit) {
-        try {
-            int lectureUnitId = attachmentUnit.hashCode();
-            int lectureId = attachmentUnit.getLecture().hashCode();
-            int courseId = attachmentUnit.getLecture().getCourse().hashCode();
-            return new PyrisLectureUnitWebhookDTO(false, artemisBaseUrl, "", lectureUnitId, "", lectureId, "", courseId, "", "");
-
-        }
-        catch (Exception e) {
-            log.error("Failed to process attachment for unit: {}", attachmentUnit.getName(), e);
-            return null;
-        }
+        int lectureUnitId = attachmentUnit.hashCode();
+        int lectureId = attachmentUnit.getLecture().hashCode();
+        int courseId = attachmentUnit.getLecture().getCourse().hashCode();
+        return new PyrisLectureUnitWebhookDTO(false, artemisBaseUrl, "", lectureUnitId, "", lectureId, "", courseId, "", "");
     }
 
     /**

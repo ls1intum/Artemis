@@ -33,8 +33,6 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 @Service
 public class LectureService {
 
-    private final Optional<PyrisWebhookService> pyrisWebhookService;
-
     private final LectureRepository lectureRepository;
 
     private final AuthorizationCheckService authCheckService;
@@ -43,13 +41,15 @@ public class LectureService {
 
     private final ChannelService channelService;
 
-    public LectureService(Optional<PyrisWebhookService> pyrisWebhookService, LectureRepository lectureRepository, AuthorizationCheckService authCheckService,
-            ChannelRepository channelRepository, ChannelService channelService) {
-        this.pyrisWebhookService = pyrisWebhookService;
+    private final Optional<PyrisWebhookService> pyrisWebhookService;
+
+    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository, ChannelService channelService,
+            Optional<PyrisWebhookService> pyrisWebhookService) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
         this.channelRepository = channelRepository;
         this.channelService = channelService;
+        this.pyrisWebhookService = pyrisWebhookService;
     }
 
     /**

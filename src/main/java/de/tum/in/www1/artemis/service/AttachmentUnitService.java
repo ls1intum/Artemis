@@ -29,8 +29,6 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @Service
 public class AttachmentUnitService {
 
-    private final Optional<PyrisWebhookService> pyrisWebhookService;
-
     private final AttachmentUnitRepository attachmentUnitRepository;
 
     private final AttachmentRepository attachmentRepository;
@@ -41,14 +39,16 @@ public class AttachmentUnitService {
 
     private final SlideRepository slideRepository;
 
-    public AttachmentUnitService(Optional<PyrisWebhookService> pyrisWebhookService, SlideRepository slideRepository, SlideSplitterService slideSplitterService,
-            AttachmentUnitRepository attachmentUnitRepository, AttachmentRepository attachmentRepository, FileService fileService) {
-        this.pyrisWebhookService = pyrisWebhookService;
+    private final Optional<PyrisWebhookService> pyrisWebhookService;
+
+    public AttachmentUnitService(SlideRepository slideRepository, SlideSplitterService slideSplitterService, AttachmentUnitRepository attachmentUnitRepository,
+            AttachmentRepository attachmentRepository, FileService fileService, Optional<PyrisWebhookService> pyrisWebhookService) {
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
         this.slideSplitterService = slideSplitterService;
         this.slideRepository = slideRepository;
+        this.pyrisWebhookService = pyrisWebhookService;
     }
 
     /**

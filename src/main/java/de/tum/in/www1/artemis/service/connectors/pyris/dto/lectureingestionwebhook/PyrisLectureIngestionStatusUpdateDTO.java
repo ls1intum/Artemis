@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureIngestionWebhook;
+package de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureingestionwebhook;
 
 import java.util.List;
 
