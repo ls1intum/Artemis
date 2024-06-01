@@ -35,7 +35,7 @@ describe('DetailOverviewList', () => {
     let fixture: ComponentFixture<DetailOverviewListComponent>;
     let modalService: NgbModal;
     let modelingService: ModelingExerciseService;
-    let alertServide: AlertService;
+    let alertService: AlertService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -53,7 +53,7 @@ describe('DetailOverviewList', () => {
             .then(() => {
                 modalService = fixture.debugElement.injector.get(NgbModal);
                 modelingService = fixture.debugElement.injector.get(ModelingExerciseService);
-                alertServide = fixture.debugElement.injector.get(AlertService);
+                alertService = fixture.debugElement.injector.get(AlertService);
             });
 
         fixture = TestBed.createComponent(DetailOverviewListComponent);
@@ -118,7 +118,7 @@ describe('DetailOverviewList', () => {
 
     it('should error on download apollon Diagram fail', () => {
         jest.spyOn(modelingService, 'convertToPdf').mockReturnValue(throwError(() => new HttpResponse({ body: new Blob() })));
-        const errorSpy = jest.spyOn(alertServide, 'error');
+        const errorSpy = jest.spyOn(alertService, 'error');
         component.downloadApollonDiagramAsPDf({} as UMLModel, 'title');
         expect(errorSpy).toHaveBeenCalledOnce();
     });
