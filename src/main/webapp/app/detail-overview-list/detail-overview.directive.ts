@@ -4,7 +4,7 @@ import { DetailType } from 'app/detail-overview-list/detail-overview-list.compon
 import { TextDetailComponent } from 'app/detail-overview-list/components/text-detail.component';
 
 @Directive({
-    selector: '[jhi-exercise-detail]',
+    selector: '[jhiExerciseDetail]',
     standalone: true,
 })
 export class SidebarCardDirective implements OnInit, OnDestroy {
