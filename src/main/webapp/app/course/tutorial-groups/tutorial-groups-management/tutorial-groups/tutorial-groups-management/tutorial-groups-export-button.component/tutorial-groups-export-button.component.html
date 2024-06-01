@@ -8,10 +8,16 @@
     <div class="modal-body">
         <form>
             <p>{{ 'artemisApp.tutorialGroupExportDialog.description' | artemisTranslate }}</p>
+            <div>
+                <div class="form-check" style="margin-bottom: 1rem">
+                    <input class="form-check-input" type="checkbox" (change)="toggleSelectAll()" [checked]="selectAll" />
+                    <label class="form-check-label">{{ 'artemisApp.tutorialGroupExportDialog.selectAll' | artemisTranslate }}</label>
+                </div>
+            </div>
             @for (field of availableFields; track field) {
                 <div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" [value]="field.value" (change)="onFieldSelectionChange($event)" />
+                    <div class="form-check" style="margin-bottom: 0.5rem">
+                        <input class="form-check-input" type="checkbox" [value]="field.value" [checked]="field.selected" (change)="onFieldSelectionChange(field)" />
                         <label class="form-check-label">{{ field.name }}</label>
                     </div>
                 </div>

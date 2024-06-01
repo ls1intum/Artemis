@@ -21,18 +21,20 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
 
     @Output() exportFinished: EventEmitter<void> = new EventEmitter();
 
+    selectAll = false;
+
     selectedFields: string[] = [];
     availableFields = [
-        { name: 'ID', value: 'ID' },
-        { name: 'Title', value: 'Title' },
-        { name: 'Day of Week', value: 'Day of Week' },
-        { name: 'Start Time', value: 'Start Time' },
-        { name: 'Location', value: 'Location' },
-        { name: 'Campus', value: 'Campus' },
-        { name: 'Language', value: 'Language' },
-        { name: 'Additional Information', value: 'Additional Information' },
-        { name: 'Capacity', value: 'Capacity' },
-        { name: 'Is Online', value: 'Is Online' },
+        { name: 'ID', value: 'ID', selected: false },
+        { name: 'Title', value: 'Title', selected: false },
+        { name: 'Day of Week', value: 'Day of Week', selected: false },
+        { name: 'Start Time', value: 'Start Time', selected: false },
+        { name: 'Location', value: 'Location', selected: false },
+        { name: 'Campus', value: 'Campus', selected: false },
+        { name: 'Language', value: 'Language', selected: false },
+        { name: 'Additional Information', value: 'Additional Information', selected: false },
+        { name: 'Capacity', value: 'Capacity', selected: false },
+        { name: 'Is Online', value: 'Is Online', selected: false },
     ];
 
     constructor(
@@ -60,18 +62,20 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
             });
     }
 
-    onFieldSelectionChange(event: Event) {
-        const checkbox = event.target as HTMLInputElement;
-        const value = checkbox.value;
+    toggleSelectAll() {
+        this.selectAll = !this.selectAll;
+        this.availableFields.forEach((field) => (field.selected = this.selectAll));
+        this.updateSelectedFields();
+    }
 
-        if (checkbox.checked) {
-            this.selectedFields.push(value);
-        } else {
-            const index = this.selectedFields.indexOf(value);
-            if (index > -1) {
-                this.selectedFields.splice(index, 1);
-            }
-        }
+    onFieldSelectionChange(field: any) {
+        field.selected = !field.selected;
+        this.selectAll = false;
+        this.updateSelectedFields();
+    }
+
+    updateSelectedFields() {
+        this.selectedFields = this.availableFields.filter((field) => field.selected).map((field) => field.value);
     }
 
     exportCSV(modal: NgbModalRef) {

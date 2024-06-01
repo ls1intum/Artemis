@@ -6,7 +6,8 @@
             "description": "Please select at least one checkbox:",
             "toolTip": "This dialog can be used to export tutorial groups to a CSV file. You can choose which information you want to include in your CSV file.",
             "cancel": "Cancel",
-            "export": "Export"
+            "export": "Export",
+            "selectAll": "Select all"
         }
     }
 }

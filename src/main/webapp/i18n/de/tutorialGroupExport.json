@@ -3,10 +3,11 @@
         "tutorialGroupExportDialog": {
             "buttonHeader": "Tutoriumsgruppen als CSV exportieren",
             "header": "Bitte wähle die zu exportierenden Felder aus",
-            "description": "Felder für CSV-Export auswählen:",
+            "description": "Bitte mindestens ein Feld für den CSV-Export auswählen:",
             "toolTip": "Dieser Dialog kann verwendet werden, um Tutoriumsgruppen in eine CSV-Datei zu exportieren. Du kannst auswählen, welche Informationen du in deine CSV-Datei aufnehmen möchtest.",
             "cancel": "Abbrechen",
-            "export": "Exportieren"
+            "export": "Exportieren",
+            "selectAll": "Alle auswählen"
         }
     }
 }
