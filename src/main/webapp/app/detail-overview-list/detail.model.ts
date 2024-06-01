@@ -18,7 +18,7 @@ export type Detail = NotShownDetail | ShownDetail;
 
 type NotShownDetail = false | undefined;
 
-type ShownDetail =
+export type ShownDetail =
     | TextDetail
     | DateDetail
     | LinkDetail
@@ -42,7 +42,7 @@ interface DetailBase {
     titleHelpText?: string;
 }
 
-interface TextDetail extends DetailBase {
+export interface TextDetail extends DetailBase {
     type: DetailType.Text;
     data: { text?: string | number };
 }
