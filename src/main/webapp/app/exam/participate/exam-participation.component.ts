@@ -551,6 +551,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.workingTimeUpdateEventsSubscription?.unsubscribe();
         this.problemStatementUpdateEventsSubscription?.unsubscribe();
         this.examParticipationService.resetExamLayout();
+        this.profileSubscription?.unsubscribe();
         window.clearInterval(this.autoSaveInterval);
     }
 

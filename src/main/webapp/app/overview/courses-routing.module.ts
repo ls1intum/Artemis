@@ -10,6 +10,7 @@ import { CourseExamsComponent } from './course-exams/course-exams.component';
 import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-tutorial-groups.component';
 import { CourseTutorialGroupDetailComponent } from './tutorial-group-details/course-tutorial-group-detail/course-tutorial-group-detail.component';
 import { ExamParticipationComponent } from 'app/exam/participate/exam-participation.component';
+import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 
 const routes: Routes = [
     {
@@ -239,6 +240,7 @@ const routes: Routes = [
                             showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
+                        canDeactivate: [PendingChangesGuard],
                         loadChildren: () => import('../exam/participate/exam-participation.module').then((m) => m.ArtemisExamParticipationModule),
                     },
                 ],

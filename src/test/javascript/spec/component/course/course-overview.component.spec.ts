@@ -53,6 +53,10 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -128,6 +132,7 @@ describe('CourseOverviewComponent', () => {
     let fixture: ComponentFixture<CourseOverviewComponent>;
     let courseService: CourseManagementService;
     let courseStorageService: CourseStorageService;
+    let examParticipationService: ExamParticipationService;
     let teamService: TeamService;
     let tutorialGroupsService: TutorialGroupsService;
     let tutorialGroupsConfigurationService: TutorialGroupsConfigurationService;
@@ -190,6 +195,8 @@ describe('CourseOverviewComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
                 { provide: NotificationService, useClass: MockNotificationService },
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
             ],
         })
             .compileComponents()
@@ -199,6 +206,7 @@ describe('CourseOverviewComponent', () => {
                 component = fixture.componentInstance;
                 courseService = TestBed.inject(CourseManagementService);
                 courseStorageService = TestBed.inject(CourseStorageService);
+                examParticipationService = TestBed.inject(ExamParticipationService);
                 teamService = TestBed.inject(TeamService);
                 tutorialGroupsService = TestBed.inject(TutorialGroupsService);
                 tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
@@ -644,5 +652,27 @@ describe('CourseOverviewComponent', () => {
         clickOnMoreItem.click();
 
         expect(component.dropdownOpen).toBeTrue();
+    });
+
+    it('should apply exam-wrapper and exam-is-active if exam is started', () => {
+        (examParticipationService as any).examIsStarted$ = of(true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.exam-wrapper')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('.exam-is-active')).not.toBeNull();
+
+        component.isExamStarted = false;
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.exam-wrapper')).toBeNull();
+        expect(fixture.nativeElement.querySelector('.exam-is-active')).toBeNull();
+    });
+
+    it('should display/hide sidebar if exam is started/over', () => {
+        (examParticipationService as any).examIsStarted$ = of(true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('mat-sidenav').hidden).toBeTrue();
+
+        component.isExamStarted = false;
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('mat-sidenav').hidden).toBeFalse();
     });
 });

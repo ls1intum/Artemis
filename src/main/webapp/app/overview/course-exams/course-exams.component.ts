@@ -29,7 +29,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     private parentParamSubscription?: Subscription;
     private courseUpdatesSubscription?: Subscription;
     private studentExamTestExamUpdateSubscription?: Subscription;
-    private examStartedSubscroption?: Subscription;
+    private examStartedSubscription?: Subscription;
     private studentExams: StudentExam[];
     public expandAttemptsMap = new Map<number, boolean>();
     public realExamsOfCourse: Exam[] = [];
@@ -66,9 +66,11 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         this.parentParamSubscription = this.route.parent?.params.subscribe((params) => {
             this.courseId = Number(params.courseId);
         });
-        this.examStartedSubscroption = this.examParticipationService.examIsStarted$.subscribe((isStarted) => {
+
+        this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted) => {
             this.isExamStarted = isStarted;
         });
+
         this.course = this.courseStorageService.getCourse(this.courseId);
         this.prepareSidebarData();
 
@@ -131,7 +133,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             this.courseUpdatesSubscription.unsubscribe();
         }
         this.studentExamTestExamUpdateSubscription?.unsubscribe();
-        this.examStartedSubscroption?.unsubscribe();
+        this.examStartedSubscription?.unsubscribe();
     }
 
     /**

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.component';
 import { Exam } from 'app/entities/exam.model';
@@ -19,12 +19,15 @@ import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.co
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { RouterTestingModule } from '@angular/router/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
 
 describe('CourseExamsComponent', () => {
     let component: CourseExamsComponent;
     let componentFixture: ComponentFixture<CourseExamsComponent>;
     let courseStorageService: CourseStorageService;
+    let examParticipationService: ExamParticipationService;
     let subscribeToCourseUpdates: jest.SpyInstance;
+    const router = new MockRouter();
 
     const visibleRealExam1 = {
         id: 1,
@@ -94,7 +97,9 @@ describe('CourseExamsComponent', () => {
     } as StudentExam;
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
+        router.navigate.mockImplementation(() => Promise.resolve(true));
+
+        TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule)],
             declarations: [
                 CourseExamsComponent,
@@ -106,6 +111,7 @@ describe('CourseExamsComponent', () => {
                 MockPipe(SearchFilterPipe),
             ],
             providers: [
+                { provide: Router, useValue: router },
                 {
                     provide: ActivatedRoute,
                     useValue: {
@@ -126,7 +132,9 @@ describe('CourseExamsComponent', () => {
                 component = componentFixture.componentInstance;
 
                 courseStorageService = TestBed.inject(CourseStorageService);
+                examParticipationService = TestBed.inject(ExamParticipationService);
                 subscribeToCourseUpdates = jest.spyOn(courseStorageService, 'subscribeToCourseUpdates').mockReturnValue(of());
+                (examParticipationService as any).examIsStarted$ = of(false);
                 jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({
                     exams: [visibleRealExam1, visibleRealExam2, notVisibleRealExam, visibleTestExam1, visibleTestExam2, notVisibleTestExam],
                 });
