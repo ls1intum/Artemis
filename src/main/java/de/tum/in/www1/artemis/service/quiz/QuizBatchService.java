@@ -10,6 +10,7 @@ import java.util.Set;
 import jakarta.annotation.Nullable;
 
 import org.apache.commons.lang3.RandomStringUtils;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -76,7 +77,7 @@ public class QuizBatchService {
             throw new IllegalStateException();
         }
 
-        if (quizExercise.getQuizBatches() == null) {
+        if (quizExercise.getQuizBatches() == null || !Hibernate.isInitialized(quizExercise.getQuizBatches())) {
             var quizBatch = quizBatchRepository.findFirstByQuizExercise(quizExercise);
             if (quizBatch.isPresent()) {
                 return quizBatch.get();
