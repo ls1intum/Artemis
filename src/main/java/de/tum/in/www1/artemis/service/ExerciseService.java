@@ -361,7 +361,6 @@ public class ExerciseService {
                 // if the quiz is not active the batches do not matter and there is no point in loading them
                 if (quizExercise.isQuizStarted() && !quizExercise.isQuizEnded()) {
                     // delete the proxy as it doesn't work; getQuizBatchForStudent will load the batches from the DB directly
-                    quizExercise.setQuizBatches(null);
                     quizExercise.setQuizBatches(quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin()).stream().collect(Collectors.toSet()));
                 }
             }
