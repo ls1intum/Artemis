@@ -200,7 +200,7 @@ public class LocalVCServletService {
         if (repositoryAction == RepositoryActionType.READ) {
             UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
             if (Objects.equals(usernameAndPassword.username(), buildAgentGitUsername) && Objects.equals(usernameAndPassword.password(), buildAgentGitPassword)) {
-                // Authentication successful, no further checks needed
+                // Authentication successful
                 return;
             }
         }
