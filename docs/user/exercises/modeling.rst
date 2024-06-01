@@ -213,45 +213,38 @@ Once you're done assessing the solution, you can either:
 
 Automatic Assessment Suggestions
 --------------------------------
-If the checkbox ``Automatic assessment suggestions enabled`` is checked for a modeling exercise, Artemis generates
-assessment suggestions for submissions using the Athena service. This section provides insights into how suggestions
-are retrieved in Artemis and how to apply them in the exercise grading process.
+If the checkbox ``Automatic assessment suggestions enabled`` is checked for a modeling exercise, Artemis generates assessment suggestions for submissions using the Athena service.
+This section provides insights into how suggestions are retrieved in Artemis and how to apply them in the exercise grading process.
 
 .. note::
    To learn how to set up an instance of the Athena service and configure your Artemis installation accordingly, please refer to the section :ref:`Athena Service <athena_service>`.
 
-After clicking on |assess-submission| on one of the submission entries on the Submissions and Assessments Page,
-assessment suggestions are loaded automatically as indicated by the following loading indicator:
+After clicking on |assess-submission| on one of the submission entries on the Submissions and Assessments Page, assessment suggestions are loaded automatically as indicated by the following loading indicator:
 
 .. figure:: modeling/assessment-suggestions-loading-indicator.png
           :align: center
           :scale: 50%
 
-Once assessment suggestions have been retrieved, a notice on top of the page indicates that the current submission
-contains assessment suggestions created via generative AI.
+Once assessment suggestions have been retrieved, a notice on top of the page indicates that the current submission contains assessment suggestions created via generative AI.
 
 .. figure:: modeling/assessment-suggestions-notice.png
           :align: center
 
-The suggestions themselves are shown as follows. If a suggestion directly references a diagram element, a dialog showing
-the suggested grading score for this specific suggestion as well as a suggestion on what could be improved is
-attached to the corresponding element. In this example, a remark is made that an element is present in the evaluated
-BPMN diagram without being mentioned in the problem statement.
+The suggestions themselves are shown as follows. If a suggestion directly references a diagram element, a dialog showing the suggested grading score for this specific suggestion as well as a suggestion on what could be improved is attached to the corresponding element.
+In this example, a remark is made that an element is present in the evaluated BPMN diagram without being mentioned in the problem statement.
 
 .. figure:: modeling/referenced-assessment-suggestion.png
           :align: center
           :scale: 50%
 
-If a suggestion addresses a more general aspect of the diagram, multiple diagram elements at once, or elements that are
-missing from the diagram, the suggestion is shown in a card overview below the diagram. These unreferenced suggestions
-can be accepted or discarded via buttons on the individual suggestion cards.
+If a suggestion addresses a more general aspect of the diagram, multiple diagram elements at once, or elements that are missing from the diagram, the suggestion is shown in a card overview below the diagram.
+These unreferenced suggestions can be accepted or discarded via buttons on the individual suggestion cards.
 
 .. figure:: modeling/unreferenced-assessment-suggestion.png
           :align: center
           :scale: 50%
 
-To learn how automatic suggestions are generated and how exercises can be optimized for automatic evaluation, please
-refer to :ref:`Generation of Assessment Suggestions for Modeling Exercises<generation_of_assessment_suggestions_for_modeling_exercises>`.
+To learn how automatic suggestions are generated and how exercises can be optimized for automatic evaluation, please refer to :ref:`Generation of Assessment Suggestions for Modeling Exercises<generation_of_assessment_suggestions_for_modeling_exercises>`.
 
 .. |edit| image:: modeling/edit.png
     :scale: 75
