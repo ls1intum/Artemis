@@ -36,7 +36,7 @@ export class SidebarCardDirective implements OnInit, OnDestroy {
     }
 
     /**
-     * See definition of {@link NotShownDetail}
+     * @return false if the detail is a {@link NotShownDetail}
      */
     private isShownDetail() {
         return !!this.detail;
