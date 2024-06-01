@@ -592,6 +592,7 @@ These credentials are used to clone repositories via HTTPS. You must also add th
 
         artemis:
             version-control:
+                url: <url-to-your-vc-server>
                 default-branch: main # The branch that should be used as default branch for all newly created repositories. This does NOT have to be equal to the default branch of the VCS
                 # Artemis admin credentials
                 build-agent-git-username: buildjob_user # Replace with more secure credentials for production. Required for https access to localvc
