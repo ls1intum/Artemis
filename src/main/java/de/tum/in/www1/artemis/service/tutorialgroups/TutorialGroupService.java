@@ -635,39 +635,17 @@ public class TutorialGroupService {
             for (TutorialGroup tutorialGroup : tutorialGroups) {
                 for (String field : fields) {
                     switch (field) {
-                        case "ID":
-                            printer.print(tutorialGroup.getId());
-                            break;
-                        case "Title":
-                            printer.print(tutorialGroup.getTitle());
-                            break;
-                        case "Campus":
-                            printer.print(tutorialGroup.getCampus());
-                            break;
-                        case "Language":
-                            printer.print(tutorialGroup.getLanguage());
-                            break;
-                        case "Additional Information":
-                            printer.print(tutorialGroup.getAdditionalInformation());
-                            break;
-                        case "Capacity":
-                            printer.print(tutorialGroup.getCapacity());
-                            break;
-                        case "Is Online":
-                            printer.print(tutorialGroup.getIsOnline());
-                            break;
-                        case "Day of Week":
-                            int dayOfWeek = tutorialGroup.getTutorialGroupSchedule().getDayOfWeek();
-                            printer.print(getDayOfWeekString(dayOfWeek));
-                            break;
-                        case "Start Time":
-                            printer.print(tutorialGroup.getTutorialGroupSchedule().getStartTime());
-                            break;
-                        case "Location":
-                            printer.print(tutorialGroup.getTutorialGroupSchedule().getLocation());
-                            break;
-                        default:
-                            printer.print("");
+                        case "ID" -> printer.print(tutorialGroup.getId());
+                        case "Title" -> printer.print(tutorialGroup.getTitle());
+                        case "Campus" -> printer.print(tutorialGroup.getCampus());
+                        case "Language" -> printer.print(tutorialGroup.getLanguage());
+                        case "Additional Information" -> printer.print(tutorialGroup.getAdditionalInformation());
+                        case "Capacity" -> printer.print(tutorialGroup.getCapacity());
+                        case "Is Online" -> printer.print(tutorialGroup.getIsOnline());
+                        case "Day of Week" -> printer.print(getDayOfWeekString(tutorialGroup.getTutorialGroupSchedule().getDayOfWeek()));
+                        case "Start Time" -> printer.print(tutorialGroup.getTutorialGroupSchedule().getStartTime());
+                        case "Location" -> printer.print(tutorialGroup.getTutorialGroupSchedule().getLocation());
+                        default -> printer.print("");
                     }
                 }
                 printer.println();

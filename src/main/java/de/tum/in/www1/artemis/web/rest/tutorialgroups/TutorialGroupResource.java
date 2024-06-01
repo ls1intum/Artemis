@@ -55,6 +55,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.feature.Feature;
@@ -544,28 +545,26 @@ public class TutorialGroupResource {
      * @return the ResponseEntity with status 200 (OK) and the CSV file containing the tutorial groups
      */
     @GetMapping("courses/{courseId}/tutorial-groups/export")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<byte[]> exportTutorialGroups(@PathVariable Long courseId, @RequestParam List<String> fields) {
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        String csvContent = "";
         try {
-            var course = courseRepository.findByIdElseThrow(courseId);
-            var user = userRepository.getUserWithGroupsAndAuthorities();
-
-            String csvContent = tutorialGroupService.exportTutorialGroupsToCSV(course, user, fields);
-
-            byte[] bytes = csvContent.getBytes(StandardCharsets.UTF_8);
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.TEXT_PLAIN);
-            headers.setContentDispositionFormData("attachment", "tutorial-groups.csv");
-            headers.setContentLength(bytes.length);
-
-            return ResponseEntity.ok().headers(headers).body(bytes);
-
+            csvContent = tutorialGroupService.exportTutorialGroupsToCSV(course, user, fields);
         }
         catch (IOException e) {
             throw new BadRequestException("Error occurred while exporting tutorial groups", e);
         }
+        byte[] bytes = csvContent.getBytes(StandardCharsets.UTF_8);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.TEXT_PLAIN);
+        headers.setContentDispositionFormData("attachment", "tutorial-groups.csv");
+        headers.setContentLength(bytes.length);
+
+        return ResponseEntity.ok().headers(headers).body(bytes);
     }
 
     /**

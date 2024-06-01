@@ -147,4 +147,16 @@ describe('TutorialGroupsManagementComponent', () => {
         expect(getOneOfCourseSpy).toHaveBeenCalledOnce();
         expect(getOneOfCourseSpy).toHaveBeenCalledWith(1);
     });
+    it('should complete export when export button is clicked', () => {
+        getAllOfCourseSpy.mockClear();
+        getOneOfCourseSpy.mockClear();
+        expect(getOneOfCourseSpy).not.toHaveBeenCalled();
+        expect(getAllOfCourseSpy).not.toHaveBeenCalled();
+        const mockTutorialGroupExportButtonComponent = fixture.debugElement.query(By.directive(MockTutorialGroupsExportButtonComponent)).componentInstance;
+        mockTutorialGroupExportButtonComponent.exportFinished.emit();
+        expect(getAllOfCourseSpy).toHaveBeenCalledOnce();
+        expect(getAllOfCourseSpy).toHaveBeenCalledWith(1);
+        expect(getOneOfCourseSpy).toHaveBeenCalledOnce();
+        expect(getOneOfCourseSpy).toHaveBeenCalledWith(1);
+    });
 });
