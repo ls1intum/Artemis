@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.service.connectors.localci.buildagent;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
@@ -27,10 +29,13 @@ class TestResultXmlParser {
             throws IOException {
         TestSuite testSuite = mapper.readValue(testResultFileString, TestSuite.class);
 
-        if (testSuite.testCases() != null) {
+        // If the xml file is only one test suite, parse it directly
+        if (!testSuite.testCases().isEmpty()) {
             processTestSuite(testSuite, failedTests, successfulTests);
         }
         else {
+            // Else, check if the file contains an outer <testsuites> element
+            // And parse the inner test suites
             TestSuites suites = mapper.readValue(testResultFileString, TestSuites.class);
             if (suites.testsuites() == null) {
                 return;
@@ -60,6 +65,10 @@ class TestResultXmlParser {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     record TestSuite(@JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "testcase") List<TestCase> testCases) {
+
+        TestSuite {
+            testCases = Objects.requireNonNullElse(testCases, Collections.emptyList());
+        }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

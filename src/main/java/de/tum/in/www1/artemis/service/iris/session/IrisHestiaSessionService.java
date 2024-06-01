@@ -7,6 +7,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
@@ -70,13 +72,9 @@ public class IrisHestiaSessionService implements IrisButtonBasedFeatureInterface
         return irisSession;
     }
 
-    // @formatter:off
-    record HestiaDTO(
-            CodeHint codeHint,
-            IrisHestiaSession session,
-            ProgrammingExercise exercise
-    ) {}
-    // @formatter:on
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    record HestiaDTO(CodeHint codeHint, IrisHestiaSession session, ProgrammingExercise exercise) {
+    }
 
     /**
      * Generates the description and content for a code hint.
