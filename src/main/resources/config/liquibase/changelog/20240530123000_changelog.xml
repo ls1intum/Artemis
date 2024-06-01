@@ -12,23 +12,18 @@
             <column name="discriminator" value="ingestion"/>
             <where>discriminator IS NULL</where>
         </update>
-    </changeSet>
-
-    <changeSet id="20240530123000-2" author="yassinsws">
         <!-- Add new column for enable_auto_update_lecture_ingestion -->
         <addColumn tableName="iris_settings">
             <column name="enable_auto_update_lecture_ingestion" type="boolean" defaultValueBoolean="false">
                 <constraints nullable="false"/>
             </column>
         </addColumn>
-
         <!-- Add new column for iris_lecture_ingestion_settings_id -->
         <addColumn tableName="iris_settings">
             <column name="iris_lecture_ingestion_settings_id" type="bigint">
                 <constraints nullable="true"/>
             </column>
         </addColumn>
-
         <!-- Add foreign key constraint for iris_lecture_ingestion_settings_id -->
         <addForeignKeyConstraint
                 baseColumnNames="iris_lecture_ingestion_settings_id"
