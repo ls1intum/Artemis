@@ -87,6 +87,13 @@ jobs:
     - name: Number of Server Starts
       if: success() || failure()
       run: bash supporting_scripts/extract_number_of_server_starts.sh
+    - name: Upload Server Test Coverage Report
+      if: success() || failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: Coverage Report Server Tests
+        path: build/reports/jacoco/test/html/
+
 
   server-tests-mysql:
       needs: [ server-tests ]
@@ -249,6 +256,12 @@ jobs:
           run: npm run compile:ts:tests
         - name: TypeScript Test Without Typechecking
           run: npm run test:ci
+        - name: Upload Client Test Coverage Report
+          if: success() || failure()
+          uses: actions/upload-artifact@v4
+          with:
+              name: Coverage Report Client Tests
+              path: build/test-results/lcov-report/
 
   client-tests-selected:
       runs-on: ubuntu-latest
