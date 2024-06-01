@@ -7,6 +7,7 @@
             <span class="posting-author">
                 {{ posting.author!.name }}
             </span>
+            <span class="px-1"> - </span>
             @if (postingIsOfToday) {
                 <span class="today-flag">{{ todayFlag | artemisTranslate }}</span>
             }
