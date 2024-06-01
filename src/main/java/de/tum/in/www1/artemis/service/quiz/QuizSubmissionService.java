@@ -127,7 +127,10 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         String logText = submitted ? "submit quiz in live mode:" : "save quiz in live mode:";
 
         long start = System.nanoTime();
-        checkSubmissionForLiveModeOrThrow(exerciseId, userLogin, logText, start);
+        var quizExercise = quizExerciseRepository.findByIdElseThrow(exerciseId);
+        quizExercise.setQuizBatches(null);
+        var participation = participationService.findOneByExerciseAndStudentLoginAnyState(quizExercise, userLogin).orElseThrow();
+        checkSubmissionForLiveModeOrThrow(quizExercise, userLogin, logText, start);
 
         // recreate pointers back to submission in each submitted answer
         for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
@@ -137,7 +140,8 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         // set submission date
         quizSubmission.setSubmissionDate(ZonedDateTime.now());
 
-        // save submission to HashMap
+        // TODO: This will create a new submission for each save/submit attempt. Do we want this?
+        quizSubmission.setParticipation(participation);
         quizSubmissionRepository.save(quizSubmission);
 
         log.info("{} Saved quiz submission for user {} in quiz {} after {} µs ", logText, userLogin, exerciseId, (System.nanoTime() - start) / 1000);
@@ -147,16 +151,14 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
     /**
      * Check that the user is allowed to currently submit to the specified exercise and throws an exception if not
      */
-    private void checkSubmissionForLiveModeOrThrow(Long exerciseId, String userLogin, String logText, long start) throws QuizSubmissionException {
+    private void checkSubmissionForLiveModeOrThrow(QuizExercise quizExercise, String userLogin, String logText, long start) throws QuizSubmissionException {
         // check if submission is still allowed
-        var quizExercise = quizExerciseRepository.findByIdElseThrow(exerciseId);
-        quizExercise.setQuizBatches(null);
-        log.debug("{}: Received quiz exercise for user {} in quiz {} in {} µs.", logText, userLogin, exerciseId, (System.nanoTime() - start) / 1000);
+        log.debug("{}: Received quiz exercise for user {} in quiz {} in {} µs.", logText, userLogin, quizExercise.getId(), (System.nanoTime() - start) / 1000);
         if (!quizExercise.isQuizStarted() || quizExercise.isQuizEnded()) {
             throw new QuizSubmissionException("The quiz is not active");
         }
 
-        var submission = quizSubmissionRepository.findByExerciseIdAndStudentLogin(exerciseId, userLogin);
+        var submission = quizSubmissionRepository.findByExerciseIdAndStudentLogin(quizExercise.getId(), userLogin);
         if (submission.isPresent() && submission.get().isSubmitted()) {
             // the old submission has not yet been processed, so don't allow a new one yet
             throw new QuizSubmissionException("You have already submitted the quiz");
