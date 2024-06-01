@@ -58,7 +58,7 @@ describe('SidebarCardLargeComponent', () => {
         expect(mockFn).toHaveBeenCalledWith('testId');
         expect(router.navigateByUrl).toHaveBeenCalled();
         const navigationArray = router.navigateByUrl.mock.calls[0][0];
-        expect(navigationArray).toBe('../testId');
+        expect(navigationArray).toBe('./testId');
     });
 
     it('should navigate to the when no item was selected before', async () => {
