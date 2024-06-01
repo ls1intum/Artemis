@@ -678,24 +678,11 @@ public class TutorialGroupService {
     }
 
     public String getDayOfWeekString(int dayOfWeek) {
-        switch (dayOfWeek) {
-            case 1:
-                return "Monday";
-            case 2:
-                return "Tuesday";
-            case 3:
-                return "Wednesday";
-            case 4:
-                return "Thursday";
-            case 5:
-                return "Friday";
-            case 6:
-                return "Saturday";
-            case 7:
-                return "Sunday";
-            default:
-                throw new IllegalArgumentException("Invalid day of the week: " + dayOfWeek);
+        if (dayOfWeek < 1 || dayOfWeek > 7) {
+            throw new IllegalArgumentException("Invalid day of the week: " + dayOfWeek);
         }
+        String[] days = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
+        return days[dayOfWeek - 1];
     }
 
 }

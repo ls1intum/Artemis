@@ -550,7 +550,6 @@ public class TutorialGroupResource {
         try {
             var course = courseRepository.findByIdElseThrow(courseId);
             var user = userRepository.getUserWithGroupsAndAuthorities();
-            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
 
             String csvContent = tutorialGroupService.exportTutorialGroupsToCSV(course, user, fields);
 
