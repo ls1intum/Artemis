@@ -25,7 +25,7 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
     competencies: Competency[] = [];
     prerequisites: Competency[] = [];
     parentParamSubscription: Subscription;
-    judgementOfLearningMap: { [key: number]: CompetencyJol } = {};
+    judgementOfLearningMap: { [key: number]: { current: CompetencyJol; prior?: CompetencyJol } } = {};
     promptForJolRatingMap: { [key: number]: boolean } = {};
 
     isCollapsed = true;
@@ -51,21 +51,17 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
             });
         }
 
-        this.setCourse(this.courseStorageService.getCourse(this.courseId));
+        this.course = this.courseStorageService.getCourse(this.courseId);
 
         this.dashboardFeatureToggleActiveSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StudentCourseAnalyticsDashboard).subscribe((active) => {
             this.dashboardFeatureActive = active;
+            this.loadData();
         });
     }
 
     ngOnDestroy(): void {
         this.dashboardFeatureToggleActiveSubscription?.unsubscribe();
         this.parentParamSubscription?.unsubscribe();
-    }
-
-    private setCourse(course?: Course) {
-        this.course = course;
-        this.loadData();
     }
 
     get countCompetencies() {
@@ -96,10 +92,10 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
         this.isLoading = true;
 
         const observables = [this.competencyService.getAllForCourse(this.courseId), this.competencyService.getAllPrerequisitesForCourse(this.courseId)] as Observable<
-            HttpResponse<Competency[] | { [key: number]: CompetencyJol }>
+            HttpResponse<Competency[] | { [key: number]: { current: CompetencyJol; prior?: CompetencyJol } }>
         >[];
 
-        if (this.dashboardFeatureActive) {
+        if (this.judgementOfLearningEnabled) {
             observables.push(this.competencyService.getJoLAllForCourse(this.courseId));
         }
 
@@ -108,12 +104,12 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
                 this.competencies = competencies.body! as Competency[];
                 this.prerequisites = prerequisites.body! as Competency[];
 
-                if (this.dashboardFeatureActive) {
+                if (this.judgementOfLearningEnabled) {
                     const competenciesMap: { [key: number]: Competency } = Object.fromEntries(this.competencies.map((competency) => [competency.id, competency]));
                     this.judgementOfLearningMap = Object.fromEntries(
-                        Object.entries((judgementOfLearningMap?.body! ?? {}) as { [key: number]: CompetencyJol }).filter(([key, value]) => {
+                        Object.entries((judgementOfLearningMap?.body! ?? {}) as { [key: number]: { current: CompetencyJol; prior?: CompetencyJol } }).filter(([key, value]) => {
                             const progress = competenciesMap[Number(key)]?.userProgress?.first();
-                            return value.competencyProgress === (progress?.progress ?? 0) && value.competencyConfidence === (progress?.confidence ?? 0);
+                            return value.current.competencyProgress === (progress?.progress ?? 0) && value.current.competencyConfidence === (progress?.confidence ?? 0);
                         }),
                     );
                     this.promptForJolRatingMap = Object.fromEntries(

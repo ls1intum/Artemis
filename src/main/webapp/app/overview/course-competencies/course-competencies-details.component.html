@@ -101,7 +101,7 @@
                         </div>
                     </jhi-side-panel>
                 }
-                @if (judgementOfLearningEnabled && promptForJolRating && competency.id !== undefined) {
+                @if (judgementOfLearningEnabled && promptForJolRating && competency.id !== undefined && judgementOfLearning === undefined) {
                     <div class="mt-3 d-flex justify-content-center">
                         <a
                             [routerLink]="['/courses', courseId, 'dashboard']"

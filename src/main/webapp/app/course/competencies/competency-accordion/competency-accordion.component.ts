@@ -120,7 +120,7 @@ export class CompetencyAccordionComponent implements OnChanges {
     }
 
     calculateProgressValues() {
-        const jol = this.metrics.competencyMetrics?.jolValues?.[this.competency.id];
+        const jol = this.metrics.competencyMetrics?.currentJolValues?.[this.competency.id];
         this.jolRating = jol?.jolValue;
         this.exercisesProgress = this.calculateExercisesProgress();
         this.lectureUnitsProgress = this.calculateLectureUnitsProgress();
@@ -180,8 +180,8 @@ export class CompetencyAccordionComponent implements OnChanges {
 
     onRatingChange(newRating: number) {
         if (this.metrics.competencyMetrics) {
-            this.metrics.competencyMetrics.jolValues = {
-                ...this.metrics.competencyMetrics.jolValues,
+            this.metrics.competencyMetrics.currentJolValues = {
+                ...this.metrics.competencyMetrics.currentJolValues,
                 [this.competency.id]: {
                     competencyId: this.competency.id,
                     jolValue: newRating,

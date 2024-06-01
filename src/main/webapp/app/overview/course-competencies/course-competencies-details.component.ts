@@ -30,15 +30,13 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     judgementOfLearning: CompetencyJol | undefined;
     promptForJolRating = false;
     showFireworks = false;
+    dashboardFeatureActive = false;
     paramsSubscription: Subscription;
 
     readonly LectureUnitType = LectureUnitType;
 
     faPencilAlt = faPencilAlt;
     getIcon = getIcon;
-
-    private dashboardFeatureToggleActiveSubscription: Subscription;
-    dashboardFeatureActive = false;
 
     constructor(
         private featureToggleService: FeatureToggleService,
@@ -53,53 +51,58 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
         // example route looks like: /courses/1/competencies/10
         const courseIdParams$ = this.activatedRoute.parent?.parent?.parent?.params;
         const competencyIdParams$ = this.activatedRoute.params;
-        if (courseIdParams$) {
-            this.paramsSubscription = combineLatest([courseIdParams$, competencyIdParams$]).subscribe(([courseIdParams, competencyIdParams]) => {
-                this.competencyId = Number(competencyIdParams.competencyId);
-                this.courseId = Number(courseIdParams.courseId);
-                if (this.competencyId && this.courseId) {
-                    this.loadData();
-                }
-                this.course = this.courseStorageService.getCourse(this.courseId);
-            });
-        }
+        const dashboardFeatureToggleActive$ = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StudentCourseAnalyticsDashboard);
 
-        this.dashboardFeatureToggleActiveSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StudentCourseAnalyticsDashboard).subscribe((active) => {
-            this.dashboardFeatureActive = active;
-        });
+        if (courseIdParams$) {
+            this.paramsSubscription = combineLatest([courseIdParams$, competencyIdParams$, dashboardFeatureToggleActive$]).subscribe(
+                ([courseIdParams, competencyIdParams, dashboardFeatureActive]) => {
+                    this.competencyId = Number(competencyIdParams.competencyId);
+                    this.courseId = Number(courseIdParams.courseId);
+                    this.dashboardFeatureActive = dashboardFeatureActive;
+                    this.course = this.courseStorageService.getCourse(this.courseId);
+                    if (this.competencyId && this.courseId) {
+                        this.loadData();
+                    }
+                },
+            );
+        }
     }
 
     ngOnDestroy(): void {
-        this.dashboardFeatureToggleActiveSubscription?.unsubscribe();
         this.paramsSubscription?.unsubscribe();
     }
 
     private loadData() {
         this.isLoading = true;
 
-        const observables = [this.competencyService.findById(this.competencyId!, this.courseId!), this.competencyService.getAllForCourse(this.courseId!)] as Observable<
-            HttpResponse<Competency | Competency[] | CompetencyJol>
+        const observables = [this.competencyService.findById(this.competencyId!, this.courseId!)] as Observable<
+            HttpResponse<Competency | Competency[] | { current: CompetencyJol; prior?: CompetencyJol }>
         >[];
 
-        if (this.dashboardFeatureActive) {
+        if (this.judgementOfLearningEnabled) {
+            observables.push(this.competencyService.getAllForCourse(this.courseId!));
             observables.push(this.competencyService.getJoL(this.courseId!, this.competencyId!));
         }
 
         forkJoin(observables).subscribe({
             next: ([competencyResp, courseCompetenciesResp, judgementOfLearningResp]) => {
                 this.competency = competencyResp.body! as Competency;
-                const competencies = courseCompetenciesResp.body! as Competency[];
-                const progress = this.competency.userProgress?.first();
-                this.promptForJolRating = CompetencyJol.shouldPromptForJol(this.competency, progress, competencies);
-                const judgementOfLearning = (judgementOfLearningResp?.body ?? undefined) as CompetencyJol | undefined;
-                if (
-                    judgementOfLearning &&
-                    progress &&
-                    (judgementOfLearning.competencyProgress !== (progress?.progress ?? 0) || judgementOfLearning.competencyConfidence !== (progress?.confidence ?? 0))
-                ) {
-                    this.judgementOfLearning = undefined;
-                } else {
-                    this.judgementOfLearning = judgementOfLearning;
+
+                if (this.judgementOfLearningEnabled) {
+                    const competencies = courseCompetenciesResp.body! as Competency[];
+                    const progress = this.competency.userProgress?.first();
+                    this.promptForJolRating = CompetencyJol.shouldPromptForJol(this.competency, progress, competencies);
+                    const judgementOfLearning = (judgementOfLearningResp?.body ?? undefined) as { current: CompetencyJol; prior?: CompetencyJol } | undefined;
+                    if (
+                        judgementOfLearning &&
+                        progress &&
+                        (judgementOfLearning.current.competencyProgress !== (progress?.progress ?? 0) ||
+                            judgementOfLearning.current.competencyConfidence !== (progress?.confidence ?? 0))
+                    ) {
+                        this.judgementOfLearning = undefined;
+                    } else {
+                        this.judgementOfLearning = judgementOfLearning?.current;
+                    }
                 }
 
                 if (this.competency && this.competency.exercises) {

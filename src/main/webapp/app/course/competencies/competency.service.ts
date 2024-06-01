@@ -22,6 +22,17 @@ import { CompetencyPageableSearch, SearchResult } from 'app/shared/table/pageabl
 type EntityResponseType = HttpResponse<Competency>;
 type EntityArrayResponseType = HttpResponse<Competency[]>;
 
+type CompetencyJolReponseType = HttpResponse<{
+    current: CompetencyJol;
+    prior?: CompetencyJol;
+}>;
+type CompetencyJolMapReponseType = HttpResponse<{
+    [key: number]: {
+        current: CompetencyJol;
+        prior?: CompetencyJol;
+    };
+}>;
+
 @Injectable({
     providedIn: 'root',
 })
@@ -65,12 +76,12 @@ export class CompetencyService {
      * Retrieves the judgement of learning (JoL) values for all competencies of a specified course.
      *
      * @param courseId the id of the course for which the JoL values should be fetched
-     * @return an Observable of HttpResponse containing a map from competency id to JoL value
+     * @return an Observable of HttpResponse containing a map from competency id to current (and prior) JoL value
      */
-    getJoLAllForCourse(courseId: number): Observable<HttpResponse<{ [key: number]: CompetencyJol }>> {
+    getJoLAllForCourse(courseId: number): Observable<CompetencyJolMapReponseType> {
         return this.httpClient
-            .get<{ [key: number]: CompetencyJol }>(`${this.resourceURL}/courses/${courseId}/competencies/jol`, { observe: 'response' })
-            .pipe(map((res: HttpResponse<{ [key: number]: CompetencyJol }>) => res));
+            .get<{ [key: number]: { current: CompetencyJol; prior?: CompetencyJol } }>(`${this.resourceURL}/courses/${courseId}/competencies/jol`, { observe: 'response' })
+            .pipe(map((res: CompetencyJolMapReponseType) => res));
     }
 
     getProgress(competencyId: number, courseId: number, refresh = false) {
@@ -103,12 +114,12 @@ export class CompetencyService {
      *
      * @param courseId the id of the course for which the competency belongs
      * @param competencyId the id of the competency for which to get the JoL value
-     * @return an Observable of HttpResponse containing the JoL value or null if not set
+     * @return an Observable of HttpResponse containing the current (and prior) JoL value or null if not set
      */
-    getJoL(courseId: number, competencyId: number): Observable<HttpResponse<CompetencyJol>> {
+    getJoL(courseId: number, competencyId: number): Observable<CompetencyJolReponseType> {
         return this.httpClient
-            .get<CompetencyJol>(`${this.resourceURL}/courses/${courseId}/competencies/${competencyId}/jol`, { observe: 'response' })
-            .pipe(map((res: HttpResponse<CompetencyJol>) => res));
+            .get<{ current: CompetencyJol; prior?: CompetencyJol }>(`${this.resourceURL}/courses/${courseId}/competencies/${competencyId}/jol`, { observe: 'response' })
+            .pipe(map((res: CompetencyJolReponseType) => res));
     }
 
     create(competency: Competency, courseId: number): Observable<EntityResponseType> {
