@@ -146,12 +146,12 @@ public class UserResource {
     public ResponseEntity<UserInitializationDTO> initializeUser() {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (user.getActivated()) {
-            return ResponseEntity.ok().body(new UserInitializationDTO());
+            return ResponseEntity.ok().body(new UserInitializationDTO(null));
         }
         if ((ltiService.isPresent() && !ltiService.get().isLtiCreatedUser(user)) || !user.isInternal()) {
             user.setActivated(true);
             userRepository.save(user);
-            return ResponseEntity.ok().body(new UserInitializationDTO());
+            return ResponseEntity.ok().body(new UserInitializationDTO(null));
         }
 
         String result = userCreationService.setRandomPasswordAndReturn(user);

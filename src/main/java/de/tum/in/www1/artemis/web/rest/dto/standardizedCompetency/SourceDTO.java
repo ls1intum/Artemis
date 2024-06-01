@@ -1,10 +1,13 @@
 package de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.competency.Source;
 
 /**
  * DTO containing source information
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record SourceDTO(long id, String title, String author, String uri) {
 
     /**
