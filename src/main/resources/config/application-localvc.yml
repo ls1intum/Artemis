@@ -10,6 +10,7 @@ artemis:
         # In a multi node setup, this folder should be in a shared file system area (e.g. based on NFS), so that user can access the same files over multiple nodes.
         local-vcs-repo-path: ./local-vcs-repos
         url: http://localhost:8000
-        build-agent-git-username: buildjob_user # Required for https access to localvc
-        build-agent-git-password: buildjob_password # Required for https access to localvc. You can otherwise use a token, or ssh key
+        build-agent-git-username: buildjob_user # Replace with more secure credentials for production. Required for https access to localvc. This config must be set for build agents and localvc.
+        build-agent-git-password: buildjob_password # Replace with more secure credentials for production. Required for https access to localvc. This config must be set for build agents and localvc. You can also use an ssh key
+
 
