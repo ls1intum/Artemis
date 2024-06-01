@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisPipelineExecutionSettingsDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureingestionwebhook.PyrisLectureUnitWebhookDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
+import de.tum.in.www1.artemis.service.iris.exception.IrisInternalPyrisErrorException;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 
 @Service
@@ -48,11 +49,10 @@ public class PyrisWebhookService {
         Path path = FilePathService.actualPathForPublicPathOrThrow(URI.create(attachmentUnit.getAttachment().getLink()));
         try {
             byte[] fileBytes = Files.readAllBytes(path);
-
             return Base64.getEncoder().encodeToString(fileBytes);
         }
         catch (IOException e) {
-            return e.getMessage();
+            throw new IrisInternalPyrisErrorException(e.getMessage());
         }
     }
 
@@ -67,7 +67,6 @@ public class PyrisWebhookService {
         String base64EncodedPdf = attachmentToBase64(attachmentUnit);
         return new PyrisLectureUnitWebhookDTO(true, artemisBaseUrl, base64EncodedPdf, lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle,
                 courseDescription);
-
     }
 
     private PyrisLectureUnitWebhookDTO processAttachmentForDeletion(AttachmentUnit attachmentUnit) {
@@ -78,7 +77,7 @@ public class PyrisWebhookService {
     }
 
     /**
-     * Exeßcutes the tutor chat pipeline for the given session
+     * Executes the Lecture Ingestion pipeline for the given
      *
      * @param shouldUpdate    True if the lecture is updated, False if the lecture is erased
      * @param attachmentUnits The attachmentUnit that got Updated / erased
@@ -86,16 +85,14 @@ public class PyrisWebhookService {
     public void executeLectureIngestionPipeline(Boolean shouldUpdate, List<AttachmentUnit> attachmentUnits) {
         if (lectureIngestionEnabled(attachmentUnits.getFirst().getLecture().getCourse())) {
             List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentUnits = new ArrayList<>();
-            for (AttachmentUnit attachmentUnit : attachmentUnits) {
-                if (attachmentUnit.getAttachment().getAttachmentType() == AttachmentType.FILE) {
-                    if (shouldUpdate) {
-                        toUpdateAttachmentUnits.add(processAttachmentForUpdate(attachmentUnit));
-                    }
-                    else {
-                        toUpdateAttachmentUnits.add(processAttachmentForDeletion(attachmentUnit));
-                    }
+            attachmentUnits.stream().filter(unit -> unit.getAttachment().getAttachmentType() == AttachmentType.FILE).forEach(unit -> {
+                if (shouldUpdate) {
+                    toUpdateAttachmentUnits.add(processAttachmentForUpdate(unit));
                 }
-            }
+                else {
+                    toUpdateAttachmentUnits.add(processAttachmentForDeletion(unit));
+                }
+            });
             if (!toUpdateAttachmentUnits.isEmpty()) {
                 var jobToken = pyrisJobService.addIngestionWebhookJob();
                 var settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
@@ -103,6 +100,5 @@ public class PyrisWebhookService {
                 pyrisConnectorService.executeLectureWebhook("fullIngestion", executionDTO);
             }
         }
-
     }
 }

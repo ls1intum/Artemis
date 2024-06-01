@@ -46,6 +46,7 @@ public class PyrisStatusUpdateService {
 
     /**
      * Handles the status update of a lecture ingestion job and logs the results for now => will change later
+     * TODO: Update this method to handle changes beyond logging
      *
      * @param job          the job that is updated
      * @param statusUpdate the status update
