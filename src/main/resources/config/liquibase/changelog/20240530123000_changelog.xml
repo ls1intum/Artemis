@@ -6,7 +6,7 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                             http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
 
-    <changeSet id="20240530123000-1" author="yassinsws">
+    <changeSet id="20240601123000-1" author="yassinsws">
         <!-- Update the discriminator column to include the new subtype -->
         <update tableName="iris_sub_settings">
             <column name="discriminator" value="ingestion"/>
