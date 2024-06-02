@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.web.rest.dto.metrics;
 
 import jakarta.validation.constraints.NotNull;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * DTO for student metrics.
  * <p>
@@ -11,6 +13,7 @@ import jakarta.validation.constraints.NotNull;
  * @param lectureUnitStudentMetricsDTO the metrics for the lecture units
  * @param competencyMetrics            the metrics for the competencies
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record StudentMetricsDTO(@NotNull ExerciseStudentMetricsDTO exerciseMetrics, @NotNull LectureUnitStudentMetricsDTO lectureUnitStudentMetricsDTO,
         @NotNull CompetencyStudentMetricsDTO competencyMetrics) {
 }
