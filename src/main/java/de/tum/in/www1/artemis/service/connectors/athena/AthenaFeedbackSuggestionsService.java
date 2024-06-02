@@ -10,6 +10,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.TextExercise;
@@ -17,10 +19,10 @@ import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.exception.NetworkingException;
-import de.tum.in.www1.artemis.service.dto.athena.ExerciseDTO;
+import de.tum.in.www1.artemis.service.dto.athena.ExerciseBaseDTO;
 import de.tum.in.www1.artemis.service.dto.athena.ModelingFeedbackDTO;
 import de.tum.in.www1.artemis.service.dto.athena.ProgrammingFeedbackDTO;
-import de.tum.in.www1.artemis.service.dto.athena.SubmissionDTO;
+import de.tum.in.www1.artemis.service.dto.athena.SubmissionBaseDTO;
 import de.tum.in.www1.artemis.service.dto.athena.TextFeedbackDTO;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
@@ -60,15 +62,19 @@ public class AthenaFeedbackSuggestionsService {
         this.athenaModuleService = athenaModuleService;
     }
 
-    private record RequestDTO(ExerciseDTO exercise, SubmissionDTO submission, boolean isGraded) {
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private record RequestDTO(ExerciseBaseDTO exercise, SubmissionBaseDTO submission, boolean isGraded) {
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private record ResponseDTOText(List<TextFeedbackDTO> data) {
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private record ResponseDTOProgramming(List<ProgrammingFeedbackDTO> data) {
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private record ResponseDTOModeling(List<ModelingFeedbackDTO> data) {
     }
 

@@ -134,7 +134,7 @@ import de.tum.in.www1.artemis.util.ExamPrepareExercisesTestUtil;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithGradeDTO;
 import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamAttendanceCheckEventDTO;
-import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamLiveEventDTO;
+import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamLiveEventBaseDTO;
 import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamWideAnnouncementEventDTO;
 import de.tum.in.www1.artemis.web.rest.dto.examevent.WorkingTimeUpdateEventDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -856,13 +856,13 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
 
         var capturedEvent = (WorkingTimeUpdateEventDTO) captureExamLiveEventForId(studentExam1.getId(), false);
 
-        assertThat(capturedEvent.getNewWorkingTime()).isEqualTo(newWorkingTime);
-        assertThat(capturedEvent.getOldWorkingTime()).isEqualTo(oldWorkingTime);
+        assertThat(capturedEvent.newWorkingTime()).isEqualTo(newWorkingTime);
+        assertThat(capturedEvent.oldWorkingTime()).isEqualTo(oldWorkingTime);
     }
 
-    private ExamLiveEventDTO captureExamLiveEventForId(Long studentExamOrExamId, boolean examWide) {
+    private ExamLiveEventBaseDTO captureExamLiveEventForId(Long studentExamOrExamId, boolean examWide) {
         // Create an ArgumentCaptor for the WebSocket message
-        ArgumentCaptor<ExamLiveEventDTO> websocketEventCaptor = ArgumentCaptor.forClass(ExamLiveEventDTO.class);
+        ArgumentCaptor<ExamLiveEventBaseDTO> websocketEventCaptor = ArgumentCaptor.forClass(ExamLiveEventBaseDTO.class);
 
         // Verify that the sendMessage method was called with the expected WebSocket event
         var expectedTopic = examWide ? "/topic/exam-participation/exam/" + studentExamOrExamId + "/events"
@@ -883,10 +883,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         var result = request.postWithPlainStringResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/announcements", testMessage,
                 ExamWideAnnouncementEventDTO.class, HttpStatus.OK);
 
-        assertThat(result.getId()).isGreaterThan(0L);
-        assertThat(result.getText()).isEqualTo(testMessage);
-        assertThat(result.getCreatedBy()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getName());
-        assertThat(result.getCreatedDate()).isCloseTo(Instant.now(), within(5, ChronoUnit.SECONDS));
+        assertThat(result.id()).isGreaterThan(0L);
+        assertThat(result.text()).isEqualTo(testMessage);
+        assertThat(result.createdBy()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getName());
+        assertThat(result.createdDate()).isCloseTo(Instant.now(), within(5, ChronoUnit.SECONDS));
 
         var event = captureExamLiveEventForId(exam1.getId(), true);
         assertThat(event).isEqualTo(result);
@@ -914,10 +914,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
                 "/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + studentExam1.getUser().getLogin() + "/attendance-check", testMessage,
                 ExamAttendanceCheckEventDTO.class, HttpStatus.OK);
 
-        assertThat(result.getId()).isGreaterThan(0L);
-        assertThat(result.getText()).isEqualTo(testMessage);
-        assertThat(result.getCreatedBy()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getName());
-        assertThat(result.getCreatedDate()).isCloseTo(Instant.now(), within(5, ChronoUnit.SECONDS));
+        assertThat(result.id()).isGreaterThan(0L);
+        assertThat(result.text()).isEqualTo(testMessage);
+        assertThat(result.createdBy()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getName());
+        assertThat(result.createdDate()).isCloseTo(Instant.now(), within(5, ChronoUnit.SECONDS));
 
     }
 

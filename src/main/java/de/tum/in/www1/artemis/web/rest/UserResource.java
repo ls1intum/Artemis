@@ -2,10 +2,14 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.security.PublicKey;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -23,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.in.www1.artemis.config.icl.ssh.HashUtils;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
@@ -141,12 +146,12 @@ public class UserResource {
     public ResponseEntity<UserInitializationDTO> initializeUser() {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (user.getActivated()) {
-            return ResponseEntity.ok().body(new UserInitializationDTO());
+            return ResponseEntity.ok().body(new UserInitializationDTO(null));
         }
         if ((ltiService.isPresent() && !ltiService.get().isLtiCreatedUser(user)) || !user.isInternal()) {
             user.setActivated(true);
             userRepository.save(user);
-            return ResponseEntity.ok().body(new UserInitializationDTO());
+            return ResponseEntity.ok().body(new UserInitializationDTO(null));
         }
 
         String result = userCreationService.setRandomPasswordAndReturn(user);
@@ -179,5 +184,25 @@ public class UserResource {
     public ResponseEntity<ZonedDateTime> getIrisAcceptedForStudent() {
         User user = userRepository.getUser();
         return ResponseEntity.ok().body(user.getIrisAcceptedTimestamp());
+    }
+
+    /**
+     * PUT users/sshpublickey : sets the ssh public key
+     *
+     * @param sshPublicKey the ssh public key to set
+     *
+     * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
+     */
+    @PutMapping("users/sshpublickey")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> addSshPublicKey(@RequestBody String sshPublicKey) throws GeneralSecurityException, IOException {
+        User user = userRepository.getUser();
+        // Parse the public key string
+        AuthorizedKeyEntry keyEntry = AuthorizedKeyEntry.parseAuthorizedKeyEntry(sshPublicKey);
+        // Extract the PublicKey object
+        PublicKey publicKey = keyEntry.resolvePublicKey(null, null, null);
+        String keyHash = HashUtils.getSha512Fingerprint(publicKey);
+        userRepository.updateUserSshPublicKeyHash(user.getId(), keyHash, sshPublicKey);
+        return ResponseEntity.ok().build();
     }
 }

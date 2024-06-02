@@ -434,17 +434,21 @@
                 "title": "Your repository is locked.",
                 "tooltip": "You are outside of the participation timeframe or you reached your submission limit, your repository is locked. You may still read the code but you may not make any changes to it."
             },
+            "checkoutDirectories": "Checkout directories",
             "preview": {
                 "label": "Preview",
-                "tooltip": "For every programming exercise, repositories and build plans will be generated. Here you can find their generated names based on the short name of the exercise (and course)",
+                "tooltip": "For every programming exercise, repositories and build plans will be generated. Here, you can find their generated names based on the short name of the exercise (and course)",
+                "tooltipLocalVC": "Here, you can find the repositories linked to the exercise and their respective checkout directories during the build execution.",
                 "repositories": "Repositories",
                 "buildPlans": "Build Plans",
                 "templateRepoTooltip": "The repository which contains the template of the exercise",
                 "solutionRepoTooltip": "The repository which contains the solution to the exercise",
                 "testRepoTooltip": "The repository which contains all tests",
                 "auxiliaryRepoTooltip": "{{description}}",
-                "templateBuildPlanTooltip": "The build plan of the template. Runs all tests on the exercise template. Used as a reference in which all tests must fail",
-                "solutionBuildPlanTooltip": "The build plan of the solution. Runs all tests on the exercise solution. Used as a reference in which all tests must succeed"
+                "templateBuildPlanTooltip": "The build plan of the template and student submissions. Runs all tests on the exercise template / student submission. The build for the exercise template is used as reference in which all tests must fail.",
+                "solutionBuildPlanTooltip": "The build plan of the solution. Runs all tests on the exercise solution. Used as a reference in which all tests must succeed.",
+                "submissionBuildPlan": "Submission build plan",
+                "solutionBuildPlan": "Solution build plan"
             },
             "orion": {
                 "openEditor": "Open Editor"

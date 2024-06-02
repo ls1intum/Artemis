@@ -15,7 +15,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.domain.AssessmentUpdate;
 import de.tum.in.www1.artemis.domain.Complaint;
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
 import de.tum.in.www1.artemis.domain.Course;
@@ -43,6 +42,7 @@ import de.tum.in.www1.artemis.service.dto.ComplaintResponseUpdateDTO;
 import de.tum.in.www1.artemis.team.TeamUtilService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.TestResourceUtils;
+import de.tum.in.www1.artemis.web.rest.dto.AssessmentUpdateDTO;
 
 class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -235,7 +235,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         complaintResponse.getComplaint().setAccepted(true);
         complaintResponse.setResponseText("accepted");
 
-        AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(feedbacks).complaintResponse(complaintResponse);
+        final var assessmentUpdate = new AssessmentUpdateDTO(feedbacks, complaintResponse, null);
         Result receivedResult = request.putWithResponseBody("/api/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
                 Result.class, HttpStatus.OK);
 
@@ -260,12 +260,12 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
     void submitComplaintResponse_updateAssessment_asOtherTutor_forbidden() throws Exception {
         complaint = complaintRepo.save(complaint);
 
-        List<Feedback> feedback = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
+        List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(true);
         complaintResponse.setResponseText("accepted");
 
-        AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(feedback).complaintResponse(complaintResponse);
+        final var assessmentUpdate = new AssessmentUpdateDTO(feedbacks, complaintResponse, null);
         request.putWithResponseBody("/api/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class,
                 HttpStatus.FORBIDDEN);
     }

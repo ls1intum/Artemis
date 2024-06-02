@@ -1,4 +1,3 @@
-import { HeaderCourseComponent } from 'app/overview/header-course.component';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { EMPTY, Observable, Subject, of, throwError } from 'rxjs';
@@ -172,7 +171,6 @@ describe('CourseOverviewComponent', () => {
                 MockComponent(CourseRegistrationComponent),
                 MockComponent(CourseCardComponent),
                 MockComponent(SecuredImageComponent),
-                MockComponent(HeaderCourseComponent),
             ],
             providers: [
                 MockProvider(CourseManagementService),

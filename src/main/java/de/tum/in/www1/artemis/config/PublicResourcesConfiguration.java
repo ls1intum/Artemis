@@ -10,7 +10,6 @@ import java.util.stream.Stream;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.CacheControl;
@@ -27,8 +26,11 @@ import tech.jhipster.config.JHipsterProperties;
 @Configuration
 public class PublicResourcesConfiguration implements WebMvcConfigurer {
 
-    @Autowired // ok
-    private JHipsterProperties jHipsterProperties;
+    private final JHipsterProperties jHipsterProperties;
+
+    public PublicResourcesConfiguration(JHipsterProperties jHipsterProperties) {
+        this.jHipsterProperties = jHipsterProperties;
+    }
 
     @Override
     public void addResourceHandlers(@NotNull ResourceHandlerRegistry registry) {

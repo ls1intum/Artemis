@@ -73,6 +73,7 @@ import com.tngtech.archunit.library.GeneralCodingRules;
 import de.tum.in.www1.artemis.AbstractArtemisIntegrationTest;
 import de.tum.in.www1.artemis.authorization.AuthorizationTestService;
 import de.tum.in.www1.artemis.config.ApplicationConfiguration;
+import de.tum.in.www1.artemis.config.ConditionalMetricsExclusionConfiguration;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryResource;
@@ -206,6 +207,24 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
+    void testDTOImplementations() {
+        var dtoRecordRule = classes().that().haveSimpleNameEndingWith("DTO").and().areNotInterfaces().should().beRecords().andShould().beAnnotatedWith(JsonInclude.class)
+                .because("All DTOs should be records and annotated with @JsonInclude(JsonInclude.Include.NON_EMPTY)");
+        var result = dtoRecordRule.evaluate(allClasses);
+        log.info("Current number of DTO classes: {}", result.getFailureReport().getDetails().size());
+        log.info("Current DTO classes: {}", result.getFailureReport().getDetails());
+        // TODO: reduce the following number to 0, if the current number is less and the test fails, decrease it
+        assertThat(result.getFailureReport().getDetails()).hasSize(26);
+
+        var dtoPackageRule = classes().that().resideInAPackage("..dto").should().haveSimpleNameEndingWith("DTO");
+        result = dtoPackageRule.evaluate(allClasses);
+        log.info("Current number of DTOs that do not end with \"DTO\": {}", result.getFailureReport().getDetails().size());
+        log.info("Current DTOs that do not end with \"DTO\": {}", result.getFailureReport().getDetails());
+        // TODO: reduce the following number to 0, if the current number is less and the test fails, decrease it
+        assertThat(result.getFailureReport().getDetails()).hasSize(32);
+    }
+
+    @Test
     void testGsonExclusion() {
         // TODO: Replace all uses of gson with Jackson and check that gson is not used any more
         var gsonUsageRule = noClasses().should().accessClassesThat().resideInAnyPackage("com.google.gson..").because("we use an alternative JSON parsing library.");
@@ -239,7 +258,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
     void ensureSpringComponentsAreProfileAnnotated() {
         ArchRule rule = classes().that().areAnnotatedWith(Controller.class).or().areAnnotatedWith(RestController.class).or().areAnnotatedWith(Repository.class).or()
                 .areAnnotatedWith(Service.class).or().areAnnotatedWith(Component.class).or().areAnnotatedWith(Configuration.class).and()
-                .doNotBelongToAnyOf(ApplicationConfiguration.class).should(beProfileAnnotated())
+                .doNotBelongToAnyOf(ApplicationConfiguration.class, ConditionalMetricsExclusionConfiguration.class).should(beProfileAnnotated())
                 .because("we want to be able to exclude these classes from application startup by specifying profiles");
 
         rule.check(productionClasses);

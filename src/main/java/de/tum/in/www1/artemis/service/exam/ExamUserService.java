@@ -22,6 +22,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
@@ -154,6 +156,7 @@ public class ExamUserService {
     /**
      * Contains the information about an exam user with image
      */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record ExamUserWithImageDTO(String studentRegistrationNumber, ImageDTO image) {
     }
 }
