@@ -512,6 +512,23 @@ describe('BuildQueueComponent', () => {
         }
     });
 
+    it('should return correct number of filters applied', () => {
+        component.finishedBuildJobFilter = new FinishedBuildJobFilter();
+        component.finishedBuildJobFilter.buildAgentAddress = 'agent1';
+        component.finishedBuildJobFilter.buildDurationFilterLowerBound = 1;
+        component.finishedBuildJobFilter.buildDurationFilterUpperBound = 2;
+        component.finishedBuildJobFilter.buildStartDateFilterFrom = dayjs('2023-01-01');
+        component.finishedBuildJobFilter.buildStartDateFilterTo = dayjs('2023-01-02');
+        component.finishedBuildJobFilter.status = 'SUCCESSFUL';
+
+        expect(component.finishedBuildJobFilter.numberOfAppliedFilters).toBe(6);
+
+        component.finishedBuildJobFilter.buildAgentAddress = undefined;
+        component.finishedBuildJobFilter.buildDurationFilterLowerBound = undefined;
+
+        expect(component.finishedBuildJobFilter.numberOfAppliedFilters).toBe(4);
+    });
+
     it('should save filter in local storage', () => {
         component.finishedBuildJobFilter = new FinishedBuildJobFilter();
         component.finishedBuildJobFilter.buildAgentAddress = 'agent1';

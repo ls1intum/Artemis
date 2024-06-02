@@ -390,13 +390,6 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Callback function to refresh the finished build jobs
-     */
-    refresh() {
-        this.loadFinishedBuildJobs();
-    }
-
-    /**
      * Update the build jobs duration
      */
     updateBuildJobDuration() {
