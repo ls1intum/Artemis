@@ -28,6 +28,7 @@ import { ArtemisExamSubmissionComponentsModule } from 'app/exam/participate/exer
 import { ExamExerciseUpdateHighlighterModule } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.module';
 import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
 import { ArtemisExamLiveEventsModule } from 'app/exam/participate/events/exam-live-events.module';
+import { ExamStartInformationComponent } from 'app/exam/participate/exam-start-information/exam-start-information.component';
 const ENTITY_STATES = [...examParticipationState];
 
 @NgModule({
@@ -56,6 +57,7 @@ const ENTITY_STATES = [...examParticipationState];
         ExamExerciseUpdateHighlighterModule,
         ArtemisExamSharedModule,
         ArtemisExamLiveEventsModule,
+        ExamStartInformationComponent,
     ],
     declarations: [ExamParticipationComponent, ExamParticipationCoverComponent, ExamExerciseOverviewPageComponent],
 })
