@@ -1,10 +1,12 @@
-package analysisOfEndpointConnections;
+package de.tum.cit.endpointanalysis;
+
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.List;
 
 public class EndpointInformation {
+
     @JsonProperty
     private String requestMapping;
 

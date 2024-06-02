@@ -1,7 +1,8 @@
-package analysisOfEndpointConnections;
+package de.tum.cit.endpointanalysis;
+
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.List;
 
 public class EndpointClassInformation {
 
