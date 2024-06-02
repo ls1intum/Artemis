@@ -26,7 +26,6 @@ export class FinishedBuildJobFilter {
     buildStartDateFilterTo?: dayjs.Dayjs = undefined;
     buildDurationFilterLowerBound?: number = undefined;
     buildDurationFilterUpperBound?: number = undefined;
-    searchTerm?: string = undefined;
 
     /**
      * Adds the http param options
@@ -51,9 +50,7 @@ export class FinishedBuildJobFilter {
         if (this.buildDurationFilterUpperBound) {
             options = options.append('buildDurationUpper', this.buildDurationFilterUpperBound.toString());
         }
-        if (this.searchTerm && this.searchTerm !== '') {
-            options = options.append('searchTerm', this.searchTerm);
-        }
+
         return options;
     }
 
@@ -134,6 +131,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     click$ = new Subject<string>();
     isLoading = false;
     search = new Subject<void>();
+    searchTerm?: string = undefined;
 
     constructor(
         private route: ActivatedRoute,
@@ -298,6 +296,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
                             pageSize: this.itemsPerPage,
                             sortingOrder: this.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
                             sortedColumn: this.predicate,
+                            searchTerm: this.searchTerm,
                         },
                         this.finishedBuildJobFilter,
                     );
@@ -308,6 +307,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
                             pageSize: this.itemsPerPage,
                             sortingOrder: this.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
                             sortedColumn: this.predicate,
+                            searchTerm: this.searchTerm || '',
                         },
                         this.finishedBuildJobFilter,
                     );
@@ -336,7 +336,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      * Method to trigger the loading of the finished build jobs by pushing a new value to the search observable
      */
     triggerLoadFinishedJobs() {
-        if (!this.finishedBuildJobFilter.searchTerm || this.finishedBuildJobFilter.searchTerm.length >= 3) {
+        if (!this.searchTerm || this.searchTerm.length >= 3) {
             this.search.next();
         }
     }

@@ -293,15 +293,25 @@ public class SharedQueueManagementService {
      * @return the page of build jobs
      */
     public Page<BuildJob> getFilteredFinishedBuildJobs(FinishedBuildJobPageableSearchDTO search, Long courseId) {
-        final Page<BuildJob> page = buildJobRepository.findAllByFilterCriteria(search.getBuildStatus(), search.getBuildAgentAddress(), search.getStartDate(), search.getEndDate(),
-                search.getSearchTerm(), courseId, PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.BUILD_JOB));
+        final Page<BuildJob> page = buildJobRepository.findAllByFilterCriteria(search.buildStatus(), search.buildAgentAddress(), search.startDate(), search.endDate(),
+                search.pageable().getSearchTerm(), courseId, PageUtil.createDefaultPageRequest(search.pageable(), PageUtil.ColumnMapping.BUILD_JOB));
+
+        // These fields have to be objects because they can be null.
+        int buildDurationLower = search.buildDurationLower() == null ? 0 : search.buildDurationLower();
+        int buildDurationUpper = search.buildDurationUpper() == null ? 0 : search.buildDurationUpper();
+
+        // If both buildDurationLower and buildDurationUpper are 0, we don't need to filter by build duration.
+        if (buildDurationLower <= 0 && buildDurationUpper <= 0) {
+            return page;
+        }
+
         List<BuildJob> filteredBuildJobs = page.get().filter(buildJob -> {
             Duration buildDuration = Duration.between(buildJob.getBuildStartDate(), buildJob.getBuildCompletionDate());
-            if (search.getBuildDurationUpper() != 0) {
-                return buildDuration.toSeconds() >= search.getBuildDurationLower() && buildDuration.toSeconds() <= search.getBuildDurationUpper();
+            if (buildDurationUpper != 0) {
+                return buildDuration.toSeconds() >= buildDurationLower && buildDuration.toSeconds() <= buildDurationUpper;
             }
             else {
-                return buildDuration.toSeconds() >= search.getBuildDurationLower();
+                return buildDuration.toSeconds() >= buildDurationLower;
             }
         }).toList();
 

@@ -416,14 +416,7 @@
         <div style="display: flex; align-items: center">
             <h3 id="build-queue-finished-heading" jhiTranslate="artemisApp.buildQueue.finishedBuildJobs" style="margin-right: 20px"></h3>
             <div class="form-group form-inline my-0 mx-1">
-                <input
-                    class="form-control ms-3"
-                    type="text"
-                    name="searchTerm"
-                    id="field_searchTerm"
-                    [(ngModel)]="finishedBuildJobFilter.searchTerm"
-                    (focusout)="triggerLoadFinishedJobs()"
-                />
+                <input class="form-control ms-3" type="text" name="searchTerm" id="field_searchTerm" [(ngModel)]="searchTerm" (focusout)="triggerLoadFinishedJobs()" />
                 <jhi-help-icon class="ps-1" text="artemisApp.buildQueue.filter.search.tooltip" />
                 <button class="btn btn-primary ms-3" (click)="triggerLoadFinishedJobs()">
                     <span jhiTranslate="artemisApp.buildQueue.filter.search.title"></span>

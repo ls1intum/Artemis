@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
 import { BuildJob, FinishedBuildJob } from 'app/entities/build-job.model';
-import { createRequestOption } from 'app/shared/util/request.util';
+import { createNestedRequestOption } from 'app/shared/util/request.util';
 import { HttpResponse } from '@angular/common/http';
 import { FinishedBuildJobFilter } from 'app/localci/build-queue/build-queue.component';
 
@@ -12,6 +12,7 @@ import { FinishedBuildJobFilter } from 'app/localci/build-queue/build-queue.comp
 export class BuildQueueService {
     public resourceUrl = 'api';
     public adminResourceUrl = 'api/admin';
+    nestedDtoKey = 'pageable';
 
     constructor(private http: HttpClient) {}
     /**
@@ -131,7 +132,7 @@ export class BuildQueueService {
      * @param filter The filter to apply
      */
     getFinishedBuildJobs(req?: any, filter?: FinishedBuildJobFilter): Observable<HttpResponse<FinishedBuildJob[]>> {
-        let options = createRequestOption(req);
+        let options = createNestedRequestOption(req, this.nestedDtoKey);
         if (filter) {
             options = filter.addHttpParams(options);
         }
@@ -149,7 +150,7 @@ export class BuildQueueService {
      * @param filter The filter to apply
      */
     getFinishedBuildJobsByCourseId(courseId: number, req?: any, filter?: FinishedBuildJobFilter): Observable<HttpResponse<FinishedBuildJob[]>> {
-        let options = createRequestOption(req);
+        let options = createNestedRequestOption(req, this.nestedDtoKey);
         if (filter) {
             options = filter.addHttpParams(options);
         }
