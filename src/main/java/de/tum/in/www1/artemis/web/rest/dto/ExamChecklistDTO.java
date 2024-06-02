@@ -1,105 +1,41 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
+import jakarta.annotation.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * This is a dto for providing statistics for the exam instructor dashboard
+ * This is a dto for providing statistics for the exam instructor dashboard, some values are nullable because they are not always needed
+ * Instructors typically see all values, while tutors only see some values
+ *
+ * @param numberOfTotalExamAssessmentsFinishedByCorrectionRound all exercises summed up
+ * @param numberOfTotalParticipationsForAssessment              all exercises summed up
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ExamChecklistDTO {
+public record ExamChecklistDTO(@Nullable Long numberOfGeneratedStudentExams, @Nullable Long numberOfTestRuns,
+        @Nullable Long[] numberOfTotalExamAssessmentsFinishedByCorrectionRound, Long numberOfTotalParticipationsForAssessment, @Nullable Long numberOfExamsSubmitted,
+        @Nullable Long numberOfExamsStarted, Long numberOfAllComplaints, Long numberOfAllComplaintsDone, @Nullable Boolean allExamExercisesAllStudentsPrepared,
+        Boolean existsUnassessedQuizzes, Boolean existsUnsubmittedExercises) {
 
-    private Long numberOfGeneratedStudentExams;
-
-    private Long numberOfTestRuns;
-
-    private Long[] numberOfTotalExamAssessmentsFinishedByCorrectionRound; // all exercises summed up
-
-    private Long numberOfTotalParticipationsForAssessment; // all exercises summed up
-
-    private Long numberOfExamsSubmitted;
-
-    private Long numberOfExamsStarted;
-
-    private Long numberOfAllComplaints;
-
-    private Long numberOfAllComplaintsDone;
-
-    private boolean allExamExercisesAllStudentsPrepared;
-
-    public Long getNumberOfTotalParticipationsForAssessment() {
-        return numberOfTotalParticipationsForAssessment;
+    public ExamChecklistDTO(@Nullable Long[] numberOfTotalExamAssessmentsFinishedByCorrectionRound, Long numberOfTotalParticipationsForAssessment, Boolean existsUnassessedQuizzes,
+            Boolean existsUnsubmittedExercises) {
+        this(null, null, numberOfTotalExamAssessmentsFinishedByCorrectionRound, numberOfTotalParticipationsForAssessment, null, null, null, null, null, existsUnassessedQuizzes,
+                existsUnsubmittedExercises);
     }
 
-    public void setNumberOfTotalParticipationsForAssessment(Long numberOfTotalParticipationsForAssessment) {
-        this.numberOfTotalParticipationsForAssessment = numberOfTotalParticipationsForAssessment;
-    }
-
-    public Long getNumberOfExamsStarted() {
-        return numberOfExamsStarted;
-    }
-
-    public void setNumberOfExamsStarted(Long numberOfExamsStarted) {
-        this.numberOfExamsStarted = numberOfExamsStarted;
-    }
-
-    public Long getNumberOfExamsSubmitted() {
-        return numberOfExamsSubmitted;
-    }
-
-    public void setNumberOfExamsSubmitted(Long numberOfExamsSubmitted) {
-        this.numberOfExamsSubmitted = numberOfExamsSubmitted;
-    }
-
-    public Long[] getNumberOfTotalExamAssessmentsFinishedByCorrectionRound() {
-        return numberOfTotalExamAssessmentsFinishedByCorrectionRound;
-    }
-
-    public void setNumberOfTotalExamAssessmentsFinishedByCorrectionRound(Long[] numberOfTotalExamAssessmentsFinishedByCorrectionRound) {
-        this.numberOfTotalExamAssessmentsFinishedByCorrectionRound = numberOfTotalExamAssessmentsFinishedByCorrectionRound;
-    }
-
-    public Long getNumberOfAllComplaints() {
-        return numberOfAllComplaints;
-    }
-
-    public void setNumberOfAllComplaints(Long numberOfAllComplaints) {
-        this.numberOfAllComplaints = numberOfAllComplaints;
-    }
-
-    public Long getNumberOfAllComplaintsDone() {
-        return numberOfAllComplaintsDone;
-    }
-
-    public void setNumberOfAllComplaintsDone(Long numberOfAllComplaintsDone) {
-        this.numberOfAllComplaintsDone = numberOfAllComplaintsDone;
-    }
-
-    public boolean isAllExamExercisesAllStudentsPrepared() {
-        return allExamExercisesAllStudentsPrepared;
-    }
-
-    public boolean getAllExamExercisesAllStudentsPrepared() {
-        return this.allExamExercisesAllStudentsPrepared;
-    }
-
-    public void setAllExamExercisesAllStudentsPrepared(boolean allExamExercisesAllStudentsPrepared) {
-        this.allExamExercisesAllStudentsPrepared = allExamExercisesAllStudentsPrepared;
-    }
-
-    public Long getNumberOfGeneratedStudentExams() {
-        return this.numberOfGeneratedStudentExams;
-    }
-
-    public void setNumberOfGeneratedStudentExams(Long numberOfGeneratedStudentExams) {
-        this.numberOfGeneratedStudentExams = numberOfGeneratedStudentExams;
-    }
-
-    public Long getNumberOfTestRuns() {
-        return this.numberOfTestRuns;
-    }
-
-    public void setNumberOfTestRuns(Long numberOfTestRuns) {
-        this.numberOfTestRuns = numberOfTestRuns;
+    /**
+     * Checks if the Boolean values are null. If they are, it assigns them a default value of false.
+     */
+    public ExamChecklistDTO {
+        if (allExamExercisesAllStudentsPrepared == null) {
+            allExamExercisesAllStudentsPrepared = false;
+        }
+        if (existsUnassessedQuizzes == null) {
+            existsUnassessedQuizzes = false;
+        }
+        if (existsUnsubmittedExercises == null) {
+            existsUnsubmittedExercises = false;
+        }
     }
 
 }

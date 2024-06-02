@@ -2,11 +2,14 @@ package de.tum.in.www1.artemis.service.dto;
 
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 
 /**
  * A DTO representing a consistency error
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ConsistencyErrorDTO {
 
     private ProgrammingExercise programmingExercise;

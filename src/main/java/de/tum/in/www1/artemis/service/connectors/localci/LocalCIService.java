@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
+
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -15,6 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -24,6 +28,9 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.web.rest.dto.BuildPlanCheckoutDirectoriesDTO;
+import de.tum.in.www1.artemis.web.rest.dto.CheckoutDirectoriesDTO;
 
 /**
  * Implementation of ContinuousIntegrationService for local CI. Contains methods for communication with the local CI system.
@@ -31,7 +38,7 @@ import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
  * needed and thus contain an empty implementation.
  */
 @Service
-@Profile("localci")
+@Profile(PROFILE_LOCALCI)
 public class LocalCIService extends AbstractContinuousIntegrationService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalCIService.class);
@@ -42,11 +49,14 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final SharedQueueManagementService sharedQueueManagementService;
+
     public LocalCIService(BuildScriptProviderService buildScriptProviderService, AeolusTemplateService aeolusTemplateService,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, SharedQueueManagementService sharedQueueManagementService) {
         this.buildScriptProviderService = buildScriptProviderService;
         this.aeolusTemplateService = aeolusTemplateService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.sharedQueueManagementService = sharedQueueManagementService;
     }
 
     @Override
@@ -107,8 +117,15 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
      */
     @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
-        // TODO: Retrieve the correct status from the database once the table is implemented.
-        return BuildStatus.INACTIVE;
+        if (!sharedQueueManagementService.getQueuedJobsForParticipation(participation.getId()).isEmpty()) {
+            return BuildStatus.QUEUED;
+        }
+        else if (!sharedQueueManagementService.getProcessingJobsForParticipation(participation.getId()).isEmpty()) {
+            return BuildStatus.BUILDING;
+        }
+        else {
+            return BuildStatus.INACTIVE;
+        }
     }
 
     @Override
@@ -162,7 +179,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public ConnectorHealth health() {
-        return new ConnectorHealth(true);
+        return new ConnectorHealth(true, Map.of("buildAgents", sharedQueueManagementService.getBuildAgentInformation()));
     }
 
     @Override
@@ -205,5 +222,51 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     private String getCleanPlanName(String name) {
         return name.toUpperCase().replaceAll("[^A-Z0-9]", "");
+    }
+
+    @Override
+    public CheckoutDirectoriesDTO getCheckoutDirectories(ProgrammingLanguage programmingLanguage, boolean checkoutSolution) {
+        BuildPlanCheckoutDirectoriesDTO submissionBuildPlanCheckoutDirectories = getSubmissionBuildPlanCheckoutDirectories(programmingLanguage, checkoutSolution);
+        BuildPlanCheckoutDirectoriesDTO solutionBuildPlanCheckoutDirectories = getSolutionBuildPlanCheckoutDirectories(submissionBuildPlanCheckoutDirectories);
+
+        return new CheckoutDirectoriesDTO(submissionBuildPlanCheckoutDirectories, solutionBuildPlanCheckoutDirectories);
+    }
+
+    private BuildPlanCheckoutDirectoriesDTO getSubmissionBuildPlanCheckoutDirectories(ProgrammingLanguage programmingLanguage, boolean checkoutSolution) {
+        String exerciseCheckoutDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
+        String testCheckoutDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
+
+        exerciseCheckoutDirectory = startPathWithRootDirectory(exerciseCheckoutDirectory);
+        testCheckoutDirectory = startPathWithRootDirectory(testCheckoutDirectory);
+
+        String solutionCheckoutDirectory = null;
+
+        if (checkoutSolution) {
+            try {
+                String solutionCheckoutDirectoryPath = ContinuousIntegrationService.RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
+                solutionCheckoutDirectory = startPathWithRootDirectory(solutionCheckoutDirectoryPath);
+            }
+            catch (IllegalArgumentException exception) {
+                // not checked out during template & submission build
+            }
+        }
+
+        return new BuildPlanCheckoutDirectoriesDTO(exerciseCheckoutDirectory, solutionCheckoutDirectory, testCheckoutDirectory);
+    }
+
+    private String startPathWithRootDirectory(String checkoutDirectoryPath) {
+        final String ROOT_DIRECTORY = "/";
+        if (checkoutDirectoryPath == null || checkoutDirectoryPath.isEmpty()) {
+            return ROOT_DIRECTORY;
+        }
+
+        return checkoutDirectoryPath.startsWith(ROOT_DIRECTORY) ? checkoutDirectoryPath : ROOT_DIRECTORY + checkoutDirectoryPath;
+    }
+
+    private BuildPlanCheckoutDirectoriesDTO getSolutionBuildPlanCheckoutDirectories(BuildPlanCheckoutDirectoriesDTO submissionBuildPlanCheckoutDirectories) {
+        String solutionCheckoutDirectory = submissionBuildPlanCheckoutDirectories.exerciseCheckoutDirectory();
+        String testCheckoutDirectory = submissionBuildPlanCheckoutDirectories.testCheckoutDirectory();
+
+        return new BuildPlanCheckoutDirectoriesDTO(null, solutionCheckoutDirectory, testCheckoutDirectory);
     }
 }

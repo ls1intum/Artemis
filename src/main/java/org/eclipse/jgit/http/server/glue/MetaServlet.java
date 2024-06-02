@@ -9,6 +9,7 @@
 package org.eclipse.jgit.http.server.glue;
 
 import java.io.IOException;
+import java.io.Serial;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
@@ -33,16 +34,10 @@ import static jakarta.servlet.http.HttpServletResponse.SC_NOT_FOUND;
  */
 public class MetaServlet extends HttpServlet {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final MetaFilter filter;
-
-    /**
-     * Empty servlet with no bindings.
-     */
-    public MetaServlet() {
-        this(new MetaFilter());
-    }
 
     /**
      * Initialize a servlet wrapping a filter.

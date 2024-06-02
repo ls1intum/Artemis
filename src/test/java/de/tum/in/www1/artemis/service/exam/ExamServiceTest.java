@@ -208,13 +208,15 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         // check if general method works. More sophisticated test are within the ExamIntegrationTests
         ExamChecklistDTO examChecklistDTO = examService.getStatsForChecklist(exam1, true);
         assertThat(examChecklistDTO).isNotNull();
-        assertThat(examChecklistDTO.getNumberOfTestRuns()).isZero();
-        assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isZero();
-        assertThat(examChecklistDTO.getNumberOfExamsSubmitted()).isZero();
-        assertThat(examChecklistDTO.getNumberOfExamsStarted()).isZero();
-        assertThat(examChecklistDTO.getNumberOfAllComplaints()).isZero();
-        assertThat(examChecklistDTO.getNumberOfAllComplaintsDone()).isZero();
-        assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isFalse();
+        assertThat(examChecklistDTO.numberOfTestRuns()).isZero();
+        assertThat(examChecklistDTO.numberOfGeneratedStudentExams()).isZero();
+        assertThat(examChecklistDTO.numberOfExamsSubmitted()).isZero();
+        assertThat(examChecklistDTO.numberOfExamsStarted()).isZero();
+        assertThat(examChecklistDTO.numberOfAllComplaints()).isZero();
+        assertThat(examChecklistDTO.numberOfAllComplaintsDone()).isZero();
+        assertThat(examChecklistDTO.allExamExercisesAllStudentsPrepared()).isFalse();
+        assertThat(examChecklistDTO.existsUnassessedQuizzes()).isFalse();
+        assertThat(examChecklistDTO.existsUnsubmittedExercises()).isFalse();
     }
 
     @Nested

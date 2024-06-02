@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsXmlConfigBuilder;
-import de.tum.in.www1.artemis.service.util.XmlFileUtils;
+import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsXmlFileUtils;
 
 @Profile("jenkins")
 @Component
@@ -99,7 +99,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         final Path configFilePath = Path.of("templates", "jenkins", "config.xml");
         final var configFileReplacements = Map.of(REPLACE_PIPELINE_SCRIPT, jenkinsfile, REPLACE_PUSH_TOKEN, pushToken);
         final var xmlResource = resourceLoaderService.getResource(configFilePath);
-        return XmlFileUtils.readXmlFile(xmlResource, configFileReplacements);
+        return JenkinsXmlFileUtils.readXmlFile(xmlResource, configFileReplacements);
     }
 
     private String getJenkinsfile(final InternalVcsRepositoryURLs internalVcsRepositoryURLs, final ProgrammingLanguage programmingLanguage, final boolean checkoutSolution,

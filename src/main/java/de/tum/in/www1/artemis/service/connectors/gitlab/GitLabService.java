@@ -330,17 +330,17 @@ public class GitLabService extends AbstractVersionControlService {
         final var details = GitLabPushNotificationDTO.convert(requestBody);
         // Gitlab specifically provide the previous latest commit and the new latest commit after the given push event
         // Here we retrieve the hash of the new latest commit
-        final var gitLabCommitHash = details.getNewHash();
+        final var gitLabCommitHash = details.newHash();
         // Here we search for the commit details for the given commit hash
         // Technically these details should always be present but as this could change, we handle the edge case
-        final var firstMatchingCommit = details.getCommits().stream().filter(com -> gitLabCommitHash.equals(com.getHash())).findFirst();
+        final var firstMatchingCommit = Optional.ofNullable(details.commits()).flatMap(commits -> commits.stream().filter(com -> gitLabCommitHash.equals(com.hash())).findFirst());
         if (firstMatchingCommit.isPresent()) {
             // Fill commit with commit details
             final var gitLabCommit = firstMatchingCommit.get();
-            final var ref = details.getRef().split("/");
+            final var ref = details.ref().split("/");
             var branch = ref[ref.length - 1];
-            var author = gitLabCommit.getAuthor();
-            return new Commit(gitLabCommitHash, author.getName(), gitLabCommit.getMessage(), author.getEmail(), branch);
+            var author = gitLabCommit.author();
+            return new Commit(gitLabCommitHash, author.name(), gitLabCommit.message(), author.email(), branch);
         }
         return new Commit(gitLabCommitHash, null, null, null, null);
     }
