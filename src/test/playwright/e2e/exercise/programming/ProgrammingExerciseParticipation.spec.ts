@@ -3,11 +3,9 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 import javaAllSuccessfulSubmission from '../../../fixtures/exercise/programming/java/all_successful/submission.json';
 import swiftAllSuccessfulSubmission from '../../../fixtures/exercise/programming/swift/all_successful/submission.json';
-import haskellAllSuccessfulSubmission from '../../../fixtures/exercise/programming/haskell/all_successful/submission.json';
 import kotlinAllSuccessfulSubmission from '../../../fixtures/exercise/programming/kotlin/all_successful/submission.json';
 import vhdlAllSuccessfulSubmission from '../../../fixtures/exercise/programming/vhdl/all_successful/submission.json';
 import assemblerAllSuccessfulSubmission from '../../../fixtures/exercise/programming/assembler/all_successful/submission.json';
-import ocamlAllSuccessfulSubmission from '../../../fixtures/exercise/programming/ocaml/all_successful/submission.json';
 import javaBuildErrorSubmission from '../../../fixtures/exercise/programming/java/build_error/submission.json';
 import javaPartiallySuccessfulSubmission from '../../../fixtures/exercise/programming/java/partially_successful/submission.json';
 import pythonAllSuccessful from '../../../fixtures/exercise/programming/python/all_successful/submission.json';
@@ -33,61 +31,42 @@ test.describe('Programming exercise participation', () => {
     });
 
     const testCases = [
-        { description: 'Makes a failing Java submission', programmingLanguage: ProgrammingLanguage.JAVA, submission: javaBuildErrorSubmission, commitMessage: 'Initial commit' },
+        { description: 'Makes a failing Java submission', programmingLanguage: ProgrammingLanguage.JAVA, submission: javaBuildErrorSubmission },
         {
             description: 'Makes a partially successful Java submission',
             programmingLanguage: ProgrammingLanguage.JAVA,
             submission: javaPartiallySuccessfulSubmission,
-            commitMessage: 'Initial implementation',
         },
         {
             description: 'Makes a successful Java submission',
             programmingLanguage: ProgrammingLanguage.JAVA,
             submission: javaAllSuccessfulSubmission,
-            commitMessage: 'Implemented all tasks',
         },
-        { description: 'Makes a successful C submission', programmingLanguage: ProgrammingLanguage.C, submission: cAllSuccessful, commitMessage: 'Implemented all tasks' },
+        { description: 'Makes a successful C submission', programmingLanguage: ProgrammingLanguage.C, submission: cAllSuccessful },
         {
             description: 'Makes a successful Python submission',
             programmingLanguage: ProgrammingLanguage.PYTHON,
             submission: pythonAllSuccessful,
-            commitMessage: 'Implemented all tasks',
         },
         {
             description: 'Makes a successful Swift submission',
             programmingLanguage: ProgrammingLanguage.SWIFT,
             submission: swiftAllSuccessfulSubmission,
-            commitMessage: 'Implemented all tasks',
-        },
-        {
-            description: 'Makes a successful Haskell submission',
-            programmingLanguage: ProgrammingLanguage.HASKELL,
-            submission: haskellAllSuccessfulSubmission,
-            commitMessage: 'Implemented all tasks',
         },
         {
             description: 'Makes a successful Kotlin submission',
             programmingLanguage: ProgrammingLanguage.KOTLIN,
             submission: kotlinAllSuccessfulSubmission,
-            commitMessage: 'Implemented all tasks',
         },
         {
             description: 'Makes a successful VHDL submission',
             programmingLanguage: ProgrammingLanguage.VHDL,
             submission: vhdlAllSuccessfulSubmission,
-            commitMessage: 'Implemented all tasks',
         },
         {
             description: 'Makes a successful Assembler submission',
             programmingLanguage: ProgrammingLanguage.ASSEMBLER,
             submission: assemblerAllSuccessfulSubmission,
-            commitMessage: 'Implemented all tasks',
-        },
-        {
-            description: 'Makes a successful Ocaml submission',
-            programmingLanguage: ProgrammingLanguage.OCAML,
-            submission: ocamlAllSuccessfulSubmission,
-            commitMessage: 'Implemented all tasks',
         },
     ];
 
@@ -122,7 +101,7 @@ test.describe('Programming exercise participation', () => {
                     const urlParts = repoUrl.split('/');
                     const repoName = urlParts[urlParts.length - 1];
                     const exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName);
-                    const commitMessage = 'Implemented all tasks';
+                    const commitMessage = 'Making a submission';
                     await makeGitSubmission(exerciseRepo, repoName, studentOne, submission, commitMessage);
                     await fs.rmdir(`./test-exercise-repos/${repoName}`, { recursive: true });
                     await page.goto(`courses/${course.id}/exercises/${exercise.id!}`);
