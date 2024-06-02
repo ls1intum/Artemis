@@ -12,6 +12,8 @@
             "fileupload": "Dateiupload-Aufgaben.",
             "notifications": "Benachrichtigungen.",
             "competencies": "Kompetenzen.",
+            "standardizedCompetencies": "standardisierte Kompetenzen.",
+            "generateCompetencies": "das Generieren von Kompetenzen.",
             "communications": "Kommunikation.",
             "exams": "Klausuren.",
             "plagiarismchecks": "Plagiatsfälle.",

@@ -1,5 +1,6 @@
 <div class="container">
     <h2 id="page-heading" jhiTranslate="artemisApp.competency.generate.title"></h2>
+    <jhi-documentation-button [type]="documentationType" />
     <jhi-course-description-form (formSubmitted)="getCompetencyRecommendations($event)" [isLoading]="isLoading" />
     <h3 jhiTranslate="artemisApp.competency.generate.listTitle" class="mt-2"></h3>
     @if (isLoading) {

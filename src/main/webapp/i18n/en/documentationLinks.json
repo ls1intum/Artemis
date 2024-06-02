@@ -12,6 +12,8 @@
             "fileupload": "file upload exercises.",
             "notifications": "notifications.",
             "competencies": "competencies.",
+            "standardizedCompetencies": "standardized competencies.",
+            "generateCompetencies": "generating competencies.",
             "communications": "communications.",
             "exams": "exams.",
             "plagiarismchecks": "plagiarism checks.",
