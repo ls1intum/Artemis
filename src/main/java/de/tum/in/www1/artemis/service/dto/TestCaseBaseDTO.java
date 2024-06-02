@@ -3,11 +3,13 @@ package de.tum.in.www1.artemis.service.dto;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * Interface for DTOs that represent a test case.
  */
-public interface TestCaseDTOInterface {
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public interface TestCaseBaseDTO {
 
     /**
      * Gets the name of the test case
