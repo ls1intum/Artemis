@@ -23,9 +23,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.google.gson.JsonParser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
@@ -148,13 +148,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userLogin);
         programmingExerciseUtilService.createProgrammingSubmission(participation, false);
 
-        List<String> logs = new ArrayList<>();
-        logs.add("[2021-05-10T14:58:30.000Z] Agents is getting prepared");
-        logs.add("[2021-05-10T15:00:00.000Z] docker exec"); // Job started
-        logs.add("[2021-05-10T15:00:05.000Z] Scanning for projects..."); // Build & test started
-        logs.add("[2021-05-10T15:00:10.000Z] Dependency 1 Downloaded from");
-        logs.add("[2021-05-10T15:00:15.000Z] Total time: Some time"); // Build & test finished
-        logs.add("[2021-05-10T15:00:20.000Z] Everything finished"); // Job finished
+        final var logs = getLogs("[2021-05-10T15:00:10.000Z] Dependency 1 Downloaded from", "[2021-05-10T15:00:20.000Z] Everything finished");
 
         var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.JAVA, List.of(), logs, null, new ArrayList<>());
         postResult(notification, HttpStatus.OK);
@@ -166,6 +160,17 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         assertThat(statistics.scaDuration()).isNull();
         assertThat(statistics.totalJobDuration()).isEqualTo(110);
         assertThat(statistics.dependenciesDownloadedCount()).isEqualTo(1);
+    }
+
+    private static List<String> getLogs(String dependencyDownloaded, String jobFinished) {
+        List<String> logs = new ArrayList<>();
+        logs.add("[2021-05-10T14:58:30.000Z] Agents is getting prepared");
+        logs.add("[2021-05-10T15:00:00.000Z] docker exec"); // Job started
+        logs.add("[2021-05-10T15:00:05.000Z] Scanning for projects..."); // Build & test started
+        logs.add(dependencyDownloaded);
+        logs.add("[2021-05-10T15:00:15.000Z] Total time: Some time"); // Build & test finished
+        logs.add(jobFinished); // Job finished
+        return logs;
     }
 
     @Test
@@ -208,13 +213,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userLogin);
         programmingExerciseUtilService.createProgrammingSubmission(participation, false);
 
-        List<String> logs = new ArrayList<>();
-        logs.add("[2021-05-10T14:58:30.000Z] Agents is getting prepared");
-        logs.add("[2021-05-10T15:00:00.000Z] docker exec"); // Job started
-        logs.add("[2021-05-10T15:00:05.000Z] Scanning for projects..."); // Build & test started
-        logs.add("[2021-05-10T15:00:20.000Z] Dependency 1 Downloaded from");
-        logs.add("[2021-05-10T15:00:15.000Z] Total time: Some time"); // Build & test finished
-        logs.add("[2021-05-10T15:00:16.000Z] Scanning for projects..."); // SCA started
+        final var logs = getLogs("[2021-05-10T15:00:20.000Z] Dependency 1 Downloaded from", "[2021-05-10T15:00:16.000Z] Scanning for projects...");
         logs.add("[2021-05-10T15:00:20.000Z] Dependency 2 Downloaded from");
         logs.add("[2021-05-10T15:00:27.000Z] Total time: Some time"); // SCA finished
         logs.add("[2021-05-10T15:00:30.000Z] Everything finished"); // Job finished
@@ -241,13 +240,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userLogin);
         programmingExerciseUtilService.createProgrammingSubmission(participation, false);
 
-        List<String> logs = new ArrayList<>();
-        logs.add("[2021-05-10T14:58:30.000Z] Agents is getting prepared");
-        logs.add("[2021-05-10T15:00:00.000Z] docker exec"); // Job started
-        logs.add("[2021-05-10T15:00:05.000Z] Scanning for projects..."); // Build & test started
-        logs.add("[2021-05-10T15:00:20.000Z] Dependency 1 Downloaded from");
-        logs.add("[2021-05-10T15:00:15.000Z] Total time: Some time"); // Build & test finished
-        logs.add("[2021-05-10T15:00:20.000Z] Everything finished"); // Job finished
+        final var logs = getLogs("[2021-05-10T15:00:20.000Z] Dependency 1 Downloaded from", "[2021-05-10T15:00:20.000Z] Everything finished");
 
         var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.PYTHON, List.of(), logs, null, new ArrayList<>());
         postResult(notification, HttpStatus.OK);
@@ -296,9 +289,10 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
     void shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived() throws Exception {
         testService.setUp_shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived(TEST_PREFIX);
         String userLogin = TEST_PREFIX + "student1";
-        var pushJSON = new JsonParser().parse(GITLAB_PUSH_EVENT_REQUEST).getAsJsonObject();
-        var firstCommitHash = pushJSON.get("before").getAsString();
-        var secondCommitHash = pushJSON.get("after").getAsString();
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode rootNode = objectMapper.readTree(GITLAB_PUSH_EVENT_REQUEST);
+        String firstCommitHash = rootNode.get("before").asText();
+        String secondCommitHash = rootNode.get("after").asText();
         var firstCommitDate = ZonedDateTime.now().minusSeconds(60);
         var secondCommitDate = ZonedDateTime.now().minusSeconds(30);
 
@@ -397,13 +391,13 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
 
         var longErrorMessage = new TestCaseDetailMessageDTO("abc\nmultiline\nfeedback");
         var testCase = new TestCaseDTO("test1", "Class", 0d, new ArrayList<>(), List.of(longErrorMessage), new ArrayList<>());
-        notification.getResults().get(0).testCases().set(0, testCase);
+        notification.getResults().getFirst().testCases().set(0, testCase);
 
         postResult(notification, HttpStatus.OK);
 
         var result = resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(participation.getId());
         // Jenkins Setup -> Gradle Feedback is not duplicated and should be kept like this
-        assertThat(result.getFeedbacks().get(0).getDetailText()).isEqualTo("abc\nmultiline\nfeedback");
+        assertThat(result.getFeedbacks().getFirst().getDetailText()).isEqualTo("abc\nmultiline\nfeedback");
     }
 
     private Result assertBuildError(Long participationId, String userLogin) throws Exception {
@@ -411,7 +405,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         // Assert that result is linked to the participation
         var results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participationId);
         assertThat(results).hasSize(1);
-        var result = results.get(0);
+        var result = results.getFirst();
         assertThat(result.isSuccessful()).isFalse();
         assertThat(result.getScore()).isZero();
 
@@ -435,14 +429,14 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
     /**
      * This is the simulated request from the VCS to Artemis on a new commit.
      */
-    private ProgrammingSubmission postSubmission(Long participationId, HttpStatus expectedStatus) throws Exception {
-        return testService.postSubmission(participationId, expectedStatus, GITLAB_PUSH_EVENT_REQUEST);
+    private void postSubmission(Long participationId, HttpStatus expectedStatus) throws Exception {
+        testService.postSubmission(participationId, expectedStatus, GITLAB_PUSH_EVENT_REQUEST);
     }
 
     private void assertNoNewSubmissions(long participationId, ProgrammingSubmission existingSubmission) {
         var updatedSubmissions = submissionRepository.findAllByParticipationIdWithResults(participationId);
         assertThat(updatedSubmissions).hasSize(1);
-        assertThat(updatedSubmissions.get(0).getId()).isEqualTo(existingSubmission.getId());
+        assertThat(updatedSubmissions.getFirst().getId()).isEqualTo(existingSubmission.getId());
     }
 
     private void postResult(TestResultsDTO requestBodyMap, HttpStatus status) throws Exception {

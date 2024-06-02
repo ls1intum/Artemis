@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -177,6 +178,8 @@ public class ProgrammingExerciseUtilService {
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setMaxPoints(10.0);
         programmingExercise.setBonusPoints(0.0);
+        programmingExercise.setGradingInstructions("Grading instructions");
+        programmingExercise.setProblemStatement("Problem statement");
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         return programmingExercise;
     }
@@ -690,8 +693,9 @@ public class ProgrammingExerciseUtilService {
      * @param exercise   The exercise for which to create the submission/participation/result combination.
      * @param submission The submission to use for adding to the exercise/participation/result.
      * @param login      The login of the user used to access or create an exercise participation.
+     * @return the newly created result
      */
-    public void addProgrammingSubmissionWithResult(ProgrammingExercise exercise, ProgrammingSubmission submission, String login) {
+    public Result addProgrammingSubmissionWithResult(ProgrammingExercise exercise, ProgrammingSubmission submission, String login) {
         StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
         submission = programmingSubmissionRepo.save(submission);
         Result result = resultRepo.save(new Result().participation(participation));
@@ -703,6 +707,30 @@ public class ProgrammingExerciseUtilService {
         result = resultRepo.save(result);
         participation.addResult(result);
         studentParticipationRepo.save(participation);
+        return result;
+    }
+
+    /**
+     * Adds a template submission with a result to the given programming exercise.
+     * The method will make sure that all necessary entities are connected.
+     *
+     * @param exerciseId The id of the programming exercise to which the submission should be added.
+     * @return the newly created result
+     */
+    public Result addTemplateSubmissionWithResult(long exerciseId) {
+        var templateParticipation = templateProgrammingExerciseParticipationRepo.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exerciseId);
+        ProgrammingSubmission submission = new ProgrammingSubmission();
+        submission = submissionRepository.save(submission);
+        Result result = resultRepo.save(new Result().participation(templateParticipation));
+        templateParticipation.addSubmission(submission);
+        submission.setParticipation(templateParticipation);
+        submission.addResult(result);
+        submission = submissionRepository.save(submission);
+        result.setSubmission(submission);
+        result = resultRepo.save(result);
+        templateParticipation.addResult(result);
+        templateProgrammingExerciseParticipationRepo.save(templateParticipation);
+        return result;
     }
 
     /**
@@ -881,6 +909,7 @@ public class ProgrammingExerciseUtilService {
         // Mock Git service operations
         doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), any(), any(), anyBoolean(), anyString());
         doNothing().when(gitService).resetToOriginHead(any());
-        doReturn(Paths.get("repo.zip")).when(gitService).zipRepositoryWithParticipation(any(), anyString(), anyBoolean());
+        doReturn(Paths.get("repo.zip")).when(gitService).getRepositoryWithParticipation(any(), anyString(), anyBoolean(), eq(true));
+        doReturn(Paths.get("repo")).when(gitService).getRepositoryWithParticipation(any(), anyString(), anyBoolean(), eq(false));
     }
 }

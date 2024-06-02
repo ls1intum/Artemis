@@ -15,12 +15,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.exception.NetworkingException;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.service.dto.athena.ExerciseDTO;
-import de.tum.in.www1.artemis.service.dto.athena.SubmissionDTO;
+import de.tum.in.www1.artemis.service.dto.athena.ExerciseBaseDTO;
+import de.tum.in.www1.artemis.service.dto.athena.SubmissionBaseDTO;
 
 /**
  * Service for sending submissions to the Athena service for further processing
@@ -53,9 +55,11 @@ public class AthenaSubmissionSendingService {
         this.athenaDTOConverterService = athenaDTOConverterService;
     }
 
-    private record RequestDTO(ExerciseDTO exercise, List<SubmissionDTO> submissions) {
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private record RequestDTO(ExerciseBaseDTO exercise, List<SubmissionBaseDTO> submissions) {
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private record ResponseDTO(String data) {
     }
 

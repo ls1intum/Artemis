@@ -148,7 +148,7 @@ public class ProgrammingAssessmentService extends AssessmentService {
 
     private void handleResolvedFeedbackRequest(StudentParticipation participation) {
         var exercise = participation.getExercise();
-        var isManualFeedbackRequest = exercise.getAllowManualFeedbackRequests() && participation.getIndividualDueDate() != null
+        var isManualFeedbackRequest = exercise.getAllowFeedbackRequests() && participation.getIndividualDueDate() != null
                 && participation.getIndividualDueDate().isBefore(ZonedDateTime.now());
         // We need to use the general exercise due date here and not the individual participation due date.
         // This feature temporarily locks the repository by setting the individual due date to the past.

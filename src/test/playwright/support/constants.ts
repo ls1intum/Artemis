@@ -75,6 +75,7 @@ export class AdditionalData {
 }
 
 // Exercise
+// Copied from src\main\webapp\app\entities\exercise.model.ts
 export type Exercise = {
     title?: string;
     type?: ExerciseType;
@@ -84,9 +85,17 @@ export type Exercise = {
 };
 
 // ExerciseMode
+// Copied from src\main\webapp\app\entities\exercise.model.ts
 export enum ExerciseMode {
     INDIVIDUAL = 'INDIVIDUAL',
     TEAM = 'TEAM',
+}
+
+// Copied from src\main\webapp\app\entities\quiz\quiz-exercise.model.ts
+export enum QuizMode {
+    SYNCHRONIZED = 'SYNCHRONIZED',
+    BATCHED = 'BATCHED',
+    INDIVIDUAL = 'INDIVIDUAL',
 }
 
 // Exercise commit entity displayed in commit history

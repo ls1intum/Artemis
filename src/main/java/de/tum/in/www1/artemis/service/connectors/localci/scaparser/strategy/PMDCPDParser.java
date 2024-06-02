@@ -1,103 +1,88 @@
 package de.tum.in.www1.artemis.service.connectors.localci.scaparser.strategy;
 
-import static de.tum.in.www1.artemis.service.connectors.localci.scaparser.utils.XmlUtils.getChildElements;
-
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
+import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisIssue;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
-import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue;
 
-/**
- * Parser strategy for PMD CPD reports.
- */
+@JsonIgnoreProperties(ignoreUnknown = true)
+record PmdCpc(@JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "duplication") List<Duplication> duplications) {
+}
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+record Duplication(@JacksonXmlProperty(isAttribute = true, localName = "lines") int lines,
+
+        @JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "file") List<DuplicationFile> files) {
+}
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+record DuplicationFile(@JacksonXmlProperty(isAttribute = true, localName = "path") String path,
+
+        @JacksonXmlProperty(isAttribute = true, localName = "line") int startLine,
+
+        @JacksonXmlProperty(isAttribute = true, localName = "endline") int endLine,
+
+        @JacksonXmlProperty(isAttribute = true, localName = "column") int startColumn,
+
+        @JacksonXmlProperty(isAttribute = true, localName = "endcolumn") int endColumn) {
+}
+
 class PMDCPDParser implements ParserStrategy {
 
-    // Category/Rule which can be used by clients for further processing
     private static final String CPD_CATEGORY = "Copy/Paste Detection";
 
-    private static final String DUPLICATION_TAG = "duplication";
-
-    private static final String DUPLICATION_ATT_LINES = "lines";
-
-    private static final String FILE_TAG = "file";
-
-    private static final String FILE_ATT_PATH = "path";
-
-    private static final String FILE_ATT_STARTLINE = "line";
-
-    private static final String FILE_ATT_ENDLINE = "endline";
-
-    private static final String FILE_ATT_STARTCOLUMN = "column";
-
-    private static final String FILE_ATT_ENDCOLUMN = "endcolumn";
+    private final XmlMapper xmlMapper = new XmlMapper();
 
     @Override
-    public StaticCodeAnalysisReportDTO parse(Document doc) {
-        StaticCodeAnalysisReportDTO report = new StaticCodeAnalysisReportDTO();
-        report.setTool(StaticCodeAnalysisTool.PMD_CPD);
-        List<StaticCodeAnalysisIssue> allIssues = new ArrayList<>();
-        Element root = doc.getDocumentElement();
+    public StaticCodeAnalysisReportDTO parse(String xmlContent) {
+        try {
+            PmdCpc duplication = xmlMapper.readValue(xmlContent, PmdCpc.class);
+            return createReportFromDuplication(duplication);
+        }
+        catch (IOException e) {
+            throw new RuntimeException("Failed to parse XML", e);
+        }
+    }
 
-        // Iterate over all <duplication> elements
-        for (Element duplication : getChildElements(root, DUPLICATION_TAG)) {
-            List<StaticCodeAnalysisIssue> issuesForDuplication = new ArrayList<>();
-            int lines = ParserUtils.extractInt(duplication, DUPLICATION_ATT_LINES);
-
-            // Create an issue for each found duplication
-            for (Element file : getChildElements(duplication, FILE_TAG)) {
-                StaticCodeAnalysisIssue issue = new StaticCodeAnalysisIssue();
-                issue.setCategory(CPD_CATEGORY);
-                issue.setRule(CPD_CATEGORY);
-                String unixPath = ParserUtils.transformToUnixPath(file.getAttribute(FILE_ATT_PATH));
-                issue.setFilePath(unixPath);
-                issue.setStartLine(ParserUtils.extractInt(file, FILE_ATT_STARTLINE));
-                issue.setEndLine(ParserUtils.extractInt(file, FILE_ATT_ENDLINE));
-                issue.setStartColumn(ParserUtils.extractInt(file, FILE_ATT_STARTCOLUMN));
-                issue.setEndColumn(ParserUtils.extractInt(file, FILE_ATT_ENDCOLUMN));
-
-                issuesForDuplication.add(issue);
+    private StaticCodeAnalysisReportDTO createReportFromDuplication(PmdCpc report) {
+        List<StaticCodeAnalysisIssue> issues = new ArrayList<>();
+        if (report.duplications() == null) {
+            return new StaticCodeAnalysisReportDTO(StaticCodeAnalysisTool.PMD_CPD, issues);
+        }
+        for (var duplication : report.duplications()) {
+            if (duplication.files() == null) {
+                continue;
             }
 
-            // Create a message referencing all locations where the same duplication was found
-            String message = createMessage(lines, issuesForDuplication);
-            issuesForDuplication.forEach(issue -> issue.setMessage(message));
+            StringBuilder messageBuilder = new StringBuilder("Code duplication of ").append(duplication.lines()).append(" lines in the following files:");
+            // Iterate through the files to create on commonly used error message refering to all instances of duplication.
+            for (DuplicationFile file : duplication.files()) {
+                String unixPath = ParserStrategy.transformToUnixPath(file.path());
+                String filename = new File(unixPath).getName();
+                messageBuilder.append("\n - ").append(filename).append(": Lines ").append(file.startLine()).append(" to ").append(file.endLine());
+            }
 
-            // Add issues to report
-            allIssues.addAll(issuesForDuplication);
+            String message = messageBuilder.toString();
+            // We create a new issue for every instance of duplicated code blocks.
+            for (DuplicationFile file : duplication.files()) {
+                String unixPath = ParserStrategy.transformToUnixPath(file.path());
+                StaticCodeAnalysisIssue issue = new StaticCodeAnalysisIssue(unixPath, file.startLine(), file.endLine(), file.startColumn(), file.endColumn(), CPD_CATEGORY,
+                        CPD_CATEGORY, message, null,  // Priority might not be applicable
+                        null   // Penalty not applicable
+                );
+                issues.add(issue);
+            }
         }
-        report.setIssues(allIssues);
-        return report;
-    }
 
-    /**
-     * Creates a message showing the file locations of the duplication.
-     *
-     * @param duplicatedLines duplicated number of lines
-     * @param issues          issues created for the same duplication
-     * @return duplication message
-     */
-    private String createMessage(int duplicatedLines, List<StaticCodeAnalysisIssue> issues) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("Code duplication of ").append(duplicatedLines).append(" lines in the following files:");
-
-        int counter = 1;
-        // Add all file locations of the same duplication
-        for (StaticCodeAnalysisIssue issue : issues) {
-            String filename = extractFilename(issue.getFilePath());
-            builder.append("\n").append(counter).append(". ").append(filename).append(":");
-            builder.append(issue.getStartLine()).append("-").append(issue.getEndLine());
-            counter++;
-        }
-        return builder.toString();
-    }
-
-    private String extractFilename(String unixPath) {
-        return new File(unixPath).getName();
+        return new StaticCodeAnalysisReportDTO(StaticCodeAnalysisTool.PMD_CPD, issues);
     }
 }

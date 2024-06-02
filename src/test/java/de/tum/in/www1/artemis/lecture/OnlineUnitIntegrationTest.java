@@ -6,7 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
-import java.net.URL;
+import java.net.URI;
 import java.util.List;
 
 import org.jsoup.Connection;
@@ -215,7 +215,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @ValueSource(strings = { "https://www.google.de", "HTTP://example.com:80?query=1" })
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void getOnlineResource(String link) throws Exception {
-        var url = new URL(link).toString();
+        var url = new URI(link).toURL().toString();
         var connectionMock = mock(Connection.class);
         jsoupMock.when(() -> Jsoup.connect(url)).thenReturn(connectionMock);
         when(connectionMock.timeout(anyInt())).thenReturn(connectionMock);
