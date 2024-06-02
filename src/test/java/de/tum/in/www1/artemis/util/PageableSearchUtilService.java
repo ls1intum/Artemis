@@ -146,7 +146,14 @@ public class PageableSearchUtilService {
 
             // Populate a LinkedMultiValueMap from the Map, mapping parameter names to values
             final LinkedMultiValueMap<String, String> paramMap = new LinkedMultiValueMap<>();
-            params.forEach((key, value) -> paramMap.add(parentKey + "." + key, value));
+            params.forEach((key, value) -> {
+                if (parentKey.isBlank()) {
+                    paramMap.add(key, value);
+                }
+                else {
+                    paramMap.add(parentKey + "." + key, value);
+                }
+            });
             return paramMap;
         }
         catch (Exception e) {
