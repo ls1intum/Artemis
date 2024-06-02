@@ -52,7 +52,8 @@
                 "search": {
                     "title": "Suche",
                     "placeholder": "Suche nach Buildjob",
-                    "loading": "Laden..."
+                    "loading": "Laden...",
+                    "tooltip": "Die Suche wird auf Benutzerlogin, Kursname und Kurskurzname durchgeführt"
                 },
                 "none": "Keine",
                 "close": "Schließen",

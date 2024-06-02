@@ -52,7 +52,8 @@
                 "search": {
                     "title": "Search",
                     "placeholder": "Search for build job",
-                    "loading": "Loading..."
+                    "loading": "Loading...",
+                    "tooltip": "Search will be performed on user login, course title, and course short name"
                 },
                 "none": "None",
                 "close": "Close",

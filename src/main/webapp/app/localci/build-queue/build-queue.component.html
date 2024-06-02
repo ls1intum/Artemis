@@ -424,6 +424,7 @@
                     [(ngModel)]="finishedBuildJobFilter.searchTerm"
                     (focusout)="triggerLoadFinishedJobs()"
                 />
+                <jhi-help-icon class="ps-1" text="artemisApp.buildQueue.filter.search.tooltip" />
                 <button class="btn btn-primary ms-3" (click)="triggerLoadFinishedJobs()">
                     <span jhiTranslate="artemisApp.buildQueue.filter.search.title"></span>
                 </button>
