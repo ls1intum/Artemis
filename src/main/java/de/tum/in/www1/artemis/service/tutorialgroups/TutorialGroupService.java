@@ -630,7 +630,7 @@ public class TutorialGroupService {
         Set<TutorialGroup> tutorialGroups = findAllForCourse(course, user);
 
         StringWriter out = new StringWriter();
-        CSVFormat csvFormat = CSVFormat.DEFAULT.withHeader(fields.toArray(new String[0]));
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(fields.toArray(new String[0])).build();
         try (CSVPrinter printer = new CSVPrinter(out, csvFormat)) {
             for (TutorialGroup tutorialGroup : tutorialGroups) {
                 for (String field : fields) {
