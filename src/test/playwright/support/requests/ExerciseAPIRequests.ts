@@ -148,8 +148,6 @@ export class ExerciseAPIRequests {
         exercise.mode = mode;
         exercise.teamAssignmentConfig = teamAssignmentConfig;
 
-        console.log('Creating programming exercise:', exercise);
-
         const response = await this.page.request.post(`${PROGRAMMING_EXERCISE_BASE}/setup`, { data: exercise });
         return response.json();
     }
