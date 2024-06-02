@@ -211,7 +211,7 @@ export class LearningPathContainerComponent implements OnInit {
             backdrop: 'static',
             windowClass: 'competency-graph-modal',
         });
-        modalRef.componentInstance.courseId = this.courseId;
+        modalRef.componentInstance.learningPathId = this.learningPathId;
         // modalRef.componentInstance.learningPath = learningPathResponse.body!;
         // this.learningPathService.getLearningPath(this.learningPathId).subscribe((learningPathResponse) => {
         // });

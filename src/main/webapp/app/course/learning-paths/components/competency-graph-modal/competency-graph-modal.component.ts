@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -15,6 +15,8 @@ export class CompetencyGraphModalComponent {
     protected readonly closeIcon = faXmark;
 
     private readonly activeModal = inject(NgbActiveModal);
+
+    learningPath = input.required<number>();
 
     closeModal() {
         this.activeModal.close();
