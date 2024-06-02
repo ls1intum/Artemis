@@ -2,7 +2,7 @@
     <div
         id="test-accordion-item-container-{{ i }}"
         class="pointer"
-        [ngClass]="{ 'd-none': !showAddOptions && !(groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length }"
+        [ngClass]="{ 'd-none': (!showAddOptions || searchValue?.length !== 0) && !(groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length }"
     >
         <div id="test-accordion-item-header" class="control-label d-flex align-items-center justify-content-between py-2 bg-module" (click)="toggleGroupCategoryCollapse(groupKey)">
             <div class="my-2">

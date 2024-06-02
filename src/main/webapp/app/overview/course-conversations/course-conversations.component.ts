@@ -246,6 +246,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             storageId: 'conversation',
             groupedData: this.accordionConversationGroups,
             ungroupedData: this.sidebarConversations,
+            showAccordionAddOption: true,
+            showAccordionLeadingIcon: true,
         };
     }
 

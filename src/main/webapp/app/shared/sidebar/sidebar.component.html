@@ -23,8 +23,8 @@
                             [routeParams]="routeParams"
                             [courseId]="courseId"
                             [itemSelected]="itemSelected"
-                            [showAddOptions]="sidebarData.sidebarType === 'conversation'"
-                            [showLeadingIcon]="sidebarData.sidebarType === 'conversation'"
+                            [showAddOptions]="sidebarData.showAccordionAddOption ?? false"
+                            [showLeadingIcon]="sidebarData.showAccordionLeadingIcon ?? false"
                             (onUpdateSidebar)="onUpdateSidebar.emit()"
                         />
                     } @else {

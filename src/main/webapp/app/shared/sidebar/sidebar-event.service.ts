@@ -20,6 +20,7 @@ export class SidebarEventService {
 
     emitSidebarAccordionPlusClickedEvent(groupkey: string) {
         this.sidebarAccordionPlusClickedEvent.next(groupkey);
+        this.sidebarAccordionPlusClickedEvent.next(null);
     }
 
     sidebarAccordionPlusClickedEventListener() {
