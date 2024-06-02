@@ -31,6 +31,7 @@ jobs:
 
       - name: Install and compile TypeScript
         run: |
+          cd supporting_scripts/analysis-of-endpoint-connections/src/main/typeScript/
           npm install
           npm install typescript
           tsc -p tsconfig.analysisOfEndpointConnections.json
