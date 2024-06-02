@@ -53,9 +53,9 @@ class IrisChatWebsocketTest extends AbstractIrisIntegrationTest {
         var message = irisSession.newMessage();
         message.addContent(createMockContent(), createMockContent());
         message.setMessageDifferentiator(101010);
-        irisChatWebsocketService.sendMessage(message, List.of());
+        irisChatWebsocketService.sendMessage(message, List.of(), List.of());
         verify(websocketMessagingService, times(1)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq("/topic/iris/" + irisSession.getId()),
-                eq(new IrisWebsocketDTO(message, new IrisRateLimitService.IrisRateLimitInformation(0, -1, 0), List.of())));
+                eq(new IrisWebsocketDTO(message, new IrisRateLimitService.IrisRateLimitInformation(0, -1, 0), List.of(), List.of())));
     }
 
     private IrisTextMessageContent createMockContent() {

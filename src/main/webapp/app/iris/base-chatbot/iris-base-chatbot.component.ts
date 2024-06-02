@@ -65,9 +65,11 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     numNewMessageSubscription: Subscription;
     rateLimitSubscription: Subscription;
     activeStatusSubscription: Subscription;
+    suggestionsSubscription: Subscription;
 
     messages: IrisMessage[] = [];
     stages?: IrisStageDTO[] = [];
+    suggestions?: string[] = [];
     error?: IrisErrorMessageKey;
     numNewMessages: number = 0;
     rateLimitInfo: IrisRateLimitInformation;
@@ -134,6 +136,12 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
                 this.resendAnimationActive = false;
             }
             this.active = active;
+        });
+        this.suggestionsSubscription = this.chatService.currentSuggestions().subscribe((suggestions) => {
+            if (suggestions.length > 0) {
+                this.suggestions = suggestions;
+                console.log('Suggestions:', suggestions);
+            }
         });
 
         this.checkIfUserAcceptedIris();

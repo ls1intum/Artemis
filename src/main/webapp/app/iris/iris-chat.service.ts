@@ -29,6 +29,7 @@ export class IrisChatService implements OnDestroy {
     messages: BehaviorSubject<IrisMessage[]> = new BehaviorSubject([]);
     numNewMessages: BehaviorSubject<number> = new BehaviorSubject(0);
     stages: BehaviorSubject<IrisStageDTO[]> = new BehaviorSubject([]);
+    suggestions: BehaviorSubject<string[]> = new BehaviorSubject([]);
     error: BehaviorSubject<IrisErrorMessageKey | undefined> = new BehaviorSubject(undefined);
 
     rateLimitInfo?: IrisRateLimitInformation;
@@ -199,6 +200,9 @@ export class IrisChatService implements OnDestroy {
                 if (payload.stages) {
                     this.stages.next(payload.stages);
                 }
+                if (payload.suggestions) {
+                    this.suggestions.next(payload.suggestions);
+                }
                 break;
             case IrisChatWebsocketPayloadType.STATUS:
                 this.stages.next(payload.stages || []);
@@ -285,5 +289,9 @@ export class IrisChatService implements OnDestroy {
 
     public currentNumNewMessages(): Observable<number> {
         return this.numNewMessages.asObservable();
+    }
+
+    public currentSuggestions(): Observable<string[]> {
+        return this.suggestions.asObservable();
     }
 }
