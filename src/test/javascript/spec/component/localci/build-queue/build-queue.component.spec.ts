@@ -17,6 +17,7 @@ import { HttpResponse } from '@angular/common/http';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 describe('BuildQueueComponent', () => {
     let component: BuildQueueComponent;
@@ -242,6 +243,7 @@ describe('BuildQueueComponent', () => {
         pageSize: 50,
         sortedColumn: 'build_completion_date',
         sortingOrder: SortingOrder.DESCENDING,
+        searchTerm: '',
     };
 
     const filterOptionsEmpty = {
@@ -250,7 +252,6 @@ describe('BuildQueueComponent', () => {
         buildDurationFilterUpperBound: undefined,
         buildStartDateFilterFrom: undefined,
         buildStartDateFilterTo: undefined,
-        searchTerm: undefined,
         status: undefined,
     };
 
@@ -258,7 +259,7 @@ describe('BuildQueueComponent', () => {
         mockActivatedRoute = { params: of({ courseId: testCourseId }) };
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule],
+            imports: [ArtemisTestModule, NgxDatatableModule, ArtemisSharedComponentModule],
             declarations: [BuildQueueComponent, MockPipe(ArtemisTranslatePipe), MockComponent(DataTableComponent)],
             providers: [
                 { provide: BuildQueueService, useValue: mockBuildQueueService },

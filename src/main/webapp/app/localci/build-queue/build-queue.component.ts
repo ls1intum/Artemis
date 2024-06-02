@@ -296,7 +296,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
                             pageSize: this.itemsPerPage,
                             sortingOrder: this.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
                             sortedColumn: this.predicate,
-                            searchTerm: this.searchTerm,
+                            searchTerm: this.searchTerm || '',
                         },
                         this.finishedBuildJobFilter,
                     );
