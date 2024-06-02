@@ -1145,19 +1145,18 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         ExamChecklistDTO actualStatistics = examService.getStatsForChecklist(exam1, true);
         ExamChecklistDTO returnedStatistics = request.get("/api/courses/" + exam1.getCourse().getId() + "/exams/" + exam1.getId() + "/statistics", HttpStatus.OK,
                 ExamChecklistDTO.class);
-        assertThat(returnedStatistics.isAllExamExercisesAllStudentsPrepared()).isEqualTo(actualStatistics.isAllExamExercisesAllStudentsPrepared());
-        assertThat(returnedStatistics.getAllExamExercisesAllStudentsPrepared()).isEqualTo(actualStatistics.getAllExamExercisesAllStudentsPrepared());
-        assertThat(returnedStatistics.getNumberOfAllComplaints()).isEqualTo(actualStatistics.getNumberOfAllComplaints());
-        assertThat(returnedStatistics.getNumberOfAllComplaintsDone()).isEqualTo(actualStatistics.getNumberOfAllComplaintsDone());
-        assertThat(returnedStatistics.getNumberOfExamsStarted()).isEqualTo(actualStatistics.getNumberOfExamsStarted());
-        assertThat(returnedStatistics.getNumberOfExamsSubmitted()).isEqualTo(actualStatistics.getNumberOfExamsSubmitted());
-        assertThat(returnedStatistics.getNumberOfTestRuns()).isEqualTo(actualStatistics.getNumberOfTestRuns());
-        assertThat(returnedStatistics.getNumberOfGeneratedStudentExams()).isEqualTo(actualStatistics.getNumberOfGeneratedStudentExams());
-        assertThat(returnedStatistics.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound())
-                .isEqualTo(actualStatistics.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound());
-        assertThat(returnedStatistics.getNumberOfTotalParticipationsForAssessment()).isEqualTo(actualStatistics.getNumberOfTotalParticipationsForAssessment());
-        assertThat(returnedStatistics.getExistsUnassessedQuizzes()).isEqualTo(actualStatistics.getExistsUnassessedQuizzes());
-        assertThat(returnedStatistics.getExistsUnsubmittedExercises()).isEqualTo(actualStatistics.getExistsUnsubmittedExercises());
+        assertThat(returnedStatistics.allExamExercisesAllStudentsPrepared()).isEqualTo(actualStatistics.allExamExercisesAllStudentsPrepared());
+        assertThat(returnedStatistics.allExamExercisesAllStudentsPrepared()).isEqualTo(actualStatistics.allExamExercisesAllStudentsPrepared());
+        assertThat(returnedStatistics.numberOfAllComplaints()).isEqualTo(actualStatistics.numberOfAllComplaints());
+        assertThat(returnedStatistics.numberOfAllComplaintsDone()).isEqualTo(actualStatistics.numberOfAllComplaintsDone());
+        assertThat(returnedStatistics.numberOfExamsStarted()).isEqualTo(actualStatistics.numberOfExamsStarted());
+        assertThat(returnedStatistics.numberOfExamsSubmitted()).isEqualTo(actualStatistics.numberOfExamsSubmitted());
+        assertThat(returnedStatistics.numberOfTestRuns()).isEqualTo(actualStatistics.numberOfTestRuns());
+        assertThat(returnedStatistics.numberOfGeneratedStudentExams()).isEqualTo(actualStatistics.numberOfGeneratedStudentExams());
+        assertThat(returnedStatistics.numberOfTotalExamAssessmentsFinishedByCorrectionRound()).isEqualTo(actualStatistics.numberOfTotalExamAssessmentsFinishedByCorrectionRound());
+        assertThat(returnedStatistics.numberOfTotalParticipationsForAssessment()).isEqualTo(actualStatistics.numberOfTotalParticipationsForAssessment());
+        assertThat(returnedStatistics.existsUnassessedQuizzes()).isEqualTo(actualStatistics.existsUnassessedQuizzes());
+        assertThat(returnedStatistics.existsUnsubmittedExercises()).isEqualTo(actualStatistics.existsUnsubmittedExercises());
     }
 
     @Test

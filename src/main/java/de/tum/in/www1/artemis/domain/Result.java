@@ -323,6 +323,10 @@ public class Result extends DomainObject implements Comparable<Result> {
      * @param skipAutomaticResults if true automatic results won't be updated
      */
     public void updateAllFeedbackItems(List<Feedback> feedbacks, boolean skipAutomaticResults) {
+        if (feedbacks == null) {
+            return;
+        }
+
         for (Feedback feedback : feedbacks) {
             if (skipAutomaticResults && feedback.getType() == FeedbackType.AUTOMATIC) {
                 continue;

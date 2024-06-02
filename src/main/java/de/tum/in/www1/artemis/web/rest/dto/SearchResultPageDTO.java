@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSear
  * @param <T>
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+// TODO: convert to Record
 public class SearchResultPageDTO<T> {
 
     /**
