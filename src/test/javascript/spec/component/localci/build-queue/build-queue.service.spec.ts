@@ -29,7 +29,6 @@ describe('BuildQueueService', () => {
     filterOptions.buildDurationFilterUpperBound = 10;
     filterOptions.buildStartDateFilterFrom = dayjs('2024-01-01');
     filterOptions.buildStartDateFilterTo = dayjs('2024-01-02');
-    filterOptions.searchTerm = 'course1';
     filterOptions.status = 'SUCCESSFUL';
 
     const expectFilterParams = (req: TestRequest, filterOptions: FinishedBuildJobFilter) => {
@@ -38,7 +37,6 @@ describe('BuildQueueService', () => {
         expect(req.request.params.get('buildDurationUpper')).toBe(filterOptions.buildDurationFilterUpperBound?.toString());
         expect(req.request.params.get('startDate')).toBe(filterOptions.buildStartDateFilterFrom?.toISOString());
         expect(req.request.params.get('endDate')).toBe(filterOptions.buildStartDateFilterTo?.toISOString());
-        expect(req.request.params.get('searchTerm')).toBe(filterOptions.searchTerm);
         expect(req.request.params.get('buildStatus')).toBe(filterOptions.status);
     };
 

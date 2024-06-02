@@ -247,7 +247,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         buildJobRepository.save(finishedJob1);
         buildJobRepository.save(finishedJob2);
         PageableSearchDTO<String> pageableSearchDTO = pageableSearchUtilService.configureFinishedJobsSearchDTO();
-        var result = request.getList("/api/admin/finished-jobs", HttpStatus.OK, FinishedBuildJobDTO.class, pageableSearchUtilService.searchMapping(pageableSearchDTO));
+        var result = request.getList("/api/admin/finished-jobs", HttpStatus.OK, FinishedBuildJobDTO.class, pageableSearchUtilService.searchMapping(pageableSearchDTO, "pageable"));
         assertThat(result).hasSize(2);
         assertThat(result.get(0).id()).isEqualTo(finishedJob1.getBuildJobId());
         assertThat(result.get(1).id()).isEqualTo(finishedJob2.getBuildJobId());
@@ -261,7 +261,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         buildJobRepository.save(finishedJob2);
         PageableSearchDTO<String> pageableSearchDTO = pageableSearchUtilService.configureFinishedJobsSearchDTO();
         var result = request.getList("/api/courses/" + course.getId() + "/finished-jobs", HttpStatus.OK, FinishedBuildJobDTO.class,
-                pageableSearchUtilService.searchMapping(pageableSearchDTO));
+                pageableSearchUtilService.searchMapping(pageableSearchDTO, "pageable"));
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().id()).isEqualTo(finishedJob1.getBuildJobId());
     }
