@@ -39,18 +39,19 @@ public class DropLocationCounter extends TempIdObject implements QuizQuestionSta
     @Override
     @JsonIgnore
     public void setQuizQuestionStatistic(DragAndDropQuestionStatistic dragAndDropQuestionStatistic) {
+        setDragAndDropQuestionStatistic(dragAndDropQuestionStatistic);
     }
 
     @Override
     @JsonIgnore
     public DropLocation getQuizQuestionComponent() {
-        return null;
+        return getDropLocation();
     }
 
     @Override
     @JsonIgnore
     public void setQuizQuestionComponent(DropLocation dropLocation) {
-
+        setDropLocation(dropLocation);
     }
 
     @Override

@@ -41,19 +41,19 @@ public class ShortAnswerSpotCounter extends TempIdObject implements QuizQuestion
     @Override
     @JsonIgnore
     public void setQuizQuestionStatistic(ShortAnswerQuestionStatistic shortAnswerQuestionStatistic) {
-
+        setShortAnswerQuestionStatistic(shortAnswerQuestionStatistic);
     }
 
     @Override
     @JsonIgnore
     public ShortAnswerSpot getQuizQuestionComponent() {
-        return null;
+        return getSpot();
     }
 
     @Override
     @JsonIgnore
     public void setQuizQuestionComponent(ShortAnswerSpot shortAnswerSpot) {
-
+        setSpot(shortAnswerSpot);
     }
 
     @Override

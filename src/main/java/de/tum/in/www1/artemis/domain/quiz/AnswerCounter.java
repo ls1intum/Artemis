@@ -39,19 +39,19 @@ public class AnswerCounter extends TempIdObject implements QuizQuestionStatistic
     @Override
     @JsonIgnore
     public void setQuizQuestionStatistic(MultipleChoiceQuestionStatistic quizQuestionStatistic) {
-
+        setMultipleChoiceQuestionStatistic(quizQuestionStatistic);
     }
 
     @Override
     @JsonIgnore
     public AnswerOption getQuizQuestionComponent() {
-        return null;
+        return getAnswer();
     }
 
     @Override
     @JsonIgnore
     public void setQuizQuestionComponent(AnswerOption answerOption) {
-
+        setAnswer(answerOption);
     }
 
     @Override
