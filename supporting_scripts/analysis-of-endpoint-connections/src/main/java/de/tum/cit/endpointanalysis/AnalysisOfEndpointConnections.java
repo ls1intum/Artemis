@@ -3,6 +3,7 @@ package de.tum.cit.endpointanalysis;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
@@ -39,17 +40,20 @@ public class AnalysisOfEndpointConnections {
         }
         String[] filePaths = args[0].split("\n");
         String[] serverFiles = Arrays.stream(filePaths).map(filePath -> Paths.get("..", "..", filePath).toString())
-                .filter(filePath -> Files.exists(Paths.get(filePath)) && filePath.endsWith(".java")).toArray(String[]::new);
-        analyzeServerEndpoints(serverFiles);
+            .filter(filePath -> Files.exists(Paths.get(filePath)) && filePath.endsWith(".java")).toArray(String[]::new);
+        parseServerEndpoints(serverFiles);
+        analyzeEndpoints();
+        analyzeRestCalls();
     }
 
-    private static void analyzeServerEndpoints(String[] filePaths) {
+    private static void parseServerEndpoints(String[] filePaths) {
         List<EndpointClassInformation> endpointClasses = new ArrayList<>();
 
         final Set<String> httpMethodClasses = Set.of(GetMapping.class.getName(), PostMapping.class.getName(), PutMapping.class.getName(), DeleteMapping.class.getName(),
                 PatchMapping.class.getName(), RequestMapping.class.getName());
 
         JavaProjectBuilder builder = new JavaProjectBuilder();
+
         for (String filePath : filePaths) {
             builder.addSourceTree(new File(filePath));
         }
@@ -145,6 +149,44 @@ public class AnalysisOfEndpointConnections {
     }
 
     private static void analyzeRestCalls() {
+        ObjectMapper mapper = new ObjectMapper();
 
+        try {
+            List<EndpointClassInformation> endpointClasses = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/endpoints.json"),
+                new TypeReference<List<EndpointClassInformation>>() {
+                });
+            List<RestCallInformation> restCalls = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/restCalls.json"),
+                new TypeReference<List<RestCallInformation>>() {
+                });
+
+            for (RestCallInformation restCall : restCalls) {
+                boolean matchingEndpointFound = false;
+                System.out.println("=============================================");
+                System.out.println("REST call URI: " + restCall.buildCompleteRestCallURI());
+                System.out.println("HTTP method: " + restCall.getMethod());
+                System.out.println("File path: " + restCall.getFilePath());
+                System.out.println("Line: " + restCall.getLine());
+                System.out.println("=============================================");
+                for (EndpointClassInformation endpointClass : endpointClasses) {
+                    for (EndpointInformation endpoint : endpointClass.getEndpoints()) {
+                        String endpointURI = endpoint.buildComparableEndpointUri();
+                        String restCallURI = restCall.buildComparableRestCallUri();
+                        if (endpointURI.equals(restCallURI) && endpoint.getHttpMethod().equals(restCall.getMethod())) {
+                            matchingEndpointFound = true;
+                            System.out.println("Matching endpoint found.\nURI: " + endpoint.buildCompleteEndpointURI() + "\nHTTP method: " + endpoint.getHttpMethodAnnotation());
+                            System.out.println("---------------------------------------------");
+                        }
+                    }
+                }
+                if (!matchingEndpointFound) {
+                    System.out.println("No matching endpoint found for REST call: " + restCall.buildCompleteRestCallURI());
+                    System.out.println("---------------------------------------------");
+                }
+                System.out.println();
+            }
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
