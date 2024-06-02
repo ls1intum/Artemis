@@ -17,6 +17,7 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { CompetencyCardStubComponent } from './competency-card-stub.component';
+import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 class MockActivatedRoute {
     parent: any;
@@ -59,6 +60,12 @@ describe('CourseCompetencies', () => {
                 {
                     provide: ActivatedRoute,
                     useValue: mockActivatedRoute,
+                },
+                {
+                    provide: FeatureToggleService,
+                    useValue: {
+                        getFeatureToggleActive: () => of(true),
+                    },
                 },
             ],
             schemas: [],
@@ -130,9 +137,10 @@ describe('CourseCompetencies', () => {
             status: 200,
         });
 
+        jest.spyOn(mockCourseStorageService, 'getCourse').mockReturnValue({ studentCourseAnalyticsDashboardEnabled: true } as any);
         const getAllPrerequisitesForCourseSpy = jest.spyOn(competencyService, 'getAllPrerequisitesForCourse').mockReturnValue(of(prerequisitesOfCourseResponse));
         const getAllForCourseSpy = jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(competenciesOfCourseResponse));
-        const getJoLAllForCourseSpy = jest.spyOn(competencyService, 'getJoLAllForCourse');
+        const getJoLAllForCourseSpy = jest.spyOn(competencyService, 'getJoLAllForCourse').mockReturnValue(of({} as any));
 
         courseCompetenciesComponent.isCollapsed = false;
         courseCompetenciesComponentFixture.detectChanges();
