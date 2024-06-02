@@ -5,14 +5,12 @@ import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.com
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisTestModule } from '../../../test.module';
 import dayjs from 'dayjs/esm';
-import { CourseExamDetailComponent } from 'app/overview/course-exams/course-exam-detail/course-exam-detail.component';
-import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { Observable, of } from 'rxjs';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CourseExamAttemptReviewDetailComponent } from 'app/overview/course-exams/course-exam-attempt-review-detail/course-exam-attempt-review-detail.component';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { SidebarComponent } from '../../../../../../main/webapp/app/shared/sidebar/sidebar.component';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
@@ -101,15 +99,7 @@ describe('CourseExamsComponent', () => {
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule)],
-            declarations: [
-                CourseExamsComponent,
-                SidebarComponent,
-                SearchFilterComponent,
-                MockComponent(CourseExamDetailComponent),
-                MockComponent(CourseExamAttemptReviewDetailComponent),
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(SearchFilterPipe),
-            ],
+            declarations: [CourseExamsComponent, SidebarComponent, SearchFilterComponent, MockPipe(ArtemisTranslatePipe), MockPipe(SearchFilterPipe)],
             providers: [
                 { provide: Router, useValue: router },
                 {
