@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisMessageDTO(Instant sentAt, IrisMessageSender sender, List<PyrisMessageContentDTO> contents) {
+public record PyrisMessageDTO(Instant sentAt, IrisMessageSender sender, List<PyrisMessageContentBaseDTO> contents) {
 
     /**
      * Convert an IrisMessage to a PyrisMessageDTO.
@@ -24,7 +24,7 @@ public record PyrisMessageDTO(Instant sentAt, IrisMessageSender sender, List<Pyr
      */
     public static PyrisMessageDTO of(IrisMessage message) {
         var content = message.getContent().stream().map(messageContent -> {
-            PyrisMessageContentDTO result = null;
+            PyrisMessageContentBaseDTO result = null;
             if (messageContent.getClass().equals(IrisTextMessageContent.class)) {
                 result = new PyrisTextMessageContentDTO(messageContent.getContentAsString());
             }

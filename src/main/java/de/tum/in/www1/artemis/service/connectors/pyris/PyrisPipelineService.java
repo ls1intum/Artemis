@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisCourseDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisExtendedCourseDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisUserDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageStateDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageState;
 import de.tum.in.www1.artemis.service.iris.exception.IrisException;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
 import de.tum.in.www1.artemis.service.metrics.LearningMetricsService;
@@ -105,9 +105,9 @@ public class PyrisPipelineService {
 
         // Define the preparation stages of pipeline execution with their initial states
         // There will be more stages added in Pyris later
-        var preparingRequestStageInProgress = new PyrisStageDTO("Preparing", 10, PyrisStageStateDTO.IN_PROGRESS, null);
-        var preparingRequestStageDone = new PyrisStageDTO("Preparing", 10, PyrisStageStateDTO.DONE, null);
-        var executingPipelineStageNotStarted = new PyrisStageDTO("Executing pipeline", 30, PyrisStageStateDTO.NOT_STARTED, null);
+        var preparingRequestStageInProgress = new PyrisStageDTO("Preparing", 10, PyrisStageState.IN_PROGRESS, null);
+        var preparingRequestStageDone = new PyrisStageDTO("Preparing", 10, PyrisStageState.DONE, null);
+        var executingPipelineStageNotStarted = new PyrisStageDTO("Executing pipeline", 30, PyrisStageState.NOT_STARTED, null);
 
         // Send initial status update indicating that the preparation stage is in progress
         irisChatWebsocketService.sendStatusUpdate(session, List.of(preparingRequestStageInProgress, executingPipelineStageNotStarted));
@@ -125,7 +125,7 @@ public class PyrisPipelineService {
             U executionDTO = executionDtoSupplier.apply(base);
 
             // Send a status update that preparation is done and pipeline execution is starting
-            var executingPipelineStageInProgress = new PyrisStageDTO("Executing pipeline", 30, PyrisStageStateDTO.IN_PROGRESS, null);
+            var executingPipelineStageInProgress = new PyrisStageDTO("Executing pipeline", 30, PyrisStageState.IN_PROGRESS, null);
             irisChatWebsocketService.sendStatusUpdate(session, List.of(preparingRequestStageDone, executingPipelineStageInProgress));
 
             try {
@@ -134,13 +134,13 @@ public class PyrisPipelineService {
             }
             catch (PyrisConnectorException | IrisException e) {
                 log.error("Failed to execute " + pipelineName + " pipeline", e);
-                var executingPipelineStageFailed = new PyrisStageDTO("Executing pipeline", 30, PyrisStageStateDTO.ERROR, "An internal error occurred");
+                var executingPipelineStageFailed = new PyrisStageDTO("Executing pipeline", 30, PyrisStageState.ERROR, "An internal error occurred");
                 irisChatWebsocketService.sendStatusUpdate(session, List.of(preparingRequestStageDone, executingPipelineStageFailed));
             }
         }
         catch (Exception e) {
             log.error("Failed to prepare " + pipelineName + " pipeline execution", e);
-            var preparingRequestStageFailed = new PyrisStageDTO("Preparing request", 10, PyrisStageStateDTO.ERROR, "An internal error occurred");
+            var preparingRequestStageFailed = new PyrisStageDTO("Preparing request", 10, PyrisStageState.ERROR, "An internal error occurred");
             irisChatWebsocketService.sendStatusUpdate(session, List.of(preparingRequestStageFailed, executingPipelineStageNotStarted));
         }
     }
@@ -153,18 +153,17 @@ public class PyrisPipelineService {
      * - The course the exercise is part of
      * <p>
      *
-     * @see PyrisPipelineService#executeChatPipeline for more details on the pipeline execution process.
-     *
      * @param variant          the variant of the pipeline
      * @param latestSubmission the latest submission of the student
      * @param exercise         the programming exercise
      * @param session          the chat session
+     * @see PyrisPipelineService#executeChatPipeline for more details on the pipeline execution process.
      */
     public void executeExerciseChatPipeline(String variant, Optional<ProgrammingSubmission> latestSubmission, ProgrammingExercise exercise, IrisExerciseChatSession session) {
         executeChatPipeline(variant, session, "tutor-chat", // TODO: Rename this to 'exercise-chat' with next breaking Pyris version
-                base -> new PyrisExerciseChatPipelineExecutionDTO(base.chatHistory(), base.user(), base.settings(), base.initialStages(),
-                        latestSubmission.map(pyrisDTOService::toPyrisSubmissionDTO).orElse(null), pyrisDTOService.toPyrisProgrammingExerciseDTO(exercise),
-                        new PyrisCourseDTO(exercise.getCourseViaExerciseGroupOrCourseMember())),
+                base -> new PyrisExerciseChatPipelineExecutionDTO(latestSubmission.map(pyrisDTOService::toPyrisSubmissionDTO).orElse(null),
+                        pyrisDTOService.toPyrisProgrammingExerciseDTO(exercise), new PyrisCourseDTO(exercise.getCourseViaExerciseGroupOrCourseMember()), base.chatHistory(),
+                        base.user(), base.settings(), base.initialStages()),
                 () -> pyrisJobService.addExerciseChatJob(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), exercise.getId(), session.getId()));
     }
 
@@ -176,21 +175,19 @@ public class PyrisPipelineService {
      * - The competency JoL if this is due to a JoL set event
      * <p>
      *
-     * @see PyrisPipelineService#executeChatPipeline for more details on the pipeline execution process.
-     *
      * @param variant       the variant of the pipeline
      * @param session       the chat session
      * @param competencyJol if this is due to a JoL set event, this must be the newly created competencyJoL
+     * @see PyrisPipelineService#executeChatPipeline for more details on the pipeline execution process.
      */
     public void executeCourseChatPipeline(String variant, IrisCourseChatSession session, CompetencyJol competencyJol) {
         var courseId = session.getCourse().getId();
         var studentId = session.getUser().getId();
         executeChatPipeline(variant, session, "course-chat", base -> {
             var fullCourse = loadCourseWithParticipationOfStudent(courseId, studentId);
-            var metrics = learningMetricsService.getStudentCourseMetrics(session.getUser().getId(), courseId);
-            var jolDto = competencyJol == null ? null : CompetencyJolDTO.of(competencyJol);
-            return new PyrisCourseChatPipelineExecutionDTO(base.chatHistory(), base.user(), base.settings(), base.initialStages(), PyrisExtendedCourseDTO.of(fullCourse), metrics,
-                    jolDto);
+            return new PyrisCourseChatPipelineExecutionDTO(PyrisExtendedCourseDTO.of(fullCourse),
+                    learningMetricsService.getStudentCourseMetrics(session.getUser().getId(), courseId), competencyJol == null ? null : CompetencyJolDTO.of(competencyJol),
+                    base.chatHistory(), base.user(), base.settings(), base.initialStages());
         }, () -> pyrisJobService.addCourseChatJob(courseId, session.getId()));
     }
 

@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageStateDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageState;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.CourseChatJob;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.ExerciseChatJob;
 import de.tum.in.www1.artemis.service.iris.session.IrisCourseChatSessionService;
@@ -58,13 +58,13 @@ public class PyrisStatusUpdateService {
      * This is the case if all stages are in a terminal state.
      * <p>
      *
-     * @see PyrisStageStateDTO#isTerminal()
+     * @see PyrisStageState#isTerminal()
      *
      * @param statusUpdate the status update
      * @param job          the job to remove
      */
     private void removeJobIfTerminated(PyrisChatStatusUpdateDTO statusUpdate, String job) {
-        var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state).allMatch(PyrisStageStateDTO::isTerminal);
+        var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state).allMatch(PyrisStageState::isTerminal);
         if (isDone) {
             pyrisJobService.removeJob(job);
         }

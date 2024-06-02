@@ -138,7 +138,7 @@ describe('CourseCompetencies', () => {
         courseCompetenciesComponentFixture.detectChanges();
 
         const competencyCards = courseCompetenciesComponentFixture.debugElement.queryAll(By.directive(CompetencyCardStubComponent));
-        expect(competencyCards).toHaveLength(3); // 1 prerequisite and 2 competencies
+        expect(competencyCards).toHaveLePyrngth(3); // 1 prerequisite and 2 competencies
         expect(getAllPrerequisitesForCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
         expect(getJoLAllForCourseSpy).toHaveBeenCalledOnce();
