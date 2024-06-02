@@ -169,17 +169,45 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
         fixture.detectChanges();
         // Initialization
         expect(comp.allDiffsReady).toBeFalse();
-        expect(comp.diffsReadyByPath[filePath1]).toBeFalse();
-        expect(comp.diffsReadyByPath[filePath2]).toBeFalse();
+        expect(comp.diffInformationForPaths[0].diffReady).toBeFalse();
+        expect(comp.diffInformationForPaths[1].diffReady).toBeFalse();
         // First file ready
         comp.onDiffReady(filePath1, true);
         expect(comp.allDiffsReady).toBeFalse();
-        expect(comp.diffsReadyByPath[filePath1]).toBeTrue();
-        expect(comp.diffsReadyByPath[filePath2]).toBeFalse();
+        expect(comp.diffInformationForPaths[0].diffReady).toBeTrue();
+        expect(comp.diffInformationForPaths[1].diffReady).toBeFalse();
         // Second file ready
         comp.onDiffReady(filePath2, true);
         expect(comp.allDiffsReady).toBeTrue();
-        expect(comp.diffsReadyByPath[filePath1]).toBeTrue();
-        expect(comp.diffsReadyByPath[filePath2]).toBeTrue();
+        expect(comp.diffInformationForPaths[0].diffReady).toBeTrue();
+        expect(comp.diffInformationForPaths[1].diffReady).toBeTrue();
+    });
+
+    it('should correctly identify renamed files', () => {
+        const originalFilePath1 = 'src/original-a.java';
+        const originalFilePath2 = 'src/original-b.java';
+        const renamedFilePath1 = 'src/renamed-without-changes.java';
+        const renamedFilePath2 = 'src/renamed-with-changes.java';
+        const notRenamedFilePath = 'src/not-renamed.java';
+        const entries: ProgrammingExerciseGitDiffEntry[] = [
+            { filePath: renamedFilePath1, previousFilePath: originalFilePath1 },
+            { filePath: renamedFilePath2, previousFilePath: originalFilePath2, startLine: 1 },
+            { filePath: notRenamedFilePath, previousFilePath: notRenamedFilePath, startLine: 1 },
+        ];
+        const defaultContent = 'some content that might change';
+        const modifiedContent = 'some content that has changed';
+        comp.report = { entries } as ProgrammingExerciseGitDiffReport;
+        const originalFileContents = new Map<string, string>();
+        const modifiedFileContents = new Map<string, string>();
+        [originalFilePath1, originalFilePath2, notRenamedFilePath].forEach((path) => {
+            originalFileContents.set(path, defaultContent);
+            modifiedFileContents.set(path, path === originalFilePath1 ? defaultContent : modifiedContent);
+        });
+        comp.templateFileContentByPath = originalFileContents;
+        comp.solutionFileContentByPath = modifiedFileContents;
+
+        fixture.detectChanges();
+
+        expect(comp.renamedFilePaths).toEqual({ [renamedFilePath1]: originalFilePath1, [renamedFilePath2]: originalFilePath2 });
     });
 });

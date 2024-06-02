@@ -9,7 +9,7 @@
                 {{ 'artemisApp.courseOverview.sidebar.' + groupKey | artemisTranslate | titlecase }}
                 ({{ (groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length }})
             </div>
-            <div class="icon-container pe-3">
+            <div class="pe-3">
                 <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!collapseState[groupKey]" />
             </div>
         </div>

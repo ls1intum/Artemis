@@ -62,6 +62,10 @@
         flex-direction: column;
     }
 
+    :host::ng-deep .ngx-charts-outer {
+        margin-bottom: 10rem;
+    }
+
     :host::ng-deep .chart-legend {
         padding: 0 !important;
 

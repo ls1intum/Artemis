@@ -243,6 +243,27 @@
                             </ng-template>
                         </ngx-datatable-column>
                     }
+                    <ngx-datatable-column prop="" [sortable]="true" [minWidth]="100" [width]="100">
+                        <ng-template ngx-datatable-header-template>
+                            <span class="datatable-header-cell-wrapper d-inline-block w-100 text-center" (click)="controls.onSort('results?.last()?.assessmentNote?.note')">
+                                <fa-icon [icon]="faComment" [ngbTooltip]="'artemisApp.assessment.assessmentNote' | artemisTranslate" />
+                                <fa-icon [icon]="controls.iconForSortPropField('results?.last()?.assessmentNote?.note')" />
+                            </span>
+                        </ng-template>
+                        <ng-template ngx-datatable-cell-template let-value="value">
+                            @if (value.results?.last()?.assessmentNote?.note?.trim()) {
+                                <span class="w-100 text-center">
+                                    <fa-icon
+                                        [ngbPopover]="value.results?.last()?.assessmentNote.note"
+                                        [triggers]="'hover'"
+                                        [icon]="faComment"
+                                        [container]="'body'"
+                                        [popoverClass]="'max-vw-30 popover-text-truncate-4-lines'"
+                                    />
+                                </span>
+                            }
+                        </ng-template>
+                    </ngx-datatable-column>
                     @if (exercise.type === ExerciseType.PROGRAMMING && afterDueDate) {
                         <ngx-datatable-column prop="" [minWidth]="100" [width]="110">
                             <ng-template ngx-datatable-header-template>
@@ -309,7 +330,7 @@
                                                 </a>
                                             }
                                             <a
-                                                [routerLink]="['/courses', course.id, 'programming-exercises', exercise.id, 'code-editor', value.id]"
+                                                [routerLink]="['/courses', course.id, 'exercises', 'programming-exercises', exercise.id, 'code-editor', value.id]"
                                                 class="btn btn-info btn-sm me-1"
                                                 [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
                                             >
