@@ -3,6 +3,12 @@
 Adaptive Learning
 =================
 
+.. toctree::
+
+   adaptive-learning/adaptive-learning-student
+   adaptive-learning/adaptive-learning-instructor
+   adaptive-learning/adaptive-learning-admin
+
 Overview
 --------
 Adaptive Learning in Artemis is centered around **competencies**, overarching learning objectives that tie together various lectures and exercises. Artemis is also able to provide students with individualized **learning paths** based on competencies and their relations.
@@ -13,9 +19,3 @@ Instructors have multiple ways to add competencies to their course: They can cre
 They can then link exercises and lecture units to competencies and define relations between them to build a structure for learning paths.
 
 Administrators are able to manage the **standardized competency catalog**, an instance-wide catalog from which instructors can import competencies into their course.
-
-.. toctree::
-
-   adaptive-learning/adaptive-learning-student
-   adaptive-learning/adaptive-learning-instructor
-   adaptive-learning/adaptive-learning-admin
