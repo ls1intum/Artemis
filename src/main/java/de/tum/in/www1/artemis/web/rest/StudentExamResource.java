@@ -69,7 +69,7 @@ import de.tum.in.www1.artemis.service.util.ExamExerciseStartPreparationStatus;
 import de.tum.in.www1.artemis.service.util.HttpRequestUtils;
 import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithGradeDTO;
 import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamAttendanceCheckEventDTO;
-import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamLiveEventDTO;
+import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamLiveEventBaseDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
@@ -558,7 +558,7 @@ public class StudentExamResource {
      */
     @GetMapping("courses/{courseId}/exams/{examId}/student-exams/live-events")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<ExamLiveEventDTO>> getExamLiveEvents(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<List<ExamLiveEventBaseDTO>> getExamLiveEvents(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.currentTimeMillis();
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the exam live events for exam {} by user {}", examId, currentUser.getLogin());
@@ -572,7 +572,7 @@ public class StudentExamResource {
 
         studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, currentUser, studentExam.isTestRun(), false);
 
-        List<ExamLiveEventDTO> examLiveEvents = examLiveEventRepository.findAllByStudentExamIdOrGlobalByExamId(examId, studentExam.getId()).stream().map(ExamLiveEvent::asDTO)
+        List<ExamLiveEventBaseDTO> examLiveEvents = examLiveEventRepository.findAllByStudentExamIdOrGlobalByExamId(examId, studentExam.getId()).stream().map(ExamLiveEvent::asDTO)
                 .toList();
 
         log.debug("getExamLiveEvents done in {}ms for user {}", System.currentTimeMillis() - start, currentUser.getLogin());
@@ -889,5 +889,22 @@ public class StudentExamResource {
         auditEventRepository.add(auditEvent);
 
         return ResponseEntity.ok(studentExamRepository.save(studentExam));
+    }
+
+    /**
+     * GET courses/{courseId}/exams/{examId}/longest-working-time : Returns the value of
+     * the longest working time of the exam
+     *
+     * @param courseId the course to which the student exams belong to
+     * @param examId   the exam to which the student exams belong to
+     * @return the longest working time of the exam (in seconds)
+     */
+    @EnforceAtLeastInstructor
+    @GetMapping("courses/{courseId}/exams/{examId}/longest-working-time")
+    public ResponseEntity<Integer> getLongestWorkingTimeForExam(@PathVariable Long courseId, @PathVariable Long examId) {
+
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        Integer longestWorkingTime = studentExamRepository.findLongestWorkingTimeForExam(examId);
+        return ResponseEntity.ok().body(longestWorkingTime);
     }
 }

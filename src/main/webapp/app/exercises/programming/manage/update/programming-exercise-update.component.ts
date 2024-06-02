@@ -18,7 +18,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
+import { EXERCISE_TITLE_NAME_PATTERN, EXERCISE_TITLE_NAME_REGEX, SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash-es';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
@@ -115,7 +115,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     // length of < 3 is also accepted in order to provide more accurate validation error messages
     readonly shortNamePattern = RegExp('(^(?![\\s\\S]))|^[a-zA-Z][a-zA-Z0-9]*$|' + SHORT_NAME_PATTERN); // must start with a letter and cannot contain special characters
-    titleNamePattern = '^[a-zA-Z0-9-_ ]+'; // must only contain alphanumeric characters, or whitespaces, or '_' or '-'
 
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
@@ -205,15 +204,19 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * used in the template to display warnings.
      */
     refreshAuxiliaryRepositoryChecks() {
+        if (!this.programmingExercise?.auxiliaryRepositories) {
+            return;
+        }
+
         let legalNameAndDirs = false;
         // Check that there are no duplicate names.
         const names = new Set<string | undefined>();
-        const auxReposWithName = this.programmingExercise.auxiliaryRepositories!.filter((auxiliaryRepository) => auxiliaryRepository.name);
-        auxReposWithName.forEach((auxiliaryRepository) => {
+        const auxReposWithName = this.programmingExercise.auxiliaryRepositories?.filter((auxiliaryRepository) => auxiliaryRepository.name);
+        auxReposWithName?.forEach((auxiliaryRepository) => {
             names.add(auxiliaryRepository.name);
             legalNameAndDirs ||= !this.invalidRepositoryNamePattern.test(auxiliaryRepository.name!);
         });
-        this.auxiliaryRepositoryDuplicateNames = names.size !== auxReposWithName.length;
+        this.auxiliaryRepositoryDuplicateNames = names.size !== auxReposWithName?.length;
 
         // Check that there are no duplicate checkout directories
         const directories = new Set<string | undefined>();
@@ -225,7 +228,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.auxiliaryRepositoryDuplicateDirectories = directories.size !== auxReposWithDirectory.length;
 
         // Check that there are no empty/incorrect repository names and directories
-        this.auxiliaryRepositoryNamedCorrectly = this.programmingExercise.auxiliaryRepositories!.length === auxReposWithName.length && !legalNameAndDirs;
+        this.auxiliaryRepositoryNamedCorrectly = this.programmingExercise.auxiliaryRepositories!.length === auxReposWithName?.length && !legalNameAndDirs;
 
         // Combining auxiliary variables to one to keep the template readable
         this.auxiliaryRepositoriesValid = this.auxiliaryRepositoryNamedCorrectly && !this.auxiliaryRepositoryDuplicateNames && !this.auxiliaryRepositoryDuplicateDirectories;
@@ -838,7 +841,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 translateKey: 'artemisApp.exercise.form.title.undefined',
                 translateValues: {},
             });
-        } else if (this.programmingExercise.title.match(this.titleNamePattern) === null || this.programmingExercise.title?.match(this.titleNamePattern)?.length === 0) {
+        } else if (!EXERCISE_TITLE_NAME_REGEX.test(this.programmingExercise.title)) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.title.pattern',
                 translateValues: {},
@@ -1058,7 +1061,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             customBuildPlansSupported: this.customBuildPlansSupported,
             invalidDirectoryNamePattern: this.invalidDirectoryNamePattern,
             invalidRepositoryNamePattern: this.invalidRepositoryNamePattern,
-            titleNamePattern: this.titleNamePattern,
+            titleNamePattern: EXERCISE_TITLE_NAME_PATTERN,
             shortNamePattern: this.shortNamePattern,
             updateRepositoryName: this.updateRepositoryName,
             updateCheckoutDirectory: this.updateCheckoutDirectory,

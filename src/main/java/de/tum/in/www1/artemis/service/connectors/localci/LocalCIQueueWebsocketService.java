@@ -19,8 +19,8 @@ import com.hazelcast.map.listener.EntryAddedListener;
 import com.hazelcast.map.listener.EntryRemovedListener;
 import com.hazelcast.map.listener.EntryUpdatedListener;
 
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildAgentInformation;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
 import de.tum.in.www1.artemis.web.websocket.localci.LocalCIWebsocketMessagingService;
 
 /**
@@ -60,9 +60,9 @@ public class LocalCIQueueWebsocketService {
      */
     @PostConstruct
     public void init() {
-        IQueue<LocalCIBuildJobQueueItem> queue = hazelcastInstance.getQueue("buildJobQueue");
-        IMap<Long, LocalCIBuildJobQueueItem> processingJobs = hazelcastInstance.getMap("processingJobs");
-        IMap<String, LocalCIBuildAgentInformation> buildAgentInformation = hazelcastInstance.getMap("buildAgentInformation");
+        IQueue<BuildJobQueueItem> queue = hazelcastInstance.getQueue("buildJobQueue");
+        IMap<Long, BuildJobQueueItem> processingJobs = hazelcastInstance.getMap("processingJobs");
+        IMap<String, BuildAgentInformation> buildAgentInformation = hazelcastInstance.getMap("buildAgentInformation");
         queue.addItemListener(new QueuedBuildJobItemListener(), true);
         processingJobs.addEntryListener(new ProcessingBuildJobItemListener(), true);
         buildAgentInformation.addEntryListener(new BuildAgentListener(), true);
@@ -80,7 +80,7 @@ public class LocalCIQueueWebsocketService {
 
     private void sendBuildAgentSummaryOverWebsocket() {
         // remove the recentBuildJobs from the build agent information before sending it over the websocket
-        List<LocalCIBuildAgentInformation> buildAgentSummary = sharedQueueManagementService.getBuildAgentInformationWithoutRecentBuildJobs();
+        List<BuildAgentInformation> buildAgentSummary = sharedQueueManagementService.getBuildAgentInformationWithoutRecentBuildJobs();
         localCIWebsocketMessagingService.sendBuildAgentSummary(buildAgentSummary);
     }
 
@@ -94,51 +94,51 @@ public class LocalCIQueueWebsocketService {
         sendBuildAgentDetailsOverWebsocket(agentName);
     }
 
-    private class QueuedBuildJobItemListener implements ItemListener<LocalCIBuildJobQueueItem> {
+    private class QueuedBuildJobItemListener implements ItemListener<BuildJobQueueItem> {
 
         @Override
-        public void itemAdded(ItemEvent<LocalCIBuildJobQueueItem> event) {
+        public void itemAdded(ItemEvent<BuildJobQueueItem> event) {
             sendQueuedJobsOverWebsocket(event.getItem().courseId());
         }
 
         @Override
-        public void itemRemoved(ItemEvent<LocalCIBuildJobQueueItem> event) {
+        public void itemRemoved(ItemEvent<BuildJobQueueItem> event) {
             sendQueuedJobsOverWebsocket(event.getItem().courseId());
         }
     }
 
-    private class ProcessingBuildJobItemListener implements EntryAddedListener<Long, LocalCIBuildJobQueueItem>, EntryRemovedListener<Long, LocalCIBuildJobQueueItem> {
+    private class ProcessingBuildJobItemListener implements EntryAddedListener<Long, BuildJobQueueItem>, EntryRemovedListener<Long, BuildJobQueueItem> {
 
         @Override
-        public void entryAdded(com.hazelcast.core.EntryEvent<Long, LocalCIBuildJobQueueItem> event) {
+        public void entryAdded(com.hazelcast.core.EntryEvent<Long, BuildJobQueueItem> event) {
             log.debug("CIBuildJobQueueItem added to processing jobs: {}", event.getValue());
             sendProcessingJobsOverWebsocket(event.getValue().courseId());
         }
 
         @Override
-        public void entryRemoved(com.hazelcast.core.EntryEvent<Long, LocalCIBuildJobQueueItem> event) {
+        public void entryRemoved(com.hazelcast.core.EntryEvent<Long, BuildJobQueueItem> event) {
             log.debug("CIBuildJobQueueItem removed from processing jobs: {}", event.getOldValue());
             sendProcessingJobsOverWebsocket(event.getOldValue().courseId());
         }
     }
 
-    private class BuildAgentListener implements EntryAddedListener<String, LocalCIBuildAgentInformation>, EntryRemovedListener<String, LocalCIBuildAgentInformation>,
-            EntryUpdatedListener<String, LocalCIBuildAgentInformation> {
+    private class BuildAgentListener
+            implements EntryAddedListener<String, BuildAgentInformation>, EntryRemovedListener<String, BuildAgentInformation>, EntryUpdatedListener<String, BuildAgentInformation> {
 
         @Override
-        public void entryAdded(com.hazelcast.core.EntryEvent<String, LocalCIBuildAgentInformation> event) {
+        public void entryAdded(com.hazelcast.core.EntryEvent<String, BuildAgentInformation> event) {
             log.debug("Build agent added: {}", event.getValue());
             sendBuildAgentInformationOverWebsocket(event.getValue().name());
         }
 
         @Override
-        public void entryRemoved(com.hazelcast.core.EntryEvent<String, LocalCIBuildAgentInformation> event) {
+        public void entryRemoved(com.hazelcast.core.EntryEvent<String, BuildAgentInformation> event) {
             log.debug("Build agent removed: {}", event.getOldValue());
             sendBuildAgentInformationOverWebsocket(event.getOldValue().name());
         }
 
         @Override
-        public void entryUpdated(com.hazelcast.core.EntryEvent<String, LocalCIBuildAgentInformation> event) {
+        public void entryUpdated(com.hazelcast.core.EntryEvent<String, BuildAgentInformation> event) {
             log.debug("Build agent updated: {}", event.getValue());
             sendBuildAgentInformationOverWebsocket(event.getValue().name());
         }

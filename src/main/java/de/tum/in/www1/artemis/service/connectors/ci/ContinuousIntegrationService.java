@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
+import de.tum.in.www1.artemis.web.rest.dto.CheckoutDirectoriesDTO;
 
 /**
  * Abstract service for managing entities related to continuous integration.
@@ -41,7 +42,7 @@ public interface ContinuousIntegrationService {
      * @param planKey               the key of the plan
      * @param repositoryUri         the URI of the assignment repository (used to separate between exercise and solution)
      * @param testRepositoryUri     the URI of the test repository
-     * @param solutionRepositoryUri the URI of the solution repository. Only used for HASKELL exercises with checkoutSolutionRepository=true. Otherwise ignored.
+     * @param solutionRepositoryUri the URI of the solution repository. Only used for HASKELL exercises with checkoutSolutionRepository=true. Otherwise, ignored.
      */
     void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUri repositoryUri, VcsRepositoryUri testRepositoryUri,
             VcsRepositoryUri solutionRepositoryUri);
@@ -124,7 +125,7 @@ public interface ContinuousIntegrationService {
      * Get the build artifact (JAR/WAR), if any, of the latest build
      *
      * @param participation participation for which to get the build artifact
-     * @return the binary build artifact. Typically a JAR/WAR ResponseEntity.
+     * @return the binary build artifact. Typically, a JAR/WAR ResponseEntity.
      */
     ResponseEntity<byte[]> retrieveLatestArtifact(ProgrammingExerciseParticipation participation);
 
@@ -238,7 +239,7 @@ public interface ContinuousIntegrationService {
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 return switch (language) {
                     case HASKELL, OCAML -> "solution";
-                    default -> throw new IllegalArgumentException("Repository checkout path for solution repo has not yet been defined for " + language);
+                    default -> throw new IllegalArgumentException("The solution repository is not checked out during the template/submission build plan for " + language);
                 };
             }
         }
@@ -255,4 +256,14 @@ public interface ContinuousIntegrationService {
          */
         String forProgrammingLanguage(ProgrammingLanguage language);
     }
+
+    /**
+     * Get the checkout directories for the template and submission build plan for a given programming language.
+     *
+     * @param programmingLanguage for which the checkout directories should be retrieved
+     * @param checkoutSolution    whether the checkout solution repository shall be checked out during the template and submission build plan
+     * @return the paths of the checkout directories for the default repositories (exercise, solution, tests) for the
+     *         template and submission build plan
+     */
+    CheckoutDirectoriesDTO getCheckoutDirectories(ProgrammingLanguage programmingLanguage, boolean checkoutSolution);
 }

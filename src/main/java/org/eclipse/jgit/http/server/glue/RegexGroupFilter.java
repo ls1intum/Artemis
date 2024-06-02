@@ -39,26 +39,29 @@ public class RegexGroupFilter implements Filter {
      */
     public RegexGroupFilter(int groupIdx) {
         if (groupIdx < 1) {
-            throw new IllegalArgumentException(MessageFormat.format(HttpServerText.get().invalidIndex, Integer.valueOf(groupIdx)));
+            throw new IllegalArgumentException(MessageFormat.format(HttpServerText.get().invalidIndex, groupIdx));
         }
         this.groupIdx = groupIdx - 1;
     }
 
-    @Override public void init(FilterConfig config) throws ServletException {
+    @Override
+    public void init(FilterConfig config) throws ServletException {
         // Do nothing.
     }
 
-    @Override public void destroy() {
+    @Override
+    public void destroy() {
         // Do nothing.
     }
 
-    @Override public void doFilter(final ServletRequest request, final ServletResponse rsp, final FilterChain chain) throws IOException, ServletException {
+    @Override
+    public void doFilter(final ServletRequest request, final ServletResponse rsp, final FilterChain chain) throws IOException, ServletException {
         final WrappedRequest[] g = groupsFor(request);
         if (groupIdx < g.length) {
             chain.doFilter(g[groupIdx], rsp);
         }
         else {
-            throw new ServletException(MessageFormat.format(HttpServerText.get().invalidRegexGroup, Integer.valueOf(groupIdx + 1)));
+            throw new ServletException(MessageFormat.format(HttpServerText.get().invalidRegexGroup, groupIdx + 1));
         }
     }
 

@@ -8,15 +8,20 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import com.thoughtworks.qdox.model.JavaClass;
+import com.thoughtworks.qdox.model.JavaType;
 
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
@@ -25,7 +30,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
  * It is used to automatically generate the structure oracle with the solution of the exercise as the system model and the template as the test model.
  * The oracle is saved in the form of a JSON file in test.json.
  * The structure oracle is used in the structural tests and contains information on the expected structural elements that the student has to implement.
- * The generator uses the <a href="https://github.com/paul-hammant/qdox">qdox framework</a>.
+ * The generator uses the qdox framework (<a href="https://github.com/paul-hammant/qdox">qdox</a>).
  * It extracts first the needed elements by doing a so-called diff of each element e.g. the difference between the solution of an exercise and its template.
  * The generator uses separate data structures that contain the elements of these diffs and then creates JSON representations of them.
  * <p>
@@ -59,6 +64,8 @@ public class OracleGenerator {
 
     private static final Logger log = LoggerFactory.getLogger(OracleGenerator.class);
 
+    private static final ObjectMapper mapper = new ObjectMapper();
+
     /**
      * This method generates the structure oracle by scanning the Java projects contained in the paths passed as arguments.
      *
@@ -69,50 +76,40 @@ public class OracleGenerator {
     public static String generateStructureOracleJSON(Path solutionProjectPath, Path templateProjectPath) {
         log.debug("Generating the Oracle for the following projects:\nSolution project: {}\nTemplate project: {}\n", solutionProjectPath, templateProjectPath);
 
-        // Initialize the empty string.
-        JsonArray structureOracleJSON = new JsonArray();
-
-        // Generate the pairs of the types found in the solution project with the corresponding one from the template project.
         Map<JavaClass, JavaClass> solutionToTemplateMapping = generateSolutionToTemplateMapping(solutionProjectPath, templateProjectPath);
+        ArrayNode structureOracleJSON = mapper.createArrayNode();
 
-        // Loop over each pair of types and create the diff data structures and the JSON representation afterwards for each.
-        // If the types, classes or enums are equal, then ignore and continue with the next pair
-        for (var entry : solutionToTemplateMapping.entrySet()) {
-            JsonObject diffJSON = new JsonObject();
-            JavaClass solutionType = entry.getKey();
-            JavaClass templateType = entry.getValue();
-
-            // Initialize the types diff containing various properties as well as methods.
-            JavaClassDiff javaClassDiff = new JavaClassDiff(solutionType, templateType);
-            if (javaClassDiff.classesAreEqual() || JavaClassDiffSerializer.isElementToIgnore(solutionType)) {
-                continue;
-            }
-
-            // If we are dealing with interfaces, the types diff already has all the information we need
-            // So we do not need to do anything more
-            JavaClassDiffSerializer serializer = new JavaClassDiffSerializer(javaClassDiff);
-            diffJSON.add("class", serializer.serializeClassProperties());
-            if (!javaClassDiff.methodsDiff.isEmpty()) {
-                diffJSON.add("methods", serializer.serializeMethods());
-            }
-
-            if (!javaClassDiff.attributesDiff.isEmpty()) {
-                diffJSON.add("attributes", serializer.serializeAttributes());
-            }
-
-            if (!javaClassDiff.enumsDiff.isEmpty()) {
-                diffJSON.add("enumValues", serializer.serializeEnums());
-            }
-
-            if (!javaClassDiff.constructorsDiff.isEmpty()) {
-                diffJSON.add("constructors", serializer.serializeConstructors());
-            }
-
-            log.debug("Generated JSON for '{}'.", solutionType.getCanonicalName());
-            structureOracleJSON.add(diffJSON);
-        }
+        solutionToTemplateMapping.entrySet().stream().map(entry -> generateDiffJSON(entry.getKey(), entry.getValue())).filter(Optional::isPresent).map(Optional::get)
+                .forEach(structureOracleJSON::add);
 
         return prettyPrint(structureOracleJSON);
+    }
+
+    private static Optional<ObjectNode> generateDiffJSON(JavaClass solutionType, JavaClass templateType) {
+        JavaClassDiff javaClassDiff = new JavaClassDiff(solutionType, templateType);
+        if (javaClassDiff.classesAreEqual() || JavaClassDiffSerializer.isElementToIgnore(solutionType)) {
+            return Optional.empty();
+        }
+
+        ObjectNode diffJSON = mapper.createObjectNode();
+        JavaClassDiffSerializer serializer = new JavaClassDiffSerializer(javaClassDiff);
+        diffJSON.set("class", serializer.serializeClassProperties());
+
+        if (!javaClassDiff.methodsDiff.isEmpty()) {
+            diffJSON.set("methods", serializer.serializeMethods());
+        }
+        if (!javaClassDiff.attributesDiff.isEmpty()) {
+            diffJSON.set("attributes", serializer.serializeAttributes());
+        }
+        if (!javaClassDiff.enumsDiff.isEmpty()) {
+            diffJSON.set("enumValues", serializer.serializeEnums());
+        }
+        if (!javaClassDiff.constructorsDiff.isEmpty()) {
+            diffJSON.set("constructors", serializer.serializeConstructors());
+        }
+
+        log.debug("Generated JSON for '{}'.", solutionType.getCanonicalName());
+        return Optional.of(diffJSON);
     }
 
     /**
@@ -121,8 +118,15 @@ public class OracleGenerator {
      * @param jsonArray The JSON array that needs to get pretty printed.
      * @return The pretty printed JSON array in its string representation.
      */
-    private static String prettyPrint(JsonArray jsonArray) {
-        return new GsonBuilder().setPrettyPrinting().create().toJson(jsonArray);
+    private static String prettyPrint(ArrayNode jsonArray) {
+        try {
+            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonArray);
+        }
+        catch (JsonProcessingException e) {
+            var error = "Error pretty printing JSON";
+            log.error(error, e);
+            throw new InternalServerErrorException(error);
+        }
     }
 
     /**
@@ -140,22 +144,22 @@ public class OracleGenerator {
         List<Path> solutionFiles = retrieveJavaSourceFiles(solutionProjectPath);
         log.debug("Template Java Files {}", templateFiles);
         log.debug("Solution Java Files {}", solutionFiles);
+
         var templateClasses = getClassesFromFiles(templateFiles);
         var solutionClasses = getClassesFromFiles(solutionFiles);
 
+        // Convert template classes into a map for quick lookup
+        Map<String, JavaClass> templateClassMap = templateClasses.stream()
+                .collect(Collectors.toMap(JavaType::getCanonicalName, Function.identity(), (existing, replacement) -> existing)); // In case of name
+                                                                                                                                  // conflicts, keep
+                                                                                                                                  // the existing
+
+        // Map each solution class to its counterpart in the template
         Map<JavaClass, JavaClass> solutionToTemplateMapping = new HashMap<>();
-
         for (JavaClass solutionClass : solutionClasses) {
-            // Put an empty template class as a default placeholder.
-            solutionToTemplateMapping.put(solutionClass, null);
-
-            for (JavaClass templateClass : templateClasses) {
-                if (solutionClass.getSimpleName().equals(templateClass.getSimpleName()) && templateClass.getPackageName().equals(solutionClass.getPackageName())) {
-                    // If a template class with the same name and package gets found, then replace the empty template with the real one.
-                    solutionToTemplateMapping.put(solutionClass, templateClass);
-                    break;
-                }
-            }
+            String qualifiedName = solutionClass.getCanonicalName();
+            JavaClass templateClass = templateClassMap.get(qualifiedName);
+            solutionToTemplateMapping.put(solutionClass, templateClass);
         }
 
         return solutionToTemplateMapping;

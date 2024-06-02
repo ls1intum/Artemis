@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.config;
 
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import org.springframework.boot.actuate.autoconfigure.endpoint.condition.ConditionalOnAvailableEndpoint;
@@ -23,7 +22,7 @@ import tech.jhipster.config.metric.JHipsterMetricsEndpoint;
  */
 public class CustomMetricsExtensionConfiguration {
 
-    @Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
+    @Profile(PROFILE_CORE)
     @Configuration
     @ConditionalOnClass(Timed.class)
     @AutoConfigureAfter(JHipsterMetricsEndpointConfiguration.class)

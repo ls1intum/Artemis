@@ -1,0 +1,19 @@
+@if (checkoutDirectories) {
+    <hr class="pt-0 pb-0 mt-1 mb-1" />
+    <ul>
+        <li [class.invisible]="!checkoutDirectories.exerciseCheckoutDirectory">
+            <code>{{ checkoutDirectories.exerciseCheckoutDirectory }} </code>
+        </li>
+        <li [class.invisible]="!checkoutDirectories.solutionCheckoutDirectory">
+            <code>{{ checkoutDirectories.solutionCheckoutDirectory }} </code>
+        </li>
+        <li [class.invisible]="!checkoutDirectories.testCheckoutDirectory">
+            <code> {{ checkoutDirectories.testCheckoutDirectory }} </code>
+        </li>
+        @for (auxiliaryRepository of auxiliaryRepositories; track auxiliaryRepository) {
+            <li>
+                <code>{{ ROOT_DIRECTORY_PATH }}{{ auxiliaryRepository.checkoutDirectory }} </code>
+            </li>
+        }
+    </ul>
+}

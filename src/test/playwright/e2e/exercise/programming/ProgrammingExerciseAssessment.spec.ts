@@ -8,6 +8,7 @@ import { admin, instructor, studentOne, tutor } from '../../../support/users';
 import { test } from '../../../support/fixtures';
 import { Participation } from 'app/entities/participation/participation.model';
 import { expect } from '@playwright/test';
+import javaPartiallySuccessfulSubmission from '../../../fixtures/exercise/programming/java/partially_successful/submission.json';
 
 // Common primitives
 const tutorFeedback = 'You are missing some classes! The classes, which you implemented look good though.';
@@ -41,7 +42,7 @@ test.describe('Programming exercise assessment', () => {
         await login(studentOne);
         const response = await exerciseAPIRequests.startExerciseParticipation(exercise.id!);
         const participation: Participation = await response.json();
-        await exerciseAPIRequests.makeProgrammingExerciseSubmission(participation.id!);
+        await exerciseAPIRequests.makeProgrammingExerciseSubmission(participation.id!, javaPartiallySuccessfulSubmission);
         const now = dayjs();
         if (now.isBefore(dueDate)) {
             await page.waitForTimeout(dueDate.diff(now, 'ms'));

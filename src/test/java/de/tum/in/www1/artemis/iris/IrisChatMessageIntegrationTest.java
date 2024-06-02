@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.iris;
 
-import static de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageStateDTO.DONE;
-import static de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageStateDTO.IN_PROGRESS;
-import static de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageStateDTO.NOT_STARTED;
+import static de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageState.DONE;
+import static de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageState.IN_PROGRESS;
+import static de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageState.NOT_STARTED;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.awaitility.Awaitility.await;
@@ -38,7 +38,7 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageStateDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageState;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.tutorChat.PyrisTutorChatStatusUpdateDTO;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.session.IrisChatSessionService;
@@ -352,7 +352,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         };
     }
 
-    private ArgumentMatcher<Object> statusDTO(PyrisStageStateDTO... stageStates) {
+    private ArgumentMatcher<Object> statusDTO(PyrisStageState... stageStates) {
         return new ArgumentMatcher<>() {
 
             @Override

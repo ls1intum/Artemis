@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -27,7 +28,8 @@ import de.tum.in.www1.artemis.repository.competency.StandardizedCompetencyReposi
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaRequestDTO;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaResultDTO;
-import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreasForImportDTO;
+import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.SourceDTO;
+import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyCatalogDTO;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyRequestDTO;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyResultDTO;
 
@@ -350,10 +352,10 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
             @Test
             @WithMockUser(username = "admin", roles = "ADMIN")
             void shouldImport() throws Exception {
-                var competency2 = new KnowledgeAreasForImportDTO.StandardizedCompetencyForImportDTO("competency2", "description2", CompetencyTaxonomy.APPLY, null, null);
-                var competency1 = new KnowledgeAreasForImportDTO.StandardizedCompetencyForImportDTO("competency1", "description", CompetencyTaxonomy.ANALYZE, "1.1.0", 1L);
-                var knowledgeArea2 = new KnowledgeAreasForImportDTO.KnowledgeAreaForImportDTO("knowledgeArea2", "ka2", "description2", null, List.of(competency2));
-                var knowledgeArea1 = new KnowledgeAreasForImportDTO.KnowledgeAreaForImportDTO("knowledgeArea1", "ka1", "description", List.of(knowledgeArea2),
+                var competency2 = new StandardizedCompetencyCatalogDTO.StandardizedCompetencyForCatalogDTO("competency2", "description2", CompetencyTaxonomy.APPLY, null, null);
+                var competency1 = new StandardizedCompetencyCatalogDTO.StandardizedCompetencyForCatalogDTO("competency1", "description", CompetencyTaxonomy.ANALYZE, "1.1.0", 1L);
+                var knowledgeArea2 = new StandardizedCompetencyCatalogDTO.KnowledgeAreaForCatalogDTO("knowledgeArea2", "ka2", "description2", null, List.of(competency2));
+                var knowledgeArea1 = new StandardizedCompetencyCatalogDTO.KnowledgeAreaForCatalogDTO("knowledgeArea1", "ka1", "description", List.of(knowledgeArea2),
                         List.of(competency1));
                 var source1 = new Source("title", "author", "http://localhost:1");
                 source1.setId(1L);
@@ -361,7 +363,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
                 source2.setId(2L);
 
                 // do not put knowledgeArea2, it is not top-level
-                var importData = new KnowledgeAreasForImportDTO(List.of(knowledgeArea1), List.of(source1, source2));
+                var importData = new StandardizedCompetencyCatalogDTO(List.of(knowledgeArea1), List.of(SourceDTO.of(source1), SourceDTO.of(source2)));
                 request.put("/api/admin/standardized-competencies/import", importData, HttpStatus.OK);
 
                 var competencies = standardizedCompetencyRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
@@ -392,11 +394,46 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
             @WithMockUser(username = "admin", roles = "ADMIN")
             void shouldReturnBadRequestForInvalidSources() throws Exception {
                 // this competency references a source that does not exist!
-                var competency = new KnowledgeAreasForImportDTO.StandardizedCompetencyForImportDTO("title", "description", null, null, 1L);
-                var knowledgeArea = new KnowledgeAreasForImportDTO.KnowledgeAreaForImportDTO("title", "title", "", null, List.of(competency));
-                var importData = new KnowledgeAreasForImportDTO(List.of(knowledgeArea), null);
+                var competency = new StandardizedCompetencyCatalogDTO.StandardizedCompetencyForCatalogDTO("title", "description", null, null, 1L);
+                var knowledgeArea = new StandardizedCompetencyCatalogDTO.KnowledgeAreaForCatalogDTO("title", "title", "", null, List.of(competency));
+                var importData = new StandardizedCompetencyCatalogDTO(List.of(knowledgeArea), null);
 
                 request.put("/api/admin/standardized-competencies/import", importData, HttpStatus.BAD_REQUEST);
+            }
+        }
+
+        @Nested
+        class ExportStandardizedCompetencies {
+
+            @Test
+            @WithMockUser(username = "admin", roles = "ADMIN")
+            void shouldExport() throws Exception {
+                var source1 = new Source("title", "author", "http://localhost:1");
+                var source2 = new Source("title2", "author2", "http://localhost:2");
+                sourceRepository.saveAll(List.of(source1, source2));
+                var knowledgeArea1 = standardizedCompetencyUtilService.saveKnowledgeArea("knowledgeArea1", "ka1", "description1", null);
+                var knowledgeArea2 = standardizedCompetencyUtilService.saveKnowledgeArea("knowledgeArea2", "ka2", "description2", knowledgeArea1);
+                var competency1 = standardizedCompetencyUtilService.saveStandardizedCompetency("competency1", "description1", CompetencyTaxonomy.APPLY, "1.0.0", knowledgeArea1,
+                        source1);
+                var competency2 = standardizedCompetencyUtilService.saveStandardizedCompetency("competency2", "description2", CompetencyTaxonomy.APPLY, "1.1.1", knowledgeArea2,
+                        source2);
+
+                // set values to match database
+                knowledgeArea.setCompetencies(Set.of(standardizedCompetency));
+                knowledgeArea1.setChildren(Set.of(knowledgeArea2));
+                knowledgeArea1.setCompetencies(Set.of(competency1));
+                knowledgeArea2.setCompetencies(Set.of(competency2));
+                // set null values (instead of empty lists) to match the response
+                knowledgeArea.setChildren(null);
+                knowledgeArea2.setChildren(null);
+
+                var expectedKnowledgeAreas = Stream.of(knowledgeArea, knowledgeArea1).map(StandardizedCompetencyCatalogDTO.KnowledgeAreaForCatalogDTO::of).toList();
+                var expectedSources = Stream.of(source, source1, source2).map(SourceDTO::of).toList();
+
+                var actualCatalog = request.get("/api/admin/standardized-competencies/export", HttpStatus.OK, StandardizedCompetencyCatalogDTO.class);
+
+                assertThat(actualCatalog.knowledgeAreas()).containsAll(expectedKnowledgeAreas);
+                assertThat(actualCatalog.sources()).containsAll(expectedSources);
             }
         }
     }
@@ -468,12 +505,31 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
 
                 assertThat(actualKnowledgeArea).isEqualTo(expectedKnowledgeArea);
             }
+
+            @Test
+            @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+            void shouldReturn404() throws Exception {
+                request.get("/api/standardized-competencies/knowledge-areas/" + ID_NOT_EXISTS, HttpStatus.NOT_FOUND, KnowledgeArea.class);
+            }
         }
 
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldReturn404() throws Exception {
-            request.get("/api/standardized-competencies/knowledge-areas/" + ID_NOT_EXISTS, HttpStatus.NOT_FOUND, KnowledgeArea.class);
+        @Nested
+        class GetSources {
+
+            @Test
+            @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+            void shouldReturnSources() throws Exception {
+                var source1 = new Source("title", "author", "http://localhost:1");
+                source1.setId(1L);
+                var source2 = new Source("title2", "author2", "http://localhost:2");
+                source2.setId(2L);
+                var sources = sourceRepository.saveAll(List.of(source1, source2));
+                var expectedSources = sources.stream().map(SourceDTO::of).toList();
+
+                var actualSources = request.getList("/api/standardized-competencies/sources", HttpStatus.OK, SourceDTO.class);
+
+                assertThat(actualSources).containsAll(expectedSources);
+            }
         }
     }
 }

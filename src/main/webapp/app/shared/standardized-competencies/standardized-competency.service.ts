@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { KnowledgeAreaDTO, StandardizedCompetency } from 'app/entities/competency/standardized-competency.model';
+import { KnowledgeAreaDTO, Source, StandardizedCompetency } from 'app/entities/competency/standardized-competency.model';
 
 @Injectable({
     providedIn: 'root',
@@ -20,5 +20,9 @@ export class StandardizedCompetencyService {
 
     getKnowledgeArea(knowledgeAreaId: number) {
         return this.httpClient.get<StandardizedCompetency>(`${this.resourceURL}/knowledge-areas/${knowledgeAreaId}`, { observe: 'response' });
+    }
+
+    getSources() {
+        return this.httpClient.get<Source[]>(`${this.resourceURL}/sources`, { observe: 'response' });
     }
 }
