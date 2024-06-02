@@ -33,6 +33,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupFreePeriod;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
@@ -328,12 +330,14 @@ public class TutorialGroupSessionResource {
     /**
      * DTO used to send the status explanation when i.g. cancelling a tutorial group session
      */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record TutorialGroupStatusDTO(String status_explanation) {
     }
 
     /**
      * DTO used because we want to interpret the dates in the time zone of the tutorial groups configuration
      */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record TutorialGroupSessionDTO(@NotNull LocalDate date, @NotNull LocalTime startTime, @NotNull LocalTime endTime, @Size(min = 1, max = 2000) String location) {
 
         public void validityCheck() {

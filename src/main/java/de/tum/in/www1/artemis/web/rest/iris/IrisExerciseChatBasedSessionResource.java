@@ -10,6 +10,8 @@ import java.util.function.Function;
 import org.springframework.boot.actuate.health.Status;
 import org.springframework.http.ResponseEntity;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
@@ -120,6 +122,7 @@ public abstract class IrisExerciseChatBasedSessionResource<E extends Exercise, S
         return new IrisHealthDTO(health.getStatus() == Status.UP, rateLimitInfo);
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record IrisHealthDTO(boolean active, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo) {
     }
 }

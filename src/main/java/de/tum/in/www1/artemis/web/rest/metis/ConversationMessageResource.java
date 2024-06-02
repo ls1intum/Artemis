@@ -38,7 +38,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.metis.ConversationMessagingService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
-import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
+import de.tum.in.www1.artemis.web.rest.dto.PostContextFilterDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import io.swagger.v3.oas.annotations.Parameter;
 import tech.jhipster.web.util.PaginationUtil;
@@ -109,18 +109,18 @@ public class ConversationMessageResource {
      */
     @GetMapping("courses/{courseId}/messages")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<Post>> getMessages(@Parameter Pageable pageable, PostContextFilter postContextFilter, Principal principal) {
+    public ResponseEntity<List<Post>> getMessages(@Parameter Pageable pageable, PostContextFilterDTO postContextFilter, Principal principal) {
         long timeNanoStart = System.nanoTime();
         Page<Post> coursePosts;
 
         var requestingUser = userRepository.getUser();
-        var course = courseRepository.findByIdElseThrow(postContextFilter.getCourseId());
+        var course = courseRepository.findByIdElseThrow(postContextFilter.courseId());
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
 
-        if (postContextFilter.getConversationId() != null) {
+        if (postContextFilter.conversationId() != null) {
             coursePosts = conversationMessagingService.getMessages(pageable, postContextFilter, requestingUser);
         }
-        else if (postContextFilter.getCourseWideChannelIds() != null) {
+        else if (postContextFilter.courseWideChannelIds() != null) {
             coursePosts = conversationMessagingService.getCourseWideMessages(pageable, postContextFilter, requestingUser);
         }
         else {

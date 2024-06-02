@@ -292,6 +292,7 @@ public class TutorialGroupResource {
      * @param notificationText               the optional notification text
      * @param updateTutorialGroupChannelName whether the tutorial group channel name should be updated with the new tutorial group title or not
      */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record TutorialGroupUpdateDTO(@Valid @NotNull TutorialGroup tutorialGroup, @Size(min = 1, max = 1000) @Nullable String notificationText,
             @Nullable Boolean updateTutorialGroupChannelName) {
     }

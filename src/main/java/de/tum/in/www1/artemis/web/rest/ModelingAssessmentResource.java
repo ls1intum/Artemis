@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.in.www1.artemis.domain.AssessmentUpdate;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
@@ -40,6 +39,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.web.rest.dto.AssessmentUpdateDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ModelingAssessmentDTO;
 import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -160,7 +160,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
             @ApiResponse(responseCode = "403", description = ErrorConstants.REQ_403_REASON), @ApiResponse(responseCode = "404", description = ErrorConstants.REQ_404_REASON) })
     @PutMapping("modeling-submissions/{submissionId}/assessment-after-complaint")
     @EnforceAtLeastTutor
-    public ResponseEntity<Result> updateModelingAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdate assessmentUpdate) {
+    public ResponseEntity<Result> updateModelingAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdateDTO assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         ModelingSubmission modelingSubmission = modelingSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(submissionId);

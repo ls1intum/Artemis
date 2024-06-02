@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.in.www1.artemis.domain.AssessmentUpdate;
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.domain.Result;
@@ -35,6 +34,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.web.rest.dto.AssessmentUpdateDTO;
 import de.tum.in.www1.artemis.web.rest.dto.FileUploadAssessmentDTO;
 
 /**
@@ -101,7 +101,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     @ResponseStatus(HttpStatus.OK)
     @PutMapping("file-upload-submissions/{submissionId}/assessment-after-complaint")
     @EnforceAtLeastTutor
-    public ResponseEntity<Result> updateFileUploadAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdate assessmentUpdate) {
+    public ResponseEntity<Result> updateFileUploadAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdateDTO assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         FileUploadSubmission fileUploadSubmission = fileUploadSubmissionRepository.findByIdWithEagerResultAndAssessorAndFeedbackElseThrow(submissionId);

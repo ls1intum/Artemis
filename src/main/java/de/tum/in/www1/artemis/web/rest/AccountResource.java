@@ -87,10 +87,10 @@ public class AccountResource {
         if (!user.isInternal()) {
             throw new AccessForbiddenException("Only users with internally saved credentials can change their password.");
         }
-        if (accountService.isPasswordLengthInvalid(passwordChangeDto.getNewPassword())) {
+        if (accountService.isPasswordLengthInvalid(passwordChangeDto.newPassword())) {
             throw new PasswordViolatesRequirementsException();
         }
-        userService.changePassword(passwordChangeDto.getCurrentPassword(), passwordChangeDto.getNewPassword());
+        userService.changePassword(passwordChangeDto.currentPassword(), passwordChangeDto.newPassword());
 
         return ResponseEntity.ok().build();
     }
