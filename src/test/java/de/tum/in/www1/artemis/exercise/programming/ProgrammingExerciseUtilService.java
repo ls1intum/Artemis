@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -908,6 +909,7 @@ public class ProgrammingExerciseUtilService {
         // Mock Git service operations
         doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), any(), any(), anyBoolean(), anyString());
         doNothing().when(gitService).resetToOriginHead(any());
-        doReturn(Paths.get("repo.zip")).when(gitService).zipRepositoryWithParticipation(any(), anyString(), anyBoolean());
+        doReturn(Paths.get("repo.zip")).when(gitService).getRepositoryWithParticipation(any(), anyString(), anyBoolean(), eq(true));
+        doReturn(Paths.get("repo")).when(gitService).getRepositoryWithParticipation(any(), anyString(), anyBoolean(), eq(false));
     }
 }
