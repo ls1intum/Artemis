@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizPointStatistic;
 import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
 import de.tum.in.www1.artemis.domain.quiz.QuizQuestionStatistic;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
+import de.tum.in.www1.artemis.repository.QuizQuestionRepository;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
@@ -43,15 +44,18 @@ public class QuizStatisticService {
 
     private final QuizExerciseRepository quizExerciseRepository;
 
+    private final QuizQuestionRepository quizQuestionRepository;
+
     public QuizStatisticService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             WebsocketMessagingService websocketMessagingService, QuizSubmissionRepository quizSubmissionRepository, Optional<LtiNewResultService> ltiNewResultService,
-            QuizExerciseRepository quizExerciseRepository) {
+            QuizExerciseRepository quizExerciseRepository, QuizQuestionRepository quizQuestionRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
         this.websocketMessagingService = websocketMessagingService;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.ltiNewResultService = ltiNewResultService;
         this.quizExerciseRepository = quizExerciseRepository;
+        this.quizQuestionRepository = quizQuestionRepository;
     }
 
     /**
@@ -107,6 +111,13 @@ public class QuizStatisticService {
             }
 
             ltiNewResultService.ifPresent(newResultService -> newResultService.onNewResult(participation));
+        }
+
+        quizExerciseRepository.saveAndFlush(quizExercise);
+        for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
+            if (quizQuestion.getQuizQuestionStatistic() != null) {
+                quizQuestionRepository.saveAndFlush(quizQuestion);
+            }
         }
     }
 
