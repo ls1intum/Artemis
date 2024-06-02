@@ -96,6 +96,7 @@ test.describe('Programming exercise participation', () => {
 
                 test('Makes a submission using git', async ({ page, programmingExerciseOverview }) => {
                     await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
+                    const commitMessage = 'Makes a submission';
                     await makeGitExerciseSubmission(page, programmingExerciseOverview, course, exercise, studentOne, submission, commitMessage);
                 });
             });
