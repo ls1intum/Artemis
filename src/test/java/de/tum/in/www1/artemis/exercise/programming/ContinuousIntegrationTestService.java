@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.reset;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -16,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
@@ -64,7 +66,7 @@ public class ContinuousIntegrationTestService {
         this.continuousIntegrationService = continuousIntegrationService;
 
         userUtilService.addUsers(testPrefix, 2, 0, 0, 1);
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         programmingExercise = (ProgrammingExercise) course.getExercises().iterator().next();
 
         // init local repo
@@ -74,7 +76,7 @@ public class ContinuousIntegrationTestService {
         localRepo.configureRepos("testLocalRepo", "testOriginRepo");
         // add file to the repository folder
         Path filePath = Path.of(localRepo.localRepoFile + "/" + currentLocalFileName);
-        var file = Files.createFile(filePath).toFile();
+        File file = Files.createFile(filePath).toFile();
         // write content to the created file
         FileUtils.write(file, currentLocalFileContent, Charset.defaultCharset());
         // add folder to the repository folder
@@ -100,10 +102,6 @@ public class ContinuousIntegrationTestService {
 
     public ProgrammingExerciseStudentParticipation getParticipation() {
         return participation;
-    }
-
-    public LocalRepository getLocalRepo() {
-        return localRepo;
     }
 
     public void testGetBuildStatusNotFound() throws Exception {
@@ -162,23 +160,23 @@ public class ContinuousIntegrationTestService {
     public void testHealthRunning() throws Exception {
         mockDelegate.mockHealthInCiService(true, HttpStatus.OK);
         var health = continuousIntegrationService.health();
-        assertThat(health.getAdditionalInfo()).containsEntry("url", ciServerUrl);
+        assertThat(health.additionalInfo()).containsEntry("url", ciServerUrl);
         assertThat(health.isUp()).isTrue();
     }
 
     public void testHealthNotRunning() throws Exception {
         mockDelegate.mockHealthInCiService(false, HttpStatus.OK);
         var health = continuousIntegrationService.health();
-        assertThat(health.getAdditionalInfo()).containsEntry("url", ciServerUrl);
+        assertThat(health.additionalInfo()).containsEntry("url", ciServerUrl);
         assertThat(health.isUp()).isFalse();
     }
 
     public void testHealthException() throws Exception {
         mockDelegate.mockHealthInCiService(false, HttpStatus.INTERNAL_SERVER_ERROR);
         var health = continuousIntegrationService.health();
-        assertThat(health.getAdditionalInfo()).containsEntry("url", ciServerUrl);
+        assertThat(health.additionalInfo()).containsEntry("url", ciServerUrl);
         assertThat(health.isUp()).isFalse();
-        assertThat(health.getException()).isNotNull();
+        assertThat(health.exception()).isNotNull();
     }
 
     public void testConfigureBuildPlan() throws Exception {

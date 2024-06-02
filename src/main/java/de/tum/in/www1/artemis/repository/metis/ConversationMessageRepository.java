@@ -25,7 +25,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
+import de.tum.in.www1.artemis.web.rest.dto.PostContextFilterDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -43,12 +43,12 @@ public interface ConversationMessageRepository extends JpaRepository<Post, Long>
      * @param userId            the id of the user for which the messages should be returned
      * @return returns a Page of Messages
      */
-    default Page<Post> findMessages(PostContextFilter postContextFilter, Pageable pageable, long userId) {
-        Specification<Post> specification = Specification.where(getConversationSpecification(postContextFilter.getConversationId()))
-                .and(getSearchTextSpecification(postContextFilter.getSearchText())).and(getOwnSpecification(postContextFilter.getFilterToOwn(), userId))
-                .and(getAnsweredOrReactedSpecification(postContextFilter.getFilterToAnsweredOrReacted(), userId))
-                .and(getUnresolvedSpecification(postContextFilter.getFilterToUnresolved()))
-                .and(getSortSpecification(true, postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder()));
+    default Page<Post> findMessages(PostContextFilterDTO postContextFilter, Pageable pageable, long userId) {
+        Specification<Post> specification = Specification.where(getConversationSpecification(postContextFilter.conversationId()))
+                .and(getSearchTextSpecification(postContextFilter.searchText())).and(getOwnSpecification(Boolean.TRUE.equals(postContextFilter.filterToOwn()), userId))
+                .and(getAnsweredOrReactedSpecification(Boolean.TRUE.equals(postContextFilter.filterToAnsweredOrReacted()), userId))
+                .and(getUnresolvedSpecification(Boolean.TRUE.equals(postContextFilter.filterToUnresolved())))
+                .and(getSortSpecification(true, postContextFilter.postSortCriterion(), postContextFilter.sortingOrder()));
 
         return findAll(specification, pageable);
     }
@@ -61,13 +61,13 @@ public interface ConversationMessageRepository extends JpaRepository<Post, Long>
      * @param userId            the id of the user for which the messages should be returned
      * @return returns a Page of Messages
      */
-    default Page<Post> findCourseWideMessages(PostContextFilter postContextFilter, Pageable pageable, long userId) {
-        Specification<Post> specification = Specification.where(getCourseWideChannelsSpecification(postContextFilter.getCourseId()))
-                .and(getConversationsSpecification(postContextFilter.getCourseWideChannelIds())).and(getSearchTextSpecification(postContextFilter.getSearchText()))
-                .and(getOwnSpecification(postContextFilter.getFilterToOwn(), userId))
-                .and(getAnsweredOrReactedSpecification(postContextFilter.getFilterToAnsweredOrReacted(), userId))
-                .and(getUnresolvedSpecification(postContextFilter.getFilterToUnresolved()))
-                .and(getSortSpecification(true, postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder()));
+    default Page<Post> findCourseWideMessages(PostContextFilterDTO postContextFilter, Pageable pageable, long userId) {
+        Specification<Post> specification = Specification.where(getCourseWideChannelsSpecification(postContextFilter.courseId()))
+                .and(getConversationsSpecification(postContextFilter.courseWideChannelIds())).and(getSearchTextSpecification(postContextFilter.searchText()))
+                .and(getOwnSpecification(Boolean.TRUE.equals(postContextFilter.filterToOwn()), userId))
+                .and(getAnsweredOrReactedSpecification(Boolean.TRUE.equals(postContextFilter.filterToAnsweredOrReacted()), userId))
+                .and(getUnresolvedSpecification(Boolean.TRUE.equals(postContextFilter.filterToUnresolved())))
+                .and(getSortSpecification(true, postContextFilter.postSortCriterion(), postContextFilter.sortingOrder()));
 
         return findAll(specification, pageable);
     }

@@ -10,7 +10,7 @@ let restCalls: Array<{method: string, url: string, line: number, filePath: strin
 
 fileNames.forEach(fileName => {
     if (fileName.endsWith('.ts')) {
-    // Load the TypeScript file
+        // Load the TypeScript file
         const sourceFile = ts.createSourceFile(fileName, require('fs').readFileSync(fileName).toString(), ts.ScriptTarget.ES2015, true);
 
         // Store class property definitions

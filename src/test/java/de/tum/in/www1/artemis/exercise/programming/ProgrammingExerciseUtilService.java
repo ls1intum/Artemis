@@ -177,6 +177,8 @@ public class ProgrammingExerciseUtilService {
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setMaxPoints(10.0);
         programmingExercise.setBonusPoints(0.0);
+        programmingExercise.setGradingInstructions("Grading instructions");
+        programmingExercise.setProblemStatement("Problem statement");
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         return programmingExercise;
     }

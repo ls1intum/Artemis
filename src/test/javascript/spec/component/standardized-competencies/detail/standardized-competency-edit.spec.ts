@@ -31,6 +31,7 @@ describe('StandardizedCompetencyEditComponent', () => {
         description: 'new description',
         taxonomy: CompetencyTaxonomy.APPLY,
         knowledgeAreaId: 2,
+        sourceId: 2,
     };
 
     const defaultKnowledgeAreas: KnowledgeAreaDTO[] = [
@@ -73,21 +74,21 @@ describe('StandardizedCompetencyEditComponent', () => {
 
     it('should set form values to competency', () => {
         componentFixture.detectChanges();
-        compareFormValues(component.form.getRawValue(), defaultCompetency);
+        compareFormValues(component['form'].getRawValue(), defaultCompetency);
     });
 
     it('should disable/enable when setting edit mode', () => {
         component.isEditing = false;
         componentFixture.detectChanges();
-        expect(component.form.disabled).toBeTrue();
+        expect(component['form'].disabled).toBeTrue();
 
         component.edit();
-        expect(component.form.disabled).toBeFalse();
+        expect(component['form'].disabled).toBeFalse();
     });
 
     it('should save', () => {
         component.isEditing = true;
-        component.form.setValue(newValues);
+        component['form'].setValue(newValues);
         const saveSpy = jest.spyOn(component.onSave, 'emit');
 
         component.save();
@@ -102,12 +103,12 @@ describe('StandardizedCompetencyEditComponent', () => {
     ])('should cancel and close', (competency, shouldClose) => {
         component.competency = competency;
         component.isEditing = true;
-        component.form.setValue(newValues);
+        component['form'].setValue(newValues);
         const closeSpy = jest.spyOn(component.onClose, 'emit');
 
         component.cancel();
 
-        compareFormValues(component.form.getRawValue(), competency);
+        compareFormValues(component['form'].getRawValue(), competency);
         expect(component.isEditing).toBeFalse();
         shouldClose ? expect(closeSpy).toHaveBeenCalled() : expect(closeSpy).not.toHaveBeenCalled();
     });
@@ -129,7 +130,7 @@ describe('StandardizedCompetencyEditComponent', () => {
     it('should update description', () => {
         component.updateDescriptionControl('new description');
 
-        expect(component.form.controls.description.getRawValue()).toBe('new description');
+        expect(component['form'].controls.description.getRawValue()).toBe('new description');
     });
 
     function compareFormValues(formValues: any, competency: StandardizedCompetencyDTO) {

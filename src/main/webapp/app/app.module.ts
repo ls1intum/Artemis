@@ -11,7 +11,6 @@ import { SystemNotificationComponent } from 'app/shared/notification/system-noti
 import { ArtemisAppRoutingModule } from 'app/app-routing.module';
 import { JhiMainComponent } from 'app/shared/layouts/main/main.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisCoursesModule } from 'app/overview/courses.module';
 import { FooterComponent } from 'app/shared/layouts/footer/footer.component';
 import { ActiveMenuDirective } from 'app/shared/layouts/navbar/active-menu.directive';
 import { ErrorComponent } from 'app/shared/layouts/error/error.component';
@@ -41,7 +40,6 @@ import { ScrollingModule } from '@angular/cdk/scrolling';
         ArtemisHomeModule,
         ArtemisAppRoutingModule,
         GuidedTourModule,
-        ArtemisCoursesModule,
         ArtemisSystemNotificationModule,
         ArtemisComplaintsModule,
         ArtemisHeaderExercisePageWithDetailsModule,

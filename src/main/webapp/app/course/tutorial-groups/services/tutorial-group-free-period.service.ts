@@ -17,9 +17,6 @@ export class TutorialGroupFreePeriodDTO {
 export class TutorialGroupFreePeriodService {
     private resourceURL = 'api';
 
-    //testChange
-    private i = 0;
-
     constructor(private httpClient: HttpClient) {}
 
     getOneOfConfiguration(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupFreePeriodId: number): Observable<EntityResponseType> {

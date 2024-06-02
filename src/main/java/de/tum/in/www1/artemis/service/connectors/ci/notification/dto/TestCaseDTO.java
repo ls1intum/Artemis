@@ -14,13 +14,13 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
 
 import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.service.dto.TestCaseDTOInterface;
+import de.tum.in.www1.artemis.service.dto.TestCaseBaseDTO;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record TestCaseDTO(String name, String classname, double time, @JsonProperty("failures") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestCaseDetailMessageDTO> failures,
         @JsonProperty("errors") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestCaseDetailMessageDTO> errors,
-        @JsonProperty("successInfos") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestCaseDetailMessageDTO> successInfos) implements TestCaseDTOInterface {
+        @JsonProperty("successInfos") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestCaseDetailMessageDTO> successInfos) implements TestCaseBaseDTO {
 
     @JsonIgnore
     public boolean isSuccessful() {
