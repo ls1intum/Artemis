@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { faArrowUpRightFromSquare, faCodeBranch, faExclamationTriangle, faEye } from '@fortawesome/free-solid-svg-icons';
 import { isEmpty } from 'lodash-es';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -37,12 +37,14 @@ export enum DetailType {
     ProgrammingProblemStatement = 'detail-problem-statement',
     ProgrammingTimeline = 'detail-timeline',
     ProgrammingBuildStatistics = 'detail-build-statistics',
+    ProgrammingCheckoutDirectories = 'detail-checkout-directories',
 }
 
 @Component({
     selector: 'jhi-detail-overview-list',
     templateUrl: './detail-overview-list.component.html',
     styleUrls: ['./detail-overview-list.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class DetailOverviewListComponent implements OnInit, OnDestroy {
     protected readonly isEmpty = isEmpty;
@@ -96,7 +98,7 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const modalRef = this.modalService.open(GitDiffReportModalComponent, { size: 'xl' });
+        const modalRef = this.modalService.open(GitDiffReportModalComponent, { windowClass: 'diff-view-modal' });
         modalRef.componentInstance.report = gitDiff;
     }
 

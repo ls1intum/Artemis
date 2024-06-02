@@ -33,17 +33,17 @@ public class ApollonHealthIndicator implements HealthIndicator {
      */
     @Override
     public Health health() {
+        Map<String, Object> additionalInfo = Map.of("url", apollonConversionUrl);
         ConnectorHealth health;
         try {
             ResponseEntity<String> response = shortTimeoutRestTemplate.getForEntity(apollonConversionUrl + "/status", String.class);
             HttpStatusCode statusCode = response.getStatusCode();
-            health = new ConnectorHealth(statusCode.is2xxSuccessful());
+            health = new ConnectorHealth(statusCode.is2xxSuccessful(), additionalInfo);
         }
         catch (RestClientException error) {
             health = new ConnectorHealth(error);
         }
 
-        health.setAdditionalInfo(Map.of("url", apollonConversionUrl));
         return health.asActuatorHealth();
     }
 }

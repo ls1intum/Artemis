@@ -31,6 +31,7 @@ services:
         expose:
             - "8080"
             - "5701" # Hazelcast
+            - "7921" # Git SSH
         networks:
             - artemis
 

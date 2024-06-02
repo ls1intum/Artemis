@@ -316,6 +316,7 @@
                     "bonusMultiplier": "Bonusmultiplikator: Dies multipliziert die Punkte für das Bestehen eines Testfalls, ohne dabei die Anteile der anderen Testfälle zu beeinflussen. Multiplikatoren größer als 1 können zu Ergebnissen von mehr als 100% führen.",
                     "bonusPoints": "Bonuspunkte: Zusätzliche Punkte, die zu den regulären Punkten für das Bestehen eines Testfalls hinzuaddiert werden. Das Setzen von Bonuspunkten kann zu Ergebnissen von mehr als 100% führen.",
                     "visibility": "Feedback und Punkte für Testfälle, die mit „Nach Einreichungsfrist“ markiert sind, werden erst danach für Studierende angezeigt. Nie sichtbare Tests werden nicht in die Punktebewertung einbezogen.",
+                    "visibilityExam": "Feedback und Punkte für Testfälle, die mit „Nach Veröffentlichung der Ergebnisse“ markiert sind, werden erst nach der Veröffentlichung der Klausurergebnisse angezeigt. Nie sichtbare Tests werden nicht in die Punktebewertung einbezogen.",
                     "points": "Die Menge an Punkten, die die Studierenden für das Bestehen dieses Tests bekommen. Dieser Wert wird wie in den Kurseinstellungen festgelegt gerundet.",
                     "type": "Der Typ des Tests gibt an, ob dieser aus der test.json-Datei generiert wurde (STRUCTURAL), oder manuell geschrieben wurde (BEHAVIORAL)."
                 },
@@ -415,7 +416,8 @@
                 "assessmentDueDate": "Einreichungsfrist der Bewertung",
                 "assessmentDueDateTooltip": "Die Frist für manuelle Reviews. Sobald das Datum erreicht ist, werden alle manuellen Ergebnisse an die Studierenden veröffentlicht!",
                 "notSet": "nicht gesetzt",
-                "allowFeedbackRequests": "Feedbackanfragen erlauben",
+                "allowFeedbackRequests": "Automatische nicht bewertete Feedbackanfragen/manuelle Feedbackanfragen erlauben",
+                "allowFeedbackRequestsTooltip": "Studierende können vor dem Einreichungsfrist um Feedback bitten. Die Anfragen werden von Athena bearbeitet oder, falls Athena nicht erreicht werden kann, können Studierende manuelle Feedbackanfragen stellen.",
                 "manualFeedbackRequests": "Anfragen nach manuellem Feedback",
                 "manualFeedbackRequestsTooltip": "Studierende können manuelle Korrekturen vor der Einreichungsfrist anfragen, um Feedback zu erhalten.",
                 "feedbackRequestsEnabled": "Korrekturanfragen sind möglich",
@@ -424,23 +426,29 @@
                 "complaintOnAutomaticAssessmentTooltip": "Die Studierenden dürfen eine Beschwerde nach einer automatischen Bewertung einlegen, die ein Tutor danach bewerten kann.",
                 "exampleSolutionPublicationDateTooltip": "Das Datum, an dem das Lösungsrepository für Studierende zum Herunterladen verfügbar wird. Zum Deaktivieren leer lassen.",
                 "releaseTestsWithExampleSolution": "Tests zusammen mit Lösungsvorschlag veröffentlichen",
-                "releaseTestsWithExampleSolutionTooltip": "Die automatischen Tests können zusätzlich zu dem Lösungsvorschlag nach der Einreichungsfrist zum Download bereit gestellt werden."
+                "releaseTestsWithExampleSolutionTooltip": "Die automatischen Tests können zusätzlich zu dem Lösungsvorschlag nach der Einreichungsfrist zum Download bereit gestellt werden.",
+                "setTestCaseVisibilityToAfterReleaseDateOfResults": "Testergebnisse erst nach Veröffentlichung der Ergebnisse sichtbar machen",
+                "setTestCaseVisibilityToAfterReleaseDateOfResultsTooltip": "Während der Klausur sehen Studierende nur, ob ihr Code kompiliert. Details zu den Testergebnissen werden erst nach dem Veröffentlichungsdatum der Ergebnisse angezeigt."
             },
             "repositoryIsLocked": {
                 "title": "Dein Repository ist gesperrt.",
                 "tooltip": "Dein Repository ist gesperrt, weil die Einreichungsfrist abgelaufen ist oder du das Einreichungslimit erreicht hast. Du kannst weiterhin deinen Code einsehen, aber keine Änderungen vornehmen."
             },
+            "checkoutDirectories": "Checkout-Verzeichnisse",
             "preview": {
                 "label": "Vorschau",
                 "tooltip": "Für jede Programmieraufgabe, werden verschieden Repositories und Build-Pläne erstellt. Links befinden sich deren generierte Namen basierend auf dem Kurznamen der Aufgabe",
+                "tooltipLocalVC": "Hier findest du die mit der Programmieraufgabe verknüpften Repositories. Rechts werden die jeweiligen Checkout-Verzeichnisse während der Build-Ausführung angezeigt.",
                 "repositories": "Repositories",
                 "buildPlans": "Build-Pläne",
                 "templateRepoTooltip": "Das Repository, welches die Vorlage der Aufgabe beinhaltet",
                 "solutionRepoTooltip": "Das Repository, welches die Lösung der Aufgabe beinhaltet",
                 "testRepoTooltip": "Das Repository, welches alle Tests beinhaltet",
                 "auxiliaryRepoTooltip": "{{description}}",
-                "templateBuildPlanTooltip": "Der Build-Plan der Vorlage. Lässt alle Tests über die Vorlage der Aufgabe laufen. Dient als Kontrollreferenz, für welche alle Tests fehlschlagen müssen",
-                "solutionBuildPlanTooltip": "Der Build-Plan der Lösung der Aufgabe. Lässt alle Tests über die Lösung der Aufgabe laufen. Dient als Kontrollreferenz, für welche alle Tests erfolgreich sein müssen"
+                "templateBuildPlanTooltip": "Der Build-Plan der Vorlage und Abgaben von Studierenden. Lässt alle Tests über die Vorlage/Studierenden-Abgabe, der Aufgabe laufen. Die Vorlage dient als Kontrollreferenz, für welche alle Tests fehlschlagen müssen.",
+                "solutionBuildPlanTooltip": "Der Build-Plan der Lösung der Aufgabe. Lässt alle Tests über die Lösung der Aufgabe laufen. Dient als Kontrollreferenz, für welche alle Tests erfolgreich sein müssen",
+                "submissionBuildPlan": "Abgabe-Build-Plan",
+                "solutionBuildPlan": "Lösungs-Build-Plan"
             },
             "orion": {
                 "openEditor": "Editor Öffnen"
@@ -540,6 +548,11 @@
             "diffReport": {
                 "button": "Anzeigen",
                 "tooltip": "Zeigt den detaillierten Git-Diff zwischen den Template- und Lösungs-Repositories.",
+                "splitView": {
+                    "enable": "Getrennte Ansicht aktivieren",
+                    "disable": "Getrennte Ansicht deaktivieren",
+                    "tooltip": "In der getrennten Ansicht werden beide Versionen jeder geänderten Datei nebeneinander angezeigt. Beachte, dass die getrennte Ansicht nur dann angezeigt wird, wenn dein Browserfenster breit genug ist."
+                },
                 "tooltipBetweenSubmissions": "Zeigt den detaillierten Git-Diff zwischen der aktuellen und der vorherigen Abgabe.",
                 "title": "Template-Lösungs-Diff",
                 "titleForSubmissions": "Abgaben-Diff",
@@ -550,6 +563,11 @@
                 "previousCommit": "Vorheriger Commit",
                 "currentSubmission": "Aktuelle Abgabe",
                 "currentCommit": "Aktueller Commit",
+                "fileChange": {
+                    "created": "Erstellt",
+                    "deleted": "Gelöscht",
+                    "renamed": "Umbenannt"
+                },
                 "errorWhileFetchingRepos": "Fehler beim Abrufen der Repositories. Bitte überprüfe deine Internetverbindung und öffne das Popup erneut.",
                 "404": "Template-Lösungs-Diff wurde noch nicht generiert. Bitte pusche etwas in die Template- oder Lösungs-Repositories, um ihn zu erstellen.",
                 "lineStatLabel": "Zeilen, die zwischen Vorlage und Lösung hinzugefügt/entfernt wurden",

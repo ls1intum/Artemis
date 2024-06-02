@@ -7,7 +7,7 @@ import { omit as _omit } from 'lodash-es';
 
 import { createRequestOption } from 'app/shared/util/request.util';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
@@ -20,11 +20,13 @@ import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programmi
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
-import { BuildLogStatisticsDTO } from 'app/exercises/programming/manage/build-log-statistics-dto';
+import { BuildLogStatisticsDTO } from 'app/entities/build-log-statistics-dto';
 import { SortService } from 'app/shared/service/sort.service';
 import { Result } from 'app/entities/result.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { PlagiarismResultDTO } from 'app/exercises/shared/plagiarism/types/PlagiarismResultDTO';
+import { ImportOptions } from 'app/types/programming-exercises';
+import { CheckoutDirectoriesDto } from 'app/entities/checkout-directories-dto';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -153,12 +155,12 @@ export class ProgrammingExerciseService {
      *                                         new exercise. E.g. with another title than the original exercise. Old
      *                                         values that should get discarded (like the old ID) will be handled by the
      *                                         server.
-     * @param recreateBuildPlans Option determining whether the build plans should be recreated or copied from the imported exercise
-     * @param updateTemplate Option determining whether the template files in the repositories should be updated
+     * @param importOptions see {@link ImportOptions}
      */
-    importExercise(adaptedSourceProgrammingExercise: ProgrammingExercise, recreateBuildPlans: boolean, updateTemplate: boolean): Observable<EntityResponseType> {
-        const options = createRequestOption({ recreateBuildPlans, updateTemplate });
+    importExercise(adaptedSourceProgrammingExercise: ProgrammingExercise, importOptions: ImportOptions): Observable<EntityResponseType> {
+        const options = createRequestOption(importOptions);
         const exercise = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(adaptedSourceProgrammingExercise);
+
         exercise.categories = ExerciseService.stringifyExerciseCategories(exercise);
         return this.http
             .post<ProgrammingExercise>(`${this.resourceUrl}/import/${adaptedSourceProgrammingExercise.id}`, exercise, {
@@ -575,19 +577,27 @@ export class ProgrammingExerciseService {
      * @param participationId The id of a participation
      * @param olderCommitHash The hash of the older commit
      * @param newerCommitHash The hash of the newer commit
-     * @param repositoryType The type of the repository
+     * @param repositoryType The type of the repository (optional)
      */
     getDiffReportForCommits(
         exerciseId: number,
-        participationId: number,
+        participationId: number | undefined,
         olderCommitHash: string,
         newerCommitHash: string,
-        repositoryType: string,
+        repositoryType?: string,
     ): Observable<ProgrammingExerciseGitDiffReport | undefined> {
+        const params = {};
+        if (repositoryType !== undefined) {
+            params['repositoryType'] = repositoryType;
+        }
+        if (participationId !== undefined && !isNaN(participationId)) {
+            params['participationId'] = participationId;
+        }
+
         return this.http
-            .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/participation/${participationId}/commits/${olderCommitHash}/diff-report/${newerCommitHash}`, {
+            .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/commits/${olderCommitHash}/diff-report/${newerCommitHash}`, {
                 observe: 'response',
-                params: { repositoryType },
+                params: params,
             })
             .pipe(map((res: HttpResponse<ProgrammingExerciseGitDiffReport>) => res.body ?? undefined));
     }
@@ -663,5 +673,14 @@ export class ProgrammingExerciseService {
         return this.http
             .post<ProgrammingExercise>(url, formData, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
+    }
+
+    getCheckoutDirectoriesForProgrammingLanguage(programmingLanguage: ProgrammingLanguage, checkoutSolution: boolean): Observable<CheckoutDirectoriesDto> {
+        return this.http.get<CheckoutDirectoriesDto>(`${this.resourceUrl}/repository-checkout-directories`, {
+            params: {
+                programmingLanguage,
+                checkoutSolution: checkoutSolution,
+            },
+        });
     }
 }

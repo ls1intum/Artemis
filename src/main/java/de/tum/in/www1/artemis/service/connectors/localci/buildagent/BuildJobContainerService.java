@@ -16,6 +16,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -199,23 +203,43 @@ public class BuildJobContainerService {
      * @param containerId The ID of the container to stop or kill.
      */
     public void stopUnresponsiveContainer(String containerId) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
         try {
             // Attempt to stop the container. It should stop the container and auto-remove it.
             // {@link DockerClient#stopContainerCmd(String)} first sends a SIGTERM command to the container to gracefully stop it,
             // and if it does not stop within the timeout, it sends a SIGKILL command to kill the container.
-            dockerClient.stopContainerCmd(containerId).withTimeout(5).exec();
+            log.info("Stopping container with id {}", containerId);
+
+            // Submit Docker stop command to executor service
+            Future<Void> future = executor.submit(() -> {
+                dockerClient.stopContainerCmd(containerId).withTimeout(5).exec();
+                return null;  // Return type to match Future<Void>
+            });
+
+            // Await the future with a timeout
+            future.get(10, TimeUnit.SECONDS);  // Wait for the stop command to complete with a timeout
         }
         catch (NotFoundException | NotModifiedException e) {
             log.debug("Container with id {} is already stopped: {}", containerId, e.getMessage());
         }
         catch (Exception e) {
-            // In case the stopContainerCmd fails, we try to forcefully kill the container
+            log.warn("Failed to stop container with id {}. Attempting to kill container: {}", containerId, e.getMessage());
+
+            // Attempt to kill the container if stop fails
             try {
-                dockerClient.killContainerCmd(containerId).exec();
+                Future<Void> killFuture = executor.submit(() -> {
+                    dockerClient.killContainerCmd(containerId).exec();
+                    return null;
+                });
+
+                killFuture.get(5, TimeUnit.SECONDS);  // Wait for the kill command to complete with a timeout
             }
             catch (Exception killException) {
                 log.warn("Failed to kill container with id {}: {}", containerId, killException.getMessage());
             }
+        }
+        finally {
+            executor.shutdown();
         }
     }
 

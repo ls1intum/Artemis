@@ -28,11 +28,18 @@ Some general aspects:
 3. Use PascalCase for enum values.
 4. Use camelCase for function names.
 5. Use camelCase for property names and local variables.
-6. Do not use "_" as a prefix for private properties.
-7. Use whole words in names when possible.
+6. Use SCREAMING_SNAKE_CASE for constants, i.e. properties with the ``readonly`` keyword.
+7. Do not use "_" as a prefix for private properties.
+8. Use whole words in names when possible.
 
 2. Components
 =============
+
+In our project, we promote the creation of standalone components instead of using Angular modules. A standalone component is a self-contained unit that encapsulates its own logic, view, and styles. It doesn't directly depend on its parent or child components and can be reused in different parts of the application.
+For existing components that are not standalone, we should aim to migrate them step by step. This migration process should be done gradually and carefully, to avoid introducing bugs. It's recommended to thoroughly test the component after each change to ensure it still works as expected.
+Standalone components can be generated with the Angular CLI using ``ng g c <component-name> --standalone``.
+
+More info about standalone components: https://angular.dev/guide/components/importing#standalone-components
 
 1. 1 file per logical component (e.g. parser, scanner, emitter, checker).
 2. files with ".generated.*" suffix are auto-generated, do not hand-edit them.

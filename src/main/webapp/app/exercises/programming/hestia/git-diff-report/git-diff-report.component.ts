@@ -1,6 +1,16 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
+import { faSpinner, faTableColumns } from '@fortawesome/free-solid-svg-icons';
+import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+
+interface DiffInformation {
+    path: string;
+    entries: ProgrammingExerciseGitDiffEntry[];
+    templateFileContent?: string;
+    solutionFileContent?: string;
+    diffReady: boolean;
+}
 
 @Component({
     selector: 'jhi-git-diff-report',
@@ -25,12 +35,22 @@ export class GitDiffReportComponent implements OnInit {
 
     rightCommit: string | undefined;
 
-    // TODO: Make this configurable by the user
-    numberOfContextLines = 3;
     entries: ProgrammingExerciseGitDiffEntry[];
     entriesByPath: Map<string, ProgrammingExerciseGitDiffEntry[]>;
     addedLineCount: number;
     removedLineCount: number;
+    diffInformationForPaths: DiffInformation[] = [];
+    allDiffsReady = false;
+    nothingToDisplay = false;
+    allowSplitView = true;
+    renamedFilePaths: { [before: string]: string | undefined } = {};
+
+    faSpinner = faSpinner;
+    faTableColumns = faTableColumns;
+
+    // Expose to template
+    protected readonly ButtonSize = ButtonSize;
+    protected readonly ButtonType = ButtonType;
 
     constructor() {}
 
@@ -73,7 +93,13 @@ export class GitDiffReportComponent implements OnInit {
 
         // Create a set of all file paths
         this.filePaths = [...new Set([...this.templateFileContentByPath.keys(), ...this.solutionFileContentByPath.keys()])].sort();
-
+        // Track renamed files
+        this.entries.forEach((entry) => {
+            // Accounts only for files that have existed in the original and the modified version, but under different names
+            if (entry.filePath && entry.previousFilePath && entry.filePath !== entry.previousFilePath) {
+                this.renamedFilePaths[entry.filePath] = entry.previousFilePath;
+            }
+        });
         // Group the diff entries by file path
         this.entriesByPath = new Map<string, ProgrammingExerciseGitDiffEntry[]>();
         [...this.templateFileContentByPath.keys()].forEach((filePath) => {
@@ -90,5 +116,31 @@ export class GitDiffReportComponent implements OnInit {
         });
         this.leftCommit = this.report.leftCommitHash?.substring(0, 10);
         this.rightCommit = this.report.rightCommitHash?.substring(0, 10);
+        this.diffInformationForPaths = this.filePaths
+            .filter((path) => this.entriesByPath.get(path)?.length)
+            .map((path) => {
+                // entries is not undefined due to the filter
+                const entries = this.entriesByPath.get(path)!;
+                const templateFileContent = this.templateFileContentByPath.get(this.renamedFilePaths[path] ?? path);
+                const solutionFileContent = this.solutionFileContentByPath.get(path);
+                return { path, entries, templateFileContent, solutionFileContent, diffReady: false };
+            });
+        this.nothingToDisplay = this.diffInformationForPaths.length === 0;
+    }
+
+    /**
+     * Records that the diff editor for a file has changed its "ready" state.
+     * If all paths have reported that they are ready, {@link allDiffsReady} will be set to true.
+     * @param path The path of the file whose diff this event refers to.
+     * @param ready Whether the diff is ready to be displayed or not.
+     */
+    onDiffReady(path: string, ready: boolean) {
+        const index = this.diffInformationForPaths.findIndex((info) => info.path === path);
+        if (index !== -1) {
+            this.diffInformationForPaths[index].diffReady = ready;
+            this.allDiffsReady = Object.values(this.diffInformationForPaths).every((info) => info.diffReady);
+        } else {
+            console.error(`Received diff ready event for unknown path: ${path}`);
+        }
     }
 }
