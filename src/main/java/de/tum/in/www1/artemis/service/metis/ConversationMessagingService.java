@@ -290,15 +290,15 @@ public class ConversationMessagingService extends PostingService {
      * @param pageable          requested page and page size
      * @param postContextFilter request object to fetch posts
      * @param requestingUser    the user requesting messages in course-wide channels
+     * @param courseId          the id of the course the post belongs to
      * @return page of posts that match the given context
      */
-    public Page<Post> getMessages(Pageable pageable, @Valid PostContextFilterDTO postContextFilter, User requestingUser) {
+    public Page<Post> getMessages(Pageable pageable, @Valid PostContextFilterDTO postContextFilter, User requestingUser, Long courseId) {
         conversationService.isMemberOrCreateForCourseWideElseThrow(postContextFilter.conversationId(), requestingUser, Optional.of(ZonedDateTime.now()));
 
         // The following query loads posts, answerPosts and reactions to avoid too many database calls (due to eager references)
         Page<Post> conversationPosts = conversationMessageRepository.findMessages(postContextFilter, pageable, requestingUser.getId());
-
-        setAuthorRoleOfPostings(conversationPosts.getContent());
+        setAuthorRoleOfPostings(conversationPosts.getContent(), courseId);
 
         // invoke async due to db write access to avoid that the client has to wait
         conversationParticipantRepository.updateLastReadAsync(requestingUser.getId(), postContextFilter.conversationId(), ZonedDateTime.now());
@@ -312,14 +312,13 @@ public class ConversationMessagingService extends PostingService {
      * @param pageable          requested page and page size
      * @param postContextFilter request object to fetch messages
      * @param requestingUser    the user requesting messages in course-wide channels
+     * @param courseId          the id of the course the post belongs to
      * @return page of posts that match the given context
      */
-    public Page<Post> getCourseWideMessages(Pageable pageable, @Valid PostContextFilterDTO postContextFilter, User requestingUser) {
+    public Page<Post> getCourseWideMessages(Pageable pageable, @Valid PostContextFilterDTO postContextFilter, User requestingUser, Long courseId) {
         // The following query loads posts, answerPosts and reactions to avoid too many database calls (due to eager references)
         Page<Post> conversationPosts = conversationMessageRepository.findCourseWideMessages(postContextFilter, pageable, requestingUser.getId());
-
-        setAuthorRoleOfPostings(conversationPosts.getContent());
-
+        setAuthorRoleOfPostings(conversationPosts.getContent(), courseId);
         return conversationPosts;
     }
 
@@ -442,13 +441,14 @@ public class ConversationMessagingService extends PostingService {
      * @param post     post that is to be created and check for similar posts beforehand
      * @return list of similar posts
      */
+    // TODO: unused, remove
     public List<Post> getSimilarPosts(Long courseId, Post post) {
         PostContextFilterDTO postContextFilter = new PostContextFilterDTO(courseId, null, null, null, null, false, false, false, null, null);
-        List<Post> coursePosts = this.getCourseWideMessages(Pageable.unpaged(), postContextFilter, userRepository.getUser()).stream()
+        List<Post> coursePosts = this.getCourseWideMessages(Pageable.unpaged(), postContextFilter, userRepository.getUser(), courseId).stream()
                 .sorted(Comparator.comparing(coursePost -> postContentCompareStrategy.performSimilarityCheck(post, coursePost))).toList();
 
         // sort course posts by calculated similarity scores
-        setAuthorRoleOfPostings(coursePosts);
+        setAuthorRoleOfPostings(coursePosts, courseId);
         return Lists.reverse(coursePosts).stream().limit(TOP_K_SIMILARITY_RESULTS).toList();
     }
 

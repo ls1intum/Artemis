@@ -22,8 +22,8 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 import de.tum.in.www1.artemis.domain.metis.Post_;
 import de.tum.in.www1.artemis.domain.metis.Reaction_;
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel_;
+import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation_;
 
 public class MessageSpecs {
@@ -91,12 +91,22 @@ public class MessageSpecs {
      */
     public static Specification<Post> getCourseWideChannelsSpecification(Long courseId) {
         return (root, query, criteriaBuilder) -> {
-            Join<Post, Channel> joinedChannels = criteriaBuilder.treat(root.join(Post_.CONVERSATION, JoinType.LEFT), Channel.class);
-            joinedChannels.on(criteriaBuilder.equal(root.get(Post_.CONVERSATION).get(Conversation_.ID), joinedChannels.get(Channel_.ID)));
-
-            Predicate isInCourse = criteriaBuilder.equal(joinedChannels.get(Channel_.COURSE).get(Course_.ID), courseId);
-            Predicate isCourseWide = criteriaBuilder.isTrue(joinedChannels.get(Channel_.IS_COURSE_WIDE));
-            return criteriaBuilder.and(isInCourse, isCourseWide);
+            Join<Post, Conversation> conversationJoin;
+            if (query.getResultType() == Long.class) {
+                // for a "getQuestionCount" call, we don't need to fetch the conversation, the join however is necessary for the predicates below
+                conversationJoin = root.join(Post_.conversation, JoinType.LEFT);
+            }
+            else {
+                // NOTE: this ugly cast is necessary, otherwise we cannot use the fetch / join below for the predicate
+                @SuppressWarnings("unchecked")
+                var conversationFetch = (Join<Post, Conversation>) root.fetch(Post_.conversation, JoinType.LEFT);
+                conversationJoin = conversationFetch;
+            }
+            final var isInCoursePredicate = criteriaBuilder.equal(conversationJoin.get(Channel_.COURSE).get(Course_.ID), courseId);
+            final var isCourseWidePredicate = criteriaBuilder.isTrue(conversationJoin.get(Channel_.IS_COURSE_WIDE));
+            // make sure we only fetch channels (which are sub types of conversations), the string needs to be the same as the DiscriminatorValue in the Channel class
+            final var isChannelPredicate = criteriaBuilder.equal(conversationJoin.get(Channel_.DISCRIMINATOR), "C");
+            return criteriaBuilder.and(isInCoursePredicate, isCourseWidePredicate, isChannelPredicate);
         };
     }
 

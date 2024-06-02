@@ -545,6 +545,7 @@ export class MetisService implements OnDestroy {
      * @param {Post} tempPost that is currently created and compared against existing course posts on updates in the form group
      * @return {Observable<Post[]>} array of similar posts that were found in the course
      */
+    // TODO: unused, remove
     getSimilarPosts(tempPost: Post): Observable<Post[]> {
         return this.postService.computeSimilarityScoresWithCoursePosts(tempPost, this.courseId).pipe(map((res: HttpResponse<Post[]>) => res.body!));
     }

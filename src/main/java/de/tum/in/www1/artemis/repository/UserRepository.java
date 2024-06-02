@@ -45,6 +45,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
+import de.tum.in.www1.artemis.service.dto.UserRoleDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.UserPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -107,8 +108,44 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesById(Long id);
 
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
-    Set<User> findAllWithGroupsAndAuthoritiesByIdIn(Set<Long> ids);
+    /**
+     * Retrieves a list of user roles within a specified course based on the provided user IDs. This method is highly optimized for performance.
+     *
+     * <p>
+     * This query method creates a list of {@link UserRoleDTO} objects containing the user ID,
+     * user login, and assigned role (INSTRUCTOR, TUTOR, or USER) for each user in the specified course. The role is determined
+     * based on the user's authorities and group memberships.
+     * </p>
+     *
+     * <p>
+     * The role assignment follows this precedence:
+     * <ul>
+     * <li>If the user has the ADMIN authority, they are assigned the role 'INSTRUCTOR'.</li>
+     * <li>If the user belongs to the course's instructor group, they are assigned the role 'INSTRUCTOR'.</li>
+     * <li>If the user belongs to the course's editor group or teaching assistant group, they are assigned the role 'TUTOR'.</li>
+     * <li>If the user belongs to the course's student group, they are assigned the role 'USER'.</li>
+     * </ul>
+     * </p>
+     *
+     * @param userIds  a collection of user IDs for which the roles are to be fetched
+     * @param courseId the ID of the course for which the user roles are to be determined
+     * @return a list of {@link UserRoleDTO} objects containing the user ID, user login, and role for each user
+     */
+    @Query("""
+            SELECT new de.tum.in.www1.artemis.service.dto.UserRoleDTO(user.id, user.login,
+                   CASE
+                       WHEN :#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities THEN 'INSTRUCTOR'
+                       WHEN course.instructorGroupName MEMBER OF user.groups THEN 'INSTRUCTOR'
+                       WHEN course.editorGroupName MEMBER OF user.groups THEN 'TUTOR'
+                       WHEN course.teachingAssistantGroupName MEMBER OF user.groups THEN 'TUTOR'
+                       WHEN course.studentGroupName MEMBER OF user.groups THEN 'USER'
+                   END)
+            FROM User user
+            INNER JOIN Course course
+            ON course.id = :courseId
+            WHERE user.id IN :userIds
+            """)
+    List<UserRoleDTO> findUserRolesInCourse(@Param("userIds") Collection<Long> userIds, @Param("courseId") long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "organizations" })
     Optional<User> findOneWithGroupsAndAuthoritiesAndOrganizationsById(Long id);

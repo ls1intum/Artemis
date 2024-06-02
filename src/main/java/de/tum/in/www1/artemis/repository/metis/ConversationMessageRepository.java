@@ -13,6 +13,8 @@ import static de.tum.in.www1.artemis.repository.specs.MessageSpecs.getUnresolved
 import java.util.List;
 import java.util.Set;
 
+import jakarta.persistence.criteria.JoinType;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,7 +26,9 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.metis.AnswerPost_;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.Post_;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilterDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -36,6 +40,50 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface ConversationMessageRepository extends JpaRepository<Post, Long>, JpaSpecificationExecutor<Post> {
 
     /**
+     * Configures the search specifications based on the provided filter criteria.
+     *
+     * @param specification     The existing specification to be configured.
+     * @param postContextFilter Filtering and sorting properties for post objects.
+     * @param userId            The id of the user for which the messages should be returned.
+     * @return A Specification object configured with search criteria.
+     */
+    private Specification<Post> configureSearchSpecification(Specification<Post> specification, PostContextFilterDTO postContextFilter, long userId) {
+        return specification.and(getSearchTextSpecification(postContextFilter.searchText())).and(getOwnSpecification(Boolean.TRUE.equals(postContextFilter.filterToOwn()), userId))
+                .and(getAnsweredOrReactedSpecification(Boolean.TRUE.equals(postContextFilter.filterToAnsweredOrReacted()), userId))
+                .and(getUnresolvedSpecification(Boolean.TRUE.equals(postContextFilter.filterToUnresolved())))
+                .and(getSortSpecification(true, postContextFilter.postSortCriterion(), postContextFilter.sortingOrder()));
+    }
+
+    /**
+     * Fetches posts along with their eagerly loaded relationships based on the provided specifications and pageable parameters.
+     *
+     * @param pageable      The pageable object containing the page number and number of records to fetch.
+     * @param specification The specifications to filter posts.
+     * @return A Page containing posts with eagerly loaded relationships.
+     */
+    private Page<Post> fetchPostsWithEagerRelationships(Pageable pageable, Specification<Post> specification) {
+        return findAll(specification.and((root, query, criteriaBuilder) -> {
+            query.distinct(true);
+            // Make sure to fetch all necessary attributes to avoid lazy loading in case it is not a "getCountQuery" call
+            if (query.getResultType() != Long.class) {
+                if (root.getFetches().stream().noneMatch(fetch -> fetch.getAttribute().equals(Post_.conversation))) {
+                    // avoid fetching twice, in case this is already fetched (e.g. in MessageSpecs.getCourseWideChannelsSpecification)
+                    root.fetch(Post_.conversation, JoinType.LEFT);
+                }
+                root.fetch(Post_.author, JoinType.LEFT);
+                root.fetch(Post_.conversation, JoinType.LEFT);
+                root.fetch(Post_.reactions, JoinType.LEFT);
+                root.fetch(Post_.tags, JoinType.LEFT);
+                final var answersFetch = root.fetch(Post_.answers, JoinType.LEFT);
+                answersFetch.fetch(AnswerPost_.reactions, JoinType.LEFT);
+                answersFetch.fetch(AnswerPost_.post, JoinType.LEFT);
+                answersFetch.fetch(Post_.author, JoinType.LEFT);
+            }
+            return criteriaBuilder.isTrue(criteriaBuilder.literal(true));
+        }), pageable);
+    }
+
+    /**
      * Generates SQL Query via specifications to find and sort Messages
      *
      * @param postContextFilter filtering and sorting properties for post objects
@@ -44,13 +92,10 @@ public interface ConversationMessageRepository extends JpaRepository<Post, Long>
      * @return returns a Page of Messages
      */
     default Page<Post> findMessages(PostContextFilterDTO postContextFilter, Pageable pageable, long userId) {
-        Specification<Post> specification = Specification.where(getConversationSpecification(postContextFilter.conversationId()))
-                .and(getSearchTextSpecification(postContextFilter.searchText())).and(getOwnSpecification(Boolean.TRUE.equals(postContextFilter.filterToOwn()), userId))
-                .and(getAnsweredOrReactedSpecification(Boolean.TRUE.equals(postContextFilter.filterToAnsweredOrReacted()), userId))
-                .and(getUnresolvedSpecification(Boolean.TRUE.equals(postContextFilter.filterToUnresolved())))
-                .and(getSortSpecification(true, postContextFilter.postSortCriterion(), postContextFilter.sortingOrder()));
-
-        return findAll(specification, pageable);
+        var specification = Specification.where(getConversationSpecification(postContextFilter.conversationId()));
+        specification = configureSearchSpecification(specification, postContextFilter, userId);
+        // Fetch all necessary attributes to avoid lazy loading (even though relations are defined as EAGER in the domain class, specification queries do not respect this)
+        return fetchPostsWithEagerRelationships(pageable, specification);
     }
 
     /**
@@ -63,13 +108,10 @@ public interface ConversationMessageRepository extends JpaRepository<Post, Long>
      */
     default Page<Post> findCourseWideMessages(PostContextFilterDTO postContextFilter, Pageable pageable, long userId) {
         Specification<Post> specification = Specification.where(getCourseWideChannelsSpecification(postContextFilter.courseId()))
-                .and(getConversationsSpecification(postContextFilter.courseWideChannelIds())).and(getSearchTextSpecification(postContextFilter.searchText()))
-                .and(getOwnSpecification(Boolean.TRUE.equals(postContextFilter.filterToOwn()), userId))
-                .and(getAnsweredOrReactedSpecification(Boolean.TRUE.equals(postContextFilter.filterToAnsweredOrReacted()), userId))
-                .and(getUnresolvedSpecification(Boolean.TRUE.equals(postContextFilter.filterToUnresolved())))
-                .and(getSortSpecification(true, postContextFilter.postSortCriterion(), postContextFilter.sortingOrder()));
-
-        return findAll(specification, pageable);
+                .and(getConversationsSpecification(postContextFilter.courseWideChannelIds()));
+        specification = configureSearchSpecification(specification, postContextFilter, userId);
+        // Fetch all necessary attributes to avoid lazy loading (even though relations are defined as EAGER in the domain class, specification queries do not respect this)
+        return fetchPostsWithEagerRelationships(pageable, specification);
     }
 
     default Post findMessagePostByIdElseThrow(Long postId) throws EntityNotFoundException {

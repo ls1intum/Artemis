@@ -133,6 +133,7 @@ export class PostService extends PostingService<Post> {
      * @param {number} courseId
      * @return {Observable<HttpResponse<void>>}
      */
+    // TODO: unused, remove
     computeSimilarityScoresWithCoursePosts(tempPost: Post, courseId: number): Observable<EntityArrayResponseType> {
         const copy = this.convertPostingDateFromClient(tempPost);
         return this.http
