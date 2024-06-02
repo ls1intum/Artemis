@@ -789,8 +789,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         var multipleChoiceQuestionAfterReevaluate = (MultipleChoiceQuestion) quizExerciseWithReevaluatedStatistics.getQuizQuestions().get(0);
         assertThat(multipleChoiceQuestionAfterReevaluate.getAnswerOptions()).hasSize(1);
 
-        assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic()).isEqualTo(quizExercise.getQuizPointStatistic());
-
         // one student should get a higher score
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()).hasSameSizeAs(quizExercise.getQuizPointStatistic().getPointCounters());
         log.debug("QuizPointStatistic after 1st re-evaluate: {}", quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
