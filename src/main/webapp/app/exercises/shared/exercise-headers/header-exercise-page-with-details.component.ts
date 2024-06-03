@@ -27,7 +27,7 @@ export interface InformationBox {
     icon?: IconProp;
     tooltip?: string;
     contentColor?: string;
-    tooltipParams?: any;
+    tooltipParams?: Record<string, string | undefined>;
 }
 @Component({
     selector: 'jhi-header-exercise-page-with-details',
