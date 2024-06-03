@@ -39,90 +39,92 @@
 }
 @if (!studentFailedToSubmit) {
     @if (startView) {
-        <h3>{{ exam.title }}</h3>
-        <div>
-            <jhi-exam-live-events-button />
-        </div>
-        <hr />
-        <jhi-exam-start-information [exam]="exam" />
-        <div class="d-inline-flex align-items-center mb-5">
-            <div class="ps-0">
-                <input
-                    [(ngModel)]="confirmed"
-                    type="checkbox"
-                    id="confirmBox"
-                    (click)="updateConfirmation()"
-                    class="form-check-input me-2"
-                    [class.ms-0]="!this.exam.confirmationStartText"
-                    [required]="inserted"
-                    [disabled]="waitingForExamStart"
-                />
-                <label for="confirmBox" id="formatted-confirmation-text" class="form-check-label" [innerHTML]="formattedConfirmationText"></label>
+        <div [ngClass]="{ 'content-height-dev': (!isProduction || isTestServer) && !testRunStartTime, 'scrollable-content': !testRunStartTime }">
+            <h3>{{ exam.title }}</h3>
+            <div>
+                <jhi-exam-live-events-button />
             </div>
-            <div class="login-form">
-                <label class="font-weight-bold" for="fullname" jhiTranslate="{{ 'artemisApp.exam.startCheckBoxText' }}"></label>
-            </div>
-        </div>
-
-        <div class="mb-4 fw-bold" jhiTranslate="artemisApp.exam.startConsentText"></div>
-        <div class="login-form mb-4">
-            <div class="row" style="padding-bottom: 0; margin-bottom: 0">
-                <div class="form-group" style="padding-bottom: 0; margin-bottom: 0; width: unset">
+            <hr />
+            <jhi-exam-start-information [exam]="exam" />
+            <div class="d-inline-flex align-items-center mb-5">
+                <div class="ps-1">
                     <input
-                        size="40"
-                        type="text"
-                        class="form-control"
-                        name="fullname"
-                        id="fullname"
-                        [placeholder]="'artemisApp.examParticipation.namePlaceholder' | artemisTranslate"
-                        [(ngModel)]="enteredName"
-                        [ngModelOptions]="{ updateOn: 'change' }"
+                        [(ngModel)]="confirmed"
+                        type="checkbox"
+                        id="confirmBox"
+                        (click)="updateConfirmation()"
+                        class="form-check-input me-2"
+                        [class.ms-0]="!this.exam.confirmationStartText"
+                        [required]="inserted"
                         [disabled]="waitingForExamStart"
                     />
+                    <label for="confirmBox" id="formatted-confirmation-text" class="form-check-label" [innerHTML]="formattedConfirmationText"></label>
+                </div>
+                <div class="login-form">
+                    <label class="font-weight-bold" for="confirmBox" jhiTranslate="{{ 'artemisApp.exam.startCheckBoxText' }}"></label>
                 </div>
             </div>
-            <div class="row">
-                <div id="your-name" class="md-6" style="font-weight: lighter">
-                    <span> {{ 'artemisApp.examParticipation.nameDisplay' | artemisTranslate: { fullName: accountName } }} </span>
-                </div>
-            </div>
-            <div class="row">
-                <div class="form-group" style="width: 60%">
-                    @if (!confirmed && inserted) {
-                        <div class="alert alert-danger mt-1">
-                            <span [innerHTML]="'artemisApp.exam.notConfirmed' | artemisTranslate"></span>
-                        </div>
-                    }
-                    @if (!nameIsCorrect && inserted) {
-                        <div class="alert alert-danger mt-1">
-                            <span [innerHTML]="'artemisApp.exam.falseName' | artemisTranslate"></span>
-                        </div>
-                    }
-                </div>
-            </div>
-        </div>
-        <ng-container #startButton>
-            <button id="start-exam" [disabled]="!startButtonEnabled || waitingForExamStart" type="submit" (click)="startExam()" class="d-inline-flex btn btn-primary">
-                <span jhiTranslate="artemisApp.exam.startExam"></span>
-            </button>
-            @if (!startButtonEnabled) {
-                <div class="mt-2" style="font-weight: lighter">{{ 'artemisApp.exam.startExamToolTip' | artemisTranslate }}</div>
-            }
-        </ng-container>
-        @if (waitingForExamStart) {
-            <div class="exam-waiting-for-start-overlay alert alert-info">
-                <span>{{ 'artemisApp.examParticipation.waitForStart' | artemisTranslate: { title: exam.title } }}</span>
-                @if (exam.startDate) {
-                    <div>
-                        <hr />
-                        <span jhiTranslate="artemisApp.examParticipation.timeUntilPlannedStart"></span>
-                        <span class="text-bold">{{ timeUntilStart }}</span>
-                        <br />
-                        <span>({{ exam.startDate | artemisDate: 'time' }})</span>
+
+            <div class="mb-4 fw-bold" jhiTranslate="artemisApp.exam.startConsentText"></div>
+            <div class="login-form mb-4">
+                <div class="row" style="padding-bottom: 0; margin-bottom: 0">
+                    <div class="form-group" style="padding-bottom: 0; margin-bottom: 0; width: unset">
+                        <input
+                            size="40"
+                            type="text"
+                            class="form-control"
+                            name="fullname"
+                            id="fullname"
+                            [placeholder]="'artemisApp.examParticipation.namePlaceholder' | artemisTranslate"
+                            [(ngModel)]="enteredName"
+                            [ngModelOptions]="{ updateOn: 'change' }"
+                            [disabled]="waitingForExamStart"
+                        />
                     </div>
-                }
+                </div>
+                <div class="row">
+                    <div id="your-name" class="md-6" style="font-weight: lighter">
+                        <span> {{ 'artemisApp.examParticipation.nameDisplay' | artemisTranslate: { fullName: accountName } }} </span>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group" style="width: 60%">
+                        @if (!confirmed && inserted) {
+                            <div class="alert alert-danger mt-1">
+                                <span [innerHTML]="'artemisApp.exam.notConfirmed' | artemisTranslate"></span>
+                            </div>
+                        }
+                        @if (!nameIsCorrect && inserted) {
+                            <div class="alert alert-danger mt-1">
+                                <span [innerHTML]="'artemisApp.exam.falseName' | artemisTranslate"></span>
+                            </div>
+                        }
+                    </div>
+                </div>
             </div>
-        }
+            <ng-container #startButton>
+                <button id="start-exam" [disabled]="!startButtonEnabled || waitingForExamStart" type="submit" (click)="startExam()" class="btn btn-primary">
+                    <span jhiTranslate="artemisApp.exam.startExam"></span>
+                </button>
+                @if (!startButtonEnabled) {
+                    <div class="mt-2 mb-2" style="font-weight: lighter">{{ 'artemisApp.exam.startExamToolTip' | artemisTranslate }}</div>
+                }
+            </ng-container>
+            @if (waitingForExamStart) {
+                <div class="exam-waiting-for-start-overlay alert alert-info">
+                    <span>{{ 'artemisApp.examParticipation.waitForStart' | artemisTranslate: { title: exam.title } }}</span>
+                    @if (exam.startDate) {
+                        <div>
+                            <hr />
+                            <span jhiTranslate="artemisApp.examParticipation.timeUntilPlannedStart"></span>
+                            <span class="text-bold">{{ timeUntilStart }}</span>
+                            <br />
+                            <span>({{ exam.startDate | artemisDate: 'time' }})</span>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
     } @else {
         <div class="container d-flex flex-column align-items-center justify-content-center">
             <div class="form-check mt-1 ps-0">
