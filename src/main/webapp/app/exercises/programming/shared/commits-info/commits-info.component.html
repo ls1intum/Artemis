@@ -14,12 +14,12 @@
                 <th scope="col">{{ 'artemisApp.programmingExercise.commitInfo.date' | artemisTranslate }}</th>
                 <th scope="col">{{ 'artemisApp.programmingExercise.commitInfo.result' | artemisTranslate }}</th>
                 <th scope="col">{{ 'artemisApp.programmingExercise.commitInfo.message' | artemisTranslate }}</th>
-                <th scope="col">{{ 'artemisApp.programmingExercise.commitInfo.message' | artemisTranslate }}</th>
+                <th scope="col">{{ 'artemisApp.programmingExercise.commitInfo.commits' | artemisTranslate }}</th>
             </tr>
         </thead>
         <tbody>
             @for (commitGroup of groupedCommits; track commitGroup; let i = $index) {
-                <commits-info-group
+                <jhi-commits-info-group
                     [ngStyle]="{ display: 'contents' }"
                     [commits]="commitGroup.commits"
                     [currentSubmissionHash]="currentSubmissionHash"

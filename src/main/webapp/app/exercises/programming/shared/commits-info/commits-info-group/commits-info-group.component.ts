@@ -3,7 +3,7 @@ import { CommitInfo, ProgrammingSubmission } from 'app/entities/programming-subm
 import { User } from 'app/core/user/user.model';
 
 @Component({
-    selector: 'commits-info-group',
+    selector: 'jhi-commits-info-group',
     templateUrl: './commits-info-group.component.html',
 })
 export class CommitsInfoGroupComponent {

@@ -5,7 +5,7 @@ import { faCircle } from '@fortawesome/free-regular-svg-icons';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
-    selector: 'commits-info-row',
+    selector: 'jhi-commits-info-row',
     templateUrl: './commits-info-row.component.html',
     styleUrls: ['./commits-info-row.component.scss'],
 })
