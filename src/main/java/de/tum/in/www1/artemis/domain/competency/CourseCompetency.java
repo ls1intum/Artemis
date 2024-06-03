@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.domain.Course;
  * It is extended by {@link Competency} and {@link Prerequisite}
  */
 @Entity
-@Table(name = "course_competency")
+@Table(name = "competency")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)

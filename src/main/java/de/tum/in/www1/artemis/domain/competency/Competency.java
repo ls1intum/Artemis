@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 
 @Entity
-@DiscriminatorValue("COMPETENCY")
+@DiscriminatorValue("C")
 public class Competency extends CourseCompetency {
 
     // TODO: move properties (linkedStandardizedCompetency, exercises, lectureUnits, userProgress, learningPaths) to CourseCompetency when refactoring
