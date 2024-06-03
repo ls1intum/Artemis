@@ -46,11 +46,11 @@ Hovering over any node, e.g. exercise or competency, opens a popover containing 
 
 |students-learning-path-graph|
 
-.. |students-learning-goals-statistics| image:: students-learning-goals-statistics.png
+.. |students-learning-goals-statistics| image:: student/students-learning-goals-statistics.png
     :width: 1000
-.. |students-learning-goals-statistics-detail| image:: students-learning-goals-statistics-detail.png
+.. |students-learning-goals-statistics-detail| image:: student/students-learning-goals-statistics-detail.png
     :width: 1000
-.. |students-learning-path-participation| image:: students-learning-path-participation.png
+.. |students-learning-path-participation| image:: student/students-learning-path-participation.png
     :width: 1000
-.. |students-learning-path-graph| image:: students-learning-path-graph.png
+.. |students-learning-path-graph| image:: student/students-learning-path-graph.png
     :width: 1000
