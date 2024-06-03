@@ -1,34 +1,7 @@
 <div class="sidebar-wrapper">
     <div class="vw-100 bg-body">
-        <div class="dropdown-courses" [hidden]="!dropdownCourses" [ngClass]="{ active: dropdownCourses }">
-            <ul>
-                @for (course of courses; track course) {
-                    <li>
-                        <a (click)="switchCourse(course); dropdownCourses = false" class="d-flex align-items-center">
-                            @if (course.courseIcon) {
-                                <span class="d-flex align-items-center justify-content-center">
-                                    <jhi-secured-image [src]="course.courseIcon" />
-                                </span>
-                            } @else {
-                                <div class="course-circle d-flex align-items-center justify-content-center">
-                                    <span class="fs-4">{{ course?.title | slice: 0 : 1 }}</span>
-                                </div>
-                            }
-                            <div class="h6 fw-normal mb-0 course-title">{{ course?.title }}</div>
-                        </a>
-                    </li>
-                }
-            </ul>
-        </div>
         <mat-sidenav-container class="vw-100" [ngClass]="{ 'sidenav-height-dev': !isProduction || isTestServer, 'container-closed': isNavbarCollapsed }">
-            <mat-sidenav
-                #sidenav
-                disableClose
-                [ngClass]="{ 'sidenav-height-dev': !isProduction || isTestServer }"
-                class="module-bg rounded-end rounded-3"
-                opened="true"
-                mode="side"
-            >
+            <mat-sidenav disableClose [ngClass]="{ 'sidenav-height-dev': !isProduction || isTestServer }" class="module-bg rounded-end rounded-3" opened="true" mode="side">
                 <div class="sidebar-container d-flex h-100 justify-content-between flex-column" [ngClass]="{ collapsed: isNavbarCollapsed }">
                     <!-- NavItems -->
                     <div #container id="container" class="d-flex p-3 align-items-center text-decoration-none" [title]="course?.title">
