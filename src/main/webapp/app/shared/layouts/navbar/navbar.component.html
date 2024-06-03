@@ -1,6 +1,6 @@
 <ng-template #iconMenu>
     <div id="navbar-icon-menu" [ngClass]="{ evenly: isNavbarNavVertical, 'in-menu': iconsMovedToMenu }">
-        @if (currAccount && !isExamActive) {
+        @if (currAccount && !isExamActive && !isExamStarted) {
             <jhi-notification-sidebar />
         }
         <jhi-theme-switch [popoverPlacement]="iconsMovedToMenu ? 'bottom' : 'bottom-right'" />
@@ -133,7 +133,7 @@
     </div>
     <div class="navbar-collapse collapse" id="navbarResponsive" [ngbCollapse]="isNavbarCollapsed">
         <ul class="navbar-nav ms-auto" [class.vertical]="isNavbarNavVertical">
-            @if (currAccount && !isExamActive) {
+            @if (currAccount && !isExamActive && !isExamStarted) {
                 <li class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
                     <a class="guided-tour-overview nav-link" routerLink="/courses" (click)="collapseNavbar()" id="overview-menu">
                         <span>
