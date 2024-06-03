@@ -115,7 +115,7 @@
                 "resultTable": "Result Table"
             },
             "title": "Exam",
-            "startExam": "Start",
+            "startExam": "Start Exam",
             "endExam": "Finish",
             "date": "Date",
             "time": "Time",

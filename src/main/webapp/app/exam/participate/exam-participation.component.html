@@ -3,7 +3,7 @@
 }
 @if (exam) {
     @if (isVisible() && !isGracePeriodOver() && !this.studentExam?.submitted && !examStartConfirmed) {
-        <div [ngClass]="{ 'px-3 py-3': !testRunId }">
+        <div [ngClass]="{ 'px-3': !testRunId, 'content-height-dev': (!isProduction || isTestServer) && !testRunId }">
             <jhi-exam-participation-cover
                 [startView]="true"
                 [exam]="exam"
