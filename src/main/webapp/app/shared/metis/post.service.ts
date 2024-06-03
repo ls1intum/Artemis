@@ -87,6 +87,7 @@ export class PostService extends PostingService<Post> {
      * @param {number} courseId
      * @return {Observable<string[]>}
      */
+    // TODO: unused, delete
     getAllPostTagsByCourseId(courseId: number): Observable<HttpResponse<string[]>> {
         return this.http.get<string[]>(`${this.resourceUrl}${courseId}/messages/tags`, { observe: 'response' });
     }

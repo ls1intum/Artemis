@@ -159,6 +159,7 @@ export class MetisService implements OnDestroy {
     /**
      * fetches all post tags used in the current course, informs all subscribing components
      */
+    // TODO: unused, delete
     updateCoursePostTags(): void {
         this.postService
             .getAllPostTagsByCourseId(this.courseId)

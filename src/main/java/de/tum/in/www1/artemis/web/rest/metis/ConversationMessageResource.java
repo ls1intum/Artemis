@@ -226,6 +226,7 @@ public class ConversationMessageResource {
      *         or 400 (Bad Request) if the checks on user or course validity fail
      */
     @GetMapping("courses/{courseId}/messages/tags")
+    // TODO: unused, delete
     @EnforceAtLeastStudent
     public ResponseEntity<List<String>> getAllPostTagsForCourse(@PathVariable Long courseId) {
         List<String> tags = conversationMessagingService.getAllCourseTags(courseId);

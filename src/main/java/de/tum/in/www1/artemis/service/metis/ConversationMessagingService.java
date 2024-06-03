@@ -459,6 +459,7 @@ public class ConversationMessagingService extends PostingService {
      * @param courseId id of the course the tags belongs to
      * @return tags of all posts that belong to the course
      */
+    // TODO: unused, delete
     public List<String> getAllCourseTags(Long courseId) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         final Course course = courseRepository.findByIdElseThrow(courseId);
