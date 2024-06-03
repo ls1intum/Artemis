@@ -78,13 +78,11 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 {
                     path: 'courses/:courseId/exercises/:exerciseId/problem-statement',
                     pathMatch: 'full',
-                    data: { isEmbedded: false },
                     component: ProblemStatementComponent,
                 },
                 {
                     pathMatch: 'full',
                     path: 'courses/:courseId/exercises/:exerciseId/problem-statement/:participationId',
-                    data: { isEmbedded: false },
                     component: ProblemStatementComponent,
                 },
                 {
