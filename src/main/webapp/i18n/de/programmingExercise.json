@@ -602,6 +602,7 @@
             "commitInfo": {
                 "title": "Commit-Informationen",
                 "commitHash": "Commit-Hash",
+                "commits": "Commits",
                 "author": "Autor",
                 "date": "Datum",
                 "message": "Nachricht",
