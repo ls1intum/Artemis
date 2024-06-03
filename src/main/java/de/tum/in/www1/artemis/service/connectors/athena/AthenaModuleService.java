@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -55,6 +56,7 @@ public class AthenaModuleService {
         this.exerciseRepository = exerciseRepository;
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private record AthenaModuleDTO(String name, String type) {
     }
 

@@ -137,7 +137,7 @@ public class GitLabPersonalAccessTokenManagementService extends VcsTokenManageme
     private void revokePersonalAccessToken(org.gitlab4j.api.models.User gitlabUser, User user) {
         GitLabPersonalAccessTokenListResponseDTO response = fetchPersonalAccessTokenId(gitlabUser.getId());
 
-        revokePersonalAccessToken(response.getId());
+        revokePersonalAccessToken(response.id());
 
         // Set access token to null for local user object to ensure consistency.
         user.setVcsAccessToken(null);

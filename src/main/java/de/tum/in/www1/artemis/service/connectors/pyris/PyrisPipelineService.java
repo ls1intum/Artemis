@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisPipelineExecutio
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisCourseDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisUserDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageStateDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageState;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.tutorChat.PyrisTutorChatPipelineExecutionDTO;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
 
@@ -57,10 +57,10 @@ public class PyrisPipelineService {
     public void executeTutorChatPipeline(String variant, Optional<ProgrammingSubmission> latestSubmission, ProgrammingExercise exercise, IrisChatSession session) {
         var jobToken = pyrisJobService.addJob(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), exercise.getId(), session.getId());
         var settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
-        var preparingRequestStageInProgress = new PyrisStageDTO("Preparing request", 10, PyrisStageStateDTO.IN_PROGRESS, "Checking out repositories and loading data");
-        var preparingRequestStageDone = new PyrisStageDTO("Preparing request", 10, PyrisStageStateDTO.DONE, "Checking out repositories and loading data");
-        var executingPipelineStageNotStarted = new PyrisStageDTO("Executing pipeline", 30, PyrisStageStateDTO.NOT_STARTED, null);
-        var executingPipelineStageInProgress = new PyrisStageDTO("Executing pipeline", 30, PyrisStageStateDTO.IN_PROGRESS, null);
+        var preparingRequestStageInProgress = new PyrisStageDTO("Preparing request", 10, PyrisStageState.IN_PROGRESS, "Checking out repositories and loading data");
+        var preparingRequestStageDone = new PyrisStageDTO("Preparing request", 10, PyrisStageState.DONE, "Checking out repositories and loading data");
+        var executingPipelineStageNotStarted = new PyrisStageDTO("Executing pipeline", 30, PyrisStageState.NOT_STARTED, null);
+        var executingPipelineStageInProgress = new PyrisStageDTO("Executing pipeline", 30, PyrisStageState.IN_PROGRESS, null);
         irisChatWebsocketService.sendStatusUpdate(session, List.of(preparingRequestStageInProgress, executingPipelineStageNotStarted));
 
         var executionDTO = new PyrisTutorChatPipelineExecutionDTO(latestSubmission.map(pyrisDTOService::toPyrisDTO).orElse(null), pyrisDTOService.toPyrisDTO(exercise),
