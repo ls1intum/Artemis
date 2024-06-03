@@ -7,7 +7,7 @@ import { TextDetailComponent } from 'app/detail-overview-list/components/text-de
     selector: '[jhiExerciseDetail]',
     standalone: true,
 })
-export class SidebarCardDirective implements OnInit, OnDestroy {
+export class ExerciseDetailDirective implements OnInit, OnDestroy {
     @Input() detail: Detail;
 
     private componentRef: ComponentRef<any>;
