@@ -11,6 +11,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param allowedModelIdentifiers the allowed model identifiers
  * @param artemisBaseUrl          the base URL of the Artemis instance
  */
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record PyrisPipelineExecutionSettingsDTO(String authenticationToken, List<String> allowedModelIdentifiers, String artemisBaseUrl) {
 }

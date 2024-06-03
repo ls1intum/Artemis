@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * This DTO is used to encapsulate the information related to updates of lecture units,
  * providing necessary details such as lecture and course identifiers, names, and descriptions.
  */
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record PyrisLectureUnitWebhookDTO(Boolean toUpdate, String artemisBaseUrl, String pdfFile, int lectureUnitId, String lectureUnitName, int lectureId, String lectureName,
         int courseId, String courseName, String courseDescription) {
 }
