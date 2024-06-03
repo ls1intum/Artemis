@@ -18,8 +18,6 @@ export class ProblemStatementComponent implements OnInit {
     @Input()
     participation?: StudentParticipation;
 
-    isEmbeddedView = true;
-
     constructor(
         private route: ActivatedRoute,
         private exerciseService: ExerciseService,
