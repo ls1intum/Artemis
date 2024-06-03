@@ -29,7 +29,14 @@ public class TextPlagiarismResult extends PlagiarismResult<TextSubmissionElement
             this.comparisons.add(comparison);
         }
         this.duration = result.getDuration();
-        this.setSimilarityDistribution(result.getSimilarityDistribution());
+
+        // Convert JPlag Similarity Distribution from int[100] to int[10]
+        int[] tenthPercentileSimilarityDistribution = new int[10];
+        for (int i = 0; i < 100; i++) {
+            tenthPercentileSimilarityDistribution[Math.floorDiv(i, 10)] += result.getSimilarityDistribution()[i];
+        }
+
+        this.setSimilarityDistribution(tenthPercentileSimilarityDistribution);
         this.setExercise(exercise);
     }
 }
