@@ -86,7 +86,8 @@ public class PyrisConnectorService {
             restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(executionDTO), Void.class);
         }
         catch (HttpStatusCodeException e) {
-            throw toIrisException(e);
+            log.error("Failed to send request to Pyris", e);
+            // TODO : add error ingestion UI.
         }
         catch (RestClientException | IllegalArgumentException e) {
             log.error("Failed to send lectures to Pyris", e);
