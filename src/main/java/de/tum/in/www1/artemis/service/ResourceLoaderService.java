@@ -137,8 +137,17 @@ public class ResourceLoaderService {
         return Objects.requireNonNullElseGet(resources, () -> new Resource[0]);
     }
 
-    private Resource[] getFileResources(final String resourceLocation) throws IOException {
-        final var fileAndDirectoryResources = resourceLoader.getResources(resourceLocation);
+    /**
+     * Loads non-directory resources from the specified patterns.
+     * <p>
+     * Each resource can be read via {@link Resource#getInputStream()}.
+     *
+     * @param locationPattern The resource pattern passed to the resource loader.
+     * @return The resources with readable content located by the specified locationPattern.
+     * @throws IOException in case of I/O errors
+     */
+    private Resource[] getFileResources(final String locationPattern) throws IOException {
+        final var fileAndDirectoryResources = resourceLoader.getResources(locationPattern);
 
         return Arrays.stream(fileAndDirectoryResources).filter(Resource::isReadable).toArray(Resource[]::new);
     }
