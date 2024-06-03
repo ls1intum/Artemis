@@ -8,7 +8,7 @@ export class CourseAccessStorageService {
     public static readonly STORAGE_KEY = 'artemis.courseAccess';
     public static readonly STORAGE_KEY_DROPDOWN = 'artemis.courseAccessDropdown';
     public static readonly MAX_RECENTLY_ACCESSED_COURSES_OVERVIEW = 3;
-    public static readonly MAX_RECENTLY_ACCESSED_COURSES_DROPDOWN = 5;
+    public static readonly MAX_RECENTLY_ACCESSED_COURSES_DROPDOWN = 6;
 
     constructor(private localStorage: LocalStorageService) {}
 
