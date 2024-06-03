@@ -41,6 +41,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import * as Utils from 'app/shared/util/utils';
+import { ExerciseDetailDirective } from 'app/detail-overview-list/exercise-detail.directive';
 
 @Component({
     template: '',
@@ -74,6 +75,7 @@ describe('ExamDetailComponent', () => {
                     { path: 'course-management/:courseId/exams', component: DummyComponent },
                 ]),
                 HttpClientTestingModule,
+                ExerciseDetailDirective,
             ],
             declarations: [
                 DetailOverviewListComponent,
