@@ -12,6 +12,8 @@ import { ArtemisProgrammingExerciseLifecycleModule } from 'app/exercises/program
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { IrisModule } from 'app/iris/iris.module';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
+import { ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-build-plan-checkout-directories.component';
+import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
 import { ExerciseDetailDirective } from 'app/detail-overview-list/exercise-detail.directive';
 
 @NgModule({
@@ -28,6 +30,8 @@ import { ExerciseDetailDirective } from 'app/detail-overview-list/exercise-detai
         AssessmentInstructionsModule,
         IrisModule,
         ArtemisModelingEditorModule,
+        ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent,
+        ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent,
         ExerciseDetailDirective,
     ],
     declarations: [DetailOverviewListComponent],

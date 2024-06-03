@@ -96,9 +96,7 @@
                                                 </a>
                                             }
                                             <div class="auxiliaryRepositoryDescription">
-                                                @if (auxiliaryRepository.checkoutDirectory) {
-                                                    <span>Checkout Directory: {{ auxiliaryRepository.checkoutDirectory }} </span>
-                                                } @else {
+                                                @if (!auxiliaryRepository.checkoutDirectory) {
                                                     <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="noCheckoutDirectorySetTooltip" />
                                                     <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySet"></span>
                                                 }
@@ -277,6 +275,16 @@
                             } @else {
                                 <ng-container *ngTemplateOutlet="noData" />
                             }
+                        </dd>
+                    }
+                    @case (DetailType.ProgrammingCheckoutDirectories) {
+                        <dd id="detail-value-{{ detail.title }}">
+                            <jhi-programming-exercise-repository-and-build-plan-details
+                                [programmingExercise]="detail.data.exercise"
+                                [programmingLanguage]="detail.data.programmingLanguage"
+                                [isLocal]="detail.data.isLocal"
+                                [checkoutSolutionRepository]="detail.data.exercise.checkoutSolutionRepository"
+                            />
                         </dd>
                     }
                 }
