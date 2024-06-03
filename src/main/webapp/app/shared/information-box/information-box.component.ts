@@ -1,4 +1,6 @@
 import { Component, Input } from '@angular/core';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 export interface InformationBox {
     title: string;
@@ -10,6 +12,8 @@ export interface InformationBox {
 }
 
 @Component({
+    standalone: true,
+    imports: [ArtemisSharedModule, ArtemisSharedComponentModule],
     selector: 'jhi-information-box',
     templateUrl: './information-box.component.html',
     styleUrls: ['./information-box.component.scss'],
