@@ -93,6 +93,12 @@ jobs:
       with:
         name: Coverage Report Server Tests
         path: build/reports/jacoco/test/html/
+    - name: XML Server Test Coverage Report
+      if: success() || failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: Coverage Report Server Tests
+        path: build/reports/jacoco/
 
 
   server-tests-mysql:
@@ -261,7 +267,7 @@ jobs:
           uses: actions/upload-artifact@v4
           with:
               name: Coverage Report Client Tests
-              path: build/test-results/lcov-report/
+              path: build/test-results/
 
   client-tests-selected:
       runs-on: ubuntu-latest
