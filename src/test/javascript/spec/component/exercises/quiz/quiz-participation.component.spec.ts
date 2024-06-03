@@ -145,8 +145,13 @@ describe('QuizParticipationComponent', () => {
                     {
                         provide: ActivatedRoute,
                         useValue: {
-                            params: of({ courseId: 1, exerciseId: quizExercise.id }),
+                            params: of({ exerciseId: quizExercise.id }),
                             data: of({ mode: 'live' }),
+                            parent: {
+                                parent: {
+                                    params: of({ courseId: 1 }),
+                                },
+                            },
                         },
                     },
                     {
