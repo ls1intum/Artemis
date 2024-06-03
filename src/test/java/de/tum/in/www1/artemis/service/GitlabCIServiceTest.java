@@ -103,7 +103,7 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
     void testHealth() {
         var health = continuousIntegrationService.health();
         assertThat(health.isUp()).isTrue();
-        assertThat(health.getAdditionalInfo()).containsEntry("cf.", "Version Control Server").containsEntry("url", gitlabServerUrl);
+        assertThat(health.additionalInfo()).containsEntry("cf.", "Version Control Server").containsEntry("url", gitlabServerUrl);
     }
 
     @Test

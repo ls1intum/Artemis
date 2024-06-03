@@ -4,7 +4,7 @@
 
 services:
     artemis-playwright:
-        image: mcr.microsoft.com/playwright:v1.40.0-jammy
+        image: mcr.microsoft.com/playwright:v1.44.0-jammy
         pull_policy: if_not_present
         environment:
             CI: 'true'
