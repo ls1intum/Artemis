@@ -1,5 +1,5 @@
 <ng-container id="self-learning-feedback">
-    @if (this.selfLearningFeedbackRequest.successful === false) {
+    @if (!this.selfLearningFeedbackRequest.successful) {
         @if (showIcon) {
             <fa-icon
                 class="result-score-icon"

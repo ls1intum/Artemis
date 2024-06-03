@@ -615,8 +615,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(invokedFeedbackRequest).isNotNull();
         assertThat(invokedFeedbackRequest.id()).isNotNull();
         assertThat(invokedFeedbackRequest.successful()).isTrue();
-        assertThat(invokedFeedbackRequest.responseDateTime()).isNotNull();
+        assertThat(invokedFeedbackRequest.responseDateTime()).isAfter(invokedFeedbackRequest.requestDateTime());
         assertThat(invokedFeedbackRequest.result()).isNotNull();
+        assertThat(invokedFeedbackRequest.result().assessmentType()).isEqualTo(AssessmentType.AUTOMATIC_ATHENA);
 
         localRepo.resetLocalRepo();
     }

@@ -104,7 +104,7 @@ export const getUnreferencedFeedback = (feedbacks: Feedback[] | undefined): Feed
 };
 
 export function isAthenaResultAndProcessed(result: Result | undefined) {
-    return result && Result.isAthenaAIResult(result);
+    return result !== undefined && Result.isAthenaAIResult(result);
 }
 
 export const evaluateTemplateStatus = (

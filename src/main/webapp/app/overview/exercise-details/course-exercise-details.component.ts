@@ -297,7 +297,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
                 .map((selfLearningFeedbackRequest) => Object.assign(new SelfLearningFeedbackRequest(), selfLearningFeedbackRequest))
                 .sort(this.selfLearningFeedbackSortFunction);
             // object assigns are used here to be able to use instanceof operator of typescript, as parsed responses from the server have no prototype
-            this.sortedHistoryEntries = this.mergeAndSortHistoryLists(sortedResults, sortedSelfLearningRequests);
+            this.sortedHistoryEntries = this.mergeAndSortResultsAndSelfLearningFeedbackRequestHistoryLists(sortedResults, sortedSelfLearningRequests);
         }
     }
 
@@ -328,7 +328,10 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
         }
     }
 
-    private mergeAndSortHistoryLists(sortedResults: Result[], selfLearningFeedbackRequests: SelfLearningFeedbackRequest[]): (Result | SelfLearningFeedbackRequest)[] {
+    private mergeAndSortResultsAndSelfLearningFeedbackRequestHistoryLists(
+        sortedResults: Result[],
+        selfLearningFeedbackRequests: SelfLearningFeedbackRequest[],
+    ): (Result | SelfLearningFeedbackRequest)[] {
         let i = 0,
             j = 0;
         const sortedMergedLists: (Result | SelfLearningFeedbackRequest)[] = [];
