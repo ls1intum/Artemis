@@ -36,6 +36,32 @@
                             <div id="test-course-title" class="course-title h6 mb-0 fw-bold text-body auto-collapse">{{ course?.title }}</div>
                         }
                     </div>
+                    <div>
+                        <hr class="mt-0" />
+                        <ul class="navbar-nav justify-content-end flex-grow-1 text-decoration-none">
+                            @for (sidebarItem of sidebarItems; track sidebarItem) {
+                                <li class="nav-item" [hidden]="sidebarItem.hidden">
+                                    @if (sidebarItem.hasInOrionProperty && sidebarItem.showInOrionWindow !== undefined) {
+                                        <ng-template
+                                            *ngTemplateOutlet="navItemOrionFilter; context: { $implicit: sidebarItem, iconTextTemplate: navIconAndText, extraPadding: false }"
+                                        />
+                                    } @else {
+                                        <ng-template *ngTemplateOutlet="navItem; context: { $implicit: sidebarItem, iconTextTemplate: navIconAndText, extraPadding: false }" />
+                                    }
+                                </li>
+                            }
+                            <li class="nav-item">
+                                <div [hidden]="!anyItemHidden" class="three-dots nav-link px-3" (click)="toggleDropdown()">
+                                    <fa-icon [fixedWidth]="true" [icon]="faEllipsis" class="ms-2 me-3" />
+                                    <span
+                                        class="more"
+                                        [ngClass]="{ 'auto-collapse': !isNavbarCollapsed, 'sidebar-collapsed': isNavbarCollapsed }"
+                                        [jhiTranslate]="'artemisApp.courseOverview.menu.more'"
+                                    ></span>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
                     <!-- Course Action Items  -->
                     <div>
                         @if (courseActionItems?.length && !anyItemHidden) {
