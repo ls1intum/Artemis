@@ -342,8 +342,8 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
             assertThat(exerciseDirPath).isDirectoryContaining(resultsFile);
         }
         if (exerciseDirPath.toString().contains("Programming")) {
-            // zip file of the repository
-            assertThat(exerciseDirPath).isDirectoryContaining(path -> path.getFileName().toString().endsWith(FILE_FORMAT_ZIP));
+            // directory of the repository
+            assertThat(exerciseDirPath).isDirectoryContaining(Files::isDirectory);
             // programming course exercise has a plagiarism case
             if (courseExercise) {
                 assertThat(exerciseDirPath)

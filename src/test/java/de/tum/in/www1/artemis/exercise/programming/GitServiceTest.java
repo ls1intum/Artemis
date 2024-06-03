@@ -7,6 +7,7 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -25,6 +26,7 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -36,12 +38,15 @@ import de.tum.in.www1.artemis.domain.File;
 import de.tum.in.www1.artemis.domain.FileType;
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.exception.GitException;
+import de.tum.in.www1.artemis.user.UserFactory;
 import de.tum.in.www1.artemis.util.GitUtilService;
 
 class GitServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private GitUtilService gitUtilService;
+
+    private static final String TEST_PREFIX = "gitservice";
 
     @BeforeEach
     void beforeEach() {
@@ -227,6 +232,39 @@ class GitServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThat(gitService.isRepositoryCached(localRepo.getRemoteRepositoryUri())).isFalse();
         assertThat(repo).isNull();
+    }
+
+    @ParameterizedTest
+    @MethodSource("getRepositoryWithParticipationParameter")
+    void testGetRepositoryWithParticipation(boolean hideStudentName, boolean zipOutput, @TempDir Path outputDir) throws IOException {
+        String login = TEST_PREFIX + "student1";
+
+        gitUtilService.initParticipationRepo(UserFactory.generateActivatedUser(login));
+
+        Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL);
+        Path outputFile = gitService.getRepositoryWithParticipation(localRepo, outputDir.toString(), hideStudentName, zipOutput);
+
+        assertThat(outputFile.getParent()).isEqualTo(outputDir);
+        if (zipOutput) {
+            assertThat(outputFile).isRegularFile();
+            assertThat(outputFile.toString()).endsWith(".zip");
+        }
+        else {
+            assertThat(outputFile).isNotEmptyDirectory();
+        }
+        if (hideStudentName) {
+            assertThat(outputFile.getFileName().toString()).doesNotContain(login);
+        }
+        else {
+            assertThat(outputFile.getFileName().toString()).contains(login);
+        }
+        gitService.deleteLocalRepository(localRepo);
+    }
+
+    private static Stream<Arguments> getRepositoryWithParticipationParameter() {
+        List<Boolean> booleans = List.of(true, false);
+
+        return booleans.stream().flatMap(firstParameter -> booleans.stream().map(secondParameter -> arguments(firstParameter, secondParameter)));
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

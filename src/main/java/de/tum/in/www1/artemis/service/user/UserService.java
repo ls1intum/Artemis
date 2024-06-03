@@ -11,6 +11,7 @@ import static de.tum.in.www1.artemis.config.Constants.USER_LAST_NAME_AFTER_SOFT_
 import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
 import static de.tum.in.www1.artemis.security.Role.ADMIN;
 import static de.tum.in.www1.artemis.security.Role.STUDENT;
+import static org.apache.commons.lang3.StringUtils.lowerCase;
 
 import java.net.URI;
 import java.time.Instant;
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -45,6 +47,7 @@ import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.GuidedTourSettingsRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.science.ScienceEventRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
@@ -104,10 +107,12 @@ public class UserService {
 
     private final FileService fileService;
 
+    private final ScienceEventRepository scienceEventRepository;
+
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
-            InstanceMessageSendService instanceMessageSendService, FileService fileService) {
+            InstanceMessageSendService instanceMessageSendService, FileService fileService, ScienceEventRepository scienceEventRepository) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -120,6 +125,7 @@ public class UserService {
         this.optionalCIUserManagementService = optionalCIUserManagementService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.fileService = fileService;
+        this.scienceEventRepository = scienceEventRepository;
     }
 
     /**
@@ -467,10 +473,11 @@ public class UserService {
         final Set<String> originalGroups = user.getGroups();
         final String randomPassword = RandomUtil.generatePassword();
         final String userImageString = user.getImageUrl();
+        final String anonymizedLogin = lowerCase(RandomUtil.generateRandomAlphanumericString(), Locale.ENGLISH);
 
         user.setFirstName(USER_FIRST_NAME_AFTER_SOFT_DELETE);
         user.setLastName(USER_LAST_NAME_AFTER_SOFT_DELETE);
-        user.setLogin(RandomUtil.generateRandomAlphanumericString());
+        user.setLogin(anonymizedLogin);
         user.setPassword(randomPassword);
         user.setEmail(RandomUtil.generateRandomAlphanumericString() + USER_EMAIL_DOMAIN_AFTER_SOFT_DELETE);
         user.setRegistrationNumber(null);
@@ -481,6 +488,8 @@ public class UserService {
         userRepository.save(user);
         clearUserCaches(user);
         userRepository.flush();
+
+        scienceEventRepository.renameIdentity(originalLogin, anonymizedLogin);
 
         if (userImageString != null) {
             fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPath(URI.create(userImageString)), 0);

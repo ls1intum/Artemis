@@ -30,7 +30,7 @@ test.describe('Import exercises', () => {
         course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
         await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
         textExercise = await exerciseAPIRequests.createTextExercise({ course });
-        quizExercise = await exerciseAPIRequests.createQuizExercise({ course }, [multipleChoiceQuizTemplate]);
+        quizExercise = await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [multipleChoiceQuizTemplate] });
         modelingExercise = await exerciseAPIRequests.createModelingExercise({ course });
         programmingExercise = await exerciseAPIRequests.createProgrammingExercise({ course });
         secondCourse = await courseManagementAPIRequests.createCourse({ customizeGroups: true });

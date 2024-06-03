@@ -18,10 +18,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyTaxonomy;
 import de.tum.in.www1.artemis.domain.competency.KnowledgeArea;
 import de.tum.in.www1.artemis.domain.competency.Source;
 import de.tum.in.www1.artemis.domain.competency.StandardizedCompetency;
+import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.SourceRepository;
 import de.tum.in.www1.artemis.repository.competency.KnowledgeAreaRepository;
 import de.tum.in.www1.artemis.repository.competency.StandardizedCompetencyRepository;
@@ -59,6 +61,9 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
 
     @Autowired
     private StandardizedCompetencyUtilService standardizedCompetencyUtilService;
+
+    @Autowired
+    private CompetencyRepository competencyRepository;
 
     @BeforeEach
     void setupTestScenario() {
@@ -195,6 +200,22 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
 
                 boolean exists = standardizedCompetencyRepository.existsById(deletedId);
                 assertThat(exists).isFalse();
+            }
+
+            @Test
+            @WithMockUser(username = "admin", roles = "ADMIN")
+            void shouldDeleteCompetencyWithLinkedCompetency() throws Exception {
+                long deletedId = standardizedCompetency.getId();
+                Competency competency = new Competency("title", "description", null, null, null, false);
+                competency.setLinkedStandardizedCompetency(standardizedCompetency);
+                competency = competencyRepository.save(competency);
+
+                request.delete("/api/admin/standardized-competencies/" + deletedId, HttpStatus.OK);
+
+                boolean standardizedExists = standardizedCompetencyRepository.existsById(deletedId);
+                assertThat(standardizedExists).isFalse();
+                boolean competencyExists = competencyRepository.existsById(competency.getId());
+                assertThat(competencyExists).isTrue();
             }
 
             @Test

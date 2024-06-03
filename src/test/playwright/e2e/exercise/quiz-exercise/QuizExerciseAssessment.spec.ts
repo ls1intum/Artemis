@@ -18,7 +18,7 @@ test.describe('Quiz Exercise Assessment', () => {
         test.describe.configure({ retries: 2 });
         test('Assesses a mc quiz submission automatically', async ({ login, page, exerciseAPIRequests, exerciseResult }) => {
             await login(admin);
-            const quizExercise = await exerciseAPIRequests.createQuizExercise({ course }, [multipleChoiceQuizTemplate], undefined, undefined, 10);
+            const quizExercise = await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [multipleChoiceQuizTemplate], duration: 10 });
             await exerciseAPIRequests.setQuizVisible(quizExercise.id!);
             await exerciseAPIRequests.startQuizNow(quizExercise.id!);
             await login(studentOne);
@@ -33,7 +33,7 @@ test.describe('Quiz Exercise Assessment', () => {
         test.describe.configure({ retries: 2 });
         test('Assesses a sa quiz submission automatically', async ({ login, page, exerciseAPIRequests, exerciseResult }) => {
             await login(admin);
-            const quizExercise = await exerciseAPIRequests.createQuizExercise({ course }, [shortAnswerQuizTemplate], undefined, undefined, 10);
+            const quizExercise = await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [shortAnswerQuizTemplate], duration: 10 });
             await exerciseAPIRequests.setQuizVisible(quizExercise.id!);
             await exerciseAPIRequests.startQuizNow(quizExercise.id!);
             await login(studentOne);

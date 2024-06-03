@@ -2,6 +2,7 @@ import { Page } from 'playwright';
 import { Exercise } from 'app/entities/exercise.model';
 import { MODELING_EXERCISE_BASE, PROGRAMMING_EXERCISE_BASE, QUIZ_EXERCISE_BASE, TEXT_EXERCISE_BASE, UPLOAD_EXERCISE_BASE } from '../../constants';
 import { expect } from '@playwright/test';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 /**
  * A class which encapsulates UI selectors and actions for the course management exercises page.
@@ -121,6 +122,12 @@ export class CourseManagementExercisesPage {
 
     async startQuiz(quizID: number) {
         await this.page.locator(`#instructor-quiz-start-${quizID}`).click();
+    }
+
+    async endQuiz(quizExercise: QuizExercise) {
+        await this.page.locator(`#quiz-set-end-${quizExercise.id}`).click();
+        await this.page.locator('#confirm-entity-name').fill(quizExercise.title!);
+        await this.page.locator('#delete').click();
     }
 
     async shouldContainExerciseWithName(exerciseID: number) {

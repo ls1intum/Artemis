@@ -69,7 +69,7 @@ export class ExamExerciseGroupCreationPage {
             case ExerciseType.MODELING:
                 return await this.exerciseAPIRequests.createModelingExercise({ exerciseGroup }, title);
             case ExerciseType.QUIZ:
-                return await this.exerciseAPIRequests.createQuizExercise({ exerciseGroup }, [multipleChoiceTemplate], title);
+                return await this.exerciseAPIRequests.createQuizExercise({ body: { exerciseGroup }, quizQuestions: [multipleChoiceTemplate], title });
             case ExerciseType.PROGRAMMING:
                 return await this.exerciseAPIRequests.createProgrammingExercise({ exerciseGroup, title, assessmentType: additionalData.progExerciseAssessmentType });
         }

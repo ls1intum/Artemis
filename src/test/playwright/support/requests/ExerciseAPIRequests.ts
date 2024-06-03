@@ -28,6 +28,7 @@ import {
     ProgrammingExerciseAssessmentType,
     ProgrammingLanguage,
     QUIZ_EXERCISE_BASE,
+    QuizMode,
     TEXT_EXERCISE_BASE,
     UPLOAD_EXERCISE_BASE,
 } from '../constants';
@@ -380,34 +381,53 @@ export class ExerciseAPIRequests {
 
     /**
      * Creates a quiz exercise.
-     *
-     * @param body - An object containing either the course or exercise group the exercise will be added to.
-     * @param quizQuestions - A list of quiz question objects that make up the quiz (e.g., multiple choice, short answer, or drag and drop).
-     * @param title - The title for the quiz exercise (optional, default: auto-generated).
-     * @param releaseDate - The release date of the quiz exercise (optional, default: current date + 1 year).
-     * @param duration - The duration in seconds that students get to complete the quiz (optional, default: 600 seconds).
+     * @param options An object containing the options for creating the programming exercise
+     * - body - An object containing either the course or exercise group the exercise will be added to.
+     * - quizQuestions - A list of quiz question objects that make up the quiz (e.g., multiple choice, short answer, or drag and drop).
+     * - title - The title for the quiz exercise (optional, default: auto-generated).
+     * - releaseDate - The release date of the quiz exercise (optional, default: current date + 1 year).
+     * - startOfWorkingTime - The start of working time of the quiz exercise (optional, default: none).
+     * - duration - The duration in seconds that students get to complete the quiz (optional, default: 600 seconds).
+     * - quizMode - The mode of the quiz exercise (optional, default: synchronized).
      * @returns Promise<QuizExercise> representing the quiz exercise created.
      */
-    async createQuizExercise(
-        body: { course: Course } | { exerciseGroup: ExerciseGroup },
-        quizQuestions: any[],
-        title = 'Quiz ' + generateUUID(),
-        releaseDate = dayjs().add(1, 'year'),
-        duration = 600,
-    ): Promise<QuizExercise> {
+    async createQuizExercise(options: {
+        body: { course: Course } | { exerciseGroup: ExerciseGroup };
+        quizQuestions: any[];
+        title?: string;
+        releaseDate?: dayjs.Dayjs;
+        startOfWorkingTime?: dayjs.Dayjs;
+        duration?: number;
+        quizMode?: QuizMode;
+    }): Promise<QuizExercise> {
+        const {
+            body,
+            quizQuestions,
+            title = 'Quiz ' + generateUUID(),
+            releaseDate = dayjs().add(1, 'year'),
+            startOfWorkingTime,
+            duration = 600,
+            quizMode = QuizMode.SYNCHRONIZED,
+        } = options;
+
         const quizExercise: any = {
             ...quizTemplate,
             title,
             quizQuestions,
             duration,
+            quizMode,
             channelName: 'exercise-' + titleLowercase(title),
         };
         const dates = {
             releaseDate: dayjsToString(releaseDate),
         };
+        const quizBatches = [];
+        if (startOfWorkingTime) {
+            quizBatches.push({ startTime: dayjsToString(startOfWorkingTime) });
+        }
 
         // eslint-disable-next-line no-prototype-builtins
-        const newQuizExercise = body.hasOwnProperty('course') ? { ...quizExercise, ...dates, ...body } : { ...quizExercise, ...body };
+        const newQuizExercise = body.hasOwnProperty('course') ? { ...quizExercise, quizBatches, ...dates, ...body } : { ...quizExercise, ...body };
         const multipartData = {
             exercise: {
                 name: 'exercise',

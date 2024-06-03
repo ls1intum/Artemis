@@ -1819,11 +1819,11 @@ public class ProgrammingExerciseTestService {
         Path courseArchivePath = courseArchivesDirPath.resolve(updatedCourse.getCourseArchivePath());
         Path extractedArchiveDir = zipFileTestUtilService.extractZipFileRecursively(courseArchivePath.toString());
         try (var files = Files.walk(extractedArchiveDir)) {
-            assertThat(files).map(Path::getFileName).anyMatch((filename) -> filename.toString().matches(".*-exercise.zip"))
-                    .anyMatch((filename) -> filename.toString().matches(".*-solution.zip")).anyMatch((filename) -> filename.toString().matches(".*-tests.zip"))
+            assertThat(files).map(Path::getFileName).anyMatch((filename) -> filename.toString().matches(".*-exercise"))
+                    .anyMatch((filename) -> filename.toString().matches(".*-solution")).anyMatch((filename) -> filename.toString().matches(".*-tests"))
                     .anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + ".*.md"))
                     .anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + ".*.json"))
-                    .anyMatch((filename) -> filename.toString().matches(".*student1.zip"));
+                    .anyMatch((filename) -> filename.toString().matches(".*student1"));
         }
     }
 

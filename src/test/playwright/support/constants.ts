@@ -91,6 +91,13 @@ export enum ExerciseMode {
     TEAM = 'TEAM',
 }
 
+// Copied from src\main\webapp\app\entities\quiz\quiz-exercise.model.ts
+export enum QuizMode {
+    SYNCHRONIZED = 'SYNCHRONIZED',
+    BATCHED = 'BATCHED',
+    INDIVIDUAL = 'INDIVIDUAL',
+}
+
 // Exercise commit entity displayed in commit history
 export type ExerciseCommit = {
     message: string;
