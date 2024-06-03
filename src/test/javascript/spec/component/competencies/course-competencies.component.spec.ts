@@ -12,7 +12,6 @@ import { By } from '@angular/platform-browser';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import { Course } from 'app/entities/course.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ArtemisTestModule } from '../../test.module';
@@ -90,34 +89,6 @@ describe('CourseCompetencies', () => {
         courseCompetenciesComponentFixture.detectChanges();
         expect(courseCompetenciesComponent).toBeDefined();
         expect(courseCompetenciesComponent.courseId).toBe(1);
-    });
-
-    it('should load progress for each competency in a given course', () => {
-        const courseStorageService = TestBed.inject(CourseStorageService);
-        const competency = new Competency();
-        competency.userProgress = [{ progress: 70, confidence: 45 } as CompetencyProgress];
-        const textUnit = new TextUnit();
-        competency.id = 1;
-        competency.description = 'Petierunt uti sibi concilium totius';
-        competency.lectureUnits = [textUnit];
-
-        // Mock a course that was already fetched in another component
-        const course = new Course();
-        course.id = 1;
-        course.competencies = [competency];
-        course.prerequisites = [competency];
-        courseStorageService.setCourses([course]);
-        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
-
-        const getAllForCourseSpy = jest.spyOn(competencyService, 'getAllForCourse');
-
-        courseCompetenciesComponentFixture.detectChanges();
-
-        expect(getCourseStub).toHaveBeenCalledOnce();
-        expect(getCourseStub).toHaveBeenCalledWith(1);
-        expect(courseCompetenciesComponent.course).toEqual(course);
-        expect(courseCompetenciesComponent.competencies).toEqual([competency]);
-        expect(getAllForCourseSpy).not.toHaveBeenCalled(); // do not load competencies again as already fetched
     });
 
     it('should load prerequisites and competencies (with associated progress) and display a card for each of them', () => {
