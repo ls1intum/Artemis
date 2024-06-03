@@ -37,7 +37,7 @@ export class PrerequisiteService {
                     if (!resp.body) {
                         return [];
                     }
-                    return resp.body.map((prerequisiteDTO) => this.convertResponseDTOToPrerequisite(prerequisiteDTO));
+                    return resp.body.map((prerequisiteDTO) => PrerequisiteService.convertResponseDTOToPrerequisite(prerequisiteDTO));
                 }),
             );
     }
