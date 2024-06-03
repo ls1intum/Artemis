@@ -10,7 +10,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -140,14 +140,7 @@ public class ResourceLoaderService {
     private Resource[] getFileResources(final String resourceLocation) throws IOException {
         final var fileAndDirectoryResources = resourceLoader.getResources(resourceLocation);
 
-        final var fileResources = new ArrayList<Resource>();
-        for (final var resource : fileAndDirectoryResources) {
-            if (resource.getFile().isFile()) {
-                fileResources.add(resource);
-            }
-        }
-
-        return fileResources.toArray(Resource[]::new);
+        return Arrays.stream(fileAndDirectoryResources).filter(Resource::isReadable).toArray(Resource[]::new);
     }
 
     private void checkValidPathElseThrow(final Path path) {
