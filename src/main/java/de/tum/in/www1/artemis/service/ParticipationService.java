@@ -266,6 +266,9 @@ public class ParticipationService {
             participation = copyRepository(exercise, exercise.getVcsTemplateRepositoryUri(), participation);
         }
 
+        // For practice mode 1 is always set. For more information see Participation.class
+        participation.setNumberOfAttempts(1);
+
         return startProgrammingParticipation(exercise, participation, setInitializationDate);
     }
 
@@ -451,7 +454,7 @@ public class ParticipationService {
             VersionControlService vcs = versionControlService.orElseThrow();
             String templateBranch = vcs.getOrRetrieveBranchOfExercise(programmingExercise);
             // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository uri and do not copy it again
-            var newRepoUri = vcs.copyRepository(projectKey, templateRepoName, templateBranch, projectKey, repoName);
+            var newRepoUri = vcs.copyRepository(projectKey, templateRepoName, templateBranch, projectKey, repoName, participation.getNumberOfAttempts());
             // add the userInfo part to the repoUri only if the participation belongs to a single student (and not a team of students)
             if (participation.getStudent().isPresent()) {
                 newRepoUri = newRepoUri.withUser(participation.getParticipantIdentifier());

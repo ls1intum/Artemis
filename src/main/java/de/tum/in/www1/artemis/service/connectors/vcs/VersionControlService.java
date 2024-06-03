@@ -128,8 +128,8 @@ public interface VersionControlService {
      * @return The URL for cloning the repository
      * @throws VersionControlException if the repository could not be copied on the VCS server (e.g. because the source repo does not exist)
      */
-    VcsRepositoryUri copyRepository(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetRepositoryName)
-            throws VersionControlException;
+    VcsRepositoryUri copyRepository(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetRepositoryName,
+            Integer numberOfAttempts) throws VersionControlException;
 
     /**
      * Add the user to the repository
