@@ -1,0 +1,20 @@
+td {
+    padding: 5px;
+}
+
+.flex-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.no-background {
+    background: none;
+    border: none;
+}
+
+.tr-expanded {
+    background-color: #a8b5ae;
+    margin: 10px;
+    border-radius: 10px;
+}

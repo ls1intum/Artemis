@@ -1,0 +1,71 @@
+<tr class="{{ isExpanded ? 'tr-expanded' : '' }}">
+    <th scope="row">
+        @if (groupCommitIndex === 0) {
+            {{ pushNumber }}
+        }
+    </th>
+    <td>
+        @if (localVC) {
+            @if (isRepositoryView) {
+                <a [routerLink]="['./', commit.hash]" ngbTooltip="{{ commit.hash }}"> {{ getShortHash(commit.hash) + '...' }} </a>
+            } @else {
+                <span ngbTooltip="{{ commit.hash }}">
+                    {{ getShortHash(commit.hash) + '...' }}
+                </span>
+            }
+        } @else {
+            <a [href]="commit.commitUrl" ngbTooltip="{{ commit.hash }}"> {{ getShortHash(commit.hash) + '...' }} </a>
+        }
+    </td>
+    <td>
+        @if (isRepositoryView) {
+            {{ user?.name }}, {{ user?.email }}
+        } @else {
+            {{ user?.name }}
+        }
+    </td>
+    <td>
+        {{ commit.timestamp | artemisDate: 'long' : true }}
+    </td>
+    @if (isRepositoryView) {
+        <td>
+            @if (commit.result) {
+                <jhi-result [result]="commit.result" [showUngradedResults]="true" [showBadge]="true" />
+            } @else if (groupCommitIndex === 0) {
+                <span class="text-body-secondary">
+                    <fa-icon [icon]="faCircle" size="lg" />&nbsp;
+                    <span> {{ 'artemisApp.result.noResult' | artemisTranslate }}</span>
+                </span>
+            }
+        </td>
+    }
+    <td>
+        {{ commit.message }}
+        @if (currentSubmissionHash === commit.hash) {
+            <span class="badge bg-info">
+                {{ 'artemisApp.programmingExercise.commitInfo.currentSubmission' | artemisTranslate }}
+            </span>
+        }
+        @if (previousSubmissionHash === commit.hash) {
+            <span class="badge bg-info"> {{ 'artemisApp.programmingExercise.commitInfo.previousSubmission' | artemisTranslate }} </span>
+        }
+        @if (!previousSubmissionHash && firstCommit) {
+            <span class="badge bg-info"> {{ 'artemisApp.programmingExercise.commitInfo.template' | artemisTranslate }} </span>
+        }
+    </td>
+    <td class="flex-container">
+        @if (groupCommitIndex === 0 && groupCommitCount > 1) {
+            {{ groupCommitCount }}
+            <button class="no-background" (click)="toggleExpand()">
+                <span class="text-body-secondary">
+                    @if (isExpanded) {
+                        <fa-icon [icon]="faAngleDown" size="lg" />
+                    }
+                    @if (!isExpanded) {
+                        <fa-icon [icon]="faAngleDown" size="lg" />
+                    }
+                </span>
+            </button>
+        }
+    </td>
+</tr>

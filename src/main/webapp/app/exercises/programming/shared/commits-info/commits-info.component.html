@@ -3,6 +3,7 @@
 } @else {
     <h5>{{ 'artemisApp.programmingExercise.commitInfo.title' | artemisTranslate }}</h5>
 }
+
 <div style="overflow-x: auto">
     <table class="table table-responsive">
         <thead>
@@ -13,62 +14,23 @@
                 <th scope="col">{{ 'artemisApp.programmingExercise.commitInfo.date' | artemisTranslate }}</th>
                 <th scope="col">{{ 'artemisApp.programmingExercise.commitInfo.result' | artemisTranslate }}</th>
                 <th scope="col">{{ 'artemisApp.programmingExercise.commitInfo.message' | artemisTranslate }}</th>
+                <th scope="col">{{ 'artemisApp.programmingExercise.commitInfo.message' | artemisTranslate }}</th>
             </tr>
         </thead>
         <tbody>
-            @for (commit of commits; track commit; let i = $index) {
-                <tr>
-                    <th scope="row">{{ i + 1 }}</th>
-                    <td>
-                        @if (localVC) {
-                            @if (isRepositoryView) {
-                                <a [routerLink]="['./', commit.hash]"> {{ commit.hash }} </a>
-                            } @else {
-                                <span>
-                                    {{ commit.hash }}
-                                </span>
-                            }
-                        } @else {
-                            <a [href]="commit.commitUrl"> {{ commit.hash }} </a>
-                        }
-                    </td>
-                    <td>
-                        @if (isRepositoryView) {
-                            {{ commit.author }}, <span class="text-primary">{{ commit.authorEmail }}</span>
-                        } @else {
-                            {{ commit.author }}
-                        }
-                    </td>
-                    <td>
-                        {{ commit.timestamp | artemisDate: 'long' : true }}
-                    </td>
-                    @if (isRepositoryView) {
-                        <td>
-                            @if (commit.result) {
-                                <jhi-result [result]="commit.result" [showUngradedResults]="true" [showBadge]="true" />
-                            } @else {
-                                <span class="text-body-secondary">
-                                    <fa-icon [icon]="faCircle" size="lg" />&nbsp;
-                                    <span> {{ 'artemisApp.result.noResult' | artemisTranslate }}</span>
-                                </span>
-                            }
-                        </td>
-                    }
-                    <td>
-                        {{ commit.message }}
-                        @if (currentSubmissionHash === commit.hash) {
-                            <span class="badge bg-info">
-                                {{ 'artemisApp.programmingExercise.commitInfo.currentSubmission' | artemisTranslate }}
-                            </span>
-                        }
-                        @if (previousSubmissionHash === commit.hash) {
-                            <span class="badge bg-info"> {{ 'artemisApp.programmingExercise.commitInfo.previousSubmission' | artemisTranslate }} </span>
-                        }
-                        @if (!previousSubmissionHash && i === commits?.length! - 1) {
-                            <span class="badge bg-info"> {{ 'artemisApp.programmingExercise.commitInfo.template' | artemisTranslate }} </span>
-                        }
-                    </td>
-                </tr>
+            @for (commitGroup of groupedCommits; track commitGroup; let i = $index) {
+                <commits-info-group
+                    [ngStyle]="{ display: 'contents' }"
+                    [commits]="commitGroup.commits"
+                    [currentSubmissionHash]="currentSubmissionHash"
+                    [previousSubmissionHash]="previousSubmissionHash"
+                    [exerciseProjectKey]="exerciseProjectKey"
+                    [isRepositoryView]="isRepositoryView"
+                    [user]="user"
+                    [groupCount]="groupedCommits.length"
+                    [groupIndex]="i"
+                    [pushNumber]="i + 1"
+                />
             }
         </tbody>
     </table>

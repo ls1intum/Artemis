@@ -8,6 +8,7 @@ import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity
 import { createRequestOption } from 'app/shared/util/request.util';
 import { Observable, map, tap } from 'rxjs';
 import { CommitInfo } from 'app/entities/programming-submission.model';
+import { User } from 'app/core/user/user.model';
 
 export interface IProgrammingExerciseParticipationService {
     getLatestResultWithFeedback: (participationId: number, withSubmission: boolean) => Observable<Result | undefined>;
@@ -149,5 +150,13 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
 
     retrieveCommitHistoryForTemplateSolutionOrTests(exerciseId: number, repositoryType: string): Observable<CommitInfo[]> {
         return this.http.get<CommitInfo[]>(`${this.resourceUrl}${exerciseId}/commit-history/${repositoryType}`);
+    }
+
+    /**
+     * Get the user associated with a programming exercise participation.
+     * @param participationId The id of the participation to fetch the associated user
+     */
+    getUserForParticipation(participationId: number): Observable<User> {
+        return this.http.get<User>(`${this.resourceUrlParticipations}${participationId}/user`);
     }
 }

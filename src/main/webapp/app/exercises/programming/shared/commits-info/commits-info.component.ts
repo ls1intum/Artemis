@@ -6,7 +6,7 @@ import { createCommitUrl } from 'app/exercises/programming/shared/utils/programm
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { Subscription } from 'rxjs';
-import { faCircle } from '@fortawesome/free-regular-svg-icons';
+import { User } from 'app/core/user/user.model';
 
 @Component({
     selector: 'jhi-commits-info',
@@ -20,12 +20,14 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
     @Input() submissions?: ProgrammingSubmission[];
     @Input() exerciseProjectKey?: string;
     @Input() isRepositoryView = false;
+    @Input() user?: User;
+    @Input() groupedCommits: { key: string; commits: CommitInfo[]; date: string }[] = [];
+
     private commitHashURLTemplate: string;
     private commitsInfoSubscription: Subscription;
     private profileInfoSubscription: Subscription;
+    private userInfoSubscription: Subscription;
     localVC = false;
-
-    faCircle = faCircle;
 
     constructor(
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
@@ -48,19 +50,37 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
             this.localVC = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
         this.setCommitDetails();
+
+        if (this.participationId) {
+            this.userInfoSubscription = this.programmingExerciseParticipationService.getUserForParticipation(this.participationId).subscribe({
+                next: (user) => {
+                    this.user = user;
+                    console.log('Fetched user:', user);
+                },
+                error: (error) => {
+                    console.error('Failed to fetch user:', error);
+                },
+            });
+        }
     }
 
     ngOnDestroy(): void {
         this.commitsInfoSubscription?.unsubscribe();
         this.profileInfoSubscription?.unsubscribe();
+        this.userInfoSubscription?.unsubscribe();
     }
 
     private setCommitDetails() {
+        console.log('Fetched commits:', this.commits);
         if (this.commits && this.submissions) {
             for (const commit of this.commits) {
                 const submission = this.findSubmissionForCommit(commit, this.submissions);
                 commit.commitUrl = createCommitUrl(this.commitHashURLTemplate, this.exerciseProjectKey, submission?.participation, submission);
             }
+        }
+        if (this.commits) {
+            console.log('Grouping Commits');
+            this.groupedCommits = this.groupCommits(this.commits);
         }
     }
 
@@ -70,5 +90,31 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
 
     private findSubmissionForCommit(commitInfo: CommitInfo, submissions: ProgrammingSubmission[] | undefined) {
         return submissions?.find((submission) => submission.commitHash === commitInfo.hash);
+    }
+
+    // This method groups commits together that were pushed in one batch. As we don't have a direct indicator whether commits were pushed together,
+    // we infer groups based on the presence of a 'result' on a commit
+    private groupCommits(commits: CommitInfo[]): { key: string; commits: CommitInfo[]; date: string }[] {
+        const commitGroups: { key: string; commits: CommitInfo[]; date: string }[] = [];
+
+        let tempGroup: CommitInfo[] = [];
+
+        for (let i = commits.length - 1; i >= 0; i--) {
+            const commit = commits[i];
+            tempGroup.push(commit);
+
+            if (commit.result) {
+                const commitDate = dayjs(commit.timestamp).format('YYYY-MM-DD');
+                tempGroup.sort((a, b) => (dayjs(a.timestamp).isAfter(dayjs(b.timestamp)) ? -1 : 1));
+                commitGroups.unshift({ key: `${commitDate}-${commit.author}`, commits: [...tempGroup], date: commitDate });
+                tempGroup = [];
+            }
+        }
+
+        if (tempGroup.length > 0) {
+            commitGroups.push({ key: 'no-result', commits: tempGroup, date: dayjs(tempGroup[tempGroup.length - 1].timestamp).format('YYYY-MM-DD') ?? '' });
+        }
+
+        return commitGroups;
     }
 }
