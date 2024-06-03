@@ -8,13 +8,13 @@ import { DefaultValueAccessor, NgModel } from '@angular/forms';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/exercises/programming/manage/update/programming-exercise-plans-and-repositories-preview.component';
 import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
 import { AddAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/add-auxiliary-repository-button.component';
 import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
 import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.component';
 import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
 import { QueryList } from '@angular/core';
+import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
 
 describe('ProgrammingExerciseInformationComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseInformationComponent>;
@@ -29,7 +29,7 @@ describe('ProgrammingExerciseInformationComponent', () => {
                 NgModel,
                 MockComponent(HelpIconComponent),
                 MockComponent(ExerciseTitleChannelNameComponent),
-                MockComponent(ProgrammingExercisePlansAndRepositoriesPreviewComponent),
+                MockComponent(ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent),
                 MockComponent(CategorySelectorComponent),
                 MockComponent(AddAuxiliaryRepositoryButtonComponent),
                 MockPipe(ArtemisTranslatePipe),
