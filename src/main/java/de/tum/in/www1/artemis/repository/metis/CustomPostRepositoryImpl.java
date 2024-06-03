@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository.metis;
 
+import java.util.Collections;
 import java.util.List;
 
 import jakarta.persistence.EntityManager;
@@ -58,6 +59,9 @@ public class CustomPostRepositoryImpl implements CustomPostRepository {
             countQuery.where(countPredicate);
         }
         countQuery.select(builder.count(countRoot));
+
+        // Remove all Orders the Specifications might have applied
+        countQuery.orderBy(Collections.emptyList());
 
         Long countResult = entityManager.createQuery(countQuery).getSingleResult();
         long count = countResult != null ? countResult : 0L;
