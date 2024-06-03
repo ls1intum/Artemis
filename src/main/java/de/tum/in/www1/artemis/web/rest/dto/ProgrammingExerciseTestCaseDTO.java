@@ -9,6 +9,7 @@ import de.tum.in.www1.artemis.domain.enumeration.Visibility;
  * It is only allowed to alter the weight, bonus multiplier, bonus points and visibility flag of a test case from an
  * endpoint, the other attributes are generated automatically.
  */
+// TODO: convert to Record
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ProgrammingExerciseTestCaseDTO {
 
