@@ -5,49 +5,28 @@ import { LocalStorageService } from 'ngx-webstorage';
     providedIn: 'root',
 })
 export class CourseAccessStorageService {
-    private static readonly STORAGE_KEY = 'artemis.courseAccess';
-    private static readonly STORAGE_KEY_DROPDOWN = 'artemis.courseAccessDropdown';
-    private static readonly MAX_RECENTLY_ACCESSED_COURSES_OVERVIEW = 3;
-    private static readonly MAX_RECENTLY_ACCESSED_COURSES_DROPDOWN = 5;
+    public static readonly STORAGE_KEY = 'artemis.courseAccess';
+    public static readonly STORAGE_KEY_DROPDOWN = 'artemis.courseAccessDropdown';
+    public static readonly MAX_RECENTLY_ACCESSED_COURSES_OVERVIEW = 3;
+    public static readonly MAX_RECENTLY_ACCESSED_COURSES_DROPDOWN = 5;
 
     constructor(private localStorage: LocalStorageService) {}
 
-    onCourseAccessed(courseId: number): void {
-        const courseAccessMap: { [key: number]: number } = this.localStorage.retrieve(CourseAccessStorageService.STORAGE_KEY) || {};
+    onCourseAccessed(courseId: number, storageKey: string, maxAccessedCourses: number): void {
+        const courseAccessMap: { [key: number]: number } = this.localStorage.retrieve(storageKey) || {};
 
         courseAccessMap[courseId] = Date.now();
 
-        if (Object.keys(courseAccessMap).length > CourseAccessStorageService.MAX_RECENTLY_ACCESSED_COURSES_OVERVIEW) {
+        if (Object.keys(courseAccessMap).length > maxAccessedCourses) {
             const oldestEntry = Object.entries(courseAccessMap).reduce((prev, curr) => (prev[1] < curr[1] ? prev : curr));
             delete courseAccessMap[oldestEntry[0]];
         }
 
-        this.localStorage.store(CourseAccessStorageService.STORAGE_KEY, courseAccessMap);
+        this.localStorage.store(storageKey, courseAccessMap);
     }
 
-    getLastAccessedCourses(): number[] {
-        const courseAccessMap: { [key: number]: number } = this.localStorage.retrieve(CourseAccessStorageService.STORAGE_KEY) || {};
-
-        return Object.entries(courseAccessMap)
-            .sort((a, b) => b[1] - a[1])
-            .map((entry) => Number(entry[0]));
-    }
-
-    onCourseAccessedDropdown(courseId: number): void {
-        const courseAccessMap: { [key: number]: number } = this.localStorage.retrieve(CourseAccessStorageService.STORAGE_KEY_DROPDOWN) || {};
-
-        courseAccessMap[courseId] = Date.now();
-        // we add +1 because the current course should not be displayed in the dropdown and therefore gets removed from the list later
-        if (Object.keys(courseAccessMap).length > CourseAccessStorageService.MAX_RECENTLY_ACCESSED_COURSES_DROPDOWN + 1) {
-            const oldestEntry = Object.entries(courseAccessMap).reduce((prev, curr) => (prev[1] < curr[1] ? prev : curr));
-            delete courseAccessMap[oldestEntry[0]];
-        }
-
-        this.localStorage.store(CourseAccessStorageService.STORAGE_KEY_DROPDOWN, courseAccessMap);
-    }
-
-    getLastAccessedCoursesDropdown(): number[] {
-        const courseAccessMap: { [key: number]: number } = this.localStorage.retrieve(CourseAccessStorageService.STORAGE_KEY_DROPDOWN) || {};
+    getLastAccessedCourses(storageKey: string): number[] {
+        const courseAccessMap: { [key: number]: number } = this.localStorage.retrieve(storageKey) || {};
 
         return Object.entries(courseAccessMap)
             .sort((a, b) => b[1] - a[1])

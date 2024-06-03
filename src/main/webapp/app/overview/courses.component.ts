@@ -90,7 +90,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
         if (this.courses.length <= 5) {
             this.regularCourses = this.courses;
         } else {
-            const lastAccessedCourseIds = this.courseAccessStorageService.getLastAccessedCourses();
+            const lastAccessedCourseIds = this.courseAccessStorageService.getLastAccessedCourses(CourseAccessStorageService.STORAGE_KEY);
             this.recentlyAccessedCourses = this.courses.filter((course) => lastAccessedCourseIds.includes(course.id!));
             this.regularCourses = this.courses.filter((course) => !lastAccessedCourseIds.includes(course.id!));
         }

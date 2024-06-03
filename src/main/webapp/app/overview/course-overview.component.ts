@@ -116,6 +116,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     isSidebarCollapsed = false;
     profileSubscription?: Subscription;
     showRefreshButton: boolean = false;
+    readonly MIN_DISPLAYED_COURSES: number = 6;
 
     // Properties to track hidden items for dropdown menu
     dropdownOpen: boolean = false;
@@ -128,7 +129,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     readonly WINDOW_OFFSET: number = 300;
     readonly ITEM_HEIGHT: number = 38;
     readonly BREADCRUMB_AND_NAVBAR_HEIGHT: number = 88;
-    readonly MIN_DISPLAYED_COURSES: number = 6;
 
     private conversationServiceInstantiated = false;
     private checkedForUnreadMessages = false;
@@ -209,11 +209,15 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         });
         this.getCollapseStateFromStorage();
         this.course = this.courseStorageService.getCourse(this.courseId);
-        this.getRecentlyAccessedCourses();
+        this.updateRecentlyAccessedCourses();
         this.isNotManagementView = !this.router.url.startsWith('/course-management');
         // Notify the course access storage service that the course has been accessed
-        this.courseAccessStorageService.onCourseAccessed(this.courseId);
-        this.courseAccessStorageService.onCourseAccessedDropdown(this.courseId);
+        this.courseAccessStorageService.onCourseAccessed(this.courseId, CourseAccessStorageService.STORAGE_KEY, CourseAccessStorageService.MAX_RECENTLY_ACCESSED_COURSES_OVERVIEW);
+        this.courseAccessStorageService.onCourseAccessed(
+            this.courseId,
+            CourseAccessStorageService.STORAGE_KEY_DROPDOWN,
+            CourseAccessStorageService.MAX_RECENTLY_ACCESSED_COURSES_DROPDOWN,
+        );
 
         await firstValueFrom(this.loadCourse());
         await this.initAfterCourseLoad();
@@ -290,16 +294,16 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
     }
 
-    /** initialize courses attribute by retreiving recently accessed courses from the server */
-    getRecentlyAccessedCourses() {
+    /** initialize courses attribute by retrieving recently accessed courses from the server */
+    updateRecentlyAccessedCourses() {
         this.courseService.findAllForDashboard().subscribe({
             next: (res: HttpResponse<CoursesForDashboardDTO>) => {
                 if (res.body) {
                     const { courses: courseDtos } = res.body;
                     const courses = courseDtos.map((courseDto) => courseDto.course);
                     this.courses = sortCourses(courses);
-                    if (this.courses.length > 6) {
-                        const lastAccessedCourseIds = this.courseAccessStorageService.getLastAccessedCoursesDropdown();
+                    if (this.courses.length > this.MIN_DISPLAYED_COURSES) {
+                        const lastAccessedCourseIds = this.courseAccessStorageService.getLastAccessedCourses(CourseAccessStorageService.STORAGE_KEY_DROPDOWN);
                         this.courses = this.courses.filter((course) => lastAccessedCourseIds.includes(course.id!));
                     }
                     this.courses = this.courses.filter((course) => course.id !== this.courseId);

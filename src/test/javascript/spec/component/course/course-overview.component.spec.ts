@@ -662,4 +662,14 @@ describe('CourseOverviewComponent', () => {
         expect(component.courses).toEqual(courses);
         expect(component.courses?.length).toBe(1);
     });
+
+    it('should not display current course in dropdown', () => {
+        const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
+        findAllForDashboardSpy.mockReturnValue(of(new HttpResponse({ body: coursesDashboard, headers: new HttpHeaders() })));
+
+        component.ngOnInit();
+
+        expect(component.courses).toEqual(courses);
+        expect(component.courses?.pop()).toBe(course2);
+    });
 });
