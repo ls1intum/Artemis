@@ -55,8 +55,4 @@ export class LearningPathStudentPageComponent {
     readonly learningPathId: Signal<number | null | undefined> = computed(() => this.learningPathIdData().value);
 
     readonly currentLearningObject: Signal<LearningPathNavigationObjectDto | undefined> = computed(() => this.navigation()?.currentLearningObject());
-
-    setCurrentLearningObjectCompletion(completed: boolean): void {
-        this.navigation()?.setCurrentLearningObjectCompletion(completed);
-    }
 }

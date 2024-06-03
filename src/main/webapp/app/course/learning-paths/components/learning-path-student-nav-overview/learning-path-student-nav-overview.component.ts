@@ -12,6 +12,7 @@ import { LoadedValue } from 'app/course/learning-paths/components/learning-path-
 import { LearningObjectType, LearningPathNavigationObjectDto, LearningPathNavigationOverviewDto } from 'app/entities/competency/learning-path.model';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { LearningPathNavigationService } from 'app/course/learning-paths/learning-path-navigation.service';
 
 @Component({
     selector: 'jhi-learning-path-student-nav-overview',
@@ -24,6 +25,7 @@ export class LearningPathStudentNavOverviewComponent {
 
     private readonly learningPathService: LearningPathService = inject(LearningPathService);
     private readonly alertService: AlertService = inject(AlertService);
+    private readonly learningPathNavigationService = inject(LearningPathNavigationService);
 
     readonly learningPathId: InputSignal<number> = input.required();
 
@@ -49,7 +51,7 @@ export class LearningPathStudentNavOverviewComponent {
 
     selectLearningObject(learningObject: LearningPathNavigationObjectDto): void {
         if (this.isLearningObjectSelectable(learningObject)) {
-            this.onLearningObjectSelected.emit(learningObject);
+            this.learningPathNavigationService.loadRelativeLearningPathNavigation(this.learningPathId(), learningObject);
         }
     }
 

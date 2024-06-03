@@ -53,7 +53,10 @@ export class LectureUnitService {
 
     setCompletion(lectureUnitId: number, lectureId: number, completed: boolean): Observable<HttpResponse<void>> {
         const params = new HttpParams().set('completed', completed.toString());
-        return this.httpClient.post<void>(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}/completion`, null, { params, observe: 'response' });
+        return this.httpClient.post<void>(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}/completion`, null, {
+            params,
+            observe: 'response',
+        });
     }
 
     convertLectureUnitDatesFromClient<T extends LectureUnit>(lectureUnit: T): T {
@@ -161,7 +164,12 @@ export class LectureUnitService {
         });
     }
 
-    public getLectureUnitById(lectureUnitId: number): Observable<HttpResponse<LectureUnit>> {
-        return this.httpClient.get<LectureUnit>(`${this.resourceURL}/lecture-units/${lectureUnitId}`, { observe: 'response' });
+    async getLectureUnitById(lectureUnitId: number): Promise<LectureUnit> {
+        try {
+            const response = await fetch(`${this.resourceURL}/lecture-units/${lectureUnitId}`);
+            return await response.json();
+        } catch {
+            throw new Error(`Error while fetching lecture unit`);
+        }
     }
 }

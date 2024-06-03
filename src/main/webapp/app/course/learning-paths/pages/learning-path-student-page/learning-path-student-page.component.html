@@ -4,7 +4,7 @@
     }
     <div class="learning-path-student-content">
         @if (currentLearningObject()?.type === LearningObjectType.LECTURE) {
-            <jhi-learning-path-lecture-unit [lectureUnitId]="currentLearningObject()!.id" (onLearningObjectCompleted)="setCurrentLearningObjectCompletion($event)" />
+            <jhi-learning-path-lecture-unit [lectureUnitId]="currentLearningObject()!.id" />
         } @else if (currentLearningObject()?.type === LearningObjectType.EXERCISE) {
             <jhi-learning-path-exercise [courseId]="courseId()" [exerciseId]="currentLearningObject()!.id" />
         }
