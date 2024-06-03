@@ -31,47 +31,37 @@
             >
                 <div class="sidebar-container d-flex h-100 justify-content-between flex-column" [ngClass]="{ collapsed: isNavbarCollapsed }">
                     <!-- NavItems -->
-                    <div>
-                        <div #container id="container" class="d-flex p-3 align-items-center text-decoration-none" [title]="course?.title">
-                            <div ngbDropdown class="d-inline-block">
-                                @if (course && course.courseIcon) {
-                                    <div class="d-flex align-items-center justify-content-center pointer">
-                                        <jhi-secured-image [src]="course.courseIcon" (click)="toggleCourseDropdown()" />
-                                    </div>
-                                } @else {
-                                    <div class="course-circle d-flex align-items-center justify-content-center pointer" (click)="toggleCourseDropdown()">
-                                        <span class="fs-4">{{ course?.title | slice: 0 : 1 }}</span>
-                                    </div>
+                    <div #container id="container" class="d-flex p-3 align-items-center text-decoration-none" [title]="course?.title">
+                        <div ngbDropdown container="body" class="d-flex">
+                            @if (course && course.courseIcon) {
+                                <div ngbDropdownToggle class="d-flex align-items-center justify-content-center pointer">
+                                    <jhi-secured-image [src]="course.courseIcon" />
+                                </div>
+                            } @else {
+                                <div ngbDropdownToggle class="course-circle d-flex align-items-center justify-content-center pointer">
+                                    <span class="fs-4">{{ course?.title | slice: 0 : 1 }}</span>
+                                </div>
+                            }
+                            <div ngbDropdownMenu class="test py-1 ms-n2">
+                                @for (course of courses; track course) {
+                                    <button ngbDropdownItem (click)="switchCourse(course); dropdownCourses = false" class="d-flex align-items-center py-1 px-2">
+                                        @if (course.courseIcon) {
+                                            <span class="d-flex align-items-center justify-content-center">
+                                                <jhi-secured-image [src]="course.courseIcon" />
+                                            </span>
+                                        } @else {
+                                            <div class="course-circle d-flex align-items-center justify-content-center">
+                                                <span class="fs-4">{{ course?.title | slice: 0 : 1 }}</span>
+                                            </div>
+                                        }
+                                        <div class="h6 fw-normal mb-0 course-title text-wrap">{{ course?.title }}</div>
+                                    </button>
                                 }
                             </div>
-                            @if (!isNavbarCollapsed) {
-                                <div id="test-course-title" class="course-title h6 mb-0 fw-bold text-body auto-collapse">{{ course?.title }}</div>
-                            }
                         </div>
-                        <hr class="mt-0" />
-                        <ul class="navbar-nav justify-content-end flex-grow-1 text-decoration-none">
-                            @for (sidebarItem of sidebarItems; track sidebarItem) {
-                                <li class="nav-item" [hidden]="sidebarItem.hidden">
-                                    @if (sidebarItem.hasInOrionProperty && sidebarItem.showInOrionWindow !== undefined) {
-                                        <ng-template
-                                            *ngTemplateOutlet="navItemOrionFilter; context: { $implicit: sidebarItem, iconTextTemplate: navIconAndText, extraPadding: false }"
-                                        />
-                                    } @else {
-                                        <ng-template *ngTemplateOutlet="navItem; context: { $implicit: sidebarItem, iconTextTemplate: navIconAndText, extraPadding: false }" />
-                                    }
-                                </li>
-                            }
-                            <li class="nav-item">
-                                <div [hidden]="!anyItemHidden" class="three-dots nav-link px-3" (click)="toggleDropdown()">
-                                    <fa-icon [fixedWidth]="true" [icon]="faEllipsis" class="ms-2 me-3" />
-                                    <span
-                                        class="more"
-                                        [ngClass]="{ 'auto-collapse': !isNavbarCollapsed, 'sidebar-collapsed': isNavbarCollapsed }"
-                                        [jhiTranslate]="'artemisApp.courseOverview.menu.more'"
-                                    ></span>
-                                </div>
-                            </li>
-                        </ul>
+                        @if (!isNavbarCollapsed) {
+                            <div id="test-course-title" class="course-title h6 mb-0 fw-bold text-body auto-collapse">{{ course?.title }}</div>
+                        }
                     </div>
                     <!-- Course Action Items  -->
                     <div>

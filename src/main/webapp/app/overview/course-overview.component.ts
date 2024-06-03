@@ -2,7 +2,6 @@ import {
     AfterViewInit,
     ChangeDetectorRef,
     Component,
-    ElementRef,
     EmbeddedViewRef,
     HostListener,
     OnDestroy,
@@ -153,8 +152,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     // Using a list query to be able to listen for changes (late mount); need both as this only returns native nodes
     @ViewChildren('controlsViewContainer') controlsViewContainerAsList: QueryList<ViewContainerRef>;
 
-    @ViewChild('container') container: ElementRef;
-
     // Icons
     faTimes = faTimes;
     faEye = faEye;
@@ -248,21 +245,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
     }
 
-    /** Listen click event whether on outside of the container to close the dropdown menu */
-    @HostListener('document:click', ['$event'])
-    onCloseDropdownClick(event: MouseEvent) {
-        const clickedInsideContainer = this.container.nativeElement.contains(event.target);
-        if (this.dropdownCourses && !clickedInsideContainer) {
-            this.dropdownCourses = false;
-        }
-    }
-
     toggleCourseDropdown() {
-        const courseTitleElement = document.querySelector('.course-title') as HTMLElement;
-        if (courseTitleElement) {
-            const courseTitleHeight = courseTitleElement.offsetHeight;
-            document.documentElement.style.setProperty('--course-title-height', `${courseTitleHeight}px`);
-        }
         this.dropdownCourses = !this.dropdownCourses;
     }
 

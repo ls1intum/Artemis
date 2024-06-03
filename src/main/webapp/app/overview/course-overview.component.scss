@@ -260,46 +260,15 @@ jhi-secured-image {
     }
 }
 
-.dropdown-courses {
-    overflow-y: auto;
-    position: absolute;
-    background-color: var(--dropdown-bg);
-    border: 0.25rem solid var(--border-color);
-    border-radius: 0.25rem;
-    margin-left: 0.25rem;
-    z-index: 1000000;
+.test {
     min-width: 204px;
     max-width: 294px;
-    top: calc(3.5rem + var(--course-title-height));
-    ul {
-        margin: 0;
-        display: flex;
-        flex-direction: column;
-        padding: 0;
-    }
-    li {
-        padding: 0;
-        &:last-child {
-            border-bottom: none;
-        }
-    }
-    a {
-        text-decoration: none;
-        color: var(--bs-body-color);
-        padding: 0.5rem;
-        display: flex;
-        &:hover {
-            background-color: var(--sidebar-card-selected-bg);
-            color: var(--primary);
-        }
-    }
-    jhi-secured-image {
-        img {
-            margin-right: 0 !important;
-        }
-    }
 }
 
 .dropdown-courses.active {
     display: block;
+}
+
+.dropdown-toggle::after {
+    display: none;
 }

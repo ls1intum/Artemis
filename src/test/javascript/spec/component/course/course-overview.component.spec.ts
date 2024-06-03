@@ -662,25 +662,4 @@ describe('CourseOverviewComponent', () => {
         expect(component.courses).toEqual(courses);
         expect(component.courses?.length).toBe(1);
     });
-
-    it('should set dropdownCourses to true when clicking first time', () => {
-        component.dropdownCourses = false;
-        fixture.detectChanges();
-
-        const clickOnDropdownButton = fixture.nativeElement.querySelector('#courseIconCustom');
-        clickOnDropdownButton.click();
-
-        expect(component.dropdownCourses).toBeTrue();
-    });
-
-    it('should set dropdownCourses to false when reclicking', () => {
-        component.dropdownCourses = false;
-        fixture.detectChanges();
-
-        const clickOnDropdownButton = fixture.nativeElement.querySelector('#courseIconCustom');
-        clickOnDropdownButton.click();
-        clickOnDropdownButton.click();
-
-        expect(component.dropdownCourses).toBeFalse();
-    });
 });
