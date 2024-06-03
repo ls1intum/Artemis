@@ -393,8 +393,10 @@ public class LectureResource {
      * @param lecture the lecture to be updated
      */
     private void helpExecuteIngestionPipeline(Lecture lecture) {
-        List<AttachmentUnit> attachmentUnitList = lecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit.getType().equals("attachment"))
-                .map(lectureUnit -> (AttachmentUnit) lectureUnit).collect(Collectors.toCollection(ArrayList::new));
-        pyrisWebhookService.ifPresent(service -> service.executeLectureIngestionPipeline(true, attachmentUnitList));
+        pyrisWebhookService.ifPresent(service -> {
+            List<AttachmentUnit> attachmentUnitList = lecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit.getType().equals("attachment"))
+                    .map(lectureUnit -> (AttachmentUnit) lectureUnit).collect(Collectors.toCollection(ArrayList::new));
+            service.executeLectureIngestionPipeline(true, attachmentUnitList);
+        });
     }
 }
