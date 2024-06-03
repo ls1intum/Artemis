@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
-import { BuildQueueComponent, FinishedBuildJobFilter, FishedBuildJobFilterStorageKey } from 'app/localci/build-queue/build-queue.component';
+import { BuildQueueComponent, FinishedBuildJobFilter, FinishedBuildJobFilterStorageKey } from 'app/localci/build-queue/build-queue.component';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe } from 'ng-mocks';
@@ -253,6 +253,10 @@ describe('BuildQueueComponent', () => {
         buildStartDateFilterFrom: undefined,
         buildStartDateFilterTo: undefined,
         status: undefined,
+        appliedFilters: new Map<string, boolean>(),
+        areDatesValid: true,
+        areDurationFiltersValid: true,
+        numberOfAppliedFilters: 0,
     };
 
     beforeEach(waitForAsync(() => {
@@ -515,16 +519,21 @@ describe('BuildQueueComponent', () => {
     it('should return correct number of filters applied', () => {
         component.finishedBuildJobFilter = new FinishedBuildJobFilter();
         component.finishedBuildJobFilter.buildAgentAddress = 'agent1';
+        component.filterBuildAgentAddressChanged();
         component.finishedBuildJobFilter.buildDurationFilterLowerBound = 1;
         component.finishedBuildJobFilter.buildDurationFilterUpperBound = 2;
+        component.filterDurationChanged();
         component.finishedBuildJobFilter.buildStartDateFilterFrom = dayjs('2023-01-01');
         component.finishedBuildJobFilter.buildStartDateFilterTo = dayjs('2023-01-02');
-        component.finishedBuildJobFilter.status = 'SUCCESSFUL';
+        component.filterDateChanged();
+        component.toggleBuildStatusFilter('SUCCESSFUL');
 
         expect(component.finishedBuildJobFilter.numberOfAppliedFilters).toBe(6);
 
         component.finishedBuildJobFilter.buildAgentAddress = undefined;
+        component.filterBuildAgentAddressChanged();
         component.finishedBuildJobFilter.buildDurationFilterLowerBound = undefined;
+        component.filterDurationChanged();
 
         expect(component.finishedBuildJobFilter.numberOfAppliedFilters).toBe(4);
     });
@@ -543,12 +552,12 @@ describe('BuildQueueComponent', () => {
         component.filterBuildAgentAddressChanged();
         component.toggleBuildStatusFilter('SUCCESSFUL');
 
-        expect(mockLocalStorageService.retrieve(FishedBuildJobFilterStorageKey.buildAgentAddress)).toBe('agent1');
-        expect(mockLocalStorageService.retrieve(FishedBuildJobFilterStorageKey.buildDurationFilterLowerBound)).toBe(1);
-        expect(mockLocalStorageService.retrieve(FishedBuildJobFilterStorageKey.buildDurationFilterUpperBound)).toBe(2);
-        expect(mockLocalStorageService.retrieve(FishedBuildJobFilterStorageKey.buildStartDateFilterFrom)).toEqual(dayjs('2023-01-01'));
-        expect(mockLocalStorageService.retrieve(FishedBuildJobFilterStorageKey.buildStartDateFilterTo)).toEqual(dayjs('2023-01-02'));
-        expect(mockLocalStorageService.retrieve(FishedBuildJobFilterStorageKey.status)).toBe('SUCCESSFUL');
+        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildAgentAddress)).toBe('agent1');
+        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildDurationFilterLowerBound)).toBe(1);
+        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildDurationFilterUpperBound)).toBe(2);
+        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildStartDateFilterFrom)).toEqual(dayjs('2023-01-01'));
+        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildStartDateFilterTo)).toEqual(dayjs('2023-01-02'));
+        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.status)).toBe('SUCCESSFUL');
 
         component.finishedBuildJobFilter = new FinishedBuildJobFilter();
 
@@ -557,30 +566,36 @@ describe('BuildQueueComponent', () => {
         component.filterBuildAgentAddressChanged();
         component.toggleBuildStatusFilter();
 
-        expect(mockLocalStorageService.retrieve(FishedBuildJobFilterStorageKey.buildAgentAddress)).toBeUndefined();
-        expect(mockLocalStorageService.retrieve(FishedBuildJobFilterStorageKey.buildDurationFilterLowerBound)).toBeUndefined();
-        expect(mockLocalStorageService.retrieve(FishedBuildJobFilterStorageKey.buildDurationFilterUpperBound)).toBeUndefined();
-        expect(mockLocalStorageService.retrieve(FishedBuildJobFilterStorageKey.buildStartDateFilterFrom)).toBeUndefined();
-        expect(mockLocalStorageService.retrieve(FishedBuildJobFilterStorageKey.buildStartDateFilterTo)).toBeUndefined();
-        expect(mockLocalStorageService.retrieve(FishedBuildJobFilterStorageKey.status)).toBeUndefined();
+        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildAgentAddress)).toBeUndefined();
+        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildDurationFilterLowerBound)).toBeUndefined();
+        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildDurationFilterUpperBound)).toBeUndefined();
+        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildStartDateFilterFrom)).toBeUndefined();
+        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildStartDateFilterTo)).toBeUndefined();
+        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.status)).toBeUndefined();
     });
 
     it('should validate correctly', () => {
         component.finishedBuildJobFilter = new FinishedBuildJobFilter();
         component.finishedBuildJobFilter.buildDurationFilterLowerBound = 1;
         component.finishedBuildJobFilter.buildStartDateFilterFrom = dayjs('2023-01-01');
+        component.filterDurationChanged();
+        component.filterDateChanged();
 
         expect(component.finishedBuildJobFilter.areDatesValid).toBeTruthy();
         expect(component.finishedBuildJobFilter.areDurationFiltersValid).toBeTruthy();
 
         component.finishedBuildJobFilter.buildDurationFilterUpperBound = 2;
         component.finishedBuildJobFilter.buildStartDateFilterTo = dayjs('2023-01-02');
+        component.filterDurationChanged();
+        component.filterDateChanged();
 
         expect(component.finishedBuildJobFilter.areDatesValid).toBeTruthy();
         expect(component.finishedBuildJobFilter.areDurationFiltersValid).toBeTruthy();
 
         component.finishedBuildJobFilter.buildDurationFilterLowerBound = 3;
         component.finishedBuildJobFilter.buildStartDateFilterFrom = dayjs('2023-01-03');
+        component.filterDurationChanged();
+        component.filterDateChanged();
 
         expect(component.finishedBuildJobFilter.areDatesValid).toBeFalsy();
         expect(component.finishedBuildJobFilter.areDurationFiltersValid).toBeFalsy();

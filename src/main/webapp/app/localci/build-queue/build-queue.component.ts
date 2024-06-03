@@ -15,7 +15,7 @@ import dayjs from 'dayjs/esm';
 import { NgbModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { HttpParams } from '@angular/common/http';
 import { LocalStorageService } from 'ngx-webstorage';
-import { Observable, OperatorFunction, Subject, merge } from 'rxjs';
+import { Observable, OperatorFunction, Subject, Subscription, merge } from 'rxjs';
 import { debounceTime, distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 
@@ -26,16 +26,20 @@ export class FinishedBuildJobFilter {
     buildStartDateFilterTo?: dayjs.Dayjs = undefined;
     buildDurationFilterLowerBound?: number = undefined;
     buildDurationFilterUpperBound?: number = undefined;
+    numberOfAppliedFilters = 0;
+    appliedFilters = new Map<string, boolean>();
+    areDurationFiltersValid: boolean = true;
+    areDatesValid: boolean = true;
 
     /**
      * Adds the http param options
      * @param options request options
      */
     addHttpParams(options: HttpParams): HttpParams {
-        if (this.status && this.status !== '') {
-            options = options.append('buildStatus', this.status);
+        if (this.status) {
+            options = options.append('buildStatus', this.status.toUpperCase());
         }
-        if (this.buildAgentAddress && this.buildAgentAddress !== '') {
+        if (this.buildAgentAddress) {
             options = options.append('buildAgentAddress', this.buildAgentAddress);
         }
         if (this.buildStartDateFilterFrom) {
@@ -55,38 +59,38 @@ export class FinishedBuildJobFilter {
     }
 
     /**
-     * Returns the number of applied filters.
+     * Method to add the filter to the filter map.
+     * This is used to avoid calling functions from the template.
+     * @param filterKey The key of the filter
      */
-    get numberOfAppliedFilters(): number {
-        return Object.values(this).filter((value) => value).length;
+    addFilterToFilterMap(filterKey: string) {
+        if (!this.appliedFilters.get(filterKey)) {
+            this.appliedFilters.set(filterKey, true);
+            this.numberOfAppliedFilters++;
+        }
     }
 
     /**
-     * Checks if the dates are valid.
+     * Method to remove the filter from the filter map.
+     * This is used to avoid calling functions from the template.
+     * @param filterKey The key of the filter
      */
-    get areDatesValid(): boolean {
-        if (!this.buildStartDateFilterFrom || !this.buildStartDateFilterTo) {
-            return true;
+    removeFilterFromFilterMap(filterKey: string) {
+        if (this.appliedFilters.get(filterKey)) {
+            this.appliedFilters.delete(filterKey);
+            this.numberOfAppliedFilters--;
         }
-        return dayjs(this.buildStartDateFilterFrom).isBefore(dayjs(this.buildStartDateFilterTo));
-    }
-
-    get areDurationFiltersValid(): boolean {
-        if (!this.buildDurationFilterLowerBound || !this.buildDurationFilterUpperBound) {
-            return true;
-        }
-        return this.buildDurationFilterLowerBound < this.buildDurationFilterUpperBound;
     }
 }
 
 enum BuildJobStatusFilter {
-    SUCCESSFUL = 'SUCCESSFUL',
-    FAILED = 'FAILED',
-    ERROR = 'ERROR',
-    CANCELLED = 'CANCELLED',
+    SUCCESSFUL = 'successful',
+    FAILED = 'failed',
+    ERROR = 'error',
+    CANCELLED = 'cancelled',
 }
 
-export enum FishedBuildJobFilterStorageKey {
+export enum FinishedBuildJobFilterStorageKey {
     status = 'artemis.buildQueue.finishedBuildJobFilterStatus',
     buildAgentAddress = 'artemis.buildQueue.finishedBuildJobFilterBuildAgentAddress',
     buildStartDateFilterFrom = 'artemis.buildQueue.finishedBuildJobFilterBuildStartDateFilterFrom',
@@ -126,11 +130,13 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     // Filter
     @ViewChild('addressTypeahead', { static: true }) addressTypeahead: NgbTypeahead;
     finishedBuildJobFilter = new FinishedBuildJobFilter();
+    buildStatusFilterValues?: string[];
     faFilter = faFilter;
     focus$ = new Subject<string>();
     click$ = new Subject<string>();
     isLoading = false;
     search = new Subject<void>();
+    searchSubscription: Subscription;
     searchTerm?: string = undefined;
 
     constructor(
@@ -143,6 +149,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit() {
+        this.buildStatusFilterValues = Object.values(BuildJobStatusFilter);
         this.loadQueue();
         this.interval = setInterval(() => {
             this.updateBuildJobDuration();
@@ -150,11 +157,11 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
         this.initWebsocketSubscription();
         this.loadFilterFromLocalStorage();
         this.loadFinishedBuildJobs();
-        this.search
+        this.searchSubscription = this.search
             .pipe(
                 debounceTime(UI_RELOAD_TIME),
                 tap(() => (this.isLoading = true)),
-                switchMap(() => this.FetchFinishedBuildJobs()),
+                switchMap(() => this.fetchFinishedBuildJobs()),
             )
             .subscribe({
                 next: (res: HttpResponse<FinishedBuildJob[]>) => {
@@ -178,6 +185,9 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
             this.websocketService.unsubscribe(channel);
         });
         clearInterval(this.interval);
+        if (this.searchSubscription) {
+            this.searchSubscription.unsubscribe();
+        }
     }
 
     /**
@@ -282,7 +292,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     /**
      * fetch the finished build jobs from the server by creating observable
      */
-    FetchFinishedBuildJobs() {
+    fetchFinishedBuildJobs() {
         return this.route.paramMap.pipe(
             take(1),
             tap(() => (this.isLoading = true)),
@@ -320,7 +330,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      * subscribe to the finished build jobs observable
      */
     loadFinishedBuildJobs() {
-        this.FetchFinishedBuildJobs().subscribe({
+        this.fetchFinishedBuildJobs().subscribe({
             next: (res: HttpResponse<FinishedBuildJob[]>) => {
                 this.onSuccess(res.body || [], res.headers);
                 this.isLoading = false;
@@ -415,10 +425,6 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
         this.modalService.open(content);
     }
 
-    get buildJobStatusFilter() {
-        return Object.values(BuildJobStatusFilter);
-    }
-
     /**
      * Get all build agents' addresses from the finished build jobs.
      */
@@ -460,11 +466,13 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      * Method to load the filter values from the local storage if they exist.
      */
     loadFilterFromLocalStorage() {
+        this.finishedBuildJobFilter.numberOfAppliedFilters = 0;
         // Iterate over all keys of the filter and load the values from the local storage if they exist.
-        for (const key in FishedBuildJobFilterStorageKey) {
-            const value = this.localStorage.retrieve(FishedBuildJobFilterStorageKey[key]);
+        for (const key in FinishedBuildJobFilterStorageKey) {
+            const value = this.localStorage.retrieve(FinishedBuildJobFilterStorageKey[key]);
             if (value) {
                 this.finishedBuildJobFilter[key] = key.includes('Date') ? dayjs(value) : value;
+                this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterStorageKey[key]);
             }
         }
     }
@@ -475,10 +483,12 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     toggleBuildStatusFilter(value?: string) {
         if (value) {
             this.finishedBuildJobFilter.status = value;
-            this.localStorage.store(FishedBuildJobFilterStorageKey.status, value);
+            this.localStorage.store(FinishedBuildJobFilterStorageKey.status, value);
+            this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterStorageKey.status);
         } else {
             this.finishedBuildJobFilter.status = undefined;
-            this.localStorage.clear(FishedBuildJobFilterStorageKey.status);
+            this.localStorage.clear(FinishedBuildJobFilterStorageKey.status);
+            this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterStorageKey.status);
         }
     }
 
@@ -487,9 +497,11 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      */
     filterBuildAgentAddressChanged() {
         if (this.finishedBuildJobFilter.buildAgentAddress) {
-            this.localStorage.store(FishedBuildJobFilterStorageKey.buildAgentAddress, this.finishedBuildJobFilter.buildAgentAddress);
+            this.localStorage.store(FinishedBuildJobFilterStorageKey.buildAgentAddress, this.finishedBuildJobFilter.buildAgentAddress);
+            this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterStorageKey.buildAgentAddress);
         } else {
-            this.localStorage.clear(FishedBuildJobFilterStorageKey.buildAgentAddress);
+            this.localStorage.clear(FinishedBuildJobFilterStorageKey.buildAgentAddress);
+            this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterStorageKey.buildAgentAddress);
         }
     }
 
@@ -499,15 +511,24 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     filterDateChanged() {
         if (!this.finishedBuildJobFilter.buildStartDateFilterFrom?.isValid()) {
             this.finishedBuildJobFilter.buildStartDateFilterFrom = undefined;
-            this.localStorage.clear(FishedBuildJobFilterStorageKey.buildStartDateFilterFrom);
+            this.localStorage.clear(FinishedBuildJobFilterStorageKey.buildStartDateFilterFrom);
+            this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterStorageKey.buildStartDateFilterFrom);
         } else {
-            this.localStorage.store(FishedBuildJobFilterStorageKey.buildStartDateFilterFrom, this.finishedBuildJobFilter.buildStartDateFilterFrom);
+            this.localStorage.store(FinishedBuildJobFilterStorageKey.buildStartDateFilterFrom, this.finishedBuildJobFilter.buildStartDateFilterFrom);
+            this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterStorageKey.buildStartDateFilterFrom);
         }
         if (!this.finishedBuildJobFilter.buildStartDateFilterTo?.isValid()) {
             this.finishedBuildJobFilter.buildStartDateFilterTo = undefined;
-            this.localStorage.clear(FishedBuildJobFilterStorageKey.buildStartDateFilterTo);
+            this.localStorage.clear(FinishedBuildJobFilterStorageKey.buildStartDateFilterTo);
+            this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterStorageKey.buildStartDateFilterTo);
         } else {
-            this.localStorage.store(FishedBuildJobFilterStorageKey.buildStartDateFilterTo, this.finishedBuildJobFilter.buildStartDateFilterTo);
+            this.localStorage.store(FinishedBuildJobFilterStorageKey.buildStartDateFilterTo, this.finishedBuildJobFilter.buildStartDateFilterTo);
+            this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterStorageKey.buildStartDateFilterTo);
+        }
+        if (this.finishedBuildJobFilter.buildStartDateFilterFrom && this.finishedBuildJobFilter.buildStartDateFilterTo) {
+            this.finishedBuildJobFilter.areDatesValid = this.finishedBuildJobFilter.buildStartDateFilterFrom.isBefore(this.finishedBuildJobFilter.buildStartDateFilterTo);
+        } else {
+            this.finishedBuildJobFilter.areDatesValid = true;
         }
     }
 
@@ -516,14 +537,24 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      */
     filterDurationChanged() {
         if (this.finishedBuildJobFilter.buildDurationFilterLowerBound) {
-            this.localStorage.store(FishedBuildJobFilterStorageKey.buildDurationFilterLowerBound, this.finishedBuildJobFilter.buildDurationFilterLowerBound);
+            this.localStorage.store(FinishedBuildJobFilterStorageKey.buildDurationFilterLowerBound, this.finishedBuildJobFilter.buildDurationFilterLowerBound);
+            this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterStorageKey.buildDurationFilterLowerBound);
         } else {
-            this.localStorage.clear(FishedBuildJobFilterStorageKey.buildDurationFilterLowerBound);
+            this.localStorage.clear(FinishedBuildJobFilterStorageKey.buildDurationFilterLowerBound);
+            this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterStorageKey.buildDurationFilterLowerBound);
         }
         if (this.finishedBuildJobFilter.buildDurationFilterUpperBound) {
-            this.localStorage.store(FishedBuildJobFilterStorageKey.buildDurationFilterUpperBound, this.finishedBuildJobFilter.buildDurationFilterUpperBound);
+            this.localStorage.store(FinishedBuildJobFilterStorageKey.buildDurationFilterUpperBound, this.finishedBuildJobFilter.buildDurationFilterUpperBound);
+            this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterStorageKey.buildDurationFilterUpperBound);
         } else {
-            this.localStorage.clear(FishedBuildJobFilterStorageKey.buildDurationFilterUpperBound);
+            this.localStorage.clear(FinishedBuildJobFilterStorageKey.buildDurationFilterUpperBound);
+            this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterStorageKey.buildDurationFilterUpperBound);
+        }
+        if (this.finishedBuildJobFilter.buildDurationFilterLowerBound && this.finishedBuildJobFilter.buildDurationFilterUpperBound) {
+            this.finishedBuildJobFilter.areDurationFiltersValid =
+                this.finishedBuildJobFilter.buildDurationFilterLowerBound <= this.finishedBuildJobFilter.buildDurationFilterUpperBound;
+        } else {
+            this.finishedBuildJobFilter.areDurationFiltersValid = true;
         }
     }
 }
