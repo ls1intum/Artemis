@@ -574,11 +574,11 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessmentsDTO(
                 r.assessor.id,
                 COUNT(r),
-                SUM(e.maxPoints),
+                SUM(CAST(e.maxPoints AS double)),
                 AVG(r.score),
                 CAST(CAST(SUM(rating.rating) AS double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END) AS double),
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
-            )
+                )
             FROM Result r
                 JOIN r.participation p
                 JOIN p.exercise e
@@ -594,7 +594,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessmentsDTO(
                 r.assessor.id,
                 COUNT(r),
-                SUM(e.maxPoints),
+                SUM(CAST(e.maxPoints AS double)),
                 AVG(r.score),
                 CAST(CAST(SUM(rating.rating) AS double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END) AS double),
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
@@ -615,7 +615,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessmentsDTO(
                 r.assessor.id,
                 COUNT(r),
-                SUM(e.maxPoints),
+                SUM(CAST(e.maxPoints AS double)),
                 AVG(r.score),
                 CAST(CAST(SUM(rating.rating) AS double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END) AS double),
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)

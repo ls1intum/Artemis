@@ -615,23 +615,24 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         List<Path> exportedStudentRepositories = Collections.synchronizedList(new ArrayList<>());
 
         log.info("export student repositories for programming exercise {} in parallel", programmingExercise.getId());
-        var threadPool = Executors.newFixedThreadPool(10);
-        var futures = participations.stream().map(participation -> CompletableFuture.runAsync(() -> {
-            try {
-                log.debug("invoke createZipForRepositoryWithParticipation for participation {}", participation.getId());
-                Path dir = getRepositoryWithParticipation(programmingExercise, participation, repositoryExportOptions, workingDir, outputDir, false);
-                if (dir != null) {
-                    exportedStudentRepositories.add(dir);
+        try (var threadPool = Executors.newFixedThreadPool(10)) {
+            var futures = participations.stream().map(participation -> CompletableFuture.runAsync(() -> {
+                try {
+                    log.debug("invoke createZipForRepositoryWithParticipation for participation {}", participation.getId());
+                    Path dir = getRepositoryWithParticipation(programmingExercise, participation, repositoryExportOptions, workingDir, outputDir, false);
+                    if (dir != null) {
+                        exportedStudentRepositories.add(dir);
+                    }
                 }
-            }
-            catch (Exception exception) {
-                var error = "Failed to export the student repository with participation: " + participation.getId() + " for programming exercise '" + programmingExercise.getTitle()
-                        + "' (id: " + programmingExercise.getId() + ") because the repository couldn't be downloaded. ";
-                exportErrors.add(error);
-            }
-        }, threadPool).toCompletableFuture()).toArray(CompletableFuture[]::new);
-        // wait until all operations finish
-        CompletableFuture.allOf(futures).thenRun(threadPool::shutdown).join();
+                catch (Exception exception) {
+                    var error = "Failed to export the student repository with participation: " + participation.getId() + " for programming exercise '"
+                            + programmingExercise.getTitle() + "' (id: " + programmingExercise.getId() + ") because the repository couldn't be downloaded. ";
+                    exportErrors.add(error);
+                }
+            }, threadPool).toCompletableFuture()).toArray(CompletableFuture[]::new);
+            // wait until all operations finish
+            CompletableFuture.allOf(futures).thenRun(threadPool::shutdown).join();
+        }
         return exportedStudentRepositories;
     }
 
@@ -754,7 +755,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             }
 
             log.debug("Create temporary directory for repository {}", repository.getLocalPath().toString());
-            return gitService.getRepositoryWithParticipation(repository, outputDir.toString(), repositoryExportOptions.isAnonymizeRepository(), zipOutput);
+            return gitService.getRepositoryWithParticipation(repository, outputDir.toString(), repositoryExportOptions.anonymizeRepository(), zipOutput);
         }
         catch (GitAPIException | GitException ex) {
             log.error("Failed to create zip for participation id {} with exercise id {} because of the following exception ", participation.getId(),

@@ -294,7 +294,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
                 r.assessor.id,
                 COUNT(c),
                 SUM( CASE WHEN (c.accepted = TRUE ) THEN 1L ELSE 0L END),
-                SUM( CASE WHEN (c.accepted = TRUE) THEN e.maxPoints ELSE 0.0 END)
+                SUM( CASE WHEN (c.accepted = TRUE) THEN CAST(e.maxPoints AS double) ELSE 0.0 END)
             )
             FROM Complaint c
                 JOIN c.result r
@@ -320,7 +320,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
                 r.assessor.id,
                 COUNT(c),
                 SUM( CASE WHEN (c.accepted = TRUE ) THEN 1L ELSE 0L END),
-                SUM( CASE WHEN (c.accepted = TRUE) THEN e.maxPoints ELSE 0.0 END)
+                SUM( CASE WHEN (c.accepted = TRUE) THEN CAST(e.maxPoints AS double) ELSE 0.0 END)
             )
             FROM Complaint c
                 JOIN c.result r
@@ -345,7 +345,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaintResponsesDTO(
                 cr.reviewer.id,
                 COUNT(c),
-                SUM(e.maxPoints)
+                SUM(CAST(e.maxPoints AS double))
             )
             FROM Complaint c
                 JOIN c.complaintResponse cr
