@@ -18,9 +18,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
@@ -28,6 +26,7 @@ import de.tum.in.www1.artemis.exception.QuizJoinException;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.QuizBatchRepository;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
+import de.tum.in.www1.artemis.service.ParticipationService;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -47,12 +46,10 @@ public class QuizBatchService {
 
     private final QuizSubmissionRepository quizSubmissionRepository;
 
-    private final ParticipationRepository participationRepository;
-
-    public QuizBatchService(QuizBatchRepository quizBatchRepository, QuizSubmissionRepository quizSubmissionRepository, ParticipationRepository participationRepository) {
+    public QuizBatchService(QuizBatchRepository quizBatchRepository, QuizSubmissionRepository quizSubmissionRepository, ParticipationRepository participationRepository,
+            ParticipationService participationService) {
         this.quizBatchRepository = quizBatchRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
-        this.participationRepository = participationRepository;
     }
 
     /**
@@ -115,17 +112,9 @@ public class QuizBatchService {
             throw new QuizJoinException("quizBatchExpired", "Batch has expired");
         }
 
-        StudentParticipation participation = new StudentParticipation();
-        participation.setInitializationDate(ZonedDateTime.now());
-        participation.setParticipant(user);
-        participation.setExercise(quizExercise);
-        participation.setInitializationState(InitializationState.FINISHED);
-
-        participationRepository.save(participation);
-
-        QuizSubmission quizSubmission = new QuizSubmission();
+        QuizSubmission quizSubmission = quizSubmissionRepository.findByExerciseIdAndStudentLogin(quizExercise.getId(), user.getLogin()).orElseThrow();
+        // TODO: Maybe we can check here if the user has already joined a batch and throw an exception instead of going by the number of submissions...
         quizSubmission.setQuizBatch(quizBatch.getId());
-        quizSubmission.setParticipation(participation);
 
         quizSubmissionRepository.save(quizSubmission);
 

@@ -90,8 +90,7 @@ public class QuizParticipationResource {
         }
         else {
             result = new Result();
-            // TODO: Do we want to keep multiple submissions per quiz participation? If not: adjust the retrieval.
-            result.setSubmission(quizSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participation.getId()));
+            result.setSubmission(quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()));
         }
 
         participation.setResults(Set.of(result));

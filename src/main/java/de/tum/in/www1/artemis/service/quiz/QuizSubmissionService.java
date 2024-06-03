@@ -112,7 +112,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
     }
 
     /**
-     * Saves a quiz submission into the hash maps for live quizzes. Submitted quizzes are marked to be saved into the database in the QuizScheduleService
+     * Saves a quiz submission into the hash maps for live quizzes. Submitted quizzes are marked to be saved into the database in the QuizScheduleService TODO: Update docs
      *
      * @param exerciseId     the exerciseID to the corresponding QuizExercise
      * @param quizSubmission the submission which should be saved
@@ -130,19 +130,21 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         var quizExercise = quizExerciseRepository.findByIdElseThrow(exerciseId);
         quizExercise.setQuizBatches(null);
         var participation = participationService.findOneByExerciseAndStudentLoginAnyState(quizExercise, userLogin).orElseThrow();
-        checkSubmissionForLiveModeOrThrow(quizExercise, userLogin, logText, start);
-
+        // A submission always exists because the user has to start the participation before submitting, which creates a submission
+        var existingSubmission = quizSubmissionRepository.findByExerciseIdAndStudentLogin(quizExercise.getId(), userLogin).orElseThrow();
+        checkSubmissionForLiveModeOrThrow(quizExercise, existingSubmission, userLogin, logText, start);
         // recreate pointers back to submission in each submitted answer
         for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
             submittedAnswer.setSubmission(quizSubmission);
         }
+        // overwrite the old submission with the new one. TODO: is there a better way to do this?
+        quizSubmission.setId(existingSubmission.getId());
+        quizSubmission.setQuizBatch(existingSubmission.getQuizBatch());
 
-        // set submission date
+        // set submission date and link to participation
         quizSubmission.setSubmissionDate(ZonedDateTime.now());
-
-        // TODO: This will create a new submission for each save/submit attempt. Do we want this?
         quizSubmission.setParticipation(participation);
-        quizSubmissionRepository.save(quizSubmission);
+        quizSubmission = quizSubmissionRepository.save(quizSubmission);
 
         log.info("{} Saved quiz submission for user {} in quiz {} after {} µs ", logText, userLogin, exerciseId, (System.nanoTime() - start) / 1000);
         return quizSubmission;
@@ -151,15 +153,15 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
     /**
      * Check that the user is allowed to currently submit to the specified exercise and throws an exception if not
      */
-    private void checkSubmissionForLiveModeOrThrow(QuizExercise quizExercise, String userLogin, String logText, long start) throws QuizSubmissionException {
+    private void checkSubmissionForLiveModeOrThrow(QuizExercise quizExercise, QuizSubmission existingSubmission, String userLogin, String logText, long start)
+            throws QuizSubmissionException {
         // check if submission is still allowed
         log.debug("{}: Received quiz exercise for user {} in quiz {} in {} µs.", logText, userLogin, quizExercise.getId(), (System.nanoTime() - start) / 1000);
         if (!quizExercise.isQuizStarted() || quizExercise.isQuizEnded()) {
             throw new QuizSubmissionException("The quiz is not active");
         }
 
-        var submission = quizSubmissionRepository.findByExerciseIdAndStudentLogin(quizExercise.getId(), userLogin);
-        if (submission.isPresent() && submission.get().isSubmitted()) {
+        if (existingSubmission.isSubmitted()) {
             // the old submission has not yet been processed, so don't allow a new one yet
             throw new QuizSubmissionException("You have already submitted the quiz");
         }
