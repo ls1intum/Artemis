@@ -48,7 +48,7 @@ export class PrerequisiteService {
      * @param prerequisiteDTO PrerequisiteResponseDTO
      * @return the Prerequisite
      */
-    convertResponseDTOToPrerequisite(prerequisiteDTO: PrerequisiteResponseDTO): Prerequisite {
+    private static convertResponseDTOToPrerequisite(prerequisiteDTO: PrerequisiteResponseDTO): Prerequisite {
         let linkedCourseCompetency: CourseCompetency | undefined = undefined;
         const softDueDate = convertDateFromServer(prerequisiteDTO.softDueDate);
 

@@ -32,7 +32,6 @@ export class CreateCompetencyComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        this.competencyToCreate = {};
         this.isLoading = true;
         this.activatedRoute
             .parent!.parent!.paramMap.pipe(
