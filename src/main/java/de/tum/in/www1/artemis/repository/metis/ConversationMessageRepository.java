@@ -101,7 +101,7 @@ public interface ConversationMessageRepository extends JpaRepository<Post, Long>
         List<Post> posts = findByPostIdsWithEagerRelationships(postIds.getContent());
         // Make sure to sort the posts in the same order as the postIds
         Map<Long, Post> postMap = posts.stream().collect(Collectors.toMap(Post::getId, post -> post));
-        posts = postIds.stream().map(postMap::get).collect(Collectors.toList());
+        posts = postIds.stream().map(postMap::get).toList();
         log.info("findByPostIdsWithEagerRelationships took {}", TimeLogUtil.formatDurationFrom(start2));
         // Recreate the page with the fetched posts
         return new PageImpl<>(posts, pageable, posts.size());

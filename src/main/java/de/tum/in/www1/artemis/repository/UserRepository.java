@@ -279,6 +279,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                     OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 )
             """)
+    // TODO: rewrite this query, pageable does not work well with left join fetch, it needs to transfer all results and only page in java
     Page<User> searchAllByLoginOrNameInGroup(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("groupName") String groupName);
 
     @Query(value = """
@@ -304,6 +305,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                 ) AND user.id <> :idOfUser
             ORDER BY CONCAT(user.firstName, ' ', user.lastName)
             """)
+    // TODO: rewrite this query, pageable does not work well with left join fetch, it needs to transfer all results and only page in java
     Page<User> searchAllByLoginOrNameInGroupsNotUserId(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames,
             @Param("idOfUser") long idOfUser);
 
@@ -336,6 +338,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                     OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 )
             """)
+    // TODO: rewrite this query, pageable does not work well with left join fetch, it needs to transfer all results and only page in java
     Page<User> searchAllByLoginOrNameInGroups(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames);
 
     @Query(value = """
@@ -364,6 +367,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                     OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 )
             """)
+    // TODO: rewrite this query, pageable does not work well with left join fetch, it needs to transfer all results and only page in java
     Page<User> searchAllByLoginOrNameInConversation(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId);
 
     @Query(value = """
@@ -393,6 +397,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                     OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 ) AND userGroup IN :groupNames
             """)
+    // TODO: rewrite this query, pageable does not work well with left join fetch, it needs to transfer all results and only page in java
     Page<User> searchAllByLoginOrNameInConversationWithCourseGroups(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId,
             @Param("groupNames") Set<String> groupNames);
 
@@ -423,6 +428,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                     OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 ) AND conversationParticipant.isModerator = TRUE
             """)
+    // TODO: rewrite this query, pageable does not work well with left join fetch
     Page<User> searchChannelModeratorsByLoginOrNameInConversation(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId);
 
     /**
@@ -506,6 +512,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             """)
     Page<User> searchAllByLoginOrNameInCourse(Pageable page, @Param("loginOrName") String loginOrName, @Param("courseId") long courseId);
 
+    // TODO: rewrite this query, pageable does not work well with left join fetch
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     Page<User> findAllWithGroupsByIsDeletedIsFalse(Pageable pageable);
 
