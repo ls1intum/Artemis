@@ -6,13 +6,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { IconDefinition, faCheckCircle, faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import { LearningPathStudentNavOverviewComponent } from 'app/course/learning-paths/components/learning-path-student-nav-overview/learning-path-student-nav-overview.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { LearningPathNavigationService } from 'app/course/learning-paths/learning-path-navigation.service';
-
-export type LoadedValue<T> = {
-    isLoading: boolean;
-    value?: T | undefined | null;
-    error?: Error;
-};
+import { LearningPathNavigationService } from 'app/course/learning-paths/services/learning-path-navigation.service';
 
 @Component({
     selector: 'jhi-learning-path-student-nav',
@@ -35,7 +29,7 @@ export class LearningPathStudentNavComponent implements OnInit {
 
     readonly learningPathProgress = computed(() => this.learningPathNavigationService.learningPathNavigation()?.progress ?? 0);
     readonly predecessorLearningObject = computed(() => this.learningPathNavigationService.learningPathNavigation()?.predecessorLearningObject);
-    readonly currentLearningObject = computed(() => this.learningPathNavigationService.learningPathNavigation()?.currentLearningObject);
+    readonly currentLearningObject = computed(() => this.learningPathNavigationService.currentLearningObject());
     readonly successorLearningObject = computed(() => this.learningPathNavigationService.learningPathNavigation()?.successorLearningObject);
 
     readonly isCurrentLearningObjectCompleted = this.learningPathNavigationService.isCurrentLearningObjectCompleted;

@@ -4,7 +4,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { ArtemisLectureUnitsModule } from 'app/overview/course-lectures/lecture-units.module';
 import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
-import { LearningPathNavigationService } from 'app/course/learning-paths/learning-path-navigation.service';
+import { LearningPathNavigationService } from 'app/course/learning-paths/services/learning-path-navigation.service';
 
 @Component({
     selector: 'jhi-learning-path-lecture-unit',
@@ -27,14 +27,23 @@ export class LearningPathLectureUnitComponent implements OnInit {
         await this.loadLectureUnit(this.lectureUnitId());
     }
 
-    async loadLectureUnit(lectureUnitId: number) {
+    async loadLectureUnit(lectureUnitId: number): Promise<void> {
         this.isLoading.set(true);
-        const lectureUnit = await this.lectureUnitService.getLectureUnitById(lectureUnitId);
-        this.lectureUnit.set(lectureUnit);
+        try {
+            const lectureUnit = await this.lectureUnitService.getLectureUnitById(lectureUnitId);
+            this.lectureUnit.set(lectureUnit);
+        } catch (error) {
+            this.alertService.error(error);
+        }
         this.isLoading.set(false);
     }
 
     setLearningObjectCompletion(completionEvent: LectureUnitCompletionEvent): void {
-        this.learningPathNavigationService.setCurrentLearningObjectCompletion(completionEvent.completed);
+        try {
+            this.lectureUnitService.completeLectureUnit(this.lectureUnit()!.lecture!, completionEvent);
+            this.learningPathNavigationService.setCurrentLearningObjectCompletion(completionEvent.completed);
+        } catch (error) {
+            this.alertService.error(error);
+        }
     }
 }
