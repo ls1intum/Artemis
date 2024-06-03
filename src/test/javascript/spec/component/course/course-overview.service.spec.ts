@@ -11,6 +11,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { Exam } from 'app/entities/exam.model';
 
 describe('CourseOverviewService', () => {
     let service: CourseOverviewService;
@@ -226,6 +227,25 @@ describe('CourseOverviewService', () => {
         expect(upcomingLecture?.id).toBe(2);
     });
 
+    it('should handle all past exams', () => {
+        const pastExams: Exam[] = [
+            {
+                id: 1,
+                title: 'Past Exam 1',
+                endDate: dayjs().subtract(2, 'day'),
+            },
+            {
+                id: 2,
+                title: 'Past Exam 2',
+                endDate: dayjs().subtract(1, 'day'),
+            },
+        ];
+        const upcomingExam = service.getUpcomingExam(pastExams);
+
+        // Assuming the function should return the most recent past lecture if all are in the past
+        expect(upcomingExam?.id).toBe(2);
+    });
+
     it('should correctly identify the exercises furthest in the future', () => {
         const exercises: Exercise[] = [
             {
@@ -256,5 +276,62 @@ describe('CourseOverviewService', () => {
         const upcomingExercise = service.getUpcomingExercise(exercises);
 
         expect(upcomingExercise?.id).toBe(3);
+    });
+
+    it('should correctly identify the exams furthest in the future', () => {
+        const exams: Exam[] = [
+            {
+                id: 1,
+                title: 'Past Exam',
+                endDate: dayjs().subtract(1, 'day'),
+            },
+            {
+                id: 2,
+                title: 'Upcoming Exam',
+                dueDate: dayjs().add(1, 'day'),
+            },
+            {
+                id: 3,
+                title: 'Far Future Exam',
+                endDate: dayjs().add(2, 'weeks'),
+            },
+        ];
+        const upcomingExam = service.getUpcomingExam(exams);
+
+        expect(upcomingExam?.id).toBe(3);
+    });
+
+    it('should return undefined if exams array is undefined', () => {
+        expect(service.getUpcomingExam(undefined)).toBeUndefined();
+    });
+
+    it('should return undefined if exams array is empty', () => {
+        expect(service.getUpcomingExam([])).toBeUndefined();
+    });
+
+    it('should convert the working time of an exam to a string correctly', () => {
+        const exams: Exam[] = [
+            {
+                id: 1,
+                workingTime: 1800,
+            },
+            {
+                id: 2,
+                workingTime: 3600,
+            },
+            {
+                id: 3,
+                workingTime: 8100,
+            },
+        ];
+        const convertWorkingTimeInstance = jest.spyOn(service, 'convertWorkingTimeToString');
+        const workingTimeInStrings: string[] = [];
+        exams.slice(0, 3).forEach((exam) => {
+            workingTimeInStrings.push(service.convertWorkingTimeToString(exam.workingTime!));
+        });
+        expect(workingTimeInStrings[0]).toBe('30 min');
+        expect(workingTimeInStrings[1]).toBe('1h');
+        expect(workingTimeInStrings[2]).toBe('2h 15 min');
+        expect(convertWorkingTimeInstance).toHaveBeenCalledTimes(3);
     });
 });

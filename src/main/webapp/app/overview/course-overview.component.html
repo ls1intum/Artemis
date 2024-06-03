@@ -129,7 +129,11 @@
                 </div>
 
                 @if (course) {
-                    <div class="h5 module-bg m-3 mt-0 px-3 py-2 rounded rounded-3 justify-content-between sticky-top" [ngStyle]="{ display: isExamStarted ? 'none' : 'flex' }">
+                    <div
+                        id="course-title-bar-test"
+                        class="h5 module-bg m-3 mt-0 px-3 py-2 rounded rounded-3 justify-content-between sticky-top"
+                        [ngStyle]="{ display: isExamStarted ? 'none' : 'flex' }"
+                    >
                         <div class="align-self-center d-flex">
                             @if (hasSidebar) {
                                 <button
