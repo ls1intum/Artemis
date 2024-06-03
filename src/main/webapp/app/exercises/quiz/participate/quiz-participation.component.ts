@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/
 import dayjs from 'dayjs/esm';
 import isMobile from 'ismobilejs-es5';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subscription, take } from 'rxjs';
+import { Subscription, combineLatest, take } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
@@ -65,8 +65,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     @ViewChildren(ShortAnswerQuestionComponent)
     shortAnswerQuestionComponents: QueryList<ShortAnswerQuestionComponent>;
 
-    private subscription: Subscription;
-    private subscriptionData: Subscription;
+    private routeAndDataSubscription: Subscription;
 
     runningTimeouts = new Array<any>(); // actually the function type setTimeout(): (handler: any, timeout?: any, ...args: any[]): number
 
@@ -145,27 +144,25 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.isMobile = isMobile(window.navigator.userAgent).any;
         // set correct mode
-        this.subscriptionData = this.route.data.subscribe((data) => {
+        this.routeAndDataSubscription = combineLatest([this.route.data, this.route.params, this.route.parent!.parent!.params]).subscribe(([data, params, parentParams]) => {
             this.mode = data.mode;
-            this.subscription = this.route.params.subscribe((params) => {
-                this.quizId = Number(params['exerciseId']);
-                this.courseId = Number(params['courseId']);
-                // init according to mode
-                switch (this.mode) {
-                    case 'practice':
-                        this.initPracticeMode();
-                        break;
-                    case 'preview':
-                        this.initPreview();
-                        break;
-                    case 'solution':
-                        this.initShowSolution();
-                        break;
-                    case 'live':
-                        this.refreshQuiz();
-                        break;
-                }
-            });
+            this.quizId = Number(params['exerciseId']);
+            this.courseId = Number(parentParams['courseId']);
+            // init according to mode
+            switch (this.mode) {
+                case 'practice':
+                    this.initPracticeMode();
+                    break;
+                case 'preview':
+                    this.initPreview();
+                    break;
+                case 'solution':
+                    this.initShowSolution();
+                    break;
+                case 'live':
+                    this.refreshQuiz();
+                    break;
+            }
         });
         // update displayed times in UI regularly
         this.interval = window.setInterval(() => {
@@ -191,11 +188,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             this.jhiWebsocketService.unsubscribe(this.quizExerciseChannel);
         }
         this.websocketSubscription?.unsubscribe();
-        if (this.subscription) {
-            this.subscription.unsubscribe();
-        }
-        if (this.subscriptionData) {
-            this.subscriptionData.unsubscribe();
+        if (this.routeAndDataSubscription) {
+            this.routeAndDataSubscription.unsubscribe();
         }
     }
 
