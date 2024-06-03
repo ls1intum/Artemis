@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ResultCount;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments;
+import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessmentsDTO;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
@@ -513,14 +513,14 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     // Valid JPQL syntax, only SCA is not able to parse it
     @Query("""
-            SELECT new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments(
+            SELECT new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessmentsDTO(
                 r.assessor.id,
                 COUNT(r),
-                SUM(e.maxPoints),
+                SUM(CAST(e.maxPoints AS double)),
                 AVG(r.score),
                 CAST(SUM(rating.rating) AS double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
-            )
+                )
             FROM Result r
                 JOIN r.participation p
                 JOIN p.exercise e
@@ -530,16 +530,16 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 AND e.id IN :exerciseIds
             GROUP BY r.assessor.id
             """)
-    List<TutorLeaderboardAssessments> findTutorLeaderboardAssessmentByCourseId(@Param("exerciseIds") Set<Long> exerciseIds);
+    List<TutorLeaderboardAssessmentsDTO> findTutorLeaderboardAssessmentByCourseId(@Param("exerciseIds") Set<Long> exerciseIds);
 
     // Alternative which might be faster, in particular for complaints in the other repositories
     // Valid JPQL syntax, only SCA is not able to parse it
 
     @Query("""
-            SELECT new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments(
+            SELECT new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessmentsDTO(
                 r.assessor.id,
                 COUNT(r),
-                SUM(e.maxPoints),
+                SUM(CAST(e.maxPoints AS double)),
                 AVG(r.score),
                 CAST(SUM(rating.rating) AS double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
@@ -553,13 +553,13 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 AND e.id = :exerciseId
             GROUP BY r.assessor.id
             """)
-    List<TutorLeaderboardAssessments> findTutorLeaderboardAssessmentByExerciseId(@Param("exerciseId") long exerciseId);
+    List<TutorLeaderboardAssessmentsDTO> findTutorLeaderboardAssessmentByExerciseId(@Param("exerciseId") long exerciseId);
 
     @Query("""
-            SELECT new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments(
+            SELECT new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessmentsDTO(
                 r.assessor.id,
                 COUNT(r),
-                SUM(e.maxPoints),
+                SUM(CAST(e.maxPoints AS double)),
                 AVG(r.score),
                 CAST(SUM(rating.rating) AS double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
@@ -575,7 +575,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 AND ex.id = :examId
             GROUP BY r.assessor.id
             """)
-    List<TutorLeaderboardAssessments> findTutorLeaderboardAssessmentByExamId(@Param("examId") long examId);
+    List<TutorLeaderboardAssessmentsDTO> findTutorLeaderboardAssessmentByExamId(@Param("examId") long examId);
 
     /**
      * This function is used for submitting a manual assessment/result.

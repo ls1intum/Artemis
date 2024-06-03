@@ -28,7 +28,7 @@ public interface BuildPlanRepository extends JpaRepository<BuildPlan, Long> {
             FROM BuildPlan buildPlan
                 JOIN buildPlan.programmingExercises programmingExercises
             WHERE programmingExercises.id = :exerciseId
-                """)
+            """)
     Optional<BuildPlan> findByProgrammingExercises_Id(@Param("exerciseId") long exerciseId);
 
     default BuildPlan findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(final long exerciseId) {

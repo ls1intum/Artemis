@@ -67,7 +67,7 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
      *
      * @param exerciseIds   - the id of the course we want to filter by
      * @param complaintType - complaint type we want to filter by
-     * @return number of complaints associated to exercise exerciseId
+     * @return list of complaints associated to exercise exerciseId
      */
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
@@ -89,7 +89,7 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
      *
      * @param exerciseIds   - the id of the course we want to filter by
      * @param complaintType - complaint type we want to filter by
-     * @return number of complaints associated to exercise exerciseId
+     * @return list of complaints associated to exercise exerciseId
      */
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
