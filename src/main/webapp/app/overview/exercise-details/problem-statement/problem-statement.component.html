@@ -1,14 +1,16 @@
-@if (isProgrammingExercise && exercise) {
-    <div class="row mb-4">
-        <jhi-programming-exercise-instructions [exercise]="exercise" [participation]="participation!" [personalParticipation]="true" />
-    </div>
-} @else {
-    @if (exercise?.problemStatement) {
-        <div class="row mb-2 align-items-baseline" id="problem-statement">
-            <div class="col-12 col-md-12 markdown-preview problem-statement">
-                <h3>{{ 'artemisApp.courseOverview.exerciseDetails.problemStatement' | artemisTranslate }}</h3>
-                <p [innerHTML]="exercise!.problemStatement! | htmlForMarkdown"></p>
-            </div>
+<div [ngClass]="{ 'module-bg mb-n5': !isEmbeddedView }">
+    @if (isProgrammingExercise && exercise) {
+        <div class="row mb-4">
+            <jhi-programming-exercise-instructions [exercise]="exercise" [participation]="participation!" [personalParticipation]="true" />
         </div>
+    } @else {
+        @if (exercise?.problemStatement) {
+            <div class="row mb-2 align-items-baseline" id="problem-statement">
+                <div class="col-12 col-md-12 markdown-preview problem-statement">
+                    <h3>{{ 'artemisApp.courseOverview.exerciseDetails.problemStatement' | artemisTranslate }}</h3>
+                    <p [innerHTML]="exercise!.problemStatement! | htmlForMarkdown"></p>
+                </div>
+            </div>
+        }
     }
-}
+</div>

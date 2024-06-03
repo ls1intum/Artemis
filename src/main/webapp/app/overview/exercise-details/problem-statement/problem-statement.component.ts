@@ -18,6 +18,8 @@ export class ProblemStatementComponent implements OnInit {
     @Input()
     participation?: StudentParticipation;
 
+    isEmbeddedView = true;
+
     constructor(
         private route: ActivatedRoute,
         private exerciseService: ExerciseService,
@@ -27,6 +29,9 @@ export class ProblemStatementComponent implements OnInit {
     ngOnInit() {
         this.route.params.subscribe((params) => {
             const exerciseId = parseInt(params['exerciseId'], 10);
+            //Change Background color of the page for standalone view
+            const isEmbeddedView: boolean = this.route.snapshot.data?.isEmbedded ?? true;
+            this.isEmbeddedView = isEmbeddedView;
             let participationId: number | undefined = undefined;
             if (params['participationId']) {
                 participationId = parseInt(params['participationId'], 10);
