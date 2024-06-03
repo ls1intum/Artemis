@@ -94,8 +94,8 @@ public class PyrisWebhookService {
                 }
             });
             if (!toUpdateAttachmentUnits.isEmpty()) {
-                var jobToken = pyrisJobService.addIngestionWebhookJob();
-                var settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
+                String jobToken = pyrisJobService.addIngestionWebhookJob();
+                PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
                 PyrisWebhookLectureIngestionExecutionDTO executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(toUpdateAttachmentUnits, settingsDTO, List.of());
                 pyrisConnectorService.executeLectureWebhook("fullIngestion", executionDTO);
             }

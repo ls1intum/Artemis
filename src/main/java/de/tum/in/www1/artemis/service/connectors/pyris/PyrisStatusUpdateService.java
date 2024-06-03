@@ -36,8 +36,7 @@ public class PyrisStatusUpdateService {
      */
     public void handleStatusUpdate(TutorChatJob job, PyrisTutorChatStatusUpdateDTO statusUpdate) {
         irisChatSessionService.handleStatusUpdate(job, statusUpdate);
-
-        var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state)
+        boolean isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state)
                 .allMatch(state -> state == PyrisStageState.DONE || state == PyrisStageState.ERROR || state == PyrisStageState.SKIPPED);
         if (isDone) {
             pyrisJobService.removeJob(job.jobId());
@@ -53,7 +52,7 @@ public class PyrisStatusUpdateService {
      */
     public void handleStatusUpdate(PyrisJob job, PyrisLectureIngestionStatusUpdateDTO statusUpdate) {
         log.info("Ingestion job status updated with result: {}", statusUpdate.result());
-        var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state)
+        boolean isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state)
                 .allMatch(state -> state == PyrisStageState.DONE || state == PyrisStageState.ERROR || state == PyrisStageState.SKIPPED);
         if (isDone) {
             pyrisJobService.removeJob(job.jobId());
