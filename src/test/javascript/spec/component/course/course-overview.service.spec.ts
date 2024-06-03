@@ -288,7 +288,7 @@ describe('CourseOverviewService', () => {
             {
                 id: 2,
                 title: 'Upcoming Exam',
-                dueDate: dayjs().add(1, 'day'),
+                endDate: dayjs().add(1, 'day'),
             },
             {
                 id: 3,
