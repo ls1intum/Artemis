@@ -16,7 +16,7 @@ import { Course } from 'app/entities/course.model';
 
 export type Detail = NotShownDetail | ShownDetail;
 
-type NotShownDetail = false | undefined;
+export type NotShownDetail = false | undefined;
 
 export type ShownDetail =
     | TextDetail
@@ -35,7 +35,7 @@ export type ShownDetail =
     | ProgrammingTimelineDetail
     | ProgrammingBuildStatisticsDetail;
 
-interface DetailBase {
+export interface DetailBase {
     type: DetailType;
     title?: string;
     titleTranslationProps?: Record<string, string>;
