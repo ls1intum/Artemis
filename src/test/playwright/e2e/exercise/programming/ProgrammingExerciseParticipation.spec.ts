@@ -310,6 +310,7 @@ async function pushGitSubmissionFiles(
 
     await exerciseRepo.addConfig('user.email', `${user.username}@example.com`);
     await exerciseRepo.addConfig('user.name', user.username);
+    await exerciseRepo.addConfig('user.password', user.password);
     await exerciseRepo.commit(commitMessage);
     await exerciseRepo.push();
 }
