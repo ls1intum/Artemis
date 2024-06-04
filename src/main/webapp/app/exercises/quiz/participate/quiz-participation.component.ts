@@ -665,6 +665,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             if (!this.quizBatch.ended) {
                 // enable automatic websocket reconnect
                 this.jhiWebsocketService.enableReconnect();
+
+                // apply randomized order where necessary
+                this.quizService.randomizeOrder(this.quizExercise.quizQuestions, this.quizExercise.randomizeQuestionOrder);
             }
         }
     }
@@ -978,10 +981,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                         this.waitingForQuizStart = false;
                         this.endDate = dayjs();
                     }
-                    // Since changes in the order of the questions won't apply after the quiz has started, we need to randomize upon loading the quiz.
-                    if (this.shouldRandomizeLiveQuizQuestionOrder(quizExercise)) {
-                        this.quizService.randomizeOrder(quizExercise.quizQuestions, quizExercise.randomizeQuestionOrder);
-                    }
                     this.quizExercise = quizExercise;
                     this.initQuiz();
                     this.initLiveMode();
@@ -992,11 +991,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 setTimeout(() => (this.refreshingQuiz = false), 500); // ensure min animation duration
             },
         });
-    }
-
-    private shouldRandomizeLiveQuizQuestionOrder(quizExercise: QuizExercise): boolean {
-        const batch = quizExercise.quizBatches?.first();
-        return (quizExercise.quizStarted ?? false) && !batch?.ended;
     }
 
     joinBatch() {
