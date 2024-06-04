@@ -173,7 +173,7 @@ export class ExerciseHintService implements IExerciseHintService {
         return this.http.post<void>(`${this.resourceUrl}/${exerciseId}/exercise-hints/${exerciseHintId}/rating/${ratingValue}`, {}, { observe: 'response' });
     }
 
-    public sendTitlesToEntityTitleService(hint: ExerciseHint | undefined | null, exerciseId: number) {
+    private sendTitlesToEntityTitleService(hint: ExerciseHint | undefined | null, exerciseId: number) {
         this.entityTitleService.setTitle(EntityType.HINT, [hint?.id, exerciseId], hint?.title);
     }
 }
