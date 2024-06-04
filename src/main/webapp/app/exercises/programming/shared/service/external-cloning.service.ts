@@ -2,8 +2,6 @@ import { Injectable } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class ExternalCloningService {
-    constructor() {}
-
     /**
      * Build source tree url.
      * @param baseUrl - the base url of the version control system
