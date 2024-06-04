@@ -582,7 +582,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         checkQuizExerciseForStudent(quizExerciseForStudent_Started);
 
         // get finished exercise for students
-        quizExerciseService.endQuiz(quizExercise, ZonedDateTime.now().minusMinutes(2));
+        quizExerciseService.endQuiz(quizExercise);
         assertThat(quizExercise.getQuizBatches()).allMatch(QuizBatch::isStarted);
         assertThat(quizExercise.getQuizBatches()).noneMatch(QuizBatch::isSubmissionAllowed);
 
@@ -731,7 +731,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         // we expect a bad request because the quiz has not ended yet
         reevalQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), HttpStatus.BAD_REQUEST);
         quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(5));
-        quizExerciseService.endQuiz(quizExercise, ZonedDateTime.now().minusMinutes(1));
+        quizExerciseService.endQuiz(quizExercise);
         quizExercise = updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.OK);
 
         // generate rated submissions for each student
@@ -840,7 +840,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         reevalQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), HttpStatus.BAD_REQUEST);
         quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
         quizExercise.setDuration(3600);
-        quizExerciseService.endQuiz(quizExercise, ZonedDateTime.now().minusHours(1));
+        quizExerciseService.endQuiz(quizExercise);
         quizExercise.setIsOpenForPractice(true);
         quizExercise = updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.OK);
 
@@ -1022,7 +1022,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/open-for-practice", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
 
         quizExercise.setDuration(180);
-        quizExerciseService.endQuiz(quizExercise, ZonedDateTime.now().minusMinutes(2));
+        quizExerciseService.endQuiz(quizExercise);
         quizExerciseService.save(quizExercise);
 
         QuizExercise updatedQuizExercise = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/open-for-practice", quizExercise, QuizExercise.class,

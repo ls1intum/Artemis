@@ -44,11 +44,25 @@ public class ExerciseLifecycleService {
      * @param task      Runnable
      * @return The {@code ScheduledFuture<?>} allows to later cancel the task or check whether it has been executed.
      */
-    public ScheduledFuture<?> scheduleTask(Exercise exercise, ExerciseLifecycle lifecycle, Runnable task) {
-        final ZonedDateTime lifecycleDate = lifecycle.getDateFromExercise(exercise);
+    public ScheduledFuture<?> scheduleTask(Exercise exercise, ZonedDateTime lifecycleDate, ExerciseLifecycle lifecycle, Runnable task) {
         final ScheduledFuture<?> future = scheduler.schedule(task, lifecycleDate.toInstant());
         log.debug("Scheduled Task for Exercise \"{}\" (#{}) to trigger on {}.", exercise.getTitle(), exercise.getId(), lifecycle);
         return future;
+    }
+
+    /**
+     * Allow to schedule a {@code Runnable} task in the lifecycle of an exercise. ({@code ExerciseLifecycle}) Tasks are performed in a background thread managed by a
+     * {@code TaskScheduler}. See {@code TaskSchedulingConfiguration}. <b>Important:</b> Scheduled tasks are not persisted across application restarts. Therefore, schedule your
+     * events from both your application logic (e.g. exercise modification) and on application startup. You can use the {@code PostConstruct} Annotation to call one service method
+     * on startup.
+     *
+     * @param exercise  Exercise
+     * @param lifecycle ExerciseLifecycle
+     * @param task      Runnable
+     * @return The {@code ScheduledFuture<?>} allows to later cancel the task or check whether it has been executed.
+     */
+    public ScheduledFuture<?> scheduleTask(Exercise exercise, ExerciseLifecycle lifecycle, Runnable task) {
+        return scheduleTask(exercise, lifecycle.getDateFromExercise(exercise), lifecycle, task);
     }
 
     /**
@@ -65,11 +79,10 @@ public class ExerciseLifecycleService {
      */
     public ScheduledFuture<?> scheduleTask(QuizExercise exercise, QuizBatch batch, ExerciseLifecycle lifecycle, Runnable task) {
         if (exercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
-            log.debug("Scheduled Task for synchronized QuizExercise \"{}\" (#{}) to trigger on {}.", exercise.getTitle(), exercise.getId(), lifecycle);
-            return scheduler.schedule(task, batch.getStartTime().toInstant());
+            return scheduleTask(exercise, lifecycle.getDateFromQuizBatch(batch, exercise), lifecycle, task);
         }
         else {
-            return scheduleTask(exercise, lifecycle, task);
+            return scheduleTask(exercise, lifecycle.getDateFromExercise(exercise), lifecycle, task);
         }
     }
 
@@ -85,6 +98,28 @@ public class ExerciseLifecycleService {
      * @return The {@code ScheduledFuture<?>}s allow to later cancel the tasks or check whether they have been executed.
      */
     public Set<ScheduledFuture<?>> scheduleMultipleTasks(Exercise exercise, ExerciseLifecycle lifecycle, Set<Tuple<ZonedDateTime, Runnable>> tasks) {
+        final Set<ScheduledFuture<?>> futures = new HashSet<>();
+        for (var task : tasks) {
+            var future = scheduler.schedule(task.y(), task.x().toInstant());
+            futures.add(future);
+        }
+        log.debug("Scheduled {} Tasks for Exercise \"{}\" (#{}) to trigger on {}.", tasks.size(), exercise.getTitle(), exercise.getId(), lifecycle.toString());
+        return futures;
+    }
+
+    /**
+     * Allow scheduling multiple {@code Runnable} tasks in the lifecycle of a quiz exercise at distinct points in time. ({@code ExerciseLifecycle}) Tasks are performed in a
+     * background thread managed by a {@code TaskScheduler}. See {@code TaskSchedulingConfiguration}. <b>Important:</b> Scheduled tasks are not persisted across application
+     * restarts. Therefore, schedule your events from both your application logic (e.g. exercise modification) and on application startup. You can use the {@code PostConstruct}
+     * Annotation to call one service method on startup.
+     *
+     * @param exercise  QuizExercise
+     * @param batch     QuizBatch
+     * @param lifecycle ExerciseLifecycle
+     * @param tasks     Runnable with ZonedDateTime
+     * @return The {@code ScheduledFuture<?>}s allow to later cancel the tasks or check whether they have been executed.
+     */
+    public Set<ScheduledFuture<?>> scheduleMultipleTasks(QuizExercise exercise, QuizBatch batch, ExerciseLifecycle lifecycle, Set<Tuple<ZonedDateTime, Runnable>> tasks) {
         final Set<ScheduledFuture<?>> futures = new HashSet<>();
         for (var task : tasks) {
             var future = scheduler.schedule(task.y(), task.x().toInstant());

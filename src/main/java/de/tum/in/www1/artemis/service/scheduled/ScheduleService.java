@@ -113,6 +113,22 @@ public class ScheduleService {
     }
 
     /**
+     * Schedule a set of tasks for the given QuizExercise for the provided ExerciseLifecycle at the given times.
+     *
+     * @param exercise  QuizExercise
+     * @param batch     QuizBatch
+     * @param lifecycle ExerciseLifecycle
+     * @param tasks     Runnable tasks to be executed at the associated ZonedDateTimes
+     */
+    public void scheduleTask(QuizExercise exercise, QuizBatch batch, ExerciseLifecycle lifecycle, Set<Tuple<ZonedDateTime, Runnable>> tasks) {
+        // check if already scheduled for exercise. if so, cancel.
+        // no exercise should be scheduled more than once.
+        cancelScheduledTaskForLifecycle(exercise.getId(), lifecycle);
+        Set<ScheduledFuture<?>> scheduledTasks = exerciseLifecycleService.scheduleMultipleTasks(exercise, batch, lifecycle, tasks);
+        addScheduledTask(exercise, lifecycle, scheduledTasks);
+    }
+
+    /**
      * Schedule a task for the given participation for the provided lifecycle.
      *
      * @param participation for which a scheduled action should be created.

@@ -551,7 +551,7 @@ public class QuizExerciseResource {
                 }
 
                 // set release date to now, truncated to seconds because the database only stores seconds
-                quizExerciseService.endQuiz(quizExercise, ZonedDateTime.now());
+                quizExerciseService.endQuiz(quizExercise);
             }
             case SET_VISIBLE -> {
                 // check if quiz is already visible

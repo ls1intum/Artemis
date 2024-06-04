@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_SCHEDULING;
 import static de.tum.in.www1.artemis.domain.enumeration.QuizAction.START_NOW;
 
 import java.time.ZonedDateTime;
+import java.util.Optional;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -11,14 +12,22 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.QuizBatchRepository;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
+import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.scheduled.ScheduleService;
+import de.tum.in.www1.artemis.service.util.Tuple;
 
 @Profile(PROFILE_SCHEDULING)
 @Service
@@ -34,12 +43,25 @@ public class QuizScheduleService {
 
     private final QuizBatchRepository quizBatchRepository;
 
+    private final QuizStatisticService quizStatisticService;
+
+    private final ParticipationRepository participationRepository;
+
+    private final ResultRepository resultRepository;
+
+    private final QuizSubmissionRepository quizSubmissionRepository;
+
     public QuizScheduleService(QuizMessagingService quizMessagingService, QuizExerciseRepository quizExerciseRepository, ScheduleService scheduleService,
-            QuizBatchRepository quizBatchRepository) {
+            QuizBatchRepository quizBatchRepository, QuizStatisticService quizStatisticService, ParticipationRepository participationRepository, ResultRepository resultRepository,
+            QuizSubmissionRepository quizSubmissionRepository) {
         this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.scheduleService = scheduleService;
         this.quizBatchRepository = quizBatchRepository;
+        this.quizStatisticService = quizStatisticService;
+        this.participationRepository = participationRepository;
+        this.resultRepository = resultRepository;
+        this.quizSubmissionRepository = quizSubmissionRepository;
     }
 
     /**
@@ -57,8 +79,52 @@ public class QuizScheduleService {
             var quizBatch = quizExercise.getQuizBatches().stream().findAny();
             if (quizBatch.isPresent() && quizBatch.get().getStartTime() != null && quizBatch.get().getStartTime().isAfter(ZonedDateTime.now())) {
                 scheduleService.scheduleTask(quizExercise, quizBatch.get(), ExerciseLifecycle.START, () -> executeQuizStartNowTask(quizExerciseId));
+                scheduleQuizStatistics(quizExercise);
             }
         }
+    }
+
+    public void scheduleQuizStatistics(QuizExercise quizExercise) {
+        var quizBatch = quizExercise.getQuizBatches().stream().findAny();
+        if (quizExercise.getDueDate() != null) {
+            scheduleService.scheduleTask(quizExercise, quizBatch.get(), ExerciseLifecycle.DUE,
+                    Set.of(new Tuple<>(quizExercise.getDueDate().plusSeconds(5), () -> calculateAllResults(quizExercise, quizBatch.get())),
+                            new Tuple<>(quizExercise.getDueDate().plusSeconds(10), () -> quizStatisticService.recalculateStatistics(quizExercise))));
+        }
+    }
+
+    private void calculateAllResults(QuizExercise quizExercise, QuizBatch quizBatch) {
+        log.info("Calculating results for quiz {}", quizExercise.getId());
+        participationRepository.findByExerciseIdWithEagerSubmissions(quizExercise.getId()).forEach(participation -> {
+            Optional<QuizSubmission> quizSubmissionOptional = participation.findLatestSubmission();
+            if (quizSubmissionOptional.isEmpty()) {
+                return;
+            }
+            QuizSubmission quizSubmission = quizSubmissionOptional.get();
+
+            if (quizSubmission.isSubmitted()) {
+                if (quizSubmission.getType() == null) {
+                    quizSubmission.setType(SubmissionType.MANUAL);
+                }
+            }
+            else if (quizExercise.isQuizEnded() || quizBatch != null && quizBatch.isEnded()) {
+                quizSubmission.setSubmitted(true);
+                quizSubmission.setType(SubmissionType.TIMEOUT);
+                quizSubmission.setSubmissionDate(ZonedDateTime.now());
+            }
+
+            Result result = new Result().participation(participation);
+            result.setRated(true);
+            result.setAssessmentType(AssessmentType.AUTOMATIC);
+            result.setCompletionDate(quizSubmission.getSubmissionDate());
+            result.setSubmission(quizSubmission);
+
+            quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
+            result.evaluateQuizSubmission();
+
+            quizSubmissionRepository.save(quizSubmission);
+            resultRepository.save(result);
+        });
     }
 
     /**

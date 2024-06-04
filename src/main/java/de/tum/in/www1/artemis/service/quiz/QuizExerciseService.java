@@ -205,9 +205,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * Update a QuizExercise so that it ends at a specific date and moves the start date of the batches as required. Does not save the quiz.
      *
      * @param quizExercise The quiz to end
-     * @param endDate      When the quize should end
      */
-    public void endQuiz(QuizExercise quizExercise, ZonedDateTime endDate) {
+    public void endQuiz(QuizExercise quizExercise) {
         quizExercise.setDueDate(ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS));
         quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(quizBatchService.quizBatchStartDate(quizExercise, batch.getStartTime())));
     }
