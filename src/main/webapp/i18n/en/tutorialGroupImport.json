@@ -7,18 +7,18 @@
             "dialogTitle": "Import Tutorial Group Registrations",
             "explanations": {
                 "description": "This dialog allows you to import tutorial groups and student registrations from a CSV file. If a tutorial group does not exist, it will be created. If students are listed in the CSV then they will be moved from their current tutorial group to the new one specified in the CSV file.",
-                "requirements": "Each row must include a value for the tutorial group title. To register students, each row must include a value for either the matriculation number or the login. First and last names are optional. The top row of the CSV file must specify the headers."
+                "requirements": "The top row of the CSV file must specify the headers. Each row must include a title for the tutorial group. To register students, each row must additionally include either the matriculation number or the login of the student. First and last names are optional."
             },
             "supportedHeaderNames": {
                 "label": "Supported header names (versions with spaces, underscores, hyphens and uppercase letters are also supported): ",
-                "alwaysRequired": "Always required (to identify tutorial group): ",
-                "requiredIfStudentRegistration": "One of those is required if you want to register students (to identify students) :",
-                "alwaysOptional": "Always optional (just for display purposes): ",
-                "tutorialGroupTitle": "For tutorial group title: Tutorial Group Title",
-                "registrationNumber": "For matriculation number: Registration Number",
-                "login": "For login: Login",
-                "firstName": "For first Name: first name",
-                "lastName": "For last Name: last name or family name"
+                "alwaysRequired": "Header which is always required (to identify tutorial group): ",
+                "requiredIfStudentRegistration": "One of these is required as Header if you want to identify and register students :",
+                "alwaysOptional": "Optional Headers (just for display purposes): ",
+                "tutorialGroupTitle": "gruppe, titel, group, title -> This will be saved as a header named Tutorial Group",
+                "registrationNumber": "registrationnumber, matriculationnumber, matrikelnummer, number -> This will be saved as a header named Matriculation Number",
+                "login": "login, user, username, benutzer, benutzername -> This will be saved as a header named Login",
+                "firstName": "firstname, firstnameofstudent, givenname, forename, vorname -> This will be saved as a header named First Name",
+                "lastName": "familyname, lastname, familynameofstudent, surname, nachname, familienname, name -> This will be saved as a header named Last Name"
             },
             "errorMessages": {
                 "genericErrorMessage": "Import of tutorial groups failed!",
@@ -41,8 +41,8 @@
             },
             "fixedPlaceForm": {
                 "checkbox": {
-                    "label": "Do you want to specify a header and column to filter the rows?",
-                    "explanation": "Only those rows that have the specified value in the specified column, will be parsed from the CSV file."
+                    "label": "Do you want to only parse certain rows? Then specify a header and a value each row should have in that header column.",
+                    "explanation": "Only those rows that have the specified value in the specified Header column, will be parsed from the CSV file. For Example: Only students who have a confirmed place as value in the Place Header should be parsed from the CSV file."
                 },
                 "statusHeaderInput": {
                     "label": "Status Header",
