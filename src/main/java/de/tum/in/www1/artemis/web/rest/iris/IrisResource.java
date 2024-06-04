@@ -38,7 +38,7 @@ public class IrisResource {
     @EnforceAtLeastStudent
     public ResponseEntity<IrisStatusDTO> getStatus() {
         var user = userRepository.getUser();
-        var health = pyrisHealthIndicator.health();
+        var health = pyrisHealthIndicator.health(true);
         var rateLimitInfo = irisRateLimitService.getRateLimitInformation(user);
 
         return ResponseEntity.ok(new IrisStatusDTO(health.getStatus() == Status.UP, rateLimitInfo));

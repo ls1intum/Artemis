@@ -1729,13 +1729,13 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
         exam.setVisibleDate(ZonedDateTime.ofInstant(exam.getVisibleDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         received.setVisibleDate(ZonedDateTime.ofInstant(received.getVisibleDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
-        assertThat(received.getVisibleDate()).isEqualToIgnoringSeconds(exam.getVisibleDate());
+        assertThat(received.getVisibleDate()).isCloseTo(exam.getVisibleDate(), within(1, ChronoUnit.SECONDS));
         exam.setStartDate(ZonedDateTime.ofInstant(exam.getStartDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         received.setStartDate(ZonedDateTime.ofInstant(received.getStartDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
-        assertThat(received.getStartDate()).isEqualToIgnoringSeconds(exam.getStartDate());
+        assertThat(received.getStartDate()).isCloseTo(exam.getStartDate(), within(1, ChronoUnit.SECONDS));
         exam.setEndDate(ZonedDateTime.ofInstant(exam.getEndDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         received.setEndDate(ZonedDateTime.ofInstant(received.getEndDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
-        assertThat(received.getEndDate()).isEqualToIgnoringSeconds(exam.getEndDate());
+        assertThat(received.getEndDate()).isCloseTo(exam.getEndDate(), within(1, ChronoUnit.SECONDS));
     }
 
     @Test

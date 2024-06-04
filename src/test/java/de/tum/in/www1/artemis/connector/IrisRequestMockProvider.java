@@ -111,19 +111,20 @@ public class IrisRequestMockProvider {
         // @formatter:on
     }
 
-    public void mockStatusResponse(boolean active) throws JsonProcessingException {
+    public void mockStatusResponses() throws JsonProcessingException {
         // @formatter:off
-        PyrisHealthStatusDTO[] irisStatusDTO = null;
-        if (active) {
-           irisStatusDTO = new PyrisHealthStatusDTO[] {
+        PyrisHealthStatusDTO[] activeIrisStatusDTO = new PyrisHealthStatusDTO[] {
                 new PyrisHealthStatusDTO("model", PyrisHealthStatusDTO.ModelStatus.UP)
            };
-        }
 
         shortTimeoutMockServer
                 .expect(ExpectedCount.once(), requestTo(healthApiURL.toString()))
                 .andExpect(method(HttpMethod.GET))
-                .andRespond(withSuccess(mapper.writeValueAsString(irisStatusDTO), MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(mapper.writeValueAsString(activeIrisStatusDTO), MediaType.APPLICATION_JSON));
+        shortTimeoutMockServer
+            .expect(ExpectedCount.once(), requestTo(healthApiURL.toString()))
+            .andExpect(method(HttpMethod.GET))
+            .andRespond(withSuccess(mapper.writeValueAsString(null), MediaType.APPLICATION_JSON));
         // @formatter:on
     }
 
