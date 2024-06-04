@@ -1,0 +1,39 @@
+@if (exercise) {
+    <div class="d-flex flex-wrap column-gap-3 flex-nowrap overflow-auto horizontal-scrollbar-hidden">
+        <!-- TODO ON MOBILE SCROLLABLE  -->
+        @for (informationBoxItem of informationBoxItems; track informationBoxItem) {
+            <jhi-information-box [informationBoxData]="informationBoxItem">
+                @if (informationBoxItem.contentComponent === 'difficultyLevel') {
+                    <jhi-difficulty-level contentComponent [difficultyLevel]="informationBoxItem.content" />
+                }
+                @if (informationBoxItem.contentComponent === 'categories') {
+                    <jhi-exercise-categories
+                        contentComponent
+                        [exercise]="informationBoxItem.content"
+                        [showTags]="{ difficulty: false, notReleased: true, includedInScore: true }"
+                        [ngClass]="'badge-row'"
+                        [isSmall]="true"
+                    />
+                }
+                @if (informationBoxItem.contentComponent === 'timeAgo') {
+                    <span [ngClass]="'text-' + informationBoxItem.contentColor" contentComponent>{{ informationBoxItem.content | artemisTimeAgo }}</span>
+                }
+                @if (informationBoxItem.contentComponent === 'dateTime') {
+                    <span contentComponent>{{ informationBoxItem.content | artemisDate }}</span>
+                }
+
+                @if (informationBoxItem.contentComponent === 'submissionStatus') {
+                    <jhi-submission-result-status
+                        contentComponent
+                        class="text-truncate result"
+                        [exercise]="exercise"
+                        [studentParticipation]="studentParticipation"
+                        [triggerLastGraded]="false"
+                        [isInSidebarCard]="true"
+                        [showBadge]="false"
+                    />
+                }
+            </jhi-information-box>
+        }
+    </div>
+}

@@ -1,4 +1,5 @@
 @if (exercise.releaseDate && dayjs(exercise.releaseDate).isAfter(dayjs())) {
+    <!-- check bg-info  -->
     <span
         class="not-released-tag badge bg-info"
         [class.ms-1]="!noMargin"

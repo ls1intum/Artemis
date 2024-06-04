@@ -12,11 +12,6 @@ export class ExerciseResultPage {
         cy.get('#exercise-header').contains(title).should('be.visible');
     }
 
-    shouldShowScore(percentage: number) {
-        cy.reloadUntilFound('jhi-course-exercise-details #submission-result-graded');
-        cy.contains('.tab-bar-exercise-details', `${percentage}%`).should('be.visible');
-    }
-
     clickOpenExercise(exerciseId: number) {
         cy.intercept(GET, `${BASE_API}/results/*/rating`).as('getResults');
         cy.get('#open-exercise-' + exerciseId).click();
