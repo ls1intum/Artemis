@@ -231,7 +231,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     @HostListener('window: resize', ['$event'])
     onResize() {
         this.dropdownOpen = false;
-        this.dropdownCourses = false;
         this.dropdownClickNumber = 0;
         this.updateVisibility(window.innerHeight);
         this.updateMenuPosition();
@@ -247,10 +246,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                 this.dropdownClickNumber = 0;
             }
         }
-    }
-
-    toggleCourseDropdown() {
-        this.dropdownCourses = !this.dropdownCourses;
     }
 
     /** Update sidebar item's hidden property based on the window height to display three-dots */
@@ -314,7 +309,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     /** Navigate to a new Course */
     switchCourse(course: Course) {
-        this.dropdownCourses = false;
         this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
             this.router.navigate(['courses', course.id]);
         });

@@ -16,9 +16,9 @@
                                         <span class="fs-4">{{ course?.title | slice: 0 : 1 }}</span>
                                     </div>
                                 }
-                                <div ngbDropdownMenu class="test py-1 ms-n2">
+                                <div ngbDropdownMenu class="dropdown-menu py-1 ms-n2">
                                     @for (course of courses; track course) {
-                                        <button ngbDropdownItem (click)="switchCourse(course); dropdownCourses = false" class="d-flex align-items-center py-1 px-2">
+                                        <button ngbDropdownItem (click)="switchCourse(course)" class="d-flex align-items-center py-1 px-2">
                                             @if (course.courseIcon) {
                                                 <span class="d-flex align-items-center justify-content-center">
                                                     <jhi-secured-image [src]="course.courseIcon" />

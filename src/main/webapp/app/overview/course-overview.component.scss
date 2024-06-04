@@ -219,9 +219,6 @@ jhi-secured-image {
         @extend %message-block;
         margin-left: -0.9rem;
     }
-    #dropdownCourses {
-        width: 64px !important;
-    }
 }
 
 .btn-sidebar-collapse {
@@ -260,7 +257,7 @@ jhi-secured-image {
     }
 }
 
-.test {
+.dropdown-menu {
     min-width: 204px;
     max-width: 294px;
 }
