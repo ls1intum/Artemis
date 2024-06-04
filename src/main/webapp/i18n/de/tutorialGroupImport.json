@@ -7,12 +7,12 @@
             "dialogTitle": "Übungsgruppen importieren",
             "explanations": {
                 "description": "Dieses Dialogfeld ermöglicht es, Tutoriumsgruppen und Studierendenregistrierungen aus einer CSV-Datei zu importieren. Wenn eine Tutoriumsgruppe noch nicht existiert, wird sie erstellt. Wenn Studierende in der CSV-Datei aufgeführt sind, werden sie von ihrer aktuellen Tutoriumsgruppe in die neue, in der CSV-Datei angegebene, Gruppe verschoben.",
-                "requirements": "Jede Zeile muss den Titel der Tutoriumsgruppe enthalten. Um Studenten zu registrieren, muss jede Zeile entweder eine Matrikelnummer oder einen Anmeldenamen enthalten. Vor- und Nachname sind optional. Die oberste Zeile der CSV-Datei muss die Spaltennamen angeben."
+                "requirements": "Die oberste Zeile der CSV-Datei muss die Spaltennamen angeben. Jede Zeile muss den Titel der Tutoriumsgruppe enthalten. Um Studenten zu registrieren, muss jede Zeile zusätzlich entweder eine Matrikelnummer oder einen Anmeldenamen enthalten. Vor- und Nachname sind optional."
             },
             "supportedHeaderNames": {
                 "label": "Unterstützte Spaltennamen (Versionen mit Leerzeichen, Unterstrichen, Bindestrichen und Grossbuchstaben werden ebenfalls unterstützt): ",
-                "alwaysRequired": "Immer erforderlich (um die Übungsgruppe zu identifizieren): ",
-                "requiredIfStudentRegistration": "Eines davon ist erforderlich, wenn Studierende registriert werden sollen (um Studierende zu identifizieren): ",
+                "alwaysRequired": "Eins von den folgenden ist als Spaltennamen immer erforderlich (um die Übungsgruppe zu identifizieren): ",
+                "requiredIfStudentRegistration": "Eins von den folgenden ist als Spaltennamen erforderlich, wenn Studierende identifiziert und registriert werden sollen: ",
                 "alwaysOptional": "Immer optional (nur für Anzeigzwecke): ",
                 "tutorialGroupTitle": "Für den Tiel der Übungsgruppe: Übungsgruppe",
                 "registrationNumber": "Für die Immatrikulationsnummer: Matrikelnummer",

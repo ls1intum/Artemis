@@ -33,7 +33,7 @@
         <!-- Example Tables -->
         <div class="form-group">
             <label class="font-weight-bold"
-                ><th scope="col">{{ 'artemisApp.tutorialGroupImportDialog.table.example1' | artemisTranslate }}</th></label
+                ><th>{{ 'artemisApp.tutorialGroupImportDialog.table.example1' | artemisTranslate }}</th></label
             >
             <table class="table table-striped table-bordered table-sm mt-2">
                 <thead>
@@ -53,15 +53,15 @@
         </div>
         <div class="form-group">
             <label class="font-weight-bold"
-                ><th scope="col">{{ 'artemisApp.tutorialGroupImportDialog.table.example2' | artemisTranslate }}</th></label
+                ><th>{{ 'artemisApp.tutorialGroupImportDialog.table.example2' | artemisTranslate }}</th></label
             >
             <table class="table table-striped table-bordered table-sm mt-2">
                 <thead>
                     <tr>
-                        <th scope="col">{{ 'artemisApp.tutorialGroupImportDialog.table.columns.title' | artemisTranslate }}</th>
-                        <th scope="col">{{ 'artemisApp.tutorialGroupImportDialog.table.columns.registrationNumber' | artemisTranslate }}</th>
-                        <th scope="col">{{ 'artemisApp.tutorialGroupImportDialog.table.columns.firstName' | artemisTranslate }}</th>
-                        <th scope="col">{{ 'artemisApp.tutorialGroupImportDialog.table.columns.lastName' | artemisTranslate }}</th>
+                        <th>{{ 'artemisApp.tutorialGroupImportDialog.table.columns.title' | artemisTranslate }}</th>
+                        <th>{{ 'artemisApp.tutorialGroupImportDialog.table.columns.registrationNumber' | artemisTranslate }}</th>
+                        <th>{{ 'artemisApp.tutorialGroupImportDialog.table.columns.firstName' | artemisTranslate }}</th>
+                        <th>{{ 'artemisApp.tutorialGroupImportDialog.table.columns.lastName' | artemisTranslate }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -82,15 +82,15 @@
         </div>
         <div class="form-group">
             <label class="font-weight-bold"
-                ><th scope="col">{{ 'artemisApp.tutorialGroupImportDialog.table.example3' | artemisTranslate }}</th></label
+                ><th>{{ 'artemisApp.tutorialGroupImportDialog.table.example3' | artemisTranslate }}</th></label
             >
             <table class="table table-striped table-bordered table-sm mt-2">
                 <thead>
                     <tr>
-                        <th scope="col">{{ 'artemisApp.tutorialGroupImportDialog.table.columns.title' | artemisTranslate }}</th>
-                        <th scope="col">{{ 'artemisApp.tutorialGroupImportDialog.table.columns.login' | artemisTranslate }}</th>
-                        <th scope="col">{{ 'artemisApp.tutorialGroupImportDialog.table.columns.firstName' | artemisTranslate }}</th>
-                        <th scope="col">{{ 'artemisApp.tutorialGroupImportDialog.table.columns.lastName' | artemisTranslate }}</th>
+                        <th>{{ 'artemisApp.tutorialGroupImportDialog.table.columns.title' | artemisTranslate }}</th>
+                        <th>{{ 'artemisApp.tutorialGroupImportDialog.table.columns.login' | artemisTranslate }}</th>
+                        <th>{{ 'artemisApp.tutorialGroupImportDialog.table.columns.firstName' | artemisTranslate }}</th>
+                        <th>{{ 'artemisApp.tutorialGroupImportDialog.table.columns.lastName' | artemisTranslate }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -148,10 +148,10 @@
                     {{ 'artemisApp.tutorialGroupImportDialog.fixedPlaceForm.checkbox.label' | artemisTranslate }}
                 </label>
             </div>
-            <div>
-                <small>{{ 'artemisApp.tutorialGroupImportDialog.fixedPlaceForm.checkbox.explanation' | artemisTranslate }}</small>
-            </div>
             <div [hidden]="specifyFixedPlaceControl?.value === false">
+                <div>
+                    <small>{{ 'artemisApp.tutorialGroupImportDialog.fixedPlaceForm.checkbox.explanation' | artemisTranslate }}</small>
+                </div>
                 <!-- Status Header -->
                 <div class="form-group">
                     <label for="status-header">{{ 'artemisApp.tutorialGroupImportDialog.fixedPlaceForm.statusHeaderInput.label' | artemisTranslate }}</label>

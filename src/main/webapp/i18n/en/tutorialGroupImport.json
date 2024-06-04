@@ -11,14 +11,14 @@
             },
             "supportedHeaderNames": {
                 "label": "Supported header names (versions with spaces, underscores, hyphens and uppercase letters are also supported): ",
-                "alwaysRequired": "Header which is always required (to identify tutorial group): ",
+                "alwaysRequired": "One of these Header is always required (to identify tutorial group): ",
                 "requiredIfStudentRegistration": "One of these is required as Header if you want to identify and register students :",
                 "alwaysOptional": "Optional Headers (just for display purposes): ",
-                "tutorialGroupTitle": "gruppe, titel, group, title -> This will be saved as a header named Tutorial Group",
-                "registrationNumber": "registrationnumber, matriculationnumber, matrikelnummer, number -> This will be saved as a header named Matriculation Number",
-                "login": "login, user, username, benutzer, benutzername -> This will be saved as a header named Login",
-                "firstName": "firstname, firstnameofstudent, givenname, forename, vorname -> This will be saved as a header named First Name",
-                "lastName": "familyname, lastname, familynameofstudent, surname, nachname, familienname, name -> This will be saved as a header named Last Name"
+                "tutorialGroupTitle": "gruppe, titel, group, title -> After parsing the CSV this will be saved as a Header named Tutorial Group",
+                "registrationNumber": "registrationnumber, matriculationnumber, matrikelnummer, number -> After parsing the CSV this will be saved as a header named Matriculation Number",
+                "login": "login, user, username, benutzer, benutzername -> After parsing the CSV this will be saved as a header named Login",
+                "firstName": "firstname, firstnameofstudent, givenname, forename, vorname -> After parsing the CSV this will be saved as a header named First Name",
+                "lastName": "familyname, lastname, familynameofstudent, surname, nachname, familienname, name -> After parsing the CSV this will be saved as a header named Last Name"
             },
             "errorMessages": {
                 "genericErrorMessage": "Import of tutorial groups failed!",
@@ -41,8 +41,8 @@
             },
             "fixedPlaceForm": {
                 "checkbox": {
-                    "label": "Do you want to only parse certain rows? Then specify a header and a value each row should have in that header column.",
-                    "explanation": "Only those rows that have the specified value in the specified Header column, will be parsed from the CSV file. For Example: Only students who have a confirmed place as value in the Place Header should be parsed from the CSV file."
+                    "label": "Do you want to only parse certain rows? Then specify a header and the required value for that header.",
+                    "explanation": "Only rows with the specified value in the specified header column will be parsed from the CSV file. For Example: Only students who have a 'confirmed place' as value in the 'Place' Header should be parsed from the CSV file."
                 },
                 "statusHeaderInput": {
                     "label": "Status Header",
