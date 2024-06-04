@@ -1,7 +1,7 @@
 import { Component, ContentChild, HostBinding, Input, OnChanges, OnInit, TemplateRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
-import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
+import { ExternalCloningService } from 'app/exercises/programming/shared/service/externalCloning.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -25,7 +25,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
     selector: 'jhi-exercise-details-student-actions',
     templateUrl: './exercise-details-student-actions.component.html',
     styleUrls: ['../course-overview.scss'],
-    providers: [SourceTreeService],
+    providers: [ExternalCloningService],
 })
 export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges {
     readonly FeatureToggle = FeatureToggle;
