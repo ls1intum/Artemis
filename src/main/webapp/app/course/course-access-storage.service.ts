@@ -8,7 +8,7 @@ export class CourseAccessStorageService {
     public static readonly STORAGE_KEY = 'artemis.courseAccess';
     public static readonly STORAGE_KEY_DROPDOWN = 'artemis.courseAccessDropdown';
     public static readonly MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_OVERVIEW = 3;
-    // Maximum number of recently accessed courses displayed in the dropdown, excluding the current course.
+    // Maximum number of recently accessed courses displayed in the dropdown, including the current course. The current course will be removed before displaying the dropdown so only 6 - 1 courses will be displayed in the dropdown.
     public static readonly MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_DROPDOWN = 6;
 
     constructor(private localStorage: LocalStorageService) {}
