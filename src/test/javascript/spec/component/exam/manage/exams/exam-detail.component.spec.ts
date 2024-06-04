@@ -42,6 +42,7 @@ import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-
 import { LocalStorageService } from 'ngx-webstorage';
 import * as Utils from 'app/shared/util/utils';
 import { ExerciseDetailDirective } from 'app/detail-overview-list/exercise-detail.directive';
+import { NoDataComponent } from 'app/detail-overview-list/components/no-data-component';
 
 @Component({
     template: '',
@@ -76,6 +77,7 @@ describe('ExamDetailComponent', () => {
                 ]),
                 HttpClientTestingModule,
                 ExerciseDetailDirective,
+                MockComponent(NoDataComponent),
             ],
             declarations: [
                 DetailOverviewListComponent,
