@@ -195,8 +195,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     }
 
     buildIntelliJUrl() {
-        const cloneUrl = this.getHttpOrSshRepositoryUri(false);
-        return this.externalCloningService.buildIntelliJUrl(cloneUrl);
+        return this.externalCloningService.buildIntelliJUrl(this.getHttpOrSshRepositoryUri(false));
     }
 
     switchPracticeMode() {
