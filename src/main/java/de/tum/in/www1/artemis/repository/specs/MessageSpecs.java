@@ -94,7 +94,7 @@ public class MessageSpecs {
             final var conversationJoin = root.join(Post_.conversation, JoinType.LEFT);
             final var isInCoursePredicate = criteriaBuilder.equal(conversationJoin.get(Channel_.COURSE).get(Course_.ID), courseId);
             final var isCourseWidePredicate = criteriaBuilder.isTrue(conversationJoin.get(Channel_.IS_COURSE_WIDE));
-            // make sure we only fetch channels (which are sub types of conversations), the string needs to be the same as the DiscriminatorValue in the Channel class
+            // make sure we only fetch channels (which are sub types of conversations)
             // this avoids the creation of sub queries
             final var isChannelPredicate = criteriaBuilder.equal(conversationJoin.type(), criteriaBuilder.literal(Channel.class));
             return criteriaBuilder.and(isInCoursePredicate, isCourseWidePredicate, isChannelPredicate);
