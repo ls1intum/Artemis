@@ -795,8 +795,6 @@ public class ParticipationResource {
         }
         else {
             // Quiz hasn't started yet => no Result, only quizExercise without questions
-            // OR: the quiz batch is already done and the submission has not yet been processed =>
-            // TODO: handle this case, but the issue will go away on its own by just waiting
             quizExercise.filterSensitiveInformation();
             quizExercise.setQuizBatches(quizBatch.stream().collect(Collectors.toSet()));
             if (quizExercise.getAllowedNumberOfAttempts() != null) {

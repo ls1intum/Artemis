@@ -161,7 +161,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                         this.initShowSolution();
                         break;
                     case 'live':
-                        this.refreshQuiz();
+                        this.initLiveMode();
                         break;
                 }
             },
@@ -607,7 +607,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      */
     updateParticipationFromServer(participation: StudentParticipation) {
         if (participation) {
-            this.applyQuizFull(this.quizExercise ?? (participation.exercise as QuizExercise));
+            this.applyQuizFull(participation.exercise as QuizExercise);
         }
 
         // apply submission if it exists

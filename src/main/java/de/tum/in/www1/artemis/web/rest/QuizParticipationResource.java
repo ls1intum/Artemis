@@ -5,11 +5,14 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.json.MappingJacksonValue;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,6 +30,7 @@ import de.tum.in.www1.artemis.repository.SubmittedAnswerRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.quiz.QuizBatchService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
@@ -51,14 +55,18 @@ public class QuizParticipationResource {
 
     private final QuizSubmissionRepository quizSubmissionRepository;
 
+    private final QuizBatchService quizBatchService;
+
     public QuizParticipationResource(QuizExerciseRepository quizExerciseRepository, ParticipationService participationService, UserRepository userRepository,
-            ResultRepository resultRepository, SubmittedAnswerRepository submittedAnswerRepository, QuizSubmissionRepository quizSubmissionRepository) {
+            ResultRepository resultRepository, SubmittedAnswerRepository submittedAnswerRepository, QuizSubmissionRepository quizSubmissionRepository,
+            QuizBatchService quizBatchService) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.participationService = participationService;
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.submittedAnswerRepository = submittedAnswerRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
+        this.quizBatchService = quizBatchService;
     }
 
     /**
@@ -69,15 +77,19 @@ public class QuizParticipationResource {
      */
     @PostMapping("quiz-exercises/{exerciseId}/start-participation")
     @EnforceAtLeastStudentInExercise
-    public ResponseEntity<StudentParticipation> startParticipation(@PathVariable Long exerciseId) {
+    public ResponseEntity<MappingJacksonValue> startParticipation(@PathVariable Long exerciseId) {
         log.debug("REST request to start quiz exercise participation : {}", exerciseId);
-        QuizExercise exercise = quizExerciseRepository.findByIdElseThrow(exerciseId);
+        QuizExercise exercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exerciseId);
 
         if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
             throw new AccessForbiddenException("Students cannot start an exercise before the release date");
         }
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        var quizBatch = quizBatchService.getQuizBatchForStudentByLogin(exercise, user.getLogin());
+        exercise.setQuizBatches(quizBatch.stream().collect(Collectors.toSet()));
+
         StudentParticipation participation = participationService.startExercise(exercise, user, true);
 
         Optional<Result> optionalResult = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true);
@@ -94,6 +106,11 @@ public class QuizParticipationResource {
         }
 
         participation.setResults(Set.of(result));
-        return ResponseEntity.ok(participation);
+        participation.setExercise(exercise);
+
+        var view = exercise.viewForStudentsInQuizExercise(quizBatch.orElse(null));
+        MappingJacksonValue value = new MappingJacksonValue(participation);
+        value.setSerializationView(view);
+        return new ResponseEntity<>(value, HttpStatus.OK);
     }
 }
