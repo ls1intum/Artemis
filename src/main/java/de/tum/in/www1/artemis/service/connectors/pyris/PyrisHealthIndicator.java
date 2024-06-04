@@ -34,9 +34,10 @@ public class PyrisHealthIndicator implements HealthIndicator {
         this.restTemplate = restTemplate;
     }
 
-    /*
+    /**
      * Pings Iris at /health and checks if the service is available and what its status is.
      * Always uses a new ping and does not use a cached result.
+     *
      * @return The health status of Iris
      */
     @Override
