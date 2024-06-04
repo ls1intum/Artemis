@@ -672,4 +672,16 @@ describe('CourseOverviewComponent', () => {
         expect(component.courses).toEqual(courses);
         expect(component.courses?.pop()).toBe(course2);
     });
+
+    it('should unsubscribe from dashboardSubscription on ngOnDestroy', () => {
+        const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
+        findAllForDashboardSpy.mockReturnValue(of(new HttpResponse({ body: coursesDashboard, headers: new HttpHeaders() })));
+
+        component.updateRecentlyAccessedCourses();
+        fixture.detectChanges();
+        component.ngOnDestroy();
+
+        expect(courseService.findAllForDashboard).toHaveBeenCalled();
+        expect(component.dashboardSubscription.closed).toBeTrue();
+    });
 });

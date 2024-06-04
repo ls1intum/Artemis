@@ -29,7 +29,6 @@ import {
     IconDefinition,
     faChalkboardUser,
     faChartBar,
-    faChevronDown,
     faChevronRight,
     faCircleNotch,
     faClipboard,
@@ -96,7 +95,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     private courseId: number;
     private subscription: Subscription;
-    private dashboardSubscription: Subscription;
+    dashboardSubscription: Subscription;
     course?: Course;
     courses?: Course[];
     refreshingCourse = false;
@@ -167,7 +166,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     faSync = faSync;
     faCircleNotch = faCircleNotch;
     faChevronRight = faChevronRight;
-    faChevronDown = faChevronDown;
     facSidebar = facSidebar;
     faEllipsis = faEllipsis;
 
