@@ -116,11 +116,15 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
         });
 
         // Notify the course access storage service that the course has been accessed
-        this.courseAccessStorageService.onCourseAccessed(courseId, CourseAccessStorageService.STORAGE_KEY, CourseAccessStorageService.MAX_RECENTLY_ACCESSED_COURSES_OVERVIEW);
+        this.courseAccessStorageService.onCourseAccessed(
+            courseId,
+            CourseAccessStorageService.STORAGE_KEY,
+            CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_OVERVIEW,
+        );
         this.courseAccessStorageService.onCourseAccessed(
             courseId,
             CourseAccessStorageService.STORAGE_KEY_DROPDOWN,
-            CourseAccessStorageService.MAX_RECENTLY_ACCESSED_COURSES_DROPDOWN,
+            CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_DROPDOWN,
         );
     }
 

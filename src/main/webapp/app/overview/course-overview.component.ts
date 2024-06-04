@@ -114,14 +114,12 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     isNotManagementView: boolean;
     canUnenroll: boolean;
     isNavbarCollapsed = false;
-    isSidebarCollapsed = false;
     profileSubscription?: Subscription;
     showRefreshButton: boolean = false;
     readonly MIN_DISPLAYED_COURSES: number = 6;
 
     // Properties to track hidden items for dropdown menu
     dropdownOpen: boolean = false;
-    dropdownCourses: boolean = false;
     anyItemHidden: boolean = false;
     hiddenItems: SidebarItem[] = [];
     thresholdsForEachSidebarItem: number[] = [];
@@ -168,12 +166,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     faGraduationCap = faGraduationCap;
     faSync = faSync;
     faCircleNotch = faCircleNotch;
-    faNetworkWired = faNetworkWired;
-    faChalkboardUser = faChalkboardUser;
     faChevronRight = faChevronRight;
     faChevronDown = faChevronDown;
-    faListCheck = faListCheck;
-    faDoorOpen = faDoorOpen;
     facSidebar = facSidebar;
     faEllipsis = faEllipsis;
 
@@ -213,11 +207,15 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.updateRecentlyAccessedCourses();
         this.isNotManagementView = !this.router.url.startsWith('/course-management');
         // Notify the course access storage service that the course has been accessed
-        this.courseAccessStorageService.onCourseAccessed(this.courseId, CourseAccessStorageService.STORAGE_KEY, CourseAccessStorageService.MAX_RECENTLY_ACCESSED_COURSES_OVERVIEW);
+        this.courseAccessStorageService.onCourseAccessed(
+            this.courseId,
+            CourseAccessStorageService.STORAGE_KEY,
+            CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_OVERVIEW,
+        );
         this.courseAccessStorageService.onCourseAccessed(
             this.courseId,
             CourseAccessStorageService.STORAGE_KEY_DROPDOWN,
-            CourseAccessStorageService.MAX_RECENTLY_ACCESSED_COURSES_DROPDOWN,
+            CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_DROPDOWN,
         );
 
         await firstValueFrom(this.loadCourse());

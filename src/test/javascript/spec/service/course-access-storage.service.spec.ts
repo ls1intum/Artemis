@@ -24,7 +24,7 @@ describe('CourseAccessStorageService', () => {
 
     it('should store accessed course', () => {
         const courseId = 123;
-        service.onCourseAccessed(courseId, CourseAccessStorageService.STORAGE_KEY, CourseAccessStorageService.MAX_RECENTLY_ACCESSED_COURSES_OVERVIEW);
+        service.onCourseAccessed(courseId, CourseAccessStorageService.STORAGE_KEY, CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_OVERVIEW);
         const courseAccessMap = localStorage.retrieve('artemis.courseAccess');
         expect(courseAccessMap).toHaveProperty(courseId.toString());
     });
@@ -32,7 +32,7 @@ describe('CourseAccessStorageService', () => {
     it('should retrieve last accessed courses and remove older courses', fakeAsync(() => {
         const courseIds = [123, 456, 789, 101112, 7494];
         courseIds.forEach((courseId) => {
-            service.onCourseAccessed(courseId, CourseAccessStorageService.STORAGE_KEY, CourseAccessStorageService.MAX_RECENTLY_ACCESSED_COURSES_OVERVIEW);
+            service.onCourseAccessed(courseId, CourseAccessStorageService.STORAGE_KEY, CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_OVERVIEW);
             tick(10); // Wait 10ms to ensure that the timestamp is different for each course
         });
         const lastAccessedCourses = service.getLastAccessedCourses(CourseAccessStorageService.STORAGE_KEY);

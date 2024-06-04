@@ -7,8 +7,9 @@ import { LocalStorageService } from 'ngx-webstorage';
 export class CourseAccessStorageService {
     public static readonly STORAGE_KEY = 'artemis.courseAccess';
     public static readonly STORAGE_KEY_DROPDOWN = 'artemis.courseAccessDropdown';
-    public static readonly MAX_RECENTLY_ACCESSED_COURSES_OVERVIEW = 3;
-    public static readonly MAX_RECENTLY_ACCESSED_COURSES_DROPDOWN = 6;
+    public static readonly MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_OVERVIEW = 3;
+    // Maximum number of recently accessed courses displayed in the dropdown, excluding the current course.
+    public static readonly MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_DROPDOWN = 6;
 
     constructor(private localStorage: LocalStorageService) {}
 
