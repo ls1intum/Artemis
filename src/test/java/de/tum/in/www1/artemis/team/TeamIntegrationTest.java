@@ -42,6 +42,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.CoursesForDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ExerciseDetailsDTO;
 
 class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -499,8 +500,8 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(serverExercise.isStudentAssignedTeamIdComputed()).as("Assigned team id on exercise was computed.").isTrue();
 
         // Check for endpoint: @GetMapping("exercises/{exerciseId}/details")
-        Exercise exerciseWithDetails = request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.OK, Exercise.class);
-        assertThat(exerciseWithDetails.getStudentAssignedTeamId()).as("Assigned team id on exercise from details is correct for student.").isEqualTo(team.getId());
+        ExerciseDetailsDTO exerciseWithDetails = request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
+        assertThat(exerciseWithDetails.exercise().getStudentAssignedTeamId()).as("Assigned team id on exercise from details is correct for student.").isEqualTo(team.getId());
         assertThat(serverExercise.isStudentAssignedTeamIdComputed()).as("Assigned team id on exercise was computed.").isTrue();
     }
 
