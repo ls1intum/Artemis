@@ -46,6 +46,7 @@
             </div>
             <hr />
             <jhi-exam-start-information [exam]="exam" [studentExam]="studentExam" />
+            <span [innerHTML]="formattedGeneralInformation"></span>
             <div class="d-inline-flex align-items-center mb-5">
                 <div class="ps-1">
                     <input
@@ -60,9 +61,11 @@
                     />
                     <label for="confirmBox" id="formatted-confirmation-text" class="form-check-label" [innerHTML]="formattedConfirmationText"></label>
                 </div>
-                <div class="login-form">
-                    <label class="font-weight-bold" for="confirmBox" jhiTranslate="{{ 'artemisApp.exam.startCheckBoxText' }}"></label>
-                </div>
+                @if (!formattedConfirmationText) {
+                    <div class="login-form">
+                        <label class="font-weight-bold" for="confirmBox" jhiTranslate="{{ 'artemisApp.exam.startCheckBoxText' }}"></label>
+                    </div>
+                }
             </div>
 
             <div class="mb-4 fw-bold" jhiTranslate="artemisApp.exam.startConsentText"></div>
