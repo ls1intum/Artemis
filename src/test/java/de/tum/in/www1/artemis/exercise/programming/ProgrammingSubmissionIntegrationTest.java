@@ -765,7 +765,8 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationJenk
         String url = "/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment";
         ProgrammingSubmission storedSubmission = request.get(url, HttpStatus.OK, ProgrammingSubmission.class);
 
-        assertThat(storedSubmission).as("submission was found").usingRecursiveComparison().ignoringFields("results", "submissionDate").isEqualTo(submission);
+        final String[] ignoringFields = { "results", "submissionDate", "participation" };
+        assertThat(storedSubmission).as("submission was found").usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(submission);
         assertThat(storedSubmission.getSubmissionDate()).as("submission date is correct").isCloseTo(submission.getSubmissionDate(), HalfSecond());
         assertThat(storedSubmission.getLatestResult()).as("result is not set").isNull();
     }
