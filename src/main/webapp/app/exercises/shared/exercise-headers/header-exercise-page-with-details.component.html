@@ -1,45 +1,144 @@
 @if (exercise) {
-    <div class="d-flex flex-wrap column-gap-3">
-        <!-- TODO ON MOBILE SCROLLABLE  -->
-        @for (informationBoxItem of informationBoxItems; track informationBoxItem) {
-            <jhi-information-box [informationBoxData]="informationBoxItem">
-                @if (informationBoxItem.contentComponent === 'difficultyLevel') {
-                    <jhi-difficulty-level contentComponent [difficultyLevel]="informationBoxItem.content" />
-                }
-                @if (informationBoxItem.contentComponent === 'categories') {
-                    <jhi-exercise-categories
-                        contentComponent
-                        [exercise]="informationBoxItem.content"
-                        [showTags]="{ difficulty: false, notReleased: true, includedInScore: true }"
-                        [ngClass]="'badge-row'"
-                        [isSmall]="true"
-                    />
-                }
-                @if (informationBoxItem.contentComponent === 'timeAgo') {
-                    <span [ngClass]="'text-' + informationBoxItem.contentColor" contentComponent>{{ informationBoxItem.content | artemisTimeAgo }}</span>
-                }
-                @if (informationBoxItem.contentComponent === 'dateTime') {
-                    <span contentComponent>{{ informationBoxItem.content | artemisDate }}</span>
-                }
-
-                @if (informationBoxItem.contentComponent === 'submissionStatus') {
-                    <jhi-submission-result-status
-                        contentComponent
-                        class="text-truncate result"
-                        [exercise]="exercise"
-                        [studentParticipation]="studentParticipation"
-                        [triggerLastGraded]="false"
-                        [isInSidebarCard]="true"
-                        [showBadge]="false"
-                    />
-                }
-            </jhi-information-box>
-        }
-    </div>
     <div class="course-info-bar" id="exercise-header">
+        <div class="left-col">
+            <div class="title-row">
+                <div class="inner-row">
+                    @if (exercise.type) {
+                        <fa-icon [icon]="getIcon(exercise.type)" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" />
+                    }
+                    &nbsp;
+                    <ng-content select="[pagetitle]" />
+                </div>
+                @if ((exercise.releaseDate && dayjs(exercise.releaseDate).isAfter(dayjs())) || exercise.difficulty || exerciseCategories?.length) {
+                    <jhi-exercise-categories [exercise]="exercise" [showTags]="{ difficulty: true, notReleased: true }" [ngClass]="'badge-row'" />
+                }
+            </div>
+            @if (exercise.maxPoints || (exercise.assessmentType && exercise.type === ExerciseType.PROGRAMMING)) {
+                <div class="points-assessment-row">
+                    @if (exercise.maxPoints) {
+                        <span [style.margin-right]="exercise.maxPoints ? '30px' : null">
+                            <span class="me-2">
+                                {{ 'artemisApp.courseOverview.exerciseDetails.points' | artemisTranslate }}
+                                @if (achievedPoints !== undefined) {
+                                    {{ achievedPoints + ('artemisApp.courseOverview.exerciseDetails.of' | artemisTranslate) }}
+                                }
+                                {{ exercise.maxPoints }}
+                                @if (exercise.bonusPoints) {
+                                    <span>({{ 'artemisApp.courseOverview.exerciseDetails.bonus' | artemisTranslate }} {{ exercise.bonusPoints }})</span>
+                                }
+                            </span>
+                            @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                                <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore" class="me-2" />
+                            }
+                        </span>
+                    }
+                    @if (exercise.assessmentType && exercise.type === ExerciseType.PROGRAMMING) {
+                        <span>
+                            <div>
+                                {{ 'artemisApp.courseOverview.exerciseDetails.assessmentType' | artemisTranslate }}
+                                {{ 'artemisApp.AssessmentType.forExerciseHeader.' + exercise.assessmentType | artemisTranslate }}
+                                <fa-icon [icon]="faQuestionCircle" ngbTooltip="{{ 'artemisApp.AssessmentType.tooltip.' + exercise.assessmentType | artemisTranslate }}" />
+                            </div>
+                        </span>
+                    }
+                </div>
+            }
+            @if (submissionPolicy && submissionPolicy.active) {
+                <div class="submission-row">
+                    <div>{{ 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle' | artemisTranslate }}:</div>
+                    <div>
+                        {{
+                            numberOfSubmissions +
+                                '/' +
+                                submissionPolicy.submissionLimit +
+                                (submissionPolicy.exceedingPenalty
+                                    ? ('artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel'
+                                      | artemisTranslate: { points: submissionPolicy.exceedingPenalty })
+                                    : '')
+                        }}
+                        <fa-icon
+                            [icon]="faQuestionCircle"
+                            ngbTooltip="{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' + submissionPolicy.type + '.tooltip' | artemisTranslate }}"
+                        />
+                    </div>
+                </div>
+            }
+        </div>
         <div class="right-col">
+            @if (!nextRelevantDateLabel || (nextRelevantDateLabel !== 'releaseDate' && nextRelevantDateLabel !== 'startDate')) {
+            } @else {
+                @if (nextRelevantDate && (!exam || !isTestRun)) {
+                    <div class="fw-500">
+                        {{ 'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel | artemisTranslate }}
+                        <span
+                            [ngClass]="nextRelevantDateStatusBadge"
+                            class="badge"
+                            [ngbTooltip]="
+                                'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel + 'Tooltip' | artemisTranslate: { date: nextRelevantDate | artemisDate }
+                            "
+                        >
+                            {{ nextRelevantDate | artemisTimeAgo }}
+                        </span>
+                    </div>
+                }
+                @if (exercise.presentationScoreEnabled) {
+                    <div>
+                        @if (course?.presentationScore) {
+                            {{ 'artemisApp.courseOverview.exerciseDetails.presented' | artemisTranslate }}
+                            @if ((studentParticipation?.presentationScore ?? 0) > 0) {
+                                <span class="badge bg-success">
+                                    {{ 'global.generic.yes' | artemisTranslate }}
+                                </span>
+                            }
+                            @if ((studentParticipation?.presentationScore ?? 0) <= 0) {
+                                <span class="badge bg-secondary">
+                                    {{ 'global.generic.no' | artemisTranslate }}
+                                </span>
+                            }
+                        } @else {
+                            {{ 'artemisApp.courseOverview.exerciseDetails.presentation' | artemisTranslate }}
+                            @if (studentParticipation?.presentationScore) {
+                                <span class="badge bg-success">
+                                    {{ studentParticipation!.presentationScore + '%' }}
+                                </span>
+                            }
+                            @if (!studentParticipation?.presentationScore) {
+                                <span class="badge bg-secondary">
+                                    {{ 'global.generic.unset' | artemisTranslate }}
+                                </span>
+                            }
+                        }
+                    </div>
+                }
+            }
+            @if (dueDate) {
+                <div class="fw-500">
+                    {{ 'artemisApp.courseOverview.exerciseDetails.submissionDue' | artemisTranslate }}
+                    <span
+                        [ngClass]="dueDateStatusBadge"
+                        class="badge"
+                        [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.submissionDueTooltip' | artemisTranslate: { date: dueDate | artemisDate }"
+                    >
+                        {{ dueDate | artemisTimeAgo }}
+                    </span>
+                </div>
+            }
             @if (!nextRelevantDateLabel || (nextRelevantDateLabel !== 'assessmentDue' && nextRelevantDateLabel !== 'complaintDue')) {
             } @else {
+                @if (nextRelevantDate && (!exam || !isTestRun)) {
+                    <div class="fw-500">
+                        {{ 'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel | artemisTranslate }}
+                        <span
+                            [ngClass]="nextRelevantDateStatusBadge"
+                            class="badge"
+                            [ngbTooltip]="
+                                'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel + 'Tooltip' | artemisTranslate: { date: nextRelevantDate | artemisDate }
+                            "
+                        >
+                            {{ nextRelevantDate | artemisTimeAgo }}
+                        </span>
+                    </div>
+                }
                 @if (exercise.presentationScoreEnabled) {
                     <div>
                         @if (course?.presentationScore) {
@@ -64,6 +163,17 @@
                         }
                     </div>
                 }
+            }
+            @if (!nextRelevantDate && canComplainLaterOn) {
+                <div class="fw-500">
+                    {{ 'artemisApp.courseOverview.exerciseDetails.complaintPossible' | artemisTranslate }}
+                    <span
+                        class="badge bg-success"
+                        [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.complaintPossibleTooltip' | artemisTranslate: { days: course?.maxComplaintTimeDays }"
+                    >
+                        {{ 'global.generic.yes' | artemisTranslate }}
+                    </span>
+                </div>
             }
         </div>
     </div>

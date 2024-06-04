@@ -200,14 +200,14 @@
                         </div>
                         <div class="d-flex">
                             @if (isNotManagementView && course.isAtLeastTutor) {
-                                <div id="manage-button" clasS="me-3">
+                                <div id="manage-button">
                                     <a class="btn btn-outline-secondary" [routerLink]="['/course-management', course.id]">
                                         {{ 'artemisApp.courseOverview.manage' | artemisTranslate }}
                                     </a>
                                 </div>
                             }
                             @if (showRefreshButton) {
-                                <button class="btn btn-primary btn-md ms-3" (click)="loadCourse(true)" [disabled]="refreshingCourse">
+                                <button class="btn btn-outline-primary btn-md ms-3" (click)="loadCourse(true)" [disabled]="refreshingCourse">
                                     <fa-icon [icon]="faSync" [animation]="refreshingCourse ? 'spin' : undefined" />
                                     <span class="d-none d-sm-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
                                 </button>
