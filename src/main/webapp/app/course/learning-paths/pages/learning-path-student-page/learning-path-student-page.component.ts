@@ -1,4 +1,4 @@
-import { Component, OnInit, Signal, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, OnInit, Signal, inject, signal } from '@angular/core';
 import { LearningObjectType, LearningPathNavigationObjectDto } from 'app/entities/competency/learning-path.model';
 import { map } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -11,6 +11,7 @@ import { LearningPathLectureUnitComponent } from 'app/course/learning-paths/comp
 import { LearningPathExerciseComponent } from 'app/course/learning-paths/components/learning-path-exercise/learning-path-exercise.component';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 import { EntityNotFoundError } from 'app/course/learning-paths/exceptions/entity-not-found.error';
+import { LearningPathNavigationService } from 'app/course/learning-paths/services/learning-path-navigation.service';
 
 @Component({
     selector: 'jhi-learning-path-student-page',
@@ -23,11 +24,11 @@ export class LearningPathStudentPageComponent implements OnInit {
     protected readonly LearningObjectType = LearningObjectType;
 
     private readonly learningApiService: LearningPathApiService = inject(LearningPathApiService);
+    private readonly learningPathNavigationService = inject(LearningPathNavigationService);
     private readonly alertService: AlertService = inject(AlertService);
     private readonly activatedRoute: ActivatedRoute = inject(ActivatedRoute);
 
-    private readonly navigation: Signal<LearningPathStudentNavComponent | undefined> = viewChild(LearningPathStudentNavComponent);
-    readonly currentLearningObject: Signal<LearningPathNavigationObjectDto | undefined> = computed(() => this.navigation()?.currentLearningObject());
+    readonly currentLearningObject: Signal<LearningPathNavigationObjectDto | undefined> = this.learningPathNavigationService.currentLearningObject;
 
     readonly isLoading = signal(false);
     readonly learningPathId = signal<number | undefined>(undefined);
@@ -43,10 +44,18 @@ export class LearningPathStudentPageComponent implements OnInit {
             this.learningPathId.set(await this.learningApiService.getLearningPathId(courseId));
         } catch (error) {
             if (error instanceof EntityNotFoundError) {
-                this.learningPathId.set(await this.learningApiService.generateLearningPath(courseId));
+                await this.generateLearningPath(courseId);
             }
             this.alertService.error(error);
         }
         this.isLoading.set(false);
+    }
+
+    private async generateLearningPath(courseId: number): Promise<void> {
+        try {
+            this.learningPathId.set(await this.learningApiService.generateLearningPath(courseId));
+        } catch (error) {
+            this.alertService.error(error);
+        }
     }
 }

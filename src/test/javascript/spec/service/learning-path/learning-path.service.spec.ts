@@ -1,10 +1,9 @@
-import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
+import { MockHttpService } from '../../helpers/mocks/service/mock-http.service';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
-import { ArtemisTestModule } from '../test.module';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { ArtemisTestModule } from '../../test.module';
+import { HttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { LearningPathStorageService } from 'app/course/learning-paths/participate/learning-path-storage.service';
-import { LearningObjectType } from 'app/entities/competency/learning-path.model';
 
 describe('LearningPathService', () => {
     let learningPathService: LearningPathService;
@@ -77,18 +76,6 @@ describe('LearningPathService', () => {
     it('should send a request to the server to get competency progress for learning path', () => {
         learningPathService.getCompetencyProgressForLearningPath(1).subscribe();
         expect(getStub).toHaveBeenCalledExactlyOnceWith('api/learning-path/1/competency-progress', { observe: 'response' });
-    });
-
-    it('should send a request to the server to get learning path navigation', () => {
-        learningPathService.getLearningPathNavigation(1, undefined, undefined).subscribe();
-        const params = new HttpParams();
-        expect(getStub).toHaveBeenCalledExactlyOnceWith('api/learning-path/1/navigation', { params, observe: 'response' });
-    });
-
-    it('should send a request to the server to get relative learning path navigation', () => {
-        learningPathService.getLearningPathNavigation(1, 2, LearningObjectType.LECTURE).subscribe();
-        const params = new HttpParams().set('learningObjectId', '2').set('learningObjectType', LearningObjectType.LECTURE);
-        expect(getStub).toHaveBeenCalledExactlyOnceWith('api/learning-path/1/navigation', { params, observe: 'response' });
     });
 
     it('should send a request to the server to get learning path navigation overview', () => {

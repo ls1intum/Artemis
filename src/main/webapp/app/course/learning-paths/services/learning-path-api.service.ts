@@ -1,6 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { LearningObjectType, LearningPathNavigationDto, LearningPathNavigationOverviewDto } from 'app/entities/competency/learning-path.model';
 import { EntityNotFoundError } from 'app/course/learning-paths/exceptions/entity-not-found.error';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { lastValueFrom } from 'rxjs';
 
 @Injectable({
     providedIn: 'root',
@@ -8,17 +10,33 @@ import { EntityNotFoundError } from 'app/course/learning-paths/exceptions/entity
 export class LearningPathApiService {
     private readonly resourceURL = 'api';
 
-    private checkForErrors(response: Response): void {
-        const statusCode = response.status;
+    private readonly httpClient = inject(HttpClient);
+
+    private handleHttpError(error: HttpResponse<any>): void {
+        const statusCode = error.status;
         if (statusCode === 404) {
             throw new EntityNotFoundError();
         }
     }
 
+    private async get<T>(url: string, params?: HttpParams): Promise<T> {
+        const response = await lastValueFrom(this.httpClient.get<T>(url, { observe: 'response', params: params }));
+        if (!response.ok) {
+            this.handleHttpError(response);
+        }
+        return response.body!;
+    }
+
+    private async post<T>(url: string, body: any): Promise<T> {
+        const response = await lastValueFrom(this.httpClient.post<T>(url, body, { observe: 'response' }));
+        if (!response.ok) {
+            this.handleHttpError(response);
+        }
+        return response.body!;
+    }
+
     async getLearningPathId(courseId: number): Promise<number> {
-        const response = await fetch(`${this.resourceURL}/courses/${courseId}/learning-path-id`);
-        this.checkForErrors(response);
-        return await response.json();
+        return await this.get<number>(`${this.resourceURL}/courses/${courseId}/learning-path-id`);
     }
 
     async getLearningPathNavigation(
@@ -26,25 +44,19 @@ export class LearningPathApiService {
         learningObjectId: number | undefined,
         learningObjectType: LearningObjectType | undefined,
     ): Promise<LearningPathNavigationDto> {
-        const params = new URLSearchParams();
+        let params = new HttpParams();
         if (learningObjectId && learningObjectType) {
-            params.append('learningObjectId', learningObjectId.toString());
-            params.append('learningObjectType', learningObjectType);
+            params = params.set('learningObjectId', learningObjectId.toString());
+            params = params.set('learningObjectType', learningObjectType);
         }
-        const response = await fetch(`${this.resourceURL}/learning-path/${learningPathId}/navigation?${params}`);
-        this.checkForErrors(response);
-        return await response.json();
+        return await this.get<LearningPathNavigationDto>(`${this.resourceURL}/learning-path/${learningPathId}/navigation`, params);
     }
 
     async generateLearningPath(courseId: number): Promise<number> {
-        const response = await fetch(`${this.resourceURL}/courses/${courseId}/learning-paths/generate`, { method: 'POST' });
-        this.checkForErrors(response);
-        return await response.json();
+        return await this.post<number>(`${this.resourceURL}/courses/${courseId}/learning-path`, null);
     }
 
     async getLearningPathNavigationOverview(learningPathId: number): Promise<LearningPathNavigationOverviewDto> {
-        const response = await fetch(`${this.resourceURL}/learning-path/${learningPathId}/navigation-overview`);
-        this.checkForErrors(response);
-        return await response.json();
+        return await this.get<LearningPathNavigationOverviewDto>(`${this.resourceURL}/learning-path/${learningPathId}/navigation-overview`);
     }
 }

@@ -20,7 +20,7 @@ export class LearningPathLectureUnitComponent implements OnInit {
     private readonly alertService: AlertService = inject(AlertService);
 
     readonly lectureUnitId: InputSignal<number> = input.required<number>();
-    readonly isLoading = signal(false);
+    readonly isLectureUnitLoading = signal(false);
     readonly lectureUnit = signal<LectureUnit | undefined>(undefined);
 
     async ngOnInit(): Promise<void> {
@@ -28,14 +28,14 @@ export class LearningPathLectureUnitComponent implements OnInit {
     }
 
     async loadLectureUnit(lectureUnitId: number): Promise<void> {
-        this.isLoading.set(true);
+        this.isLectureUnitLoading.set(true);
         try {
             const lectureUnit = await this.lectureUnitService.getLectureUnitById(lectureUnitId);
             this.lectureUnit.set(lectureUnit);
         } catch (error) {
             this.alertService.error(error);
         }
-        this.isLoading.set(false);
+        this.isLectureUnitLoading.set(false);
     }
 
     setLearningObjectCompletion(completionEvent: LectureUnitCompletionEvent): void {
