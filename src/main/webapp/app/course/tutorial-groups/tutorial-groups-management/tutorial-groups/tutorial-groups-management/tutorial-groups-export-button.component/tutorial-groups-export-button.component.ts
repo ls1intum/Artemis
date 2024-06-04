@@ -25,16 +25,18 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
 
     selectedFields: string[] = [];
     availableFields = [
-        { name: 'ID', value: 'ID', selected: false },
-        { name: 'Title', value: 'Title', selected: false },
-        { name: 'Day of Week', value: 'Day of Week', selected: false },
-        { name: 'Start Time', value: 'Start Time', selected: false },
-        { name: 'Location', value: 'Location', selected: false },
-        { name: 'Campus', value: 'Campus', selected: false },
-        { name: 'Language', value: 'Language', selected: false },
-        { name: 'Additional Information', value: 'Additional Information', selected: false },
-        { name: 'Capacity', value: 'Capacity', selected: false },
-        { name: 'Is Online', value: 'Is Online', selected: false },
+        { value: 'ID', selected: false },
+        { value: 'Title', selected: false },
+        { value: 'Day of Week', selected: false },
+        { value: 'Start Time', selected: false },
+        { value: 'End Time', selected: false },
+        { value: 'Location', selected: false },
+        { value: 'Campus', selected: false },
+        { value: 'Language', selected: false },
+        { value: 'Additional Information', selected: false },
+        { value: 'Capacity', selected: false },
+        { value: 'Is Online', selected: false },
+        { value: 'Students', selected: false },
     ];
 
     constructor(
@@ -70,12 +72,16 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
 
     onFieldSelectionChange(field: any) {
         field.selected = !field.selected;
-        this.selectAll = false;
+        this.selectAll = this.areAllFieldsSelected();
         this.updateSelectedFields();
     }
 
     updateSelectedFields() {
         this.selectedFields = this.availableFields.filter((field) => field.selected).map((field) => field.value);
+    }
+
+    areAllFieldsSelected(): boolean {
+        return this.availableFields.every((field) => field.selected);
     }
 
     exportCSV(modal: NgbModalRef) {
@@ -87,15 +93,41 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
                 a.download = 'tutorial-groups.csv';
                 a.click();
                 URL.revokeObjectURL(objectUrl);
-                this.selectedFields = [];
+                this.resetSelections();
                 modal.close();
             },
             error: (res: HttpErrorResponse) => {
                 onError(this.alertService, res);
-                this.selectedFields = [];
+                this.resetSelections();
                 modal.dismiss('error');
             },
         });
+    }
+
+    exportJSON(modal: NgbModalRef) {
+        this.tutorialGroupsService.exportToJson(this.courseId, this.selectedFields).subscribe(
+            (response) => {
+                const blob = new Blob([response], { type: 'application/json' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'tutorial_groups.json';
+                a.click();
+                window.URL.revokeObjectURL(url);
+                this.resetSelections();
+                modal.close();
+            },
+            () => {
+                alert('Failed to export JSON');
+                this.resetSelections();
+            },
+        );
+    }
+
+    private resetSelections() {
+        this.selectedFields = [];
+        this.availableFields.forEach((field) => (field.selected = false));
+        this.selectAll = false;
     }
 
     ngOnDestroy(): void {

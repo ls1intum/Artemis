@@ -180,9 +180,17 @@ export class TutorialGroupsService {
      */
     exportTutorialGroupsToCSV(courseId: number, fields: string[]): Observable<Blob> {
         const params = { fields };
-        return this.httpClient.get(`${this.resourceURL}/courses/${courseId}/tutorial-groups/export`, {
+        return this.httpClient.get(`${this.resourceURL}/courses/${courseId}/tutorial-groups/export/csv`, {
             params,
             responseType: 'blob',
+        });
+    }
+
+    exportToJson(courseId: number, fields: string[]): Observable<any> {
+        const params = { fields };
+        return this.httpClient.get(`${this.resourceURL}/courses/${courseId}/tutorial-groups/export/json`, {
+            params,
+            responseType: 'text',
         });
     }
 }

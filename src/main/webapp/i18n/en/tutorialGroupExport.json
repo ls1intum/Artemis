@@ -1,12 +1,13 @@
 {
     "artemisApp": {
         "tutorialGroupExportDialog": {
-            "buttonHeader": "Export Tutorial Groups to CSV",
+            "buttonHeader": "Export Tutorial Groups",
             "header": "Select fields for CSV Export",
             "description": "Please select at least one checkbox:",
             "toolTip": "This dialog can be used to export tutorial groups to a CSV file. You can choose which information you want to include in your CSV file.",
             "cancel": "Cancel",
-            "export": "Export",
+            "exportCSV": "Export as CSV",
+            "exportJSON": "Export as JSON",
             "selectAll": "Select all"
         }
     }

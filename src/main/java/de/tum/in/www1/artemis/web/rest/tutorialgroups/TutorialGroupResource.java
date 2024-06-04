@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
@@ -39,6 +40,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
@@ -544,7 +546,7 @@ public class TutorialGroupResource {
      * @param fields   the list of fields to include in the CSV export
      * @return the ResponseEntity with status 200 (OK) and the CSV file containing the tutorial groups
      */
-    @GetMapping("courses/{courseId}/tutorial-groups/export")
+    @GetMapping("courses/{courseId}/tutorial-groups/export/csv")
     @EnforceAtLeastInstructorInCourse
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<byte[]> exportTutorialGroups(@PathVariable Long courseId, @RequestParam List<String> fields) {
@@ -560,11 +562,32 @@ public class TutorialGroupResource {
         byte[] bytes = csvContent.getBytes(StandardCharsets.UTF_8);
 
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.TEXT_PLAIN);
+        headers.setContentType(new MediaType("text", "csv"));
         headers.setContentDispositionFormData("attachment", "tutorial-groups.csv");
         headers.setContentLength(bytes.length);
 
         return ResponseEntity.ok().headers(headers).body(bytes);
+    }
+
+    /**
+     * POST /courses/:courseId/tutorial-groups/export/json : Export tutorial groups to JSON.
+     *
+     * @param courseId       the id of the course to which the tutorial groups belong to
+     * @param selectedFields the fields to be included in the export
+     * @return ResponseEntity with the JSON data of the tutorial groups
+     */
+    @GetMapping(path = "courses/{courseId}/tutorial-groups/export/json", produces = MediaType.APPLICATION_JSON_VALUE)
+    @EnforceAtLeastInstructor
+    @FeatureToggle(Feature.TutorialGroups)
+    public ResponseEntity<String> exportTutorialGroupsToJSON(@PathVariable Long courseId, @RequestParam List<String> fields) {
+        log.debug("REST request to export TutorialGroups to JSON for course: {}", courseId);
+        try {
+            String json = tutorialGroupService.exportTutorialGroupsToJSON(courseId, fields);
+            return ResponseEntity.ok().body(json);
+        }
+        catch (JsonProcessingException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to process JSON export");
+        }
     }
 
     /**
