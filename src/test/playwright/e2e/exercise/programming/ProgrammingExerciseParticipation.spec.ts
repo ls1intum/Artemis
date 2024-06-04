@@ -182,7 +182,7 @@ test.describe('Programming exercise participation', () => {
         });
 
         test.describe('Check team participation', () => {
-            test.beforeEach('Each team member makes a submission', async ({ login, exerciseAPIRequests }) => {
+            test.beforeEach('Each team member makes a submission', async ({ login, waitForExerciseBuildToFinish, exerciseAPIRequests }) => {
                 for (const { student, submission } of submissions) {
                     await login(student);
                     const response = await exerciseAPIRequests.startExerciseParticipation(exercise.id!);
@@ -192,6 +192,7 @@ test.describe('Programming exercise participation', () => {
                         await exerciseAPIRequests.createProgrammingExerciseFile(participation.id!, filename);
                     }
                     await exerciseAPIRequests.makeProgrammingExerciseSubmission(participation.id!, submission);
+                    await waitForExerciseBuildToFinish(exercise.id!);
                 }
             });
 
@@ -203,8 +204,6 @@ test.describe('Programming exercise participation', () => {
                 programmingExerciseRepository,
                 programmingExerciseParticipations,
             }) => {
-                // Marked test as slow as there are 3 builds being awaited
-                test.slow();
                 await login(instructor);
                 await navigationBar.openCourseManagement();
                 await courseManagement.openExercisesOfCourse(course.id!);
