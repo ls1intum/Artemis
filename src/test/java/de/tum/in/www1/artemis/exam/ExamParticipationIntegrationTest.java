@@ -804,18 +804,18 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         // instructor exam checklist checks
         ExamChecklistDTO examChecklistDTO = examService.getStatsForChecklist(exam, true);
         assertThat(examChecklistDTO).isNotNull();
-        assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isEqualTo(exam.getExamUsers().size());
-        assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isTrue();
-        assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isZero();
+        assertThat(examChecklistDTO.numberOfGeneratedStudentExams()).isEqualTo(exam.getExamUsers().size());
+        assertThat(examChecklistDTO.allExamExercisesAllStudentsPrepared()).isTrue();
+        assertThat(examChecklistDTO.numberOfTotalParticipationsForAssessment()).isZero();
 
         // check that an adapted version is computed for tutors
         userUtilService.changeUser(TEST_PREFIX + "tutor1");
 
         examChecklistDTO = examService.getStatsForChecklist(exam, false);
         assertThat(examChecklistDTO).isNotNull();
-        assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isNull();
-        assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isFalse();
-        assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isZero();
+        assertThat(examChecklistDTO.numberOfGeneratedStudentExams()).isNull();
+        assertThat(examChecklistDTO.allExamExercisesAllStudentsPrepared()).isFalse();
+        assertThat(examChecklistDTO.numberOfTotalParticipationsForAssessment()).isZero();
 
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
 
@@ -1085,28 +1085,28 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         examChecklistDTO = examService.getStatsForChecklist(exam, true);
         assertThat(examChecklistDTO).isNotNull();
         var size = examScores.studentResults().size();
-        assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isEqualTo(size);
-        assertThat(examChecklistDTO.getNumberOfExamsSubmitted()).isEqualTo(size);
-        assertThat(examChecklistDTO.getNumberOfExamsStarted()).isEqualTo(size);
-        assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isTrue();
-        assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isEqualTo(size * 6L);
-        assertThat(examChecklistDTO.getNumberOfTestRuns()).isZero();
-        assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound()).hasSize(2).containsExactly(expectedTotalExamAssessmentsFinishedByCorrectionRound);
+        assertThat(examChecklistDTO.numberOfGeneratedStudentExams()).isEqualTo(size);
+        assertThat(examChecklistDTO.numberOfExamsSubmitted()).isEqualTo(size);
+        assertThat(examChecklistDTO.numberOfExamsStarted()).isEqualTo(size);
+        assertThat(examChecklistDTO.allExamExercisesAllStudentsPrepared()).isTrue();
+        assertThat(examChecklistDTO.numberOfTotalParticipationsForAssessment()).isEqualTo(size * 6L);
+        assertThat(examChecklistDTO.numberOfTestRuns()).isZero();
+        assertThat(examChecklistDTO.numberOfTotalExamAssessmentsFinishedByCorrectionRound()).hasSize(2).containsExactly(expectedTotalExamAssessmentsFinishedByCorrectionRound);
 
         // change to a tutor
         userUtilService.changeUser(TEST_PREFIX + "tutor1");
 
         // check that a modified version is returned
-        // check if stats are set correctly for the instructor
+        // check if stats are set correctly for the tutor
         examChecklistDTO = examService.getStatsForChecklist(exam, false);
         assertThat(examChecklistDTO).isNotNull();
-        assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isNull();
-        assertThat(examChecklistDTO.getNumberOfExamsSubmitted()).isNull();
-        assertThat(examChecklistDTO.getNumberOfExamsStarted()).isNull();
-        assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isFalse();
-        assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isEqualTo(size * 6L);
-        assertThat(examChecklistDTO.getNumberOfTestRuns()).isNull();
-        assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound()).hasSize(2).containsExactly(expectedTotalExamAssessmentsFinishedByCorrectionRound);
+        assertThat(examChecklistDTO.numberOfGeneratedStudentExams()).isNull();
+        assertThat(examChecklistDTO.numberOfExamsSubmitted()).isNull();
+        assertThat(examChecklistDTO.numberOfExamsStarted()).isNull();
+        assertThat(examChecklistDTO.allExamExercisesAllStudentsPrepared()).isFalse();
+        assertThat(examChecklistDTO.numberOfTotalParticipationsForAssessment()).isEqualTo(size * 6L);
+        assertThat(examChecklistDTO.numberOfTestRuns()).isNull();
+        assertThat(examChecklistDTO.numberOfTotalExamAssessmentsFinishedByCorrectionRound()).hasSize(2).containsExactly(expectedTotalExamAssessmentsFinishedByCorrectionRound);
 
         jenkinsRequestMockProvider.reset();
 

@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -39,7 +38,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.metis.ConversationMessagingService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
-import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
+import de.tum.in.www1.artemis.web.rest.dto.PostContextFilterDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import io.swagger.annotations.ApiParam;
 import tech.jhipster.web.util.PaginationUtil;
@@ -111,31 +110,31 @@ public class ConversationMessageResource {
      */
     @GetMapping("courses/{courseId}/messages")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<Post>> getMessages(@ApiParam Pageable pageable, PostContextFilter postContextFilter, Principal principal) {
+    public ResponseEntity<List<Post>> getMessages(@ApiParam Pageable pageable, PostContextFilterDTO postContextFilter, Principal principal) {
         long timeNanoStart = System.nanoTime();
         Page<Post> coursePosts;
 
-        var requestingUser = userRepository.getUser();
-        var course = courseRepository.findByIdElseThrow(postContextFilter.getCourseId());
+        final var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        final var course = courseRepository.findByIdElseThrow(postContextFilter.courseId());
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
 
-        if (postContextFilter.getConversationId() != null) {
-            coursePosts = conversationMessagingService.getMessages(pageable, postContextFilter, requestingUser);
+        if (postContextFilter.conversationId() != null) {
+            coursePosts = conversationMessagingService.getMessages(pageable, postContextFilter, requestingUser, course.getId());
         }
-        else if (postContextFilter.getCourseWideChannelIds() != null) {
-            coursePosts = conversationMessagingService.getCourseWideMessages(pageable, postContextFilter, requestingUser);
+        else if (postContextFilter.courseWideChannelIds() != null) {
+            coursePosts = conversationMessagingService.getCourseWideMessages(pageable, postContextFilter, requestingUser, course.getId());
         }
         else {
             throw new BadRequestAlertException("Messages must be associated with a conversion", conversationMessagingService.getEntityName(), "conversationMissing");
         }
         // keep the data as small as possible and avoid unnecessary information sent to the client
-        // TODO: in the future we should set conversation to null
+        // TODO: in the future we should use a DTO and send only the necessary information
         coursePosts.getContent().forEach(post -> {
             if (post.getConversation() != null) {
                 post.getConversation().hideDetails();
             }
         });
-        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), coursePosts);
+        final var headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), coursePosts);
         logDuration(coursePosts.getContent(), principal, timeNanoStart);
         return new ResponseEntity<>(coursePosts.getContent(), headers, HttpStatus.OK);
     }
@@ -213,6 +212,7 @@ public class ConversationMessageResource {
      */
     @PostMapping("courses/{courseId}/messages/similarity-check")
     @EnforceAtLeastStudent
+    // TODO: unused, remove
     public ResponseEntity<List<Post>> computeSimilarityScoresWitCoursePosts(@PathVariable Long courseId, @RequestBody Post post) {
         List<Post> similarPosts = conversationMessagingService.getSimilarPosts(courseId, post);
         return ResponseEntity.ok().body(similarPosts);
@@ -226,6 +226,7 @@ public class ConversationMessageResource {
      *         or 400 (Bad Request) if the checks on user or course validity fail
      */
     @GetMapping("courses/{courseId}/messages/tags")
+    // TODO: unused, delete
     @EnforceAtLeastStudent
     public ResponseEntity<List<String>> getAllPostTagsForCourse(@PathVariable Long courseId) {
         List<String> tags = conversationMessagingService.getAllCourseTags(courseId);
