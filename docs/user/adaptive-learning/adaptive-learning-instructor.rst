@@ -11,12 +11,6 @@ Instructors have the ability to define competencies for a course, linking variou
 
 Competencies are overarching learning objectives that link together different course materials.
 
-.. raw:: html
-
-    <iframe src="https://live.rbg.tum.de/w/artemisintro/26313?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
-        Watch this video on TUM-Live.
-    </iframe>
-
 An instructor can view and edit all competencies of a course on the competency management page.
 The table shows the title, description, and percentage of students that mastered the respective competency.
 
@@ -41,6 +35,12 @@ Alternatively, instructors can also link competencies to an exercise or lecture 
 
 Generate Competencies
 ^^^^^^^^^^^^^^^^^^^^^
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/46941?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
 
 TODO
 
