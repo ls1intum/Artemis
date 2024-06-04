@@ -35,7 +35,9 @@ public class PyrisHealthIndicator implements HealthIndicator {
     }
 
     /*
-     * Used by the MetricsBean - will always freshly update.
+     * Pings Iris at /health and checks if the service is available and what its status is.
+     * Always uses a new ping and does not use a cached result.
+     * @return The health status of Iris
      */
     @Override
     public Health health() {
@@ -45,6 +47,9 @@ public class PyrisHealthIndicator implements HealthIndicator {
     /**
      * Ping Iris at /health and check if the service is available and what its status is.
      * Offers an option to use a cached result to avoid spamming the service.
+     *
+     * @param useCache Whether to use the cached result or not
+     * @return The (cached) health status of Iris
      */
     public Health health(boolean useCache) {
         if (useCache && cachedHealth != null && System.currentTimeMillis() - lastUpdated < CACHE_TTL) {
