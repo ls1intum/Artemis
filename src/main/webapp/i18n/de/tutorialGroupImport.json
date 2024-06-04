@@ -11,14 +11,14 @@
             },
             "supportedHeaderNames": {
                 "label": "Unterstützte Spaltennamen (Versionen mit Leerzeichen, Unterstrichen, Bindestrichen und Grossbuchstaben werden ebenfalls unterstützt): ",
-                "alwaysRequired": "Eins von den folgenden ist als Spaltennamen immer erforderlich (um die Übungsgruppe zu identifizieren): ",
+                "alwaysRequired": "Eins von den folgenden ist als Spaltennamen immer erforderlich um die Übungsgruppe zu identifizieren: ",
                 "requiredIfStudentRegistration": "Eins von den folgenden ist als Spaltennamen erforderlich, wenn Studierende identifiziert und registriert werden sollen: ",
-                "alwaysOptional": "Immer optional (nur für Anzeigzwecke): ",
-                "tutorialGroupTitle": "Für den Tiel der Übungsgruppe: Übungsgruppe",
-                "registrationNumber": "Für die Immatrikulationsnummer: Matrikelnummer",
-                "login": "Für den Anmeldename: Anmeldename",
-                "firstName": "Für den Vornamen: Vorname",
-                "lastName": "Für den Nachnamen: Nachname oder Familienname"
+                "alwaysOptional": "Folgende Spaltennamen sind optional (nur für Anzeigzwecke): ",
+                "tutorialGroupTitle": "gruppe, titel, group, title -> Nach dem Parsen der CSV wird der Spaltenname als Übungsgruppe angezeigt",
+                "registrationNumber": "registrationnumber, matriculationnumber, matrikelnummer, number -> Nach dem Parsen der CSV wird der Spaltenname als Matrikelnummer angezeigt",
+                "login": "login, user, username, benutzer, benutzername -> Nach dem Parsen der CSV wird der Spaltenname als Anmeldename angezeigt",
+                "firstName": "firstname, firstnameofstudent, givenname, forename, vorname -> Nach dem Parsen der CSV wird der Spaltenname als Vorname angezeigt",
+                "lastName": "familyname, lastname, familynameofstudent, surname, nachname, familienname, name -> Nach dem Parsen der CSV wird der Spaltenname als Nachname angezeigt"
             },
             "errorMessages": {
                 "genericErrorMessage": "Import von Übungsgruppen sind fehlgeschlagen!",
@@ -41,8 +41,8 @@
             },
             "fixedPlaceForm": {
                 "checkbox": {
-                    "label": "Möchtest du einen Spaltennamen und Wert eingeben, um die Zeilen zu filtern?",
-                    "explanation": "Nur die Zeilen, die den angegebenen Wert in der angegebenen Spalte enthalten werden aus der CSV ausgelesen."
+                    "label": "Möchtest du nur bestimmte Zeilen auslesen? Gib einen Header und den gewünschten Wert für diesen Header an um die CSV nach diesen Zeilen zu filtern.",
+                    "explanation": "Nur Zeilen, die den angegebenen Wert in der angegebenen Header Spalte haben, werden aus der CSV-Datei ausgelesen. Zum Beispiel, um nur Studenten mit 'Fixplatz' als Zeilenwert im 'Platz' Header zu parsen, gib 'Fixplatz' als Wert an und 'Platz' als Spaltennamen an."
                 },
                 "statusHeaderInput": {
                     "label": "Spaltenname für Registrierungsstatus",
@@ -56,9 +56,9 @@
                 }
             },
             "table": {
-                "example1": "Beispiel CSV-Format (mindestens):",
-                "example2": "Beispiel CSV-Format zur Registrierung von Studierenden mit Matrikelnummer:",
-                "example3": "Beispiel CSV-Format zur Registrierung von Studierenden mit Login:",
+                "example1": "Dieses Beispiel-CSV-Format zeigt die minimal erforderlichen Header zum Parsen einer CSV-Datei:",
+                "example2": "Dieses Beispiel-CSV-Format zeigt die Header, die erforderlich sind, um Studenten mit einer Matrikelnummer zu registrieren, wobei Vorname und Nachname optional sind:",
+                "example3": "Dieses Beispiel-CSV-Format zeigt die Header, die erforderlich sind, um Studenten mit einem Login zu registrieren, wobei Vorname und Nachname optional sind:",
                 "showNotImportedButton": "Nicht importierte Registrierungen",
                 "showImportedButton": "Importierte Registrierungen",
                 "showAllButton": "Alle Registrierungen",

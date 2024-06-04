@@ -11,7 +11,7 @@
             },
             "supportedHeaderNames": {
                 "label": "Supported header names (versions with spaces, underscores, hyphens and uppercase letters are also supported): ",
-                "alwaysRequired": "One of these Header is always required (to identify tutorial group): ",
+                "alwaysRequired": "One of these Header is always required to identify the tutorial group: ",
                 "requiredIfStudentRegistration": "One of these is required as Header if you want to identify and register students :",
                 "alwaysOptional": "Optional Headers (just for display purposes): ",
                 "tutorialGroupTitle": "gruppe, titel, group, title -> After parsing the CSV this will be saved as a Header named Tutorial Group",
@@ -41,7 +41,7 @@
             },
             "fixedPlaceForm": {
                 "checkbox": {
-                    "label": "Do you want to only parse certain rows? Then specify a header and the required value for that header.",
+                    "label": "Do you want to only parse certain rows? Then specify a header and the required value for that header to filter the rows accordingly.",
                     "explanation": "Only rows with the specified value in the specified header column will be parsed from the CSV file. For Example: Only students who have a 'confirmed place' as value in the 'Place' Header should be parsed from the CSV file."
                 },
                 "statusHeaderInput": {
@@ -56,9 +56,9 @@
                 }
             },
             "table": {
-                "example1": "Example CSV Format (minimum):",
-                "example2": "Example CSV Format to register students with registration number:",
-                "example3": "Example CSV Format to register students with login:",
+                "example1": "This example CSV format shows the minimum required headers to parse a CSV:",
+                "example2": "This example CSV format shows the headers required to register students with a registration number, with First Name and Last Name being optional:",
+                "example3": "This example CSV format shows the headers required to register students with a login, with First Name and Last Name being optional:",
                 "showNotImportedButton": "Not imported registrations",
                 "showImportedButton": "Imported registrations",
                 "showAllButton": "All registrations",
