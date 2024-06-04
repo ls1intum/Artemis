@@ -37,7 +37,7 @@ export type EntityDetailsResponseType = HttpResponse<ExerciseDetailsType>;
 export type ExerciseDetailsType = {
     exercise: Exercise;
     irisSettings?: IrisExerciseSettings;
-    plagiarismCaseInfo: PlagiarismCaseInfo;
+    plagiarismCaseInfo?: PlagiarismCaseInfo;
     availableExerciseHints?: ExerciseHint[];
     activatedExerciseHints?: ExerciseHint[];
 };

@@ -319,9 +319,7 @@ describe('CourseExerciseDetailsComponent', () => {
     });
 
     it('should handle new programming exercise', () => {
-        const submissionPolicyService = fixture.debugElement.injector.get(SubmissionPolicyService);
         const submissionPolicy = new LockRepositoryPolicy();
-        const submissionPolicyServiceSpy = jest.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(submissionPolicy));
 
         const programmingExercise = {
             id: exercise.id,
@@ -332,6 +330,7 @@ describe('CourseExerciseDetailsComponent', () => {
             secondCorrectionEnabled: false,
             studentAssignedTeamIdComputed: true,
             numberOfAssessmentsOfCorrectionRounds: [],
+            submissionPolicy: submissionPolicy,
         } as ProgrammingExercise;
 
         const childComponent = {} as DiscussionSectionComponent;
@@ -341,10 +340,9 @@ describe('CourseExerciseDetailsComponent', () => {
 
         comp.courseId = courseId;
 
-        comp.handleNewExercise(programmingExercise);
+        comp.handleNewExercise({ exercise: programmingExercise });
         expect(comp.baseResource).toBe(`/course-management/${courseId}/${programmingExercise.type}-exercises/${programmingExercise.id}/`);
         expect(comp.allowComplaintsForAutomaticAssessments).toBeTrue();
-        expect(submissionPolicyServiceSpy).toHaveBeenCalledOnce();
         expect(comp.submissionPolicy).toEqual(submissionPolicy);
         expect(childComponent.exercise).toEqual(programmingExercise);
     });
