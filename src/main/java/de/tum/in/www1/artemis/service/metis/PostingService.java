@@ -14,9 +14,11 @@ import java.util.stream.Stream;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import de.tum.in.www1.artemis.domain.ConversationNotificationRecipientSummary;
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
@@ -35,11 +37,14 @@ import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
+import de.tum.in.www1.artemis.service.dto.UserRoleDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
 public abstract class PostingService {
+
+    private static final Logger log = LoggerFactory.getLogger(PostingService.class);
 
     protected final CourseRepository courseRepository;
 
@@ -175,14 +180,21 @@ public abstract class PostingService {
     }
 
     /**
-     * helper method that fetches groups and authorities of all posting authors in a list of Posts
+     * Sets the author role of each post and its answers in a given list of posts.
      *
-     * @param postsInCourse list of posts whose authors are populated with their groups, authorities, and authorRole
+     * <p>
+     * This method processes a list of posts to determine the roles of their authors within the context of a specified course.
+     * It collects a unique set of user IDs from the posts and their answers, fetches the corresponding user roles from the repository,
+     * and sets the author roles accordingly.
+     * </p>
+     *
+     * @param posts    the list of posts for which the author roles need to be set
+     * @param courseId the ID of the course in which the posts exist
      */
-    protected void setAuthorRoleOfPostings(List<Post> postsInCourse) {
+    protected void setAuthorRoleOfPostings(List<Post> posts, Long courseId) {
         // prepares a unique set of userIds that authored the current list of postings
         Set<Long> userIds = new HashSet<>();
-        postsInCourse.forEach(post -> {
+        posts.forEach(post -> {
             // needs to handle posts created by SingleUserNotificationService.notifyUserAboutNewPlagiarismCaseBySystem
             if (post.getAuthor() != null) {
                 userIds.add(post.getAuthor().getId());
@@ -190,28 +202,36 @@ public abstract class PostingService {
             post.getAnswers().forEach(answerPost -> userIds.add(answerPost.getAuthor().getId()));
         });
 
-        // fetches and sets groups and authorities of all posting authors involved, which are used to display author role icon in the posting header
-        // converts fetched set to hashmap type for performant matching of authors
-        Map<Long, User> authors = userRepository.findAllWithGroupsAndAuthoritiesByIdIn(userIds).stream().collect(Collectors.toMap(DomainObject::getId, Function.identity()));
+        // we only fetch the minimal data needed for the mapping to avoid performance issues
+        List<UserRoleDTO> userRoles = userRepository.findUserRolesInCourse(userIds, courseId);
+        log.debug("userRepository.findUserRolesInCourse done for {} authors ", userRoles.size());
+
+        Map<Long, UserRoleDTO> authorRoles = userRoles.stream().collect(Collectors.toMap(UserRoleDTO::userId, Function.identity()));
 
         // sets respective author role to display user authority icon on posting headers
-        postsInCourse.stream()
-                // needs to handle posts created by SingleUserNotificationService.notifyUserAboutNewPlagiarismCaseBySystem
-                .filter(post -> post.getAuthor() != null).forEach(post -> {
-                    post.setAuthor(authors.get(post.getAuthor().getId()));
-                    setAuthorRoleForPosting(post, post.getCoursePostingBelongsTo());
-                    post.getAnswers().forEach(answerPost -> {
-                        answerPost.setAuthor(authors.get(answerPost.getAuthor().getId()));
-                        setAuthorRoleForPosting(answerPost, answerPost.getCoursePostingBelongsTo());
-                    });
-                });
+        posts.stream().filter(post -> post.getAuthor() != null).forEach(post -> {
+            post.setAuthorRole(authorRoles.get(post.getAuthor().getId()).role());
+            post.getAnswers().forEach(answerPost -> {
+                answerPost.setAuthorRole(authorRoles.get(answerPost.getAuthor().getId()).role());
+            });
+        });
     }
 
     /**
-     * helper method that assigns authorRoles of postings in accordance to user groups and authorities
+     * Assigns the author role to a given posting based on the user's groups and authorities within a course.
      *
-     * @param posting       posting to assign authorRole
-     * @param postingCourse course that the post belongs to, must be explicitly fetched and provided to handle new post creation case
+     * <p>
+     * This helper method determines the appropriate author role (INSTRUCTOR, TUTOR, or USER) for the author of a posting
+     * based on their permissions and groups within the specified course. The author must be fetched with their authorities
+     * and groups set prior to calling this method.
+     * </p>
+     *
+     * <p>
+     * Note: The course to which the posting belongs must be explicitly fetched and provided to handle cases of new post creation.
+     * </p>
+     *
+     * @param posting       the posting to assign an author role to
+     * @param postingCourse the course that the posting belongs to, required to determine the author's role
      */
     protected void setAuthorRoleForPosting(Posting posting, Course postingCourse) {
         if (authorizationCheckService.isAtLeastInstructorInCourse(postingCourse, posting.getAuthor())) {
