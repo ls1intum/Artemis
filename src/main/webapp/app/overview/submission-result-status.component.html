@@ -1,5 +1,4 @@
 <div class="col-auto">
-    {{ shouldShowResult }}
     @if (shouldShowResult) {
         <!-- Updating result -->
         <span>
@@ -39,7 +38,6 @@
     }
     <!-- For programming exercises -->
     @if (exercise.type === ExerciseType.PROGRAMMING && studentParticipation) {
-        missed
         <jhi-programming-exercise-student-trigger-build-button [exercise]="exercise" [participation]="studentParticipation" [triggerLastGraded]="triggerLastGraded" />
     }
 </div>

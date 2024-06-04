@@ -22,7 +22,6 @@ export interface InformationBox {
     title: string;
     content: string | number | any;
     contentType?: string;
-    isContentComponent?: boolean;
     contentComponent?: any;
     icon?: IconProp;
     tooltip?: string;
@@ -67,6 +66,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     public achievedPoints?: number;
     public numberOfSubmissions: number;
     public informationBoxItems: InformationBox[] = [];
+    public shouldDisplayDueDateRelative = false;
 
     icon: IconProp;
 
@@ -112,6 +112,8 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
         if (this.dueDate) {
             // If the due date is less than a day away, the color change to red
             this.dueDateStatusBadge = this.dueDate.isBetween(dayjs().add(1, 'day'), dayjs()) ? 'danger' : 'body-color';
+            // If the due date is less than a week away, text is displayed relativley e.g. 'in 2 days'
+            this.shouldDisplayDueDateRelative = this.dueDate.isBetween(dayjs().add(1, 'week'), dayjs()) ? true : false;
         }
         this.createInformationBoxItems();
     }
@@ -119,7 +121,9 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     createInformationBoxItems() {
         const notReleased = this.exercise.releaseDate && dayjs(this.exercise.releaseDate).isAfter(dayjs());
         if (this.exercise.maxPoints) this.informationBoxItems.push(this.getMaxPointsItem());
-        this.informationBoxItems.push(this.getDueDateItem());
+        if (this.exercise.bonusPoints) this.informationBoxItems.push(this.getBonusPointsItem());
+
+        if (this.exercise.dueDate) this.informationBoxItems.push(this.getDueDateItem());
         this.informationBoxItems.push(this.getDifficultyItem());
         // (exercise.releaseDate && dayjs(exercise.releaseDate).isAfter(dayjs()))
         if (notReleased || this.exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY || this.exercise.categories?.length)
@@ -128,19 +132,26 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
         // if (this.submissionPolicy?.active) this.informationBoxItems.push(this.getSubmissionPolicyItem());
         this.informationBoxItems.push(this.getSubmissionStatusItem());
 
-        if (this.exercise.assessmentType && this.exercise.type === ExerciseType.PROGRAMMING) this.informationBoxItems.push(this.getAssessmentTypeItem());
+        // if (this.exercise.assessmentType && this.exercise.type === ExerciseType.PROGRAMMING) this.informationBoxItems.push(this.getAssessmentTypeItem());
     }
 
     getDueDateItem(): InformationBox {
+        const isDueDateInThePast = this.dueDate?.isBefore(dayjs());
+
+        if (isDueDateInThePast) {
+            return {
+                title: 'artemisApp.courseOverview.exerciseDetails.submissionDueOver',
+                content: this.dueDate,
+                contentComponent: 'dateTime',
+            };
+        }
+
         return {
             title: 'artemisApp.courseOverview.exerciseDetails.submissionDue',
-            //  less than a day make time relative to now
+            //  less than a week make time relative to now
             content: this.dueDate,
-            // content: this.dueDate?.format('lll') ?? '-',
-            // icon: this.icon,
-            isContentComponent: true,
-            contentType: 'timeAgo',
-            tooltip: 'artemisApp.courseOverview.exerciseDetails.submissionDueTooltip',
+            contentComponent: this.shouldDisplayDueDateRelative ? 'timeAgo' : 'dateTime',
+            tooltip: this.shouldDisplayDueDateRelative ? 'artemisApp.courseOverview.exerciseDetails.submissionDueTooltip' : undefined,
             contentColor: this.dueDateStatusBadge,
             tooltipParams: { date: this.dueDate?.format('lll') },
         };
@@ -167,7 +178,6 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
             title: 'artemisApp.courseOverview.exerciseDetails.difficulty',
             content: this.exercise.difficulty,
             contentComponent: 'difficultyLevel',
-            isContentComponent: true,
         };
     }
     getSubmissionStatusItem(): InformationBox {
@@ -175,7 +185,6 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
             title: 'artemisApp.courseOverview.exerciseDetails.submissionStatus',
             content: this.studentParticipation,
             contentComponent: 'submissionStatus',
-            isContentComponent: true,
         };
     }
     getCategoryItems(): InformationBox {
@@ -183,27 +192,15 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
             title: 'artemisApp.courseOverview.exerciseDetails.categories',
             content: this.exercise,
             contentComponent: 'categories',
-            isContentComponent: true,
         };
     }
 
     getSubmissionPolicyItem(): InformationBox {
-        console.log(this.submissionPolicy);
-        // {{ 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle' | artemisTranslate }}:
-        // {{
-        //         numberOfSubmissions +
-        //         '/' +
-        //         submissionPolicy.submissionLimit +
-        //         (submissionPolicy.exceedingPenalty
-        //             ? ('artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel'
-        //               | artemisTranslate: { points: submissionPolicy.exceedingPenalty })
-        //             : '')
-        // }}
-
-        // TODO Make Red if submissionLimit is (nearly) reached
         return {
             title: 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle',
             content: this.numberOfSubmissions + ' / ' + this.submissionPolicy?.submissionLimit,
+
+            contentColor: this.submissionPolicy?.submissionLimit ? this.getSubmissionColor() : 'body-color',
             // content:
             //     this.numberOfSubmissions +
             //     '/' +
@@ -214,14 +211,16 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
             //           })
             //         : ''),
             tooltip: 'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' + this.submissionPolicy?.type + '.tooltip',
+            tooltipParams: { points: this.submissionPolicy?.exceedingPenalty?.toString() },
         };
     }
 
-    getExceedingPenalty() {
-        return {
-            title: 'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.submission_penalty.title',
-            content: '-' + this.submissionPolicy?.exceedingPenalty + ' Points',
-        };
+    getSubmissionColor() {
+        const submissionsLeft = this.submissionPolicy?.submissionLimit ? this.submissionPolicy?.submissionLimit - this.numberOfSubmissions : 2;
+        if (submissionsLeft > 1) return 'body-color';
+        else {
+            return submissionsLeft <= 0 ? 'danger' : 'warning';
+        }
     }
 
     // Can be visible in the tooltip above a status
@@ -237,18 +236,19 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
 
     // }
 
+    // separate Points and Bonus Points
+    // DO one function with input
     getMaxPointsItem(): InformationBox {
-        if (this.exercise.bonusPoints) {
-            const pointsAndBonusTitle = 'artemisApp.courseOverview.exerciseDetails.pointsAndBonus';
-            const pointsAndBonusContent = this.exercise.maxPoints + ` + ${this.exercise.bonusPoints}`;
-            return {
-                title: pointsAndBonusTitle,
-                content: this.achievedPoints !== undefined ? this.achievedPoints + ' / ' + pointsAndBonusContent : pointsAndBonusContent,
-            };
-        }
         return {
             title: 'artemisApp.courseOverview.exerciseDetails.points',
-            content: this.achievedPoints !== undefined ? this.achievedPoints + ' / ' + this.exercise.maxPoints : this.exercise.maxPoints ?? '-',
+            content: this.achievedPoints !== undefined ? this.achievedPoints + ' / ' + this.exercise.maxPoints : '0 / ' + this.exercise.maxPoints,
+        };
+    }
+
+    getBonusPointsItem(): InformationBox {
+        return {
+            title: 'artemisApp.courseOverview.exerciseDetails.bonus',
+            content: this.achievedPoints !== undefined ? this.achievedPoints + ' / ' + this.exercise.bonusPoints : '0 / ' + this.exercise.bonusPoints,
         };
     }
     // getDefaultItems(): InformationBox[] {
@@ -270,13 +270,13 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     ngOnChanges() {
         this.course = this.course ?? getCourseFromExercise(this.exercise);
 
-        if (this.submissionPolicy?.active) {
+        if (this.submissionPolicy?.active && this.submissionPolicy?.submissionLimit) {
             console.log('Changes Submission');
             this.countSubmissions();
             this.informationBoxItems.push(this.getSubmissionPolicyItem());
-            if (this.submissionPolicy?.exceedingPenalty) {
-                this.informationBoxItems.push(this.getExceedingPenalty());
-            }
+            // if (this.submissionPolicy?.exceedingPenalty) {
+            //     this.informationBoxItems.push(this.getExceedingPenalty());
+            // }
         }
         if (this.studentParticipation?.results?.length) {
             // The updated participation by the websocket is not guaranteed to be sorted, find the newest result (highest id)

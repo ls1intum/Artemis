@@ -73,7 +73,7 @@
                     {{ sidebarItem.subtitleLeft }}
                 </small>
                 <small class="text-truncate d-inline">
-                    @if (sidebarType === 'exercise' && sidebarItem.studentParticipation && sidebarItem.exercise) {
+                    @if (sidebarType === 'exercise' && sidebarItem.exercise) {
                         <jhi-submission-result-status
                             class="text-truncate result"
                             [exercise]="sidebarItem.exercise"

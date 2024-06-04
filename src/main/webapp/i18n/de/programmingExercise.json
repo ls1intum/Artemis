@@ -601,7 +601,7 @@
                     },
                     "submission_penalty": {
                         "title": "Punktabzug je Überschreitung",
-                        "tooltip": "Das System zieht für jede Abgabe, die das Abgabelimit überschreitet, Punkte vom Gesamtergebnis ab."
+                        "tooltip": "Das System zieht für jede Abgabe, die das Abgabelimit überschreitet, Punkte vom Gesamtergebnis ab. Der Punktabzug für diese Aufgabe ist -{{points}} Punkte"
                     }
                 },
                 "submissionLimitTitle": "Abgaben",
