@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 import de.tum.in.www1.artemis.domain.metis.Post_;
 import de.tum.in.www1.artemis.domain.metis.Reaction_;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel_;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation_;
 
@@ -95,7 +96,7 @@ public class MessageSpecs {
             final var isCourseWidePredicate = criteriaBuilder.isTrue(conversationJoin.get(Channel_.IS_COURSE_WIDE));
             // make sure we only fetch channels (which are sub types of conversations), the string needs to be the same as the DiscriminatorValue in the Channel class
             // this avoids the creation of sub queries
-            final var isChannelPredicate = criteriaBuilder.equal(conversationJoin.get(Channel_.DISCRIMINATOR), "C");
+            final var isChannelPredicate = criteriaBuilder.equal(conversationJoin.type(), criteriaBuilder.literal(Channel.class));
             return criteriaBuilder.and(isInCoursePredicate, isCourseWidePredicate, isChannelPredicate);
         };
     }

@@ -73,10 +73,6 @@ public abstract class Conversation extends DomainObject {
     @Column(name = "creation_date", updatable = false)
     private ZonedDateTime creationDate = ZonedDateTime.now();
 
-    // this only exists to be used in specification queries
-    @Column(name = "discriminator", insertable = false, updatable = false)
-    private String discriminator;
-
     @Column(name = "last_message_date")
     private ZonedDateTime lastMessageDate;
 
