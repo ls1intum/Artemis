@@ -1337,7 +1337,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         verify(textBlockService, times(irrelevantCallCount + 3)).findAllBySubmissionId(textSubmission.getId());
 
         Set<TextBlock> textBlocks = textBlockRepository.findAllBySubmissionId(textSubmissionWithoutAssessment.getId());
-        assertThat(textBlocks).allSatisfy(block -> assertThat(block).isEqualToComparingFieldByField(blocksSubmission.get(block.getId())));
+        final String[] ignoringFields = { "submission.results", "submission.submissionDate", "submission.participation", "submission.blocks", "submission.versions" };
+        assertThat(textBlocks).allSatisfy(block -> assertThat(block).usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(blocksSubmission.get(block.getId())));
     }
 
     /**
