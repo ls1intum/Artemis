@@ -49,16 +49,19 @@ const routes: Routes = [
                 loadChildren: () => import('../discussion-section/discussion-section.module').then((m) => m.DiscussionSectionModule),
             },
             {
+                // Used in the apps, not in this client
                 pathMatch: 'full',
                 path: 'problem-statement',
                 component: ProblemStatementComponent,
             },
             {
+                // Used in the apps, not in this client
                 pathMatch: 'full',
                 path: 'problem-statement/:participationId',
                 component: ProblemStatementComponent,
             },
             {
+                // Used in the apps, not in this client
                 path: 'participations/:participationId/results/:resultId/feedback',
                 pathMatch: 'full',
                 component: StandaloneFeedbackComponent,

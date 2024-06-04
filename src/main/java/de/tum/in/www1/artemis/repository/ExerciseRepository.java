@@ -347,6 +347,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             FROM Exercise e
                 LEFT JOIN FETCH e.posts
                 LEFT JOIN FETCH e.categories
+                LEFT JOIN FETCH e.submissionPolicy
             WHERE e.id = :exerciseId
             """)
     Optional<Exercise> findByIdWithDetailsForStudent(@Param("exerciseId") Long exerciseId);

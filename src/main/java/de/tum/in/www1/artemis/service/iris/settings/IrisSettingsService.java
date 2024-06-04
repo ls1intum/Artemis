@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisChatSubSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisCompetencyGenerationSubSettings;
@@ -27,6 +28,7 @@ import de.tum.in.www1.artemis.domain.iris.settings.IrisSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
 import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.iris.IrisDefaultTemplateService;
 import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedSettingsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenAlertException;
@@ -50,11 +52,14 @@ public class IrisSettingsService {
 
     private final IrisDefaultTemplateService irisDefaultTemplateService;
 
-    public IrisSettingsService(IrisSettingsRepository irisSettingsRepository, IrisSubSettingsService irisSubSettingsService,
-            IrisDefaultTemplateService irisDefaultTemplateService) {
+    private final AuthorizationCheckService authCheckService;
+
+    public IrisSettingsService(IrisSettingsRepository irisSettingsRepository, IrisSubSettingsService irisSubSettingsService, IrisDefaultTemplateService irisDefaultTemplateService,
+            AuthorizationCheckService authCheckService) {
         this.irisSettingsRepository = irisSettingsRepository;
         this.irisSubSettingsService = irisSubSettingsService;
         this.irisDefaultTemplateService = irisDefaultTemplateService;
+        this.authCheckService = authCheckService;
     }
 
     private Optional<Integer> loadGlobalTemplateVersion() {
@@ -399,6 +404,17 @@ public class IrisSettingsService {
 
         return new IrisCombinedSettingsDTO(irisSubSettingsService.combineChatSettings(settingsList, minimal), irisSubSettingsService.combineHestiaSettings(settingsList, minimal),
                 irisSubSettingsService.combineCompetencyGenerationSettings(settingsList, minimal));
+    }
+
+    /**
+     * Check if we have to show minimal settings for an exercise. Editors can see the full settings, students only the reduced settings.
+     *
+     * @param exercise The exercise to check
+     * @param user     The user to check
+     * @return Whether we have to show the user the minimal settings
+     */
+    public boolean showMinimalSettings(Exercise exercise, User user) {
+        return !authCheckService.isAtLeastEditorForExercise(exercise, user);
     }
 
     /**

@@ -87,7 +87,7 @@ test.describe('Exam Results', () => {
                 new ExamNavigationBar(page),
                 new ExamStartEndPage(page),
                 new ModelingEditor(page),
-                new OnlineEditorPage(page, courseList, courseOverview),
+                new OnlineEditorPage(page),
                 new MultipleChoiceQuiz(page),
                 new TextEditorPage(page),
                 page,

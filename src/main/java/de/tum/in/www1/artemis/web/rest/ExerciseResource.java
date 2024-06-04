@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -29,10 +30,10 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
@@ -50,8 +51,14 @@ import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.TutorParticipationService;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
+import de.tum.in.www1.artemis.service.hestia.ExerciseHintService;
+import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedSettingsDTO;
+import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCaseService;
 import de.tum.in.www1.artemis.service.quiz.QuizBatchService;
+import de.tum.in.www1.artemis.web.rest.dto.ExerciseDetailsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.plagiarism.PlagiarismCaseInfoDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -93,11 +100,18 @@ public class ExerciseResource {
 
     private final ExamAccessService examAccessService;
 
+    private final Optional<IrisSettingsService> irisSettingsService;
+
+    private final PlagiarismCaseService plagiarismCaseService;
+
+    private final ExerciseHintService exerciseHintService;
+
     public ExerciseResource(ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ParticipationService participationService,
             UserRepository userRepository, ExamDateService examDateService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             ExampleSubmissionRepository exampleSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository, QuizBatchService quizBatchService,
-            ParticipationRepository participationRepository, ExamAccessService examAccessService) {
+            ParticipationRepository participationRepository, ExamAccessService examAccessService, Optional<IrisSettingsService> irisSettingsService,
+            PlagiarismCaseService plagiarismCaseService, ExerciseHintService exerciseHintService) {
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
@@ -112,6 +126,9 @@ public class ExerciseResource {
         this.quizBatchService = quizBatchService;
         this.participationRepository = participationRepository;
         this.examAccessService = examAccessService;
+        this.irisSettingsService = irisSettingsService;
+        this.plagiarismCaseService = plagiarismCaseService;
+        this.exerciseHintService = exerciseHintService;
     }
 
     /**
@@ -289,7 +306,7 @@ public class ExerciseResource {
      */
     @GetMapping("exercises/{exerciseId}/details")
     @EnforceAtLeastStudent
-    public ResponseEntity<Exercise> getExerciseDetails(@PathVariable Long exerciseId) {
+    public ResponseEntity<ExerciseDetailsDTO> getExerciseDetails(@PathVariable Long exerciseId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOneWithDetailsForStudents(exerciseId, user);
 
@@ -321,11 +338,6 @@ public class ExerciseResource {
             quizExercise.setQuizBatches(null);
             quizExercise.setQuizBatches(quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin()).stream().collect(Collectors.toSet()));
         }
-        if (exercise instanceof ProgrammingExercise programmingExercise) {
-            // TODO: instead fetch the policy without programming exercise, should be faster
-            SubmissionPolicy policy = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(programmingExercise.getId()).getSubmissionPolicy();
-            programmingExercise.setSubmissionPolicy(policy);
-        }
         // TODO: we should also check that the submissions do not contain sensitive data
 
         // remove sensitive information for students
@@ -333,7 +345,17 @@ public class ExerciseResource {
             exercise.filterSensitiveInformation();
         }
 
-        return ResponseEntity.ok(exercise);
+        IrisCombinedSettingsDTO irisSettings = irisSettingsService.map(service -> service.getCombinedIrisSettingsFor(exercise, service.showMinimalSettings(exercise, user)))
+                .orElse(null);
+        PlagiarismCaseInfoDTO plagiarismCaseInfo = plagiarismCaseService.getPlagiarismCaseInfoForExerciseAndUser(exercise.getId(), user.getId()).orElse(null);
+
+        if (exercise instanceof ProgrammingExercise programmingExercise) {
+            Set<ExerciseHint> activatedExerciseHints = exerciseHintService.getActivatedExerciseHints(programmingExercise, user);
+            Set<ExerciseHint> availableExerciseHints = exerciseHintService.getAvailableExerciseHints(programmingExercise, user);
+            return ResponseEntity.ok(new ExerciseDetailsDTO(exercise, irisSettings, plagiarismCaseInfo, availableExerciseHints, activatedExerciseHints));
+        }
+
+        return ResponseEntity.ok(new ExerciseDetailsDTO(exercise, irisSettings, plagiarismCaseInfo, null, null));
     }
 
     /**
