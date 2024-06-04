@@ -146,6 +146,7 @@ describe('CourseOverviewComponent', () => {
     let findOneForDashboardStub: jest.SpyInstance;
     let route: ActivatedRoute;
     let findOneForRegistrationStub: jest.SpyInstance;
+    let findAllForDashboardSpy: jest.SpyInstance;
 
     let metisConversationService: MetisConversationService;
 
@@ -229,6 +230,9 @@ describe('CourseOverviewComponent', () => {
                     .spyOn(courseService, 'findOneForRegistration')
                     .mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
                 jest.spyOn(metisConversationService, 'course', 'get').mockReturnValue(course);
+                findAllForDashboardSpy = jest
+                    .spyOn(courseService, 'findAllForDashboard')
+                    .mockReturnValue(of(new HttpResponse({ body: coursesDashboard, headers: new HttpHeaders() })));
             });
     }));
 
@@ -258,7 +262,16 @@ describe('CourseOverviewComponent', () => {
         expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
         expect(getSidebarItems).toHaveBeenCalledOnce();
         expect(getCourseActionItems).toHaveBeenCalledOnce();
-        expect(notifyAboutCourseAccessStub).toHaveBeenCalledExactlyOnceWith(course1.id);
+        expect(notifyAboutCourseAccessStub).toHaveBeenCalledWith(
+            course1.id,
+            CourseAccessStorageService.STORAGE_KEY,
+            CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_OVERVIEW,
+        );
+        expect(notifyAboutCourseAccessStub).toHaveBeenCalledWith(
+            course1.id,
+            CourseAccessStorageService.STORAGE_KEY_DROPDOWN,
+            CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_DROPDOWN,
+        );
         expect(getUpdateVisibility).toHaveBeenCalledOnce();
         expect(getUpdateMenuPosition).toHaveBeenCalledOnce();
     });
@@ -654,19 +667,20 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should initialize courses attribute when page is loaded', () => {
-        const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
-        findAllForDashboardSpy.mockReturnValue(of(new HttpResponse({ body: coursesDashboard, headers: new HttpHeaders() })));
-
         component.ngOnInit();
 
         expect(component.courses).toEqual(courses);
         expect(component.courses?.length).toBe(1);
     });
 
-    it('should not display current course in dropdown', () => {
-        const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
-        findAllForDashboardSpy.mockReturnValue(of(new HttpResponse({ body: coursesDashboard, headers: new HttpHeaders() })));
+    it('should not initialize courses attribute when page has error while loading', () => {
+        findAllForDashboardSpy.mockReturnValue(throwError(() => new HttpResponse({ status: 404 })));
 
+        component.ngOnInit();
+        expect(component.courses?.length).toBeUndefined();
+    });
+
+    it('should not display current course in dropdown', () => {
         component.ngOnInit();
 
         expect(component.courses).toEqual(courses);
@@ -674,9 +688,6 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should unsubscribe from dashboardSubscription on ngOnDestroy', () => {
-        const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
-        findAllForDashboardSpy.mockReturnValue(of(new HttpResponse({ body: coursesDashboard, headers: new HttpHeaders() })));
-
         component.updateRecentlyAccessedCourses();
         fixture.detectChanges();
         component.ngOnDestroy();

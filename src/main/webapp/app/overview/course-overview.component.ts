@@ -714,7 +714,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.vcSubscription?.unsubscribe();
         this.subscription?.unsubscribe();
         this.profileSubscription?.unsubscribe();
-        this.dashboardSubscription.unsubscribe();
+        this.dashboardSubscription?.unsubscribe();
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
     }
