@@ -18,7 +18,8 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisHealthStatusDTO;
 @Profile("iris")
 public class PyrisHealthIndicator implements HealthIndicator {
 
-    private static final int CACHE_TTL = 30_000;
+    @Value("${artemis.iris.health-ttl:30000}")
+    private int CACHE_TTL;
 
     private final RestTemplate restTemplate;
 

@@ -73,15 +73,20 @@ class IrisExerciseChatSessionIntegrationTest extends AbstractIrisIntegrationTest
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "ADMIN")
-    void irisStatusActive() throws Exception {
-        irisRequestMockProvider.mockStatusResponse(true);
+    void irisStatus() throws Exception {
+        irisRequestMockProvider.mockStatusResponses();
         assertThat(request.get("/api/iris/status", HttpStatus.OK, IrisStatusDTO.class).active()).isTrue();
-    }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "ADMIN")
-    void irisStatusNotActive() throws Exception {
-        irisRequestMockProvider.mockStatusResponse(false);
+        // Pyris now became unavailable (mockStatusResponses mocks a failure for the second call)
+
+        // Should still return true, as the status is cached
+        assertThat(request.get("/api/iris/status", HttpStatus.OK, IrisStatusDTO.class).active()).isTrue();
+
+        // Wait the TTL time for the cache to expire
+        // In tests, this is 500ms
+        Thread.sleep(510);
+
+        // Should now return false
         assertThat(request.get("/api/iris/status", HttpStatus.OK, IrisStatusDTO.class).active()).isFalse();
     }
 
