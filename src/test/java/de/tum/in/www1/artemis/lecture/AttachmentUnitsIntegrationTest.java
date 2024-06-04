@@ -340,8 +340,8 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
 
                     switch (i) {
                         case 6 -> generateBreakSlide(contentStream, font);
-                        case 7 -> generateExampleSolutionSlide(contentStream, font);
-                        case 2, 8 -> generateOutlineSlide(contentStream, font);
+                        case 7 -> generateOutlineSlide(contentStream, font, "Example solution");
+                        case 2, 8 -> generateOutlineSlide(contentStream, font, "Outline");
                         default -> generateContentSlide(contentStream, font);
                     }
                 }
@@ -366,28 +366,13 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
         contentStream.close();
     }
 
-    private void generateExampleSolutionSlide(PDPageContentStream contentStream, PDType1Font font) throws IOException {
+    private void generateOutlineSlide(PDPageContentStream contentStream, PDType1Font font, String header) throws IOException {
         contentStream.beginText();
         contentStream.setFont(font, 12);
         contentStream.newLineAtOffset(25, -15);
         contentStream.showText("itp20..");
         contentStream.newLineAtOffset(25, 500);
-        contentStream.showText("Example solution");
-        contentStream.newLineAtOffset(0, -15);
-        contentStream.showText("First Unit");
-        contentStream.newLineAtOffset(0, -15);
-        contentStream.showText("Second Unit");
-        contentStream.endText();
-        contentStream.close();
-    }
-
-    private void generateOutlineSlide(PDPageContentStream contentStream, PDType1Font font) throws IOException {
-        contentStream.beginText();
-        contentStream.setFont(font, 12);
-        contentStream.newLineAtOffset(25, -15);
-        contentStream.showText("itp20..");
-        contentStream.newLineAtOffset(25, 500);
-        contentStream.showText("Outline");
+        contentStream.showText(header);
         contentStream.newLineAtOffset(0, -15);
         contentStream.showText("First Unit");
         contentStream.newLineAtOffset(0, -15);
