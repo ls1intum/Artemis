@@ -31,7 +31,7 @@ export class ExamParticipationActions {
     async getResultScore(exerciseID?: number) {
         const parentComponent = exerciseID ? getExercise(this.page, exerciseID) : this.page;
         const resultScoreLocator = parentComponent.getByTestId('achieved-percentage');
-        await Commands.reloadUntilFound(this.page, resultScoreLocator);
+        await Commands.reloadUntilFound(this.page, resultScoreLocator, 4000, 60000);
         return resultScoreLocator;
     }
 
