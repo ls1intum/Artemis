@@ -186,7 +186,7 @@ export class CourseOverviewService {
             icon: faGraduationCap,
             subtitleLeft: exam.moduleNumber ?? '',
             startDateWithTime: exam.startDate,
-            workingTime: convertWorkingTimeToString(exam.workingTime ?? 0),
+            workingTime: exam.workingTime ?? 0,
             attainablePoints: exam.examMaxPoints ?? 0,
             size: 'L',
         };
@@ -230,32 +230,4 @@ export class CourseOverviewService {
     setSidebarCollapseState(storageId: string, isCollapsed: boolean) {
         localStorage.setItem('sidebar.collapseState.' + storageId, JSON.stringify(isCollapsed));
     }
-}
-
-/**
- * Converts workingTime property to a formatted string to be displayed in sidebar-cards
- */
-export function convertWorkingTimeToString(workingTime: number): string {
-    let workingTimeString = '';
-
-    if (workingTime) {
-        const hours = Math.floor(workingTime / 3600);
-        const minutes = Math.floor((workingTime % 3600) / 60);
-        const seconds = workingTime % 60;
-        if (hours > 0) {
-            workingTimeString += `${hours}h`;
-            if (minutes > 0) {
-                workingTimeString += ` ${minutes} min`;
-            }
-        } else if (minutes > 0) {
-            workingTimeString += `${minutes} min`;
-            if (seconds > 0) {
-                workingTimeString += ` ${seconds} sec`;
-            }
-        } else {
-            workingTimeString += `${seconds} sec`;
-        }
-    }
-
-    return workingTimeString;
 }

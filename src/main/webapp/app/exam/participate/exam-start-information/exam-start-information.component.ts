@@ -4,13 +4,13 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { InformationBox, InformationBoxComponent } from 'app/shared/information-box/information-box.component';
 import { Exam } from 'app/entities/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { convertWorkingTimeToString } from 'app/overview/course-overview.service';
+import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
 import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-exam-start-information',
     standalone: true,
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, InformationBoxComponent],
+    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, InformationBoxComponent, ArtemisExamSharedModule],
     templateUrl: './exam-start-information.component.html',
     styleUrl: './exam-start-information.component.scss',
 })
@@ -21,7 +21,7 @@ export class ExamStartInformationComponent implements OnInit {
     @Input() studentExam: StudentExam;
 
     totalPoints: number | undefined;
-    totalWorkingTime: number | undefined;
+    totalWorkingTimeInMinutes: number | undefined;
     moduleNumber: string | undefined;
     courseName: string | undefined;
     examiner: string | undefined;
@@ -31,7 +31,7 @@ export class ExamStartInformationComponent implements OnInit {
 
     ngOnInit(): void {
         this.totalPoints = this.exam.examMaxPoints;
-        this.totalWorkingTime = this.exam.workingTime! / 60; // convert seconds to minutes
+        this.totalWorkingTimeInMinutes = Math.floor(this.exam.workingTime! / 60);
         this.moduleNumber = this.exam.moduleNumber;
         this.courseName = this.exam.courseName;
         this.examiner = this.exam.examiner;
@@ -53,7 +53,7 @@ export class ExamStartInformationComponent implements OnInit {
 
     prepareInformationBoxData(): void {
         if (this.moduleNumber) {
-            const informationBoxModuleNumber = this.prepareEachInformationBox('artemisApp.examManagement.moduleNumber', this.moduleNumber!);
+            const informationBoxModuleNumber = this.prepareEachInformationBox('artemisApp.exam.moduleNumber', this.moduleNumber!);
             this.examInformationBoxData.push(informationBoxModuleNumber);
         }
         if (this.courseName) {
@@ -79,7 +79,7 @@ export class ExamStartInformationComponent implements OnInit {
             const informationBoxStartDate = this.prepareEachInformationBox('artemisApp.exam.date', this.startDate.toString(), 'formatedDate');
             this.examInformationBoxData.push(informationBoxStartDate);
         }
-        const informationBoxTotalWorkingTime = this.prepareEachInformationBox('artemisApp.exam.workingTime', convertWorkingTimeToString(this.exam.workingTime!));
+        const informationBoxTotalWorkingTime = this.prepareEachInformationBox('artemisApp.exam.workingTime', this.exam.workingTime!, 'workingTime');
         this.examInformationBoxData.push(informationBoxTotalWorkingTime);
     }
 }

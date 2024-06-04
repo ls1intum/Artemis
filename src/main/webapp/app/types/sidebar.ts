@@ -98,7 +98,7 @@ export interface SidebarCardElement {
     /**
      * Set for Exam, shows the working time
      */
-    workingTime?: string;
+    workingTime?: number;
     /**
      * Set for exam, shows the maximum attainable Points
      */

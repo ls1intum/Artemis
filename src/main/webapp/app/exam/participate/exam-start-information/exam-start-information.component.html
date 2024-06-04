@@ -5,6 +5,8 @@
                 <ng-container contentComponent>
                     @if (informationBoxData.contentComponent === 'formatedDate') {
                         <span>{{ informationBoxData.content | artemisDate: 'long-date' }}</span>
+                    } @else if (informationBoxData.contentComponent === 'workingTime') {
+                        <jhi-student-exam-working-time [studentExam]="studentExam" />
                     }
                 </ng-container>
             </jhi-information-box>
@@ -20,7 +22,7 @@
     <div class="fw-bold" jhiTranslate="artemisApp.exam.workingInstruction.workingInstructions"></div>
     <ul>
         <li jhiTranslate="artemisApp.exam.workingInstruction.important"></li>
-        <li jhiTranslate="artemisApp.exam.workingInstruction.totalPoints" [translateValues]="{ totalPoints: totalPoints, totalWorkingTime: totalWorkingTime }"></li>
+        <li jhiTranslate="artemisApp.exam.workingInstruction.totalPoints" [translateValues]="{ totalPoints: totalPoints, totalWorkingTime: totalWorkingTimeInMinutes }"></li>
         <li jhiTranslate="artemisApp.exam.workingInstruction.notAllowed"></li>
     </ul>
 </div>

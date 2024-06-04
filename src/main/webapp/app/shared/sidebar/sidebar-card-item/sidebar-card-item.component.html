@@ -34,7 +34,7 @@
                 </small>
                 <small class="me-2 text-truncate fw-semibold">
                     @if (sidebarItem.workingTime) {
-                        {{ sidebarItem.workingTime }}
+                        {{ sidebarItem.workingTime | artemisDurationFromSeconds }}
                     }
                 </small>
             </div>
