@@ -104,7 +104,7 @@ public interface ConversationMessageRepository extends JpaRepository<Post, Long>
         posts = postIds.stream().map(postMap::get).toList();
         log.info("findByPostIdsWithEagerRelationships took {}", TimeLogUtil.formatDurationFrom(start2));
         // Recreate the page with the fetched posts
-        return new PageImpl<>(posts, pageable, posts.size());
+        return new PageImpl<>(posts, postIds.getPageable(), postIds.getTotalElements());
     }
 
     @Query("""
