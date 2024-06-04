@@ -1,8 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { ImportCourseCompetenciesComponent } from 'app/course/competencies/import-competencies/import-course-competencies.component';
 import { onError } from 'app/shared/util/global.utils';
-import { PrerequisiteService } from '../prerequisite.service';
 
 @Component({
     selector: 'jhi-import-prerequisites',
@@ -11,8 +10,6 @@ import { PrerequisiteService } from '../prerequisite.service';
 export class ImportPrerequisitesComponent extends ImportCourseCompetenciesComponent {
     entityType = 'prerequisite';
     allowRelationImport = false;
-
-    private readonly prerequisiteService: PrerequisiteService = inject(PrerequisiteService);
 
     onSubmit() {
         const idsToImport = this.selectedCourseCompetencies.resultsOnPage.map((c) => c.id).filter((c): c is number => c !== undefined);
