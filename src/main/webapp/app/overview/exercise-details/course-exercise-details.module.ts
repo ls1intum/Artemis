@@ -27,7 +27,6 @@ import { LtiInitializerModalComponent } from 'app/overview/exercise-details/lti-
 import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/programming/manage/programming-exercise-management.module';
 import { ArtemisExerciseHintParticipationModule } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-participation.module';
 import { ProblemStatementComponent } from 'app/overview/exercise-details/problem-statement/problem-statement.component';
-import { StandaloneFeedbackComponent } from 'app/exercises/shared/feedback/standalone-feedback/standalone-feedback.component';
 import { ArtemisFeedbackModule } from 'app/exercises/shared/feedback/feedback.module';
 import { ArtemisExerciseInfoModule } from 'app/exercises/shared/exercise-info/exercise-info.module';
 import { IrisModule } from 'app/iris/iris.module';
@@ -47,24 +46,6 @@ const routes: Routes = [
                 path: '',
                 pathMatch: 'full',
                 loadChildren: () => import('../discussion-section/discussion-section.module').then((m) => m.DiscussionSectionModule),
-            },
-            {
-                // Used in the apps, not in this client
-                pathMatch: 'full',
-                path: 'problem-statement',
-                component: ProblemStatementComponent,
-            },
-            {
-                // Used in the apps, not in this client
-                pathMatch: 'full',
-                path: 'problem-statement/:participationId',
-                component: ProblemStatementComponent,
-            },
-            {
-                // Used in the apps, not in this client
-                path: 'participations/:participationId/results/:resultId/feedback',
-                pathMatch: 'full',
-                component: StandaloneFeedbackComponent,
             },
         ],
     },
@@ -97,6 +78,6 @@ const routes: Routes = [
         IrisModule,
     ],
     declarations: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent, LtiInitializerComponent, LtiInitializerModalComponent, ProblemStatementComponent],
-    exports: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent],
+    exports: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent, ProblemStatementComponent],
 })
 export class CourseExerciseDetailsModule {}

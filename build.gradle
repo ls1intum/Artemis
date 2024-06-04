@@ -221,6 +221,9 @@ repositories {
 ext["jackson.version"] = fasterxml_version
 ext["junit-jupiter.version"] = junit_version
 
+ext { qDoxVersionReusable = "com.thoughtworks.qdox:qdox:2.1.0" }
+ext { springBootStarterWeb = "org.springframework.boot:spring-boot-starter-web:${spring_boot_version}" }
+
 dependencies {
 
     // Note: jenkins-client is not well maintained and includes dependencies to libraries with critical security issues (e.g. CVE-2020-10683 for dom4j@1.6.1)
@@ -291,7 +294,7 @@ dependencies {
         }
     }
 
-    implementation "com.thoughtworks.qdox:qdox:2.1.0"
+    implementation qDoxVersionReusable
     implementation "io.sentry:sentry-logback:${sentry_version}"
     implementation "io.sentry:sentry-spring-boot-starter-jakarta:${sentry_version}"
 
@@ -361,7 +364,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-aop:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-data-jpa:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-security:${spring_boot_version}"
-    implementation("org.springframework.boot:spring-boot-starter-web:${spring_boot_version}") {
+    implementation(springBootStarterWeb) {
         exclude module: "spring-boot-starter-undertow"
     }
     implementation "org.springframework.boot:spring-boot-starter-tomcat:${spring_boot_version}"
