@@ -96,6 +96,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     private courseId: number;
     private subscription: Subscription;
+    private dashboardSubscription: Subscription;
     course?: Course;
     courses?: Course[];
     refreshingCourse = false;
@@ -291,7 +292,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     /** initialize courses attribute by retrieving recently accessed courses from the server */
     updateRecentlyAccessedCourses() {
-        this.courseService.findAllForDashboard().subscribe({
+        this.dashboardSubscription = this.courseService.findAllForDashboard().subscribe({
             next: (res: HttpResponse<CoursesForDashboardDTO>) => {
                 if (res.body) {
                     const { courses: courseDtos } = res.body;
@@ -717,7 +718,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.vcSubscription?.unsubscribe();
         this.subscription?.unsubscribe();
         this.profileSubscription?.unsubscribe();
-        this.subscription.unsubscribe();
+        this.dashboardSubscription.unsubscribe();
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
     }
