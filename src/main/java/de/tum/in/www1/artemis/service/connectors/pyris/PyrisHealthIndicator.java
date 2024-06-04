@@ -18,20 +18,38 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisHealthStatusDTO;
 @Profile("iris")
 public class PyrisHealthIndicator implements HealthIndicator {
 
+    private static final int CACHE_TTL = 30_000;
+
     private final RestTemplate restTemplate;
 
     @Value("${artemis.iris.url}")
     private URI irisUrl;
 
+    private long lastUpdated = 0;
+
+    private Health cachedHealth = null;
+
     public PyrisHealthIndicator(@Qualifier("shortTimeoutPyrisRestTemplate") RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
 
-    /**
-     * Ping Iris at /health and check if the service is available and what its status is.
+    /*
+     * Used by the MetricsBean - will always freshly update.
      */
     @Override
     public Health health() {
+        return health(false);
+    }
+
+    /**
+     * Ping Iris at /health and check if the service is available and what its status is.
+     * Offers an option to use a cached result to avoid spamming the service.
+     */
+    public Health health(boolean useCache) {
+        if (useCache && cachedHealth != null && System.currentTimeMillis() - lastUpdated < CACHE_TTL) {
+            return cachedHealth;
+        }
+
         ConnectorHealth health;
         try {
             PyrisHealthStatusDTO[] status = restTemplate.getForObject(irisUrl + "/api/v1/health/", PyrisHealthStatusDTO[].class);
@@ -42,6 +60,10 @@ public class PyrisHealthIndicator implements HealthIndicator {
             health = new ConnectorHealth(false, null, e);
         }
 
-        return health.asActuatorHealth();
+        var newHealth = health.asActuatorHealth();
+        cachedHealth = newHealth;
+        lastUpdated = System.currentTimeMillis();
+
+        return newHealth;
     }
 }
