@@ -148,12 +148,12 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
      * <ul>
      * <li>
      * Input: Local repository path - {@code Paths.get("/local/path/projectX/my-repo/.git")}
-     * and Local VC server URL - {@code new URL("https://artemis.cit.tum.de")}
+     * and Local VC server URL - {@code new URI("https://artemis.cit.tum.de").getURL()}
      * Output: {@code https://artemis.cit.tum.de/git/projectX/my-repo.git}
      * </li>
      * <li>
      * Input: Remote repository path - {@code Paths.get("/remote/path/projectY/my-repo")}
-     * and Local VC server URL - {@code new URL("https://artemis.cit.tum.de")}
+     * and Local VC server URL - {@code new URI("https://artemis.cit.tum.de").getURL()}
      * Output: {@code https://artemis.cit.tum.de/git/projectY/my-repo.git}
      * </li>
      * </ul>
