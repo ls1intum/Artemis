@@ -111,8 +111,8 @@ public class QuizBatchService {
         if (quizBatch.isEnded()) {
             throw new QuizJoinException("quizBatchExpired", "Batch has expired");
         }
-        else if (existingBatch.isPresent() && !existingBatch.get().equals(quizBatch)) {
-            throw new QuizJoinException("quizBatchAlreadyJoined", "User is already part of another batch");
+        else if (existingBatch.isPresent()) {
+            throw new QuizJoinException("quizBatchAlreadyJoined", "User is already part of a batch");
         }
 
         QuizSubmission quizSubmission = quizSubmissionRepository.findByExerciseIdAndStudentLogin(quizExercise.getId(), user.getLogin()).orElseThrow();
