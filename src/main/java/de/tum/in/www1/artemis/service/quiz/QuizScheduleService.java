@@ -73,30 +73,24 @@ public class QuizScheduleService {
         // first remove and cancel old scheduledFuture if it exists
         cancelScheduledQuizStart(quizExerciseId);
         // reload from database to make sure there are no proxy objects
-        final var quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseId);
-        if (quizExercise != null && quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
+        final var quizExercise = quizExerciseRepository.findWithEagerBatchesByIdOrElseThrow(quizExerciseId);
+        if (quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
             // TODO: quiz cleanup: it should be possible to schedule quiz batches in BATCHED mode
             var quizBatch = quizExercise.getQuizBatches().stream().findAny();
             if (quizBatch.isPresent() && quizBatch.get().getStartTime() != null) {
                 if (quizBatch.get().getStartTime().isAfter(ZonedDateTime.now())) {
                     scheduleService.scheduleTask(quizExercise, quizBatch.get(), ExerciseLifecycle.START, () -> executeQuizStartNowTask(quizExerciseId));
                 }
-                scheduleQuizStatistics(quizExercise);
             }
         }
-    }
-
-    public void scheduleQuizStatistics(QuizExercise quizExercise) {
-        var quizBatch = quizExercise.getQuizBatches().stream().findAny();
         if (quizExercise.getDueDate() != null) {
-            scheduleService.scheduleTask(quizExercise, quizBatch.get(), ExerciseLifecycle.DUE,
-                    Set.of(new Tuple<>(quizExercise.getDueDate().plusSeconds(5), () -> calculateAllResults(quizExercise.getId(), quizBatch.get().getId()))));
+            scheduleService.scheduleTask(quizExercise, ExerciseLifecycle.DUE,
+                    Set.of(new Tuple<>(quizExercise.getDueDate().plusSeconds(5), () -> calculateAllResults(quizExerciseId))));
         }
     }
 
-    private void calculateAllResults(long quizExerciseId, long quizBatchId) {
+    private void calculateAllResults(long quizExerciseId) {
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
-        QuizBatch quizBatch = quizExercise.getQuizBatches().stream().filter(batch -> batch.getId().equals(quizBatchId)).findAny().orElse(null);
         log.info("Calculating results for quiz {}", quizExercise.getId());
         participationRepository.findByExerciseId(quizExercise.getId()).forEach(participation -> {
             participation.setExercise(quizExercise);
@@ -112,7 +106,7 @@ public class QuizScheduleService {
                     quizSubmission.setType(SubmissionType.MANUAL);
                 }
             }
-            else if (quizExercise.isQuizEnded() || quizBatch != null && quizBatch.isEnded()) {
+            else if (quizExercise.isQuizEnded()) {
                 quizSubmission.setSubmitted(true);
                 quizSubmission.setType(SubmissionType.TIMEOUT);
                 quizSubmission.setSubmissionDate(ZonedDateTime.now());
