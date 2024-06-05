@@ -119,7 +119,6 @@
                 "titleRequiredValidationError": "Eine Kompetenz braucht einen Titel",
                 "titleMaxLengthValidationError": "Der Titel einer Kompetenz ist auf maximal {{max}} Symbole beschränkt",
                 "titleUniqueValidationError": "Es gibt bereits eine Kompetenz mit diesem Titel in dem Kurs",
-                "descriptionPlaceholder": "Was sollen die Studierenden lernen? Beispiel: \"Du kannst den Unterschied zwischen Rekursion und Schleifen erklären.\"",
                 "descriptionMaxLengthValidationError": "Die Beschreibung der Kompetenz ist auf maximal {{max}} Symbole beschränkt",
                 "softDueDate": "Empfohlenes Fertigstellungsdatum",
                 "softDueDateHint": "Empfehle einen Zeitpunkt zu dem die Studierenden diese Kompetenz gemeistert haben sollten. Dies ist keine harte Frist.",
@@ -206,6 +205,12 @@
                 "success": "{{ numPrerequisites }} Voraussetzungen importiert.",
                 "selectedTableHeader": "Ausgewählte Kompetenzen",
                 "selectedTableEmpty": "Keine Kompetenzen zum Import als Voraussetzungen ausgewählt"
+            },
+            "create": {
+                "title": "Erstelle eine neue Voraussetzung"
+            },
+            "edit": {
+                "title": "Bearbeite eine Voraussetzung"
             }
         },
         "learningPath": {

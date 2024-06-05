@@ -25,18 +25,24 @@ export class PrerequisiteService {
         //TODO: send title to entityTitleService when we allow prerequisite detail view.
     }
 
-    createPrerequisite(prerequisite: Prerequisite, prerequisiteId: number, courseId: number): Observable<Prerequisite | undefined> {
+    getPrerequisite(prerequisiteId: number, courseId: number) {
+        return this.httpClient
+            .get<PrerequisiteResponseDTO>(`${this.resourceURL}/courses/${courseId}/competencies/prerequisites/${prerequisiteId}`, { observe: 'response' })
+            .pipe(map((resp) => PrerequisiteService.convertResponseDTOToPrerequisite(resp.body!)));
+    }
+
+    createPrerequisite(prerequisite: Prerequisite, courseId: number): Observable<Prerequisite | undefined> {
         const prerequisiteDTO = this.convertToRequestDTO(prerequisite);
         return this.httpClient
-            .post<PrerequisiteResponseDTO>(`${this.resourceURL}/courses/${courseId}/competencies/prerequisites/${prerequisiteId}`, prerequisiteDTO, { observe: 'response' })
-            .pipe(map((resp) => (resp.body ? this.convertResponseDTOToPrerequisite(resp.body) : undefined)));
+            .post<PrerequisiteResponseDTO>(`${this.resourceURL}/courses/${courseId}/competencies/prerequisites`, prerequisiteDTO, { observe: 'response' })
+            .pipe(map((resp) => (resp.body ? PrerequisiteService.convertResponseDTOToPrerequisite(resp.body) : undefined)));
     }
 
     updatePrerequisite(prerequisite: Prerequisite, prerequisiteId: number, courseId: number): Observable<Prerequisite | undefined> {
         const prerequisiteDTO = this.convertToRequestDTO(prerequisite);
         return this.httpClient
             .post<PrerequisiteResponseDTO>(`${this.resourceURL}/courses/${courseId}/competencies/prerequisites/${prerequisiteId}`, prerequisiteDTO, { observe: 'response' })
-            .pipe(map((resp) => (resp.body ? this.convertResponseDTOToPrerequisite(resp.body) : undefined)));
+            .pipe(map((resp) => (resp.body ? PrerequisiteService.convertResponseDTOToPrerequisite(resp.body) : undefined)));
     }
 
     deletePrerequisite(prerequisiteId: number, courseId: number) {

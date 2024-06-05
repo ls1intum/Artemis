@@ -39,6 +39,7 @@ import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.repository.CompetencyProgressRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
+import de.tum.in.www1.artemis.repository.CourseCompetencyRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.PrerequisiteRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -102,12 +103,14 @@ public class CompetencyResource {
 
     private final CompetencyRelationService competencyRelationService;
 
+    private final CourseCompetencyRepository courseCompetencyRepository;
+
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CompetencyRepository competencyRepository, CompetencyRelationRepository competencyRelationRepository, CompetencyService competencyService,
             CompetencyProgressRepository competencyProgressRepository, CompetencyProgressService competencyProgressService, ExerciseService exerciseService,
             LectureUnitService lectureUnitService, CompetencyRelationService competencyRelationService,
             Optional<IrisCompetencyGenerationSessionService> irisCompetencyGenerationSessionService, PrerequisiteService prerequisiteService,
-            PrerequisiteRepository prerequisiteRepository) {
+            PrerequisiteRepository prerequisiteRepository, CourseCompetencyRepository courseCompetencyRepository) {
         this.courseRepository = courseRepository;
         this.competencyRelationRepository = competencyRelationRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -120,6 +123,7 @@ public class CompetencyResource {
         this.lectureUnitService = lectureUnitService;
         this.competencyRelationService = competencyRelationService;
         this.irisCompetencyGenerationSessionService = irisCompetencyGenerationSessionService;
+        this.courseCompetencyRepository = courseCompetencyRepository;
     }
 
     /**
@@ -530,6 +534,19 @@ public class CompetencyResource {
         var competencies = irisService.executeRequest(session);
 
         return ResponseEntity.ok().body(competencies);
+    }
+
+    /**
+     * GET courses/{courseId}/competencies/titles : Returns the titles of all course competencies. Used for a validator in the client
+     *
+     * @param courseId the id of the current course
+     * @return the titles of all course competencies
+     */
+    @GetMapping("courses/{courseId}/competencies/titles")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<List<String>> getCourseCompetencyTitles(@PathVariable Long courseId) {
+        final var titles = courseCompetencyRepository.findAllTitlesByCourseId(courseId);
+        return ResponseEntity.ok(titles);
     }
 
     /**

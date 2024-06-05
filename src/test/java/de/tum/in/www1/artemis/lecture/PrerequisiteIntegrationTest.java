@@ -106,6 +106,36 @@ class PrerequisiteIntegrationTest extends AbstractSpringIntegrationIndependentTe
     }
 
     @Nested
+    class GetPrerequisite {
+
+        private static String url(long courseId, long prerequisiteId) {
+            return PrerequisiteIntegrationTest.baseUrl(courseId) + "/" + prerequisiteId;
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldReturnPrerequisite() throws Exception {
+            var prerequisite = prerequisiteUtilService.createPrerequisite(course);
+
+            PrerequisiteResponseDTO actualPrerequisite = request.get(url(prerequisite.getId(), course.getId()), HttpStatus.OK, PrerequisiteResponseDTO.class);
+
+            assertThat(actualPrerequisite).isEqualTo(PrerequisiteResponseDTO.of(prerequisite));
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
+        void shouldReturnNotFoundIfCompetencyDoesNotExistInCourse() throws Exception {
+            var prerequisite = prerequisiteUtilService.createPrerequisite(course);
+
+            // this competency does not exist in course2
+            request.get(url(prerequisite.getId(), course2.getId()), HttpStatus.NOT_FOUND, PrerequisiteResponseDTO.class);
+
+            // this competency does not exist at all
+            request.get(url(-1000L, course.getId()), HttpStatus.NOT_FOUND, PrerequisiteResponseDTO.class);
+        }
+    }
+
+    @Nested
     class CreatePrerequisite {
 
         private static String url(long courseId) {

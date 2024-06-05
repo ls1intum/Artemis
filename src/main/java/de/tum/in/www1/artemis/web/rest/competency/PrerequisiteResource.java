@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.repository.PrerequisiteRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.competency.PrerequisiteService;
 import de.tum.in.www1.artemis.web.rest.dto.competency.PrerequisiteRequestDTO;
@@ -77,6 +78,23 @@ public class PrerequisiteResource {
         var prerequisites = prerequisiteRepository.findByCourseIdOrderById(courseId);
 
         return ResponseEntity.ok(prerequisites.stream().map(PrerequisiteResponseDTO::of).toList());
+    }
+
+    /**
+     * GET /courses/:courseId/competencies/prerequisites/:prerequisiteId : Gets the prerequisite competency with the given id for a course.
+     *
+     * @param prerequisiteId the id of the prerequisite to fetch
+     * @param courseId       the id of the course in which the prerequisite should exist
+     * @return the ResponseEntity with status 200 (OK) and with body the found prerequisite or with status 404 (Not Found)
+     */
+    @GetMapping("courses/{courseId}/competencies/prerequisites/{prerequisiteId}")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<PrerequisiteResponseDTO> getPrerequisite(@PathVariable long prerequisiteId, @PathVariable long courseId) {
+        log.debug("REST request to get prerequisite with id: {}", prerequisiteId);
+
+        var prerequisite = prerequisiteRepository.findByIdAndCourseIdElseThrow(prerequisiteId, courseId);
+
+        return ResponseEntity.ok(PrerequisiteResponseDTO.of(prerequisite));
     }
 
     /**

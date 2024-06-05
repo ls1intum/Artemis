@@ -142,6 +142,12 @@ export class CompetencyService {
         });
     }
 
+    getCourseCompetencyTitles(courseId: number) {
+        return this.httpClient.get<string[]>(`${this.resourceURL}/courses/${courseId}/competencies/titles`, {
+            observe: 'response',
+        });
+    }
+
     //helper methods
 
     /**

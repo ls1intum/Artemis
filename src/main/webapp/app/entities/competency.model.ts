@@ -35,6 +35,8 @@ export enum CompetencyRelationError {
 export enum CompetencyValidators {
     TITLE_MAX = 255,
     DESCRIPTION_MAX = 10000,
+    MASTERY_THRESHOLD_MIN = 0,
+    MASTERY_THRESHOLD_MAX = 100,
 }
 
 export const DEFAULT_MASTERY_THRESHOLD = 100;

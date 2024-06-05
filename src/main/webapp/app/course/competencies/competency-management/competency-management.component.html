@@ -145,9 +145,12 @@
                 <fa-icon [icon]="faFileImport" />
                 <span jhiTranslate="artemisApp.prerequisite.manage.importButton"></span>
             </a>
+            <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'competency-management', 'prerequisites', 'create']">
+                <fa-icon [icon]="faPlus" />
+                <span jhiTranslate="TODO TRANSLATION"></span>
+            </a>
         </div>
     </div>
-    <!-- TODO: new table will be added when create/edit will be added -->
     <div class="container-fluid overflow-auto">
         @if (prerequisites.length) {
             <table class="table table-striped">
@@ -192,17 +195,26 @@
                                     </div>
                                 }
                             </td>
-                            <td class="col text-end">
-                                <button
-                                    jhiDeleteButton
-                                    [entityTitle]="prerequisite.title ?? ''"
-                                    [deleteQuestion]="'artemisApp.prerequisite.manage.delete.question'"
-                                    [deleteConfirmationText]="'artemisApp.prerequisite.manage.delete.typeNameToConfirm'"
-                                    (delete)="deletePrerequisite(prerequisite.id!)"
-                                    [dialogError]="dialogError"
-                                >
-                                    <fa-icon [icon]="faTrash" />
-                                </button>
+                            <td class="col">
+                                <div class="d-flex justify-content-end">
+                                    <a
+                                        class="btn btn-sm btn-primary me-1"
+                                        [routerLink]="['/course-management', courseId, 'competency-management', 'prerequisites', prerequisite.id, 'edit']"
+                                    >
+                                        <fa-icon [icon]="faPencilAlt" />
+                                        <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
+                                    </a>
+                                    <button
+                                        jhiDeleteButton
+                                        [entityTitle]="prerequisite.title ?? ''"
+                                        [deleteQuestion]="'artemisApp.prerequisite.manage.delete.question'"
+                                        [deleteConfirmationText]="'artemisApp.prerequisite.manage.delete.typeNameToConfirm'"
+                                        (delete)="deletePrerequisite(prerequisite.id!)"
+                                        [dialogError]="dialogError"
+                                    >
+                                        <fa-icon [icon]="faTrash" />
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     }

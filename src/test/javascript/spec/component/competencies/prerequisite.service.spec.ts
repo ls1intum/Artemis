@@ -68,7 +68,7 @@ describe('PrerequisiteService', () => {
         const expectedPrerequisite: Prerequisite = { id: 1, title: 'newTitle', description: 'newDescription' };
         const returnedFromService: Prerequisite = { ...expectedPrerequisite };
 
-        prerequisiteService.createPrerequisite({ title: 'newTitle', description: 'newDescription' }, 1, 1).subscribe((resp) => (actualPrerequisite = resp));
+        prerequisiteService.createPrerequisite({ title: 'newTitle', description: 'newDescription' }, 1).subscribe((resp) => (actualPrerequisite = resp));
         const req = httpTestingController.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
         tick();

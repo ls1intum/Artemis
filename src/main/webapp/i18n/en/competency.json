@@ -119,7 +119,6 @@
                 "titleRequiredValidationError": "A competency needs to have a title",
                 "titleMaxLengthValidationError": "A competency title is limited to {{max}} characters",
                 "titleUniqueValidationError": "There already exists a competency with this title in the course",
-                "descriptionPlaceholder": "What do you expect students to learn? Example: \"You can explain the difference between call-by-value and call-by-reference.\"",
                 "descriptionMaxLengthValidationError": "A competency description is limited to {{max}} characters",
                 "softDueDate": "Recommended date of completion",
                 "softDueDateHint": "Guide students by selecting when you expect them to have mastered this competency. This is not a hard deadline.",
@@ -206,6 +205,12 @@
                 "success": "Imported {{ numPrerequisites }} prerequisites.",
                 "selectedTableHeader": "Selected Prerequisites",
                 "selectedTableEmpty": "No competencies selected to import as prerequisites"
+            },
+            "create": {
+                "title": "Create a new Prerequisite"
+            },
+            "edit": {
+                "title": "Edit a Prerequisite"
             }
         },
         "learningPath": {
