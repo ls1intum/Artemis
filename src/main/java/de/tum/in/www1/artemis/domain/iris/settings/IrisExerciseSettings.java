@@ -41,17 +41,11 @@ public class IrisExerciseSettings extends IrisSettings {
         this.exercise = exercise;
     }
 
-    /**
-     * @return
-     */
     @Override
     public IrisLectureIngestionSubSettings getIrisLectureIngestionSettings() {
         return null;
     }
 
-    /**
-     * @param irisLectureIngestionSettings
-     */
     @Override
     public void setIrisLectureIngestionSettings(IrisLectureIngestionSubSettings irisLectureIngestionSettings) {
     }

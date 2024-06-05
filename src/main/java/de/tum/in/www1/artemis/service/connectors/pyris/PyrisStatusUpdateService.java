@@ -9,7 +9,7 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureingestionwebho
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageState;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.tutorChat.PyrisTutorChatStatusUpdateDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.job.PyrisJob;
+import de.tum.in.www1.artemis.service.connectors.pyris.job.IngestionWebhookJob;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.TutorChatJob;
 import de.tum.in.www1.artemis.service.iris.session.IrisChatSessionService;
 
@@ -50,7 +50,7 @@ public class PyrisStatusUpdateService {
      * @param job          the job that is updated
      * @param statusUpdate the status update
      */
-    public void handleStatusUpdate(PyrisJob job, PyrisLectureIngestionStatusUpdateDTO statusUpdate) {
+    public void handleStatusUpdate(IngestionWebhookJob job, PyrisLectureIngestionStatusUpdateDTO statusUpdate) {
         log.info("Ingestion job status updated with result: {}", statusUpdate.result());
         boolean isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state)
                 .allMatch(state -> state == PyrisStageState.DONE || state == PyrisStageState.ERROR || state == PyrisStageState.SKIPPED);

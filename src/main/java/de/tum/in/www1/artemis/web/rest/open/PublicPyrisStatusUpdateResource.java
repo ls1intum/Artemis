@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.service.connectors.pyris.PyrisStatusUpdateService;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.tutorChat.PyrisTutorChatStatusUpdateDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.IngestionWebhookJob;
+import de.tum.in.www1.artemis.service.connectors.pyris.job.PyrisJob;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.TutorChatJob;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
@@ -79,7 +80,7 @@ public class PublicPyrisStatusUpdateResource {
     @PostMapping("webhooks/ingestion/runs/{runId}/status")
     @EnforceNothing
     public ResponseEntity<Void> setStatusOfIngestionJob(@PathVariable String runId, @RequestBody PyrisLectureIngestionStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
-        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request);
+        PyrisJob job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request);
         if (!job.jobId().equals(runId)) {
             throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
         }

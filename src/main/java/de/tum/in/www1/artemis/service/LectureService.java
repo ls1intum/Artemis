@@ -144,9 +144,8 @@ public class LectureService {
             Lecture lectureWithAttachmentUnits = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture.getId());
             List<AttachmentUnit> attachmentUnitList = lectureWithAttachmentUnits.getLectureUnits().stream().filter(lectureUnit -> lectureUnit.getType().equals("attachment"))
                     .map(lectureUnit -> (AttachmentUnit) lectureUnit).collect(Collectors.toCollection(ArrayList::new));
-            // This code sends the lecture to IRIS.
             if (!attachmentUnitList.isEmpty()) {
-                pyrisWebhookService.get().executeLectureIngestionPipeline(false, attachmentUnitList);
+                pyrisWebhookService.get().deleteLectureFromPyrisDB(attachmentUnitList);
             }
         }
         Channel lectureChannel = channelRepository.findChannelByLectureId(lecture.getId());

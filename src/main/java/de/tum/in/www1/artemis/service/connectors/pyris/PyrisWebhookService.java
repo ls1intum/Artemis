@@ -77,28 +77,49 @@ public class PyrisWebhookService {
     }
 
     /**
-     * Executes the Lecture Ingestion pipeline for the given
+     * delete the lectures from the vector database on pyris
      *
-     * @param shouldUpdate    True if the lecture is updated, False if the lecture is erased
      * @param attachmentUnits The attachmentUnit that got Updated / erased
+     * @return jobToken if the job was created
      */
-    public void executeLectureIngestionPipeline(Boolean shouldUpdate, List<AttachmentUnit> attachmentUnits) {
+    public String deleteLectureFromPyrisDB(List<AttachmentUnit> attachmentUnits) {
         if (lectureIngestionEnabled(attachmentUnits.getFirst().getLecture().getCourse())) {
             List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentUnits = new ArrayList<>();
             attachmentUnits.stream().filter(unit -> unit.getAttachment().getAttachmentType() == AttachmentType.FILE).forEach(unit -> {
-                if (shouldUpdate) {
-                    toUpdateAttachmentUnits.add(processAttachmentForUpdate(unit));
-                }
-                else {
-                    toUpdateAttachmentUnits.add(processAttachmentForDeletion(unit));
-                }
+                toUpdateAttachmentUnits.add(processAttachmentForDeletion(unit));
             });
             if (!toUpdateAttachmentUnits.isEmpty()) {
-                String jobToken = pyrisJobService.addIngestionWebhookJob();
-                PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
-                PyrisWebhookLectureIngestionExecutionDTO executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(toUpdateAttachmentUnits, settingsDTO, List.of());
-                pyrisConnectorService.executeLectureWebhook("fullIngestion", executionDTO);
+                return helpExecuteIngestionPipeline(toUpdateAttachmentUnits);
             }
         }
+        return null;
     }
+
+    /**
+     * adds the lectures to the vector database on pyris
+     *
+     * @param attachmentUnits The attachmentUnit that got Updated / erased
+     * @return jobToken if the job was created
+     */
+    public String addLectureToPyrisDB(List<AttachmentUnit> attachmentUnits) {
+        if (lectureIngestionEnabled(attachmentUnits.getFirst().getLecture().getCourse())) {
+            List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentUnits = new ArrayList<>();
+            attachmentUnits.stream().filter(unit -> unit.getAttachment().getAttachmentType() == AttachmentType.FILE).forEach(unit -> {
+                toUpdateAttachmentUnits.add(processAttachmentForUpdate(unit));
+            });
+            if (!toUpdateAttachmentUnits.isEmpty()) {
+                return helpExecuteIngestionPipeline(toUpdateAttachmentUnits);
+            }
+        }
+        return null;
+    }
+
+    private String helpExecuteIngestionPipeline(List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentUnits) {
+        String jobToken = pyrisJobService.addIngestionWebhookJob();
+        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
+        PyrisWebhookLectureIngestionExecutionDTO executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(toUpdateAttachmentUnits, settingsDTO, List.of());
+        pyrisConnectorService.executeLectureWebhook("fullIngestion", executionDTO);
+        return jobToken;
+    }
+
 }

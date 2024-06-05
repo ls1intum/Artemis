@@ -359,7 +359,7 @@ public class LectureResource {
                 // re-add the competencies already loaded with the exercise unit
                 ((ExerciseUnit) lectureUnit).getExercise().setCompetencies(exercise.getCompetencies());
             }
-        }).collect(Collectors.toCollection(ArrayList::new));
+        }).toList();
 
         lecture.setLectureUnits(lectureUnitsUserIsAllowedToSee);
         return lecture;
@@ -396,7 +396,7 @@ public class LectureResource {
         pyrisWebhookService.ifPresent(service -> {
             List<AttachmentUnit> attachmentUnitList = lecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit.getType().equals("attachment"))
                     .map(lectureUnit -> (AttachmentUnit) lectureUnit).collect(Collectors.toCollection(ArrayList::new));
-            service.executeLectureIngestionPipeline(true, attachmentUnitList);
+            service.addLectureToPyrisDB(attachmentUnitList);
         });
     }
 }

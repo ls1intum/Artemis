@@ -167,7 +167,7 @@ public class LectureUnitService {
                 for (Slide slide : slides) {
                     fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(slide.getSlideImagePath())), 5);
                 }
-                pyrisWebhookService.ifPresent(service -> service.executeLectureIngestionPipeline(false, List.of(attachmentUnit)));
+                pyrisWebhookService.ifPresent(service -> service.deleteLectureFromPyrisDB(List.of(attachmentUnit)));
                 slideRepository.deleteAll(slides);
             }
         }

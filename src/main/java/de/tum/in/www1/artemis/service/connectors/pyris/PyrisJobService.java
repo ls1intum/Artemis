@@ -106,15 +106,6 @@ public class PyrisJobService {
     }
 
     /**
-     * Get the job of a token.
-     *
-     * @return the whole map of jobs
-     */
-    public IMap<String, PyrisJob> getAllJobs() {
-        return jobMap;
-    }
-
-    /**
      * This method is used to authenticate an incoming request from Pyris.
      * 1. Reads the authentication token from the request headers.
      * 2. Retrieves the PyrisJob object associated with the provided token.

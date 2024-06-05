@@ -15,7 +15,6 @@ import {
     IrisHestiaSubSettings,
     IrisLectureIngestionSubSettings,
 } from 'app/entities/iris/settings/iris-sub-settings.model';
-import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-iris-settings-update',
@@ -50,16 +49,11 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     GLOBAL = IrisSettingsType.GLOBAL;
     COURSE = IrisSettingsType.COURSE;
     EXERCISE = IrisSettingsType.EXERCISE;
-    isAdmin: boolean;
-    lectureChat = false;
 
     constructor(
         private irisSettingsService: IrisSettingsService,
         private alertService: AlertService,
-        private accountService: AccountService,
-    ) {
-        this.isAdmin = accountService.isAdmin();
-    }
+    ) {}
 
     ngOnInit(): void {
         this.loadIrisSettings();
