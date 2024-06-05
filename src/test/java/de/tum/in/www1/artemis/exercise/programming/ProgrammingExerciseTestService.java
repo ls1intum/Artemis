@@ -271,11 +271,11 @@ public class ProgrammingExerciseTestService {
 
     public ProgrammingExercise examExercise;
 
-    public static final int numberOfStudents = 5;
+    public static final int NUMBER_OF_STUDENTS = 5;
 
-    public static final String studentLogin = "student1";
+    public static final String STUDENT_LOGIN = "student1";
 
-    public static final String teamShortName = "team1";
+    public static final String TEAM_SHORT_NAME = "team1";
 
     public static final String PARTICIPATION_BASE_URL = "/api/participations/";
 
@@ -315,7 +315,7 @@ public class ProgrammingExerciseTestService {
 
     public void setupTestUsers(String userPrefix, int additionalStudents, int additionalTutors, int additionalEditors, int additionalInstructors) {
         this.userPrefix = userPrefix;
-        userUtilService.addUsers(userPrefix, numberOfStudents + additionalStudents, additionalTutors + 1, additionalEditors + 1, additionalInstructors + 1);
+        userUtilService.addUsers(userPrefix, NUMBER_OF_STUDENTS + additionalStudents, additionalTutors + 1, additionalEditors + 1, additionalInstructors + 1);
     }
 
     public void setup(MockDelegate mockDelegate, VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService) throws Exception {
@@ -351,8 +351,8 @@ public class ProgrammingExerciseTestService {
         studentTeamRepo.configureRepos("studentTeamRepo", "studentTeamOriginRepo");
 
         setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
-        setupRepositoryMocksParticipant(exercise, userPrefix + studentLogin, studentRepo);
-        setupRepositoryMocksParticipant(exercise, userPrefix + teamShortName, studentTeamRepo);
+        setupRepositoryMocksParticipant(exercise, userPrefix + STUDENT_LOGIN, studentRepo);
+        setupRepositoryMocksParticipant(exercise, userPrefix + TEAM_SHORT_NAME, studentTeamRepo);
     }
 
     public void tearDown() throws Exception {
@@ -1271,7 +1271,7 @@ public class ProgrammingExerciseTestService {
     // TEST
     void startProgrammingExercise_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
         setupCourseWithProgrammingExercise(exerciseMode);
-        var user = userRepo.findOneByLogin(userPrefix + studentLogin).orElseThrow();
+        var user = userRepo.findOneByLogin(userPrefix + STUDENT_LOGIN).orElseThrow();
         Participant participant = user;
         if (exerciseMode == TEAM) {
             participant = setupTeam(user);
@@ -1315,7 +1315,7 @@ public class ProgrammingExerciseTestService {
             permissions = VersionControlRepositoryPermission.REPO_READ;
         }
 
-        final User participant = userRepo.getUserByLoginElseThrow(userPrefix + studentLogin);
+        final User participant = userRepo.getUserByLoginElseThrow(userPrefix + STUDENT_LOGIN);
 
         verify(versionControlService).addMemberToRepository(any(), eq(participant), eq(permissions));
     }
@@ -1788,7 +1788,7 @@ public class ProgrammingExerciseTestService {
 
         // Add student participation
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
-        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userPrefix + studentLogin);
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userPrefix + STUDENT_LOGIN);
 
         // Mock student repo
         Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null);
@@ -1884,7 +1884,7 @@ public class ProgrammingExerciseTestService {
 
         // Add student participation
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
-        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userPrefix + studentLogin);
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userPrefix + STUDENT_LOGIN);
 
         // Mock student repo
         Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null);
@@ -2013,7 +2013,7 @@ public class ProgrammingExerciseTestService {
 
     private ProgrammingExerciseStudentParticipation createStudentParticipationWithSubmission(ExerciseMode exerciseMode) {
         setupCourseWithProgrammingExercise(exerciseMode);
-        User user = userRepo.findOneByLogin(userPrefix + studentLogin).orElseThrow();
+        User user = userRepo.findOneByLogin(userPrefix + STUDENT_LOGIN).orElseThrow();
 
         ProgrammingExerciseStudentParticipation participation;
         if (exerciseMode == TEAM) {
@@ -2042,7 +2042,7 @@ public class ProgrammingExerciseTestService {
     private Team setupTeam(User user) {
         // create a team for the user (necessary condition before starting an exercise)
         Set<User> students = Set.of(user);
-        Team team = new Team().name("Team 1").shortName(userPrefix + teamShortName).exercise(exercise).students(students);
+        Team team = new Team().name("Team 1").shortName(userPrefix + TEAM_SHORT_NAME).exercise(exercise).students(students);
         team = teamRepository.save(exercise, team);
         assertThat(team.getStudents()).as("Student was correctly added to team").hasSize(1);
         return team;
@@ -2051,7 +2051,7 @@ public class ProgrammingExerciseTestService {
     // TEST
     void startProgrammingExerciseStudentRetrieveEmptyArtifactPage() throws Exception {
         persistProgrammingExercise();
-        User user = userRepo.findOneByLogin(userPrefix + studentLogin).orElseThrow();
+        User user = userRepo.findOneByLogin(userPrefix + STUDENT_LOGIN).orElseThrow();
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, user.getParticipantIdentifier(), Set.of(user), true);
 
         final var participation = createUserParticipation();
@@ -2074,10 +2074,10 @@ public class ProgrammingExerciseTestService {
 
         // Create a team with students
         Set<User> students = new HashSet<>(userRepo.searchByLoginOrNameInGroup("tumuser", userPrefix + "student"));
-        Team team = new Team().name("Team 1").shortName(userPrefix + teamShortName).exercise(exercise).students(students);
+        Team team = new Team().name("Team 1").shortName(userPrefix + TEAM_SHORT_NAME).exercise(exercise).students(students);
         team = teamRepository.save(exercise, team);
 
-        assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents).hasSameSizeAs(students);
+        assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(NUMBER_OF_STUDENTS).hasSameSizeAs(students);
 
         // Set up mockRetrieveArtifacts requests for start participation
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), true);
@@ -2097,7 +2097,7 @@ public class ProgrammingExerciseTestService {
 
         // Update team with new student after participation has already started
         Team serverTeam = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/teams/" + team.getId(), team, Team.class, HttpStatus.OK);
-        assertThat(serverTeam.getStudents()).as("Team students were updated correctly").hasSize(numberOfStudents + 1); // new student was added
+        assertThat(serverTeam.getStudents()).as("Team students were updated correctly").hasSize(NUMBER_OF_STUDENTS + 1); // new student was added
     }
 
     // TEST
@@ -2106,10 +2106,10 @@ public class ProgrammingExerciseTestService {
 
         // Create a team with students
         Set<User> students = new HashSet<>(userRepo.searchByLoginOrNameInGroup("tumuser", userPrefix + "student"));
-        Team team = new Team().name("Team 1").shortName(userPrefix + teamShortName).exercise(exercise).students(students);
+        Team team = new Team().name("Team 1").shortName(userPrefix + TEAM_SHORT_NAME).exercise(exercise).students(students);
         team = teamRepository.save(exercise, team);
 
-        assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents).hasSameSizeAs(students);
+        assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(NUMBER_OF_STUDENTS).hasSameSizeAs(students);
 
         // Set up mockRetrieveArtifacts requests for start participation
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), true);
@@ -2126,7 +2126,7 @@ public class ProgrammingExerciseTestService {
 
         // Update team with removed student
         Team serverTeam = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/teams/" + team.getId(), team, Team.class, HttpStatus.OK);
-        assertThat(serverTeam.getStudents()).as("Team students were updated correctly").hasSize(numberOfStudents - 1); // first student was removed
+        assertThat(serverTeam.getStudents()).as("Team students were updated correctly").hasSize(NUMBER_OF_STUDENTS - 1); // first student was removed
     }
 
     // TEST
@@ -2179,7 +2179,7 @@ public class ProgrammingExerciseTestService {
 
         // Create a team with students
         var student1 = userUtilService.getUserByLogin(userPrefix + "student1");
-        Team team = new Team().name("Team 1").shortName(userPrefix + teamShortName).exercise(exercise).students(Set.of(student1));
+        Team team = new Team().name("Team 1").shortName(userPrefix + TEAM_SHORT_NAME).exercise(exercise).students(Set.of(student1));
         team = teamRepository.save(exercise, team);
 
         assertThat(team.getStudents()).as("Student1 was correctly added to team").hasSize(1);

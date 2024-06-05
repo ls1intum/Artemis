@@ -88,7 +88,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final int NUMBER_OF_STUDENTS = 3;
 
-    private static final long nonExistingId = 123456789L;
+    private static final long NON_EXISTING_ID = 123456789L;
 
     private static final String TEST_PREFIX = "tit";
 
@@ -267,7 +267,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testUpdateTeam_NotFound() throws Exception {
         // Try updating a non-existing team
         Team team4 = new Team();
-        team4.setId(nonExistingId);
+        team4.setId(NON_EXISTING_ID);
         team4.setExercise(exercise);
         request.putWithResponseBody(resourceUrl() + "/" + team4.getId(), team4, Team.class, HttpStatus.NOT_FOUND);
     }
@@ -327,7 +327,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetTeam_NotFound() throws Exception {
-        request.get(resourceUrl() + "/" + nonExistingId, HttpStatus.NOT_FOUND, Team.class);
+        request.get(resourceUrl() + "/" + NON_EXISTING_ID, HttpStatus.NOT_FOUND, Team.class);
     }
 
     @Test
@@ -395,7 +395,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteTeam_NotFound() throws Exception {
-        request.delete(resourceUrl() + "/" + nonExistingId, HttpStatus.NOT_FOUND);
+        request.delete(resourceUrl() + "/" + NON_EXISTING_ID, HttpStatus.NOT_FOUND);
     }
 
     @Test
