@@ -99,7 +99,7 @@ public class QuizSubmissionResource {
     @PostMapping("exercises/{exerciseId}/submissions/live")
     @EnforceAtLeastStudentInExercise
     public ResponseEntity<QuizSubmission> saveOrSubmitForLiveMode(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission,
-            @RequestParam(name = "submit") boolean submit) {
+            @RequestParam(name = "submit", defaultValue = "false") boolean submit) {
         log.debug("REST request to save or submit QuizSubmission for live mode : {}", quizSubmission);
         String userLogin = SecurityUtils.getCurrentUserLogin().orElseThrow();
         try {

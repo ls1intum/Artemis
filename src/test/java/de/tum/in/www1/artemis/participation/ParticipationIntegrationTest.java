@@ -66,6 +66,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizPointStatistic;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
@@ -97,6 +98,7 @@ import de.tum.in.www1.artemis.service.quiz.QuizBatchService;
 import de.tum.in.www1.artemis.service.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
+import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
 
 class ParticipationIntegrationTest extends AbstractAthenaTest {
 
@@ -1605,9 +1607,10 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
             if (quizMode != QuizMode.SYNCHRONIZED) {
                 var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizEx, ZonedDateTime.now().minusSeconds(10)));
-                quizExerciseUtilService.joinQuizBatch(quizEx, batch, TEST_PREFIX + "student1");
+                request.postWithResponseBody("/api/quiz-exercises/" + quizEx.getId() + "/join", new QuizBatchJoinDTO(batch.getPassword()), QuizBatch.class, HttpStatus.OK);
             }
-            var participation = request.get("/api/exercises/" + quizEx.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
+            var participation = request.postWithResponseBody("/api/quiz-exercises/" + quizEx.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
+            ;
             assertThat(participation.getExercise()).as("Participation contains exercise").isEqualTo(quizEx);
             assertThat(participation.getResults()).as("New result was added to the participation").hasSize(1);
             assertThat(participation.getInitializationState()).as("Participation was initialized").isEqualTo(InitializationState.INITIALIZED);
