@@ -5,29 +5,25 @@ import * as fs from 'fs';
 const fileNames = process.argv.slice(2);
 const HTTP_METHODS = ['get', 'post', 'put', 'delete'];
 
-fileNames.forEach(fileName => {
-    if (fileName.endsWith('.ts')) {
-        // Load the TypeScript file
-        const sourceFile = ts.createSourceFile(fileName, fs.readFileSync(fileName).toString(), ts.ScriptTarget.ES2015, true);
+fileNames.filter(fileName => fileName.endsWith('.ts')).forEach(fileName => {
+    // Load the TypeScript file
+    const sourceFile = ts.createSourceFile(fileName, fs.readFileSync(fileName).toString(), ts.ScriptTarget.ES2022, true);
 
-        // Store class property definitions
-        const classProperties: { [key: string]: string } = {};
+    // Store class property definitions
+    const classProperties: { [key: string]: string } = {};
 
-        // Start traversing the AST from the root
-        visit(sourceFile, classProperties, sourceFile, fileName);
-    }
+    // Start traversing the AST from the root
+    visit(sourceFile, classProperties, sourceFile, fileName);
 });
 
 // This function will be called for each node in the AST
 function visit(node: ts.Node, classProperties: { [key: string]: string }, sourceFile: ts.SourceFile, fileName: string) {
-    // Check if the node is a property declaration
     if (ts.isPropertyDeclaration(node) && node.initializer && ts.isStringLiteral(node.initializer)) {
         const name = node.name.getText();
         const value = node.initializer.getText().slice(1, -1); // Remove the quotes
         classProperties[name] = value;
     }
 
-    // Check if the node is a call expression
     if (ts.isCallExpression(node)) {
         const expression = node.expression;
         // Check if the expression is a property access expression (e.g. httpClient.get)
