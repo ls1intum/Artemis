@@ -2,7 +2,8 @@
     @if (quizExercise) {
         <div class="quiz-header ms-5">
             <h2>
-                {{ quizExercise.course?.title ? quizExercise.course?.title : quizExercise.exerciseGroup?.exam?.course?.title }} - {{ quizExercise.title }}
+                {{ quizExercise.course?.title ? quizExercise.course?.title : quizExercise.exerciseGroup?.exam?.course?.title }}
+                - {{ quizExercise.title }}
                 @switch (mode) {
                     @case ('practice') {
                         <span class="in-parentheses" jhiTranslate="artemisApp.quizExercise.practiceMode"></span>
@@ -34,51 +35,57 @@
         </div>
     }
     <!-- TODO for a follow-up: Much of this template relies on method calls in the template. We should avoid this for performance reasons -->
-    <div class="w-auto m-0 pb-5">
+    <div class="row m-0 pb-5">
         @if (quizExercise) {
-            <div class="position-fixed d-flex align-items-center align-self-end justify-content-center">
-                <div class="p-0 col-md-auto quiz-navigation sticky-top">
-                    <div class="stepwizardquiz col-6">
-                        @for (question of quizExercise.quizQuestions; track question; let i = $index) {
-                            <div class="stepwizardquiz__step mb-3">
-                                @if (question.type === DRAG_AND_DROP) {
-                                    <span
-                                        class="btn btn-light btn-circle stepbutton stepwizardquiz-circle draganddropcolor-question"
-                                        (click)="navigateToQuestion(i)"
-                                        [ngbTooltip]="!!dragAndDropMappings.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
-                                        [ngClass]="!!dragAndDropMappings.get(question.id!)?.length ? 'changed-question' : ''"
-                                    >
-                                        <b class="fa">DD</b>
-                                    </span>
-                                }
-                                @if (question.type === MULTIPLE_CHOICE) {
-                                    <span
-                                        class="btn btn-light btn-circle stepbutton stepwizardquiz-circle multiplechoicecolor-question"
-                                        (click)="navigateToQuestion(i)"
-                                        [ngbTooltip]="!!selectedAnswerOptions.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
-                                        [ngClass]="!!selectedAnswerOptions.get(question.id!)?.length ? 'changed-question' : ''"
-                                    >
-                                        <b class="fa">MC</b>
-                                    </span>
-                                }
-                                @if (question.type === SHORT_ANSWER) {
-                                    <span
-                                        class="btn btn-light btn-circle stepbutton stepwizardquiz-circle shortanswercolor-question"
-                                        (click)="navigateToQuestion(i)"
-                                        [ngbTooltip]="!!shortAnswerSubmittedTexts.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
-                                        [ngClass]="!!shortAnswerSubmittedTexts.get(question.id!)?.length ? 'changed-question' : ''"
-                                    >
-                                        <b class="fa">SA</b>
-                                    </span>
-                                }
-                                <ng-template #tooltipExplanationTranslate>{{ 'artemisApp.quizExercise.explanationAnswered' | artemisTranslate }} </ng-template>
-                                <ng-template #tooltipNotExplanationTranslate>{{ 'artemisApp.quizExercise.explanationNotAnswered' | artemisTranslate }} </ng-template>
-                            </div>
-                        }
-                    </div>
+            <div class="col-md-auto">
+                <div class="p-0 col-md-auto quiz-navigation stepwizardquiz sticky-top">
+                    @for (question of quizExercise.quizQuestions; track question; let i = $index) {
+                        <div class="stepwizardquiz__step mb-3" [class.mb-3]="!$last">
+                            <span
+                                class="btn btn-light btn-circle draganddropcolor-question"
+                                (click)="navigateToQuestion(i)"
+                                [ngbTooltip]="!!dragAndDropMappings.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
+                                [ngClass]="!!dragAndDropMappings.get(question.id!)?.length ? 'changed-question' : ''"
+                            >
+                                <b class="fa">DD</b>
+                            </span>
+                            @if (question.type === DRAG_AND_DROP) {
+                                <span
+                                    class="btn btn-light btn-circle draganddropcolor-question"
+                                    (click)="navigateToQuestion(i)"
+                                    [ngbTooltip]="!!dragAndDropMappings.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
+                                    [ngClass]="!!dragAndDropMappings.get(question.id!)?.length ? 'changed-question' : ''"
+                                >
+                                    <b class="fa">DD</b>
+                                </span>
+                            }
+                            @if (question.type === MULTIPLE_CHOICE) {
+                                <span
+                                    class="btn btn-light btn-circle multiplechoicecolor-question"
+                                    (click)="navigateToQuestion(i)"
+                                    [ngbTooltip]="!!selectedAnswerOptions.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
+                                    [ngClass]="!!selectedAnswerOptions.get(question.id!)?.length ? 'changed-question' : ''"
+                                >
+                                    <b class="fa">MC</b>
+                                </span>
+                            }
+                            @if (question.type === SHORT_ANSWER) {
+                                <span
+                                    class="btn btn-light btn-circle shortanswercolor-question"
+                                    (click)="navigateToQuestion(i)"
+                                    [ngbTooltip]="!!shortAnswerSubmittedTexts.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
+                                    [ngClass]="!!shortAnswerSubmittedTexts.get(question.id!)?.length ? 'changed-question' : ''"
+                                >
+                                    <b class="fa">SA</b>
+                                </span>
+                            }
+                            <ng-template #tooltipExplanationTranslate>{{ 'artemisApp.quizExercise.explanationAnswered' | artemisTranslate }} </ng-template>
+                            <ng-template #tooltipNotExplanationTranslate>{{ 'artemisApp.quizExercise.explanationNotAnswered' | artemisTranslate }} </ng-template>
+                        </div>
+                    }
                 </div>
             </div>
-            <div class="quiz-content ms-5 mb-3">
+            <div class="col p-0 quiz-content mb-3">
                 @for (question of quizExercise.quizQuestions; track question; let i = $index) {
                     <div>
                         <!-- TODO: Map vs Array consistency -->
