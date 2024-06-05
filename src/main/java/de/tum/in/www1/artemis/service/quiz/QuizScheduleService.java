@@ -114,6 +114,11 @@ public class QuizScheduleService {
         }
     }
 
+    /**
+     * Calculate the results for all participations of the given quiz exercise
+     *
+     * @param quizExerciseId the id of the quiz exercise for which the results should be calculated
+     */
     public void calculateAllResults(long quizExerciseId) {
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         log.info("Calculating results for quiz {}", quizExercise.getId());

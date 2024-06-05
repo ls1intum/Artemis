@@ -45,7 +45,6 @@ import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.quiz.QuizExerciseService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
-import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 
 @Isolated
 class LtiQuizIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -63,9 +62,6 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private QuizExerciseRepository quizExerciseRepository;
-
-    @Autowired
-    private QuizSubmissionWebsocketService quizSubmissionWebsocketService;
 
     @Autowired
     private SubmissionRepository submissionRepository;

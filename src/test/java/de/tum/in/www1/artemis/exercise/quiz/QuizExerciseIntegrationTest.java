@@ -1056,6 +1056,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         batch.setPassword("1234");
 
         quizExerciseUtilService.setQuizBatchExerciseAndSave(batch, quizExercise);
+        request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
 
         request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO("1234"), QuizBatch.class, HttpStatus.BAD_REQUEST);
     }

@@ -437,7 +437,7 @@ public class QuizExerciseResource {
             return ResponseEntity.ok(batch);
         }
         catch (QuizJoinException ex) {
-            return ResponseEntity.notFound().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", ex.getError(), ex.getMessage())).build();
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", ex.getError(), ex.getMessage())).build();
         }
     }
 
