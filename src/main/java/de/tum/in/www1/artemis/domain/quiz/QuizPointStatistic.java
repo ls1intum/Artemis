@@ -83,29 +83,33 @@ public class QuizPointStatistic implements Serializable {
     /**
      * increase participants and the PointCounter, which is associated to the score
      *
-     * @param score whose PointCounter increases
-     * @param rated specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate of the
-     *                  quizExercise)
+     * @param score        whose PointCounter increases
+     * @param rated        specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate of
+     *                         the
+     *                         quizExercise)
+     * @param quizExercise quiz exercise object statistics belongs to
      */
-    public void addResult(Double score, Boolean rated, QuizExercise quiz) {
+    public void addResult(Double score, Boolean rated, QuizExercise quizExercise) {
         if (score == null) {
             return;
         }
-        changeStatisticBasedOnResult(score, rated, 1, quiz);
+        changeStatisticBasedOnResult(score, rated, 1, quizExercise);
     }
 
     /**
      * decrease participants and the PointCounter, which is associated to the score
      *
-     * @param score whose PointCounter decreases
-     * @param rated specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate of the
-     *                  quizExercise)
+     * @param score        whose PointCounter decreases
+     * @param rated        specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate of
+     *                         the
+     *                         quizExercise)
+     * @param quizExercise quiz exercise object statistics belongs to
      */
-    public void removeOldResult(Double score, Boolean rated, QuizExercise quiz) {
+    public void removeOldResult(Double score, Boolean rated, QuizExercise quizExercise) {
         if (score == null) {
             return;
         }
-        changeStatisticBasedOnResult(score, rated, -1, quiz);
+        changeStatisticBasedOnResult(score, rated, -1, quizExercise);
     }
 
     /**

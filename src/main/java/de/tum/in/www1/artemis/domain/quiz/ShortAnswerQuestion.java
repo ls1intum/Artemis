@@ -380,6 +380,14 @@ public class ShortAnswerQuestion extends QuizQuestion {
         return question;
     }
 
+    /**
+     * This method is triggered after the entity is loaded from or updated in the database. It performs the following tasks:
+     * <p>
+     * 1. Checks if the content is not null.
+     * 2. Sets the spots, solutions, and correct mappings from the content to the current entity.
+     * <p>
+     * This method is annotated with `@PostLoad` and `@PostUpdate` to ensure it is executed after the entity is loaded or updated.
+     */
     @PostLoad
     @PostUpdate
     public void loadContent() {

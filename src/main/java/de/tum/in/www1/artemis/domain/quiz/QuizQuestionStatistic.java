@@ -60,6 +60,7 @@ public abstract class QuizQuestionStatistic implements QuizQuestionComponent<Qui
      * @param submittedAnswer the submittedAnswer object which contains all selected answers
      * @param rated           specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate
      *                            of the quizExercise)
+     * @param quizQuestion    quiz question object statistics belongs to
      */
     public void addResult(SubmittedAnswer submittedAnswer, boolean rated, QuizQuestion quizQuestion) {
         changeStatisticBasedOnResult(submittedAnswer, rated, 1, quizQuestion);
@@ -71,7 +72,7 @@ public abstract class QuizQuestionStatistic implements QuizQuestionComponent<Qui
      * @param submittedAnswer the submittedAnswer object which contains all selected answers
      * @param rated           specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate
      *                            of the quizExercise)
-     * @param quizQuestion
+     * @param quizQuestion    quiz question object statistics belongs to
      */
     public void removeOldResult(SubmittedAnswer submittedAnswer, boolean rated, QuizQuestion quizQuestion) {
         changeStatisticBasedOnResult(submittedAnswer, rated, -1, quizQuestion);

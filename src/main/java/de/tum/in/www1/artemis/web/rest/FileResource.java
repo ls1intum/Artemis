@@ -236,6 +236,7 @@ public class FileResource {
     /**
      * GET /files/drag-and-drop/drag-items/:dragItemId/:filename : Get the drag item file with the given name for the given drag item
      *
+     * @param questionId ID of the drag and drop question, the file belongs to
      * @param dragItemId ID of the drag item, the file belongs to
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
@@ -250,7 +251,7 @@ public class FileResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
         if (dragItem == null) {
-            throw new EntityNotFoundException("Drag item " + dragItemId + " can not found");
+            throw new EntityNotFoundException("Drag item " + dragItemId + " cannot be found");
         }
         if (dragItem.getPictureFilePath() == null) {
             throw new EntityNotFoundException("Drag item " + dragItemId + " has no picture file");

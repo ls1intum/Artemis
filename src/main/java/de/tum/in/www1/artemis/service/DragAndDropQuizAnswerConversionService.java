@@ -31,7 +31,6 @@ import de.tum.in.www1.artemis.domain.quiz.DragAndDropMapping;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropSubmittedAnswer;
 import de.tum.in.www1.artemis.domain.quiz.DropLocation;
-import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
 
 /**
  * Service for converting a DragAndDropSubmittedAnswer to a PDF file displaying the submitted answer.
@@ -132,11 +131,11 @@ public class DragAndDropQuizAnswerConversionService {
     }
 
     private void drawDropLocation(DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer, Graphics2D graphics, DropLocation dropLocation,
-            DropLocationCoordinates dropLocationCoordinates, boolean showResult, QuizQuestion quizQuestion) {
+            DropLocationCoordinates dropLocationCoordinates, boolean showResult, DragAndDropQuestion dragAndDropQuestion) {
         graphics.setColor(Color.WHITE);
         graphics.fillRect(dropLocationCoordinates.x, dropLocationCoordinates.y, dropLocationCoordinates.width, dropLocationCoordinates.height);
 
-        if (((DragAndDropQuestion) quizQuestion).isDropLocationCorrect(dragAndDropSubmittedAnswer, dropLocation)) {
+        if (dragAndDropQuestion.isDropLocationCorrect(dragAndDropSubmittedAnswer, dropLocation)) {
             graphics.setColor(Color.GREEN);
         }
         else if (dropLocation.isInvalid()) {

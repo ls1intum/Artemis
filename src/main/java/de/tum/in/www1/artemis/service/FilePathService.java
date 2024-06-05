@@ -171,6 +171,7 @@ public class FilePathService {
      *
      * @param actualPathString the path to the file in the local filesystem
      * @param entityId         the id of the entity associated with the file
+     * @param questionId       ID of the drag and drop question, the file belongs to
      * @throws FilePathParsingException if the path is unknown
      * @return the public file url that can be used by users to access the file from outside
      */
@@ -187,8 +188,9 @@ public class FilePathService {
     /**
      * Generate the public path for the file at the given path
      *
-     * @param path     the path to the file in the local filesystem
-     * @param entityId the id of the entity associated with the file
+     * @param path       the path to the file in the local filesystem
+     * @param entityId   the id of the entity associated with the file
+     * @param questionId ID of the drag and drop question, the file belongs to
      * @return the public file url that can be used by users to access the file from outside
      */
     public static URI publicPathForActualPath(Path path, @Nullable Long entityId, @Nullable Long questionId) {

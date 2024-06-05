@@ -420,7 +420,8 @@ public class DragAndDropQuestion extends QuizQuestion {
     /**
      * check if the DropLocation is solved correctly
      *
-     * @param dndAnswer Answer from the student with the List of submittedMappings from the Result
+     * @param dndAnswer    Answer from the student with the List of submittedMappings from the Result
+     * @param dropLocation Drop location object
      * @return if the drop location is correct
      */
     public boolean isDropLocationCorrect(DragAndDropSubmittedAnswer dndAnswer, DropLocation dropLocation) {
@@ -472,6 +473,15 @@ public class DragAndDropQuestion extends QuizQuestion {
         return question;
     }
 
+    /**
+     * This method is triggered after the entity is loaded from or updated in the database. It performs the following tasks:
+     *
+     * 1. Iterates over the drag items within the content and updates the picture file paths if they contain a specific placeholder.
+     * The placeholder is replaced with the entity's ID and the drag item's ID.
+     * 2. Sets the drop locations, drag items, and correct mappings from the content to the current entity.
+     *
+     * This method is annotated with `@PostLoad` and `@PostUpdate` to ensure it is executed after the entity is loaded or updated.
+     */
     @PostLoad
     @PostUpdate
     public void loadContent() {

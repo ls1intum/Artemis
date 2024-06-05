@@ -64,7 +64,7 @@ public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic {
      * @param rated           specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate
      *                            of the quizExercise)
      * @param change          the int-value, which will be added to the Counter and participants
-     * @param quizQuestion
+     * @param quizQuestion    quiz question object statistics belongs to
      */
     @Override
     protected void changeStatisticBasedOnResult(SubmittedAnswer submittedAnswer, boolean rated, int change, QuizQuestion quizQuestion) {

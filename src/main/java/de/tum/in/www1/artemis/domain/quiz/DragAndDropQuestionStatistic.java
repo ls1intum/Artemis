@@ -55,14 +55,14 @@ public class DragAndDropQuestionStatistic extends QuizQuestionStatistic {
      * @param rated           specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate
      *                            of the quizExercise)
      * @param change          the int-value, which will be added to the Counter and participants
-     * @param quizQuestion
+     * @param quizQuestion    quiz question object statistics belongs to
      */
     @Override
     protected void changeStatisticBasedOnResult(SubmittedAnswer submittedAnswer, boolean rated, int change, QuizQuestion quizQuestion) {
         if (!(submittedAnswer instanceof DragAndDropSubmittedAnswer ddSubmittedAnswer)) {
             return;
         }
-
+        DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) quizQuestion;
         if (rated) {
             // change the rated participants
             setParticipantsRated(getParticipantsRated() + change);
@@ -70,13 +70,13 @@ public class DragAndDropQuestionStatistic extends QuizQuestionStatistic {
             if (ddSubmittedAnswer.getMappings() != null) {
                 // change rated dropLocationCounter if dropLocation is correct
                 for (DropLocationCounter dropLocationCounter : dropLocationCounters) {
-                    if (((DragAndDropQuestion) quizQuestion).isDropLocationCorrect(ddSubmittedAnswer, dropLocationCounter.getDropLocation())) {
+                    if (dragAndDropQuestion.isDropLocationCorrect(ddSubmittedAnswer, dropLocationCounter.getDropLocation())) {
                         dropLocationCounter.setRatedCounter(dropLocationCounter.getRatedCounter() + change);
                     }
                 }
             }
             // change rated correctCounter if answer is complete correct
-            if (quizQuestion.isAnswerCorrect(ddSubmittedAnswer)) {
+            if (dragAndDropQuestion.isAnswerCorrect(ddSubmittedAnswer)) {
                 setRatedCorrectCounter(getRatedCorrectCounter() + change);
             }
         }
@@ -88,13 +88,13 @@ public class DragAndDropQuestionStatistic extends QuizQuestionStatistic {
             if (ddSubmittedAnswer.getMappings() != null) {
                 // change unrated dropLocationCounter if dropLocation is correct
                 for (DropLocationCounter dropLocationCounter : dropLocationCounters) {
-                    if (((DragAndDropQuestion) quizQuestion).isDropLocationCorrect(ddSubmittedAnswer, dropLocationCounter.getDropLocation())) {
+                    if (dragAndDropQuestion.isDropLocationCorrect(ddSubmittedAnswer, dropLocationCounter.getDropLocation())) {
                         dropLocationCounter.setUnRatedCounter(dropLocationCounter.getUnRatedCounter() + change);
                     }
                 }
             }
             // change unrated correctCounter if answer is complete correct
-            if (quizQuestion.isAnswerCorrect(ddSubmittedAnswer)) {
+            if (dragAndDropQuestion.isAnswerCorrect(ddSubmittedAnswer)) {
                 setUnRatedCorrectCounter(getUnRatedCorrectCounter() + change);
             }
         }
