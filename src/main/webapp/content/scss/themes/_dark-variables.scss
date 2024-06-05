@@ -637,13 +637,14 @@ $competency-rings-blue: $blue;
 $competency-rings-blue-bg: transparentize($competency-rings-blue, 0.8);
 
 // Iris Chatbot
-// TODO: Use standard colors
-$iris-chat-widget-background: var(--bs-body-bg);
-$iris-client-chat-background: var(--gray-700);
-$iris-client-chat-input: var(--gray-700);
+$iris-chat-widget-background: var(--neutral-dark-l-5);
+$iris-client-chat-background: var(--neutral-dark-l-10);
+$iris-client-chat-input: var(--neutral-dark-l-5);
 $iris-my-chat-background: #008462;
 $iris-btn-circle: var(--teal);
 $iris-btn-circle-hover: var(--success);
+$iris-tool-background: var(--neutral-dark-l-10);
+$iris-rate-background: var(--neutral-dark-l-15);
 
 // Image Cropper
 $cropper-overlay-color: transparent;
