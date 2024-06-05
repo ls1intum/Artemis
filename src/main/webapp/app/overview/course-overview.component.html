@@ -13,11 +13,11 @@
                                             <div ngbDropdownToggle class="d-flex align-items-center justify-content-center pointer">
                                                 <jhi-secured-image [src]="course.courseIcon" />
                                             </div>
-                                        } @else {
-                                            <div class="d-flex align-items-center justify-content-center">
-                                                <jhi-secured-image [src]="course.courseIcon" />
-                                            </div>
                                         }
+                                    } @else {
+                                        <div class="d-flex align-items-center justify-content-center">
+                                            <jhi-secured-image [src]="course.courseIcon" />
+                                        </div>
                                     }
                                 } @else {
                                     @if (courses !== undefined) {
@@ -25,11 +25,11 @@
                                             <div ngbDropdownToggle class="course-circle d-flex align-items-center justify-content-center pointer">
                                                 <span class="fs-4">{{ course?.title | slice: 0 : 1 }}</span>
                                             </div>
-                                        } @else {
-                                            <div class="course-circle d-flex align-items-center justify-content-center">
-                                                <span class="fs-4">{{ course?.title | slice: 0 : 1 }}</span>
-                                            </div>
                                         }
+                                    } @else {
+                                        <div class="course-circle d-flex align-items-center justify-content-center">
+                                            <span class="fs-4">{{ course?.title | slice: 0 : 1 }}</span>
+                                        </div>
                                     }
                                 }
                                 <div ngbDropdownMenu class="dropdown-menu py-1 ms-n2">
