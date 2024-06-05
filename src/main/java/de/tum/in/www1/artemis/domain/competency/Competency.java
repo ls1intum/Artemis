@@ -47,11 +47,6 @@ public class Competency extends CourseCompetency {
     @JsonIgnoreProperties({ "competencies", "course" })
     private Set<LearningPath> learningPaths = new HashSet<>();
 
-    @ManyToOne
-    @JoinColumn(name = "linked_standardized_competency_id")
-    @JsonIgnoreProperties({ "competencies" })
-    private StandardizedCompetency linkedStandardizedCompetency;
-
     @OneToMany(mappedBy = "competency", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<CompetencyJol> competencyJols = new HashSet<>();
 
@@ -108,7 +103,7 @@ public class Competency extends CourseCompetency {
 
     /**
      * Removes the lecture unit from the competency (bidirectional)
-     * Note: ExerciseUnits are not accepted, should be set via the connected exercise (see {@link #removeExercise(Exercise)})
+     * Note: ExerciseUnits are not accepted, should be set via the connected exercise
      *
      * @param lectureUnit The lecture unit to remove
      */

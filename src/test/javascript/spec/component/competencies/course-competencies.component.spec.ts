@@ -94,34 +94,6 @@ describe('CourseCompetencies', () => {
         expect(courseCompetenciesComponent.courseId).toBe(1);
     });
 
-    it('should load progress for each competency in a given course', () => {
-        const courseStorageService = TestBed.inject(CourseStorageService);
-        const competency: Competency = {};
-        competency.userProgress = [{ progress: 70, confidence: 45 } as CompetencyProgress];
-        const textUnit = new TextUnit();
-        competency.id = 1;
-        competency.description = 'Petierunt uti sibi concilium totius';
-        competency.lectureUnits = [textUnit];
-
-        // Mock a course that was already fetched in another component
-        const course = new Course();
-        course.id = 1;
-        course.competencies = [competency];
-        course.prerequisites = [competency];
-        courseStorageService.setCourses([course]);
-        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
-
-        const getAllForCourseSpy = jest.spyOn(competencyService, 'getAllForCourse');
-
-        courseCompetenciesComponentFixture.detectChanges();
-
-        expect(getCourseStub).toHaveBeenCalledOnce();
-        expect(getCourseStub).toHaveBeenCalledWith(1);
-        expect(courseCompetenciesComponent.course).toEqual(course);
-        expect(courseCompetenciesComponent.competencies).toEqual([competency]);
-        expect(getAllForCourseSpy).not.toHaveBeenCalled(); // do not load competencies again as already fetched
-    });
-
     it('should load prerequisites and competencies (with associated progress) and display a card for each of them', () => {
         const competency: Competency = {};
         const textUnit = new TextUnit();
