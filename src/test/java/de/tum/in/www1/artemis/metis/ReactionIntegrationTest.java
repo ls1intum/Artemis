@@ -124,7 +124,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateOwnPostReaction(CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean shouldBeAllowed) throws Exception {
         // student 1 is the author of the post and reacts on this post
-        Post postReactedOn = existingPostsWithAnswers.get(0);
+        Post postReactedOn = existingPostsWithAnswers.getFirst();
         Reaction reactionToSaveOnPost = createReactionOnPost(postReactedOn);
 
         course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
@@ -144,7 +144,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateVoteReaction() throws Exception {
         // student 1 is the author of the post and reacts on this post
-        Post postReactedOn = existingPostsWithAnswers.get(0);
+        Post postReactedOn = existingPostsWithAnswers.getFirst();
         Reaction reactionToSaveOnPost = createVoteReactionOnPost(postReactedOn, null);
 
         Reaction createdReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.CREATED);
@@ -160,7 +160,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testCreateOwnPostReactionOnAnotherUsersConversationMessage(CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean shouldBeAllowed)
             throws Exception {
         // tutor1 is the author of the message and tutor2 reacts on this post
-        Post messageReactedOn = existingConversationPosts.get(0);
+        Post messageReactedOn = existingConversationPosts.getFirst();
         Reaction reactionToSaveOnMessage = createReactionOnPost(messageReactedOn);
 
         course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
@@ -193,7 +193,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateMultipleOwnPostReaction_internalServerError() throws Exception {
         // student 1 is the author of the post and reacts on this post
-        Post postReactedOn = existingPostsWithAnswers.get(0);
+        Post postReactedOn = existingPostsWithAnswers.getFirst();
         Reaction reactionToSaveOnPost = createReactionOnPost(postReactedOn);
 
         Reaction createdReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.CREATED);
@@ -210,7 +210,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateOwnAnswerPostReaction(CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean shouldBeAllowed) throws Exception {
         // student 1 is the author of the answer post and reacts on this answer post
-        AnswerPost answerPostReactedOn = existingAnswerPosts.get(0);
+        AnswerPost answerPostReactedOn = existingAnswerPosts.getFirst();
         Reaction reactionToSaveOnAnswerPost = createReactionOnAnswerPost(answerPostReactedOn);
 
         course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
@@ -230,7 +230,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateMultipleOwnAnswerPostReaction_internalServerError() throws Exception {
         // student 1 is the author of the answer post and reacts on this answer post
-        AnswerPost answerPostReactedOn = existingAnswerPosts.get(0);
+        AnswerPost answerPostReactedOn = existingAnswerPosts.getFirst();
         Reaction reactionToSaveOnAnswerPost = createReactionOnAnswerPost(answerPostReactedOn);
 
         Reaction createdReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, Reaction.class, HttpStatus.CREATED);
@@ -246,7 +246,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testCreatePostReactions() throws Exception {
         // student 1 is the author of the post and student 2 reacts on this post
-        AnswerPost answerPostReactedOn = existingAnswerPosts.get(0);
+        AnswerPost answerPostReactedOn = existingAnswerPosts.getFirst();
         Reaction reactionToSaveOnAnswerPost = createReactionOnAnswerPost(answerPostReactedOn);
 
         Reaction createdFirstReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, Reaction.class,
@@ -269,7 +269,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testCreateAnswerPostReactions() throws Exception {
         // student 1 is the author of the answer post and student 2 reacts on this answer post
-        AnswerPost answerPostReactedOn = existingAnswerPosts.get(0);
+        AnswerPost answerPostReactedOn = existingAnswerPosts.getFirst();
         Reaction reactionToSaveOnAnswerPost = createReactionOnAnswerPost(answerPostReactedOn);
 
         Reaction createdFirstReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, Reaction.class,
@@ -292,7 +292,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateExistingReaction_badRequest() throws Exception {
         // student 1 is the author of the answer post and reacts on this answer post
-        AnswerPost answerPostReactedOn = existingAnswerPosts.get(0);
+        AnswerPost answerPostReactedOn = existingAnswerPosts.getFirst();
         Reaction reactionToSaveOnAnswerPost = createReactionOnAnswerPost(answerPostReactedOn);
 
         Reaction createdReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, Reaction.class, HttpStatus.CREATED);
@@ -323,7 +323,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
 
         // student 1 is the author of the post and reacts on this post
-        Post postReactedOn = existingPostsWithAnswers.get(0);
+        Post postReactedOn = existingPostsWithAnswers.getFirst();
         createVoteReactionOnPost(postReactedOn, student1);
 
         Post postReactedOn2 = existingPostsWithAnswers.get(1);
@@ -360,7 +360,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
 
-        Post postReactedOn = existingPostsWithAnswers.get(0);
+        Post postReactedOn = existingPostsWithAnswers.getFirst();
         createVoteReactionOnPost(postReactedOn, student1);
         createVoteReactionOnPost(postReactedOn, student2);
 
@@ -395,7 +395,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDeleteOwnPostReaction(CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean shouldBeAllowed) throws Exception {
         // student 1 is the author of the post and reacts on this post
-        Post postReactedOn = existingPostsWithAnswers.get(0);
+        Post postReactedOn = existingPostsWithAnswers.getFirst();
         Reaction reactionToSaveOnPost = createReactionOnPost(postReactedOn);
 
         Reaction reactionToBeDeleted = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.CREATED);
@@ -419,7 +419,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDeleteOwnVoteReaction() throws Exception {
         // student 1 is the author of the post and reacts on this post
-        Post postReactedOn = existingPostsWithAnswers.get(0);
+        Post postReactedOn = existingPostsWithAnswers.getFirst();
         Reaction reactionToSaveOnPost = createVoteReactionOnPost(postReactedOn, null);
 
         Reaction reactionToBeDeleted = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.CREATED);
@@ -440,7 +440,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDeleteOwnAnswerPostReaction(CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean shouldBeAllowed) throws Exception {
         // student 1 is the author of the post and reacts on this post
-        AnswerPost answerPostReactedOn = existingAnswerPosts.get(0);
+        AnswerPost answerPostReactedOn = existingAnswerPosts.getFirst();
         Reaction reactionToSaveOnPost = createReactionOnAnswerPost(answerPostReactedOn);
 
         Reaction reactionToBeDeleted = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.CREATED);
@@ -463,7 +463,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDeletePostReactionOfOthers_forbidden() throws Exception {
         // student 1 is the author of the post and student 2 reacts on this post
-        Post postReactedOn = existingPostsWithAnswers.get(0);
+        Post postReactedOn = existingPostsWithAnswers.getFirst();
         Reaction reactionSaveOnPost = saveReactionOfOtherUserOnPost(postReactedOn, TEST_PREFIX);
 
         // student 1 wants to delete the reaction of student 2
@@ -475,7 +475,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testDeletePostReactionWithWrongCourseId_badRequest() throws Exception {
         Course dummyCourse = courseUtilService.createCourse();
-        Post postToReactOn = existingPostsWithAnswers.get(0);
+        Post postToReactOn = existingPostsWithAnswers.getFirst();
         Reaction reactionToSaveOnPost = createReactionOnPost(postToReactOn);
 
         request.delete("/api/courses/" + dummyCourse.getCourseIcon() + "/postings/reactions/" + reactionToSaveOnPost.getId(), HttpStatus.BAD_REQUEST);
@@ -486,7 +486,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testDeletePostReaction() throws Exception {
         // student 1 is the author of the post and student 2 reacts on this post
-        Post postReactedOn = existingPostsWithAnswers.get(0);
+        Post postReactedOn = existingPostsWithAnswers.getFirst();
         Reaction reactionToSaveOnPost = createReactionOnPost(postReactedOn);
 
         Reaction reactionToBeDeleted = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.CREATED);
@@ -517,8 +517,8 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private Reaction createInvalidReaction() {
         Reaction reaction = new Reaction();
         reaction.setEmojiId("smiley");
-        reaction.setPost(existingPostsWithAnswers.get(0));
-        reaction.setAnswerPost(existingAnswerPosts.get(0));
+        reaction.setPost(existingPostsWithAnswers.getFirst());
+        reaction.setAnswerPost(existingAnswerPosts.getFirst());
         return reaction;
     }
 
