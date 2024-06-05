@@ -371,17 +371,13 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      */
     updateDisplayedTimes() {
         const translationBasePath = 'artemisApp.showStatistic.';
-        let quizAboutToEnd = false;
         // update remaining time
         if (this.endDate) {
             const endDate = this.endDate;
             if (endDate.isAfter(this.serverDateService.now())) {
                 // quiz is still running => calculate remaining seconds and generate text based on that
                 // Get the diff as a floating point number in seconds
-                const diff = endDate.diff(this.serverDateService.now(), 'seconds', true);
-                // Round the diff down to the nearest second for better readability
-                this.remainingTimeSeconds = Math.floor(diff);
-                quizAboutToEnd = diff <= 1;
+                this.remainingTimeSeconds = endDate.diff(this.serverDateService.now(), 'seconds');
                 this.remainingTimeText = this.relativeTimeText(this.remainingTimeSeconds);
             } else {
                 // quiz is over => set remaining seconds to negative, to deactivate 'Submit' button
@@ -426,12 +422,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         } else {
             this.timeUntilStart = '';
         }
-
-        // TODO: move?
-        if (quizAboutToEnd && !this.isQuizOverOrSubmitted() && this.autoSaveInterval) {
-            this.stopAutoSave();
-            this.triggerSave();
-        }
     }
 
     /**
@@ -453,8 +443,10 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     checkForQuizEnd() {
         const running = this.mode === 'live' && !!this.quizBatch && this.remainingTimeSeconds >= 0 && this.quizExercise?.quizMode !== QuizMode.SYNCHRONIZED;
         if (!running && this.previousRunning) {
-            if (!this.submission.submitted && this.submission.submissionDate) {
-                this.alertService.success('artemisApp.quizExercise.submitSuccess');
+            // Rely on the grace period to store any unsaved changes at the end of the quiz
+            if (this.autoSaveInterval && !this.submission.submitted) {
+                this.stopAutoSave();
+                this.triggerSave();
             }
         }
         this.previousRunning = running;
