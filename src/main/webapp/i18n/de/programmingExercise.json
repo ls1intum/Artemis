@@ -544,6 +544,7 @@
             "diffReport": {
                 "button": "Änderungen überprüfen",
                 "tooltip": "Zeigt den detaillierten Git-Diff zwischen den Template- und Lösungs-Repositories.",
+                "detailedTooltip": "Die Vergleichsansicht hebt alle Änderungen zwischen dem Vorlage- und dem Lösungs-Repository hervor. Rot markierte Zeilen zeigen Löschungen, d.h. Zeilen, die in der Lösung im Vergleich zur Vorlage entfernt wurden. Grün markierte Zeilen zeigen, was in der Lösung hinzugefügt wurde.",
                 "splitView": {
                     "enable": "Getrennte Ansicht aktivieren",
                     "disable": "Getrennte Ansicht deaktivieren",

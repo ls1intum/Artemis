@@ -418,7 +418,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 {
                     type: DetailType.ProgrammingDiffReport,
                     title: 'artemisApp.programmingExercise.diffReport.title',
-                    titleHelpText: 'artemisApp.programmingExercise.revertToTemplateBuildPlan',
+                    titleHelpText: 'artemisApp.programmingExercise.diffReport.detailedTooltip',
                     data: {
                         addedLineCount: this.addedLineCount,
                         removedLineCount: this.removedLineCount,
