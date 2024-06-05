@@ -99,7 +99,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
         sourceRepositoryName = sourceRepositoryName.toLowerCase();
         targetRepositoryName = targetRepositoryName.toLowerCase();
         String targetProjectKeyLowerCase = targetProjectKey.toLowerCase();
-        if (numberOfAttempts != null && numberOfAttempts > 0) {
+        if (numberOfAttempts != null && numberOfAttempts > 0 && !targetRepositoryName.contains("practice-")) {
             targetProjectKeyLowerCase = targetProjectKeyLowerCase + numberOfAttempts;
         }
         final String targetRepoSlug = targetProjectKeyLowerCase + "-" + targetRepositoryName;
