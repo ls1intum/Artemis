@@ -11,24 +11,24 @@ import org.junit.jupiter.api.Test;
 import de.tum.in.www1.artemis.domain.TempIdObject;
 import de.tum.in.www1.artemis.service.quiz.QuizIdAssigner;
 
-public class QuizIdAssignerTest {
+class QuizIdAssignerTest {
 
     static class TestTempIdObject extends TempIdObject {
 
-        public TestTempIdObject(Long id) {
+        TestTempIdObject(Long id) {
             this.setId(id);
         }
     }
 
     @Test
-    public void testAssignIds_EmptyCollection() {
+    void testAssignIds_EmptyCollection() {
         Collection<TestTempIdObject> items = new ArrayList<>();
         QuizIdAssigner.assignIds(items);
         assertThat(items).isEmpty();
     }
 
     @Test
-    public void testAssignIds_AllItemsHaveIds() {
+    void testAssignIds_AllItemsHaveIds() {
         Collection<TestTempIdObject> items = List.of(new TestTempIdObject(1L), new TestTempIdObject(2L));
         QuizIdAssigner.assignIds(items);
         for (TestTempIdObject item : items) {
@@ -37,7 +37,7 @@ public class QuizIdAssignerTest {
     }
 
     @Test
-    public void testAssignIds_SomeItemsHaveIds() {
+    void testAssignIds_SomeItemsHaveIds() {
         Collection<TestTempIdObject> items = new ArrayList<>();
         items.add(new TestTempIdObject(1L));
         items.add(new TestTempIdObject(null));
@@ -55,7 +55,7 @@ public class QuizIdAssignerTest {
     }
 
     @Test
-    public void testAssignIds_NoItemsHaveIds() {
+    void testAssignIds_NoItemsHaveIds() {
         Collection<TestTempIdObject> items = new ArrayList<>();
         items.add(new TestTempIdObject(null));
         items.add(new TestTempIdObject(null));

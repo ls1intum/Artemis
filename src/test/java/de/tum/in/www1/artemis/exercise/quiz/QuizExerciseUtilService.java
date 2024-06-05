@@ -53,7 +53,7 @@ import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.QuizUpdater;
+import de.tum.in.www1.artemis.util.QuizUpdaterService;
 
 /**
  * Service responsible for initializing the database with specific testdata related to quiz exercises for use in integration tests.
@@ -110,7 +110,7 @@ public class QuizExerciseUtilService {
     private QuizScheduleService quizScheduleService;
 
     @Autowired
-    private QuizUpdater quizUpdater;
+    private QuizUpdaterService quizUpdaterService;
 
     /**
      * Creates and saves a course with one quiz exercise with the title "Title".
@@ -138,7 +138,7 @@ public class QuizExerciseUtilService {
         assertThat(quizExercise.isValid()).isTrue();
         course.addExercises(quizExercise);
         course = courseRepo.save(course);
-        quizUpdater.updateQuizQuestions(quizExercise);
+        quizUpdaterService.updateQuizQuestions(quizExercise);
         quizExercise = exerciseRepo.save(quizExercise);
         assertThat(courseRepo.findWithEagerExercisesById(course.getId()).getExercises()).as("course contains the exercise").contains(quizExercise);
         return course;
@@ -182,7 +182,7 @@ public class QuizExerciseUtilService {
      */
     public QuizExercise createAndSaveQuiz(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
         QuizExercise quizExercise = createQuiz(releaseDate, dueDate, quizMode);
-        quizUpdater.updateQuizQuestions(quizExercise);
+        quizUpdaterService.updateQuizQuestions(quizExercise);
 
         quizExerciseRepository.save(quizExercise);
 
@@ -261,7 +261,7 @@ public class QuizExerciseUtilService {
 
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExerciseForExam(exerciseGroup);
         QuizExerciseFactory.addQuestionsToQuizExercise(quizExercise);
-        quizUpdater.updateQuizQuestions(quizExercise);
+        quizUpdaterService.updateQuizQuestions(quizExercise);
 
         quizExerciseRepository.save(quizExercise);
 
@@ -420,7 +420,7 @@ public class QuizExerciseUtilService {
     public QuizExercise createAndSaveQuizWithAllQuestionTypes(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, QuizMode quizMode) {
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(releaseDate, dueDate, assessmentDueDate, quizMode, course);
         QuizExerciseFactory.addAllQuestionTypesToQuizExercise(quizExercise);
-        quizUpdater.updateQuizQuestions(quizExercise);
+        quizUpdaterService.updateQuizQuestions(quizExercise);
 
         return quizExerciseRepository.save(quizExercise);
     }

@@ -66,7 +66,7 @@ import de.tum.in.www1.artemis.repository.metis.conversation.ConversationReposito
 import de.tum.in.www1.artemis.service.quiz.QuizExerciseService;
 import de.tum.in.www1.artemis.service.quiz.QuizPoolService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.QuizUpdater;
+import de.tum.in.www1.artemis.util.QuizUpdaterService;
 
 /**
  * Service responsible for initializing the database with specific testdata related to exams for use in integration tests.
@@ -142,7 +142,7 @@ public class ExamUtilService {
     private QuizExerciseService quizExerciseService;
 
     @Autowired
-    private QuizUpdater quizUpdater;
+    private QuizUpdaterService quizUpdaterService;
 
     /**
      * Creates and saves a course with an exam and an exercise group with all exercise types excluding programming exercises.
@@ -787,8 +787,8 @@ public class ExamUtilService {
 
         QuizExercise quizExercise2 = QuizExerciseFactory.createQuizForExam(exerciseGroup1);
 
-        quizUpdater.updateQuizQuestions(quizExercise1);
-        quizUpdater.updateQuizQuestions(quizExercise2);
+        quizUpdaterService.updateQuizQuestions(quizExercise1);
+        quizUpdaterService.updateQuizQuestions(quizExercise2);
 
         exerciseGroup1.setExercises(Set.of(quizExercise1, quizExercise2));
         exerciseRepo.save(quizExercise1);
@@ -884,7 +884,7 @@ public class ExamUtilService {
             var exerciseGroup3 = exam.getExerciseGroups().get(2 + (withProgrammingExercise ? 1 : 0));
             // Programming exercises need a proper setup for 'prepare exam start' to work
             QuizExercise quizExercise = QuizExerciseFactory.createQuizForExam(exerciseGroup3);
-            quizUpdater.updateQuizQuestions(quizExercise);
+            quizUpdaterService.updateQuizQuestions(quizExercise);
             exerciseRepo.save(quizExercise);
             exerciseGroup3.setExercises(Set.of(quizExercise));
         }

@@ -73,7 +73,7 @@ import de.tum.in.www1.artemis.service.quiz.QuizBatchService;
 import de.tum.in.www1.artemis.service.quiz.QuizExerciseService;
 import de.tum.in.www1.artemis.service.quiz.QuizStatisticService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.QuizUpdater;
+import de.tum.in.www1.artemis.util.QuizUpdaterService;
 import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 
 class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -135,7 +135,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     QuizSubmissionWebsocketService quizSubmissionWebsocketService;
 
     @Autowired
-    QuizUpdater quizUpdater;
+    QuizUpdaterService quizUpdaterService;
 
     @BeforeEach
     void init() {
@@ -170,7 +170,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusDays(1), null, QuizMode.SYNCHRONIZED);
         quizExercise.duration(240);
 
-        quizUpdater.updateQuizQuestions(quizExercise);
+        quizUpdaterService.updateQuizQuestions(quizExercise);
 
         quizExerciseRepository.save(quizExercise);
 

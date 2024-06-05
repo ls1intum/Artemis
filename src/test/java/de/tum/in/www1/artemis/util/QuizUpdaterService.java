@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.service.quiz.QuizExerciseService;
 import de.tum.in.www1.artemis.service.quiz.QuizIdAssigner;
 
 @Service
-public class QuizUpdater {
+public class QuizUpdaterService {
 
     @Autowired
     private QuizExerciseService quizExerciseService;
