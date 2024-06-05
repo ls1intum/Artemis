@@ -168,7 +168,9 @@ export class ExerciseService {
                     if (res.body.exercise.posts === undefined) {
                         res.body.exercise.posts = [];
                     }
-                    res.body.activatedExerciseHints?.forEach((hint) => this.entityTitleService.setTitle(EntityType.HINT, [hint?.id, exerciseId], hint?.title));
+                    for (const hint of res.body.activatedExerciseHints ?? []) {
+                        this.entityTitleService.setTitle(EntityType.HINT, [hint?.id, exerciseId], hint?.title);
+                    }
                 }
                 return res;
             }),
