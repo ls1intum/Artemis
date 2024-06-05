@@ -3,11 +3,13 @@ package de.tum.in.www1.artemis.service.connectors.pyris;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageState;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.tutorChat.PyrisTutorChatStatusUpdateDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.job.TutorChatJob;
-import de.tum.in.www1.artemis.service.iris.session.IrisChatSessionService;
+import de.tum.in.www1.artemis.service.connectors.pyris.job.CourseChatJob;
+import de.tum.in.www1.artemis.service.connectors.pyris.job.ExerciseChatJob;
+import de.tum.in.www1.artemis.service.iris.session.IrisCourseChatSessionService;
+import de.tum.in.www1.artemis.service.iris.session.IrisExerciseChatSessionService;
 
 @Service
 @Profile("iris")
@@ -15,26 +17,56 @@ public class PyrisStatusUpdateService {
 
     private final PyrisJobService pyrisJobService;
 
-    private final IrisChatSessionService irisChatSessionService;
+    private final IrisExerciseChatSessionService irisExerciseChatSessionService;
 
-    public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisChatSessionService irisChatSessionService) {
+    private final IrisCourseChatSessionService courseChatSessionService;
+
+    public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisExerciseChatSessionService irisExerciseChatSessionService,
+            IrisCourseChatSessionService courseChatSessionService) {
         this.pyrisJobService = pyrisJobService;
-        this.irisChatSessionService = irisChatSessionService;
+        this.irisExerciseChatSessionService = irisExerciseChatSessionService;
+        this.courseChatSessionService = courseChatSessionService;
     }
 
     /**
-     * Handles the status update of a tutor chat job and forwards it to {@link IrisChatSessionService#handleStatusUpdate(TutorChatJob, PyrisTutorChatStatusUpdateDTO)}
+     * Handles the status update of a exercise chat job and forwards it to {@link IrisExerciseChatSessionService#handleStatusUpdate(ExerciseChatJob, PyrisChatStatusUpdateDTO)}
      *
      * @param job          the job that is updated
      * @param statusUpdate the status update
      */
-    public void handleStatusUpdate(TutorChatJob job, PyrisTutorChatStatusUpdateDTO statusUpdate) {
-        irisChatSessionService.handleStatusUpdate(job, statusUpdate);
+    public void handleStatusUpdate(ExerciseChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
+        irisExerciseChatSessionService.handleStatusUpdate(job, statusUpdate);
 
-        var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state)
-                .allMatch(state -> state == PyrisStageState.DONE || state == PyrisStageState.ERROR || state == PyrisStageState.SKIPPED);
+        removeJobIfTerminated(statusUpdate, job.jobId());
+    }
+
+    /**
+     * Handles the status update of a course chat job and forwards it to
+     * {@link de.tum.in.www1.artemis.service.iris.session.IrisCourseChatSessionService#handleStatusUpdate(CourseChatJob, PyrisChatStatusUpdateDTO)}
+     *
+     * @param job          the job that is updated
+     * @param statusUpdate the status update
+     */
+    public void handleStatusUpdate(CourseChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
+        courseChatSessionService.handleStatusUpdate(job, statusUpdate);
+
+        removeJobIfTerminated(statusUpdate, job.jobId());
+    }
+
+    /**
+     * Removes the job from the job service if the status update indicates that the job is terminated.
+     * This is the case if all stages are in a terminal state.
+     * <p>
+     *
+     * @see PyrisStageState#isTerminal()
+     *
+     * @param statusUpdate the status update
+     * @param job          the job to remove
+     */
+    private void removeJobIfTerminated(PyrisChatStatusUpdateDTO statusUpdate, String job) {
+        var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state).allMatch(PyrisStageState::isTerminal);
         if (isDone) {
-            pyrisJobService.removeJob(job.jobId());
+            pyrisJobService.removeJob(job);
         }
     }
 }
