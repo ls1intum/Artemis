@@ -46,8 +46,8 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSp
                 LEFT JOIN FETCH r.submission
             WHERE (:buildStatus IS NULL OR b.buildStatus = :buildStatus)
                 AND (:buildAgentAddress IS NULL OR b.buildAgentAddress = :buildAgentAddress)
-                AND (CAST(:startDate as string) IS NULL OR b.buildStartDate >= :startDate)
-                AND (CAST(:endDate as string) IS NULL OR b.buildStartDate <= :endDate)
+                AND (CAST(:startDate AS string) IS NULL OR b.buildStartDate >= :startDate)
+                AND (CAST(:endDate AS string) IS NULL OR b.buildStartDate <= :endDate)
                 AND (:searchTerm IS NULL OR (b.repositoryName LIKE %:searchTerm% OR c.title LIKE %:searchTerm%))
                 AND (:courseId IS NULL OR b.courseId = :courseId)
             """)
