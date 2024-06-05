@@ -277,12 +277,12 @@ public class GitFilter extends MetaFilter {
     }
 
     private static File getFile(FilterConfig cfg, String param) throws ServletException {
-        String n = cfg.getInitParameter(param);
-        if (n == null || "".equals(n)) {
+        String initParameter = cfg.getInitParameter(param);
+        if (StringUtils.isEmptyOrNull(initParameter)) {
             throw new ServletException(MessageFormat.format(HttpServerText.get().parameterNotSet, param));
         }
 
-        File path = new File(n);
+        File path = new File(initParameter);
         if (!path.exists()) {
             throw new ServletException(MessageFormat.format(HttpServerText.get().pathForParamNotFound, path, param));
         }
@@ -290,19 +290,20 @@ public class GitFilter extends MetaFilter {
     }
 
     private static boolean getBoolean(FilterConfig cfg, String param) throws ServletException {
-        String n = cfg.getInitParameter(param);
-        if (n == null) {
+        String initParameter = cfg.getInitParameter(param);
+        if (initParameter == null) {
             return false;
         }
         try {
-            return StringUtils.toBoolean(n);
+            return StringUtils.toBoolean(initParameter);
         }
         catch (IllegalArgumentException err) {
-            throw new ServletException(MessageFormat.format(HttpServerText.get().invalidBoolean, param, n), err);
+            throw new ServletException(MessageFormat.format(HttpServerText.get().invalidBoolean, param, initParameter), err);
         }
     }
 
-    @Override protected ServletBinder register(ServletBinder binder) {
+    @Override
+    protected ServletBinder register(ServletBinder binder) {
         if (resolver == null) {
             throw new IllegalStateException(HttpServerText.get().noResolverAvailable);
         }

@@ -10,8 +10,11 @@ import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -23,9 +26,11 @@ import de.tum.in.www1.artemis.domain.competency.StandardizedCompetency;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.competency.KnowledgeAreaService;
 import de.tum.in.www1.artemis.service.competency.StandardizedCompetencyService;
+import de.tum.in.www1.artemis.service.feature.Feature;
+import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaRequestDTO;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaResultDTO;
-import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreasForImportDTO;
+import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyCatalogDTO;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyRequestDTO;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyResultDTO;
 
@@ -56,6 +61,7 @@ public class AdminStandardizedCompetencyResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("standardized-competencies")
+    @FeatureToggle(Feature.StandardizedCompetencies)
     @EnforceAdmin
     public ResponseEntity<StandardizedCompetencyResultDTO> createStandardizedCompetency(@RequestBody @Valid StandardizedCompetencyRequestDTO competency) throws URISyntaxException {
         log.debug("REST request to create standardized competency : {}", competency);
@@ -73,6 +79,7 @@ public class AdminStandardizedCompetencyResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated standardized competency
      */
     @PutMapping("standardized-competencies/{competencyId}")
+    @FeatureToggle(Feature.StandardizedCompetencies)
     @EnforceAdmin
     public ResponseEntity<StandardizedCompetencyResultDTO> updateStandardizedCompetency(@PathVariable long competencyId,
             @RequestBody @Valid StandardizedCompetencyRequestDTO competency) {
@@ -90,6 +97,7 @@ public class AdminStandardizedCompetencyResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("standardized-competencies/{competencyId}")
+    @FeatureToggle(Feature.StandardizedCompetencies)
     @EnforceAdmin
     public ResponseEntity<Void> deleteStandardizedCompetency(@PathVariable long competencyId) {
         log.debug("REST request to delete standardized competency : {}", competencyId);
@@ -107,6 +115,7 @@ public class AdminStandardizedCompetencyResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("standardized-competencies/knowledge-areas")
+    @FeatureToggle(Feature.StandardizedCompetencies)
     @EnforceAdmin
     public ResponseEntity<KnowledgeAreaResultDTO> createKnowledgeArea(@RequestBody @Valid KnowledgeAreaRequestDTO knowledgeArea) throws URISyntaxException {
         log.debug("REST request to create knowledge area : {}", knowledgeArea);
@@ -125,6 +134,7 @@ public class AdminStandardizedCompetencyResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated knowledge area
      */
     @PutMapping("standardized-competencies/knowledge-areas/{knowledgeAreaId}")
+    @FeatureToggle(Feature.StandardizedCompetencies)
     @EnforceAdmin
     public ResponseEntity<KnowledgeAreaResultDTO> updateKnowledgeArea(@PathVariable long knowledgeAreaId, @RequestBody @Valid KnowledgeAreaRequestDTO knowledgeArea) {
         log.debug("REST request to update knowledge area : {}", knowledgeArea);
@@ -141,6 +151,7 @@ public class AdminStandardizedCompetencyResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("standardized-competencies/knowledge-areas/{knowledgeAreaId}")
+    @FeatureToggle(Feature.StandardizedCompetencies)
     @EnforceAdmin
     public ResponseEntity<Void> deleteKnowledgeArea(@PathVariable long knowledgeAreaId) {
         log.debug("REST request to delete knowledge area : {}", knowledgeAreaId);
@@ -151,18 +162,39 @@ public class AdminStandardizedCompetencyResource {
     }
 
     /**
-     * PUT api/admin/standardized-competencies/import : Imports standardized competencies, knowledge areas and sources
+     * PUT api/admin/standardized-competencies/import : Imports a catalog of standardized competencies, knowledge areas and sources
      *
-     * @param knowledgeAreasForImportDTO the DTO containing knowledge areas (and their competencies) and sources
+     * @param standardizedCompetencyCatalogDTO the DTO containing the standardized competency catalog
      * @return the ResponseEntity with status 200 (OK)
      */
     @PutMapping("standardized-competencies/import")
+    @FeatureToggle(Feature.StandardizedCompetencies)
     @EnforceAdmin
-    public ResponseEntity<Void> importStandardizedCompetencies(@RequestBody @Valid KnowledgeAreasForImportDTO knowledgeAreasForImportDTO) {
-        log.debug("REST request to import standardized competencies from .json");
+    public ResponseEntity<Void> importStandardizedCompetencyCatalog(@RequestBody @Valid StandardizedCompetencyCatalogDTO standardizedCompetencyCatalogDTO) {
+        log.debug("REST request to import standardized competency catalog");
 
-        standardizedCompetencyService.adminImportStandardizedCompetencies(knowledgeAreasForImportDTO);
+        standardizedCompetencyService.importStandardizedCompetencyCatalog(standardizedCompetencyCatalogDTO);
 
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * GET api/admin/standardized-competencies/export : Exports the catalog of standardized competencies, knowledge areas and sources of this Artemis instance
+     *
+     * @return the ResponseEntity with status 200 (OK) and the body containing the JSON string of the standardized competency catalog
+     */
+    @GetMapping("standardized-competencies/export")
+    @FeatureToggle(Feature.StandardizedCompetencies)
+    @EnforceAdmin
+    public ResponseEntity<String> exportStandardizedCompetencyCatalog() {
+        log.debug("REST request to export standardized competency catalog");
+
+        String catalog = standardizedCompetencyService.exportStandardizedCompetencyCatalog();
+
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.setContentType(MediaType.APPLICATION_JSON);
+        responseHeaders.setContentDispositionFormData("attachment", "competencies.json");
+
+        return ResponseEntity.ok().headers(responseHeaders).body(catalog);
     }
 }

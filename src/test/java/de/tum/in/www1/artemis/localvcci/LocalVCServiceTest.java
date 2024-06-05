@@ -33,7 +33,7 @@ class LocalVCServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     @Test
     void testHealth() {
         ConnectorHealth health = versionControlService.health();
-        assertThat(health.getAdditionalInfo().get("url")).isEqualTo(localVCBaseUrl);
+        assertThat(health.additionalInfo().get("url")).isEqualTo(localVCBaseUrl);
     }
 
     @Test

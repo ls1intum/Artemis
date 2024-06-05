@@ -19,16 +19,17 @@ test.describe('Course exercise', () => {
         let exercise3: QuizExercise;
 
         test.beforeEach('Create Exercises', async ({ exerciseAPIRequests }) => {
-            exercise1 = await exerciseAPIRequests.createQuizExercise({ course }, [multipleChoiceQuizTemplate], 'Course Exercise Quiz 1');
-            exercise2 = await exerciseAPIRequests.createQuizExercise({ course }, [multipleChoiceQuizTemplate], 'Course Exercise Quiz 2');
-            exercise3 = await exerciseAPIRequests.createQuizExercise({ course }, [multipleChoiceQuizTemplate], 'Course Exercise 3');
+            exercise1 = await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [multipleChoiceQuizTemplate], title: 'Course Exercise Quiz 1' });
+            exercise2 = await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [multipleChoiceQuizTemplate], title: 'Course Exercise Quiz 2' });
+            exercise3 = await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [multipleChoiceQuizTemplate], title: 'Course Exercise 3' });
         });
 
         test('Filters exercises based on title', async ({ page, courseOverview }) => {
             await page.goto(`/courses/${course.id}/exercises`);
-            await expect(courseOverview.getExercise(exercise1.title!)).toBeVisible();
-            await expect(courseOverview.getExercise(exercise2.title!)).toBeVisible();
-            await expect(courseOverview.getExercise(exercise3.title!)).toBeVisible();
+            // All quiz exercises should be hidden initially, as the default accordion status is collapsed when there is no due date.
+            await expect(courseOverview.getExercise(exercise1.title!)).toBeHidden();
+            await expect(courseOverview.getExercise(exercise2.title!)).toBeHidden();
+            await expect(courseOverview.getExercise(exercise3.title!)).toBeHidden();
             await courseOverview.search('Course Exercise Quiz');
             await expect(courseOverview.getExercise(exercise1.title!)).toBeVisible();
             await expect(courseOverview.getExercise(exercise2.title!)).toBeVisible();

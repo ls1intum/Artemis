@@ -15,11 +15,15 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.competency.KnowledgeArea;
 import de.tum.in.www1.artemis.domain.competency.StandardizedCompetency;
+import de.tum.in.www1.artemis.repository.SourceRepository;
 import de.tum.in.www1.artemis.repository.competency.KnowledgeAreaRepository;
 import de.tum.in.www1.artemis.repository.competency.StandardizedCompetencyRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.service.competency.StandardizedCompetencyService;
+import de.tum.in.www1.artemis.service.feature.Feature;
+import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaResultDTO;
+import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.SourceDTO;
 
 /**
  * REST controller for managing {@link StandardizedCompetency} entities.
@@ -37,11 +41,14 @@ public class StandardizedCompetencyResource {
 
     private final KnowledgeAreaRepository knowledgeAreaRepository;
 
+    private final SourceRepository sourceRepository;
+
     public StandardizedCompetencyResource(StandardizedCompetencyService standardizedCompetencyService, StandardizedCompetencyRepository standardizedCompetencyRepository,
-            KnowledgeAreaRepository knowledgeAreaRepository) {
+            KnowledgeAreaRepository knowledgeAreaRepository, SourceRepository sourceRepository) {
         this.standardizedCompetencyService = standardizedCompetencyService;
         this.standardizedCompetencyRepository = standardizedCompetencyRepository;
         this.knowledgeAreaRepository = knowledgeAreaRepository;
+        this.sourceRepository = sourceRepository;
     }
 
     /**
@@ -51,6 +58,7 @@ public class StandardizedCompetencyResource {
      * @return the ResponseEntity with status 200 (OK) and with body containing the standardized competency, or with status 404 (Not Found)
      */
     @GetMapping("{competencyId}")
+    @FeatureToggle(Feature.StandardizedCompetencies)
     @EnforceAtLeastInstructor
     public ResponseEntity<StandardizedCompetency> getStandardizedCompetency(@PathVariable long competencyId) {
         log.debug("REST request to get standardized competency with id : {}", competencyId);
@@ -66,6 +74,7 @@ public class StandardizedCompetencyResource {
      * @return the ResponseEntity with status 200 (OK) and with body containing the knowledge areas
      */
     @GetMapping("for-tree-view")
+    @FeatureToggle(Feature.StandardizedCompetencies)
     @EnforceAtLeastInstructor
     public ResponseEntity<List<KnowledgeAreaResultDTO>> getAllForTreeView() {
         log.debug("REST request to all knowledge areas for tree view");
@@ -82,6 +91,7 @@ public class StandardizedCompetencyResource {
      * @return the ResponseEntity with status 200 (OK) and with body containing the knowledge area, or with status 404 (Not Found)
      */
     @GetMapping("knowledge-areas/{knowledgeAreaId}")
+    @FeatureToggle(Feature.StandardizedCompetencies)
     @EnforceAtLeastInstructor
     public ResponseEntity<KnowledgeArea> getKnowledgeArea(@PathVariable long knowledgeAreaId) {
         log.debug("REST request to get knowledge area with id : {}", knowledgeAreaId);
@@ -89,5 +99,21 @@ public class StandardizedCompetencyResource {
         var knowledgeArea = knowledgeAreaRepository.findWithChildrenAndCompetenciesByIdElseThrow(knowledgeAreaId);
 
         return ResponseEntity.ok().body(knowledgeArea);
+    }
+
+    /**
+     * GET api/standardized-competencies/sources : Gets all sources
+     *
+     * @return the ResponseEntity with status 200 (OK) and with body containing the list of sources
+     */
+    @GetMapping("sources")
+    @FeatureToggle(Feature.StandardizedCompetencies)
+    @EnforceAtLeastInstructor
+    public ResponseEntity<List<SourceDTO>> getSources() {
+        log.debug("REST request to get all sources");
+
+        var sourceDTOs = sourceRepository.findAll().stream().map(SourceDTO::of).toList();
+
+        return ResponseEntity.ok().body(sourceDTOs);
     }
 }

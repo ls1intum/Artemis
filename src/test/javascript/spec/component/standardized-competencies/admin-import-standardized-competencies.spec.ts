@@ -16,7 +16,7 @@ import { of } from 'rxjs';
 import { KnowledgeAreasForImportDTO } from 'app/entities/competency/standardized-competency.model';
 import { StandardizedCompetencyDetailComponent } from 'app/shared/standardized-competencies/standardized-competency-detail.component';
 
-describe('ImportStandardizedCompetenciesComponent', () => {
+describe('AdminImportStandardizedCompetenciesComponent', () => {
     let componentFixture: ComponentFixture<AdminImportStandardizedCompetenciesComponent>;
     let component: AdminImportStandardizedCompetenciesComponent;
 
@@ -133,7 +133,7 @@ describe('ImportStandardizedCompetenciesComponent', () => {
         const mockRouter = TestBed.inject(Router);
         const navigateSpy = jest.spyOn(mockRouter, 'navigate');
         const competencyService = TestBed.inject(AdminStandardizedCompetencyService);
-        jest.spyOn(competencyService, 'importCompetencies').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
+        jest.spyOn(competencyService, 'importStandardizedCompetencyCatalog').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
 
         component.importCompetencies();
 
@@ -158,13 +158,15 @@ describe('ImportStandardizedCompetenciesComponent', () => {
     });
 
     it('should open details', () => {
-        const competencyToOpen = { id: 2, isVisible: true };
+        component['importData'] = { knowledgeAreas: [], sources: [{ id: 1, title: 'any source' }] };
+        const competencyToOpen = { id: 2, isVisible: true, sourceId: 1 };
         const knowledgeAreaTitle = 'knowledgeArea';
 
         component['openCompetencyDetails'](competencyToOpen, knowledgeAreaTitle);
 
         expect(component['selectedCompetency']).toEqual(competencyToOpen);
         expect(component['knowledgeAreaTitle']).toEqual(knowledgeAreaTitle);
+        expect(component['sourceString']).toBeTruthy();
     });
 
     it('should close details', () => {

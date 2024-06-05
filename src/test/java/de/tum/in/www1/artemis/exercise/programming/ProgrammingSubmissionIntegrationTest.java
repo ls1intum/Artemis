@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.exercise.programming;
 import static de.tum.in.www1.artemis.config.Constants.NEW_SUBMISSION_TOPIC;
 import static de.tum.in.www1.artemis.config.Constants.SETUP_COMMIT_MESSAGE;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
+import static de.tum.in.www1.artemis.util.TestResourceUtils.HalfSecond;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.any;
@@ -764,8 +765,9 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationJenk
         String url = "/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment";
         ProgrammingSubmission storedSubmission = request.get(url, HttpStatus.OK, ProgrammingSubmission.class);
 
-        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "results", "submissionDate");
-        assertThat(storedSubmission.getSubmissionDate()).as("submission date is correct").isEqualToIgnoringNanos(submission.getSubmissionDate());
+        final String[] ignoringFields = { "results", "submissionDate", "participation" };
+        assertThat(storedSubmission).as("submission was found").usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(submission);
+        assertThat(storedSubmission.getSubmissionDate()).as("submission date is correct").isCloseTo(submission.getSubmissionDate(), HalfSecond());
         assertThat(storedSubmission.getLatestResult()).as("result is not set").isNull();
     }
 

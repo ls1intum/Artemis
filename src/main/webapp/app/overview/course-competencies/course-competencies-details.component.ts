@@ -1,28 +1,37 @@
 import dayjs from 'dayjs/esm';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Competency, CompetencyProgress, getIcon } from 'app/entities/competency.model';
+import { Competency, CompetencyJol, CompetencyProgress, getIcon } from 'app/entities/competency.model';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
+import { Observable, Subscription, combineLatest, forkJoin } from 'rxjs';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-course-competencies-details',
     templateUrl: './course-competencies-details.component.html',
     styleUrls: ['../course-overview.scss'],
 })
-export class CourseCompetenciesDetailsComponent implements OnInit {
+export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     competencyId?: number;
+    course?: Course;
     courseId?: number;
     isLoading = false;
     competency: Competency;
+    judgementOfLearning: CompetencyJol | undefined;
+    promptForJolRating = false;
     showFireworks = false;
+    dashboardFeatureActive = false;
+    paramsSubscription: Subscription;
 
     readonly LectureUnitType = LectureUnitType;
 
@@ -30,6 +39,8 @@ export class CourseCompetenciesDetailsComponent implements OnInit {
     getIcon = getIcon;
 
     constructor(
+        private featureToggleService: FeatureToggleService,
+        private courseStorageService: CourseStorageService,
         private alertService: AlertService,
         private activatedRoute: ActivatedRoute,
         private competencyService: CompetencyService,
@@ -37,20 +48,63 @@ export class CourseCompetenciesDetailsComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        this.activatedRoute.params.subscribe((params) => {
-            this.competencyId = +params['competencyId'];
-            this.courseId = +params['courseId'];
-            if (this.competencyId && this.courseId) {
-                this.loadData();
-            }
-        });
+        // example route looks like: /courses/1/competencies/10
+        const courseIdParams$ = this.activatedRoute.parent?.parent?.parent?.params;
+        const competencyIdParams$ = this.activatedRoute.params;
+        const dashboardFeatureToggleActive$ = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StudentCourseAnalyticsDashboard);
+
+        if (courseIdParams$) {
+            this.paramsSubscription = combineLatest([courseIdParams$, competencyIdParams$, dashboardFeatureToggleActive$]).subscribe(
+                ([courseIdParams, competencyIdParams, dashboardFeatureActive]) => {
+                    this.competencyId = Number(competencyIdParams.competencyId);
+                    this.courseId = Number(courseIdParams.courseId);
+                    this.dashboardFeatureActive = dashboardFeatureActive;
+                    this.course = this.courseStorageService.getCourse(this.courseId);
+                    if (this.competencyId && this.courseId) {
+                        this.loadData();
+                    }
+                },
+            );
+        }
+    }
+
+    ngOnDestroy(): void {
+        this.paramsSubscription?.unsubscribe();
     }
 
     private loadData() {
         this.isLoading = true;
-        this.competencyService.findById(this.competencyId!, this.courseId!).subscribe({
-            next: (resp) => {
-                this.competency = resp.body!;
+
+        const observables = [this.competencyService.findById(this.competencyId!, this.courseId!)] as Observable<
+            HttpResponse<Competency | Competency[] | { current: CompetencyJol; prior?: CompetencyJol }>
+        >[];
+
+        if (this.judgementOfLearningEnabled) {
+            observables.push(this.competencyService.getAllForCourse(this.courseId!));
+            observables.push(this.competencyService.getJoL(this.courseId!, this.competencyId!));
+        }
+
+        forkJoin(observables).subscribe({
+            next: ([competencyResp, courseCompetenciesResp, judgementOfLearningResp]) => {
+                this.competency = competencyResp.body! as Competency;
+
+                if (this.judgementOfLearningEnabled) {
+                    const competencies = courseCompetenciesResp.body! as Competency[];
+                    const progress = this.competency.userProgress?.first();
+                    this.promptForJolRating = CompetencyJol.shouldPromptForJol(this.competency, progress, competencies);
+                    const judgementOfLearning = (judgementOfLearningResp?.body ?? undefined) as { current: CompetencyJol; prior?: CompetencyJol } | undefined;
+                    if (
+                        judgementOfLearning &&
+                        progress &&
+                        (judgementOfLearning.current.competencyProgress !== (progress?.progress ?? 0) ||
+                            judgementOfLearning.current.competencyConfidence !== (progress?.confidence ?? 0))
+                    ) {
+                        this.judgementOfLearning = undefined;
+                    } else {
+                        this.judgementOfLearning = judgementOfLearning?.current;
+                    }
+                }
+
                 if (this.competency && this.competency.exercises) {
                     // Add exercises as lecture units for display
                     this.competency.lectureUnits = this.competency.lectureUnits ?? [];
@@ -126,5 +180,19 @@ export class CourseCompetenciesDetailsComponent implements OnInit {
 
     get softDueDatePassed(): boolean {
         return dayjs().isAfter(this.competency.softDueDate);
+    }
+
+    get judgementOfLearningEnabled() {
+        return (this.course?.studentCourseAnalyticsDashboardEnabled ?? false) && this.dashboardFeatureActive;
+    }
+
+    onRatingChange(newRating: number) {
+        this.judgementOfLearning = {
+            competencyId: this.competencyId!,
+            jolValue: newRating,
+            judgementTime: dayjs().toString(),
+            competencyProgress: this.progress,
+            competencyConfidence: this.confidence,
+        } satisfies CompetencyJol;
     }
 }

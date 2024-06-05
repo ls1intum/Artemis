@@ -261,6 +261,25 @@ Generic styles
     width: 60% !important;
 }
 
+.max-vw-30 {
+    max-width: 30vw !important;
+}
+
+// Should be used with a width restriction of your choice.
+.popover-text-truncate-4-lines > .popover-body {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    // Show only the first four lines (limiting height with something else than lines is not possible).
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+    -webkit-box-orient: vertical;
+    // Add a margin at the bottom and solve problem in Chromium-based browsers,
+    // that an additional line after the ellipsis end is shown.
+    margin-bottom: 1em;
+    padding-bottom: 0;
+}
+
 .mt-n3 {
     margin-top: -1rem;
 }
@@ -313,6 +332,21 @@ a:hover {
 .hand,
 [jhisortby] {
     cursor: pointer;
+}
+
+/* Styles for rotating chevron icons */
+
+.rotate-icon {
+    transition: transform 0.3s ease;
+}
+
+.rotated {
+    transform: rotate(90deg);
+}
+
+.chevron-position {
+    display: inline-block;
+    vertical-align: middle;
 }
 
 /* ==========================================================================
@@ -701,9 +735,12 @@ code.password:hover {
     background: $displaycolor-background;
 }
 
-// This puts the owl-datetime-picker on top of the ngbootstrap modal
+// This positions the owl-datetime-picker above the ngbootstrap modal, accounting for a 10px margin which reduces width and height by 20px.
 .cdk-overlay-container {
     z-index: 1060;
+    margin: 10px;
+    width: calc(100% - 20px);
+    height: calc(100% - 20px);
 }
 
 .not-allowed {

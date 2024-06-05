@@ -40,7 +40,7 @@ import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
+import de.tum.in.www1.artemis.web.rest.dto.PostContextFilterDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
 class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -93,7 +93,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
                 .filter(coursePost -> (coursePost.getConversation() instanceof Channel channel && channel.getExercise() != null)).toList();
 
         // filter existing posts with first exercise context
-        exerciseChannel = ((Channel) existingExercisePosts.get(0).getConversation());
+        exerciseChannel = ((Channel) existingExercisePosts.getFirst().getConversation());
         exercise = exerciseChannel.getExercise();
         postsBelongingToExercise = existingExercisePosts.stream().filter(post -> (post.getConversation().getId().equals(exerciseChannel.getId()))).toList();
 
@@ -108,7 +108,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
         courseId = course.getId();
 
-        plagiarismCaseId = existingPlagiarismPosts.get(0).getPlagiarismCase().getId();
+        plagiarismCaseId = existingPlagiarismPosts.getFirst().getPlagiarismCase().getId();
 
         GroupNotificationService groupNotificationService = mock(GroupNotificationService.class);
         doNothing().when(groupNotificationService).notifyAllGroupsAboutNewAnnouncement(any(), any());
@@ -132,8 +132,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         Post notCreatedPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.BAD_REQUEST);
 
         assertThat(notCreatedPost).isNull();
-        PostContextFilter postContextFilter = new PostContextFilter(courseId);
-        postContextFilter.setConversationId(exerciseChannel.getId());
+        PostContextFilterDTO postContextFilter = new PostContextFilterDTO(courseId, null, null, exerciseChannel.getId(), null, false, false, false, null, null);
         assertThat(postsBelongingToExercise).hasSameSizeAs(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), 1));
 
         // conversation participants should not be notified
@@ -191,7 +190,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateExistingPost_badRequest() throws Exception {
-        Post existingPostToSave = existingPosts.get(0);
+        Post existingPostToSave = existingPosts.getFirst();
 
         var sizeBefore = postRepository.findAll().size();
 
@@ -221,7 +220,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testEditPost_asTutor() throws Exception {
-        Post postToUpdate = editExistingPost(existingPlagiarismPosts.get(0));
+        Post postToUpdate = editExistingPost(existingPlagiarismPosts.getFirst());
         Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.FORBIDDEN);
         assertThat(notUpdatedPost).isNull();
     }
@@ -231,7 +230,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testEditPostWithUserMention(String userMention, boolean isUserMentionValid) throws Exception {
         // update post of student1 (index 0)--> OK
-        Post postToUpdate = editExistingPost(existingPosts.get(0));
+        Post postToUpdate = editExistingPost(existingPosts.getFirst());
         postToUpdate.setContent(userMention);
 
         if (!isUserMentionValid) {
@@ -248,7 +247,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testEditPost_asStudent_forbidden() throws Exception {
         // update post from another student (index 1)--> forbidden
-        Post postToNotUpdate = editExistingPost(existingPosts.get(0));
+        Post postToNotUpdate = editExistingPost(existingPosts.getFirst());
 
         Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToNotUpdate.getId(), postToNotUpdate, Post.class, HttpStatus.FORBIDDEN);
         assertThat(notUpdatedPost).isNull();
@@ -257,7 +256,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testEditPostWithIdIsNull_badRequest() throws Exception {
-        Post postToUpdate = existingPosts.get(0);
+        Post postToUpdate = existingPosts.getFirst();
         postToUpdate.setId(null);
 
         Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.BAD_REQUEST);
@@ -276,7 +275,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         List<Post> returnedPosts = getPosts(params);
         // get amount of posts with certain plagiarism context
         assertThat(returnedPosts).hasSameSizeAs(existingPlagiarismPosts);
-        assertThat(returnedPosts.get(0).getAuthorRole()).isEqualTo(UserRole.INSTRUCTOR);
+        assertThat(returnedPosts.getFirst().getAuthorRole()).isEqualTo(UserRole.INSTRUCTOR);
     }
 
     @Test
@@ -316,7 +315,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testDeletePost_asTutor_forbidden() throws Exception {
-        Post postToNotDelete = existingPlagiarismPosts.get(0);
+        Post postToNotDelete = existingPlagiarismPosts.getFirst();
 
         request.delete("/api/courses/" + courseId + "/posts/" + postToNotDelete.getId(), HttpStatus.FORBIDDEN);
         assertThat(postRepository.findById(postToNotDelete.getId())).isPresent();
@@ -325,7 +324,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeletePost_asInstructor() throws Exception {
-        Post postToNotDelete = existingPlagiarismPosts.get(0);
+        Post postToNotDelete = existingPlagiarismPosts.getFirst();
 
         request.delete("/api/courses/" + courseId + "/posts/" + postToNotDelete.getId(), HttpStatus.OK);
         assertThat(postRepository.findById(postToNotDelete.getId())).isNotPresent();

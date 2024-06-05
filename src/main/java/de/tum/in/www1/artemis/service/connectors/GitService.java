@@ -1,16 +1,11 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -39,53 +34,39 @@ import jakarta.validation.constraints.NotNull;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.CommitCommand;
 import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.GitCommand;
 import org.eclipse.jgit.api.LsRemoteCommand;
 import org.eclipse.jgit.api.PullCommand;
 import org.eclipse.jgit.api.PullResult;
 import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.Status;
-import org.eclipse.jgit.api.TransportCommand;
-import org.eclipse.jgit.api.TransportConfigCallback;
 import org.eclipse.jgit.api.errors.CanceledException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRefNameException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.api.errors.TransportException;
-import org.eclipse.jgit.errors.UnsupportedCredentialItem;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.RefUpdate;
-import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
-import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-import org.eclipse.jgit.transport.CredentialItem;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.RemoteConfig;
-import org.eclipse.jgit.transport.SshConfigStore;
-import org.eclipse.jgit.transport.SshConstants;
-import org.eclipse.jgit.transport.SshTransport;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.transport.sshd.JGitKeyCache;
-import org.eclipse.jgit.transport.sshd.KeyPasswordProvider;
-import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.File;
@@ -107,42 +88,16 @@ import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.web.rest.dto.CommitInfoDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
-@Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
+@Profile(PROFILE_CORE)
 @Service
-public class GitService {
+public class GitService extends AbstractGitService {
 
     private static final Logger log = LoggerFactory.getLogger(GitService.class);
-
-    private final Environment environment;
 
     private final ProfileService profileService;
 
     @Value("${artemis.version-control.local-vcs-repo-path:#{null}}")
     private String localVCBasePath;
-
-    @Value("${artemis.version-control.url}")
-    private URL gitUrl;
-
-    @Value("${artemis.version-control.user}")
-    private String gitUser;
-
-    @Value("${artemis.version-control.password}")
-    private String gitPassword;
-
-    @Value("${artemis.version-control.token:#{null}}")
-    private Optional<String> gitToken;
-
-    @Value("${artemis.version-control.ssh-private-key-folder-path:#{null}}")
-    private Optional<String> gitSshPrivateKeyPath;
-
-    @Value("${artemis.version-control.ssh-private-key-password:#{null}}")
-    private Optional<String> gitSshPrivateKeyPassphrase;
-
-    @Value("${artemis.version-control.ssh-template-clone-url:#{null}}")
-    private Optional<String> sshUrlTemplate;
-
-    @Value("${artemis.version-control.default-branch:main}")
-    private String defaultBranch;
 
     @Value("${artemis.repo-clone-path}")
     private String repoClonePath;
@@ -152,6 +107,12 @@ public class GitService {
 
     @Value("${artemis.git.email}")
     private String artemisGitEmail;
+
+    @Value("${artemis.version-control.user}")
+    protected String gitUser;
+
+    @Value("${artemis.version-control.password}")
+    protected String gitPassword;
 
     // TODO: clean up properly in multi node environments
     private final Map<Path, Repository> cachedRepositories = new ConcurrentHashMap<>();
@@ -163,23 +124,13 @@ public class GitService {
 
     private final ZipFileService zipFileService;
 
-    private TransportConfigCallback sshCallback;
-
-    private static final int JGIT_TIMEOUT_IN_SECONDS = 5;
-
     private static final String ANONYMIZED_STUDENT_NAME = "student";
 
     private static final String ANONYMIZED_STUDENT_EMAIL = "";
 
-    private static final String REMOTE_NAME = "origin";
-
-    public GitService(Environment environment, ProfileService profileService, ZipFileService zipFileService) {
+    public GitService(ProfileService profileService, ZipFileService zipFileService) {
+        super();
         this.profileService = profileService;
-        log.debug("file.encoding={}", Charset.defaultCharset().displayName());
-        log.debug("sun.jnu.encoding={}", System.getProperty("sun.jnu.encoding"));
-        log.debug("Default Charset={}", Charset.defaultCharset());
-        log.debug("Default Charset in Use={}", new OutputStreamWriter(new ByteArrayOutputStream()).getEncoding());
-        this.environment = environment;
         this.zipFileService = zipFileService;
     }
 
@@ -208,102 +159,11 @@ public class GitService {
 
     private void configureSsh() {
 
-        var credentialsProvider = new CredentialsProvider() {
+        final var sshSessionFactoryBuilder = getSshdSessionFactoryBuilder(gitSshPrivateKeyPath, gitSshPrivateKeyPassphrase, gitUrl);
 
-            @Override
-            public boolean isInteractive() {
-                return false;
-            }
-
-            @Override
-            public boolean supports(CredentialItem... items) {
-                return true;
-            }
-
-            // Note: the following method allows us to store known hosts
-            @Override
-            public boolean get(URIish uri, CredentialItem... items) throws UnsupportedCredentialItem {
-                for (CredentialItem item : items) {
-                    if (item instanceof CredentialItem.YesNoType yesNoItem) {
-                        yesNoItem.setValue(true);
-                    }
-                }
-                return true;
-            }
-        };
-
-        CredentialsProvider.setDefault(credentialsProvider);
-
-        var sshSessionFactory = new SshdSessionFactoryBuilder().setKeyPasswordProvider(keyPasswordProvider -> new KeyPasswordProvider() {
-
-            @Override
-            public char[] getPassphrase(URIish uri, int attempt) {
-                // Example: /Users/artemis/.ssh/artemis/id_rsa contains /Users/artemis/.ssh/artemis
-                if (gitSshPrivateKeyPath.isPresent() && gitSshPrivateKeyPassphrase.isPresent() && uri.getPath().contains(gitSshPrivateKeyPath.get())) {
-                    return gitSshPrivateKeyPassphrase.get().toCharArray();
-                }
-                else {
-                    return null;
-                }
-            }
-
-            @Override
-            public void setAttempts(int maxNumberOfAttempts) {
-            }
-
-            @Override
-            public boolean keyLoaded(URIish uri, int attempt, Exception error) {
-                return false;
-            }
-        }).setConfigStoreFactory((homeDir, configFile, localUserName) -> new SshConfigStore() {
-
-            @Override
-            public HostConfig lookup(String hostName, int port, String userName) {
-                return new HostConfig() {
-
-                    @Override
-                    public String getValue(String key) {
-                        return null;
-                    }
-
-                    @Override
-                    public List<String> getValues(String key) {
-                        return Collections.emptyList();
-                    }
-
-                    @Override
-                    public Map<String, String> getOptions() {
-                        log.debug("getOptions: {}:{}", hostName, port);
-                        if (hostName.equals(gitUrl.getHost())) {
-                            return Collections.singletonMap(SshConstants.STRICT_HOST_KEY_CHECKING, SshConstants.NO);
-                        }
-                        else {
-                            return Collections.emptyMap();
-                        }
-                    }
-
-                    @Override
-                    public Map<String, List<String>> getMultiValuedOptions() {
-                        return Collections.emptyMap();
-                    }
-                };
-            }
-
-            @Override
-            public HostConfig lookupDefault(String hostName, int port, String userName) {
-                return lookup(hostName, port, userName);
-            }
-        }).setSshDirectory(new java.io.File(gitSshPrivateKeyPath.orElseThrow())).setHomeDirectory(new java.io.File(System.getProperty("user.home"))).build(new JGitKeyCache());
-
-        sshCallback = transport -> {
-            if (transport instanceof SshTransport sshTransport) {
-                transport.setTimeout(JGIT_TIMEOUT_IN_SECONDS);
-                sshTransport.setSshSessionFactory(sshSessionFactory);
-            }
-            else {
-                log.error("Cannot use ssh properly because of mismatch of Jgit transport object: {}", transport);
-            }
-        };
+        try (final var sshSessionFactory = sshSessionFactoryBuilder.build(new JGitKeyCache())) {
+            sshCallback = getSshCallback(sshSessionFactory);
+        }
     }
 
     private boolean useSsh() {
@@ -311,7 +171,8 @@ public class GitService {
         // password is optional and will only be applied if the ssh private key was encrypted using a password
     }
 
-    private String getGitUriAsString(VcsRepositoryUri vcsRepositoryUri) throws URISyntaxException {
+    @Override
+    protected String getGitUriAsString(VcsRepositoryUri vcsRepositoryUri) throws URISyntaxException {
         return getGitUri(vcsRepositoryUri).toString();
     }
 
@@ -332,15 +193,7 @@ public class GitService {
             LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(vcsRepositoryUri.toString());
             return localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath).toUri();
         }
-        return useSsh() ? getSshUri(vcsRepositoryUri) : vcsRepositoryUri.getURI();
-    }
-
-    private URI getSshUri(VcsRepositoryUri vcsRepositoryUri) throws URISyntaxException {
-        URI templateUri = new URI(sshUrlTemplate.orElseThrow());
-        // Example Gitlab: ssh://git@gitlab.ase.in.tum.de:2222/se2021w07h02/se2021w07h02-ga27yox.git
-        final var repositoryUri = vcsRepositoryUri.getURI();
-        final var path = repositoryUri.getPath().replace("/scm", "");
-        return new URI(templateUri.getScheme(), templateUri.getUserInfo(), templateUri.getHost(), templateUri.getPort(), path, null, repositoryUri.getFragment());
+        return useSsh() ? getSshUri(vcsRepositoryUri, sshUrlTemplate) : vcsRepositoryUri.getURI();
     }
 
     /**
@@ -696,78 +549,6 @@ public class GitService {
     }
 
     /**
-     * Creates a JGit repository instance using the provided local path and remote repository URI with specific configurations.
-     * This method sets up the repository to avoid auto garbage collection and disables the use of symbolic links to enhance security.
-     * It also makes sure that the default branch and HEAD are correctly configured.
-     * Works for both, local checkout repositories and bare repositories (without working directory).
-     *
-     * @param localPath           The path to the local repository directory, not null.
-     * @param remoteRepositoryUri The URI of the remote repository, not null.
-     * @param defaultBranch       The name of the default branch to be checked out, not null.
-     * @param isBare              Whether the repository is a bare repository (without working directory)
-     * @return The configured Repository instance.
-     * @throws IOException             If an I/O error occurs during repository initialization or configuration.
-     * @throws InvalidRefNameException If the provided default branch name is invalid.
-     *
-     *                                     <p>
-     *                                     The method disables automatic garbage collection of the repository to prevent potential issues with file deletion
-     *                                     as discussed in multiple resources. It also avoids the use of symbolic links for security reasons,
-     *                                     following best practices against remote code execution vulnerabilities.
-     *                                     </p>
-     *
-     *                                     <p>
-     *                                     References:
-     *                                     <ul>
-     *                                     <li>https://stackoverflow.com/questions/45266021/java-jgit-files-delete-fails-to-delete-a-file-but-file-delete-succeeds</li>
-     *                                     <li>https://git-scm.com/docs/git-gc</li>
-     *                                     <li>https://www.eclipse.org/lists/jgit-dev/msg03734.html</li>
-     *                                     </ul>
-     *                                     </p>
-     */
-    @NotNull
-    public Repository linkRepositoryForExistingGit(Path localPath, VcsRepositoryUri remoteRepositoryUri, String defaultBranch, boolean isBare)
-            throws IOException, InvalidRefNameException {
-        // Create the JGit repository object
-
-        // Open the repository from the filesystem
-        FileRepositoryBuilder builder = new FileRepositoryBuilder();
-
-        if (isBare) {
-            builder.setBare();
-        }
-        // bare repositories use a different path than checked out ones
-        builder.setGitDir(isBare ? localPath.toFile() : localPath.resolve(".git").toFile()).setInitialBranch(defaultBranch).setMustExist(true).readEnvironment().findGitDir()
-                .setup(); // scan environment GIT_* variables
-
-        try (Repository repository = new Repository(builder, localPath, remoteRepositoryUri)) {
-            // disable auto garbage collection because it can lead to problems (especially with deleting local repositories)
-            // see https://stackoverflow.com/questions/45266021/java-jgit-files-delete-fails-to-delete-a-file-but-file-delete-succeeds
-            // and https://git-scm.com/docs/git-gc for an explanation of the parameter
-            // and https://www.eclipse.org/lists/jgit-dev/msg03734.html
-            StoredConfig gitRepoConfig = repository.getConfig();
-            gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
-            gitRepoConfig.setBoolean(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTODETACH, false);
-            gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOPACKLIMIT, 0);
-            gitRepoConfig.setBoolean(ConfigConstants.CONFIG_RECEIVE_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOGC, false);
-
-            // disable symlinks to avoid security issues such as remote code execution
-            gitRepoConfig.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS, false);
-            gitRepoConfig.setBoolean(ConfigConstants.CONFIG_COMMIT_SECTION, null, ConfigConstants.CONFIG_KEY_GPGSIGN, false);
-            gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_REMOTE_SECTION, REMOTE_NAME);
-            gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_MERGE_SECTION, "refs/heads/" + defaultBranch);
-
-            // Important for new / empty repositories so the default branch is set correctly.
-            RefUpdate refUpdate = repository.getRefDatabase().newUpdate(Constants.HEAD, false);
-            refUpdate.setForceUpdate(true);
-            refUpdate.link("refs/heads/" + defaultBranch);
-
-            gitRepoConfig.save();
-
-            return repository;
-        }
-    }
-
-    /**
      * Commits with the given message into the repository.
      *
      * @param repo    Local Repository Object.
@@ -993,34 +774,6 @@ public class GitService {
     public void switchBackToDefaultBranchHead(Repository repository) throws GitAPIException {
         try (Git git = new Git(repository)) {
             git.checkout().setName(defaultBranch).call();
-        }
-    }
-
-    /**
-     * Get last commit hash from HEAD
-     *
-     * @param repoUri to get the latest hash from.
-     * @return the latestHash of the given repo.
-     * @throws EntityNotFoundException if retrieving the latestHash from the git repo failed.
-     */
-    @Nullable
-    public ObjectId getLastCommitHash(VcsRepositoryUri repoUri) throws EntityNotFoundException {
-        if (repoUri == null || repoUri.getURI() == null) {
-            return null;
-        }
-        // Get HEAD ref of repo without cloning it locally
-        try {
-            log.debug("getLastCommitHash {}", repoUri);
-            var headRef = lsRemoteCommand().setRemote(getGitUriAsString(repoUri)).callAsMap().get(Constants.HEAD);
-
-            if (headRef == null) {
-                return null;
-            }
-
-            return headRef.getObjectId();
-        }
-        catch (GitAPIException | URISyntaxException ex) {
-            throw new EntityNotFoundException("Could not retrieve the last commit hash for repoUri " + repoUri + " due to the following exception: " + ex);
         }
     }
 
@@ -1405,13 +1158,8 @@ public class GitService {
      * @throws IOException if the deletion of the repository failed.
      */
     public void deleteLocalRepository(Repository repository) throws IOException {
-        Path repoPath = repository.getLocalPath();
-        cachedRepositories.remove(repoPath);
-        // if repository is not closed, it causes weird IO issues when trying to delete the repository again
-        // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
-        repository.closeBeforeDelete();
-        FileUtils.deleteDirectory(repoPath.toFile());
-        log.debug("Deleted Repository at {}", repoPath);
+        cachedRepositories.remove(repository.getLocalPath());
+        super.deleteLocalRepository(repository);
     }
 
     /**
@@ -1451,31 +1199,42 @@ public class GitService {
     }
 
     /**
-     * Zip the content of a git repository that contains a participation.
+     * Get the content of a git repository that contains a participation, as zip or directory.
      *
      * @param repo            Local Repository Object.
      * @param repositoryDir   path where the repo is located on disk
-     * @param hideStudentName option to hide the student name for the zip file
-     * @return path to zip file.
-     * @throws IOException if the zipping process failed.
+     * @param hideStudentName option to hide the student name for the zip file or directory
+     * @param zipOutput       If true the method returns a zip file otherwise a directory.
+     * @return path to zip file or directory.
+     * @throws IOException if the zipping or copying process failed.
      */
-    public Path zipRepositoryWithParticipation(Repository repo, String repositoryDir, boolean hideStudentName) throws IOException, UncheckedIOException {
+    public Path getRepositoryWithParticipation(Repository repo, String repositoryDir, boolean hideStudentName, boolean zipOutput) throws IOException, UncheckedIOException {
         var exercise = repo.getParticipation().getProgrammingExercise();
         var courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         var participation = (ProgrammingExerciseStudentParticipation) repo.getParticipation();
 
-        // The zip filename is either the student login, team short name or some default string.
-        var studentTeamOrDefault = Objects.requireNonNullElse(participation.getParticipantIdentifier(), "student-submission" + repo.getParticipation().getId());
-
-        String zipRepoName = FileService.sanitizeFilename(courseShortName + "-" + exercise.getTitle() + "-" + participation.getId());
+        String repoName = FileService.sanitizeFilename(courseShortName + "-" + exercise.getTitle() + "-" + participation.getId());
         if (hideStudentName) {
-            zipRepoName += "-student-submission.git.zip";
+            repoName += "-student-submission.git";
         }
         else {
-            zipRepoName += "-" + studentTeamOrDefault + ".zip";
+            // The zip filename is either the student login, team short name or some default string.
+            var studentTeamOrDefault = Objects.requireNonNullElse(participation.getParticipantIdentifier(), "student-submission" + repo.getParticipation().getId());
+
+            repoName += "-" + studentTeamOrDefault;
         }
-        zipRepoName = participation.addPracticePrefixIfTestRun(zipRepoName);
-        return zipFiles(repo.getLocalPath(), zipRepoName, repositoryDir, null);
+        repoName = participation.addPracticePrefixIfTestRun(repoName);
+
+        if (zipOutput) {
+            return zipFiles(repo.getLocalPath(), repoName, repositoryDir, null);
+        }
+        else {
+            Path targetDir = Path.of(repositoryDir, repoName);
+
+            FileUtils.copyDirectory(repo.getLocalPath().toFile(), targetDir.toFile());
+            return targetDir;
+        }
+
     }
 
     /**
@@ -1533,24 +1292,12 @@ public class GitService {
         return authenticate(git.push());
     }
 
-    private CloneCommand cloneCommand() {
-        return authenticate(Git.cloneRepository());
-    }
-
     private FetchCommand fetchCommand(Git git) {
         return authenticate(git.fetch());
     }
 
     private LsRemoteCommand lsRemoteCommand(Git git) {
         return authenticate(git.lsRemote());
-    }
-
-    private LsRemoteCommand lsRemoteCommand() {
-        return authenticate(Git.lsRemoteRepository());
-    }
-
-    public <C extends GitCommand<?>> C authenticate(TransportCommand<C, ?> command) {
-        return command.setTransportConfigCallback(sshCallback);
     }
 
     /**
