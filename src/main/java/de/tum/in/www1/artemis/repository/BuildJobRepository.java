@@ -31,6 +31,7 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSp
 
     Optional<BuildJob> findBuildJobByResult(Result result);
 
+    // TODO: rewrite this query, pageable does not work well with EntityGraph
     @EntityGraph(attributePaths = { "result", "result.participation", "result.participation.exercise", "result.submission" })
     Page<BuildJob> findAll(Pageable pageable);
 
@@ -63,6 +64,7 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSp
             """)
     Set<DockerImageBuild> findAllLastBuildDatesForDockerImages();
 
+    // TODO: rewrite this query, pageable does not work well with EntityGraph
     @EntityGraph(attributePaths = { "result", "result.participation", "result.participation.exercise", "result.submission" })
     Page<BuildJob> findAllByCourseId(long courseId, Pageable pageable);
 
