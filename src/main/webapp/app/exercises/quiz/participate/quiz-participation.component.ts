@@ -297,19 +297,25 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     setupAutoSave(): void {
         // Clear existing autosaves - only one may run at a time
         this.stopAutoSave();
-        this.autoSaveInterval = window.setInterval(() => {
-            if (this.waitingForQuizStart) {
-                // The quiz has not started. No need to autosave yet.
-                return;
-            } else if (this.isQuizOverOrSubmitted()) {
-                this.stopAutoSave();
-                return;
-            }
-            this.autoSaveTimer++;
-            if (this.autoSaveTimer >= AUTOSAVE_EXERCISE_INTERVAL) {
-                this.triggerSave();
-            }
-        }, AUTOSAVE_CHECK_INTERVAL);
+        setTimeout(
+            () => {
+                this.autoSaveInterval = window.setInterval(() => {
+                    if (this.waitingForQuizStart) {
+                        // The quiz has not started. No need to autosave yet.
+                        return;
+                    } else if (this.isQuizOverOrSubmitted()) {
+                        this.stopAutoSave();
+                        return;
+                    }
+                    this.autoSaveTimer++;
+                    if (this.autoSaveTimer >= AUTOSAVE_EXERCISE_INTERVAL) {
+                        this.triggerSave();
+                    }
+                }, AUTOSAVE_CHECK_INTERVAL);
+            },
+            // Randomize the start time to prevent all clients from saving at the same time
+            Math.random() * (30000 - 10000) + 10000,
+        );
     }
 
     isQuizOverOrSubmitted(): boolean {
