@@ -450,7 +450,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         const running = this.mode === 'live' && !!this.quizBatch && this.remainingTimeSeconds >= 0 && this.quizExercise?.quizMode !== QuizMode.SYNCHRONIZED;
         if (!running && this.previousRunning) {
             // Rely on the grace period to store any unsaved changes at the end of the quiz
-            if (this.autoSaveInterval && !this.submission.submitted) {
+            if (!this.submission.submitted) {
                 this.stopAutoSave();
                 this.triggerSave();
             }
