@@ -87,6 +87,7 @@ export class PostService extends PostingService<Post> {
      * @param {number} courseId
      * @return {Observable<string[]>}
      */
+    // TODO: unused, delete
     getAllPostTagsByCourseId(courseId: number): Observable<HttpResponse<string[]>> {
         return this.http.get<string[]>(`${this.resourceUrl}${courseId}/messages/tags`, { observe: 'response' });
     }
@@ -133,6 +134,7 @@ export class PostService extends PostingService<Post> {
      * @param {number} courseId
      * @return {Observable<HttpResponse<void>>}
      */
+    // TODO: unused, remove
     computeSimilarityScoresWithCoursePosts(tempPost: Post, courseId: number): Observable<EntityArrayResponseType> {
         const copy = this.convertPostingDateFromClient(tempPost);
         return this.http

@@ -191,7 +191,6 @@ public class LectureUnitProcessingService {
      * @return The prepared information of split units LectureUnitInformationDTO
      */
     public LectureUnitInformationDTO getSplitUnitData(byte[] fileBytes) {
-
         try {
             log.debug("Start preparing information of split units.");
             Outline unitsInformation = separateIntoUnits(fileBytes);
