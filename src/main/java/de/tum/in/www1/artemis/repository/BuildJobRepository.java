@@ -35,6 +35,7 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSp
     @EntityGraph(attributePaths = { "result", "result.participation", "result.participation.exercise", "result.submission" })
     Page<BuildJob> findAll(Pageable pageable);
 
+    // Cast to string is necessary. Otherwise, the query will fail on PostgreSQL.
     @Query("""
             SELECT b
             FROM BuildJob b
@@ -45,8 +46,8 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSp
                 LEFT JOIN FETCH r.submission
             WHERE (:buildStatus IS NULL OR b.buildStatus = :buildStatus)
                 AND (:buildAgentAddress IS NULL OR b.buildAgentAddress = :buildAgentAddress)
-                AND (:startDate IS NULL OR b.buildStartDate >= :startDate)
-                AND (:endDate IS NULL OR b.buildStartDate <= :endDate)
+                AND (CAST(:startDate as string) IS NULL OR b.buildStartDate >= :startDate)
+                AND (CAST(:endDate as string) IS NULL OR b.buildStartDate <= :endDate)
                 AND (:searchTerm IS NULL OR (b.repositoryName LIKE %:searchTerm% OR c.title LIKE %:searchTerm%))
                 AND (:courseId IS NULL OR b.courseId = :courseId)
             """)
