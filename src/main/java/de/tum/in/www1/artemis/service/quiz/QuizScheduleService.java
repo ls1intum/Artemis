@@ -190,6 +190,9 @@ public class QuizScheduleService {
         scheduler.schedule(this::scheduleRunningExercisesOnStartup, Instant.now().plusSeconds(QUIZ_EXERCISE_SCHEDULE_DELAY_SEC));
     }
 
+    /**
+     * Schedule all quiz exercises that will start in the future on application startup
+     */
     public void scheduleRunningExercisesOnStartup() {
         try {
             Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
