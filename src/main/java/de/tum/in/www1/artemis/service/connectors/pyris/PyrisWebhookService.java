@@ -8,10 +8,13 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.aop.logging.LoggingAspect;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
@@ -25,6 +28,8 @@ import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 @Service
 @Profile("iris")
 public class PyrisWebhookService {
+
+    private static final Logger log = LoggerFactory.getLogger(LoggingAspect.class);
 
     private final PyrisConnectorService pyrisConnectorService;
 
@@ -42,7 +47,14 @@ public class PyrisWebhookService {
     }
 
     private boolean lectureIngestionEnabled(Course course) {
-        return Boolean.TRUE.equals(irisSettingsService.getRawIrisSettingsFor(course).getIrisLectureIngestionSettings().isEnabled());
+        try {
+            Boolean enabled = irisSettingsService.getRawIrisSettingsFor(course).getIrisLectureIngestionSettings().isEnabled();
+            return Boolean.TRUE.equals(enabled);
+        }
+        catch (NullPointerException e) {
+            log.error("NullPointerException: " + e.getMessage());
+            return false;
+        }
     }
 
     private String attachmentToBase64(AttachmentUnit attachmentUnit) {
@@ -114,6 +126,12 @@ public class PyrisWebhookService {
         return null;
     }
 
+    /**
+     * executes executeLectureWebhook add or delete lectures from to the vector database on pyris
+     *
+     * @param toUpdateAttachmentUnits The attachmentUnit that are goin to be Updated / deleted
+     * @return jobToken if the job was created
+     */
     private String helpExecuteIngestionPipeline(List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentUnits) {
         String jobToken = pyrisJobService.addIngestionWebhookJob();
         PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);

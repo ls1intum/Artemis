@@ -215,6 +215,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
                 .isEqualTo(loadedSettings2);
         assertThat(loadedSettings1.getIrisHestiaSettings()).isNull();
         assertThat(loadedSettings1.getIrisCompetencyGenerationSettings()).isNull();
+        assertThat(loadedSettings1.getIrisLectureIngestionSettings()).isNull();
         assertThat(loadedSettings1).isNotNull().usingRecursiveComparison().ignoringFields("exercise")
                 .isEqualTo(irisSettingsRepository.findExerciseSettings(programmingExercise.getId()).orElseThrow());
     }
