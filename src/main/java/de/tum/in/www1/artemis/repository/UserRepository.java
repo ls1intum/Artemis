@@ -156,6 +156,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "guidedTourSettings" })
     Optional<User> findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(String login);
 
+    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "guidedTourSettings", "irisAccepted" })
+    Optional<User> findOneWithGroupsAndAuthoritiesAndGuidedTourSettingsAndIrisAcceptedTimestampByLogin(String login);
+
     @EntityGraph(type = LOAD, attributePaths = { "learningPaths" })
     Optional<User> findOneWithLearningPathsByLogin(String login);
 
@@ -658,6 +661,30 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         String currentUserLogin = getCurrentUserLogin();
         Optional<User> user = findOneByLogin(currentUserLogin);
         return unwrapOptionalUser(user, currentUserLogin);
+    }
+
+    /**
+     * Finds user id by login
+     *
+     * @param login the login of the user to search
+     * @return optional of the user id if it exists, empty otherwise
+     */
+    @Query("""
+            SELECT u.id
+            FROM User u
+            WHERE u.login = :login
+            """)
+    Optional<Long> findIdByLogin(@Param("login") String login);
+
+    /**
+     * Get the user id of the currently logged-in user
+     *
+     * @return the user id of the currently logged-in user
+     */
+    default long getUserIdElseThrow() {
+        String currentUserLogin = getCurrentUserLogin();
+        Optional<Long> userId = findIdByLogin(currentUserLogin);
+        return userId.orElseThrow(() -> new EntityNotFoundException("User: " + currentUserLogin));
     }
 
     /**
