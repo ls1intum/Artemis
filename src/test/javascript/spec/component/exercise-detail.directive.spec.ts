@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ExerciseDetailDirective } from 'app/detail-overview-list/exercise-detail.directive';
 import { Component, ViewChild } from '@angular/core';
-import { Detail, NotShownDetail, ShownDetail, TextDetail } from 'app/detail-overview-list/detail.model';
+import type { Detail, NotShownDetail, ShownDetail, TextDetail } from 'app/detail-overview-list/detail.model';
 import { TextDetailComponent } from 'app/detail-overview-list/components/text-detail.component';
 import { MockComponent } from 'ng-mocks';
 import { DetailType } from 'app/detail-overview-list/detail-overview-list.component';

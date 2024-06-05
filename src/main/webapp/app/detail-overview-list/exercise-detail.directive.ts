@@ -1,5 +1,5 @@
 import { ComponentRef, Directive, Input, OnDestroy, OnInit, ViewContainerRef } from '@angular/core';
-import { Detail, ShownDetail } from 'app/detail-overview-list/detail.model';
+import type { Detail, ShownDetail } from 'app/detail-overview-list/detail.model';
 import { DetailType } from 'app/detail-overview-list/detail-overview-list.component';
 import { TextDetailComponent } from 'app/detail-overview-list/components/text-detail.component';
 
