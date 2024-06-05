@@ -12,12 +12,12 @@ import { By } from '@angular/platform-browser';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import { Course } from 'app/entities/course.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { CompetencyCardStubComponent } from './competency-card-stub.component';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
+import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 class MockActivatedRoute {
     parent: any;
@@ -61,6 +61,12 @@ describe('CourseCompetencies', () => {
                 {
                     provide: ActivatedRoute,
                     useValue: mockActivatedRoute,
+                },
+                {
+                    provide: FeatureToggleService,
+                    useValue: {
+                        getFeatureToggleActive: () => of(true),
+                    },
                 },
             ],
             schemas: [],
@@ -130,7 +136,9 @@ describe('CourseCompetencies', () => {
         });
 
         const getAllPrerequisitesForCourseSpy = jest.spyOn(prerequisiteService, 'getAllPrerequisitesForCourse').mockReturnValue(of([{}]));
+        jest.spyOn(mockCourseStorageService, 'getCourse').mockReturnValue({ studentCourseAnalyticsDashboardEnabled: true } as any);
         const getAllForCourseSpy = jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(competenciesOfCourseResponse));
+        const getJoLAllForCourseSpy = jest.spyOn(competencyService, 'getJoLAllForCourse').mockReturnValue(of({} as any));
 
         courseCompetenciesComponent.isCollapsed = false;
         courseCompetenciesComponentFixture.detectChanges();
@@ -139,6 +147,7 @@ describe('CourseCompetencies', () => {
         expect(competencyCards).toHaveLength(3); // 1 prerequisite and 2 competencies
         expect(getAllPrerequisitesForCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
+        expect(getJoLAllForCourseSpy).toHaveBeenCalledOnce();
         expect(courseCompetenciesComponent.competencies).toHaveLength(2);
     });
 });

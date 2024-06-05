@@ -164,4 +164,5 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long>, J
 
     List<Competency> findByCourseIdOrderById(long courseId);
 
+    boolean existsByIdAndCourseId(long competencyId, long courseId);
 }

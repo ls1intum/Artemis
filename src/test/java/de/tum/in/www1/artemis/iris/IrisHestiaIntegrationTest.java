@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -47,11 +48,13 @@ class IrisHestiaIntegrationTest extends AbstractIrisIntegrationTest {
     void updateSolutionEntriesOnSaving() throws Exception {
         addCodeHints();
 
-        irisRequestMockProvider.mockRunResponse(dto -> {
-            assertThat(dto.settings().authenticationToken()).isNotNull();
-
-            pipelineDone.set(true);
-        });
+        /*
+         * irisRequestMockProvider.mockRunResponse(dto -> {
+         * assertThat(dto.settings().authenticationToken()).isNotNull();
+         * pipelineDone.set(true);
+         * });
+         */
+        fail("This test is not yet implemented. Implement it and remove the fail call.");
 
         var updatedCodeHint = request.postWithResponseBody("/api/programming-exercises/" + exercise.getId() + "/code-hints/" + codeHint.getId() + "/generate-description", null,
                 CodeHint.class, HttpStatus.OK);

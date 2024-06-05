@@ -47,6 +47,14 @@ public class Competency extends CourseCompetency {
     @JsonIgnoreProperties({ "competencies", "course" })
     private Set<LearningPath> learningPaths = new HashSet<>();
 
+    @ManyToOne
+    @JoinColumn(name = "linked_standardized_competency_id")
+    @JsonIgnoreProperties({ "competencies" })
+    private StandardizedCompetency linkedStandardizedCompetency;
+
+    @OneToMany(mappedBy = "competency", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<CompetencyJol> competencyJols = new HashSet<>();
+
     public Competency() {
     }
 
@@ -73,11 +81,6 @@ public class Competency extends CourseCompetency {
     public void addExercise(Exercise exercise) {
         this.exercises.add(exercise);
         exercise.getCompetencies().add(this);
-    }
-
-    public void removeExercise(Exercise exercise) {
-        this.exercises.remove(exercise);
-        exercise.getCompetencies().remove(this);
     }
 
     public Set<LectureUnit> getLectureUnits() {
