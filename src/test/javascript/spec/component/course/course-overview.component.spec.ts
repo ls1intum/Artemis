@@ -675,4 +675,20 @@ describe('CourseOverviewComponent', () => {
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('mat-sidenav').hidden).toBeFalse();
     });
+
+    it('should display/hide course title bar if exam is started/over', () => {
+        (examParticipationService as any).examIsStarted$ = of(true);
+        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
+        getCourseStub.mockReturnValue(course2);
+        fixture.detectChanges();
+        const courseTitleBar = fixture.debugElement.query(By.css('#course-title-bar-test'));
+        const displayStyle = courseTitleBar.nativeElement.style.display;
+        expect(displayStyle).toBe('none');
+
+        component.isExamStarted = false;
+        fixture.detectChanges();
+        const courseTitleBar2 = fixture.debugElement.query(By.css('#course-title-bar-test'));
+        const displayStyle2 = courseTitleBar2.nativeElement.style.display;
+        expect(displayStyle2).toBe('flex');
+    });
 });

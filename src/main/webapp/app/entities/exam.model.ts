@@ -4,14 +4,6 @@ import { Course } from 'app/entities/course.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { faCheck, faCircleExclamation, faHourglassHalf, faQuestion } from '@fortawesome/free-solid-svg-icons';
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
-
-export enum ExamStatus {
-    NOT_STARTED = 'notStarted',
-    ONGOING = 'ongoing',
-    FINISHED = 'finished',
-}
 
 export class Exam implements BaseEntity {
     public id?: number;
@@ -69,70 +61,4 @@ export class Exam implements BaseEntity {
         this.visible = false;
         this.started = false;
     }
-}
-
-// THIS PART WILL BE NEEDED IN THE FOLLOW UP PRs WHEN STATUS ICONS FOR EXAMS WILL BE IMPLEMENTED
-/**
- * Determine the status of an exam based on its start and end dates.
- * @param exam {Exam}
- * @returns {ExamStatus}
- */
-export function determineExamStatus(exam: Exam): ExamStatus {
-    const now = dayjs();
-    if (!exam.started) {
-        return ExamStatus.NOT_STARTED;
-    } else if (exam.endDate && now.isAfter(exam.endDate)) {
-        return ExamStatus.FINISHED;
-    } else if (exam.startDate && exam.endDate && now.isAfter(exam.startDate) && now.isBefore(exam.endDate)) {
-        return ExamStatus.ONGOING;
-    }
-    return ExamStatus.ONGOING; // Default case if dates are not properly set
-}
-
-// THIS PART WILL BE NEEDED IN THE FOLLOW UP PRs WHEN STATUS ICONS FOR EXAMS WILL BE IMPLEMENTED
-/**
- * Get an icon for the given exam status.
- * @param status {ExamStatus}
- * @returns {IconProp}
- */
-export function getExamStatusIcon(status?: ExamStatus): IconProp {
-    if (!status) {
-        return faQuestion as IconProp; // Default icon if no status is provided
-    }
-
-    const statusIcons = {
-        [ExamStatus.NOT_STARTED]: faHourglassHalf,
-        [ExamStatus.ONGOING]: faCircleExclamation,
-        [ExamStatus.FINISHED]: faCheck,
-    };
-
-    return statusIcons[status] as IconProp;
-}
-
-// THIS PART WILL BE NEEDED IN THE FOLLOW UP PRs WHEN STATUS ICONS FOR EXAMS WILL BE IMPLEMENTED
-/**
- * Get the appropriate icon for an exam based on its current status.
- * @param exam {Exam}
- * @returns {IconProp}
- */
-export function getIconForExam(exam: Exam): IconProp {
-    const status = determineExamStatus(exam);
-    return getExamStatusIcon(status);
-}
-
-// THIS PART WILL BE NEEDED IN THE FOLLOW UP PRs WHEN STATUS ICONS FOR EXAMS WILL BE IMPLEMENTED
-/**
- * Get the color for an icon based on the exam's current status.
- * @param exam {Exam}
- * @returns {string} The color corresponding to the exam status.
- */
-export function getColorForIcon(exam: Exam): string {
-    const status = determineExamStatus(exam);
-    const statusColors = {
-        [ExamStatus.NOT_STARTED]: 'var(--bs-body-color)',
-        [ExamStatus.ONGOING]: 'var(--red)',
-        [ExamStatus.FINISHED]: 'var(--green)',
-    };
-
-    return statusColors[status];
 }
