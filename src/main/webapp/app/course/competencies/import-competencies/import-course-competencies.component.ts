@@ -11,6 +11,8 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
+import { forkJoin } from 'rxjs';
 
 /**
  * An abstract component used to import course competencies. Its concrete implementations are
@@ -73,23 +75,26 @@ export abstract class ImportCourseCompetenciesComponent implements OnInit, Compo
     protected readonly activatedRoute: ActivatedRoute = inject(ActivatedRoute);
     protected readonly router: Router = inject(Router);
     protected readonly competencyService: CompetencyService = inject(CompetencyService);
+    protected readonly prerequisiteService: PrerequisiteService = inject(PrerequisiteService);
     protected readonly alertService: AlertService = inject(AlertService);
     private readonly translateService: TranslateService = inject(TranslateService);
     private readonly sortingService: SortService = inject(SortService);
 
     ngOnInit(): void {
-        this.activatedRoute.params.subscribe((params) => {
-            this.courseId = Number(params['courseId']);
-            this.performSearch();
-            //load competencies of this course to disable their import buttons
-            this.competencyService.getAllForCourse(this.courseId).subscribe({
-                next: (res) => {
-                    if (res.body) {
-                        this.disabledIds = res.body.map((competency) => competency.id).filter((id): id is number => !!id);
-                    }
-                },
-                error: (error: HttpErrorResponse) => onError(this.alertService, error),
-            });
+        this.courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
+        //load competencies and prerequisites of this course to disable their import buttons
+        const competencySubscription = this.competencyService.getAllForCourse(this.courseId);
+        const prerequisiteSubscription = this.prerequisiteService.getAllPrerequisitesForCourse(this.courseId);
+        forkJoin([competencySubscription, prerequisiteSubscription]).subscribe({
+            next: ([competenciesResponse, prerequisites]) => {
+                const competencies = competenciesResponse.body ?? [];
+                const competencyIds = competencies.map((competency) => competency.id).filter((id): id is number => !!id);
+                // do not allow import of competencies that are already imported as prerequisites
+                const referencedIds = prerequisites.map((prerequisite) => prerequisite.linkedCourseCompetency?.id).filter((id): id is number => !!id);
+                this.disabledIds = [...competencyIds, ...referencedIds];
+                this.performSearch();
+            },
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });
     }
 

@@ -19,7 +19,7 @@ export class PrerequisiteService {
                 if (!resp.body) {
                     return [];
                 }
-                return resp.body.map((prerequisiteDTO) => this.convertResponseDTOToPrerequisite(prerequisiteDTO));
+                return resp.body.map((prerequisiteDTO) => PrerequisiteService.convertResponseDTOToPrerequisite(prerequisiteDTO));
             }),
         );
         //TODO: send title to entityTitleService when we allow prerequisite detail view.
@@ -51,7 +51,7 @@ export class PrerequisiteService {
                     if (!resp.body) {
                         return [];
                     }
-                    return resp.body.map((prerequisiteDTO) => this.convertResponseDTOToPrerequisite(prerequisiteDTO));
+                    return resp.body.map((prerequisiteDTO) => PrerequisiteService.convertResponseDTOToPrerequisite(prerequisiteDTO));
                 }),
             );
     }
@@ -79,7 +79,7 @@ export class PrerequisiteService {
      * @param prerequisiteDTO PrerequisiteResponseDTO
      * @return the Prerequisite
      */
-    convertResponseDTOToPrerequisite(prerequisiteDTO: PrerequisiteResponseDTO): Prerequisite {
+    private static convertResponseDTOToPrerequisite(prerequisiteDTO: PrerequisiteResponseDTO): Prerequisite {
         let linkedCourseCompetency: CourseCompetency | undefined = undefined;
         const softDueDate = convertDateFromServer(prerequisiteDTO.softDueDate);
 

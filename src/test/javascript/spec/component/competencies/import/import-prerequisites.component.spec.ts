@@ -1,14 +1,12 @@
 import { ArtemisTestModule } from '../../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { ImportPrerequisitesComponent } from 'app/course/competencies/import-competencies/import-prerequisites.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { FormsModule } from 'app/forms/forms.module';
-import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { ActivatedRoute, Router } from '@angular/router';
-import { CompetencyService } from 'app/course/competencies/competency.service';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { ImportCompetenciesTableComponent } from 'app/course/competencies/import-competencies/import-competencies-table.component';
 import { CompetencySearchComponent } from 'app/course/competencies/import-competencies/competency-search.component';
@@ -32,10 +30,11 @@ describe('ImportPrerequisitesComponent', () => {
             providers: [
                 {
                     provide: ActivatedRoute,
-                    useValue: new MockActivatedRoute({ courseId: 1 }),
+                    useValue: {
+                        snapshot: { paramMap: convertToParamMap({ courseId: 1 }) },
+                    } as ActivatedRoute,
                 },
                 { provide: Router, useClass: MockRouter },
-                MockProvider(CompetencyService),
             ],
         })
             .compileComponents()

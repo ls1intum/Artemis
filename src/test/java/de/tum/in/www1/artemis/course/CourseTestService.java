@@ -528,7 +528,7 @@ public class CourseTestService {
         course3 = courseRepo.save(course3);
         courses.add(course3);
         addConversationsToCourse(course3);
-        examUtilService.addExamWithExerciseGroup(courses.get(0), true);
+        examUtilService.addExamWithExerciseGroup(courses.getFirst(), true);
         // mock certain requests
         for (Course course : courses) {
             if (course.getStudentGroupName().startsWith(ARTEMIS_GROUP_DEFAULT_PREFIX)) {
@@ -837,7 +837,7 @@ public class CourseTestService {
     // Test
     public void testGetCoursesWithQuizExercises() throws Exception {
         List<Course> coursesCreated = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, false, 0);
-        Course activeCourse = coursesCreated.get(0);
+        Course activeCourse = coursesCreated.getFirst();
         Course inactiveCourse = coursesCreated.get(1);
 
         List<Course> courses = request.getList("/api/courses/courses-with-quiz", HttpStatus.OK, Course.class);
@@ -857,7 +857,7 @@ public class CourseTestService {
     // Test
     public void testGetCourseForDashboard(boolean userRefresh) throws Exception {
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, numberOfTutors);
-        CourseForDashboardDTO receivedCourseForDashboard = request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK,
+        CourseForDashboardDTO receivedCourseForDashboard = request.get("/api/courses/" + courses.getFirst().getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK,
                 CourseForDashboardDTO.class);
         Course receivedCourse = receivedCourseForDashboard.course();
 
@@ -873,7 +873,7 @@ public class CourseTestService {
         assertThat(receivedCourse.getTutorialGroupsConfiguration()).isNull();
 
         // Iterate over all exercises of the remaining course
-        for (Exercise exercise : courses.get(0).getExercises()) {
+        for (Exercise exercise : courses.getFirst().getExercises()) {
             // Test that the exercise does not have more than one participation.
             assertThat(exercise.getStudentParticipations()).as("At most one participation for exercise").hasSizeLessThanOrEqualTo(1);
             if (!exercise.getStudentParticipations().isEmpty()) {
@@ -900,18 +900,17 @@ public class CourseTestService {
 
     private Course createCourseWithEnrollmentEnabled(boolean enrollmentEnabled) throws Exception {
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, numberOfTutors);
-        Course course = courses.get(0);
+        Course course = courses.getFirst();
         course.setEnrollmentEnabled(enrollmentEnabled);
         courseRepo.save(course);
         return course;
     }
 
-    private User removeAllGroupsFromStudent1() {
+    private void removeAllGroupsFromStudent1() {
         User student = userUtilService.getUserByLogin(userPrefix + "student1");
         // remove student from all courses so that they are not already enrolled
         student.setGroups(new HashSet<>());
         userRepo.save(student);
-        return student;
     }
 
     // Test
@@ -1081,7 +1080,7 @@ public class CourseTestService {
         var coursesForDashboard = request.get("/api/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
         List<Course> courses = coursesForDashboard.courses().stream().map(CourseForDashboardDTO::course).toList();
 
-        Course activeCourse = coursesCreated.get(0);
+        Course activeCourse = coursesCreated.getFirst();
         Course inactiveCourse = coursesCreated.get(1);
 
         // Test that the prepared inactive course was filtered out
@@ -1187,7 +1186,7 @@ public class CourseTestService {
     public void testGetAllCoursesWithUserStats() throws Exception {
         adjustUserGroupsToCustomGroups();
         List<Course> testCourses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, false, 0);
-        Course course = testCourses.get(0);
+        Course course = testCourses.getFirst();
         course.setStudentGroupName(userPrefix + "student");
         course.setTeachingAssistantGroupName(userPrefix + "tutor");
         course.setInstructorGroupName(userPrefix + "instructor");
@@ -1277,7 +1276,7 @@ public class CourseTestService {
             }
 
             StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
-            long numberOfInTimeSubmissions = course.getId().equals(testCourses.get(0).getId()) ? 5 : 0; // course 1 has 5 submissions, course 2 has 0 submissions
+            long numberOfInTimeSubmissions = course.getId().equals(testCourses.getFirst().getId()) ? 5 : 0; // course 1 has 5 submissions, course 2 has 0 submissions
             assertThat(stats.getNumberOfSubmissions().inTime()).as("Number of in-time submissions is correct").isEqualTo(numberOfInTimeSubmissions);
             assertThat(stats.getNumberOfSubmissions().late()).as("Number of latte submissions is correct").isZero();
             assertThat(stats.getTotalNumberOfAssessments().inTime()).as("Number of in-time assessments is correct").isZero();
@@ -1290,7 +1289,7 @@ public class CourseTestService {
 
     // Tests that average rating and number of ratings are computed correctly in '/for-assessment-dashboard'
     public void testGetCourseForAssessmentDashboard_averageRatingComputedCorrectly() throws Exception {
-        var testCourse = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, true, 5).get(0);
+        var testCourse = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, true, 5).getFirst();
         var exercise = exerciseUtilService.getFirstExerciseWithType(testCourse, TextExercise.class);
 
         int[] ratings = { 3, 4, 5 };
@@ -1325,10 +1324,8 @@ public class CourseTestService {
     // Test
     public void testGetAllGroupsForAllCourses() throws Exception {
         Set<String> allGroups = new HashSet<>(request.getList("/api/admin/courses/groups", HttpStatus.OK, String.class));
-        courseRepo.findAll().stream().findAny().ifPresent(course -> {
-            assertThat(allGroups)
-                    .containsAll(List.of(course.getStudentGroupName(), course.getTeachingAssistantGroupName(), course.getEditorGroupName(), course.getInstructorGroupName()));
-        });
+        courseRepo.findAll().stream().findAny().ifPresent(course -> assertThat(allGroups)
+                .containsAll(List.of(course.getStudentGroupName(), course.getTeachingAssistantGroupName(), course.getEditorGroupName(), course.getInstructorGroupName())));
     }
 
     // Test
@@ -1340,15 +1337,15 @@ public class CourseTestService {
 
         StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
 
-        var currentTutorLeaderboard = stats.getTutorLeaderboardEntries().get(0);
-        assertThat(currentTutorLeaderboard.getNumberOfTutorComplaints()).isZero();
-        assertThat(currentTutorLeaderboard.getNumberOfAcceptedComplaints()).isZero();
-        assertThat(currentTutorLeaderboard.getNumberOfComplaintResponses()).isZero();
-        assertThat(currentTutorLeaderboard.getNumberOfAnsweredMoreFeedbackRequests()).isZero();
-        assertThat(currentTutorLeaderboard.getNumberOfNotAnsweredMoreFeedbackRequests()).isZero();
-        assertThat(currentTutorLeaderboard.getNumberOfTutorMoreFeedbackRequests()).isZero();
-        assertThat(currentTutorLeaderboard.getNumberOfAssessments()).isZero();
-        assertThat(currentTutorLeaderboard.getPoints()).isZero();
+        var currentTutorLeaderboard = stats.getTutorLeaderboardEntries().getFirst();
+        assertThat(currentTutorLeaderboard.numberOfTutorComplaints()).isZero();
+        assertThat(currentTutorLeaderboard.numberOfAcceptedComplaints()).isZero();
+        assertThat(currentTutorLeaderboard.numberOfComplaintResponses()).isZero();
+        assertThat(currentTutorLeaderboard.numberOfAnsweredMoreFeedbackRequests()).isZero();
+        assertThat(currentTutorLeaderboard.numberOfNotAnsweredMoreFeedbackRequests()).isZero();
+        assertThat(currentTutorLeaderboard.numberOfTutorMoreFeedbackRequests()).isZero();
+        assertThat(currentTutorLeaderboard.numberOfAssessments()).isZero();
+        assertThat(currentTutorLeaderboard.points()).isZero();
     }
 
     // Test
@@ -1358,13 +1355,13 @@ public class CourseTestService {
         adjustUserGroupsToCustomGroups(suffix);
         Course testCourse = courseUtilService.addCourseWithExercisesAndSubmissions(userPrefix, suffix, 6, 4, 2, 0, true, 0, validModel);
         StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
-        var tutorLeaderboardEntries = stats.getTutorLeaderboardEntries().stream().sorted(Comparator.comparing(TutorLeaderboardDTO::getUserId)).toList();
+        var tutorLeaderboardEntries = stats.getTutorLeaderboardEntries().stream().sorted(Comparator.comparing(TutorLeaderboardDTO::userId)).toList();
 
         // the first two tutors did assess 2 submissions in 2 exercises. The second two only 2 in one exercise.
-        assertThat(tutorLeaderboardEntries.get(0).getNumberOfAssessments()).isEqualTo(4);
-        assertThat(tutorLeaderboardEntries.get(1).getNumberOfAssessments()).isEqualTo(4);
-        assertThat(tutorLeaderboardEntries.get(2).getNumberOfAssessments()).isEqualTo(2);
-        assertThat(tutorLeaderboardEntries.get(3).getNumberOfAssessments()).isEqualTo(2);
+        assertThat(tutorLeaderboardEntries.getFirst().numberOfAssessments()).isEqualTo(4);
+        assertThat(tutorLeaderboardEntries.get(1).numberOfAssessments()).isEqualTo(4);
+        assertThat(tutorLeaderboardEntries.get(2).numberOfAssessments()).isEqualTo(2);
+        assertThat(tutorLeaderboardEntries.get(3).numberOfAssessments()).isEqualTo(2);
     }
 
     // Test
@@ -1374,23 +1371,23 @@ public class CourseTestService {
         adjustUserGroupsToCustomGroups(suffix);
         Course testCourse = courseUtilService.addCourseWithExercisesAndSubmissions(userPrefix, suffix, 6, 4, 4, 2, true, 0, validModel);
         StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
-        var tutorLeaderboardEntries = stats.getTutorLeaderboardEntries().stream().sorted(Comparator.comparing(TutorLeaderboardDTO::getUserId)).toList();
+        var tutorLeaderboardEntries = stats.getTutorLeaderboardEntries().stream().sorted(Comparator.comparing(TutorLeaderboardDTO::userId)).toList();
 
         // the first two tutors did assess 2 submissions in 2 exercises. The second two only 2 in one exercise.
-        assertThat(tutorLeaderboardEntries.get(0).getNumberOfAssessments()).isEqualTo(8);
-        assertThat(tutorLeaderboardEntries.get(1).getNumberOfAssessments()).isEqualTo(8);
-        assertThat(tutorLeaderboardEntries.get(2).getNumberOfAssessments()).isEqualTo(4);
-        assertThat(tutorLeaderboardEntries.get(3).getNumberOfAssessments()).isEqualTo(4);
+        assertThat(tutorLeaderboardEntries.getFirst().numberOfAssessments()).isEqualTo(8);
+        assertThat(tutorLeaderboardEntries.get(1).numberOfAssessments()).isEqualTo(8);
+        assertThat(tutorLeaderboardEntries.get(2).numberOfAssessments()).isEqualTo(4);
+        assertThat(tutorLeaderboardEntries.get(3).numberOfAssessments()).isEqualTo(4);
 
-        assertThat(tutorLeaderboardEntries.get(0).getNumberOfTutorComplaints()).isEqualTo(4);
-        assertThat(tutorLeaderboardEntries.get(1).getNumberOfTutorComplaints()).isEqualTo(4);
-        assertThat(tutorLeaderboardEntries.get(2).getNumberOfTutorComplaints()).isEqualTo(2);
-        assertThat(tutorLeaderboardEntries.get(3).getNumberOfTutorComplaints()).isEqualTo(2);
+        assertThat(tutorLeaderboardEntries.getFirst().numberOfTutorComplaints()).isEqualTo(4);
+        assertThat(tutorLeaderboardEntries.get(1).numberOfTutorComplaints()).isEqualTo(4);
+        assertThat(tutorLeaderboardEntries.get(2).numberOfTutorComplaints()).isEqualTo(2);
+        assertThat(tutorLeaderboardEntries.get(3).numberOfTutorComplaints()).isEqualTo(2);
 
-        assertThat(tutorLeaderboardEntries.get(0).getNumberOfNotAnsweredMoreFeedbackRequests()).isZero();
-        assertThat(tutorLeaderboardEntries.get(1).getNumberOfNotAnsweredMoreFeedbackRequests()).isZero();
-        assertThat(tutorLeaderboardEntries.get(2).getNumberOfNotAnsweredMoreFeedbackRequests()).isZero();
-        assertThat(tutorLeaderboardEntries.get(3).getNumberOfNotAnsweredMoreFeedbackRequests()).isZero();
+        assertThat(tutorLeaderboardEntries.getFirst().numberOfNotAnsweredMoreFeedbackRequests()).isZero();
+        assertThat(tutorLeaderboardEntries.get(1).numberOfNotAnsweredMoreFeedbackRequests()).isZero();
+        assertThat(tutorLeaderboardEntries.get(2).numberOfNotAnsweredMoreFeedbackRequests()).isZero();
+        assertThat(tutorLeaderboardEntries.get(3).numberOfNotAnsweredMoreFeedbackRequests()).isZero();
     }
 
     // Test
@@ -1400,23 +1397,23 @@ public class CourseTestService {
         adjustUserGroupsToCustomGroups(suffix);
         Course testCourse = courseUtilService.addCourseWithExercisesAndSubmissions(userPrefix, suffix, 6, 4, 4, 2, false, 0, validModel);
         StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
-        var tutorLeaderboardEntries = stats.getTutorLeaderboardEntries().stream().sorted(Comparator.comparing(TutorLeaderboardDTO::getUserId)).toList();
+        var tutorLeaderboardEntries = stats.getTutorLeaderboardEntries().stream().sorted(Comparator.comparing(TutorLeaderboardDTO::userId)).toList();
 
         // the first two tutors did assess 2 submissions in 2 exercises. The second two only 2 in one exercise.
-        assertThat(tutorLeaderboardEntries.get(0).getNumberOfAssessments()).isEqualTo(8);
-        assertThat(tutorLeaderboardEntries.get(1).getNumberOfAssessments()).isEqualTo(8);
-        assertThat(tutorLeaderboardEntries.get(2).getNumberOfAssessments()).isEqualTo(4);
-        assertThat(tutorLeaderboardEntries.get(3).getNumberOfAssessments()).isEqualTo(4);
+        assertThat(tutorLeaderboardEntries.getFirst().numberOfAssessments()).isEqualTo(8);
+        assertThat(tutorLeaderboardEntries.get(1).numberOfAssessments()).isEqualTo(8);
+        assertThat(tutorLeaderboardEntries.get(2).numberOfAssessments()).isEqualTo(4);
+        assertThat(tutorLeaderboardEntries.get(3).numberOfAssessments()).isEqualTo(4);
 
-        assertThat(tutorLeaderboardEntries.get(0).getNumberOfTutorComplaints()).isZero();
-        assertThat(tutorLeaderboardEntries.get(1).getNumberOfTutorComplaints()).isZero();
-        assertThat(tutorLeaderboardEntries.get(2).getNumberOfTutorComplaints()).isZero();
-        assertThat(tutorLeaderboardEntries.get(3).getNumberOfTutorComplaints()).isZero();
+        assertThat(tutorLeaderboardEntries.getFirst().numberOfTutorComplaints()).isZero();
+        assertThat(tutorLeaderboardEntries.get(1).numberOfTutorComplaints()).isZero();
+        assertThat(tutorLeaderboardEntries.get(2).numberOfTutorComplaints()).isZero();
+        assertThat(tutorLeaderboardEntries.get(3).numberOfTutorComplaints()).isZero();
 
-        assertThat(tutorLeaderboardEntries.get(0).getNumberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(4);
-        assertThat(tutorLeaderboardEntries.get(1).getNumberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(4);
-        assertThat(tutorLeaderboardEntries.get(2).getNumberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(2);
-        assertThat(tutorLeaderboardEntries.get(3).getNumberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(2);
+        assertThat(tutorLeaderboardEntries.getFirst().numberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(4);
+        assertThat(tutorLeaderboardEntries.get(1).numberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(4);
+        assertThat(tutorLeaderboardEntries.get(2).numberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(2);
+        assertThat(tutorLeaderboardEntries.get(3).numberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(2);
     }
 
     // Test
@@ -1429,32 +1426,32 @@ public class CourseTestService {
         Course testCourse = courseUtilService.addCourseWithExercisesAndSubmissions(userPrefix, suffix, 6, 4, 4, 2, true, 1, validModel);
 
         StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
-        var tutorLeaderboardEntries = stats.getTutorLeaderboardEntries().stream().sorted(Comparator.comparing(TutorLeaderboardDTO::getUserId)).toList();
+        var tutorLeaderboardEntries = stats.getTutorLeaderboardEntries().stream().sorted(Comparator.comparing(TutorLeaderboardDTO::userId)).toList();
 
         // the first two tutors did assess 2 submissions in 2 exercises. The second two only 2 in one exercise.
-        assertThat(tutorLeaderboardEntries.get(0).getNumberOfAssessments()).isEqualTo(8);
-        assertThat(tutorLeaderboardEntries.get(1).getNumberOfAssessments()).isEqualTo(8);
-        assertThat(tutorLeaderboardEntries.get(2).getNumberOfAssessments()).isEqualTo(4);
-        assertThat(tutorLeaderboardEntries.get(3).getNumberOfAssessments()).isEqualTo(4);
-        assertThat(tutorLeaderboardEntries.get(4).getNumberOfAssessments()).isZero();
+        assertThat(tutorLeaderboardEntries.getFirst().numberOfAssessments()).isEqualTo(8);
+        assertThat(tutorLeaderboardEntries.get(1).numberOfAssessments()).isEqualTo(8);
+        assertThat(tutorLeaderboardEntries.get(2).numberOfAssessments()).isEqualTo(4);
+        assertThat(tutorLeaderboardEntries.get(3).numberOfAssessments()).isEqualTo(4);
+        assertThat(tutorLeaderboardEntries.get(4).numberOfAssessments()).isZero();
 
-        assertThat(tutorLeaderboardEntries.get(0).getNumberOfTutorComplaints()).isEqualTo(4);
-        assertThat(tutorLeaderboardEntries.get(1).getNumberOfTutorComplaints()).isEqualTo(4);
-        assertThat(tutorLeaderboardEntries.get(2).getNumberOfTutorComplaints()).isEqualTo(2);
-        assertThat(tutorLeaderboardEntries.get(3).getNumberOfTutorComplaints()).isEqualTo(2);
-        assertThat(tutorLeaderboardEntries.get(4).getNumberOfTutorComplaints()).isZero();
+        assertThat(tutorLeaderboardEntries.getFirst().numberOfTutorComplaints()).isEqualTo(4);
+        assertThat(tutorLeaderboardEntries.get(1).numberOfTutorComplaints()).isEqualTo(4);
+        assertThat(tutorLeaderboardEntries.get(2).numberOfTutorComplaints()).isEqualTo(2);
+        assertThat(tutorLeaderboardEntries.get(3).numberOfTutorComplaints()).isEqualTo(2);
+        assertThat(tutorLeaderboardEntries.get(4).numberOfTutorComplaints()).isZero();
 
-        assertThat(tutorLeaderboardEntries.get(0).getNumberOfAcceptedComplaints()).isEqualTo(2);
-        assertThat(tutorLeaderboardEntries.get(1).getNumberOfAcceptedComplaints()).isEqualTo(2);
-        assertThat(tutorLeaderboardEntries.get(2).getNumberOfAcceptedComplaints()).isEqualTo(1);
-        assertThat(tutorLeaderboardEntries.get(3).getNumberOfAcceptedComplaints()).isEqualTo(1);
-        assertThat(tutorLeaderboardEntries.get(4).getNumberOfAcceptedComplaints()).isZero();
+        assertThat(tutorLeaderboardEntries.getFirst().numberOfAcceptedComplaints()).isEqualTo(2);
+        assertThat(tutorLeaderboardEntries.get(1).numberOfAcceptedComplaints()).isEqualTo(2);
+        assertThat(tutorLeaderboardEntries.get(2).numberOfAcceptedComplaints()).isEqualTo(1);
+        assertThat(tutorLeaderboardEntries.get(3).numberOfAcceptedComplaints()).isEqualTo(1);
+        assertThat(tutorLeaderboardEntries.get(4).numberOfAcceptedComplaints()).isZero();
 
-        assertThat(tutorLeaderboardEntries.get(0).getNumberOfComplaintResponses()).isZero();
-        assertThat(tutorLeaderboardEntries.get(1).getNumberOfComplaintResponses()).isZero();
-        assertThat(tutorLeaderboardEntries.get(2).getNumberOfComplaintResponses()).isZero();
-        assertThat(tutorLeaderboardEntries.get(3).getNumberOfComplaintResponses()).isZero();
-        assertThat(tutorLeaderboardEntries.get(4).getNumberOfComplaintResponses()).isEqualTo(6);
+        assertThat(tutorLeaderboardEntries.getFirst().numberOfComplaintResponses()).isZero();
+        assertThat(tutorLeaderboardEntries.get(1).numberOfComplaintResponses()).isZero();
+        assertThat(tutorLeaderboardEntries.get(2).numberOfComplaintResponses()).isZero();
+        assertThat(tutorLeaderboardEntries.get(3).numberOfComplaintResponses()).isZero();
+        assertThat(tutorLeaderboardEntries.get(4).numberOfComplaintResponses()).isEqualTo(6);
     }
 
     // Test
@@ -1467,32 +1464,32 @@ public class CourseTestService {
         Course testCourse = courseUtilService.addCourseWithExercisesAndSubmissions(userPrefix, suffix, 6, 4, 4, 2, false, 1, validModel);
 
         StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
-        var tutorLeaderboardEntries = stats.getTutorLeaderboardEntries().stream().sorted(Comparator.comparing(TutorLeaderboardDTO::getUserId)).toList();
+        var tutorLeaderboardEntries = stats.getTutorLeaderboardEntries().stream().sorted(Comparator.comparing(TutorLeaderboardDTO::userId)).toList();
 
         // the first two tutors did assess 2 submissions in 2 exercises. The second two only 2 in one exercise.
-        assertThat(tutorLeaderboardEntries.get(0).getNumberOfAssessments()).isEqualTo(8);
-        assertThat(tutorLeaderboardEntries.get(1).getNumberOfAssessments()).isEqualTo(8);
-        assertThat(tutorLeaderboardEntries.get(2).getNumberOfAssessments()).isEqualTo(4);
-        assertThat(tutorLeaderboardEntries.get(3).getNumberOfAssessments()).isEqualTo(4);
-        assertThat(tutorLeaderboardEntries.get(4).getNumberOfAssessments()).isZero();
+        assertThat(tutorLeaderboardEntries.getFirst().numberOfAssessments()).isEqualTo(8);
+        assertThat(tutorLeaderboardEntries.get(1).numberOfAssessments()).isEqualTo(8);
+        assertThat(tutorLeaderboardEntries.get(2).numberOfAssessments()).isEqualTo(4);
+        assertThat(tutorLeaderboardEntries.get(3).numberOfAssessments()).isEqualTo(4);
+        assertThat(tutorLeaderboardEntries.get(4).numberOfAssessments()).isZero();
 
-        assertThat(tutorLeaderboardEntries.get(0).getNumberOfTutorMoreFeedbackRequests()).isEqualTo(4);
-        assertThat(tutorLeaderboardEntries.get(1).getNumberOfTutorMoreFeedbackRequests()).isEqualTo(4);
-        assertThat(tutorLeaderboardEntries.get(2).getNumberOfTutorMoreFeedbackRequests()).isEqualTo(2);
-        assertThat(tutorLeaderboardEntries.get(3).getNumberOfTutorMoreFeedbackRequests()).isEqualTo(2);
-        assertThat(tutorLeaderboardEntries.get(4).getNumberOfTutorMoreFeedbackRequests()).isZero();
+        assertThat(tutorLeaderboardEntries.getFirst().numberOfTutorMoreFeedbackRequests()).isEqualTo(4);
+        assertThat(tutorLeaderboardEntries.get(1).numberOfTutorMoreFeedbackRequests()).isEqualTo(4);
+        assertThat(tutorLeaderboardEntries.get(2).numberOfTutorMoreFeedbackRequests()).isEqualTo(2);
+        assertThat(tutorLeaderboardEntries.get(3).numberOfTutorMoreFeedbackRequests()).isEqualTo(2);
+        assertThat(tutorLeaderboardEntries.get(4).numberOfTutorMoreFeedbackRequests()).isZero();
 
-        assertThat(tutorLeaderboardEntries.get(0).getNumberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(2);
-        assertThat(tutorLeaderboardEntries.get(1).getNumberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(2);
-        assertThat(tutorLeaderboardEntries.get(2).getNumberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(1);
-        assertThat(tutorLeaderboardEntries.get(3).getNumberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(1);
-        assertThat(tutorLeaderboardEntries.get(4).getNumberOfNotAnsweredMoreFeedbackRequests()).isZero();
+        assertThat(tutorLeaderboardEntries.getFirst().numberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(2);
+        assertThat(tutorLeaderboardEntries.get(1).numberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(2);
+        assertThat(tutorLeaderboardEntries.get(2).numberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(1);
+        assertThat(tutorLeaderboardEntries.get(3).numberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(1);
+        assertThat(tutorLeaderboardEntries.get(4).numberOfNotAnsweredMoreFeedbackRequests()).isZero();
 
-        assertThat(tutorLeaderboardEntries.get(0).getNumberOfAnsweredMoreFeedbackRequests()).isEqualTo(2);
-        assertThat(tutorLeaderboardEntries.get(1).getNumberOfAnsweredMoreFeedbackRequests()).isEqualTo(2);
-        assertThat(tutorLeaderboardEntries.get(2).getNumberOfAnsweredMoreFeedbackRequests()).isEqualTo(1);
-        assertThat(tutorLeaderboardEntries.get(3).getNumberOfAnsweredMoreFeedbackRequests()).isEqualTo(1);
-        assertThat(tutorLeaderboardEntries.get(4).getNumberOfAnsweredMoreFeedbackRequests()).isZero();
+        assertThat(tutorLeaderboardEntries.getFirst().numberOfAnsweredMoreFeedbackRequests()).isEqualTo(2);
+        assertThat(tutorLeaderboardEntries.get(1).numberOfAnsweredMoreFeedbackRequests()).isEqualTo(2);
+        assertThat(tutorLeaderboardEntries.get(2).numberOfAnsweredMoreFeedbackRequests()).isEqualTo(1);
+        assertThat(tutorLeaderboardEntries.get(3).numberOfAnsweredMoreFeedbackRequests()).isEqualTo(1);
+        assertThat(tutorLeaderboardEntries.get(4).numberOfAnsweredMoreFeedbackRequests()).isZero();
     }
 
     // Test
@@ -1511,33 +1508,33 @@ public class CourseTestService {
                 validModel);
 
         StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
-        var tutorLeaderboardEntries = stats.getTutorLeaderboardEntries().stream().sorted(Comparator.comparing(TutorLeaderboardDTO::getUserId)).toList();
+        var tutorLeaderboardEntries = stats.getTutorLeaderboardEntries().stream().sorted(Comparator.comparing(TutorLeaderboardDTO::userId)).toList();
 
         // the first two tutors did assess 5 submissions of 3 exercises. The rest two only 5 of two exercises.
-        assertThat(tutorLeaderboardEntries.get(0).getNumberOfAssessments()).isEqualTo(3 * submissions);
-        assertThat(tutorLeaderboardEntries.get(1).getNumberOfAssessments()).isEqualTo(2 * submissions);
-        assertThat(tutorLeaderboardEntries.get(2).getNumberOfAssessments()).isEqualTo(2 * submissions);
-        assertThat(tutorLeaderboardEntries.get(3).getNumberOfAssessments()).isEqualTo(2 * submissions);
-        assertThat(tutorLeaderboardEntries.get(4).getNumberOfAssessments()).isZero();
+        assertThat(tutorLeaderboardEntries.getFirst().numberOfAssessments()).isEqualTo(3 * submissions);
+        assertThat(tutorLeaderboardEntries.get(1).numberOfAssessments()).isEqualTo(2 * submissions);
+        assertThat(tutorLeaderboardEntries.get(2).numberOfAssessments()).isEqualTo(2 * submissions);
+        assertThat(tutorLeaderboardEntries.get(3).numberOfAssessments()).isEqualTo(2 * submissions);
+        assertThat(tutorLeaderboardEntries.get(4).numberOfAssessments()).isZero();
 
-        assertThat(tutorLeaderboardEntries.get(0).getNumberOfTutorComplaints()).isEqualTo(3 * complaints);
-        assertThat(tutorLeaderboardEntries.get(1).getNumberOfTutorComplaints()).isEqualTo(2 * complaints);
-        assertThat(tutorLeaderboardEntries.get(2).getNumberOfTutorComplaints()).isEqualTo(2 * complaints);
-        assertThat(tutorLeaderboardEntries.get(3).getNumberOfTutorComplaints()).isEqualTo(2 * complaints);
-        assertThat(tutorLeaderboardEntries.get(4).getNumberOfTutorComplaints()).isZero();
+        assertThat(tutorLeaderboardEntries.getFirst().numberOfTutorComplaints()).isEqualTo(3 * complaints);
+        assertThat(tutorLeaderboardEntries.get(1).numberOfTutorComplaints()).isEqualTo(2 * complaints);
+        assertThat(tutorLeaderboardEntries.get(2).numberOfTutorComplaints()).isEqualTo(2 * complaints);
+        assertThat(tutorLeaderboardEntries.get(3).numberOfTutorComplaints()).isEqualTo(2 * complaints);
+        assertThat(tutorLeaderboardEntries.get(4).numberOfTutorComplaints()).isZero();
 
-        assertThat(tutorLeaderboardEntries.get(0).getNumberOfAcceptedComplaints()).isEqualTo(3 * complaints);
-        assertThat(tutorLeaderboardEntries.get(1).getNumberOfAcceptedComplaints()).isEqualTo(2 * complaints);
-        assertThat(tutorLeaderboardEntries.get(2).getNumberOfAcceptedComplaints()).isEqualTo(2 * complaints);
-        assertThat(tutorLeaderboardEntries.get(3).getNumberOfAcceptedComplaints()).isEqualTo(2 * complaints);
-        assertThat(tutorLeaderboardEntries.get(4).getNumberOfAcceptedComplaints()).isZero();
+        assertThat(tutorLeaderboardEntries.getFirst().numberOfAcceptedComplaints()).isEqualTo(3 * complaints);
+        assertThat(tutorLeaderboardEntries.get(1).numberOfAcceptedComplaints()).isEqualTo(2 * complaints);
+        assertThat(tutorLeaderboardEntries.get(2).numberOfAcceptedComplaints()).isEqualTo(2 * complaints);
+        assertThat(tutorLeaderboardEntries.get(3).numberOfAcceptedComplaints()).isEqualTo(2 * complaints);
+        assertThat(tutorLeaderboardEntries.get(4).numberOfAcceptedComplaints()).isZero();
 
-        assertThat(tutorLeaderboardEntries.get(0).getNumberOfComplaintResponses()).isZero();
-        assertThat(tutorLeaderboardEntries.get(1).getNumberOfComplaintResponses()).isZero();
-        assertThat(tutorLeaderboardEntries.get(2).getNumberOfComplaintResponses()).isZero();
-        assertThat(tutorLeaderboardEntries.get(3).getNumberOfComplaintResponses()).isZero();
+        assertThat(tutorLeaderboardEntries.getFirst().numberOfComplaintResponses()).isZero();
+        assertThat(tutorLeaderboardEntries.get(1).numberOfComplaintResponses()).isZero();
+        assertThat(tutorLeaderboardEntries.get(2).numberOfComplaintResponses()).isZero();
+        assertThat(tutorLeaderboardEntries.get(3).numberOfComplaintResponses()).isZero();
         // 9 exercises, for each one there are 5 complaintResponses
-        assertThat(tutorLeaderboardEntries.get(4).getNumberOfComplaintResponses()).isEqualTo(exercises * complaints);
+        assertThat(tutorLeaderboardEntries.get(4).numberOfComplaintResponses()).isEqualTo(exercises * complaints);
     }
 
     // Test
@@ -1576,7 +1573,7 @@ public class CourseTestService {
             // Verify presence of exercises in mock courses
             // - Course 1 has 5 exercises in total, 4 exercises with relevant participations
             // - Course 2 has 0 exercises in total, 0 exercises with relevant participations
-            boolean isFirstCourse = courseOnly.getId().equals(testCourses.get(0).getId());
+            boolean isFirstCourse = courseOnly.getId().equals(testCourses.getFirst().getId());
             int numberOfExercises = isFirstCourse ? 5 : 0;
             assertThat(courseWithExercises.getExercises()).as("Course contains correct number of exercises").hasSize(numberOfExercises);
         }
@@ -1585,7 +1582,7 @@ public class CourseTestService {
     // Test
     public void testGetCategoriesInCourse() throws Exception {
         List<Course> testCourses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, false, 0);
-        Course course1 = testCourses.get(0);
+        Course course1 = testCourses.getFirst();
         Course course2 = testCourses.get(1);
         List<String> categories1 = request.getList("/api/courses/" + course1.getId() + "/categories", HttpStatus.OK, String.class);
         assertThat(categories1).as("Correct categories in course1").containsExactlyInAnyOrder("Category", "Modeling", "Quiz", "File", "Text", "Programming");
@@ -1617,7 +1614,7 @@ public class CourseTestService {
         mockDelegate.mockAddUserToGroupInUserManagement(student, course1.getStudentGroupName(), false);
         mockDelegate.mockAddUserToGroupInUserManagement(student, course2.getStudentGroupName(), false);
 
-        Set<String> updatedGroups = request.postWithResponseBody("/api/courses/" + course1.getId() + "/enroll", null, Set.class, HttpStatus.OK);
+        Set<String> updatedGroups = request.postSetWithResponseBody("/api/courses/" + course1.getId() + "/enroll", null, String.class, HttpStatus.OK);
         assertThat(updatedGroups).as("User is enrolled in course").contains(course1.getStudentGroupName());
 
         List<AuditEvent> auditEvents = auditEventRepo.find("ab12cde", Instant.now().minusSeconds(20), Constants.ENROLL_IN_COURSE);
@@ -1672,11 +1669,11 @@ public class CourseTestService {
     }
 
     private void testUnenrollFromCourseSuccessfull(Course course) throws Exception {
-        Set<String> updatedGroups = request.postWithResponseBody("/api/courses/" + course.getId() + "/unenroll", null, Set.class, HttpStatus.OK);
+        Set<String> updatedGroups = request.postSetWithResponseBody("/api/courses/" + course.getId() + "/unenroll", null, String.class, HttpStatus.OK);
         assertThat(updatedGroups).as("User is not enrolled in course").doesNotContain(course.getStudentGroupName());
         List<AuditEvent> auditEvents = auditEventRepo.find(userPrefix + "student1", Instant.now().minusSeconds(20), Constants.UNENROLL_FROM_COURSE);
         assertThat(auditEvents).as("Audit Event for course unenrollment added").hasSize(1);
-        AuditEvent auditEvent = auditEvents.get(0);
+        AuditEvent auditEvent = auditEvents.getFirst();
         assertThat(auditEvent.getData()).as("Correct Event Data").containsEntry("course", course.getTitle());
     }
 
@@ -2006,6 +2003,7 @@ public class CourseTestService {
         return updatedCourse;
     }
 
+    // TODO: reactivate test as part of Quiz Tests
     public void testArchiveCourseWithQuizExercise(String userPrefix) throws Exception {
         var course = courseUtilService.createCourse();
         var quizSubmission = quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course, userPrefix + "student1", false);
@@ -2017,6 +2015,7 @@ public class CourseTestService {
         extractAndAssertContent(archivePath.orElseThrow(), quizSubmission);
     }
 
+    // TODO: reactivate test as part of Quiz Tests
     public void testArchiveCourseWithQuizExerciseCannotExportExerciseDetails() throws IOException {
         var course = courseUtilService.createCourse();
         var quizSubmission = quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course, userPrefix + "student1", false);
@@ -2026,6 +2025,7 @@ public class CourseTestService {
         extractAndAssertMissingContent(archivePath.orElseThrow(), quizSubmission, missingPathPredicate);
     }
 
+    // TODO: reactivate test as part of Quiz Tests
     public void testArchiveCourseWithQuizExerciseCannotExportDragAndDropSubmission() throws IOException {
         List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
         var course = courseUtilService.createCourse();
@@ -2039,6 +2039,7 @@ public class CourseTestService {
         }
     }
 
+    // TODO: reactivate test as part of Quiz Tests
     public void testArchiveCourseWithQuizExerciseCannotCreateParticipationDirectory() throws IOException {
         List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
         var course = courseUtilService.createCourse();
@@ -2051,6 +2052,7 @@ public class CourseTestService {
 
     }
 
+    // TODO: reactivate test as part of Quiz Tests
     public void testArchiveCourseWithQuizExerciseCannotExportMCOrSAAnswersSubmission(String fileName, String dynamicErrorMsg) throws IOException {
         List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
         var course = courseUtilService.createCourse();
@@ -2063,7 +2065,7 @@ public class CourseTestService {
             Predicate<Path> missingPathPredicate = path -> path.getFileName().toString().contains(fileName) && path.getFileName().toString().endsWith(".txt");
             extractAndAssertMissingContent(archivePath.orElseThrow(), quizSubmission, missingPathPredicate);
             assertThat(exportErrors).hasSize(1);
-            assertThat(exportErrors.get(0)).contains("Failed to export " + dynamicErrorMsg + " answers");
+            assertThat(exportErrors.getFirst()).contains("Failed to export " + dynamicErrorMsg + " answers");
         }
     }
 
@@ -2294,6 +2296,7 @@ public class CourseTestService {
     }
 
     // Test
+    // TODO: reactivate test as part of Modeling Tests
     public void testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportModelingExercise() throws Exception {
         Course course = courseUtilService.createCourseWithTextModelingAndFileUploadExercisesAndSubmissions(userPrefix);
         Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).stream().findFirst();
@@ -2302,6 +2305,7 @@ public class CourseTestService {
     }
 
     // Test
+    // TODO: reactivate test as part of Modeling Tests
     public void testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportTextExercise() throws Exception {
         Course course = courseUtilService.createCourseWithTextModelingAndFileUploadExercisesAndSubmissions(userPrefix);
         Optional<TextExercise> textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).stream().findFirst();
@@ -2310,6 +2314,7 @@ public class CourseTestService {
     }
 
     // Test
+    // TODO: reactivate test as part of Modeling Tests
     public void testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportFileUploadExercise() throws Exception {
         Course course = courseUtilService.createCourseWithTextModelingAndFileUploadExercisesAndSubmissions(userPrefix);
         Optional<FileUploadExercise> fileUploadExercise = fileUploadExerciseRepository.findByCourseIdWithCategories(course.getId()).stream().findFirst();
@@ -2532,7 +2537,7 @@ public class CourseTestService {
     public void testGetAllCoursesForManagementOverview() throws Exception {
         // Add two courses, containing one not belonging to the instructor
         var testCourses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, false, 0);
-        var instructorsCourse = testCourses.get(0);
+        var instructorsCourse = testCourses.getFirst();
         instructorsCourse.setInstructorGroupName("test-instructors");
         courseRepo.save(instructorsCourse);
         var nonInstructorsCourse = testCourses.get(1);
@@ -2559,7 +2564,7 @@ public class CourseTestService {
 
         // Add two courses, containing one not belonging to the instructor
         var testCourses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, false, 0);
-        var instructorsCourse = testCourses.get(0);
+        var instructorsCourse = testCourses.getFirst();
         instructorsCourse.setInstructorGroupName("test-instructors");
         courseRepo.save(instructorsCourse);
         var nonInstructorsCourse = testCourses.get(1);
@@ -2672,16 +2677,16 @@ public class CourseTestService {
         // We only added one course, so expect one dto
         assertThat(courseDtos).hasSize(1);
 
-        Optional<CourseManagementOverviewStatisticsDTO> optionalCourseDTO = courseDtos.stream().filter(dto -> Objects.equals(dto.getCourseId(), instructorsCourse.getId()))
+        Optional<CourseManagementOverviewStatisticsDTO> optionalCourseDTO = courseDtos.stream().filter(dto -> Objects.equals(dto.courseId(), instructorsCourse.getId()))
                 .findFirst();
         assertThat(optionalCourseDTO).as("Active course was not filtered").isPresent();
         CourseManagementOverviewStatisticsDTO dto = optionalCourseDTO.orElseThrow();
 
-        assertThat(dto.getCourseId()).isEqualTo(instructorsCourse.getId());
-        assertThat(dto.getActiveStudents()).as("course was only active for 3 days").hasSize(1);
+        assertThat(dto.courseId()).isEqualTo(instructorsCourse.getId());
+        assertThat(dto.activeStudents()).as("course was only active for 3 days").hasSize(1);
 
         // Expect our three created exercises
-        var exerciseDTOS = dto.getExerciseDTOS();
+        var exerciseDTOS = dto.exerciseDTOS();
         assertThat(exerciseDTOS).hasSize(3);
 
         // Get the statistics of the exercise with a passed assessment due date
@@ -2765,14 +2770,14 @@ public class CourseTestService {
         // We only added one course, so expect one dto
         assertThat(courseDtos).hasSize(1);
 
-        var optionalCourseDTO = courseDtos.stream().filter(dto -> Objects.equals(dto.getCourseId(), instructorsCourse.getId())).findFirst();
+        var optionalCourseDTO = courseDtos.stream().filter(dto -> Objects.equals(dto.courseId(), instructorsCourse.getId())).findFirst();
         assertThat(optionalCourseDTO).as("Active course was not filtered").isPresent();
         CourseManagementOverviewStatisticsDTO dto = optionalCourseDTO.orElseThrow();
 
-        assertThat(dto.getCourseId()).isEqualTo(instructorsCourse.getId());
+        assertThat(dto.courseId()).isEqualTo(instructorsCourse.getId());
 
         // Only five exercises should be returned
-        var exerciseDTOS = dto.getExerciseDTOS();
+        var exerciseDTOS = dto.exerciseDTOS();
         assertThat(exerciseDTOS).hasSize(5);
 
         // The one specific exercise should not be included
@@ -2820,7 +2825,7 @@ public class CourseTestService {
         ZonedDateTime now = ZonedDateTime.now();
         // add courses with exercises
         var courses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
-        var course1 = courses.get(0);
+        var course1 = courses.getFirst();
         var course2 = courses.get(1);
         course1.setStartDate(now.minusWeeks(2));
         course1.setStudentGroupName(userPrefix + "student");
@@ -2924,10 +2929,7 @@ public class CourseTestService {
         feedback5.setReference(TextExerciseFactory.generateTextBlock(0, 5, "test5").getId());
         var feedbackListForComplaint = Arrays.asList(feedback1, feedback2, feedback3, feedback4, feedback5);
 
-        var assessmentUpdate = new TextAssessmentUpdateDTO();
-        assessmentUpdate.feedbacks(feedbackListForComplaint).complaintResponse(complaintResponse);
-        assessmentUpdate.setTextBlocks(new HashSet<>());
-
+        var assessmentUpdate = new TextAssessmentUpdateDTO(feedbackListForComplaint, complaintResponse, null, new HashSet<>());
         request.putWithResponseBody("/api/participations/" + result1.getSubmission().getParticipation().getId() + "/submissions/" + result1.getSubmission().getId()
                 + "/text-assessment-after-complaint", assessmentUpdate, Result.class, HttpStatus.OK);
 
@@ -2943,10 +2945,7 @@ public class CourseTestService {
         feedbackResponse.setResponseText("accepted");
         var feedbackListForMoreFeedback = Arrays.asList(feedback1, feedback2, feedback3, feedback4);
 
-        var feedbackUpdate = new TextAssessmentUpdateDTO();
-        feedbackUpdate.feedbacks(feedbackListForMoreFeedback).complaintResponse(feedbackResponse);
-        feedbackUpdate.setTextBlocks(new HashSet<>());
-
+        final var feedbackUpdate = new TextAssessmentUpdateDTO(feedbackListForMoreFeedback, feedbackResponse, null, new HashSet<>());
         request.putWithResponseBody("/api/participations/" + result2.getSubmission().getParticipation().getId() + "/submissions/" + result2.getSubmission().getId()
                 + "/text-assessment-after-complaint", feedbackUpdate, Result.class, HttpStatus.OK);
 
@@ -3166,11 +3165,10 @@ public class CourseTestService {
         Course createdCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
         String courseId = createdCourse.getId().toString();
 
-        // without onlinecourseconfiguration
-        OnlineCourseConfiguration ocConfiguration = null;
-        request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), ocConfiguration, OnlineCourseConfiguration.class, HttpStatus.BAD_REQUEST);
+        // without online course configuration
+        request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), null, OnlineCourseConfiguration.class, HttpStatus.BAD_REQUEST);
 
-        ocConfiguration = createdCourse.getOnlineCourseConfiguration();
+        var ocConfiguration = createdCourse.getOnlineCourseConfiguration();
         // with invalid user prefix - not matching regex
         CourseFactory.updateOnlineCourseConfiguration(ocConfiguration, "with space", null, "10000");
         request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), ocConfiguration, OnlineCourseConfiguration.class, HttpStatus.BAD_REQUEST);
@@ -3256,13 +3254,13 @@ public class CourseTestService {
         String clientId = ocConfiguration.getLtiPlatformConfiguration().getRegistrationId();
 
         String jsonResponse = request.get("/api/courses/for-lti-dashboard?clientId=" + clientId, HttpStatus.OK, String.class);
-        List<OnlineCourseDTO> receivedCourseForDashboard = objectMapper.readValue(jsonResponse, new TypeReference<List<OnlineCourseDTO>>() {
+        List<OnlineCourseDTO> receivedCourseForDashboard = objectMapper.readValue(jsonResponse, new TypeReference<>() {
             // This empty block is necessary to provide type information for JSON deserialization
         });
 
         assertThat(receivedCourseForDashboard).hasSize(1);
 
-        OnlineCourseDTO dto = receivedCourseForDashboard.get(0);
+        OnlineCourseDTO dto = receivedCourseForDashboard.getFirst();
         assertThat(dto.id()).isEqualTo(course.getId());
         assertThat(dto.title()).isEqualTo(course.getTitle());
         assertThat(dto.shortName()).isEqualTo(course.getShortName());
@@ -3347,6 +3345,7 @@ public class CourseTestService {
     }
 
     // Test
+    // TODO: reactivate test as part of Learning Paths
     public void testUpdateCourseEnableLearningPaths() throws Exception {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), new HashSet<>(), "editlearningpathenabledcourse",
                 "tutor", "editor", "instructor");

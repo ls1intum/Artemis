@@ -193,8 +193,8 @@
             "title": "Voraussetzungen",
             "empty": "Es existieren keine Voraussetzungen für diesen Kurs",
             "manage": {
-                "importButton": "Import prerequisites",
-                "importFromCoursesButton": "Import from other courses",
+                "importButton": "Voraussetzungen importieren",
+                "importFromCoursesButton": "Aus anderen Kursen importieren",
                 "deleted": "Voraussetzung gelöscht",
                 "delete": {
                     "question": "Willst du wirklich die Voraussetzung <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen!",

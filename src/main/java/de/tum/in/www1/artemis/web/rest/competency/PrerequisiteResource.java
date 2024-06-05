@@ -57,10 +57,11 @@ public class PrerequisiteResource {
     }
 
     /**
-     * GET /courses/:courseId/competencies/prerequisites
+     * GET /courses/:courseId/competencies/prerequisites : Gets all prerequisite competencies for a course.
+     * This endpoint allows all students to view prerequisites of a course if self-enrollment is activated (and thus only uses @EnforceAtLeastStudent)
      *
-     * @param courseId the id of the course for which the competencies should be fetched
-     * @return the ResponseEntity with status 200 (OK) and with body the found competencies
+     * @param courseId the id of the course for which the prerequisites should be fetched for
+     * @return the ResponseEntity with status 200 (OK) and with body the found prerequisites
      */
     @GetMapping("courses/{courseId}/competencies/prerequisites")
     @EnforceAtLeastStudent

@@ -29,9 +29,6 @@ public class ExamWideAnnouncementEvent extends ExamLiveEvent {
 
     @Override
     public ExamWideAnnouncementEventDTO asDTO() {
-        var dto = new ExamWideAnnouncementEventDTO();
-        super.populateDTO(dto);
-        dto.setText(textContent);
-        return dto;
+        return new ExamWideAnnouncementEventDTO(this.getId(), this.getCreatedBy(), this.getCreatedDate(), textContent);
     }
 }
