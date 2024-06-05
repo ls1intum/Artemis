@@ -164,36 +164,34 @@
     }
 }
 
-.quiz-icons {
-    max-width: 40%;
+.autosave-text {
+    max-width: 30%;
+    text-align: center;
+}
+
+.quiz-navigation {
+    .draganddropcolor-question {
+        background-color: var(--quiz-participation-footer-dnd-background) !important;
+    }
+    .multiplechoicecolor-question {
+        background-color: var(--quiz-participation-footer-mc-background) !important;
+    }
+    .shortanswercolor-question {
+        background-color: var(--quiz-participation-footer-sa-background) !important;
+    }
+    .changed-question {
+        background-color: var(--quiz-participation-footer-changed-background) !important;
+    }
 }
 
 .stepwizardquiz {
-    display: flex;
-    flex-wrap: wrap;
-    max-height: 60px;
-    overflow: hidden;
-    position: relative;
-
-    @media (max-width: 767.98px) {
-        max-height: 45px;
-    }
-
-    @media (max-width: 450px) {
-        max-width: 100px;
-    }
-
     &__step {
-        display: inline-block;
-        text-align: center;
-        position: relative;
-
         .fa {
             vertical-align: initial;
         }
 
         .btn {
-            cursor: pointer;
+            cursor: help;
             opacity: 1 !important;
         }
     }
