@@ -228,19 +228,19 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
             log.debug(pointCounter.toString());
             if (pointCounter.getPoints() == 0.0) {
                 assertThat(pointCounter.getRatedCounter()).isEqualTo(Math.round(NUMBER_OF_STUDENTS / 3.0));
-                assertThat(pointCounter.getUnRatedCounter()).isZero();
+                assertThat(pointCounter.getUnratedCounter()).isZero();
             }
             else if (pointCounter.getPoints() == 3.0 || pointCounter.getPoints() == 4.0 || pointCounter.getPoints() == 6.0) {
                 assertThat(pointCounter.getRatedCounter()).isEqualTo(Math.round(NUMBER_OF_STUDENTS / 6.0));
-                assertThat(pointCounter.getUnRatedCounter()).isZero();
+                assertThat(pointCounter.getUnratedCounter()).isZero();
             }
             else if (pointCounter.getPoints() == 7.0) {
                 assertThat(pointCounter.getRatedCounter()).isEqualTo(Math.round(NUMBER_OF_STUDENTS / 12.0));
-                assertThat(pointCounter.getUnRatedCounter()).isZero();
+                assertThat(pointCounter.getUnratedCounter()).isZero();
             }
             else {
                 assertThat(pointCounter.getRatedCounter()).isZero();
-                assertThat(pointCounter.getUnRatedCounter()).isZero();
+                assertThat(pointCounter.getUnratedCounter()).isZero();
             }
         }
         // check statistic for each question
@@ -255,7 +255,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
             else {
                 assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(NUMBER_OF_STUDENTS / 4);
             }
-            assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isZero();
+            assertThat(question.getQuizQuestionStatistic().getUnratedCorrectCounter()).isZero();
             assertThat(question.getQuizQuestionStatistic().getParticipantsRated()).isEqualTo(NUMBER_OF_STUDENTS);
             assertThat(question.getQuizQuestionStatistic().getParticipantsUnrated()).isZero();
         }
@@ -332,7 +332,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         assertThat(quizExerciseWithStatistic).isNotNull();
 
         for (var pointCounter : quizPointStatistic.getPointCounters()) {
-            assertThat(pointCounter.getUnRatedCounter()).as("Unrated counter is always 0").isZero();
+            assertThat(pointCounter.getUnratedCounter()).as("Unrated counter is always 0").isZero();
             if (pointCounter.getPoints() == 0.0) {
                 assertThat(pointCounter.getRatedCounter()).as("Bucket 0.0 contains 0 rated submission -> 0.33 points").isEqualTo(1);
             }
@@ -430,31 +430,31 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
             if (pointCounter.getPoints() == 0.0) {
                 assertThat(pointCounter.getRatedCounter()).isZero();
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(Math.round(NUMBER_OF_STUDENTS / 3.0));
+                assertThat(pointCounter.getUnratedCounter()).isEqualTo(Math.round(NUMBER_OF_STUDENTS / 3.0));
             }
             else if (pointCounter.getPoints() == 3.0 || pointCounter.getPoints() == 4.0 || pointCounter.getPoints() == 6.0) {
                 assertThat(pointCounter.getRatedCounter()).isZero();
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(Math.round(NUMBER_OF_STUDENTS / 6.0));
+                assertThat(pointCounter.getUnratedCounter()).isEqualTo(Math.round(NUMBER_OF_STUDENTS / 6.0));
             }
             else if (pointCounter.getPoints() == 7.0) {
                 assertThat(pointCounter.getRatedCounter()).isZero();
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(Math.round(NUMBER_OF_STUDENTS / 12.0));
+                assertThat(pointCounter.getUnratedCounter()).isEqualTo(Math.round(NUMBER_OF_STUDENTS / 12.0));
             }
             else {
                 assertThat(pointCounter.getRatedCounter()).isZero();
-                assertThat(pointCounter.getUnRatedCounter()).isZero();
+                assertThat(pointCounter.getUnratedCounter()).isZero();
             }
         }
         // check statistic for each question
         for (var question : quizExerciseWithStatistic.getQuizQuestions()) {
             if (question instanceof MultipleChoiceQuestion) {
-                assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isEqualTo(Math.round(NUMBER_OF_STUDENTS / 2.0));
+                assertThat(question.getQuizQuestionStatistic().getUnratedCorrectCounter()).isEqualTo(Math.round(NUMBER_OF_STUDENTS / 2.0));
             }
             else if (question instanceof DragAndDropQuestion) {
-                assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isEqualTo(Math.round(NUMBER_OF_STUDENTS / 3.0));
+                assertThat(question.getQuizQuestionStatistic().getUnratedCorrectCounter()).isEqualTo(Math.round(NUMBER_OF_STUDENTS / 3.0));
             }
             else {
-                assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isEqualTo(NUMBER_OF_STUDENTS / 4);
+                assertThat(question.getQuizQuestionStatistic().getUnratedCorrectCounter()).isEqualTo(NUMBER_OF_STUDENTS / 4);
             }
             assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isZero();
             assertThat(question.getQuizQuestionStatistic().getParticipantsUnrated()).isEqualTo(NUMBER_OF_STUDENTS);
@@ -603,12 +603,12 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()).hasSize(questionScore + 1);
         for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
             assertThat(pointCounter.getRatedCounter()).isZero();
-            assertThat(pointCounter.getUnRatedCounter()).isZero();
+            assertThat(pointCounter.getUnratedCounter()).isZero();
         }
         // check statistic for each question
         for (var question : quizExerciseWithStatistic.getQuizQuestions()) {
-            assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isZero();
-            assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isZero();
+            assertThat(question.getQuizQuestionStatistic().getUnratedCorrectCounter()).isZero();
+            assertThat(question.getQuizQuestionStatistic().getUnratedCorrectCounter()).isZero();
             assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isZero();
             assertThat(question.getQuizQuestionStatistic().getParticipantsUnrated()).isZero();
             assertThat(question.getQuizQuestionStatistic().getParticipantsRated()).isZero();

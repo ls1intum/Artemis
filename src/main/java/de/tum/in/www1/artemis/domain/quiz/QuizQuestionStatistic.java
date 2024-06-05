@@ -31,7 +31,7 @@ public abstract class QuizQuestionStatistic implements QuizQuestionComponent<Qui
 
     private Integer ratedCorrectCounter = 0;
 
-    private Integer unRatedCorrectCounter = 0;
+    private Integer unratedCorrectCounter = 0;
 
     public Integer getRatedCorrectCounter() {
         return ratedCorrectCounter;
@@ -41,12 +41,12 @@ public abstract class QuizQuestionStatistic implements QuizQuestionComponent<Qui
         this.ratedCorrectCounter = ratedCorrectCounter;
     }
 
-    public Integer getUnRatedCorrectCounter() {
-        return unRatedCorrectCounter;
+    public Integer getUnratedCorrectCounter() {
+        return unratedCorrectCounter;
     }
 
-    public void setUnRatedCorrectCounter(Integer unRatedCorrectCounter) {
-        this.unRatedCorrectCounter = unRatedCorrectCounter;
+    public void setUnratedCorrectCounter(Integer unratedCorrectCounter) {
+        this.unratedCorrectCounter = unratedCorrectCounter;
     }
 
     @JsonIgnore
@@ -87,12 +87,12 @@ public abstract class QuizQuestionStatistic implements QuizQuestionComponent<Qui
         setParticipantsRated(0);
         setParticipantsUnrated(0);
         setRatedCorrectCounter(0);
-        setUnRatedCorrectCounter(0);
+        setUnratedCorrectCounter(0);
     }
 
     @Override
     public String toString() {
-        return getClass() + "{" + "ratedCorrectCounter=" + ratedCorrectCounter + ", unRatedCorrectCounter=" + unRatedCorrectCounter + "participantsRated=" + getParticipantsRated()
+        return getClass() + "{" + "ratedCorrectCounter=" + ratedCorrectCounter + ", unRatedCorrectCounter=" + unratedCorrectCounter + "participantsRated=" + getParticipantsRated()
                 + ", participantsUnrated=" + getParticipantsUnrated() + '}';
     }
 

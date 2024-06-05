@@ -52,7 +52,7 @@ public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic {
         super.resetStatistic();
         for (ShortAnswerSpotCounter spotCounter : shortAnswerSpotCounters) {
             spotCounter.setRatedCounter(0);
-            spotCounter.setUnRatedCounter(0);
+            spotCounter.setUnratedCounter(0);
         }
     }
 
@@ -91,11 +91,11 @@ public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic {
             setParticipantsUnrated(getParticipantsUnrated() + change);
             handleCountersForCorrectSpots(shortAnswerSubmittedAnswer, (ShortAnswerSpotCounter spotCounter) -> {
                 // change unrated spotCounter if spot is correct
-                spotCounter.setUnRatedCounter(spotCounter.getUnRatedCounter() + change);
+                spotCounter.setUnratedCounter(spotCounter.getUnratedCounter() + change);
             });
             // change unrated correctCounter if answer is complete correct
             if (quizQuestion.isAnswerCorrect(shortAnswerSubmittedAnswer)) {
-                setUnRatedCorrectCounter(getUnRatedCorrectCounter() + change);
+                setUnratedCorrectCounter(getUnratedCorrectCounter() + change);
             }
         }
     }

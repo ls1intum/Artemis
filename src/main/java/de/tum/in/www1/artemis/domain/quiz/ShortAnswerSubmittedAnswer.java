@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ShortAnswerSubmittedAnswer extends SubmittedAnswer {
 
+    // Specifies that the `selection` field should be stored as JSON in the database.
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "selection", columnDefinition = "json")
     @JsonView(QuizView.Before.class)

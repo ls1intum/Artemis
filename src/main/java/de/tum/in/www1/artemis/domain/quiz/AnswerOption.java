@@ -101,7 +101,7 @@ public class AnswerOption extends TempIdObject implements QuizQuestionComponent<
 
     @Override
     public String toString() {
-        return "AnswerOptionDTO{" + "id=" + getId() + ", text='" + getText() + "'" + ", hint='" + "'" + ", explanation='" + "'" + ", isCorrect='" + isIsCorrect() + "'"
-                + ", invalid='" + isInvalid() + "'" + "}";
+        return "AnswerOption{" + "id=" + getId() + ", text='" + getText() + "'" + ", hint='" + getHint() + "'" + ", explanation='" + getExplanation() + "'" + ", isCorrect='"
+                + isIsCorrect() + "'" + ", invalid='" + isInvalid() + "'" + "}";
     }
 }

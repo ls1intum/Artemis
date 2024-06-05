@@ -87,6 +87,7 @@ public abstract class QuizQuestion extends DomainObject {
     @JsonView(QuizView.Before.class)
     private Long quizGroupId;
 
+    // Specifies that the `statistics` field should be stored as JSON in the database.
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "statistics", columnDefinition = "json")
     private QuizQuestionStatistic quizQuestionStatistic;

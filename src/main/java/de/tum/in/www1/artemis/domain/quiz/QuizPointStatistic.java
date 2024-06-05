@@ -145,7 +145,7 @@ public class QuizPointStatistic implements Serializable {
             // find associated unrated pointCounter and change it
             for (PointCounter pointCounter : pointCounters) {
                 if (points == pointCounter.getPoints()) {
-                    pointCounter.setUnRatedCounter(pointCounter.getUnRatedCounter() + countChange);
+                    pointCounter.setUnratedCounter(pointCounter.getUnratedCounter() + countChange);
                 }
             }
         }
@@ -159,7 +159,7 @@ public class QuizPointStatistic implements Serializable {
         setParticipantsRated(0);
         for (PointCounter pointCounter : pointCounters) {
             pointCounter.setRatedCounter(0);
-            pointCounter.setUnRatedCounter(0);
+            pointCounter.setUnratedCounter(0);
         }
     }
 }

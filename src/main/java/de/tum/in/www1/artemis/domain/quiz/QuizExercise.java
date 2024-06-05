@@ -92,6 +92,7 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
     @JsonView(QuizView.Before.class)
     private Integer duration;
 
+    // Specifies that the `statistics` field should be stored as JSON in the database.
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "statistics", columnDefinition = "json")
     private QuizPointStatistic quizPointStatistic;

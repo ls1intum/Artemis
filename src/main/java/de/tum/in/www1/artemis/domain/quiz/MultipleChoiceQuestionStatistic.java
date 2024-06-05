@@ -86,14 +86,14 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic {
                 for (AnswerCounter answerCounter : answerCounters) {
                     // change unrated answerCounter if answer is selected
                     if (mcSubmittedAnswer.getSelectedOptions().contains(answerCounter.getAnswer())) {
-                        answerCounter.setUnRatedCounter(answerCounter.getUnRatedCounter() + change);
+                        answerCounter.setUnratedCounter(answerCounter.getUnratedCounter() + change);
                     }
                 }
             }
 
             // change unrated correctCounter if answer is complete correct
             if (quizQuestion.isAnswerCorrect(mcSubmittedAnswer)) {
-                setUnRatedCorrectCounter(getUnRatedCorrectCounter() + change);
+                setUnratedCorrectCounter(getUnratedCorrectCounter() + change);
             }
         }
     }
@@ -106,7 +106,7 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic {
         super.resetStatistic();
         for (AnswerCounter answerCounter : answerCounters) {
             answerCounter.setRatedCounter(0);
-            answerCounter.setUnRatedCounter(0);
+            answerCounter.setUnratedCounter(0);
         }
     }
 }

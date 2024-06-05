@@ -64,6 +64,7 @@ public class DragAndDropQuestion extends QuizQuestion {
     @JsonView(QuizView.Before.class)
     private String backgroundFilePath;
 
+    // Specifies that the `content` field should be stored as JSON in the database.
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "content", columnDefinition = "json")
     private DragAndDropDAO content = new DragAndDropDAO();
@@ -152,7 +153,7 @@ public class DragAndDropQuestion extends QuizQuestion {
         }
 
         // A drag item can either be a text or a picture, but not both or none
-        for (DragItem dragItem : getDragItems()) {
+        for (DragItem dragItem : dragItems) {
             if (StringUtils.isEmpty(dragItem.getText()) == StringUtils.isEmpty(dragItem.getPictureFilePath())) {
                 return false;
             }

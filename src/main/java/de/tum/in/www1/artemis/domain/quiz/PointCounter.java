@@ -20,7 +20,7 @@ public class PointCounter extends TempIdObject implements Serializable {
 
     private Integer ratedCounter = 0;
 
-    private Integer unRatedCounter = 0;
+    private Integer unratedCounter = 0;
 
     public Double getPoints() {
         return points;
@@ -46,16 +46,16 @@ public class PointCounter extends TempIdObject implements Serializable {
         this.ratedCounter = ratedCounter;
     }
 
-    public Integer getUnRatedCounter() {
-        return unRatedCounter;
+    public Integer getUnratedCounter() {
+        return unratedCounter;
     }
 
-    public void setUnRatedCounter(Integer unRatedCounter) {
-        this.unRatedCounter = unRatedCounter;
+    public void setUnratedCounter(Integer unratedCounter) {
+        this.unratedCounter = unratedCounter;
     }
 
     @Override
     public String toString() {
-        return "PointCounter{" + "id=" + getId() + ", points='" + getPoints() + "'" + ", rated=" + getRatedCounter() + ", unrated=" + getUnRatedCounter() + "}";
+        return "PointCounter{" + "id=" + getId() + ", points='" + getPoints() + "'" + ", rated=" + getRatedCounter() + ", unrated=" + getUnratedCounter() + "}";
     }
 }

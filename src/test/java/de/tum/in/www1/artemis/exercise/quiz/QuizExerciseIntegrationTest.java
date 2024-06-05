@@ -1898,7 +1898,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private PointCounter pc(int rated, int unrated) {
         PointCounter pointCounter = new PointCounter();
         pointCounter.setRatedCounter(rated);
-        pointCounter.setUnRatedCounter(unrated);
+        pointCounter.setUnratedCounter(unrated);
         return pointCounter;
     }
 
@@ -1916,7 +1916,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
             assertThat(pointCounterAfter.getPoints()).isEqualTo(pointCounterBefore.getPoints());
             assertThat(pointCounterAfter.getRatedCounter()).isEqualTo(pointCounterBefore.getRatedCounter());
-            assertThat(pointCounterAfter.getUnRatedCounter()).isEqualTo(pointCounterBefore.getUnRatedCounter());
+            assertThat(pointCounterAfter.getUnratedCounter()).isEqualTo(pointCounterBefore.getUnratedCounter());
         }
 
         for (var quizQuestion : quizExercise.getQuizQuestions()) {
@@ -1951,12 +1951,12 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
             if (expectedPointCounter != null) {
                 assertThat(pointCounter.getRatedCounter()).as(pointCounter.getPoints() + " should have a rated counter of " + expectedPointCounter.getRatedCounter())
                         .isEqualTo(expectedPointCounter.getRatedCounter());
-                assertThat(pointCounter.getUnRatedCounter()).as(pointCounter.getPoints() + " should have an unrated counter of " + expectedPointCounter.getUnRatedCounter())
-                        .isEqualTo(expectedPointCounter.getUnRatedCounter());
+                assertThat(pointCounter.getUnratedCounter()).as(pointCounter.getPoints() + " should have an unrated counter of " + expectedPointCounter.getUnratedCounter())
+                        .isEqualTo(expectedPointCounter.getUnratedCounter());
             }
             else {
                 assertThat(pointCounter.getRatedCounter()).as(pointCounter.getPoints() + " should have a rated counter of 0").isZero();
-                assertThat(pointCounter.getUnRatedCounter()).as(pointCounter.getPoints() + " should have a rated counter of 0").isZero();
+                assertThat(pointCounter.getUnratedCounter()).as(pointCounter.getPoints() + " should have a rated counter of 0").isZero();
             }
         }
     }

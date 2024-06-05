@@ -18,7 +18,7 @@ public class DropLocationCounter extends TempIdObject implements QuizQuestionSta
 
     private Integer ratedCounter = 0;
 
-    private Integer unRatedCounter = 0;
+    private Integer unratedCounter = 0;
 
     public DragAndDropQuestionStatistic getDragAndDropQuestionStatistic() {
         return dragAndDropQuestionStatistic;
@@ -67,11 +67,11 @@ public class DropLocationCounter extends TempIdObject implements QuizQuestionSta
         this.ratedCounter = ratedCounter;
     }
 
-    public Integer getUnRatedCounter() {
-        return unRatedCounter;
+    public Integer getUnratedCounter() {
+        return unratedCounter;
     }
 
-    public void setUnRatedCounter(Integer unRatedCounter) {
-        this.unRatedCounter = unRatedCounter;
+    public void setUnratedCounter(Integer unratedCounter) {
+        this.unratedCounter = unratedCounter;
     }
 }

@@ -18,7 +18,7 @@ public class ShortAnswerSpotCounter extends TempIdObject implements QuizQuestion
 
     private Integer ratedCounter = 0;
 
-    private Integer unRatedCounter = 0;
+    private Integer unratedCounter = 0;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
@@ -69,11 +69,11 @@ public class ShortAnswerSpotCounter extends TempIdObject implements QuizQuestion
         this.ratedCounter = ratedCounter;
     }
 
-    public Integer getUnRatedCounter() {
-        return unRatedCounter;
+    public Integer getUnratedCounter() {
+        return unratedCounter;
     }
 
-    public void setUnRatedCounter(Integer unRatedCounter) {
-        this.unRatedCounter = unRatedCounter;
+    public void setUnratedCounter(Integer unratedCounter) {
+        this.unratedCounter = unratedCounter;
     }
 }

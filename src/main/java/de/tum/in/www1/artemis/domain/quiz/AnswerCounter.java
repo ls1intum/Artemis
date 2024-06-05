@@ -18,7 +18,7 @@ public class AnswerCounter extends TempIdObject implements QuizQuestionStatistic
 
     private Integer ratedCounter = 0;
 
-    private Integer unRatedCounter = 0;
+    private Integer unratedCounter = 0;
 
     public MultipleChoiceQuestionStatistic getMultipleChoiceQuestionStatistic() {
         return multipleChoiceQuestionStatistic;
@@ -56,7 +56,7 @@ public class AnswerCounter extends TempIdObject implements QuizQuestionStatistic
 
     @Override
     public String toString() {
-        return "AnswerCounter{" + "id=" + getId() + ", rated=" + getRatedCounter() + ", unrated=" + getUnRatedCounter() + "}";
+        return "AnswerCounter{" + "id=" + getId() + ", rated=" + getRatedCounter() + ", unrated=" + getUnratedCounter() + "}";
     }
 
     public Integer getRatedCounter() {
@@ -67,11 +67,11 @@ public class AnswerCounter extends TempIdObject implements QuizQuestionStatistic
         this.ratedCounter = ratedCounter;
     }
 
-    public Integer getUnRatedCounter() {
-        return unRatedCounter;
+    public Integer getUnratedCounter() {
+        return unratedCounter;
     }
 
-    public void setUnRatedCounter(Integer unRatedCounter) {
-        this.unRatedCounter = unRatedCounter;
+    public void setUnratedCounter(Integer unratedCounter) {
+        this.unratedCounter = unratedCounter;
     }
 }

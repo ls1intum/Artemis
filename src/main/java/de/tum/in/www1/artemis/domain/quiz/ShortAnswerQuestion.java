@@ -45,6 +45,7 @@ public class ShortAnswerQuestion extends QuizQuestion {
     @JsonView(QuizView.After.class)
     private List<ShortAnswerMapping> correctMappings = new ArrayList<>();
 
+    // Specifies that the `content` field should be stored as JSON in the database.
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "content", columnDefinition = "json")
     private ShortAnswerDAO content = new ShortAnswerDAO();

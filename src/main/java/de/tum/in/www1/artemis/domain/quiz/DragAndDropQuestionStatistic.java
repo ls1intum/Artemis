@@ -89,13 +89,13 @@ public class DragAndDropQuestionStatistic extends QuizQuestionStatistic {
                 // change unrated dropLocationCounter if dropLocation is correct
                 for (DropLocationCounter dropLocationCounter : dropLocationCounters) {
                     if (dragAndDropQuestion.isDropLocationCorrect(ddSubmittedAnswer, dropLocationCounter.getDropLocation())) {
-                        dropLocationCounter.setUnRatedCounter(dropLocationCounter.getUnRatedCounter() + change);
+                        dropLocationCounter.setUnratedCounter(dropLocationCounter.getUnratedCounter() + change);
                     }
                 }
             }
             // change unrated correctCounter if answer is complete correct
             if (dragAndDropQuestion.isAnswerCorrect(ddSubmittedAnswer)) {
-                setUnRatedCorrectCounter(getUnRatedCorrectCounter() + change);
+                setUnratedCorrectCounter(getUnratedCorrectCounter() + change);
             }
         }
     }
@@ -108,7 +108,7 @@ public class DragAndDropQuestionStatistic extends QuizQuestionStatistic {
         super.resetStatistic();
         for (DropLocationCounter dropLocationCounter : dropLocationCounters) {
             dropLocationCounter.setRatedCounter(0);
-            dropLocationCounter.setUnRatedCounter(0);
+            dropLocationCounter.setUnratedCounter(0);
         }
     }
 }
