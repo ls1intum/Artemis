@@ -33,6 +33,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
+import { scrollToTopOfPage } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-course-management-tab-bar',
@@ -119,6 +120,9 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
         this.courseAccessStorageService.onCourseAccessed(courseId);
     }
 
+    ngAfterViewInit() {
+        scrollToTopOfPage();
+    }
     /**
      * Subscribe to changes in course.
      */
