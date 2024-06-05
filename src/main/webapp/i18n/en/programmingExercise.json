@@ -549,7 +549,7 @@
             },
             "diffReport": {
                 "button": "Review Changes",
-                "tooltip": "Shows the detailed git-diff between the template and solution repository.",
+                "tooltip": "Shows the detailed git-diff between the template and solution repositories.",
                 "detailedTooltip": "The comparison view highlights all changes between the template and solution repositories. Red indicates deletions from the template, while green shows additions made in the solution.",
                 "splitView": {
                     "enable": "Enable split view",
