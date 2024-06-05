@@ -223,7 +223,6 @@ public class ParticipationService {
         participation.setInitializationState(InitializationState.UNINITIALIZED);
         participation.setExercise(exercise);
         participation.setParticipant(participant);
-        participation.setNumberOfAttempts(0);
 
         return studentParticipationRepository.saveAndFlush(participation);
     }
