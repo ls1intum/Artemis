@@ -153,7 +153,7 @@ public class DatabaseMigration {
      * If the 'DATABASECHANGELOG' table does not exist, implying that the database is not yet initialized, the method
      * returns {@code null}, indicating that a full migration or initialization is required.
      * <p>
-     * If the 'artemis_version' table does not exist or no version is recorded, this method throws a {@link RuntimeException},
+     * If the 'artemis_version' table does not exist, this method throws a {@link RuntimeException},
      * signaling a critical migration issue that must be resolved by installing a specific version of the application
      * (as mentioned in the thrown error message) before proceeding.
      * <p>
@@ -161,7 +161,7 @@ public class DatabaseMigration {
      * adhering to the migration path requirements.
      *
      * @return The latest version string from the 'artemis_version' table if it exists.
-     * @throws RuntimeException If the 'DATABASECHANGELOG' table does not exist, or if retrieving the latest version fails.
+     * @throws RuntimeException If the 'artemis_version' table does not exist
      */
     private String getPreviousVersionElseThrow() {
         String error = "Cannot start Artemis because version table does not exist, but a migration path is necessary! Please start the release 5.12.9 first, otherwise the migration will fail";
@@ -172,9 +172,8 @@ public class DatabaseMigration {
             if (result.next()) {
                 return result.getString("latest_version");
             }
-            // if no version exists, we fail here
-            log.error(error);
-            System.exit(12);
+            // if no version is recorded in the table, we proceed with the startup
+            return null;
         }
         catch (SQLException e) {
             if (StringUtils.containsIgnoreCase(e.getMessage(), "databasechangelog") && (e.getMessage().contains("does not exist") || (e.getMessage().contains("doesn't exist")))) {

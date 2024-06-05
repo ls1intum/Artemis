@@ -306,7 +306,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
         InvocationRequest mvnRequest = new DefaultInvocationRequest();
         mvnRequest.setJavaHome(java17Home);
         mvnRequest.setPomFile(testRepo.localRepoFile);
-        mvnRequest.setGoals(List.of("clean", "test"));
+        mvnRequest.addArgs(List.of("clean", "test"));
         if (testwiseCoverageAnalysis) {
             mvnRequest.addArg("-Pcoverage");
         }
