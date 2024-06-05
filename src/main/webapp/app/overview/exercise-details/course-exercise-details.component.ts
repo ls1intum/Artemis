@@ -191,11 +191,11 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
         if (this.participationUpdateListener) {
             this.participationUpdateListener.unsubscribe();
             if (this.studentParticipations) {
-                this.studentParticipations.forEach((participation) => {
+                for (const participation of this.studentParticipations) {
                     if (participation.id && this.exercise) {
                         this.participationWebsocketService.unsubscribeForLatestUpdatesOfParticipation(participation.id, this.exercise);
                     }
-                });
+                }
             }
         }
         this.teamAssignmentUpdateListener?.unsubscribe();
@@ -287,16 +287,17 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
 
     sortHistoryEntries() {
         if (this.studentParticipations?.length) {
-            this.studentParticipations.forEach((participation) => participation.results?.sort(this.resultSortFunction));
+            for (const participation of this.studentParticipations) {
+                participation.results?.sort(this.resultSortFunction);
+            }
             const sortedResults = this.studentParticipations
                 .flatMap((participation) => participation.results ?? [])
                 .map((result) => Object.assign(new Result(), result))
                 .sort(this.resultSortFunction);
             const sortedSelfLearningRequests = this.studentParticipations
                 .flatMap((participation) => participation.selfLearningFeedbackRequests ?? [])
-                .map((selfLearningFeedbackRequest) => Object.assign(new SelfLearningFeedbackRequest(), selfLearningFeedbackRequest))
+                .map((request) => Object.assign(new SelfLearningFeedbackRequest(), request))
                 .sort(this.selfLearningFeedbackSortFunction);
-            // object assigns are used here to be able to use instanceof operator of typescript, as parsed responses from the server have no prototype
             this.sortedHistoryEntries = this.mergeAndSortResultsAndSelfLearningFeedbackRequestHistoryLists(sortedResults, sortedSelfLearningRequests);
         }
     }
@@ -308,8 +309,8 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     };
 
     private selfLearningFeedbackSortFunction = (a: SelfLearningFeedbackRequest, b: SelfLearningFeedbackRequest) => {
-        const aValue = dayjs(a.requestDateTime!).valueOf();
-        const bValue = dayjs(b.requestDateTime!).valueOf();
+        const aValue = dayjs(a.requestDateTime ? a.requestDateTime : '').valueOf();
+        const bValue = dayjs(b.requestDateTime ? b.requestDateTime : '').valueOf();
         return aValue - bValue;
     };
 

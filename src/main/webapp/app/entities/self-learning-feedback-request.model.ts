@@ -16,7 +16,7 @@ export class SelfLearningFeedbackRequest implements BaseEntity {
 
     // parsed objects from the server do not have a prototype by default, the method will not work
     // you need to explicitly convert objects in order for this function to work
-    public static isSelfLearningFeedbackRequest(obj: any): obj is SelfLearningFeedbackRequest {
+    public static isSelfLearningFeedbackRequest(obj: unknown): obj is SelfLearningFeedbackRequest {
         return obj instanceof SelfLearningFeedbackRequest;
     }
 
