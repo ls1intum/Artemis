@@ -32,9 +32,12 @@
         </div>
         <!-- Example Tables -->
         <div class="form-group">
-            <label class="font-weight-bold">
+            <label class="font-weight-bold pointer" (click)="generateCSV(1)">
                 <th>{{ 'artemisApp.tutorialGroupImportDialog.table.example1' | artemisTranslate }}</th>
             </label>
+            <div>
+                <small>{{ 'artemisApp.tutorialGroupImportDialog.table.template' | artemisTranslate }}</small>
+            </div>
             <table class="table table-striped table-bordered table-sm mt-2">
                 <thead>
                     <tr>
@@ -52,9 +55,12 @@
             </table>
         </div>
         <div class="form-group">
-            <label class="font-weight-bold"
+            <label class="font-weight-bold pointer" (click)="generateCSV(2)"
                 ><th>{{ 'artemisApp.tutorialGroupImportDialog.table.example2' | artemisTranslate }}</th></label
             >
+            <div>
+                <small>{{ 'artemisApp.tutorialGroupImportDialog.table.template' | artemisTranslate }}</small>
+            </div>
             <table class="table table-striped table-bordered table-sm mt-2">
                 <thead>
                     <tr>
@@ -81,9 +87,12 @@
             </table>
         </div>
         <div class="form-group">
-            <label class="font-weight-bold"
+            <label class="font-weight-bold pointer" (click)="generateCSV(3)"
                 ><th>{{ 'artemisApp.tutorialGroupImportDialog.table.example3' | artemisTranslate }}</th></label
             >
+            <div>
+                <small>{{ 'artemisApp.tutorialGroupImportDialog.table.template' | artemisTranslate }}</small>
+            </div>
             <table class="table table-striped table-bordered table-sm mt-2">
                 <thead>
                     <tr>
