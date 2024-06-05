@@ -41,14 +41,6 @@
                 <div class="p-0 col-md-auto quiz-navigation stepwizardquiz sticky-top">
                     @for (question of quizExercise.quizQuestions; track question; let i = $index) {
                         <div class="stepwizardquiz__step mb-3" [class.mb-3]="!$last">
-                            <span
-                                class="btn btn-light btn-circle draganddropcolor-question"
-                                (click)="navigateToQuestion(i)"
-                                [ngbTooltip]="!!dragAndDropMappings.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
-                                [ngClass]="!!dragAndDropMappings.get(question.id!)?.length ? 'changed-question' : ''"
-                            >
-                                <b class="fa">DD</b>
-                            </span>
                             @if (question.type === DRAG_AND_DROP) {
                                 <span
                                     class="btn btn-light btn-circle draganddropcolor-question"
