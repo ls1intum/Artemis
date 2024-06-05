@@ -25,3 +25,9 @@ The administrator can also click on the commit hash to navigate to the commits d
    :align: center
 
    Build Agent Details
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/46914?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
+        Watch this video on TUM-Live.
+    </iframe>
