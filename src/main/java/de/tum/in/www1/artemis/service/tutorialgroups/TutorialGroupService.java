@@ -406,6 +406,24 @@ public class TutorialGroupService {
                     tutorialGroup.setTeachingAssistant(requestingUser);
                     tutorialGroup.setIsOnline(false);
                     tutorialGroup.setCampus("Campus");
+
+                    // Set additional fields from registrations
+                    Optional<TutorialGroupRegistrationImportDTO> registrationOpt = registrations.stream().filter(r -> title.equals(r.title())).findFirst();
+                    registrationOpt.ifPresent(registration -> {
+                        if (registration.campus() != null) {
+                            tutorialGroup.setCampus(registration.campus());
+                        }
+                        if (registration.capacity() != null) {
+                            tutorialGroup.setCapacity(registration.capacity());
+                        }
+                        if (registration.language() != null) {
+                            tutorialGroup.setLanguage(registration.language());
+                        }
+                        if (registration.additionalInformation() != null) {
+                            tutorialGroup.setAdditionalInformation(registration.additionalInformation());
+                        }
+                    });
+
                     return tutorialGroup;
                 }).collect(Collectors.toSet());
 

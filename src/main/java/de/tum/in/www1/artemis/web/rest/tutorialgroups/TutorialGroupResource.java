@@ -543,14 +543,15 @@ public class TutorialGroupResource {
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record TutorialGroupRegistrationImportDTO(@Nullable String title, @Nullable StudentDTO student, @Nullable Boolean importSuccessful,
-            @Nullable TutorialGroupImportErrors error) {
+            @Nullable TutorialGroupImportErrors error, @Nullable String campus, @Nullable Integer capacity, @Nullable String language, @Nullable String additionalInformation) {
 
         public TutorialGroupRegistrationImportDTO withImportResult(boolean importSuccessful, TutorialGroupImportErrors error) {
-            return new TutorialGroupRegistrationImportDTO(title(), student(), importSuccessful, error);
+            return new TutorialGroupRegistrationImportDTO(title(), student(), importSuccessful, error, campus(), capacity(), language(), additionalInformation());
         }
 
-        public TutorialGroupRegistrationImportDTO(@Nullable String title, @Nullable StudentDTO student) {
-            this(title, student, null, null);
+        public TutorialGroupRegistrationImportDTO(@Nullable String title, @Nullable StudentDTO student, @Nullable String campus, @Nullable Integer capacity,
+                @Nullable String language, @Nullable String additionalInformation) {
+            this(title, student, null, null, campus, capacity, language, additionalInformation);
         }
 
         @Override
@@ -579,7 +580,8 @@ public class TutorialGroupResource {
 
         @Override
         public String toString() {
-            return "TutorialGroupRegistrationImportDTO{" + "title='" + title + '\'' + ", student=" + student + ", importSuccessful=" + importSuccessful + ", error=" + error + '}';
+            return "TutorialGroupRegistrationImportDTO{" + "title='" + title + '\'' + ", student=" + student + ", importSuccessful=" + importSuccessful + ", error=" + error
+                    + ", campus=" + campus + ", capacity=" + capacity + ", language=" + language + ", additionalInformation=" + additionalInformation + '}';
         }
     }
 }
