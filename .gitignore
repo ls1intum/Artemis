@@ -226,3 +226,7 @@ data-exports/
 # Supporting scripts config
 ##############################
 /supporting_scripts/**/*.ini
+/supporting_scripts/analysis-of-endpoint-connections/build/scripts/analysis-of-endpoint-connections
+/supporting_scripts/analysis-of-endpoint-connections/build/scripts/analysis-of-endpoint-connections.bat
+/supporting_scripts/analysis-of-endpoint-connections/build/distributions/analysis-of-endpoint-connections-1.0-SNAPSHOT.tar
+/supporting_scripts/analysis-of-endpoint-connections/build/distributions/analysis-of-endpoint-connections-1.0-SNAPSHOT.zip
