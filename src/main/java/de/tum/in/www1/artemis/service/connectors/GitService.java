@@ -108,6 +108,12 @@ public class GitService extends AbstractGitService {
     @Value("${artemis.git.email}")
     private String artemisGitEmail;
 
+    @Value("${artemis.version-control.user}")
+    protected String gitUser;
+
+    @Value("${artemis.version-control.password}")
+    protected String gitPassword;
+
     // TODO: clean up properly in multi node environments
     private final Map<Path, Repository> cachedRepositories = new ConcurrentHashMap<>();
 
