@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 
 /**
  * An IrisSession represents a list of messages of Artemis, a user, and an LLM.
- * See {@link IrisChatSession} and {@link IrisHestiaSession} for concrete implementations.
+ * See {@link IrisExerciseChatSession} and {@link IrisHestiaSession} for concrete implementations.
  */
 @Entity
 @Table(name = "iris_session")
@@ -38,7 +38,8 @@ import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // @formatter:off
 @JsonSubTypes({
-    @JsonSubTypes.Type(value = IrisChatSession.class, name = "chat"),
+    @JsonSubTypes.Type(value = IrisExerciseChatSession.class, name = "chat"), // TODO: Legacy. Should ideally be "exercise_chat"
+    @JsonSubTypes.Type(value = IrisCourseChatSession.class, name = "course_chat"),
     @JsonSubTypes.Type(value = IrisHestiaSession.class, name = "hestia"),
 })
 // @formatter:on
