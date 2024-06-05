@@ -87,8 +87,9 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         request.get("/api/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.FORBIDDEN, IrisSettings.class);
         var loadedSettings = request.get("/api/courses/" + course.getId() + "/iris-settings", HttpStatus.OK, IrisCombinedSettingsDTO.class);
 
-        assertThat(loadedSettings).isNotNull().usingRecursiveComparison()
-                .ignoringCollectionOrderInFields("irisChatSettings.allowedModels", "irisCompetencyGenerationSettings.allowedModels", "irisHestiaSettings.allowedModels")
+        assertThat(loadedSettings)
+                .isNotNull().usingRecursiveComparison().ignoringCollectionOrderInFields("irisChatSettings.allowedModels", "irisLectureIngestionSettings.allowedModels",
+                        "irisCompetencyGenerationSettings.allowedModels", "irisHestiaSettings.allowedModels")
                 .ignoringFields("id").isEqualTo(irisSettingsService.getCombinedIrisSettingsFor(course, true));
     }
 
