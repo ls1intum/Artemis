@@ -134,11 +134,11 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         // recreate pointers back to submission in each submitted answer
         for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
             submittedAnswer.setSubmission(quizSubmission);
-            if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
-                QuizIdAssigner.assignIds(((MultipleChoiceSubmittedAnswer) submittedAnswer).getSelectedOptions());
+            if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer) {
+                QuizIdAssigner.assignIds(multipleChoiceSubmittedAnswer.getSelectedOptions());
             }
-            else if (submittedAnswer instanceof DragAndDropSubmittedAnswer) {
-                QuizIdAssigner.assignIds(((DragAndDropSubmittedAnswer) submittedAnswer).getMappings());
+            else if (submittedAnswer instanceof DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer) {
+                QuizIdAssigner.assignIds(dragAndDropSubmittedAnswer.getMappings());
             }
         }
 

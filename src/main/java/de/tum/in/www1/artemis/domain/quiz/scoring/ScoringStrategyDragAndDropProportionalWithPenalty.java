@@ -46,7 +46,7 @@ public class ScoringStrategyDragAndDropProportionalWithPenalty implements Scorin
                 }
                 else {
                     // check if user's mapping is correct
-                    if (((DragAndDropQuestion) quizQuestion).isDropLocationCorrect(dndAnswer, dropLocation)) {
+                    if (dndQuestion.isDropLocationCorrect(dndAnswer, dropLocation)) {
                         // points are only given for drop locations that were meant to not stay empty
                         if (!correctDragItems.isEmpty()) {
                             correctMappings++;

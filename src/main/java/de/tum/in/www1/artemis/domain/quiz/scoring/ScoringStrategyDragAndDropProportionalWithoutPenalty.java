@@ -43,7 +43,7 @@ public class ScoringStrategyDragAndDropProportionalWithoutPenalty implements Sco
                     }
                 }
                 // check if user's mapping is correct
-                else if (((DragAndDropQuestion) quizQuestion).isDropLocationCorrect(dndAnswer, dropLocation) && !correctDragItems.isEmpty()) {
+                else if (dndQuestion.isDropLocationCorrect(dndAnswer, dropLocation) && !correctDragItems.isEmpty()) {
                     // points are only given for drop locations that were meant to not stay empty
                     correctMappings++;
                 }

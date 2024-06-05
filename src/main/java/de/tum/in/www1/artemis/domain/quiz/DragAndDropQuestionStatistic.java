@@ -62,40 +62,41 @@ public class DragAndDropQuestionStatistic extends QuizQuestionStatistic {
         if (!(submittedAnswer instanceof DragAndDropSubmittedAnswer ddSubmittedAnswer)) {
             return;
         }
-        DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) quizQuestion;
-        if (rated) {
-            // change the rated participants
-            setParticipantsRated(getParticipantsRated() + change);
+        if (quizQuestion instanceof DragAndDropQuestion dndQuestion) {
+            if (rated) {
+                // change the rated participants
+                setParticipantsRated(getParticipantsRated() + change);
 
-            if (ddSubmittedAnswer.getMappings() != null) {
-                // change rated dropLocationCounter if dropLocation is correct
-                for (DropLocationCounter dropLocationCounter : dropLocationCounters) {
-                    if (dragAndDropQuestion.isDropLocationCorrect(ddSubmittedAnswer, dropLocationCounter.getDropLocation())) {
-                        dropLocationCounter.setRatedCounter(dropLocationCounter.getRatedCounter() + change);
+                if (ddSubmittedAnswer.getMappings() != null) {
+                    // change rated dropLocationCounter if dropLocation is correct
+                    for (DropLocationCounter dropLocationCounter : dropLocationCounters) {
+                        if (dndQuestion.isDropLocationCorrect(ddSubmittedAnswer, dropLocationCounter.getDropLocation())) {
+                            dropLocationCounter.setRatedCounter(dropLocationCounter.getRatedCounter() + change);
+                        }
                     }
                 }
-            }
-            // change rated correctCounter if answer is complete correct
-            if (dragAndDropQuestion.isAnswerCorrect(ddSubmittedAnswer)) {
-                setRatedCorrectCounter(getRatedCorrectCounter() + change);
-            }
-        }
-        // Result is unrated
-        else {
-            // change the unrated participants
-            setParticipantsUnrated(getParticipantsUnrated() + change);
-
-            if (ddSubmittedAnswer.getMappings() != null) {
-                // change unrated dropLocationCounter if dropLocation is correct
-                for (DropLocationCounter dropLocationCounter : dropLocationCounters) {
-                    if (dragAndDropQuestion.isDropLocationCorrect(ddSubmittedAnswer, dropLocationCounter.getDropLocation())) {
-                        dropLocationCounter.setUnratedCounter(dropLocationCounter.getUnratedCounter() + change);
-                    }
+                // change rated correctCounter if answer is complete correct
+                if (dndQuestion.isAnswerCorrect(ddSubmittedAnswer)) {
+                    setRatedCorrectCounter(getRatedCorrectCounter() + change);
                 }
             }
-            // change unrated correctCounter if answer is complete correct
-            if (dragAndDropQuestion.isAnswerCorrect(ddSubmittedAnswer)) {
-                setUnratedCorrectCounter(getUnratedCorrectCounter() + change);
+            // Result is unrated
+            else {
+                // change the unrated participants
+                setParticipantsUnrated(getParticipantsUnrated() + change);
+
+                if (ddSubmittedAnswer.getMappings() != null) {
+                    // change unrated dropLocationCounter if dropLocation is correct
+                    for (DropLocationCounter dropLocationCounter : dropLocationCounters) {
+                        if (dndQuestion.isDropLocationCorrect(ddSubmittedAnswer, dropLocationCounter.getDropLocation())) {
+                            dropLocationCounter.setUnratedCounter(dropLocationCounter.getUnratedCounter() + change);
+                        }
+                    }
+                }
+                // change unrated correctCounter if answer is complete correct
+                if (dndQuestion.isAnswerCorrect(ddSubmittedAnswer)) {
+                    setUnratedCorrectCounter(getUnratedCorrectCounter() + change);
+                }
             }
         }
     }

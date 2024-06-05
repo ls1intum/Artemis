@@ -430,10 +430,10 @@ public class DragAndDropQuestion extends QuizQuestion {
         Set<DragItem> correctDragItems = this.getCorrectDragItemsForDropLocation(dropLocation);
         DragItem selectedDragItem = dndAnswer.getSelectedDragItemForDropLocation(dropLocation);
 
-        return ((correctDragItems.isEmpty() && selectedDragItem == null) || (selectedDragItem != null && correctDragItems.contains(selectedDragItem)));
         // this drop location was meant to stay empty and user didn't drag anything onto it
         // OR the user dragged one of the correct drag items onto this drop location
         // => this is correct => Return true;
+        return ((correctDragItems.isEmpty() && selectedDragItem == null) || (selectedDragItem != null && correctDragItems.contains(selectedDragItem)));
     }
 
     @Override
