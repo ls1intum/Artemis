@@ -4,7 +4,7 @@ Integrated Code Lifecycle Setup
 -------------------------------
 
 This section describes how to set up a programming exercise environment based on the Integrated Code Lifecycle, which includes a local Version Control system and a local Continuous Integration system.
-These two systems are integrated into the Artemis server application and thus the setup is greatly simplified compared to the external options.
+These two systems are integrated into the Artemis server application, and thus, the setup is greatly simplified compared to the external options.
 This also reduces system requirements as you do not have to run any systems in addition to the Artemis server.
 If you are setting Artemis up for the first time, these are the steps you should follow:
 
