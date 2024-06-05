@@ -1,15 +1,25 @@
 package de.tum.in.www1.artemis.service.quiz;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.in.www1.artemis.config.StartupDelayConfig.QUIZ_EXERCISE_SCHEDULE_DELAY_SEC;
 import static de.tum.in.www1.artemis.domain.enumeration.QuizAction.START_NOW;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
+import org.springframework.core.env.Environment;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Result;
@@ -28,6 +38,7 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.scheduled.ScheduleService;
 import de.tum.in.www1.artemis.service.util.Tuple;
+import tech.jhipster.config.JHipsterConstants;
 
 @Profile(PROFILE_SCHEDULING)
 @Service
@@ -51,9 +62,13 @@ public class QuizScheduleService {
 
     private final QuizSubmissionRepository quizSubmissionRepository;
 
+    private final TaskScheduler scheduler;
+
+    private final Environment env;
+
     public QuizScheduleService(QuizMessagingService quizMessagingService, QuizExerciseRepository quizExerciseRepository, ScheduleService scheduleService,
             QuizBatchRepository quizBatchRepository, QuizStatisticService quizStatisticService, ParticipationRepository participationRepository, ResultRepository resultRepository,
-            QuizSubmissionRepository quizSubmissionRepository) {
+            QuizSubmissionRepository quizSubmissionRepository, Environment env, @Qualifier("taskScheduler") TaskScheduler scheduler) {
         this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.scheduleService = scheduleService;
@@ -62,6 +77,8 @@ public class QuizScheduleService {
         this.participationRepository = participationRepository;
         this.resultRepository = resultRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
+        this.scheduler = scheduler;
+        this.env = env;
     }
 
     /**
@@ -70,22 +87,30 @@ public class QuizScheduleService {
      * @param quizExerciseId the id of the quiz exercise that should be scheduled for being started automatically
      */
     public void scheduleQuizStart(final long quizExerciseId) {
-        // first remove and cancel old scheduledFuture if it exists
-        cancelScheduledQuizStart(quizExerciseId);
-        // reload from database to make sure there are no proxy objects
         final var quizExercise = quizExerciseRepository.findWithEagerBatchesByIdOrElseThrow(quizExerciseId);
+        scheduleQuizStart(quizExercise);
+    }
+
+    /**
+     * Start scheduler of quiz and update the quiz exercise in the hash map
+     *
+     * @param quizExercise the quiz exercise that should be scheduled for being started automatically
+     */
+    public void scheduleQuizStart(QuizExercise quizExercise) {
+        // first remove and cancel old scheduledFuture if it exists
+        cancelScheduledQuizStart(quizExercise.getId());
         if (quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
             // TODO: quiz cleanup: it should be possible to schedule quiz batches in BATCHED mode
             var quizBatch = quizExercise.getQuizBatches().stream().findAny();
             if (quizBatch.isPresent() && quizBatch.get().getStartTime() != null) {
                 if (quizBatch.get().getStartTime().isAfter(ZonedDateTime.now())) {
-                    scheduleService.scheduleTask(quizExercise, quizBatch.get(), ExerciseLifecycle.START, () -> executeQuizStartNowTask(quizExerciseId));
+                    scheduleService.scheduleTask(quizExercise, quizBatch.get(), ExerciseLifecycle.START, () -> executeQuizStartNowTask(quizExercise.getId()));
                 }
             }
         }
         if (quizExercise.getDueDate() != null) {
             scheduleService.scheduleTask(quizExercise, ExerciseLifecycle.DUE,
-                    Set.of(new Tuple<>(quizExercise.getDueDate().plusSeconds(5), () -> calculateAllResults(quizExerciseId))));
+                    Set.of(new Tuple<>(quizExercise.getDueDate().plusSeconds(5), () -> calculateAllResults(quizExercise.getId()))));
         }
     }
 
@@ -157,5 +182,31 @@ public class QuizScheduleService {
 
         SecurityUtils.setAuthorizationObject();
         quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, quizBatch, START_NOW);
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void applicationReady() {
+        // schedule the task after the application has started to avoid delaying the start of the application
+        scheduler.schedule(this::scheduleRunningExercisesOnStartup, Instant.now().plusSeconds(QUIZ_EXERCISE_SCHEDULE_DELAY_SEC));
+    }
+
+    public void scheduleRunningExercisesOnStartup() {
+        try {
+            Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
+            if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
+                // only execute this on production server, i.e. when the prod profile is active
+                // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
+                return;
+            }
+            SecurityUtils.setAuthorizationObject();
+
+            List<QuizExercise> exercisesToBeScheduled = quizExerciseRepository.findAllToBeScheduled(ZonedDateTime.now());
+            exercisesToBeScheduled.forEach(this::scheduleQuizStart);
+
+            log.info("Scheduled {} quiz exercises.", exercisesToBeScheduled.size());
+        }
+        catch (Exception e) {
+            log.error("Failed to start QuizScheduleService", e);
+        }
     }
 }
