@@ -1,5 +1,5 @@
-<div class="w-100 d-flex">
-    @if (!startView) {
+@if (!startView && !studentFailedToSubmit) {
+    <div class="w-100 d-flex">
         <div class="col-md-3">
             <jhi-exam-live-events-button />
         </div>
@@ -15,13 +15,8 @@
             </span>
             <br />
         </h2>
-    }
-
-    @if (!startView && !studentFailedToSubmit) {
         <jhi-exam-timer class="col-md-3 justify-content-end" [isEndView]="true" [endDate]="graceEndDate" [criticalTime]="criticalTime" />
-    }
-</div>
-@if (!startView && !studentFailedToSubmit) {
+    </div>
     <div class="w-100 d-flex">
         <div class="col-md-3"></div>
         <p class="col-md-6 font-weight-bold" style="text-align: center">
@@ -33,8 +28,16 @@
     <div><span style="display: table; margin-left: auto; margin-right: auto" [innerHTML]="formattedGeneralInformation"></span></div>
 }
 @if (studentFailedToSubmit) {
-    <div class="mb-2 font-weight-bold text-danger">
-        {{ 'artemisApp.studentExam.submissionNotInTime' | artemisTranslate }}
+    <div class="col-md-3">
+        <jhi-exam-live-events-button />
+    </div>
+    <div class="d-flex justify-content-between">
+        <div class="col-12 text-center my-auto">
+            <h3>{{ exam.title }}</h3>
+            <div class="mb-2 font-weight-bold text-danger">
+                {{ 'artemisApp.studentExam.submissionNotInTime' | artemisTranslate }}
+            </div>
+        </div>
     </div>
 }
 @if (!studentFailedToSubmit) {
