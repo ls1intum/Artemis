@@ -103,6 +103,12 @@ public class LocalVCServletService {
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private String localVCBasePath;
 
+    @Value("${artemis.version-control.build-agent-git-username}")
+    private String buildAgentGitUsername;
+
+    @Value("${artemis.version-control.build-agent-git-password}")
+    private String buildAgentGitPassword;
+
     /**
      * Name of the header containing the authorization information.
      */
@@ -188,7 +194,18 @@ public class LocalVCServletService {
 
         long timeNanoStart = System.nanoTime();
 
-        User user = authenticateUser(request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER));
+        String authorizationHeader = request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER);
+
+        // If it is a fetch request, we check if it is the build agent that is fetching the repository.
+        if (repositoryAction == RepositoryActionType.READ) {
+            UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
+            if (Objects.equals(usernameAndPassword.username(), buildAgentGitUsername) && Objects.equals(usernameAndPassword.password(), buildAgentGitPassword)) {
+                // Authentication successful
+                return;
+            }
+        }
+
+        User user = authenticateUser(authorizationHeader);
 
         // Optimization.
         // For each git command (i.e. 'git fetch' or 'git push'), the git client sends three requests.
@@ -220,15 +237,10 @@ public class LocalVCServletService {
 
     private User authenticateUser(String authorizationHeader) throws LocalVCAuthException {
 
-        String basicAuthCredentials = checkAuthorizationHeader(authorizationHeader);
-        int separatorIndex = basicAuthCredentials.indexOf(":");
+        UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
 
-        if (separatorIndex == -1) {
-            throw new LocalVCAuthException();
-        }
-
-        String username = basicAuthCredentials.substring(0, separatorIndex);
-        String password = basicAuthCredentials.substring(separatorIndex + 1);
+        String username = usernameAndPassword.username();
+        String password = usernameAndPassword.password();
 
         var user = userRepository.findOneByLogin(username);
 
@@ -306,6 +318,19 @@ public class LocalVCServletService {
 
         // Return decoded basic auth credentials which contain the username and the password.
         return new String(Base64.getDecoder().decode(basicAuthCredentialsEncoded[1]));
+    }
+
+    private UsernameAndPassword extractUsernameAndPassword(String authorizationHeader) throws LocalVCAuthException {
+        String basicAuthCredentials = checkAuthorizationHeader(authorizationHeader);
+        int separatorIndex = basicAuthCredentials.indexOf(":");
+
+        if (separatorIndex == -1) {
+            throw new LocalVCAuthException();
+        }
+        String username = basicAuthCredentials.substring(0, separatorIndex);
+        String password = basicAuthCredentials.substring(separatorIndex + 1);
+
+        return new UsernameAndPassword(username, password);
     }
 
     /**
@@ -590,5 +615,8 @@ public class LocalVCServletService {
     public static String getDefaultBranchOfRepository(Repository repository) {
         Path repositoryFolderPath = repository.getDirectory().toPath();
         return LocalVCService.getDefaultBranchOfRepository(repositoryFolderPath.toString());
+    }
+
+    record UsernameAndPassword(String username, String password) {
     }
 }
