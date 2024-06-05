@@ -57,7 +57,7 @@
             },
             "cloneIntellij": {
                 "button": "Clone in IntelliJ",
-                "helpIcon": "This opens the repository in IntelliJ IDEA. If you do not have it, you can still clone the repository using the terminal."
+                "helpIcon": "This opens the repository in IntelliJ IDEA. If you do not have it, you can still clone the repository in another way."
             },
             "goToBuildPlan": "Go to build plan",
             "openTextEditor": "Open text editor",

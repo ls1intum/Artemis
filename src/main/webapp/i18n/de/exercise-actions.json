@@ -56,7 +56,7 @@
             },
             "cloneIntellij": {
                 "button": "In IntelliJ klonen",
-                "helpIcon": "Dies öffnet das Repository in IntelliJ. Falls du IntelliJ nicht installiert hast, kannst du das Repository im Terminal klonen."
+                "helpIcon": "Dies öffnet das Repository in IntelliJ. Falls du IntelliJ nicht installiert hast, kannst du das Repository anderweitig klonen."
             },
             "goToBuildPlan": "Zum Build Plan gehen",
             "openTextEditor": "Texteditor öffnen",
