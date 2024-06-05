@@ -278,16 +278,15 @@ describe('QuizParticipationComponent', () => {
             expect(checkQuizEndSpy).toHaveBeenCalledTimes(50);
         }));
 
-        it('should add alert on quiz end', fakeAsync(() => {
+        it('should trigger a save on quiz end if the answers were not submitted', fakeAsync(() => {
             fixture.detectChanges();
 
             component.endDate = dayjs().add(1, 'seconds');
             component.quizExercise.quizMode = QuizMode.BATCHED;
             component.submission.submissionDate = dayjs();
+            component.submission.submitted = false;
 
-            const alertService = fixture.debugElement.injector.get(AlertService);
-            const alertSpy = jest.spyOn(alertService, 'success');
-
+            const triggerSaveStub = jest.spyOn(component, 'triggerSave').mockImplementation();
             const checkQuizEndSpy = jest.spyOn(component, 'checkForQuizEnd');
 
             tick(2000);
@@ -295,7 +294,7 @@ describe('QuizParticipationComponent', () => {
             discardPeriodicTasks();
 
             expect(checkQuizEndSpy).toHaveBeenCalledTimes(20);
-            expect(alertSpy).toHaveBeenCalledOnce();
+            expect(triggerSaveStub).toHaveBeenCalledOnce();
         }));
 
         it('should refresh quiz', () => {
