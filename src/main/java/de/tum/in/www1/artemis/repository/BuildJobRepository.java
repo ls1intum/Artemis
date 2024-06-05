@@ -36,17 +36,18 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSp
 
     @Query("""
             SELECT b
-            FROM BuildJob b LEFT JOIN Course c ON b.courseId = c.id
-            LEFT JOIN FETCH b.result r
-            LEFT JOIN FETCH r.participation p
-            LEFT JOIN FETCH p.exercise
-            LEFT JOIN FETCH r.submission
+            FROM BuildJob b
+                LEFT JOIN Course c ON b.courseId = c.id
+                LEFT JOIN FETCH b.result r
+                LEFT JOIN FETCH r.participation p
+                LEFT JOIN FETCH p.exercise
+                LEFT JOIN FETCH r.submission
             WHERE (:buildStatus IS NULL OR b.buildStatus = :buildStatus)
-            AND (:buildAgentAddress IS NULL OR b.buildAgentAddress = :buildAgentAddress)
-            AND (:startDate IS NULL OR b.buildStartDate >= :startDate)
-            AND (:endDate IS NULL OR b.buildStartDate <= :endDate)
-            AND (:searchTerm IS NULL OR (b.repositoryName LIKE %:searchTerm% OR c.title LIKE %:searchTerm%))
-            AND (:courseId IS NULL OR b.courseId = :courseId)
+                AND (:buildAgentAddress IS NULL OR b.buildAgentAddress = :buildAgentAddress)
+                AND (:startDate IS NULL OR b.buildStartDate >= :startDate)
+                AND (:endDate IS NULL OR b.buildStartDate <= :endDate)
+                AND (:searchTerm IS NULL OR (b.repositoryName LIKE %:searchTerm% OR c.title LIKE %:searchTerm%))
+                AND (:courseId IS NULL OR b.courseId = :courseId)
             """)
     Page<BuildJob> findAllByFilterCriteria(@Param("buildStatus") BuildStatus buildStatus, @Param("buildAgentAddress") String buildAgentAddress,
             @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("searchTerm") String searchTerm, @Param("courseId") Long courseId,

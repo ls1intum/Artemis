@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
 
 import com.hazelcast.collection.IQueue;
 import com.hazelcast.core.HazelcastInstance;
@@ -251,6 +252,42 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         assertThat(result).hasSize(2);
         assertThat(result.get(0).id()).isEqualTo(finishedJob1.getBuildJobId());
         assertThat(result.get(1).id()).isEqualTo(finishedJob2.getBuildJobId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testGetFinishedBuildJobs_returnsFilteredJobs() throws Exception {
+        buildJobRepository.deleteAll();
+
+        // Create a failed job to filter for
+        JobTimingInfo jobTimingInfo = new JobTimingInfo(ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(1).plusMinutes(2),
+                ZonedDateTime.now().plusDays(1).plusMinutes(10));
+        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null);
+        RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
+        var failedJob1 = new BuildJobQueueItem("5", "job5", "address1", 1, course.getId(), 1, 1, 1, BuildStatus.FAILED, repositoryInfo, jobTimingInfo, buildConfig, null);
+        var jobResult = new Result().successful(false).rated(true).score(0D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
+        var failedFinishedJob = new BuildJob(failedJob1, BuildStatus.FAILED, jobResult);
+
+        // Save the jobs
+        buildJobRepository.save(finishedJob1);
+        buildJobRepository.save(finishedJob2);
+        resultRepository.save(jobResult);
+        buildJobRepository.save(failedFinishedJob);
+
+        // Filter for the failed job
+        PageableSearchDTO<String> pageableSearchDTO = pageableSearchUtilService.configureFinishedJobsSearchDTO();
+        LinkedMultiValueMap<String, String> searchParams = pageableSearchUtilService.searchMapping(pageableSearchDTO, "pageable");
+        searchParams.add("buildStatus", "FAILED");
+        searchParams.add("startDate", jobTimingInfo.buildStartDate().toString());
+        searchParams.add("endDate", jobTimingInfo.buildCompletionDate().toString());
+        searchParams.add("searchTerm", "short");
+        searchParams.add("buildDurationLower", "120");
+        searchParams.add("buildDurationUpper", "600");
+
+        // Check that only the failed job is returned
+        var result = request.getList("/api/admin/finished-jobs", HttpStatus.OK, FinishedBuildJobDTO.class, searchParams);
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().id()).isEqualTo(failedFinishedJob.getBuildJobId());
     }
 
     @Test
