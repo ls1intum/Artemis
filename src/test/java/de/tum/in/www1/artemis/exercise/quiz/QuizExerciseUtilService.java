@@ -29,16 +29,13 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropMapping;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
-import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestionStatistic;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropSubmittedAnswer;
 import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceQuestion;
-import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceQuestionStatistic;
 import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceSubmittedAnswer;
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestion;
-import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestionStatistic;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSubmittedAnswer;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSubmittedText;
 import de.tum.in.www1.artemis.exam.ExamFactory;
@@ -54,11 +51,9 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmittedAnswerRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.service.FilePathService;
-import de.tum.in.www1.artemis.service.quiz.QuizExerciseService;
-import de.tum.in.www1.artemis.service.quiz.QuizIdAssigner;
-import de.tum.in.www1.artemis.service.quiz.QuizService;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.util.QuizUpdater;
 
 /**
  * Service responsible for initializing the database with specific testdata related to quiz exercises for use in integration tests.
@@ -115,10 +110,7 @@ public class QuizExerciseUtilService {
     private QuizScheduleService quizScheduleService;
 
     @Autowired
-    private QuizExerciseService quizExerciseService;
-
-    @Autowired
-    private QuizService<QuizExercise> quizService;
+    private QuizUpdater quizUpdater;
 
     /**
      * Creates and saves a course with one quiz exercise with the title "Title".
@@ -146,27 +138,7 @@ public class QuizExerciseUtilService {
         assertThat(quizExercise.isValid()).isTrue();
         course.addExercises(quizExercise);
         course = courseRepo.save(course);
-        for (var quizQuestion : quizExercise.getQuizQuestions()) {
-            if (quizQuestion.getQuizQuestionStatistic() == null) {
-                quizQuestion.initializeStatistic();
-            }
-
-            if (quizQuestion instanceof MultipleChoiceQuestion multipleChoiceQuestion) {
-                quizExerciseService.fixReferenceMultipleChoice(multipleChoiceQuestion);
-                QuizIdAssigner.assignIds(multipleChoiceQuestion.getAnswerOptions());
-                QuizIdAssigner.assignIds(((MultipleChoiceQuestionStatistic) multipleChoiceQuestion.getQuizQuestionStatistic()).getAnswerCounters());
-            }
-            else if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
-                quizExerciseService.fixReferenceDragAndDrop(dragAndDropQuestion);
-                quizExerciseService.restoreCorrectMappingsFromIndicesDragAndDrop(dragAndDropQuestion);
-                QuizIdAssigner.assignIds(((DragAndDropQuestionStatistic) dragAndDropQuestion.getQuizQuestionStatistic()).getDropLocationCounters());
-            }
-            else if (quizQuestion instanceof ShortAnswerQuestion shortAnswerQuestion) {
-                quizExerciseService.fixReferenceShortAnswer(shortAnswerQuestion);
-                quizExerciseService.restoreCorrectMappingsFromIndicesShortAnswer(shortAnswerQuestion);
-                QuizIdAssigner.assignIds(((ShortAnswerQuestionStatistic) shortAnswerQuestion.getQuizQuestionStatistic()).getShortAnswerSpotCounters());
-            }
-        }
+        quizUpdater.updateQuizQuestions(quizExercise);
         quizExercise = exerciseRepo.save(quizExercise);
         assertThat(courseRepo.findWithEagerExercisesById(course.getId()).getExercises()).as("course contains the exercise").contains(quizExercise);
         return course;
@@ -210,28 +182,7 @@ public class QuizExerciseUtilService {
      */
     public QuizExercise createAndSaveQuiz(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
         QuizExercise quizExercise = createQuiz(releaseDate, dueDate, quizMode);
-
-        for (var quizQuestion : quizExercise.getQuizQuestions()) {
-            if (quizQuestion.getQuizQuestionStatistic() == null) {
-                quizQuestion.initializeStatistic();
-            }
-
-            if (quizQuestion instanceof MultipleChoiceQuestion multipleChoiceQuestion) {
-                quizExerciseService.fixReferenceMultipleChoice(multipleChoiceQuestion);
-                QuizIdAssigner.assignIds(multipleChoiceQuestion.getAnswerOptions());
-                QuizIdAssigner.assignIds(((MultipleChoiceQuestionStatistic) multipleChoiceQuestion.getQuizQuestionStatistic()).getAnswerCounters());
-            }
-            else if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
-                quizExerciseService.fixReferenceDragAndDrop(dragAndDropQuestion);
-                quizExerciseService.restoreCorrectMappingsFromIndicesDragAndDrop(dragAndDropQuestion);
-                QuizIdAssigner.assignIds(((DragAndDropQuestionStatistic) dragAndDropQuestion.getQuizQuestionStatistic()).getDropLocationCounters());
-            }
-            else if (quizQuestion instanceof ShortAnswerQuestion shortAnswerQuestion) {
-                quizExerciseService.fixReferenceShortAnswer(shortAnswerQuestion);
-                quizExerciseService.restoreCorrectMappingsFromIndicesShortAnswer(shortAnswerQuestion);
-                QuizIdAssigner.assignIds(((ShortAnswerQuestionStatistic) shortAnswerQuestion.getQuizQuestionStatistic()).getShortAnswerSpotCounters());
-            }
-        }
+        quizUpdater.updateQuizQuestions(quizExercise);
 
         quizExerciseRepository.save(quizExercise);
 
@@ -310,28 +261,7 @@ public class QuizExerciseUtilService {
 
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExerciseForExam(exerciseGroup);
         QuizExerciseFactory.addQuestionsToQuizExercise(quizExercise);
-
-        for (var quizQuestion : quizExercise.getQuizQuestions()) {
-            if (quizQuestion.getQuizQuestionStatistic() == null) {
-                quizQuestion.initializeStatistic();
-            }
-
-            if (quizQuestion instanceof MultipleChoiceQuestion multipleChoiceQuestion) {
-                quizExerciseService.fixReferenceMultipleChoice(multipleChoiceQuestion);
-                QuizIdAssigner.assignIds(multipleChoiceQuestion.getAnswerOptions());
-                QuizIdAssigner.assignIds(((MultipleChoiceQuestionStatistic) multipleChoiceQuestion.getQuizQuestionStatistic()).getAnswerCounters());
-            }
-            else if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
-                quizExerciseService.fixReferenceDragAndDrop(dragAndDropQuestion);
-                quizExerciseService.restoreCorrectMappingsFromIndicesDragAndDrop(dragAndDropQuestion);
-                QuizIdAssigner.assignIds(((DragAndDropQuestionStatistic) dragAndDropQuestion.getQuizQuestionStatistic()).getDropLocationCounters());
-            }
-            else if (quizQuestion instanceof ShortAnswerQuestion shortAnswerQuestion) {
-                quizExerciseService.fixReferenceShortAnswer(shortAnswerQuestion);
-                quizExerciseService.restoreCorrectMappingsFromIndicesShortAnswer(shortAnswerQuestion);
-                QuizIdAssigner.assignIds(((ShortAnswerQuestionStatistic) shortAnswerQuestion.getQuizQuestionStatistic()).getShortAnswerSpotCounters());
-            }
-        }
+        quizUpdater.updateQuizQuestions(quizExercise);
 
         quizExerciseRepository.save(quizExercise);
 
@@ -490,28 +420,8 @@ public class QuizExerciseUtilService {
     public QuizExercise createAndSaveQuizWithAllQuestionTypes(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, QuizMode quizMode) {
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(releaseDate, dueDate, assessmentDueDate, quizMode, course);
         QuizExerciseFactory.addAllQuestionTypesToQuizExercise(quizExercise);
+        quizUpdater.updateQuizQuestions(quizExercise);
 
-        for (var quizQuestion : quizExercise.getQuizQuestions()) {
-            if (quizQuestion.getQuizQuestionStatistic() == null) {
-                quizQuestion.initializeStatistic();
-            }
-
-            if (quizQuestion instanceof MultipleChoiceQuestion multipleChoiceQuestion) {
-                quizExerciseService.fixReferenceMultipleChoice(multipleChoiceQuestion);
-                QuizIdAssigner.assignIds(multipleChoiceQuestion.getAnswerOptions());
-                QuizIdAssigner.assignIds(((MultipleChoiceQuestionStatistic) multipleChoiceQuestion.getQuizQuestionStatistic()).getAnswerCounters());
-            }
-            else if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
-                quizExerciseService.fixReferenceDragAndDrop(dragAndDropQuestion);
-                quizExerciseService.restoreCorrectMappingsFromIndicesDragAndDrop(dragAndDropQuestion);
-                QuizIdAssigner.assignIds(((DragAndDropQuestionStatistic) dragAndDropQuestion.getQuizQuestionStatistic()).getDropLocationCounters());
-            }
-            else if (quizQuestion instanceof ShortAnswerQuestion shortAnswerQuestion) {
-                quizExerciseService.fixReferenceShortAnswer(shortAnswerQuestion);
-                quizExerciseService.restoreCorrectMappingsFromIndicesShortAnswer(shortAnswerQuestion);
-                QuizIdAssigner.assignIds(((ShortAnswerQuestionStatistic) shortAnswerQuestion.getQuizQuestionStatistic()).getShortAnswerSpotCounters());
-            }
-        }
         return quizExerciseRepository.save(quizExercise);
     }
 
