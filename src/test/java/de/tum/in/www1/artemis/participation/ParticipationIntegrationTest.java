@@ -1601,6 +1601,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             var quizEx = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now().plusMinutes(5), quizMode, course).duration(360);
             quizEx = exerciseRepo.save(quizEx);
 
+            request.postWithResponseBody("/api/quiz-exercises/" + quizEx.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
+
             if (quizMode != QuizMode.SYNCHRONIZED) {
                 var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizEx, ZonedDateTime.now().minusSeconds(10)));
                 quizExerciseUtilService.joinQuizBatch(quizEx, batch, TEST_PREFIX + "student1");

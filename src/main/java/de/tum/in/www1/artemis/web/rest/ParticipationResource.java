@@ -991,7 +991,7 @@ public class ParticipationResource {
         Optional<Submission> optionalSubmission = submissionRepository.findByParticipationIdOrderBySubmissionDateDesc(participation.getId());
         if (optionalSubmission.isPresent()) {
             Result result = new Result().submission(optionalSubmission.get());
-            participation.addResult(result);
+            participation.setResults(Set.of(result));
         }
 
         return participation;
