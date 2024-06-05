@@ -63,12 +63,6 @@ public abstract class AbstractGitService {
     @Value("${artemis.version-control.url}")
     protected URL gitUrl;
 
-    @Value("${artemis.version-control.user}")
-    protected String gitUser;
-
-    @Value("${artemis.version-control.password}")
-    protected String gitPassword;
-
     @Value("${artemis.version-control.token:#{null}}")
     protected Optional<String> gitToken;
 
