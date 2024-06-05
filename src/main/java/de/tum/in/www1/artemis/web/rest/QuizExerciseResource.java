@@ -432,14 +432,6 @@ public class QuizExerciseResource {
             throw new AccessForbiddenException();
         }
 
-        /*
-         * TODO: fix or remove this check. a submission is always created when the user opens the quiz - and there should only be one submission per user (?)
-         * int submissions = submissionRepository.countByExerciseIdAndStudentLogin(quizExerciseId, user.getLogin());
-         * if (quizExercise.getAllowedNumberOfAttempts() != null && submissions >= quizExercise.getAllowedNumberOfAttempts()) {
-         * throw new BadRequestAlertException("Maximum number of attempts reached.", ENTITY_NAME, "quizAttemptsExceeded");
-         * }
-         */
-
         try {
             var batch = quizBatchService.joinBatch(quizExercise, user, joinRequest.password());
             return ResponseEntity.ok(batch);
