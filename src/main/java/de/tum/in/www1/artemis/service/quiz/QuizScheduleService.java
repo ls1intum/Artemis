@@ -114,7 +114,7 @@ public class QuizScheduleService {
         }
     }
 
-    private void calculateAllResults(long quizExerciseId) {
+    public void calculateAllResults(long quizExerciseId) {
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         log.info("Calculating results for quiz {}", quizExercise.getId());
         participationRepository.findByExerciseId(quizExercise.getId()).forEach(participation -> {

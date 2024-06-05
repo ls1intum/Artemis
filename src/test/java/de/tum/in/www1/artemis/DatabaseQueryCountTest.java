@@ -56,7 +56,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
             var userCourses = request.get("/api/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
             log.info("Finish courses for dashboard call for multiple courses");
             return userCourses;
-        }).hasBeenCalledAtMostTimes(12); // TODO: reduce this number back to 10
+        }).hasBeenCalledTimes(11);
         // 1 DB call to get the user from the DB
         // 1 DB call to get all active courses
         // 1 DB call to load all exercises
@@ -75,7 +75,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
             var userCourse = request.get("/api/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, Course.class);
             log.info("Finish courses for dashboard call for one course");
             return userCourse;
-        }).hasBeenCalledAtMostTimes(11);
+        }).hasBeenCalledTimes(12); // TODO: reduce this number back to 10
         // 1 DB call to get the user from the DB
         // 1 DB call to get the course with lectures
         // 1 DB call to load all exercises with categories
@@ -85,6 +85,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
         // 1 DB call to get all team student participations with submissions and results
         // 1 DB call to get all plagiarism cases
         // 1 DB call to get the grading scale
+        // 1 DB call to get the batch of a live quiz. No Batches of other quizzes are retrieved
     }
 
     @Test
