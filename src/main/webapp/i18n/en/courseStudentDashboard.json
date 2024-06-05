@@ -1,0 +1,34 @@
+{
+    "artemisApp": {
+        "courseStudentDashboard": {
+            "noMetrics": "No metrics are available for you in this course yet.",
+            "overallPerformance": {
+                "title": "Overall Performance"
+            },
+            "exercisePerformance": {
+                "title": "Exercise Performance",
+                "info": "Performance is measured as the percentage of points you have achieved in an exercise.",
+                "noData": "No scores are available for you in this course yet.",
+                "yourScoreLabel": "Your score",
+                "averageScoreLabel": "Average score",
+                "xAxisLabel": "Exercises",
+                "yAxisLabel": "Score (%)"
+            },
+            "exerciseLateness": {
+                "title": "Exercise Lateness",
+                "info": "Relative lateness refers to the percentage of working time that has passed.",
+                "noData": "You have not submitted any exercises in this course yet.",
+                "yourLatenessLabel": "Your lateness",
+                "averageLatenessLabel": "Average lateness",
+                "xAxisLabel": "Exercises",
+                "yAxisLabel": "Relative lateness (%)"
+            },
+            "judgementOfLearning": {
+                "title": "How would you rate your mastery?",
+                "artemisRating": "Artemis rates your mastery as",
+                "error": "An error occurred while saving your rating.",
+                "redirectButton": "Rate mastery on dashboard"
+            }
+        }
+    }
+}
