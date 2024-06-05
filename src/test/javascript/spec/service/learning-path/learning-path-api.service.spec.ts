@@ -1,10 +1,12 @@
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
-import { TestBed } from '@angular/core/testing';
+import { TestBed, waitForAsync } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 
 describe('LearningPathApiService', () => {
+    let httpClient: HttpTestingController;
     let learningPathApiService: LearningPathApiService;
-    let httpClientMock: HttpTestingController;
+
+    const url = 'api';
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -13,14 +15,26 @@ describe('LearningPathApiService', () => {
         });
 
         learningPathApiService = TestBed.inject(LearningPathApiService);
-        httpClientMock = TestBed.inject(HttpTestingController);
+        httpClient = TestBed.inject(HttpTestingController);
     });
 
-    it('getLearningPathId should return the learning path id', async () => {
-        const courseId = 1;
-        const learningPathId = 2;
-        const result = await learningPathApiService.getLearningPathId(courseId);
-        httpClientMock.expectOne(`api/courses/${courseId}/learning-path-id`).flush(learningPathId);
-        expect(result).toEqual(learningPathId);
+    afterEach(() => {
+        httpClient.verify();
     });
+
+    it('should create', () => {
+        expect(learningPathApiService).toBeTruthy();
+    });
+
+    it('should get learning path id', waitForAsync(async () => {
+        const courseId = 1;
+        const learningPathId = 1;
+
+        const methodCall = learningPathApiService.getLearningPathId(courseId);
+        const req = httpClient.expectOne({ method: 'GET', url: `${url}/courses/${courseId}/learning-path-id` });
+        req.flush(learningPathId);
+
+        const result = await methodCall;
+        expect(result).toEqual(learningPathId);
+    }));
 });
