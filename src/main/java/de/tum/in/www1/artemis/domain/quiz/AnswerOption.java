@@ -99,6 +99,15 @@ public class AnswerOption extends TempIdObject implements QuizQuestionComponent<
         this.invalid = invalid;
     }
 
+    /**
+     * Checks if the current object's explanation is valid.
+     *
+     * @return true if the explanation length is less than or equal to 500 characters, false otherwise.
+     */
+    public boolean isValid() {
+        return this.getExplanation().length() <= 500;
+    }
+
     @Override
     public String toString() {
         return "AnswerOption{" + "id=" + getId() + ", text='" + getText() + "'" + ", hint='" + getHint() + "'" + ", explanation='" + getExplanation() + "'" + ", isCorrect='"
