@@ -574,7 +574,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     it('assureConditionsSatisfied should alert and return false if the maximum number of successful Athena results is reached', () => {
         jest.spyOn(window, 'alert').mockImplementation(() => {});
         const numResults = 20;
-        const results = [];
+        const results: Array<{ assessmentType: AssessmentType, successful: boolean }> = [];
 
         for (let i = 0; i < numResults; i++) {
             results.push({ assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true });
