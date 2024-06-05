@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.exercise.quiz;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,7 +24,7 @@ public class QuizIdAssignerTest {
     public void testAssignIds_EmptyCollection() {
         Collection<TestTempIdObject> items = new ArrayList<>();
         QuizIdAssigner.assignIds(items);
-        assertTrue(items.isEmpty(), "Collection should remain empty");
+        assertThat(items).isEmpty();
     }
 
     @Test
@@ -34,7 +32,7 @@ public class QuizIdAssignerTest {
         Collection<TestTempIdObject> items = List.of(new TestTempIdObject(1L), new TestTempIdObject(2L));
         QuizIdAssigner.assignIds(items);
         for (TestTempIdObject item : items) {
-            assertNotNull(item.getId(), "ID should not be changed");
+            assertThat(item.getId()).isNotNull();
         }
     }
 
@@ -53,8 +51,7 @@ public class QuizIdAssignerTest {
         for (TestTempIdObject item : items) {
             actualIds.add(item.getId());
         }
-
-        assertEquals(expectedIds, actualIds, "IDs should be assigned correctly");
+        assertThat(expectedIds).isEqualTo(actualIds);
     }
 
     @Test
@@ -71,7 +68,6 @@ public class QuizIdAssignerTest {
         for (TestTempIdObject item : items) {
             actualIds.add(item.getId());
         }
-
-        assertEquals(expectedIds, actualIds, "IDs should be assigned correctly");
+        assertThat(expectedIds).isEqualTo(actualIds);
     }
 }
