@@ -1054,10 +1054,12 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
 
         modelingAssessment = resultRepo.findDistinctWithFeedbackBySubmissionId(modelingSubmission2.getId()).orElseThrow();
         assertThat(modelingAssessment.getFeedbacks()).as("assessment is correctly stored").hasSize(1);
-        assertThat(modelingAssessment.getFeedbacks().get(0)).as("feedback credits and text are correct").isEqualToComparingOnlyGivenFields(changedFeedback, "credits", "text");
+        assertThat(modelingAssessment.getFeedbacks().getFirst().getCredits()).as("feedback credits are correct").isEqualTo(changedFeedback.getCredits());
+        assertThat(modelingAssessment.getFeedbacks().getFirst().getText()).as("feedback text are correct").isEqualTo(changedFeedback.getText());
         modelingAssessment = resultRepo.findDistinctWithFeedbackBySubmissionId(modelingSubmission.getId()).orElseThrow();
         assertThat(modelingAssessment.getFeedbacks()).as("existing manual assessment has correct amount of feedback").hasSize(1);
-        assertThat(modelingAssessment.getFeedbacks().get(0)).as("existing manual assessment did not change").isEqualToComparingOnlyGivenFields(originalFeedback, "credits", "text");
+        assertThat(modelingAssessment.getFeedbacks().getFirst().getCredits()).as("existing manual assessment did not change credits").isEqualTo(originalFeedback.getCredits());
+        assertThat(modelingAssessment.getFeedbacks().getFirst().getText()).as("existing manual assessment did not change text").isEqualTo(originalFeedback.getText());
     }
 
     @Test
@@ -1080,11 +1082,12 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
 
         modelingAssessment = resultRepo.findDistinctWithFeedbackBySubmissionId(modelingSubmission.getId()).orElseThrow();
         assertThat(modelingAssessment.getFeedbacks()).as("overridden assessment has correct amount of feedback").hasSize(1);
-        assertThat(modelingAssessment.getFeedbacks().get(0)).as("feedback is properly overridden").isEqualToComparingOnlyGivenFields(changedFeedback, "credits", "text");
+        assertThat(modelingAssessment.getFeedbacks().getFirst().getCredits()).as("feedback credits are properly overridden").isEqualTo(changedFeedback.getCredits());
+        assertThat(modelingAssessment.getFeedbacks().getFirst().getText()).as("feedback text is properly overridden").isEqualTo(changedFeedback.getText());
         modelingAssessment = compassService.getSuggestionResult(modelingSubmission2, classExercise);
         assertThat(modelingAssessment.getFeedbacks()).as("automatic assessment still exists").hasSize(1);
-        assertThat(modelingAssessment.getFeedbacks().get(0)).as("automatic assessment is overridden properly").isEqualToComparingOnlyGivenFields(changedFeedback, "credits",
-                "text");
+        assertThat(modelingAssessment.getFeedbacks().getFirst().getCredits()).as("automatic assessment credits are overridden properly").isEqualTo(changedFeedback.getCredits());
+        assertThat(modelingAssessment.getFeedbacks().getFirst().getText()).as("automatic assessment text is overridden properly").isEqualTo(changedFeedback.getText());
     }
 
     @Test
@@ -1112,10 +1115,12 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
 
         modelingAssessment = resultRepo.findDistinctWithFeedbackBySubmissionId(modelingSubmission.getId()).orElseThrow();
         assertThat(modelingAssessment.getFeedbacks()).as("overridden assessment has correct amount of feedback").hasSize(2);
-        assertThat(modelingAssessment.getFeedbacks().get(0)).as("feedback is properly overridden").isEqualToComparingOnlyGivenFields(changedFeedback, "credits", "text");
+        assertThat(modelingAssessment.getFeedbacks().getFirst().getCredits()).as("feedback credits are properly overridden").isEqualTo(changedFeedback.getCredits());
+        assertThat(modelingAssessment.getFeedbacks().getFirst().getText()).as("feedback text is properly overridden").isEqualTo(changedFeedback.getText());
         modelingAssessment = resultRepo.findDistinctWithFeedbackBySubmissionId(modelingSubmission2.getId()).orElseThrow();
         assertThat(modelingAssessment.getFeedbacks()).as("existing submitted assessment still exists").hasSize(2);
-        assertThat(modelingAssessment.getFeedbacks().get(0)).as("existing feedback is still the same").isEqualToComparingOnlyGivenFields(originalFeedback, "credits", "text");
+        assertThat(modelingAssessment.getFeedbacks().getFirst().getCredits()).as("existing feedback credits are still the same").isEqualTo(originalFeedback.getCredits());
+        assertThat(modelingAssessment.getFeedbacks().getFirst().getText()).as("existing feedback text is still the same").isEqualTo(originalFeedback.getText());
         modelingAssessment = compassService.getSuggestionResult(modelingSubmission3, classExercise);
         assertThat(modelingAssessment).as("automatic assessment is not possible").isNull();
 

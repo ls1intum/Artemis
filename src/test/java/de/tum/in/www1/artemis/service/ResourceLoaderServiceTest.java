@@ -8,6 +8,7 @@ import static org.mockito.Mockito.mock;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -163,7 +164,7 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationIndependentTest
     void testGetResourceFilePathFromJar() throws IOException, URISyntaxException {
         ResourceLoader resourceLoader = mock(ResourceLoader.class);
         Resource resource = mock(Resource.class);
-        URL resourceUrl = new URL("jar:file:/example.jar!/path/to/resource.txt");
+        URL resourceUrl = new URI("jar:file:/example.jar!/path/to/resource.txt").toURL();
 
         // Mock the getResource() method.
         doReturn(true).when(resource).exists();

@@ -46,6 +46,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
  * A user.
@@ -230,6 +231,12 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public User(Long id) {
         this.setId(id);
+    }
+
+    public User(Long id, String firstName, String lastName) {
+        this(id);
+        this.firstName = firstName;
+        this.lastName = lastName;
     }
 
     public User(Long id, String login, String firstName, String lastName, String langKey, String email) {
@@ -534,6 +541,20 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Nullable
     public ZonedDateTime getIrisAcceptedTimestamp() {
         return irisAccepted;
+    }
+
+    public void setIrisAcceptedTimestamp(@Nullable ZonedDateTime irisAccepted) {
+        this.irisAccepted = irisAccepted;
+    }
+
+    /**
+     * Checks if the user has accepted the Iris privacy policy.
+     * If not, an {@link AccessForbiddenException} is thrown.
+     */
+    public void hasAcceptedIrisElseThrow() {
+        if (irisAccepted == null) {
+            throw new AccessForbiddenException("The user has not accepted the Iris privacy policy yet.");
+        }
     }
 
     @Nullable
