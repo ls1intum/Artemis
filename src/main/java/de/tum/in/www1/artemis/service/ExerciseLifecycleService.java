@@ -39,9 +39,10 @@ public class ExerciseLifecycleService {
      * events from both your application logic (e.g. exercise modification) and on application startup. You can use the {@code PostConstruct} Annotation to call one service method
      * on startup.
      *
-     * @param exercise  Exercise
-     * @param lifecycle ExerciseLifecycle
-     * @param task      Runnable
+     * @param exercise      The exercise for which the task is scheduled
+     * @param lifecycleDate The date at which the task should be executed
+     * @param lifecycle     The lifecycle event that triggers the task
+     * @param task          The task to be executed
      * @return The {@code ScheduledFuture<?>} allows to later cancel the task or check whether it has been executed.
      */
     public ScheduledFuture<?> scheduleTask(Exercise exercise, ZonedDateTime lifecycleDate, ExerciseLifecycle lifecycle, Runnable task) {
@@ -56,9 +57,9 @@ public class ExerciseLifecycleService {
      * events from both your application logic (e.g. exercise modification) and on application startup. You can use the {@code PostConstruct} Annotation to call one service method
      * on startup.
      *
-     * @param exercise  Exercise
-     * @param lifecycle ExerciseLifecycle
-     * @param task      Runnable
+     * @param exercise  The exercise for which the task is scheduled
+     * @param lifecycle The lifecycle event that triggers the task
+     * @param task      The task to be executed
      * @return The {@code ScheduledFuture<?>} allows to later cancel the task or check whether it has been executed.
      */
     public ScheduledFuture<?> scheduleTask(Exercise exercise, ExerciseLifecycle lifecycle, Runnable task) {
@@ -71,10 +72,10 @@ public class ExerciseLifecycleService {
      * events from both your application logic (e.g. exercise modification) and on application startup. You can use the {@code PostConstruct} Annotation to call one service method
      * on startup.
      *
-     * @param exercise  QuizExercise
-     * @param batch     QuizBatch
-     * @param lifecycle ExerciseLifecycle
-     * @param task      Runnable
+     * @param exercise  The quiz exercise for which the task is scheduled
+     * @param batch     The quiz batch for which the task is scheduled
+     * @param lifecycle The lifecycle event that triggers the task
+     * @param task      The task to be executed
      * @return The {@code ScheduledFuture<?>} allows to later cancel the task or check whether it has been executed.
      */
     public ScheduledFuture<?> scheduleTask(QuizExercise exercise, QuizBatch batch, ExerciseLifecycle lifecycle, Runnable task) {
@@ -92,9 +93,9 @@ public class ExerciseLifecycleService {
      * restarts. Therefore, schedule your events from both your application logic (e.g. exercise modification) and on application startup. You can use the {@code PostConstruct}
      * Annotation to call one service method on startup.
      *
-     * @param exercise  Exercise
-     * @param lifecycle ExerciseLifecycle
-     * @param tasks     Runnable with ZonedDateTime
+     * @param exercise  The exercise for which the tasks are scheduled
+     * @param lifecycle The lifecycle event that triggers the tasks
+     * @param tasks     The tasks to be executed at distinct points in time
      * @return The {@code ScheduledFuture<?>}s allow to later cancel the tasks or check whether they have been executed.
      */
     public Set<ScheduledFuture<?>> scheduleMultipleTasks(Exercise exercise, ExerciseLifecycle lifecycle, Set<Tuple<ZonedDateTime, Runnable>> tasks) {
