@@ -6,7 +6,8 @@ import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exe
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
-import { EntityResponseType, ExerciseDetailsType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import type { EntityResponseType, ExerciseDetailsType } from 'app/exercises/shared/exercise/exercise.service';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import dayjs from 'dayjs/esm';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockRouter } from '../helpers/mocks/mock-router';
