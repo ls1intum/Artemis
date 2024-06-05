@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject, Subscription } from 'rxjs';
@@ -40,7 +40,7 @@ import { scrollToTopOfPage } from 'app/shared/util/utils';
     templateUrl: './course-management-tab-bar.component.html',
     styleUrls: ['./course-management-tab-bar.component.scss'],
 })
-export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
+export class CourseManagementTabBarComponent implements OnInit, OnDestroy, AfterViewInit {
     readonly FeatureToggle = FeatureToggle;
     readonly ButtonSize = ButtonSize;
 
