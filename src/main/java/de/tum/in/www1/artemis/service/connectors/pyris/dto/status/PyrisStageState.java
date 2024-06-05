@@ -1,5 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors.pyris.dto.status;
 
-public enum PyrisStageStateDTO {
+public enum PyrisStageState {
     NOT_STARTED, IN_PROGRESS, DONE, SKIPPED, ERROR
 }

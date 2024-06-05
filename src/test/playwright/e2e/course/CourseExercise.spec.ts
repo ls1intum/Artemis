@@ -19,9 +19,9 @@ test.describe('Course exercise', () => {
         let exercise3: QuizExercise;
 
         test.beforeEach('Create Exercises', async ({ exerciseAPIRequests }) => {
-            exercise1 = await exerciseAPIRequests.createQuizExercise({ course }, [multipleChoiceQuizTemplate], 'Course Exercise Quiz 1');
-            exercise2 = await exerciseAPIRequests.createQuizExercise({ course }, [multipleChoiceQuizTemplate], 'Course Exercise Quiz 2');
-            exercise3 = await exerciseAPIRequests.createQuizExercise({ course }, [multipleChoiceQuizTemplate], 'Course Exercise 3');
+            exercise1 = await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [multipleChoiceQuizTemplate], title: 'Course Exercise Quiz 1' });
+            exercise2 = await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [multipleChoiceQuizTemplate], title: 'Course Exercise Quiz 2' });
+            exercise3 = await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [multipleChoiceQuizTemplate], title: 'Course Exercise 3' });
         });
 
         test('Filters exercises based on title', async ({ page, courseOverview }) => {

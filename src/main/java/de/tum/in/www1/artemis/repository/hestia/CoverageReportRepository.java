@@ -39,6 +39,7 @@ public interface CoverageReportRepository extends JpaRepository<CoverageReport, 
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY s.submissionDate DESC
             """)
+    // TODO: rewrite this query, pageable does not work well with left join fetch
     List<CoverageReport> getLatestCoverageReportsForLegalSubmissionsForProgrammingExercise(@Param("programmingExerciseId") Long programmingExerciseId, Pageable pageable);
 
     @Query("""
@@ -52,6 +53,7 @@ public interface CoverageReportRepository extends JpaRepository<CoverageReport, 
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY s.submissionDate DESC
             """)
+    // TODO: rewrite this query, pageable does not work well with left join fetch, it needs to transfer all results and only page in java
     List<CoverageReport> getLatestCoverageReportsForLegalSubmissionsForProgrammingExerciseWithEagerFileReportsAndEntries(@Param("programmingExerciseId") Long programmingExerciseId,
             Pageable pageable);
 

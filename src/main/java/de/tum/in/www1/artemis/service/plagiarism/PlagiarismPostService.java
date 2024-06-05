@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.metis.PostingService;
-import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
+import de.tum.in.www1.artemis.web.rest.dto.PostContextFilterDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
@@ -144,22 +144,22 @@ public class PlagiarismPostService extends PostingService {
      * @param postContextFilter filter object
      * @return page of posts that belong to the plagiarism case
      */
-    public List<Post> getAllPlagiarismCasePosts(PostContextFilter postContextFilter) {
+    public List<Post> getAllPlagiarismCasePosts(PostContextFilterDTO postContextFilter) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
-        final Course course = courseRepository.findByIdElseThrow(postContextFilter.getCourseId());
+        final Course course = courseRepository.findByIdElseThrow(postContextFilter.courseId());
         // user has to be at least student in the course
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-        final PlagiarismCase plagiarismCase = plagiarismCaseRepository.findByIdElseThrow(postContextFilter.getPlagiarismCaseId());
+        final PlagiarismCase plagiarismCase = plagiarismCaseRepository.findByIdElseThrow(postContextFilter.plagiarismCaseId());
 
         // checks
         if (authorizationCheckService.isAtLeastInstructorInCourse(plagiarismCase.getExercise().getCourseViaExerciseGroupOrCourseMember(), user)
                 || plagiarismCase.getStudent().getLogin().equals(user.getLogin())) {
             // retrieve posts
             List<Post> plagiarismCasePosts;
-            plagiarismCasePosts = postRepository.findPostsByPlagiarismCaseId(postContextFilter.getPlagiarismCaseId());
+            plagiarismCasePosts = postRepository.findPostsByPlagiarismCaseId(postContextFilter.plagiarismCaseId());
 
             // protect sample solution, grading instructions, etc.
-            setAuthorRoleOfPostings(plagiarismCasePosts);
+            setAuthorRoleOfPostings(plagiarismCasePosts, course.getId());
 
             return plagiarismCasePosts;
         }

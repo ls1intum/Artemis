@@ -668,6 +668,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                     OR p.student.lastName LIKE %:partialStudentName%
                 ) AND r.completionDate IS NOT NULL
             """)
+    // TODO: rewrite this query, pageable does not work well with left join fetch, it needs to transfer all results and only page in java
     Page<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsByExerciseId(@Param("exerciseId") long exerciseId, @Param("partialStudentName") String partialStudentName,
             Pageable pageable);
 

@@ -6,30 +6,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Stores necessary information for a GitLab response to list personal access tokens.
+ *
+ * @param id The id of the personal access token.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class GitLabPersonalAccessTokenListResponseDTO {
-
-    /**
-     * The id of the personal access token.
-     */
-    @JsonProperty
-    private Long id;
-
-    public GitLabPersonalAccessTokenListResponseDTO() {
-        // default constructor for Jackson
-    }
-
-    public GitLabPersonalAccessTokenListResponseDTO(Long id) {
-        this.id = id;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
+public record GitLabPersonalAccessTokenListResponseDTO(@JsonProperty Long id) {
 }
