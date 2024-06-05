@@ -62,10 +62,10 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
     headlinesRecord: Record<string, string>;
 
     // icons
-    faExclamationTriangle = faExclamationTriangle;
-    faCodeCompare = faCodeCompare;
-    faArrowUpRightFromSquare = faArrowUpRightFromSquare;
-    faCodeBranch = faCodeBranch;
+    readonly faExclamationTriangle = faExclamationTriangle;
+    readonly faCodeCompare = faCodeCompare;
+    readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
+    readonly faCodeBranch = faCodeBranch;
 
     WARNING = ButtonType.WARNING;
 
