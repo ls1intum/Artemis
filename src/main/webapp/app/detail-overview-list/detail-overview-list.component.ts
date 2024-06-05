@@ -37,6 +37,7 @@ export enum DetailType {
     ProgrammingProblemStatement = 'detail-problem-statement',
     ProgrammingTimeline = 'detail-timeline',
     ProgrammingBuildStatistics = 'detail-build-statistics',
+    ProgrammingCheckoutDirectories = 'detail-checkout-directories',
 }
 
 @Component({

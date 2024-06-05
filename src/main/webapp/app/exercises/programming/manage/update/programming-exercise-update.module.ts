@@ -2,7 +2,6 @@ import { NgModule } from '@angular/core';
 import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/exercises/programming/manage/update/programming-exercise-plans-and-repositories-preview.component';
 import { ArtemisTeamConfigFormGroupModule } from 'app/exercises/shared/team-config-form-group/team-config-form-group.module';
 import { ArtemisDifficultyPickerModule } from 'app/exercises/shared/difficulty-picker/difficulty-picker.module';
 import { ArtemisPresentationScoreModule } from 'app/exercises/shared/presentation-score/presentation-score.module';
@@ -31,6 +30,8 @@ import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-edito
 import { ProgrammingExerciseCustomBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-build-plan.component';
 import { ProgrammingExerciseDockerImageComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-docker-image/programming-exercise-docker-image.component';
 import { FormsModule } from 'app/forms/forms.module';
+import { ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-build-plan-checkout-directories.component';
+import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
 
 @NgModule({
     imports: [
@@ -54,6 +55,8 @@ import { FormsModule } from 'app/forms/forms.module';
         ExerciseUpdatePlagiarismModule,
         AceEditorModule,
         FormsModule,
+        ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent,
+        ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent,
     ],
     declarations: [
         ProgrammingExerciseUpdateComponent,
@@ -65,10 +68,9 @@ import { FormsModule } from 'app/forms/forms.module';
         ProgrammingExerciseLanguageComponent,
         ProgrammingExerciseGradingComponent,
         ProgrammingExerciseProblemComponent,
-        ProgrammingExercisePlansAndRepositoriesPreviewComponent,
         AddAuxiliaryRepositoryButtonComponent,
         RemoveAuxiliaryRepositoryButtonComponent,
     ],
-    exports: [ProgrammingExerciseUpdateComponent, ProgrammingExercisePlansAndRepositoriesPreviewComponent],
+    exports: [ProgrammingExerciseUpdateComponent],
 })
 export class ArtemisProgrammingExerciseUpdateModule {}

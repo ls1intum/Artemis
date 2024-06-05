@@ -128,8 +128,6 @@ public class TextExerciseUtilService {
      *
      * @param course The course to which the exercise belongs
      * @return the created text exercise
-     * @param course The Course to which the exercise belongs
-     * @return The created TextExercise
      */
     public TextExercise createSampleTextExercise(Course course) {
         var textExercise = new TextExercise();
@@ -138,6 +136,8 @@ public class TextExerciseUtilService {
         textExercise.setShortName("Shortname");
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
+        textExercise.setGradingInstructions("Grading instructions");
+        textExercise.setProblemStatement("Problem statement");
         textExercise = textExerciseRepository.save(textExercise);
         return textExercise;
     }
