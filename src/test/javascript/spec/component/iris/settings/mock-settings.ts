@@ -1,6 +1,11 @@
 import { IrisModel } from 'app/entities/iris/settings/iris-model';
 import { IrisTemplate } from 'app/entities/iris/settings/iris-template';
-import { IrisChatSubSettings, IrisCompetencyGenerationSubSettings, IrisHestiaSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
+import {
+    IrisChatSubSettings,
+    IrisCompetencyGenerationSubSettings,
+    IrisHestiaSubSettings,
+    IrisLectureIngestionSubSettings,
+} from 'app/entities/iris/settings/iris-sub-settings.model';
 import { IrisGlobalSettings } from 'app/entities/iris/settings/iris-settings.model';
 
 export function mockSettings() {
@@ -11,6 +16,9 @@ export function mockSettings() {
     mockChatSettings.id = 1;
     mockChatSettings.template = mockTemplate;
     mockChatSettings.enabled = true;
+    const mockLectureIngestionSettings = new IrisLectureIngestionSubSettings();
+    mockLectureIngestionSettings.id = 7;
+    mockLectureIngestionSettings.enabled = true;
     const mockHestiaSettings = new IrisHestiaSubSettings();
     mockHestiaSettings.id = 2;
     mockHestiaSettings.template = mockTemplate;

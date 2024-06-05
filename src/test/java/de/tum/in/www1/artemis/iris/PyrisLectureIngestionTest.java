@@ -129,7 +129,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    public void testAllStagesDoneRemovesAdditionIngestionJob() throws Exception {
+    void testAllStagesDoneRemovesAdditionIngestionJob() throws Exception {
         activateIrisFor(lecture1.getCourse());
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
@@ -146,7 +146,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    public void testAllStagesDoneRemovesDeletionIngestionJob() throws Exception {
+    void testAllStagesDoneRemovesDeletionIngestionJob() throws Exception {
         activateIrisFor(lecture1.getCourse());
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
@@ -162,7 +162,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    public void testStageNotDoneKeepsAdditonIngestionJob() throws Exception {
+    void testStageNotDoneKeepsAdditonIngestionJob() throws Exception {
         activateIrisFor(lecture1.getCourse());
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
@@ -179,7 +179,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    public void testStageNotDoneKeepsDeletionIngetionJob() throws Exception {
+    void testStageNotDoneKeepsDeletionIngetionJob() throws Exception {
         activateIrisFor(lecture1.getCourse());
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
@@ -196,7 +196,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    public void testErrorStageRemovesDeletionIngetionJob() throws Exception {
+    void testErrorStageRemovesDeletionIngetionJob() throws Exception {
         activateIrisFor(lecture1.getCourse());
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
@@ -212,7 +212,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    public void testErrorStageRemovesadditionIngetionJob() throws Exception {
+    void testErrorStageRemovesadditionIngetionJob() throws Exception {
         activateIrisFor(lecture1.getCourse());
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
