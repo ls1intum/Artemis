@@ -55,8 +55,7 @@
                 "helpIcon": "Dies öffnet das Repository in Sourcetree oder Tower. Falls du diese nicht installiert hast, kannst du das Repository in deiner IDE oder dem Terminal klonen."
             },
             "cloneIntellij": {
-                "button": "In IntelliJ klonen",
-                "helpIcon": "Dies öffnet das Repository in IntelliJ. Falls du IntelliJ nicht installiert hast, kannst du das Repository anderweitig klonen."
+                "button": "In IntelliJ klonen"
             },
             "goToBuildPlan": "Zum Build Plan gehen",
             "openTextEditor": "Texteditor öffnen",
