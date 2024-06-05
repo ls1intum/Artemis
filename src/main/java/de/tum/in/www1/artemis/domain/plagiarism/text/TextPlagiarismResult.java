@@ -37,7 +37,7 @@ public class TextPlagiarismResult extends PlagiarismResult<TextSubmissionElement
         // Convert JPlag Similarity Distribution from int[100] to int[10]
         int[] tenthPercentileSimilarityDistribution = new int[REDUCED_SIZE];
         for (int i = 0; i < ORIGINAL_SIZE; i++) {
-            tenthPercentileSimilarityDistribution[Math.floorDiv(i, REDUCED_SIZE)] += result.getSimilarityDistribution()[i];
+            tenthPercentileSimilarityDistribution[i / REDUCED_SIZE] += result.getSimilarityDistribution()[i];
         }
 
         this.setSimilarityDistribution(tenthPercentileSimilarityDistribution);
