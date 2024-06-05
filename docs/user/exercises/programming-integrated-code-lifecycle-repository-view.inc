@@ -70,3 +70,24 @@ You can navigate to these repositories by pressing the '*Open Repository*' butto
    :align: center
 
    Solution, Template and Test Repositories in Exercise Management Page
+
+You can review differences between the **template** and **solution** repositories.
+The comparison allows you to review which changes to the exercise template are expected from students to solve the exercise.
+
+.. figure:: programming/course-management-template-solution-diff.png
+   :alt: Template/Solution Comparison in Exercise Management Page
+   :align: center
+
+   Template/Solution Comparison in Exercise Management Page
+
+You can open the comparison view by clicking the |review-changes-button| button.
+
+.. figure:: programming/course-management-template-solution-diff-example.png
+   :alt: Template/Solution Comparison Example
+   :align: center
+
+   Template/Solution Comparison View Example
+
+.. |review-changes-button| image:: programming/course-management-template-solution-diff-review-changes-button.png
+    :alt: '*Review Changes*'
+    :width: 150px
