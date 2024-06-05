@@ -41,6 +41,7 @@ public class ShortAnswerSolution extends TempIdObject implements QuizQuestionCom
         this.invalid = invalid;
     }
 
+    // TODO: the following method should be removed
     @Override
     public void setQuestion(ShortAnswerQuestion quizQuestion) {
 

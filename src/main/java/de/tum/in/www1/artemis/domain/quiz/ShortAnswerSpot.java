@@ -62,6 +62,7 @@ public class ShortAnswerSpot extends TempIdObject implements QuizQuestionCompone
         return "ShortAnswerSpot{" + "id=" + getId() + ", width=" + getWidth() + ", spotNr=" + getSpotNr() + ", invalid='" + isInvalid() + "'" + "}";
     }
 
+    // TODO: the following method should be removed
     @Override
     public void setQuestion(ShortAnswerQuestion quizQuestion) {
 

@@ -85,6 +85,7 @@ public class ShortAnswerMapping extends TempIdObject implements QuizQuestionComp
                 + ", invalid='" + isInvalid() + "'" + "}";
     }
 
+    // TODO: the following method should be removed
     @Override
     public void setQuestion(ShortAnswerQuestion quizQuestion) {
 

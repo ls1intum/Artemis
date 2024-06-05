@@ -97,6 +97,7 @@ public class DragAndDropMapping extends TempIdObject implements QuizQuestionComp
                 + isInvalid() + "'" + "}";
     }
 
+    // TODO: the following method should be removed
     @Override
     public void setQuestion(DragAndDropQuestion quizQuestion) {
 

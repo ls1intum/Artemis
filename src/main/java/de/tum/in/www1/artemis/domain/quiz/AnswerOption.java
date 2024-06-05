@@ -29,6 +29,7 @@ public class AnswerOption extends TempIdObject implements QuizQuestionComponent<
     @JsonView(QuizView.Before.class)
     private Boolean invalid = false;
 
+    // TODO: the following method should be removed
     @Override
     public void setQuestion(MultipleChoiceQuestion quizQuestion) {
 
