@@ -1,11 +1,11 @@
 import * as ts from 'typescript';
-import * as fs from 'fs';
+import * as fs from 'node:fs';
 
 // Get the file names from the command line arguments
 const fileNames = process.argv.slice(2);
 const HTTP_METHODS = ['get', 'post', 'put', 'delete'];
 
-fileNames.filter(fileName => fileName.endsWith('.ts')).forEach(fileName => {
+for (const fileName of fileNames.filter(fileName => fileName.endsWith('.ts')))  {
     // Load the TypeScript file
     const sourceFile = ts.createSourceFile(fileName, fs.readFileSync(fileName).toString(), ts.ScriptTarget.ES2022, true);
 
@@ -14,7 +14,7 @@ fileNames.filter(fileName => fileName.endsWith('.ts')).forEach(fileName => {
 
     // Start traversing the AST from the root
     visit(sourceFile, classProperties, sourceFile, fileName);
-});
+};
 
 // This function will be called for each node in the AST
 function visit(node: ts.Node, classProperties: { [key: string]: string }, sourceFile: ts.SourceFile, fileName: string) {
