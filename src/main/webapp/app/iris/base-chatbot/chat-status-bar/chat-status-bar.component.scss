@@ -5,24 +5,13 @@
     background: var(--iris-client-chat-background);
     border-top: 0 solid var(--border-color);
 
-    &.open {
-        border-top-width: 1px;
-        opacity: 1;
-
-        .progress-bar .part {
-            opacity: 1;
-        }
-    }
-
     .display {
         white-space: nowrap;
         overflow: hidden;
         transition: all 0.2s;
-
         max-height: 0;
         min-height: 0;
         padding: 0 5px;
-
         display: flex;
         align-items: center;
         gap: 5px;
@@ -68,18 +57,30 @@
                 background-color: var(--success);
                 transform: scaleX(1);
             }
+
             &.in_progress {
                 background-color: var(--warning);
                 transition: transform 10s linear;
                 transform: scaleX(0.05);
             }
+
             &.skipped {
                 transform: scaleX(1);
             }
+
             &.error {
                 background-color: var(--danger);
                 transform: scaleX(1);
             }
+        }
+    }
+
+    &.open {
+        border-top-width: 1px;
+        opacity: 1;
+
+        .progress-bar .part {
+            opacity: 1;
         }
     }
 }
@@ -88,6 +89,7 @@
     0% {
         transform: scaleX(0.1);
     }
+
     100% {
         transform: scaleX(0.9);
     }
