@@ -47,6 +47,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     isTeamParticipation: boolean;
     activeParticipation?: ProgrammingExerciseStudentParticipation;
     isPracticeMode: boolean | undefined;
+    jetbrainsIdea: string | undefined;
 
     // Icons
     faDownload = faDownload;
@@ -98,6 +99,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
         } else if (this.repositoryUri) {
             this.cloneHeadline = 'artemisApp.exerciseActions.cloneExerciseRepository';
         }
+        this.jetbrainsIdea = this.externalCloningService.getJetbrainsIdeForProgrammingLanguage(this.exercise?.programmingLanguage);
     }
 
     private getRepositoryUri() {
@@ -194,8 +196,8 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
         return this.externalCloningService.buildSourceTreeUrl(this.versionControlUrl, this.getHttpOrSshRepositoryUri(false));
     }
 
-    buildIntelliJUrl() {
-        return this.externalCloningService.buildIntelliJUrl(this.getHttpOrSshRepositoryUri(false));
+    buildJetbrainsUrl() {
+        return this.externalCloningService.buildJetbrainsUrl(this.getHttpOrSshRepositoryUri(false), this.exercise?.programmingLanguage);
     }
 
     switchPracticeMode() {

@@ -54,8 +54,10 @@
                 "button": "Im Git Client klonen",
                 "helpIcon": "Dies öffnet das Repository in Sourcetree oder Tower. Falls du diese nicht installiert hast, kannst du das Repository in deiner IDE oder dem Terminal klonen."
             },
-            "cloneIntellij": {
-                "button": "In IntelliJ klonen"
+            "jetbrains": {
+                "cloneidea": "In IntelliJ klonen",
+                "clonepycharm": "In PyCharm klonen",
+                "cloneclion": "In CLion klonen"
             },
             "goToBuildPlan": "Zum Build Plan gehen",
             "openTextEditor": "Texteditor öffnen",

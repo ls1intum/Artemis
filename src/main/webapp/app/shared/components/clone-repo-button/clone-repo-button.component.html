@@ -80,9 +80,9 @@
         >
             {{ wasCopied ? ('artemisApp.exerciseActions.copiedUrl' | artemisTranslate) : ('artemisApp.exerciseActions.copyUrl' | artemisTranslate) }}
         </button>
-        @if (exercise?.programmingLanguage === ProgrammingLanguage.JAVA || exercise?.programmingLanguage === ProgrammingLanguage.KOTLIN) {
-            <a class="btn btn-primary btn-sm" [href]="buildIntelliJUrl() | safeUrl">
-                {{ 'artemisApp.exerciseActions.cloneIntellij.button' | artemisTranslate }}
+        @if (jetbrainsIdea) {
+            <a class="btn btn-primary btn-sm me-2" [href]="buildJetbrainsUrl() | safeUrl">
+                {{ 'artemisApp.exerciseActions.jetbrains.clone' + jetbrainsIdea | artemisTranslate }}
             </a>
         }
         <a class="btn btn-primary btn-sm" target="hidden-iframe" [href]="buildSourceTreeUrl() | safeUrl"
