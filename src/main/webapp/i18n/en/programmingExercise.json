@@ -553,6 +553,7 @@
                 },
                 "tooltipBetweenSubmissions": "Shows the detailed git-diff between the current and previous submission.",
                 "title": "Template/Solution Comparison",
+                "shortDescription": "Review which changes to the template are expected from students to solve the exercise.",
                 "titleForSubmissions": "Submission-Diff",
                 "template": "Template",
                 "solution": "Solution",

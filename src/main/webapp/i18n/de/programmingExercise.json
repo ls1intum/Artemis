@@ -551,6 +551,7 @@
                 },
                 "tooltipBetweenSubmissions": "Zeigt den detaillierten Git-Diff zwischen der aktuellen und der vorherigen Abgabe.",
                 "title": "Vergleich von Template und Lösung",
+                "shortDescription": "Überprüfe, welche Änderungen am Template von den Studierenden erwartet werden, um die Aufgabe zu lösen.",
                 "titleForSubmissions": "Abgaben-Diff",
                 "emptyRepository": "Leeres Repository",
                 "template": "Vorlage",

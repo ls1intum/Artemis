@@ -165,7 +165,7 @@
                     }
                     @case (DetailType.ProgrammingDiffReport) {
                         <dd id="detail-value-{{ detail.title }}">
-                            Review which changes to the template are expected from students to solve the exercise.
+                            <span jhiTranslate="artemisApp.programmingExercise.diffReport.shortDescription"></span>
                             <div class="fw-bold">
                                 <jhi-git-diff-line-stat
                                     [addedLineCount]="detail.data.addedLineCount"
