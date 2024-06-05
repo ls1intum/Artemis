@@ -91,12 +91,13 @@ public class MessageSpecs {
      */
     public static Specification<Post> getCourseWideChannelsSpecification(Long courseId) {
         return (root, query, criteriaBuilder) -> {
-            Join<Post, Channel> joinedChannels = criteriaBuilder.treat(root.join(Post_.CONVERSATION, JoinType.LEFT), Channel.class);
-            joinedChannels.on(criteriaBuilder.equal(root.get(Post_.CONVERSATION).get(Conversation_.ID), joinedChannels.get(Channel_.ID)));
-
-            Predicate isInCourse = criteriaBuilder.equal(joinedChannels.get(Channel_.COURSE).get(Course_.ID), courseId);
-            Predicate isCourseWide = criteriaBuilder.isTrue(joinedChannels.get(Channel_.IS_COURSE_WIDE));
-            return criteriaBuilder.and(isInCourse, isCourseWide);
+            final var conversationJoin = root.join(Post_.conversation, JoinType.LEFT);
+            final var isInCoursePredicate = criteriaBuilder.equal(conversationJoin.get(Channel_.COURSE).get(Course_.ID), courseId);
+            final var isCourseWidePredicate = criteriaBuilder.isTrue(conversationJoin.get(Channel_.IS_COURSE_WIDE));
+            // make sure we only fetch channels (which are sub types of conversations)
+            // this avoids the creation of sub queries
+            final var isChannelPredicate = criteriaBuilder.equal(conversationJoin.type(), criteriaBuilder.literal(Channel.class));
+            return criteriaBuilder.and(isInCoursePredicate, isCourseWidePredicate, isChannelPredicate);
         };
     }
 
