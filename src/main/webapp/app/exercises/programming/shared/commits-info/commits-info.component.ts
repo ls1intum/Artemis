@@ -39,7 +39,7 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
             if (this.participationId) {
                 this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitsInfoForParticipation(this.participationId).subscribe((commits) => {
                     if (commits) {
-                        this.commits = this.sortCommitsByTimestampDesc(commits);
+                        this.commits = commits;
                     }
                 });
             }
@@ -49,7 +49,9 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
             this.commitHashURLTemplate = profileInfo.commitHashURLTemplate;
             this.localVC = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
+
         this.setCommitDetails();
+        this.groupCommits();
 
         if (this.participationId) {
             this.userInfoSubscription = this.programmingExerciseParticipationService.getUserForParticipation(this.participationId).subscribe({
@@ -71,21 +73,12 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
     }
 
     private setCommitDetails() {
-        console.log('Fetched commits:', this.commits);
         if (this.commits && this.submissions) {
             for (const commit of this.commits) {
                 const submission = this.findSubmissionForCommit(commit, this.submissions);
                 commit.commitUrl = createCommitUrl(this.commitHashURLTemplate, this.exerciseProjectKey, submission?.participation, submission);
             }
         }
-        if (this.commits) {
-            console.log('Grouping Commits');
-            this.groupedCommits = this.groupCommits(this.commits);
-        }
-    }
-
-    private sortCommitsByTimestampDesc(commitInfos: CommitInfo[]) {
-        return commitInfos.sort((a, b) => (dayjs(b.timestamp!).isAfter(dayjs(a.timestamp!)) ? 1 : -1));
     }
 
     private findSubmissionForCommit(commitInfo: CommitInfo, submissions: ProgrammingSubmission[] | undefined) {
@@ -94,27 +87,39 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
 
     // This method groups commits together that were pushed in one batch. As we don't have a direct indicator whether commits were pushed together,
     // we infer groups based on the presence of a 'result' on a commit
-    private groupCommits(commits: CommitInfo[]): { key: string; commits: CommitInfo[]; date: string }[] {
-        const commitGroups: { key: string; commits: CommitInfo[]; date: string }[] = [];
+    private groupCommits() {
+        if (!this.commits) {
+            return;
+        }
 
+        const commitGroups: { key: string; commits: CommitInfo[]; date: string }[] = [];
         let tempGroup: CommitInfo[] = [];
 
-        for (let i = commits.length - 1; i >= 0; i--) {
-            const commit = commits[i];
+        this.commits = this.commits.sort((a, b) => (dayjs(b.timestamp!).isAfter(dayjs(a.timestamp!)) ? -1 : 1));
+
+        for (let i = 0; i < this.commits.length; i++) {
+            const commit = this.commits[i];
             tempGroup.push(commit);
 
             if (commit.result) {
-                const commitDate = dayjs(commit.timestamp).format('YYYY-MM-DD');
-                tempGroup.sort((a, b) => (dayjs(a.timestamp).isAfter(dayjs(b.timestamp)) ? -1 : 1));
-                commitGroups.unshift({ key: `${commitDate}-${commit.author}`, commits: [...tempGroup], date: commitDate });
+                const date = dayjs(tempGroup[tempGroup.length - 1].timestamp).format('YYYY-MM-DD');
+                commitGroups.push({
+                    key: `${date}-${commit.author}`,
+                    commits: [...tempGroup].reverse(),
+                    date: date ?? '',
+                });
                 tempGroup = [];
             }
         }
 
         if (tempGroup.length > 0) {
-            commitGroups.push({ key: 'no-result', commits: tempGroup, date: dayjs(tempGroup[tempGroup.length - 1].timestamp).format('YYYY-MM-DD') ?? '' });
+            commitGroups.push({
+                key: 'no-result',
+                commits: tempGroup,
+                date: dayjs(tempGroup[tempGroup.length - 1].timestamp).format('YYYY-MM-DD') ?? '',
+            });
         }
 
-        return commitGroups;
+        this.groupedCommits = commitGroups.reverse();
     }
 }

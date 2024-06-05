@@ -1,7 +1,7 @@
 @if (isRepositoryView) {
-    <h3>{{ 'artemisApp.programmingExercise.commitInfo.history' | artemisTranslate }}</h3>
+    <h3 jhiTranslate="artemisApp.programmingExercise.commitInfo.history"></h3>
 } @else {
-    <h5>{{ 'artemisApp.programmingExercise.commitInfo.title' | artemisTranslate }}</h5>
+    <h5 jhiTranslate="artemisApp.programmingExercise.commitInfo.title"></h5>
 }
 
 <div style="overflow-x: auto">
@@ -9,12 +9,12 @@
         <thead>
             <tr>
                 <th scope="col">#</th>
-                <th scope="col">{{ 'artemisApp.programmingExercise.commitInfo.commitHash' | artemisTranslate }}</th>
-                <th scope="col">{{ 'artemisApp.programmingExercise.commitInfo.author' | artemisTranslate }}</th>
-                <th scope="col">{{ 'artemisApp.programmingExercise.commitInfo.date' | artemisTranslate }}</th>
-                <th scope="col">{{ 'artemisApp.programmingExercise.commitInfo.result' | artemisTranslate }}</th>
-                <th scope="col">{{ 'artemisApp.programmingExercise.commitInfo.message' | artemisTranslate }}</th>
-                <th scope="col">{{ 'artemisApp.programmingExercise.commitInfo.commits' | artemisTranslate }}</th>
+                <th scope="col" jhiTranslate="artemisApp.programmingExercise.commitInfo.commitHash"></th>
+                <th scope="col" jhiTranslate="artemisApp.programmingExercise.commitInfo.author"></th>
+                <th scope="col" jhiTranslate="artemisApp.programmingExercise.commitInfo.date"></th>
+                <th scope="col" jhiTranslate="artemisApp.programmingExercise.commitInfo.result"></th>
+                <th scope="col" jhiTranslate="artemisApp.programmingExercise.commitInfo.message"></th>
+                <th scope="col" jhiTranslate="artemisApp.programmingExercise.commitInfo.commits"></th>
             </tr>
         </thead>
         <tbody>

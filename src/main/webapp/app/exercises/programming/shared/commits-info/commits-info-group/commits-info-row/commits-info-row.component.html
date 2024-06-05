@@ -1,62 +1,60 @@
-<tr class="{{ isExpanded ? 'tr-expanded' : '' }}">
-    <th scope="row">
+<tr class="{{ isExpanded ? 'bg-light' : '' }}">
+    <th scope="row" class="p-2">
         @if (groupCommitIndex === 0) {
             {{ pushNumber }}
         }
     </th>
-    <td>
+    <td class="p-2">
         @if (localVC) {
             @if (isRepositoryView) {
-                <a [routerLink]="['./', commit.hash]" ngbTooltip="{{ commit.hash }}"> {{ getShortHash(commit.hash) + '...' }} </a>
+                <a [routerLink]="['./', commit.hash]" ngbTooltip="{{ commit.hash }}"> {{ commit.hash ?? '' | truncate: 7 }} </a>
             } @else {
                 <span ngbTooltip="{{ commit.hash }}">
-                    {{ getShortHash(commit.hash) + '...' }}
+                    {{ commit.hash ?? '' | truncate: 7 }}
                 </span>
             }
         } @else {
-            <a [href]="commit.commitUrl" ngbTooltip="{{ commit.hash }}"> {{ getShortHash(commit.hash) + '...' }} </a>
+            <a [href]="commit.commitUrl" ngbTooltip="{{ commit.hash }}"> {{ commit.hash ?? '' | truncate: 7 }} </a>
         }
     </td>
-    <td>
+    <td class="p-2">
         @if (isRepositoryView) {
             {{ user?.name }}, {{ user?.email }}
         } @else {
             {{ user?.name }}
         }
     </td>
-    <td>
+    <td class="p-2">
         {{ commit.timestamp | artemisDate: 'long' : true }}
     </td>
     @if (isRepositoryView) {
-        <td>
+        <td class="p-2">
             @if (commit.result) {
                 <jhi-result [result]="commit.result" [showUngradedResults]="true" [showBadge]="true" />
             } @else if (groupCommitIndex === 0) {
                 <span class="text-body-secondary">
                     <fa-icon [icon]="faCircle" size="lg" />&nbsp;
-                    <span> {{ 'artemisApp.result.noResult' | artemisTranslate }}</span>
+                    <span jhiTranslate="artemisApp.result.noResult"></span>
                 </span>
             }
         </td>
     }
-    <td>
+    <td class="p-2">
         {{ commit.message }}
         @if (currentSubmissionHash === commit.hash) {
-            <span class="badge bg-info">
-                {{ 'artemisApp.programmingExercise.commitInfo.currentSubmission' | artemisTranslate }}
-            </span>
+            <span class="badge bg-info" jhiTranslate="artemisApp.programmingExercise.commitInfo.currentSubmission"></span>
         }
         @if (previousSubmissionHash === commit.hash) {
-            <span class="badge bg-info"> {{ 'artemisApp.programmingExercise.commitInfo.previousSubmission' | artemisTranslate }} </span>
+            <span class="badge bg-info" jhiTranslate="artemisApp.programmingExercise.commitInfo.previousSubmission"></span>
         }
         @if (!previousSubmissionHash && firstCommit) {
-            <span class="badge bg-info"> {{ 'artemisApp.programmingExercise.commitInfo.template' | artemisTranslate }} </span>
+            <span class="badge bg-info" jhiTranslate="artemisApp.programmingExercise.commitInfo.template"></span>
         }
     </td>
-    <td class="flex-container">
+    <td class="flex-container p-2">
         @if (groupCommitIndex === 0 && groupCommitCount > 1) {
             {{ groupCommitCount }}
-            <button class="no-background" (click)="toggleExpand()">
+            <button class="btn btn-link" (click)="toggleExpand()">
                 <span class="text-body-secondary">
                     @if (isExpanded) {
                         <fa-icon [icon]="faAngleDown" size="lg" />

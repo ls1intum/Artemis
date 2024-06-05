@@ -7,7 +7,6 @@ import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-commits-info-row',
     templateUrl: './commits-info-row.component.html',
-    styleUrls: ['./commits-info-row.component.scss'],
 })
 export class CommitsInfoRowComponent {
     @Input() commit: CommitInfo;
@@ -28,8 +27,4 @@ export class CommitsInfoRowComponent {
     faCircle = faCircle;
     faAngleRight = faAngleRight;
     faAngleDown = faAngleDown;
-
-    getShortHash(hash?: string): string {
-        return hash ? hash.slice(0, 7) : '';
-    }
 }
