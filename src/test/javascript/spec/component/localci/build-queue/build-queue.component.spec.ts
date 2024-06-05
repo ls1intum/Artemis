@@ -500,6 +500,29 @@ describe('BuildQueueComponent', () => {
         expect(component.finishedBuildJobs).toEqual(mockFinishedJobs);
     });
 
+    it('should return correct build agent addresses', () => {
+        component.finishedBuildJobs = mockFinishedJobs;
+        expect(component.buildAgentAddresses).toEqual(['agent5', 'agent6']);
+    });
+
+    it('should trigger refresh on search term change', async () => {
+        mockActivatedRoute.paramMap = of(new Map([]));
+
+        mockBuildQueueService.getQueuedBuildJobs.mockReturnValue(of(mockQueuedJobs));
+        mockBuildQueueService.getRunningBuildJobs.mockReturnValue(of(mockRunningJobs));
+        mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(of(mockFinishedJobsResponse));
+
+        component.ngOnInit();
+        component.searchTerm = 'search';
+        component.triggerLoadFinishedJobs();
+
+        const requestWithSearchTerm = { ...request };
+        requestWithSearchTerm.searchTerm = 'search';
+        // Wait for the debounce time to pass
+        await new Promise((resolve) => setTimeout(resolve, 110));
+        expect(mockBuildQueueService.getFinishedBuildJobs).toHaveBeenNthCalledWith(2, requestWithSearchTerm, filterOptionsEmpty);
+    });
+
     it('should set build job duration', () => {
         // Mock ActivatedRoute to return no course ID
         mockActivatedRoute.paramMap = of(new Map([]));
