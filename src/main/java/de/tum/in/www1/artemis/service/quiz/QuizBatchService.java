@@ -107,13 +107,15 @@ public class QuizBatchService {
                 quizBatchRepository.findByQuizExerciseAndPassword(quizExercise, password).orElseThrow(() -> new QuizJoinException("quizBatchNotFound", "Batch does not exist"));
             case INDIVIDUAL -> createIndividualBatch(quizExercise, user);
         };
-
+        Optional<QuizBatch> existingBatch = quizBatchRepository.findByQuizExerciseAndStudentLogin(quizExercise, user.getLogin());
         if (quizBatch.isEnded()) {
             throw new QuizJoinException("quizBatchExpired", "Batch has expired");
         }
+        else if (existingBatch.isPresent() && !existingBatch.get().equals(quizBatch)) {
+            throw new QuizJoinException("quizBatchAlreadyJoined", "User is already part of another batch");
+        }
 
         QuizSubmission quizSubmission = quizSubmissionRepository.findByExerciseIdAndStudentLogin(quizExercise.getId(), user.getLogin()).orElseThrow();
-        // TODO: Maybe we can check here if the user has already joined a batch and throw an exception instead of going by the number of submissions...
         quizSubmission.setQuizBatch(quizBatch.getId());
 
         quizSubmissionRepository.save(quizSubmission);
@@ -196,7 +198,7 @@ public class QuizBatchService {
      * @return the batch that the user currently takes part in or empty
      */
     public Optional<QuizBatch> getQuizBatchForStudentByLogin(QuizExercise quizExercise, String login) {
-        Optional<QuizBatch> optionalQuizBatch = quizBatchRepository.findAllByQuizExerciseAndStudentLogin(quizExercise, login).stream().findFirst();
+        Optional<QuizBatch> optionalQuizBatch = quizBatchRepository.findByQuizExerciseAndStudentLogin(quizExercise, login);
         if (optionalQuizBatch.isEmpty() && quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
             return Optional.of(getOrCreateSynchronizedQuizBatch(quizExercise));
         }

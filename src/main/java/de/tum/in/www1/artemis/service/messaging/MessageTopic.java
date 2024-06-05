@@ -30,7 +30,8 @@ public enum MessageTopic {
     STUDENT_EXAM_RESCHEDULE_DURING_CONDUCTION("student-exam-reschedule-during-conduction"),
     PARTICIPANT_SCORE_SCHEDULE("participant-score-schedule"),
     QUIZ_EXERCISE_START_SCHEDULE("quiz-exercise-start-schedule"),
-    QUIZ_EXERCISE_START_CANCEL("quiz-exercise-start-cancel");// @formatter:on
+    QUIZ_EXERCISE_START_CANCEL("quiz-exercise-start-cancel");
+    // @formatter:on
 
     private final String topic;
 
