@@ -722,7 +722,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 AND p.exercise IN :exercises
             """)
     List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(@Param("studentId") long studentId,
-            @Param("exercises") List<Exercise> exercises);
+            @Param("exercises") Collection<Exercise> exercises);
 
     @Query("""
             SELECT DISTINCT p

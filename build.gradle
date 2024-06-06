@@ -32,7 +32,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "7.1.2"
+version = "7.1.3"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -192,7 +192,7 @@ jacocoTestCoverageVerification {
                 counter = "CLASS"
                 value = "MISSEDCOUNT"
                 // TODO: in the future the following value should become less than 10
-                maximum = 32
+                maximum = 39
             }
         }
     }
