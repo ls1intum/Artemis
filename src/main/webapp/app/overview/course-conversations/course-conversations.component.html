@@ -91,6 +91,9 @@
                     [courseId]="course.id"
                     [sidebarData]="sidebarData"
                     (onPlusPressed)="onAccordionPlusButtonPressed($event)"
+                    [showAddOption]="CHANNEL_TYPE_SHOW_ADD_OPTION"
+                    [channelTypeIcon]="CHANNEL_TYPE_ICON"
+                    [collapseState]="DEFAULT_COLLAPSE_STATE"
                 />
             </div>
             @if (course && !activeConversation && isCodeOfConductPresented) {

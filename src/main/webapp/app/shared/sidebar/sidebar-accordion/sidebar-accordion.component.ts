@@ -1,36 +1,7 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
-import { faBan, faChevronRight, faComment, faComments, faFile, faGraduationCap, faHeart, faList, faMessage } from '@fortawesome/free-solid-svg-icons';
-import { AccordionGroups, ChannelAccordionShowAdd, ChannelTypeIcons, ExerciseCollapseState, SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
+import { faChevronRight, faFile } from '@fortawesome/free-solid-svg-icons';
+import { AccordionGroups, ChannelAccordionShowAdd, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
 import { Params } from '@angular/router';
-
-const DEFAULT_EXERCISE_COLLAPSE_STATE: ExerciseCollapseState = {
-    future: true,
-    current: false,
-    past: true,
-    noDate: true,
-};
-
-const CHANNEL_TYPE_SHOW_ADD_OPTION: ChannelAccordionShowAdd = {
-    generalChannels: true,
-    exerciseChannels: true,
-    examChannels: true,
-    groupChats: true,
-    directMessages: true,
-    favoriteChannels: false,
-    lectureChannels: true,
-    hiddenChannels: false,
-};
-
-const CHANNEL_TYPE_ICON: ChannelTypeIcons = {
-    generalChannels: faMessage,
-    exerciseChannels: faList,
-    examChannels: faGraduationCap,
-    groupChats: faComments,
-    directMessages: faComment,
-    favoriteChannels: faHeart,
-    lectureChannels: faFile,
-    hiddenChannels: faBan,
-};
 
 @Component({
     selector: 'jhi-sidebar-accordion',
@@ -50,10 +21,9 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
     @Input() itemSelected?: boolean;
     @Input() showLeadingIcon = false;
     @Input() showAddOptions = false;
-
-    readonly showAddOption = CHANNEL_TYPE_SHOW_ADD_OPTION;
-    readonly channelTypeIcon = CHANNEL_TYPE_ICON;
-    collapseState = DEFAULT_EXERCISE_COLLAPSE_STATE;
+    @Input() showAddOption?: ChannelAccordionShowAdd;
+    @Input() channelTypeIcon?: ChannelTypeIcons;
+    @Input() collapseState: CollapseState;
 
     //icon
     faChevronRight = faChevronRight;

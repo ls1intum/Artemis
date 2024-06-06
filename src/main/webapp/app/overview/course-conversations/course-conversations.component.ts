@@ -11,11 +11,12 @@ import { ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Course } from 'app/entities/course.model';
 import { PageType, SortDirection } from 'app/shared/metis/metis.util';
+import { faBan, faComment, faComments, faFile, faGraduationCap, faHeart, faList, faMessage } from '@fortawesome/free-solid-svg-icons';
 import { faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { CourseWideSearchComponent, CourseWideSearchConfig } from 'app/overview/course-conversations/course-wide-search/course-wide-search.component';
-import { AccordionGroups, SidebarCardElement, SidebarData } from 'app/types/sidebar';
+import { AccordionGroups, ChannelAccordionShowAdd, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { CourseOverviewService } from 'app/overview/course-overview.service';
 import { GroupChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/group-chat-create-dialog/group-chat-create-dialog.component';
 import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
@@ -32,6 +33,39 @@ const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     groupChats: { entityData: [] },
     directMessages: { entityData: [] },
     hiddenChannels: { entityData: [] },
+};
+
+const CHANNEL_TYPE_SHOW_ADD_OPTION: ChannelAccordionShowAdd = {
+    generalChannels: true,
+    exerciseChannels: true,
+    examChannels: true,
+    groupChats: true,
+    directMessages: true,
+    favoriteChannels: false,
+    lectureChannels: true,
+    hiddenChannels: false,
+};
+
+const CHANNEL_TYPE_ICON: ChannelTypeIcons = {
+    generalChannels: faMessage,
+    exerciseChannels: faList,
+    examChannels: faGraduationCap,
+    groupChats: faComments,
+    directMessages: faComment,
+    favoriteChannels: faHeart,
+    lectureChannels: faFile,
+    hiddenChannels: faBan,
+};
+
+const DEFAULT_COLLAPSE_STATE: CollapseState = {
+    generalChannels: false,
+    exerciseChannels: true,
+    examChannels: true,
+    groupChats: true,
+    directMessages: true,
+    favoriteChannels: true,
+    lectureChannels: true,
+    hiddenChannels: true,
 };
 
 @Component({
@@ -55,6 +89,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     accordionConversationGroups: AccordionGroups = DEFAULT_CHANNEL_GROUPS;
     sidebarConversations: SidebarCardElement[] = [];
     isCollapsed = false;
+
+    readonly CHANNEL_TYPE_SHOW_ADD_OPTION = CHANNEL_TYPE_SHOW_ADD_OPTION;
+    readonly CHANNEL_TYPE_ICON = CHANNEL_TYPE_ICON;
+    readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
 
     // set undefined so nothing gets displayed until isCodeOfConductAccepted is loaded
     isCodeOfConductAccepted?: boolean;
