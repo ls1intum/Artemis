@@ -5,7 +5,7 @@ package de.tum.in.www1.artemis.security;
  */
 public enum Role {
 
-    // NOTE: we will soon rename "USER" to "STUDENT" in the database and add a new role "EDITOR"
+    // NOTE: we will soon rename "USER" to "STUDENT" in the database
     ADMIN("ADMIN"), INSTRUCTOR("INSTRUCTOR"), EDITOR("EDITOR"), TEACHING_ASSISTANT("TA"), STUDENT("USER"), ANONYMOUS("ANONYMOUS");
 
     public static final String ROLE_PREFIX = "ROLE_";

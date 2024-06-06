@@ -42,7 +42,6 @@ import { IncludedInOverallScorePickerComponent } from 'app/exercises/shared/incl
 import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
 import { AddAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/add-auxiliary-repository-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/exercises/programming/manage/update/programming-exercise-plans-and-repositories-preview.component';
 import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission-policy/submission-policy-update.component';
@@ -68,6 +67,7 @@ import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
 import { FormFooterComponent } from 'app/forms/form-footer/form-footer.component';
+import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -96,7 +96,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 SelectControlValueAccessor,
                 NumberValueAccessor,
                 MockComponent(HelpIconComponent),
-                MockComponent(ProgrammingExercisePlansAndRepositoriesPreviewComponent),
+                MockComponent(ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent),
                 MockComponent(TableEditableFieldComponent),
                 MockComponent(RemoveAuxiliaryRepositoryButtonComponent),
                 MockComponent(CategorySelectorComponent),

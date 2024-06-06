@@ -18,15 +18,15 @@ import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
-import de.tum.in.www1.artemis.service.dto.athena.ExerciseDTO;
-import de.tum.in.www1.artemis.service.dto.athena.FeedbackDTO;
+import de.tum.in.www1.artemis.service.dto.athena.ExerciseBaseDTO;
+import de.tum.in.www1.artemis.service.dto.athena.FeedbackBaseDTO;
 import de.tum.in.www1.artemis.service.dto.athena.ModelingExerciseDTO;
 import de.tum.in.www1.artemis.service.dto.athena.ModelingFeedbackDTO;
 import de.tum.in.www1.artemis.service.dto.athena.ModelingSubmissionDTO;
 import de.tum.in.www1.artemis.service.dto.athena.ProgrammingExerciseDTO;
 import de.tum.in.www1.artemis.service.dto.athena.ProgrammingFeedbackDTO;
 import de.tum.in.www1.artemis.service.dto.athena.ProgrammingSubmissionDTO;
-import de.tum.in.www1.artemis.service.dto.athena.SubmissionDTO;
+import de.tum.in.www1.artemis.service.dto.athena.SubmissionBaseDTO;
 import de.tum.in.www1.artemis.service.dto.athena.TextExerciseDTO;
 import de.tum.in.www1.artemis.service.dto.athena.TextFeedbackDTO;
 import de.tum.in.www1.artemis.service.dto.athena.TextSubmissionDTO;
@@ -63,7 +63,7 @@ public class AthenaDTOConverterService {
      * @param exercise the exercise to convert
      * @return *ExerciseDTO for Athena
      */
-    public ExerciseDTO ofExercise(Exercise exercise) {
+    public ExerciseBaseDTO ofExercise(Exercise exercise) {
         switch (exercise.getExerciseType()) {
             case TEXT -> {
                 // Fetch text exercise with grade criteria
@@ -92,7 +92,7 @@ public class AthenaDTOConverterService {
      * @param submission the submission to convert
      * @return *SubmissionDTO for Athena
      */
-    public SubmissionDTO ofSubmission(long exerciseId, Submission submission) {
+    public SubmissionBaseDTO ofSubmission(long exerciseId, Submission submission) {
         if (submission instanceof TextSubmission textSubmission) {
             return TextSubmissionDTO.of(exerciseId, textSubmission);
         }
@@ -113,7 +113,7 @@ public class AthenaDTOConverterService {
      * @param feedback     the feedback to convert
      * @return *FeedbackDTO for Athena
      */
-    public FeedbackDTO ofFeedback(Exercise exercise, long submissionId, Feedback feedback) {
+    public FeedbackBaseDTO ofFeedback(Exercise exercise, long submissionId, Feedback feedback) {
         switch (exercise.getExerciseType()) {
             case TEXT -> {
                 TextBlock feedbackTextBlock = null;

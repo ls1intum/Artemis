@@ -22,6 +22,7 @@ import com.offbytwo.jenkins.JenkinsServer;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
@@ -36,6 +37,7 @@ import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.build_plan.JenkinsBuildPlanService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
+import de.tum.in.www1.artemis.web.rest.dto.CheckoutDirectoriesDTO;
 
 @Profile("jenkins")
 @Service
@@ -251,5 +253,10 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
             log.error(e.getMessage(), e);
             throw new JenkinsException("Error creating folder for exercise " + programmingExercise, e);
         }
+    }
+
+    @Override
+    public CheckoutDirectoriesDTO getCheckoutDirectories(ProgrammingLanguage programmingLanguage, boolean checkoutSolution) {
+        throw new UnsupportedOperationException("Method not implemented, consult the build plans in Jenkins for more information on the checkout directories.");
     }
 }
