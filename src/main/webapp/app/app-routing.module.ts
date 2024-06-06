@@ -4,6 +4,8 @@ import { navbarRoute } from 'app/shared/layouts/navbar/navbar.route';
 import { errorRoute } from 'app/shared/layouts/error/error.route';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { AboutIrisComponent } from 'app/iris/about-iris/about-iris.component';
+import { ProblemStatementComponent } from './overview/exercise-details/problem-statement/problem-statement.component';
+import { StandaloneFeedbackComponent } from './exercises/shared/feedback/standalone-feedback/standalone-feedback.component';
 
 const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
 
@@ -72,6 +74,23 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     path: 'courses/:courseId/grading-system',
                     loadChildren: () => import('./grading-system/grading-system.module').then((m) => m.GradingSystemModule),
                 },
+
+                {
+                    path: 'courses/:courseId/exercises/:exerciseId/problem-statement',
+                    pathMatch: 'full',
+                    component: ProblemStatementComponent,
+                },
+                {
+                    pathMatch: 'full',
+                    path: 'courses/:courseId/exercises/:exerciseId/problem-statement/:participationId',
+                    component: ProblemStatementComponent,
+                },
+                {
+                    path: 'courses/:courseId/exercises/:exerciseId/participations/:participationId/results/:resultId/feedback',
+                    pathMatch: 'full',
+                    component: StandaloneFeedbackComponent,
+                },
+
                 // ===== EXAM =====
                 {
                     path: 'course-management/:courseId/exams',
