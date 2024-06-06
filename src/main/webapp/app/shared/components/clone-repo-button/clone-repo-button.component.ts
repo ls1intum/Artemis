@@ -192,11 +192,11 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
      * build the sourceTreeUrl from the repository uri
      * @return sourceTreeUrl
      */
-    buildSourceTreeUrl() {
+    buildSourceTreeUrl(): string | undefined {
         return this.externalCloningService.buildSourceTreeUrl(this.versionControlUrl, this.getHttpOrSshRepositoryUri(false));
     }
 
-    buildJetbrainsUrl() {
+    buildJetbrainsUrl(): string | undefined {
         return this.externalCloningService.buildJetbrainsUrl(this.getHttpOrSshRepositoryUri(false), this.exercise?.programmingLanguage);
     }
 

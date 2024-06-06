@@ -21,7 +21,7 @@ export class ExternalCloningService {
      * @param baseUrl - the base url of the version control system
      * @param cloneUrl - url of the target.
      */
-    buildSourceTreeUrl(baseUrl: string, cloneUrl: string | undefined) {
+    buildSourceTreeUrl(baseUrl: string, cloneUrl: string | undefined): string | undefined {
         return cloneUrl ? `sourcetree://cloneRepo?type=stash&cloneUrl=${encodeURI(cloneUrl)}&baseWebUrl=${baseUrl}` : undefined;
     }
 
