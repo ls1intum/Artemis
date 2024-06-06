@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.iris;
 
+import jakarta.annotation.Nullable;
 import jakarta.ws.rs.BadRequestException;
 
 import org.springframework.context.annotation.Profile;
@@ -7,17 +8,20 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
-import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCompetencyGenerationSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisCourseChatSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisExerciseChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisHestiaSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.iris.session.IrisChatBasedFeatureInterface;
-import de.tum.in.www1.artemis.service.iris.session.IrisChatSessionService;
 import de.tum.in.www1.artemis.service.iris.session.IrisCompetencyGenerationSessionService;
+import de.tum.in.www1.artemis.service.iris.session.IrisCourseChatSessionService;
+import de.tum.in.www1.artemis.service.iris.session.IrisExerciseChatSessionService;
 import de.tum.in.www1.artemis.service.iris.session.IrisHestiaSessionService;
 import de.tum.in.www1.artemis.service.iris.session.IrisRateLimitedFeatureInterface;
 import de.tum.in.www1.artemis.service.iris.session.IrisSubFeatureInterface;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
  * Service for managing Iris sessions.
@@ -28,16 +32,20 @@ public class IrisSessionService {
 
     private final UserRepository userRepository;
 
-    private final IrisChatSessionService irisChatSessionService;
+    private final IrisExerciseChatSessionService irisExerciseChatSessionService;
+
+    private final IrisCourseChatSessionService irisCourseChatSessionService;
 
     private final IrisHestiaSessionService irisHestiaSessionService;
 
     private final IrisCompetencyGenerationSessionService irisCompetencyGenerationSessionService;
 
-    public IrisSessionService(UserRepository userRepository, IrisChatSessionService irisChatSessionService, IrisHestiaSessionService irisHestiaSessionService,
+    public IrisSessionService(UserRepository userRepository, IrisExerciseChatSessionService irisExerciseChatSessionService,
+            IrisCourseChatSessionService irisCourseChatSessionService, IrisHestiaSessionService irisHestiaSessionService,
             IrisCompetencyGenerationSessionService irisCompetencyGenerationSessionService) {
         this.userRepository = userRepository;
-        this.irisChatSessionService = irisChatSessionService;
+        this.irisExerciseChatSessionService = irisExerciseChatSessionService;
+        this.irisCourseChatSessionService = irisCourseChatSessionService;
         this.irisHestiaSessionService = irisHestiaSessionService;
         this.irisCompetencyGenerationSessionService = irisCompetencyGenerationSessionService;
     }
@@ -58,11 +66,13 @@ public class IrisSessionService {
      *
      * @param session The session to check
      * @param user    The user to check
+     * @throws AccessForbiddenException If the user has not accepted the Iris privacy policy yet
      */
-    public void checkHasAccessToIrisSession(IrisSession session, User user) {
+    public void checkHasAccessToIrisSession(IrisSession session, @Nullable User user) {
         if (user == null) {
             user = userRepository.getUserWithGroupsAndAuthorities();
         }
+        user.hasAcceptedIrisElseThrow();
         var wrapper = getIrisSessionSubService(session);
         wrapper.irisSubFeatureInterface.checkHasAccessTo(user, wrapper.irisSession);
     }
@@ -129,16 +139,14 @@ public class IrisSessionService {
      */
     @SuppressWarnings("unchecked")
     private <S extends IrisSession> IrisSubFeatureWrapper<S> getIrisSessionSubService(S session) {
-        if (session instanceof IrisChatSession chatSession) {
-            return (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisChatSessionService, chatSession);
-        }
-        if (session instanceof IrisHestiaSession hestiaSession) {
-            return (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisHestiaSessionService, hestiaSession);
-        }
-        if (session instanceof IrisCompetencyGenerationSession irisCompetencyGenerationSession) {
-            return (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisCompetencyGenerationSessionService, irisCompetencyGenerationSession);
-        }
-        throw new BadRequestException("Unknown Iris session type " + session.getClass().getSimpleName());
+        return switch (session) {
+            case IrisExerciseChatSession chatSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisExerciseChatSessionService, chatSession);
+            case IrisCourseChatSession courseChatSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisCourseChatSessionService, courseChatSession);
+            case IrisHestiaSession hestiaSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisHestiaSessionService, hestiaSession);
+            case IrisCompetencyGenerationSession irisCompetencyGenerationSession ->
+                (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisCompetencyGenerationSessionService, irisCompetencyGenerationSession);
+            case null, default -> throw new BadRequestException("Unknown Iris session type " + session.getClass().getSimpleName());
+        };
     }
 
     private record IrisSubFeatureWrapper<S extends IrisSession>(IrisSubFeatureInterface<S> irisSubFeatureInterface, S irisSession) {
