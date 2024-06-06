@@ -101,19 +101,13 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     courseWideSearchConfig: CourseWideSearchConfig;
     courseWideSearchTerm = '';
-    formGroup: FormGroup;
-    readonly documentationType: DocumentationType = 'Communications';
     readonly ButtonType = ButtonType;
-    readonly SortDirection = SortDirection;
-    sortingOrder = SortDirection.ASCENDING;
 
     // Icons
     faPlus = faPlus;
     faTimes = faTimes;
     faFilter = faFilter;
     faSearch = faSearch;
-    faLongArrowAltUp = faLongArrowAltUp;
-    faLongArrowAltDown = faLongArrowAltDown;
 
     // MetisConversationService is created in course overview, so we can use it here
     constructor(
@@ -121,7 +115,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         private activatedRoute: ActivatedRoute,
         private metisConversationService: MetisConversationService,
         private metisService: MetisService,
-        private formBuilder: FormBuilder,
         private courseOverviewService: CourseOverviewService,
         private modalService: NgbModal,
     ) {}
@@ -148,7 +141,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             if (isServiceSetUp) {
                 this.course = this.metisConversationService.course;
                 this.initializeCourseWideSearchConfig();
-                this.resetFormGroup();
                 this.setupMetis();
                 this.subscribeToMetis();
                 this.subscribeToQueryParameter();
@@ -244,29 +236,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.activeConversation = undefined;
         this.courseWideSearchConfig.searchTerm = this.courseWideSearchTerm;
         this.courseWideSearch?.onSearch();
-    }
-
-    onSelectContext(): void {
-        this.courseWideSearchConfig.filterToUnresolved = this.formGroup.get('filterToUnresolved')?.value;
-        this.courseWideSearchConfig.filterToOwn = this.formGroup.get('filterToOwn')?.value;
-        this.courseWideSearchConfig.filterToAnsweredOrReacted = this.formGroup.get('filterToAnsweredOrReacted')?.value;
-        this.courseWideSearchConfig.sortingOrder = this.sortingOrder;
-        if (!this.activeConversation) {
-            this.onSearch();
-        }
-    }
-
-    onChangeSortDir(): void {
-        this.sortingOrder = this.sortingOrder === SortDirection.DESCENDING ? SortDirection.ASCENDING : SortDirection.DESCENDING;
-        this.onSelectContext();
-    }
-
-    resetFormGroup(): void {
-        this.formGroup = this.formBuilder.group({
-            filterToUnresolved: false,
-            filterToOwn: false,
-            filterToAnsweredOrReacted: false,
-        });
     }
 
     prepareSidebarData() {
