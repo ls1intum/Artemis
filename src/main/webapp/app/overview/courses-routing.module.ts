@@ -8,6 +8,7 @@ import { CourseExercisesComponent } from 'app/overview/course-exercises/course-e
 import { CourseOverviewComponent } from './course-overview.component';
 import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-tutorial-groups.component';
 import { CourseTutorialGroupDetailComponent } from './tutorial-group-details/course-tutorial-group-detail/course-tutorial-group-detail.component';
+import { CourseDashboardGuard } from 'app/overview/course-dashboard/course-dashboard-guard.service';
 
 const routes: Routes = [
     {
@@ -165,6 +166,15 @@ const routes: Routes = [
                 ],
             },
             {
+                path: 'dashboard',
+                loadChildren: () => import('./course-dashboard/course-dashboard.module').then((m) => m.CourseDashboardModule),
+                data: {
+                    authorities: [Authority.USER],
+                    pageTitle: 'overview.dashboard',
+                },
+                canActivate: [UserRouteAccessService, CourseDashboardGuard],
+            },
+            {
                 path: 'learning-path',
                 loadChildren: () => import('app/course/learning-paths/learning-paths.module').then((m) => m.ArtemisLearningPathsModule),
                 data: {
@@ -236,7 +246,7 @@ const routes: Routes = [
             },
             {
                 path: '',
-                redirectTo: 'exercises',
+                redirectTo: 'dashboard', // dashboard will redirect to exercises if not enabled
                 pathMatch: 'full',
             },
         ],

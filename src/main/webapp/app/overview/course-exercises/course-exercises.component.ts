@@ -79,7 +79,17 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     navigateToExercise() {
         const upcomingExercise = this.courseOverviewService.getUpcomingExercise(this.course?.exercises);
         const lastSelectedExercise = this.getLastSelectedExercise();
-        const exerciseId = this.route.firstChild?.snapshot?.params.exerciseId;
+        let exerciseId = this.route.firstChild?.snapshot?.params.exerciseId;
+        if (!exerciseId) {
+            // Get the exerciseId from the URL
+            const url = this.router.url;
+            const urlParts = url.split('/');
+            const indexOfExercise = urlParts.indexOf('exercises');
+            if (indexOfExercise !== -1 && urlParts.length === indexOfExercise + 2) {
+                exerciseId = urlParts[indexOfExercise + 1];
+            }
+        }
+
         if (!exerciseId && lastSelectedExercise) {
             this.router.navigate([lastSelectedExercise], { relativeTo: this.route, replaceUrl: true });
         } else if (!exerciseId && upcomingExercise) {
