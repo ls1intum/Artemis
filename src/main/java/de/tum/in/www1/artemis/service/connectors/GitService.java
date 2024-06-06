@@ -152,12 +152,8 @@ public class GitService extends AbstractGitService {
     }
 
     private void configureSsh() {
-
-        final var sshSessionFactoryBuilder = getSshdSessionFactoryBuilder(gitSshPrivateKeyPath, gitSshPrivateKeyPassphrase, gitUrl);
-
-        try (final var sshSessionFactory = sshSessionFactoryBuilder.build(new JGitKeyCache())) {
-            sshCallback = getSshCallback(sshSessionFactory);
-        }
+        final var sshSessionFactory = getSshdSessionFactoryBuilder(gitSshPrivateKeyPath, gitSshPrivateKeyPassphrase, gitUrl).build(new JGitKeyCache());
+        sshCallback = getSshCallback(sshSessionFactory);
     }
 
     private boolean useSsh() {
