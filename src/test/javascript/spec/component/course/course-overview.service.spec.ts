@@ -308,30 +308,4 @@ describe('CourseOverviewService', () => {
     it('should return undefined if exams array is empty', () => {
         expect(service.getUpcomingExam([])).toBeUndefined();
     });
-
-    it('should convert the working time of an exam to a string correctly', () => {
-        const exams: Exam[] = [
-            {
-                id: 1,
-                workingTime: 1800,
-            },
-            {
-                id: 2,
-                workingTime: 3600,
-            },
-            {
-                id: 3,
-                workingTime: 8100,
-            },
-        ];
-        const convertWorkingTimeInstance = jest.spyOn(service, 'convertWorkingTimeToString');
-        const workingTimeInStrings: string[] = [];
-        exams.slice(0, 3).forEach((exam) => {
-            workingTimeInStrings.push(service.convertWorkingTimeToString(exam.workingTime!));
-        });
-        expect(workingTimeInStrings[0]).toBe('30 min');
-        expect(workingTimeInStrings[1]).toBe('1h');
-        expect(workingTimeInStrings[2]).toBe('2h 15 min');
-        expect(convertWorkingTimeInstance).toHaveBeenCalledTimes(3);
-    });
 });

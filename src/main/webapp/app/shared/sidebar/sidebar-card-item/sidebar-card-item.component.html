@@ -16,9 +16,7 @@
                 </div>
             </div>
             <div class="d-flex flex-column align-items-baseline">
-                <small class="me-2 text-truncate fw-semibold small-title-color">
-                    {{ 'artemisApp.courseOverview.sidebar.start' | artemisTranslate }}
-                </small>
+                <small class="me-2 text-truncate fw-semibold small-title-color" jhiTranslate="artemisApp.courseOverview.sidebar.start"></small>
                 <small class="me-2 text-truncate fw-semibold">
                     @if (sidebarItem.startDateWithTime) {
                         {{ sidebarItem.startDateWithTime | artemisDate: 'long-date' }}
@@ -29,20 +27,16 @@
             </div>
             <hr [ngStyle]="{ margin: '0.25rem 0' }" />
             <div class="d-flex flex-column align-items-baseline">
-                <small class="me-2 text-truncate fw-semibold small-title-color">
-                    {{ 'artemisApp.courseOverview.sidebar.workingTime' | artemisTranslate }}
-                </small>
+                <small class="me-2 text-truncate fw-semibold small-title-color" jhiTranslate="artemisApp.courseOverview.sidebar.workingTime"></small>
                 <small class="me-2 text-truncate fw-semibold">
                     @if (sidebarItem.workingTime) {
-                        {{ sidebarItem.workingTime }}
+                        {{ sidebarItem.workingTime | artemisDurationFromSeconds }}
                     }
                 </small>
             </div>
             <hr [ngStyle]="{ margin: '0.25rem 0' }" />
             <div class="d-flex flex-column align-items-baseline">
-                <small class="me-2 text-truncate fw-semibold small-title-color">
-                    {{ 'artemisApp.courseOverview.sidebar.attainablePoints' | artemisTranslate }}
-                </small>
+                <small class="me-2 text-truncate fw-semibold small-title-color" jhiTranslate="artemisApp.courseOverview.sidebar.attainablePoints"></small>
                 <small class="me-2 text-truncate fw-semibold">
                     @if (sidebarItem.attainablePoints) {
                         {{ sidebarItem.attainablePoints }}
