@@ -1,3 +1,5 @@
+$breadcrumb-height: 38px;
+
 .exam-footer {
     max-width: 100vw;
     height: 50px;
@@ -49,4 +51,19 @@
     position: sticky;
     top: 0;
     z-index: 1010;
+}
+
+.exam-background-wrapper {
+    background-color: var(--bs-body-bg);
+}
+
+.content-exam-height {
+    height: calc(100vh - var(--sidebar-footer-height-dev) - $breadcrumb-height);
+
+    &.content-height-dev {
+        height: calc(100vh - var(--sidebar-footer-height-dev) - $breadcrumb-height);
+    }
+    @media (max-width: 768px) {
+        height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height)) !important;
+    }
 }

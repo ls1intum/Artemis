@@ -15,6 +15,7 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { captureException } from '@sentry/angular-ivy';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { SidebarCardElement } from 'app/types/sidebar';
 
 export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted';
 
@@ -349,5 +350,18 @@ export class ExamParticipationService {
     resetExamLayout() {
         this.examIsStartedSubject.next(false);
         document.documentElement.style.setProperty('--header-height', '68px'); // Set back to default value, because exam nav bar changes this property within the exam
+    }
+
+    mapExercisesToSidebarCardElements(exercises: Exercise[]) {
+        return exercises.map((exercise) => this.mapExerciseToSidebarCardElement(exercise));
+    }
+
+    mapExerciseToSidebarCardElement(exercise: Exercise): SidebarCardElement {
+        const exerciseCardItem: SidebarCardElement = {
+            title: exercise.title ?? '',
+            id: exercise.id ?? '',
+            size: 'S',
+        };
+        return exerciseCardItem;
     }
 }

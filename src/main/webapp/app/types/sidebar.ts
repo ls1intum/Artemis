@@ -7,7 +7,7 @@ export type SidebarCardSize = 'S' | 'M' | 'L';
 export type TimeGroupCategory = 'past' | 'current' | 'future' | 'noDate';
 export type ExamGroupCategory = 'real' | 'test';
 export type TutorialGroupCategory = 'all' | 'registered' | 'further';
-export type SidebarTypes = 'exercise' | 'exam' | 'default';
+export type SidebarTypes = 'exercise' | 'exam' | 'inExam' | 'default';
 
 export type AccordionGroups = Record<TimeGroupCategory | TutorialGroupCategory | ExamGroupCategory | string, { entityData: SidebarCardElement[] }>;
 export type ExerciseCollapseState = Record<TimeGroupCategory, boolean>;

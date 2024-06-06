@@ -18,9 +18,9 @@
     @if (studentExam) {
         <!-- exam participation -->
         @if (isVisible() && isActive() && !isOver() && examStartConfirmed) {
-            <div [ngClass]="{ 'card-body': !testRunId }">
+            <div class="exam-background-wrapper">
                 <!-- exam nav -->
-                <jhi-exam-navigation-bar
+                <!-- <jhi-exam-navigation-bar
                     id="exam-navigation-bar"
                     class="exam-navigation-sticky d-block"
                     [exercises]="studentExam.exercises!"
@@ -31,89 +31,81 @@
                     (onPageChanged)="onPageChange($event)"
                     (examAboutToEnd)="examEnded()"
                     (onExamHandInEarly)="toggleHandInEarly()"
-                />
-                <!-- exercises -->
-                <div [hidden]="activePageIndex !== -1">
-                    <jhi-exam-exercise-overview-page [studentExam]="studentExam" (onPageChanged)="onPageChange($event)" />
+                /> -->
+                <div class="h5 module-bg m-3 mt-0 px-3 py-2 rounded rounded-3 justify-content-between sticky-top">
+                    <div class="align-self-center d-flex">
+                        <h3 class="align-self-center mb-0">{{ exam.title }}</h3>
+                    </div>
                 </div>
-                @for (exercise of studentExam.exercises; track exercise; let i = $index) {
-                    @if (exercise && exercise.studentParticipations && exercise.studentParticipations[0]) {
-                        @if (pageComponentVisited[i]) {
-                            <div class="mb-4" [hidden]="i !== activePageIndex" [id]="'exercise-' + exercise.id">
-                                @switch (exercise.type) {
-                                    @case (QUIZ) {
-                                        <jhi-quiz-submission-exam [quizConfiguration]="exercise" [studentSubmission]="exercise.studentParticipations[0].submissions![0]" />
-                                    }
-                                    @case (FILEUPLOAD) {
-                                        <jhi-file-upload-submission-exam [exercise]="exercise" [studentSubmission]="exercise.studentParticipations[0].submissions![0]" />
-                                    }
-                                    @case (TEXT) {
-                                        <jhi-text-editor-exam [exercise]="exercise" [studentSubmission]="exercise.studentParticipations[0].submissions![0]" />
-                                    }
-                                    @case (MODELING) {
-                                        <jhi-modeling-submission-exam [exercise]="exercise" [studentSubmission]="exercise.studentParticipations[0].submissions![0]" />
-                                    }
-                                    @case (PROGRAMMING) {
-                                        <jhi-programming-submission-exam [exercise]="exercise" [studentParticipation]="exercise.studentParticipations[0]" [courseId]="courseId" />
-                                    }
+                <div class="d-flex justify-content-between gap-3 content-exam-height">
+                    <div class="ms-3 bg-body">
+                        <!-- <jhi-sidebar [itemSelected]="true" [courseId]="courseId" [sidebarData]="sidebarData" [searchFieldEnabled]="false" [isExamMode]="true" [itemSelected]="exerciseSelected"/> -->
+                        <jhi-exam-navigation-sidebar
+                            [itemSelected]="true"
+                            [courseId]="courseId"
+                            [sidebarData]="sidebarData"
+                            [exercises]="studentExam.exercises!"
+                            [exerciseIndex]="exerciseIndex"
+                            [endDate]="individualStudentEndDate"
+                            [overviewPageOpen]="activePageIndex === -1"
+                            [examSessions]="studentExam.examSessions"
+                            (onPageChanged)="onPageChange($event)"
+                            (examAboutToEnd)="examEnded()"
+                            (onExamHandInEarly)="toggleHandInEarly()"
+                        />
+                    </div>
+                    <!-- exercises -->
+                    <div class="vw-100 module-bg rounded-3 me-3 px-3 pt-3">
+                        <div [hidden]="activePageIndex !== -1">
+                            <jhi-exam-exercise-overview-page [studentExam]="studentExam" (onPageChanged)="onPageChange($event)" />
+                        </div>
+                        @for (exercise of studentExam.exercises; track exercise; let i = $index) {
+                            @if (exercise && exercise.studentParticipations && exercise.studentParticipations[0]) {
+                                @if (pageComponentVisited[i]) {
+                                    <div class="content-exam-height" [hidden]="i !== activePageIndex" [id]="'exercise-' + exercise.id">
+                                        @switch (exercise.type) {
+                                            @case (QUIZ) {
+                                                <jhi-quiz-submission-exam [quizConfiguration]="exercise" [studentSubmission]="exercise.studentParticipations[0].submissions![0]" />
+                                            }
+                                            @case (FILEUPLOAD) {
+                                                <jhi-file-upload-submission-exam [exercise]="exercise" [studentSubmission]="exercise.studentParticipations[0].submissions![0]" />
+                                            }
+                                            @case (TEXT) {
+                                                <jhi-text-editor-exam [exercise]="exercise" [studentSubmission]="exercise.studentParticipations[0].submissions![0]" />
+                                            }
+                                            @case (MODELING) {
+                                                <jhi-modeling-submission-exam [exercise]="exercise" [studentSubmission]="exercise.studentParticipations[0].submissions![0]" />
+                                            }
+                                            @case (PROGRAMMING) {
+                                                <jhi-programming-submission-exam
+                                                    [exercise]="exercise"
+                                                    [studentParticipation]="exercise.studentParticipations[0]"
+                                                    [courseId]="courseId"
+                                                />
+                                            }
+                                        }
+                                    </div>
                                 }
+                            }
+                        }
+                        @if ((generateParticipationStatus | async) === 'generating') {
+                            <div class="d-flex justify-content-center align-items-center">
+                                <p class="mb-0" jhiTranslate="artemisApp.examParticipation.preparingParticipation"></p>
+                                <div class="spinner-border ms-2" role="status">
+                                    <span class="sr-only">Loading...</span>
+                                </div>
                             </div>
                         }
-                    }
-                }
-                @if ((generateParticipationStatus | async) === 'generating') {
-                    <div class="d-flex justify-content-center align-items-center">
-                        <p class="mb-0" jhiTranslate="artemisApp.examParticipation.preparingParticipation"></p>
-                        <div class="spinner-border ms-2" role="status">
-                            <span class="sr-only">Loading...</span>
-                        </div>
-                    </div>
-                }
-                @if ((generateParticipationStatus | async) === 'failed') {
-                    <div class="d-flex justify-content-center align-items-center">
-                        <p class="mb-0" jhiTranslate="artemisApp.examParticipation.generateParticipationFailed"></p>
-                        <button class="btn btn-sm btn-primary px-3 ms-2" (click)="createParticipationForExercise(this.activeExamPage.exercise!).subscribe()">
-                            {{ 'artemisApp.examParticipation.generateParticipationRetry' | artemisTranslate }}
-                        </button>
-                    </div>
-                }
-                <!-- exam connection status footer bar -->
-                @if (connected) {
-                    <div class="exam-footer connected">
-                        <div class="container">
-                            <div class="exam-footer-content">
-                                <!-- Note by SK: this case shows an empty <p> on purpose -->
-                                @if (isProgrammingExercise()) {
-                                    <p jhiTranslate="artemisApp.examParticipation.ideConnected" class="mb-0"></p>
-                                } @else {
-                                    <p jhiTranslate="artemisApp.examParticipation.connected" class="mb-0"></p>
-                                }
-                                <jhi-connection-status class="connection-status-exam-participation" />
+                        @if ((generateParticipationStatus | async) === 'failed') {
+                            <div class="d-flex justify-content-center align-items-center">
+                                <p class="mb-0" jhiTranslate="artemisApp.examParticipation.generateParticipationFailed"></p>
+                                <button class="btn btn-sm btn-primary px-3 ms-2" (click)="createParticipationForExercise(this.activeExamPage.exercise!).subscribe()">
+                                    {{ 'artemisApp.examParticipation.generateParticipationRetry' | artemisTranslate }}
+                                </button>
                             </div>
-                        </div>
+                        }
                     </div>
-                }
-                @if (!connected) {
-                    <div class="exam-footer disconnected">
-                        <div class="container">
-                            <div class="exam-footer-content">
-                                @if (!isProgrammingExercise()) {
-                                    <p jhiTranslate="artemisApp.examParticipation.disconnected" class="mb-0"></p>
-                                }
-                                @if (isProgrammingExerciseWithCodeEditor() && isProgrammingExerciseWithOfflineIDE()) {
-                                    <p jhiTranslate="artemisApp.examParticipation.disconnectedCodeEditorAndOfflineIDE" class="mb-0"></p>
-                                }
-                                @if (isProgrammingExerciseWithCodeEditor() && !isProgrammingExerciseWithOfflineIDE()) {
-                                    <p jhiTranslate="artemisApp.examParticipation.disconnectedCodeEditorNoOfflineIDE" class="mb-0"></p>
-                                }
-                                @if (!isProgrammingExerciseWithCodeEditor() && isProgrammingExerciseWithOfflineIDE()) {
-                                    <p jhiTranslate="artemisApp.examParticipation.disconnectedNoCodeEditor" class="mb-0"></p>
-                                }
-                                <jhi-connection-status class="connection-status-exam-participation" />
-                            </div>
-                        </div>
-                    </div>
-                }
+                </div>
             </div>
         }
         @if (!studentExam.submitted && ((isOver() && examStartConfirmed) || isGracePeriodOver())) {
