@@ -3,12 +3,13 @@ package de.tum.in.www1.artemis.theia;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_THEIA;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.service.theia.TheiaInfoContributor;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.info.Info;
 import org.springframework.context.annotation.Profile;
+
+import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.service.theia.TheiaInfoContributor;
 
 @Profile(PROFILE_THEIA)
 class TheiaInfoContributorTest {
@@ -24,7 +25,8 @@ class TheiaInfoContributorTest {
         theiaInfoContributor = new TheiaInfoContributor();
         try {
             theiaInfoContributor.contribute(builder);
-        } catch (NullPointerException e) {
+        }
+        catch (NullPointerException e) {
         }
 
         Info info = builder.build();
