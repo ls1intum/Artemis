@@ -78,7 +78,7 @@ export class ExamAssessmentButtonsComponent implements OnInit {
             );
 
             /*
-            Prepare workingTimeObservable to perform the following on subscribe:
+            Prepare examObservable to perform the following on subscribe:
             - set the exam
             - trigger (re)calculation of whether the exam is over
              */
