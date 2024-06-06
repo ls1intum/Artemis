@@ -85,8 +85,11 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
         return submissions?.find((submission) => submission.commitHash === commitInfo.hash);
     }
 
-    // This method groups commits together that were pushed in one batch. As we don't have a direct indicator whether commits were pushed together,
-    // we infer groups based on the presence of a 'result' on a commit
+    /**
+     * Groups commits together that were pushed in one batch.
+     * As we don't have a direct indicator whether commits were pushed together,
+     * we infer groups based on the presence of a 'result' on a commit.
+     */
     private groupCommits() {
         if (!this.commits) {
             return;
@@ -115,7 +118,7 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
         if (tempGroup.length > 0) {
             commitGroups.push({
                 key: 'no-result',
-                commits: tempGroup,
+                commits: [...tempGroup].reverse(),
                 date: dayjs(tempGroup[tempGroup.length - 1].timestamp).format('YYYY-MM-DD') ?? '',
             });
         }
