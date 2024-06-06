@@ -47,33 +47,33 @@ export class CourseOverviewService {
     }
 
     getCorrespondingExerciseGroupByDate(exercise: Exercise): TimeGroupCategory {
-        if (!exercise.dueDate) {
-            return 'noDate';
-        }
-
         const now = dayjs();
-        const dueDate = dayjs(exercise.dueDate);
-
-        const dueDateIsInThePast = dueDate.isBefore(now);
-        if (dueDateIsInThePast) {
-            return 'past';
-        }
-
-        const dueDateIsSoon = dueDate.isBefore(now.add(3, 'days'));
-        if (dueDateIsSoon) {
-            return 'dueSoon';
-        }
 
         // any exercise without release/start dates is immediately available for participation
         const start = exercise.startDate ?? exercise.releaseDate;
         const startDate = start ? dayjs(start) : now;
+
+        if (now.isBefore(startDate)) {
+            return 'future';
+        }
+
+        const dueDate = dayjs(exercise.dueDate);
+        const dueDateIsInThePast = dueDate.isBefore(now);
+        if (exercise.dueDate && dueDateIsInThePast) {
+            return 'past';
+        }
+
+        const dueDateIsSoon = dueDate.isBefore(now.add(3, 'days'));
+        if (exercise.dueDate && dueDateIsSoon) {
+            return 'dueSoon';
+        }
 
         // last parameter indicates inclusive range for both start and end date
         if (now.isBetween(startDate, dueDate, undefined, '[]')) {
             return 'current';
         }
 
-        return 'future';
+        return 'noDate';
     }
 
     getCorrespondingLectureGroupByDate(startDate: dayjs.Dayjs | undefined, endDate?: dayjs.Dayjs | undefined): TimeGroupCategory {

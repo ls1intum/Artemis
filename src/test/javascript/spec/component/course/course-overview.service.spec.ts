@@ -185,18 +185,17 @@ describe('CourseOverviewService', () => {
         jest.spyOn(service, 'mapExerciseToSidebarCardElement');
         const groupedExercises = service.groupExercisesByDueDate(sortedExercises);
 
-        expect(groupedExercises['current'].entityData).toHaveLength(1);
+        expect(groupedExercises['current'].entityData).toHaveLength(2);
         expect(groupedExercises['dueSoon'].entityData).toHaveLength(1);
         expect(groupedExercises['past'].entityData).toHaveLength(1);
         expect(groupedExercises['future'].entityData).toHaveLength(2);
-        expect(groupedExercises['noDate'].entityData).toHaveLength(1);
         expect(service.mapExerciseToSidebarCardElement).toHaveBeenCalledTimes(6);
         expect(groupedExercises['current'].entityData[0].title).toBe('Current Exercise');
+        expect(groupedExercises['current'].entityData[1].title).toBe('Current Exercise No Due Date');
         expect(groupedExercises['dueSoon'].entityData[0].title).toBe('DueSoon Exercise');
         expect(groupedExercises['past'].entityData[0].title).toBe('Past Exercise');
         expect(groupedExercises['future'].entityData[0].title).toBe('Future Exercise');
         expect(groupedExercises['future'].entityData[1].title).toBe('Future Exercise 2');
-        expect(groupedExercises['noDate'].entityData[0].title).toBe('Current Exercise No Due Date');
     });
 
     describe.each([
@@ -237,6 +236,16 @@ describe('CourseOverviewService', () => {
                 }
             }
         });
+    });
+
+    it('should group an exercise with no release date or due date, but start date in future as future', () => {
+        const exercise = new TextExercise(course, undefined);
+        exercise.releaseDate = undefined;
+        exercise.startDate = dayjs().add(1, 'day');
+        exercise.dueDate = undefined;
+
+        const groupedExercises = service.groupExercisesByDueDate([exercise]);
+        expect(groupedExercises['future'].entityData).toHaveLength(1);
     });
 
     it('should group all exercises as past when all exercises have past due dates', () => {
