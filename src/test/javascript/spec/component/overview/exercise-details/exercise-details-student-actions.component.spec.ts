@@ -33,6 +33,7 @@ import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-c
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { PROFILE_THEIA } from 'app/app.constants';
 
 describe('ExerciseDetailsStudentActionsComponent', () => {
     let comp: ExerciseDetailsStudentActionsComponent;
@@ -597,5 +598,54 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
         expect(window.alert).toHaveBeenCalledWith('artemisApp.exercise.maxAthenaResultsReached');
         expect(result).toBeFalse();
+    });
+
+    it('start theia button should be visible when profile is active and url is set', () => {
+        getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
+        getProfileInfoSub.mockReturnValue(
+            of({
+                inProduction: false,
+                sshCloneURLTemplate: 'ssh://git@testserver.com:1234/',
+                activeProfiles: [PROFILE_THEIA],
+                theiaPortalURL: 'https://theia.test',
+            } as ProfileInfo),
+        );
+        comp.exercise = exercise;
+
+        fixture.detectChanges();
+
+        expect(comp.theiaEnabled).toBeTrue();
+    });
+
+    it('start theia button should not be visible when profile is active but url is not set', () => {
+        getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
+        getProfileInfoSub.mockReturnValue(
+            of({
+                inProduction: false,
+                sshCloneURLTemplate: 'ssh://git@testserver.com:1234/',
+                activeProfiles: [PROFILE_THEIA],
+            } as ProfileInfo),
+        );
+        comp.exercise = exercise;
+
+        fixture.detectChanges();
+
+        expect(comp.theiaEnabled).toBeFalse();
+    });
+
+    it('start theia button should not be visible when profile is not active but url is set', () => {
+        getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
+        getProfileInfoSub.mockReturnValue(
+            of({
+                inProduction: false,
+                sshCloneURLTemplate: 'ssh://git@testserver.com:1234/',
+                theiaPortalURL: 'https://theia.test',
+            } as ProfileInfo),
+        );
+        comp.exercise = exercise;
+
+        fixture.detectChanges();
+
+        expect(comp.theiaEnabled).toBeFalse();
     });
 });
