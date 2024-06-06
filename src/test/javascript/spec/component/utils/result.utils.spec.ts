@@ -38,6 +38,15 @@ describe('ResultUtils', () => {
             expected: false,
         },
         {
+            result: {
+                assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is not a test case' }, { type: FeedbackType.AUTOMATIC }],
+                testCaseCount: 1,
+            },
+            templateStatus: ResultTemplateStatus.HAS_RESULT,
+            expected: false,
+        },
+        {
             result: { feedbacks: [{ type: FeedbackType.AUTOMATIC, text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER }, { type: FeedbackType.MANUAL }], testCaseCount: 0 },
             templateStatus: ResultTemplateStatus.NO_RESULT,
             expected: false,
@@ -71,6 +80,15 @@ describe('ResultUtils', () => {
         { result: {}, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-danger' },
         {
             result: { score: 1, participation: { exercise: { type: ExerciseType.PROGRAMMING } } } as Result,
+            templateStatus: ResultTemplateStatus.HAS_RESULT,
+            expected: 'text-success',
+        },
+        {
+            result: {
+                assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is not a test case' }, { type: FeedbackType.AUTOMATIC }],
+                testCaseCount: 1,
+            },
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: 'text-success',
         },
@@ -118,6 +136,15 @@ describe('ResultUtils', () => {
         },
         {
             result: { feedbacks: [], assessmentType: AssessmentType.AUTOMATIC_ATHENA },
+            templateStatus: ResultTemplateStatus.HAS_RESULT,
+            expected: faCheckCircle,
+        },
+        {
+            result: {
+                assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is not a test case' }, { type: FeedbackType.AUTOMATIC }],
+                testCaseCount: 1,
+            },
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: faCheckCircle,
         },
