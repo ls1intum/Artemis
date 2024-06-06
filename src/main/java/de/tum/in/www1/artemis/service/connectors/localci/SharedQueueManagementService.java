@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +29,7 @@ import com.hazelcast.topic.ITopic;
 
 import de.tum.in.www1.artemis.domain.BuildJob;
 import de.tum.in.www1.artemis.repository.BuildJobRepository;
+import de.tum.in.www1.artemis.repository.specs.BuildJobSpecs;
 import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
@@ -296,11 +298,14 @@ public class SharedQueueManagementService {
         Duration buildDurationLower = search.buildDurationLower() == null ? null : Duration.ofSeconds(search.buildDurationLower());
         Duration buildDurationUpper = search.buildDurationUpper() == null ? null : Duration.ofSeconds(search.buildDurationUpper());
 
-        Page<Long> buildJobIdsPage = buildJobRepository.findAllByFilterCriteria(search.buildStatus(), search.buildAgentAddress(), search.startDate(), search.endDate(),
-                search.pageable().getSearchTerm(), courseId, buildDurationLower, buildDurationUpper,
+        Page<BuildJob> buildJobIdsPage = buildJobRepository.findAll(
+                Specification.where(BuildJobSpecs.hasBuildStatus(search.buildStatus())).and(BuildJobSpecs.hasBuildAgentAddress(search.buildAgentAddress()))
+                        .and(BuildJobSpecs.buildStartDateAfter(search.startDate())).and(BuildJobSpecs.buildStartDateBefore(search.endDate()))
+                        .and(BuildJobSpecs.hasSearchTerm(search.pageable().getSearchTerm())).and(BuildJobSpecs.hasCourseId(courseId))
+                        .and(BuildJobSpecs.durationGreaterThanOrEqualTo(buildDurationLower)).and(BuildJobSpecs.durationLessThanOrEqualTo(buildDurationUpper)),
                 PageUtil.createDefaultPageRequest(search.pageable(), PageUtil.ColumnMapping.BUILD_JOB));
 
-        List<BuildJob> buildJobs = buildJobRepository.findAllByIdWithResults(buildJobIdsPage.toList());
+        List<BuildJob> buildJobs = buildJobRepository.findAllByIdWithResults(buildJobIdsPage.map(BuildJob::getId).getContent());
 
         return new PageImpl<>(buildJobs, buildJobIdsPage.getPageable(), buildJobIdsPage.getTotalElements());
     }
