@@ -15,7 +15,7 @@ import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/model
 import { ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-build-plan-checkout-directories.component';
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
 import { ExerciseDetailDirective } from 'app/detail-overview-list/exercise-detail.directive';
-import { NoDataComponent } from 'app/detail-overview-list/components/no-data-component';
+import { NoDataComponent } from 'app/shared/no-data-component';
 
 @NgModule({
     imports: [

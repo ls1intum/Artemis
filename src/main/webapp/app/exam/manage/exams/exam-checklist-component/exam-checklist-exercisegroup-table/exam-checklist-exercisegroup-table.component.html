@@ -82,7 +82,7 @@
                         <span>{{ column.indexExercise }}</span>
                     }
                     @if (column.noExercises) {
-                        <span>-</span>
+                        <jhi-no-data />
                     }
                 </td>
                 <td>
@@ -95,7 +95,7 @@
                         </div>
                     }
                     @if (!column.exerciseTitle) {
-                        <span>-</span>
+                        <jhi-no-data />
                     }
                 </td>
                 <td>
@@ -103,7 +103,7 @@
                         <span>{{ column.exerciseMaxPoints }}</span>
                     }
                     @if (!column.exerciseMaxPoints) {
-                        <span>-</span>
+                        <jhi-no-data />
                     }
                 </td>
                 <td>

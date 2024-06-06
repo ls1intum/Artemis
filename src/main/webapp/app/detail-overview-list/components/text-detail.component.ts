@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import type { TextDetail } from 'app/detail-overview-list/detail.model';
-import { NoDataComponent } from 'app/detail-overview-list/components/no-data-component';
+import { NoDataComponent } from 'app/shared/no-data-component';
 
 @Component({
     selector: 'jhi-text-detail',
