@@ -87,13 +87,19 @@ public class PyrisConnectorService {
         }
     }
 
+    /**
+     * Executes a webhook and send lectures to the webhook with the given variant
+     *
+     * @param variant      The variant of the feature to execute
+     * @param executionDTO The DTO sent as a body for the execution
+     */
     public void executeLectureWebhook(String variant, PyrisWebhookLectureIngestionExecutionDTO executionDTO) {
         var endpoint = "/api/v1/webhooks/lectures/" + variant;
         try {
             restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(executionDTO), Void.class);
         }
         catch (HttpStatusCodeException e) {
-            log.error("Failed to send request to Pyris", e);
+            log.error("Failed to send lectures to Pyris", e);
             // TODO : add error ingestion UI.
         }
         catch (RestClientException | IllegalArgumentException e) {

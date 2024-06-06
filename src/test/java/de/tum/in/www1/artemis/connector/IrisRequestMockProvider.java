@@ -114,6 +114,15 @@ public class IrisRequestMockProvider {
         // @formatter:on
     }
 
+    public void mockIngestionWebhookRunError(int httpStatus) {
+        // @formatter:off
+        mockServer
+            .expect(ExpectedCount.once(), requestTo(webhooksApiURL + "/lectures/fullIngestion"))
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(withStatus(HttpStatus.valueOf(httpStatus)));
+        // @formatter:on
+    }
+
     public void mockModelsResponse() throws JsonProcessingException {
         var irisModelDTO = new PyrisModelDTO("TEST_MODEL", "Test model", "Test description");
         var irisModelDTOArray = new PyrisModelDTO[] { irisModelDTO };
