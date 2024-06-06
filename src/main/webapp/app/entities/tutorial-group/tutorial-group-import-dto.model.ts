@@ -7,7 +7,11 @@ export class TutorialGroupRegistrationImportDTO {
     capacity?: number;
     language?: string;
     additionalInformation?: string;
-    meetingPlace?: string;
+    isOnline?: string;
+    dayOfWeek?: number;
+    startTime?: string;
+    endTime?: string;
+    location?: string;
 
     // properties set by the server when the import is done
     public importSuccessful?: boolean;

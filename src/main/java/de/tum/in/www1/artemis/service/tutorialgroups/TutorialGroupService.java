@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
 import de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupRegistrationType;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSchedule;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
@@ -422,6 +423,26 @@ public class TutorialGroupService {
                         if (registration.additionalInformation() != null) {
                             tutorialGroup.setAdditionalInformation(registration.additionalInformation());
                         }
+                        if (registration.isOnline() != null) {
+                            tutorialGroup.setIsOnline(registration.isOnline());
+                        }
+
+                        // Create and set the schedule
+                        TutorialGroupSchedule schedule = new TutorialGroupSchedule();
+                        if (registration.dayOfWeek() != null) {
+                            schedule.setDayOfWeek(registration.dayOfWeek());
+                        }
+                        if (registration.startTime() != null) {
+                            schedule.setStartTime(registration.startTime());
+                        }
+                        if (registration.endTime() != null) {
+                            schedule.setEndTime(registration.endTime());
+                        }
+                        if (registration.location() != null) {
+                            schedule.setLocation(registration.location());
+                        }
+                        schedule.setTutorialGroup(tutorialGroup);
+                        tutorialGroup.setTutorialGroupSchedule(schedule);
                     });
 
                     return tutorialGroup;

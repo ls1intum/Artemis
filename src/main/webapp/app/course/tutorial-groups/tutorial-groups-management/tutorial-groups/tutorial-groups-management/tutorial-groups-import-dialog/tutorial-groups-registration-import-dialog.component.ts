@@ -32,7 +32,12 @@ const POSSIBLE_LAST_NAME_HEADERS = ['familyname', 'lastname', 'familynameofstude
 const POSSIBLE_CAMPUS_HEADERS = ['campus'];
 const POSSIBLE_CAPACITY_HEADERS = ['capacity'];
 const POSSIBLE_LANGUAGE_HEADERS = ['language'];
-const POSSIBLE_ADDITIONAL_INFO_HEADERS = ['additional information'];
+const POSSIBLE_ADDITIONAL_INFO_HEADERS = ['additionalinformation'];
+const POSSIBLE_IS_ONLINE_HEADERS = ['isonline'];
+const POSSIBLE_DAY_OF_WEEK_HEADERS = ['dayOfWeek'];
+const POSSIBLE_START_TIME_HEADERS = ['startTime'];
+const POSSIBLE_END_TIME_HEADERS = ['endTime'];
+const POSSIBLE_LOCATION_HEADERS = ['location'];
 
 type filterValues = 'all' | 'onlyImported' | 'onlyNotImported';
 
@@ -210,7 +215,8 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
             return [];
         }
         // get the used headers from the first csv row object returned by the parser
-        const parsedHeaders = Object.keys(csvRows[0] || []);
+        let parsedHeaders = Object.keys(csvRows[0] || []);
+        parsedHeaders = parsedHeaders.map(this.removeSpacesFromHeaderName);
 
         // we find out which of the possible values is used in the csv file for the respective properties
         const usedTitleHeader = parsedHeaders.find((value) => POSSIBLE_TUTORIAL_GROUP_TITLE_HEADERS.includes(value)) || '';
@@ -222,6 +228,11 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
         const usedCapacityHeader = parsedHeaders.find((value) => POSSIBLE_CAPACITY_HEADERS.includes(value)) || '';
         const usedLanguageHeader = parsedHeaders.find((value) => POSSIBLE_LANGUAGE_HEADERS.includes(value)) || '';
         const usedAdditionalInfoHeader = parsedHeaders.find((value) => POSSIBLE_ADDITIONAL_INFO_HEADERS.includes(value)) || '';
+        const usedIsOnlineHeader = parsedHeaders.find((value) => POSSIBLE_IS_ONLINE_HEADERS.includes(value)) || '';
+        const usedDayOfWeekHeader = parsedHeaders.find((value) => POSSIBLE_DAY_OF_WEEK_HEADERS.includes(value)) || '';
+        const usedStartTimeHeader = parsedHeaders.find((value) => POSSIBLE_START_TIME_HEADERS.includes(value)) || '';
+        const usedEndTimeHeader = parsedHeaders.find((value) => POSSIBLE_END_TIME_HEADERS.includes(value)) || '';
+        const usedLocationHeader = parsedHeaders.find((value) => POSSIBLE_LOCATION_HEADERS.includes(value)) || '';
 
         // if status header is used filter out those rows that do not have a fixed place
         const statusColumn = cleanString(this.statusHeaderControl?.value);
@@ -244,6 +255,11 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
                 registration.capacity = csvRow[usedCapacityHeader] ? parseInt(csvRow[usedCapacityHeader], 10) : undefined;
                 registration.language = csvRow[usedLanguageHeader]?.trim() || '';
                 registration.additionalInformation = csvRow[usedAdditionalInfoHeader]?.trim() || '';
+                registration.isOnline = csvRow[usedIsOnlineHeader]?.trim().toLowerCase() || '';
+                registration.dayOfWeek = csvRow[usedDayOfWeekHeader] ? parseInt(csvRow[usedDayOfWeekHeader], 10) : undefined;
+                registration.startTime = csvRow[usedStartTimeHeader]?.trim() || '';
+                registration.endTime = csvRow[usedEndTimeHeader]?.trim() || '';
+                registration.location = csvRow[usedLocationHeader]?.trim() || '';
 
                 return registration;
             })
@@ -256,6 +272,11 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
         } else {
             return registrations;
         }
+    }
+
+    // Function to remove all spaces in header names
+    removeSpacesFromHeaderName(header: string) {
+        return header.trim().toLowerCase().replace(/_/g, '-').replace(/\s+/g, '');
     }
 
     resetFileUpload() {
