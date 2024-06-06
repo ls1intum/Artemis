@@ -600,52 +600,36 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(result).toBeFalse();
     });
 
-    it('start theia button should be visible when profile is active and url is set', () => {
-        getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-        getProfileInfoSub.mockReturnValue(
-            of({
-                inProduction: false,
-                sshCloneURLTemplate: 'ssh://git@testserver.com:1234/',
+    it.each([
+        [
+            'start theia button should be visible when profile is active and url is set',
+            {
                 activeProfiles: [PROFILE_THEIA],
                 theiaPortalURL: 'https://theia.test',
-            } as ProfileInfo),
-        );
-        comp.exercise = exercise;
-
-        fixture.detectChanges();
-
-        expect(comp.theiaEnabled).toBeTrue();
-    });
-
-    it('start theia button should not be visible when profile is active but url is not set', () => {
-        getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-        getProfileInfoSub.mockReturnValue(
-            of({
-                inProduction: false,
-                sshCloneURLTemplate: 'ssh://git@testserver.com:1234/',
+            },
+            true,
+        ],
+        [
+            'start theia button should not be visible when profile is active but url is not set',
+            {
                 activeProfiles: [PROFILE_THEIA],
-            } as ProfileInfo),
-        );
-        comp.exercise = exercise;
-
-        fixture.detectChanges();
-
-        expect(comp.theiaEnabled).toBeFalse();
-    });
-
-    it('start theia button should not be visible when profile is not active but url is set', () => {
-        getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-        getProfileInfoSub.mockReturnValue(
-            of({
-                inProduction: false,
-                sshCloneURLTemplate: 'ssh://git@testserver.com:1234/',
+            },
+            false,
+        ],
+        [
+            'start theia button should not be visible when profile is not active but url is set',
+            {
                 theiaPortalURL: 'https://theia.test',
-            } as ProfileInfo),
-        );
+            },
+            false,
+        ],
+    ])('%s', (description, profileInfo, expectedVisibility) => {
+        getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
+        getProfileInfoSub.mockReturnValue(of(profileInfo as ProfileInfo));
         comp.exercise = exercise;
 
         fixture.detectChanges();
 
-        expect(comp.theiaEnabled).toBeFalse();
+        expect(comp.theiaEnabled).toBe(expectedVisibility);
     });
 });
