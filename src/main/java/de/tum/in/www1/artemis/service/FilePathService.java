@@ -171,12 +171,11 @@ public class FilePathService {
      *
      * @param actualPathString the path to the file in the local filesystem
      * @param entityId         the id of the entity associated with the file
-     * @param questionId       ID of the drag and drop question, the file belongs to
      * @throws FilePathParsingException if the path is unknown
      * @return the public file url that can be used by users to access the file from outside
      */
-    public static URI publicPathForActualPathOrThrow(Path actualPathString, @Nullable Long entityId, @Nullable Long questionId) {
-        URI publicPath = publicPathForActualPath(actualPathString, entityId, questionId);
+    public static URI publicPathForActualPathOrThrow(Path actualPathString, @Nullable Long entityId) {
+        URI publicPath = publicPathForActualPath(actualPathString, entityId);
         if (publicPath == null) {
             // path is unknown => cannot convert
             throw new FilePathParsingException("Unknown Filepath: " + actualPathString);
@@ -188,22 +187,34 @@ public class FilePathService {
     /**
      * Generate the public path for the file at the given path
      *
-     * @param path       the path to the file in the local filesystem
-     * @param entityId   the id of the entity associated with the file
-     * @param questionId ID of the drag and drop question, the file belongs to
+     * @param actualPathString the path to the file in the local filesystem
+     * @param entityId         the id of the entity associated with the file
+     * @throws FilePathParsingException if the path is unknown
      * @return the public file url that can be used by users to access the file from outside
      */
-    public static URI publicPathForActualPath(Path path, @Nullable Long entityId, @Nullable Long questionId) {
+    public static URI publicPathForActualPathOrThrow(Path actualPathString, @Nullable String entityId) {
+        URI publicPath = publicPathForActualPath(actualPathString, entityId);
+        if (publicPath == null) {
+            // path is unknown => cannot convert
+            throw new FilePathParsingException("Unknown Filepath: " + actualPathString);
+        }
+
+        return publicPath;
+    }
+
+    /**
+     * Generate the public path for the file at the given path
+     *
+     * @param path     the path to the file in the local filesystem
+     * @param entityId the id of the entity associated with the file
+     * @return the public file url that can be used by users to access the file from outside
+     */
+    public static URI publicPathForActualPath(Path path, @Nullable Long entityId) {
         // first extract filename
         String filename = path.getFileName().toString();
 
         // generate part for id
-        String id = (entityId == null) ? Constants.FILEPATH_ID_PLACEHOLDER : entityId.toString();
-
-        if (questionId != null && entityId != null) {
-            id = String.format("%s/%s", questionId, id);
-        }
-
+        String id = entityId == null ? Constants.FILEPATH_ID_PLACEHOLDER : entityId.toString();
         // check for known path to convert
         if (path.startsWith(getTempFilePath())) {
             return URI.create(FileService.DEFAULT_FILE_SUBPATH + filename);
@@ -231,6 +242,28 @@ public class FilePathService {
         }
         if (path.startsWith(getFileUploadExercisesFilePath())) {
             return publicPathForActualFileUploadExercisesFilePath(path, filename, id);
+        }
+
+        return null;
+    }
+
+    /**
+     * Generate the public path for the file at the given path
+     *
+     * @param path     the path to the file in the local filesystem
+     * @param entityId the id of the entity associated with the file
+     * @return the public file url that can be used by users to access the file from outside
+     */
+    public static URI publicPathForActualPath(Path path, @Nullable String entityId) {
+        // first extract filename
+        String filename = path.getFileName().toString();
+
+        // generate part for id
+        String id = (entityId == null) ? Constants.FILEPATH_ID_PLACEHOLDER : entityId;
+
+        // check for known path to convert
+        if (path.startsWith(getDragItemFilePath())) {
+            return URI.create("/api/files/drag-and-drop/drag-items/" + id + "/" + filename);
         }
 
         return null;

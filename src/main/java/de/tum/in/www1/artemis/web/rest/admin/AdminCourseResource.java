@@ -150,7 +150,7 @@ public class AdminCourseResource {
         if (file != null) {
             Path basePath = FilePathService.getCourseIconFilePath();
             Path savePath = fileService.saveFile(file, basePath, false);
-            createdCourse.setCourseIcon(FilePathService.publicPathForActualPathOrThrow(savePath, createdCourse.getId(), null).toString());
+            createdCourse.setCourseIcon(FilePathService.publicPathForActualPathOrThrow(savePath, createdCourse.getId()).toString());
             createdCourse = courseRepository.save(createdCourse);
         }
 

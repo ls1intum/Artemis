@@ -177,7 +177,7 @@ public class LectureImportService {
             FileUtils.copyFile(oldPath.toFile(), tempPath.toFile(), REPLACE_EXISTING);
 
             // File was copied to a temp directory and will be moved once we persist the attachment
-            attachment.setLink(FilePathService.publicPathForActualPathOrThrow(tempPath, null, null).toString());
+            attachment.setLink(FilePathService.publicPathForActualPathOrThrow(tempPath, (Long) null).toString());
         }
         catch (IOException e) {
             log.error("Error while copying file", e);

@@ -398,7 +398,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         String sanitizedFilename = fileService.checkAndSanitizeFilename(file.getOriginalFilename());
         Path savePath = basePath.resolve(fileService.generateFilename("dnd_image_", sanitizedFilename, true));
         FileUtils.copyToFile(file.getInputStream(), savePath.toFile());
-        return FilePathService.publicPathForActualPathOrThrow(savePath, null, questionId);
+        return FilePathService.publicPathForActualPathOrThrow(savePath, questionId);
     }
 
     /**

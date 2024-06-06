@@ -101,11 +101,11 @@ public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic {
     }
 
     private void handleCountersForCorrectSpots(ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer, Consumer<ShortAnswerSpotCounter> changeCounterIfSpotIsCorrect) {
-        if (shortAnswerSubmittedAnswer.getSubmittedTexts() != null) {
+        if (shortAnswerSubmittedAnswer.getSubmittedTexts() != null && shortAnswerSubmittedAnswer.getQuizQuestion() instanceof ShortAnswerQuestion saQuestion) {
             for (ShortAnswerSpotCounter spotCounter : shortAnswerSpotCounters) {
                 ShortAnswerSpot spot = spotCounter.getSpot();
                 ShortAnswerSubmittedText shortAnswerSubmittedText = shortAnswerSubmittedAnswer.getSubmittedTextForSpot(spot);
-                Set<ShortAnswerSolution> shortAnswerSolutions = ((ShortAnswerQuestion) shortAnswerSubmittedAnswer.getQuizQuestion()).getCorrectSolutionForSpot(spot);
+                Set<ShortAnswerSolution> shortAnswerSolutions = saQuestion.getCorrectSolutionForSpot(spot);
 
                 if (shortAnswerSubmittedText == null) {
                     continue;
