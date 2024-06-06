@@ -17,7 +17,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -29,7 +28,6 @@ import com.hazelcast.topic.ITopic;
 
 import de.tum.in.www1.artemis.domain.BuildJob;
 import de.tum.in.www1.artemis.repository.BuildJobRepository;
-import de.tum.in.www1.artemis.repository.specs.BuildJobSpecs;
 import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
@@ -295,12 +293,9 @@ public class SharedQueueManagementService {
      * @return the page of build jobs
      */
     public Page<BuildJob> getFilteredFinishedBuildJobs(FinishedBuildJobPageableSearchDTO search, Long courseId) {
-        Specification<BuildJob> specification = Specification.where(BuildJobSpecs.hasBuildStatus(search.buildStatus()))
-                .and(BuildJobSpecs.hasBuildAgentAddress(search.buildAgentAddress())).and(BuildJobSpecs.buildStartDateAfter(search.startDate()))
-                .and(BuildJobSpecs.buildStartDateBefore(search.endDate())).and(BuildJobSpecs.hasSearchTerm(search.pageable().getSearchTerm()))
-                .and(BuildJobSpecs.hasCourseId(courseId)).and(BuildJobSpecs.fetchAssociations());
+        final Page<BuildJob> page = buildJobRepository.findAllByFilterCriteria(search.buildStatus(), search.buildAgentAddress(), search.startDate(), search.endDate(),
+                search.pageable().getSearchTerm(), courseId, PageUtil.createDefaultPageRequest(search.pageable(), PageUtil.ColumnMapping.BUILD_JOB));
 
-        final Page<BuildJob> page = buildJobRepository.findAll(specification, PageUtil.createDefaultPageRequest(search.pageable(), PageUtil.ColumnMapping.BUILD_JOB));
         // These fields have to be objects because they can be null.
         int buildDurationLower = search.buildDurationLower() == null ? 0 : search.buildDurationLower();
         int buildDurationUpper = search.buildDurationUpper() == null ? 0 : search.buildDurationUpper();
