@@ -13,7 +13,6 @@ import { ExamParticipationComponent } from 'app/exam/participate/exam-participat
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { CourseDashboardGuard } from 'app/overview/course-dashboard/course-dashboard-guard.service';
 
-
 const routes: Routes = [
     {
         path: '',
