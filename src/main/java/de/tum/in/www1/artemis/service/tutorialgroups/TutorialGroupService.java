@@ -663,17 +663,18 @@ public class TutorialGroupService {
     private void writeTutorialGroupRow(CSVPrinter printer, TutorialGroup tutorialGroup, List<String> fields, User student) throws IOException {
         for (String field : fields) {
             switch (field) {
-                case "ID" -> printer.print(tutorialGroup.getId());
-                case "Title" -> printer.print(tutorialGroup.getTitle());
-                case "Campus" -> printer.print(tutorialGroup.getCampus());
-                case "Language" -> printer.print(tutorialGroup.getLanguage());
-                case "Additional Information" -> printer.print(tutorialGroup.getAdditionalInformation());
-                case "Capacity" -> printer.print(tutorialGroup.getCapacity());
-                case "Is Online" -> printer.print(tutorialGroup.getIsOnline());
-                case "Day of Week" -> printer.print(getDayOfWeekString(tutorialGroup.getTutorialGroupSchedule().getDayOfWeek()));
-                case "Start Time" -> printer.print(tutorialGroup.getTutorialGroupSchedule().getStartTime());
-                case "End Time" -> printer.print(tutorialGroup.getTutorialGroupSchedule().getEndTime());
-                case "Location" -> printer.print(tutorialGroup.getTutorialGroupSchedule().getLocation());
+                case "ID" -> printer.print(tutorialGroup.getId() != null ? tutorialGroup.getId() : "");
+                case "Title" -> printer.print(tutorialGroup.getTitle() != null ? tutorialGroup.getTitle() : "");
+                case "Campus" -> printer.print(tutorialGroup.getCampus() != null ? tutorialGroup.getCampus() : "");
+                case "Language" -> printer.print(tutorialGroup.getLanguage() != null ? tutorialGroup.getLanguage() : "");
+                case "Additional Information" -> printer.print(tutorialGroup.getAdditionalInformation() != null ? tutorialGroup.getAdditionalInformation() : "");
+                case "Capacity" -> printer.print(tutorialGroup.getCapacity() != null ? tutorialGroup.getCapacity() : "");
+                case "Is Online" -> printer.print(tutorialGroup.getIsOnline() != null ? tutorialGroup.getIsOnline() : "");
+                case "Day of Week" -> printer
+                        .print(getDayOfWeekString(tutorialGroup.getTutorialGroupSchedule().getDayOfWeek() != null ? tutorialGroup.getTutorialGroupSchedule().getDayOfWeek() : 8));
+                case "Start Time" -> printer.print(tutorialGroup.getTutorialGroupSchedule().getStartTime() != null ? tutorialGroup.getTutorialGroupSchedule().getStartTime() : "");
+                case "End Time" -> printer.print(tutorialGroup.getTutorialGroupSchedule().getEndTime() != null ? tutorialGroup.getTutorialGroupSchedule().getEndTime() : "");
+                case "Location" -> printer.print(tutorialGroup.getTutorialGroupSchedule().getLocation() != null ? tutorialGroup.getTutorialGroupSchedule().getLocation() : "");
                 case "Registration Number" -> printer.print(student != null ? student.getRegistrationNumber() : "");
                 case "First Name" -> printer.print(student != null ? student.getFirstName() : "");
                 case "Last Name" -> printer.print(student != null ? student.getLastName() : "");
@@ -692,10 +693,10 @@ public class TutorialGroupService {
      * @throws IllegalArgumentException if the provided dayOfWeek is not within the range 1 to 7.
      */
     public String getDayOfWeekString(int dayOfWeek) {
-        if (dayOfWeek < 1 || dayOfWeek > 7) {
+        if (dayOfWeek < 1 || dayOfWeek > 8) {
             throw new IllegalArgumentException("Invalid day of the week: " + dayOfWeek);
         }
-        String[] days = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
+        String[] days = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "None" };
         return days[dayOfWeek - 1];
     }
 
