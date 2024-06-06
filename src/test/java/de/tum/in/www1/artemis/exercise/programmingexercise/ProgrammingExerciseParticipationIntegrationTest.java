@@ -44,6 +44,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.CommitInfoDTO;
 
@@ -672,6 +673,27 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
         var commitInfo2 = new CommitInfoDTO("hash2", "msg2", ZonedDateTime.of(2020, 1, 2, 0, 0, 0, 0, ZoneId.of("UTC")), "author2", "authorEmail2");
         doReturn(List.of(commitInfo, commitInfo2)).when(gitService).getCommitInfos(participation.getVcsRepositoryUri());
         request.getList("/api/programming-exercise-participations/" + participation.getId() + "/commit-history", HttpStatus.OK, CommitInfoDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void retrieveParticipationUserStudentOwnerSuccess() throws Exception {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        request.get("/api/programming-exercise-participations/" + participation.getId() + "/user", HttpStatus.OK, UserDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void retrieveParticipationUserStudentNotOwnerForbidden() throws Exception {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
+        request.get("/api/programming-exercise-participations/" + participation.getId() + "/user", HttpStatus.FORBIDDEN, UserDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void retrieveParticipationUserTutorNotOwnerSuccess() throws Exception {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        request.get("/api/programming-exercise-participations/" + participation.getId() + "/user", HttpStatus.OK, UserDTO.class);
     }
 
     private Result addStudentParticipationWithResult(AssessmentType assessmentType, ZonedDateTime completionDate) {
