@@ -2,7 +2,6 @@ import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@ang
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FormBuilder, FormGroup } from '@angular/forms';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { EMPTY, Subject, from, take, takeUntil } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -12,9 +11,8 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { Course } from 'app/entities/course.model';
 import { PageType, SortDirection } from 'app/shared/metis/metis.util';
 import { faBan, faComment, faComments, faFile, faGraduationCap, faHeart, faList, faMessage } from '@fortawesome/free-solid-svg-icons';
-import { faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faFilter, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { CourseWideSearchComponent, CourseWideSearchConfig } from 'app/overview/course-conversations/course-wide-search/course-wide-search.component';
 import { AccordionGroups, ChannelAccordionShowAdd, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { CourseOverviewService } from 'app/overview/course-overview.service';
