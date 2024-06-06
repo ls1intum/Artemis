@@ -29,6 +29,10 @@ const POSSIBLE_REGISTRATION_NUMBER_HEADERS = ['registrationnumber', 'matriculati
 const POSSIBLE_LOGIN_HEADERS = ['login', 'user', 'username', 'benutzer', 'benutzername'];
 const POSSIBLE_FIRST_NAME_HEADERS = ['firstname', 'firstnameofstudent', 'givenname', 'forename', 'vorname'];
 const POSSIBLE_LAST_NAME_HEADERS = ['familyname', 'lastname', 'familynameofstudent', 'surname', 'nachname', 'familienname', 'name'];
+const POSSIBLE_CAMPUS_HEADERS = ['campus'];
+const POSSIBLE_CAPACITY_HEADERS = ['capacity'];
+const POSSIBLE_LANGUAGE_HEADERS = ['language'];
+const POSSIBLE_ADDITIONAL_INFO_HEADERS = ['additional information'];
 
 type filterValues = 'all' | 'onlyImported' | 'onlyNotImported';
 
@@ -206,7 +210,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
             return [];
         }
         // get the used headers from the first csv row object returned by the parser
-        const parsedHeaders = Object.keys(csvRows.first() || []);
+        const parsedHeaders = Object.keys(csvRows[0] || []);
 
         // we find out which of the possible values is used in the csv file for the respective properties
         const usedTitleHeader = parsedHeaders.find((value) => POSSIBLE_TUTORIAL_GROUP_TITLE_HEADERS.includes(value)) || '';
@@ -214,6 +218,10 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
         const usedLoginHeader = parsedHeaders.find((value) => POSSIBLE_LOGIN_HEADERS.includes(value)) || '';
         const usedFirstNameHeader = parsedHeaders.find((value) => POSSIBLE_FIRST_NAME_HEADERS.includes(value)) || '';
         const usedLastNameHeader = parsedHeaders.find((value) => POSSIBLE_LAST_NAME_HEADERS.includes(value)) || '';
+        const usedCampusHeader = parsedHeaders.find((value) => POSSIBLE_CAMPUS_HEADERS.includes(value)) || '';
+        const usedCapacityHeader = parsedHeaders.find((value) => POSSIBLE_CAPACITY_HEADERS.includes(value)) || '';
+        const usedLanguageHeader = parsedHeaders.find((value) => POSSIBLE_LANGUAGE_HEADERS.includes(value)) || '';
+        const usedAdditionalInfoHeader = parsedHeaders.find((value) => POSSIBLE_ADDITIONAL_INFO_HEADERS.includes(value)) || '';
 
         // if status header is used filter out those rows that do not have a fixed place
         const statusColumn = cleanString(this.statusHeaderControl?.value);
@@ -232,6 +240,10 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
                     firstName: csvRow[usedFirstNameHeader]?.trim() || '',
                     lastName: csvRow[usedLastNameHeader]?.trim() || '',
                 } as StudentDTO;
+                registration.campus = csvRow[usedCampusHeader]?.trim() || '';
+                registration.capacity = csvRow[usedCapacityHeader] ? parseInt(csvRow[usedCapacityHeader], 10) : undefined;
+                registration.language = csvRow[usedLanguageHeader]?.trim() || '';
+                registration.additionalInformation = csvRow[usedAdditionalInfoHeader]?.trim() || '';
 
                 return registration;
             })
