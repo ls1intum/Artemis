@@ -29,8 +29,8 @@ describe('ExternalCloningService', () => {
     });
 
     it('should build JetBrains url correctly', () => {
-        const cloneUrl = baseUrl + '/git/reo.git';
-        const expectedUrl = 'jetbrains://idea/checkout/git?idea.required.plugins.id=Git4Idea&checkout.repo=https://artemis.cit.tum.de/git/repo.git';
+        const cloneUrl = baseUrl + '/git/repo.git';
+        const expectedUrl = 'jetbrains://idea/checkout/git?idea.required.plugins.id=Git4Idea&checkout.repo=https%3A%2F%2Fartemis.cit.tum.de%2Fgit%2Frepo.git';
         expect(service.buildJetbrainsUrl(cloneUrl, ProgrammingLanguage.JAVA)).toEqual(expectedUrl);
     });
 
