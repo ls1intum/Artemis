@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.user;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -89,6 +90,7 @@ public class UserFactory {
         user.setLangKey("en");
         user.setGroups(new HashSet<>());
         user.setAuthorities(new HashSet<>());
+        user.setIrisAcceptedTimestamp(ZonedDateTime.now());
         return user;
     }
 
