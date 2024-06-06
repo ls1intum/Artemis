@@ -37,13 +37,9 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSp
 
     // Cast to string is necessary. Otherwise, the query will fail on PostgreSQL.
     @Query("""
-            SELECT b
+            SELECT b.id
             FROM BuildJob b
                 LEFT JOIN Course c ON b.courseId = c.id
-                LEFT JOIN FETCH b.result r
-                LEFT JOIN FETCH r.participation p
-                LEFT JOIN FETCH p.exercise
-                LEFT JOIN FETCH r.submission
             WHERE (:buildStatus IS NULL OR b.buildStatus = :buildStatus)
                 AND (:buildAgentAddress IS NULL OR b.buildAgentAddress = :buildAgentAddress)
                 AND (CAST(:startDate AS string) IS NULL OR b.buildStartDate >= :startDate)
@@ -51,9 +47,20 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSp
                 AND (:searchTerm IS NULL OR (b.repositoryName LIKE %:searchTerm% OR c.title LIKE %:searchTerm%))
                 AND (:courseId IS NULL OR b.courseId = :courseId)
             """)
-    Page<BuildJob> findAllByFilterCriteria(@Param("buildStatus") BuildStatus buildStatus, @Param("buildAgentAddress") String buildAgentAddress,
+    Page<Long> findAllByFilterCriteria(@Param("buildStatus") BuildStatus buildStatus, @Param("buildAgentAddress") String buildAgentAddress,
             @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("searchTerm") String searchTerm, @Param("courseId") Long courseId,
             Pageable pageable);
+
+    @Query("""
+            SELECT b
+            FROM BuildJob b
+                LEFT JOIN FETCH b.result r
+                LEFT JOIN FETCH r.participation p
+                LEFT JOIN FETCH p.exercise
+                LEFT JOIN FETCH r.submission
+            WHERE b.id IN :buildJobIds
+            """)
+    List<BuildJob> findAllByIdWithResults(@Param("buildJobIds") List<Long> buildJobIds);
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild(

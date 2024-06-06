@@ -165,7 +165,7 @@ public class AdminBuildJobQueueResource {
      */
     @GetMapping("finished-jobs")
     @EnforceAdmin
-    public ResponseEntity<List<FinishedBuildJobDTO>> getFinishedBuildJobsCustom(FinishedBuildJobPageableSearchDTO search) {
+    public ResponseEntity<List<FinishedBuildJobDTO>> getFinishedBuildJobs(FinishedBuildJobPageableSearchDTO search) {
         log.debug("REST request to get a page of finished build jobs with build status {}, build agent address {}, start date {} and end date {}", search.buildStatus(),
                 search.buildAgentAddress(), search.startDate(), search.endDate());
 

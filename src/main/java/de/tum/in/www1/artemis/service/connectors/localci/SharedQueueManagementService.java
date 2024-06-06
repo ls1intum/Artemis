@@ -293,8 +293,10 @@ public class SharedQueueManagementService {
      * @return the page of build jobs
      */
     public Page<BuildJob> getFilteredFinishedBuildJobs(FinishedBuildJobPageableSearchDTO search, Long courseId) {
-        final Page<BuildJob> page = buildJobRepository.findAllByFilterCriteria(search.buildStatus(), search.buildAgentAddress(), search.startDate(), search.endDate(),
+        Page<Long> buildJobIdsPage = buildJobRepository.findAllByFilterCriteria(search.buildStatus(), search.buildAgentAddress(), search.startDate(), search.endDate(),
                 search.pageable().getSearchTerm(), courseId, PageUtil.createDefaultPageRequest(search.pageable(), PageUtil.ColumnMapping.BUILD_JOB));
+
+        List<BuildJob> buildJobs = buildJobRepository.findAllByIdWithResults(buildJobIdsPage.toList());
 
         // These fields have to be objects because they can be null.
         int buildDurationLower = search.buildDurationLower() == null ? 0 : search.buildDurationLower();
@@ -302,10 +304,10 @@ public class SharedQueueManagementService {
 
         // If both buildDurationLower and buildDurationUpper are 0, we don't need to filter by build duration.
         if (buildDurationLower <= 0 && buildDurationUpper <= 0) {
-            return page;
+            return new PageImpl<>(buildJobs, buildJobIdsPage.getPageable(), buildJobIdsPage.getTotalElements());
         }
 
-        List<BuildJob> filteredBuildJobs = page.get().filter(buildJob -> {
+        List<BuildJob> filteredBuildJobs = buildJobs.stream().filter(buildJob -> {
             Duration buildDuration = Duration.between(buildJob.getBuildStartDate(), buildJob.getBuildCompletionDate());
             if (buildDurationUpper != 0) {
                 return buildDuration.toSeconds() >= buildDurationLower && buildDuration.toSeconds() <= buildDurationUpper;
@@ -315,7 +317,7 @@ public class SharedQueueManagementService {
             }
         }).toList();
 
-        return new PageImpl<>(filteredBuildJobs, page.getPageable(), filteredBuildJobs.size());
+        return new PageImpl<>(filteredBuildJobs, buildJobIdsPage.getPageable(), buildJobIdsPage.getTotalElements());
     }
 
 }
