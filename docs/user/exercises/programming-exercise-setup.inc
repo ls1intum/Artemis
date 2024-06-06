@@ -620,7 +620,7 @@ Verify the exercise configuration
 
 
 - You can review differences between the **template** and **solution** repositories.
-  The comparison allows you to review which changes to the exercise template are expected from students to solve the exercise.
+  The comparison allows you to review the changes students are expected to make to the exercise template to solve the exercise.
 
   .. figure:: programming/course-management-template-solution-diff.png
      :alt: Template/Solution Comparison in Exercise Management Page
