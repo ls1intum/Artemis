@@ -59,9 +59,7 @@ describe('ExamAssessmentButtons', () => {
         }),
         MockProvider(StudentExamService, {
             getLongestWorkingTimeForExam: () => {
-                return of(
-                    studentExamOne?.workingTime ?? 0
-                );
+                return of(studentExamOne?.workingTime ?? 0);
             },
         }),
         MockProvider(CourseManagementService, {
