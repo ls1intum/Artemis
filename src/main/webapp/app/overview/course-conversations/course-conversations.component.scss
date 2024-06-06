@@ -7,9 +7,14 @@
 }
 
 .card-border {
+    --message-input-height: 175px;
+
     border: 1px solid;
     border-color: var(--bs-card-border-color);
     border-radius: 0.25rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: calc(100vh - var(--header-height) - var(--message-input-height));
 }
 
 .message-input {
