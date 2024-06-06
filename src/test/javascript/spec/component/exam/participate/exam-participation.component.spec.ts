@@ -1026,4 +1026,91 @@ describe('ExamParticipationComponent', () => {
             expect(comp.activePageIndex).toBe(1);
         });
     });
+
+    it('should return the index of the active page', () => {
+        const exercise0 = new QuizExercise(undefined, undefined);
+        exercise0.id = 5;
+        const exercise1 = new ProgrammingExercise(undefined, undefined);
+        exercise1.id = 6;
+
+        comp.activeExamPage = new ExamPage();
+        comp.activeExamPage.exercise = exercise1;
+
+        comp.studentExam = new StudentExam();
+        comp.studentExam.exercises = [exercise0, exercise1];
+
+        expect(comp.activePageIndex).toBe(1);
+    });
+
+    it('should set Exam Layout if the exam is started', () => {
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+        const examLayoutStub = jest.spyOn(examParticipationService, 'setExamLayout');
+        const exercise0 = new QuizExercise(undefined, undefined);
+        exercise0.id = 5;
+        const exercise1 = new ProgrammingExercise(undefined, undefined);
+        exercise1.id = 6;
+        comp.studentExam = new StudentExam();
+        comp.studentExam.exercises = [exercise0, exercise1];
+        comp.ngOnInit();
+        comp.examStarted(comp.studentExam);
+        expect(examLayoutStub).toHaveBeenCalledOnce();
+    });
+
+    it('should reset Exam Layout if the summary is loaded and displayed', () => {
+        const examLayoutStub = jest.spyOn(examParticipationService, 'resetExamLayout');
+
+        const studentExam = new StudentExam();
+        studentExam.exam = new Exam();
+        studentExam.exam.testExam = false;
+        studentExam.exam.startDate = dayjs().subtract(2000, 'seconds');
+        studentExam.workingTime = 100;
+        studentExam.id = 3;
+        const studentExamWithExercises = new StudentExam();
+        studentExamWithExercises.id = 3;
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2', studentExamId: '3' });
+        jest.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExam));
+        jest.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExamWithExercises));
+
+        comp.ngOnInit();
+        comp.loadAndDisplaySummary();
+
+        expect(examLayoutStub).toHaveBeenCalledOnce();
+    });
+
+    it('should not reset Exam Layout in loadAndDisplaySummary if it is a test exam', () => {
+        const examLayoutStub = jest.spyOn(examParticipationService, 'resetExamLayout');
+        const studentExam = new StudentExam();
+        studentExam.exam = new Exam();
+        studentExam.exam.testExam = true;
+        studentExam.exam.startDate = dayjs().subtract(2000, 'seconds');
+        studentExam.workingTime = 100;
+        studentExam.id = 3;
+        const studentExamWithExercises = new StudentExam();
+        studentExamWithExercises.id = 3;
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2', studentExamId: '3' });
+        jest.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExam));
+        jest.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExamWithExercises));
+
+        comp.ngOnInit();
+        comp.loadAndDisplaySummary();
+
+        expect(examLayoutStub).not.toHaveBeenCalledOnce();
+    });
+
+    it('should reset Exam Layout in onExamEndConfirmed if it is a test exam', () => {
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+        const examLayoutStub = jest.spyOn(examParticipationService, 'resetExamLayout');
+        const studentExam = new StudentExam();
+
+        jest.spyOn(examParticipationService, 'loadTestRunWithExercisesForConduction').mockReturnValue(of(studentExam));
+        jest.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(of(undefined));
+        jest.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExam));
+        jest.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExam));
+        examParticipationService.currentlyLoadedStudentExam = new Subject<StudentExam>();
+        comp.ngOnInit();
+        comp.testExam = true;
+        comp.onExamEndConfirmed();
+
+        expect(examLayoutStub).toHaveBeenCalledOnce();
+    });
 });

@@ -282,4 +282,23 @@ describe('CourseExamsComponent', () => {
         expect(sortedExams[1].id).toBe(3);
         expect(sortedExams[2].id).toBe(1);
     });
+
+    it('should toggle sidebar', () => {
+        component.isCollapsed = false;
+        component.toggleSidebar();
+        expect(component.isCollapsed).toBeTrue();
+
+        component.toggleSidebar();
+        expect(component.isCollapsed).toBeFalse();
+    });
+
+    it('should not update sidebarData if there is no exam', () => {
+        const course = new Course();
+        course.exams = undefined;
+        component.course = course;
+
+        const updateSidebarDataStub = jest.spyOn(component, 'updateSidebarData');
+        component.prepareSidebarData();
+        expect(updateSidebarDataStub).not.toHaveBeenCalledOnce();
+    });
 });
