@@ -149,7 +149,7 @@ class TestResultXmlParserTest {
         String input = """
                 <testsuite>
                     <testcase name="testBubbleSort()" classname="testpackage.SortingExampleBehaviorTest" time="0.000306">
-                        <skipped/>
+                        <skipped message="This test was skipped."/>
                     </testcase>
                 </testsuite>
                 """;
