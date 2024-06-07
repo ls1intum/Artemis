@@ -53,7 +53,6 @@ import de.tum.in.www1.artemis.exception.QuizJoinException;
 import de.tum.in.www1.artemis.repository.QuizBatchRepository;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
@@ -136,8 +135,6 @@ public class QuizExerciseResource {
 
     private final QuizBatchRepository quizBatchRepository;
 
-    private final SubmissionRepository submissionRepository;
-
     private final FileService fileService;
 
     private final ChannelService channelService;
@@ -149,8 +146,7 @@ public class QuizExerciseResource {
             ExamDateService examDateService, InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService,
             QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService,
             GroupNotificationScheduleService groupNotificationScheduleService, StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService,
-            QuizBatchRepository quizBatchRepository, SubmissionRepository submissionRepository, FileService fileService, ChannelService channelService,
-            ChannelRepository channelRepository) {
+            QuizBatchRepository quizBatchRepository, FileService fileService, ChannelService channelService, ChannelRepository channelRepository) {
         this.quizExerciseService = quizExerciseService;
         this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -168,7 +164,6 @@ public class QuizExerciseResource {
         this.studentParticipationRepository = studentParticipationRepository;
         this.quizBatchService = quizBatchService;
         this.quizBatchRepository = quizBatchRepository;
-        this.submissionRepository = submissionRepository;
         this.fileService = fileService;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
