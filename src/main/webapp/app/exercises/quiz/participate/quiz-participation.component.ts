@@ -190,9 +190,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             this.jhiWebsocketService.unsubscribe(this.quizExerciseChannel);
         }
         this.websocketSubscription?.unsubscribe();
-        if (this.routeAndDataSubscription) {
-            this.routeAndDataSubscription.unsubscribe();
-        }
+        this.routeAndDataSubscription?.unsubscribe();
     }
 
     /**
@@ -202,8 +200,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         // listen to connect / disconnect events
         this.websocketSubscription = this.jhiWebsocketService.connectionState.subscribe((status) => {
             if (status.connected && this.disconnected) {
-                // if the disconnect happened during the live quiz and there are unsaved changes, we trigger a selection changed event to save the submission on the server
-                // TODO: Do we want this to affect the timer?
+                // if the disconnect happened during the live quiz and there are unsaved changes, we save the submission on the server
                 this.triggerSave(false);
                 // if the quiz was not yet started, we might have missed the quiz start => refresh
                 if (this.quizBatch && !this.quizBatch.started) {
@@ -301,7 +298,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             if (this.waitingForQuizStart) {
                 // The quiz has not started. No need to autosave yet.
                 return;
-            } else if (this.isQuizOverOrSubmitted()) {
+            }
+            if (this.remainingTimeSeconds < 0 || this.submission.submitted) {
                 this.stopAutoSave();
                 return;
             }
@@ -310,10 +308,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 this.triggerSave();
             }
         }, AUTOSAVE_CHECK_INTERVAL);
-    }
-
-    isQuizOverOrSubmitted(): boolean {
-        return this.remainingTimeSeconds < 0 || (this.submission.submitted ?? false);
     }
 
     stopAutoSave(): void {
@@ -789,11 +783,10 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 .pipe(take(1))
                 .subscribe({
                     next: () => {
-                        // TODO: Do we need the response for anything here?
                         this.unsavedChanges = false;
                         this.updateSubmissionTime();
                     },
-                    error: (error: HttpErrorResponse) => this.onSaveError(error.message), // TODO: Test this. It's not super clear what onSaveError expects.
+                    error: (error: HttpErrorResponse) => this.onSaveError(error.message),
                 });
         }
     }
