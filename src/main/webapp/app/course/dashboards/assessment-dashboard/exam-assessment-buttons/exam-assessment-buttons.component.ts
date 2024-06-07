@@ -64,18 +64,24 @@ export class ExamAssessmentButtonsComponent implements OnInit {
             this.courseService.find(this.courseId).subscribe((courseResponse) => {
                 this.course = courseResponse.body!;
             });
-            const studentExamObservable = this.studentExamService.findAllForExam(this.courseId, this.examId).pipe(
-                tap((res) => {
-                    // TODO: directly load the longest working time from the server and avoid loading all student exams
-                    this.setStudentExams(res.body);
-                    this.longestWorkingTime = Math.max.apply(
-                        null,
-                        this.studentExams.map((studentExam) => studentExam.workingTime),
-                    );
+
+            /*
+            Prepare workingTimeObservable to perform the following on subscribe:
+            - set the longestWorkingTime
+            - trigger (re)calculation of whether the exam is over
+             */
+            const workingTimeObservable = this.studentExamService.getLongestWorkingTimeForExam(this.courseId, this.examId).pipe(
+                tap((value) => {
+                    this.longestWorkingTime = value;
                     this.calculateIsExamOver();
                 }),
             );
 
+            /*
+            Prepare examObservable to perform the following on subscribe:
+            - set the exam
+            - trigger (re)calculation of whether the exam is over
+             */
             const examObservable = this.examManagementService.find(this.courseId, this.examId, true).pipe(
                 tap((examResponse) => {
                     this.exam = examResponse.body!;
@@ -84,7 +90,7 @@ export class ExamAssessmentButtonsComponent implements OnInit {
             );
 
             // Calculate hasStudentsWithoutExam only when both observables emitted
-            forkJoin([studentExamObservable, examObservable]).subscribe(() => {
+            forkJoin([workingTimeObservable, examObservable]).subscribe(() => {
                 this.isLoading = false;
             });
         });
@@ -149,12 +155,6 @@ export class ExamAssessmentButtonsComponent implements OnInit {
                 endDate = endDate.add(this.exam.gracePeriod!, 'seconds');
             }
             this.isExamOver = endDate.isBefore(dayjs());
-        }
-    }
-
-    private setStudentExams(studentExams: any): void {
-        if (studentExams) {
-            this.studentExams = studentExams;
         }
     }
 }
