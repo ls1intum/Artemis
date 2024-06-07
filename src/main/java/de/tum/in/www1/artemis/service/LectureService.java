@@ -8,7 +8,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -142,8 +141,9 @@ public class LectureService {
     public void delete(Lecture lecture) {
         if (pyrisWebhookService.isPresent()) {
             Lecture lectureWithAttachmentUnits = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture.getId());
-            List<AttachmentUnit> attachmentUnitList = lectureWithAttachmentUnits.getLectureUnits().stream().filter(lectureUnit -> lectureUnit.getType().equals("attachment"))
-                    .map(lectureUnit -> (AttachmentUnit) lectureUnit).collect(Collectors.toCollection(ArrayList::new));
+            List<AttachmentUnit> attachmentUnitList = lectureWithAttachmentUnits.getLectureUnits().stream()
+                    .filter(lectureUnit -> lectureUnit instanceof AttachmentUnit && ((AttachmentUnit) lectureUnit).getAttachment().getLink().endsWith(".pdf"))
+                    .map(lectureUnit -> (AttachmentUnit) lectureUnit).toList();
             if (!attachmentUnitList.isEmpty()) {
                 pyrisWebhookService.get().deleteLectureFromPyrisDB(attachmentUnitList);
             }

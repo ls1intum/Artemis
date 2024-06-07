@@ -76,9 +76,8 @@ public class AttachmentUnitService {
         Attachment savedAttachment = attachmentRepository.saveAndFlush(attachment);
         savedAttachmentUnit.setAttachment(savedAttachment);
         evictCache(file, savedAttachmentUnit);
-        if (savedAttachment.getAttachmentType() == AttachmentType.FILE) {
+        if (savedAttachment.getAttachmentType() == AttachmentType.FILE && Objects.equals(FilenameUtils.getExtension(file.getOriginalFilename()), "pdf")) {
             pyrisWebhookService.ifPresent(service -> service.addLectureToPyrisDB(List.of(savedAttachmentUnit)));
-
         }
         return savedAttachmentUnit;
     }
@@ -126,8 +125,8 @@ public class AttachmentUnitService {
             // Split the updated file into single slides only if it is a pdf
             if (Objects.equals(FilenameUtils.getExtension(updateFile.getOriginalFilename()), "pdf")) {
                 slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
+                pyrisWebhookService.ifPresent(service -> service.addLectureToPyrisDB(List.of(savedAttachmentUnit)));
             }
-            pyrisWebhookService.ifPresent(service -> service.addLectureToPyrisDB(List.of(savedAttachmentUnit)));
         }
 
         return savedAttachmentUnit;

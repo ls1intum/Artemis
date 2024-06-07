@@ -116,7 +116,7 @@ public class PyrisWebhookService {
     public String addLectureToPyrisDB(List<AttachmentUnit> attachmentUnits) {
         if (lectureIngestionEnabled(attachmentUnits.getFirst().getLecture().getCourse())) {
             List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentUnits = new ArrayList<>();
-            attachmentUnits.stream().filter(unit -> unit.getAttachment().getAttachmentType() == AttachmentType.FILE).forEach(unit -> {
+            attachmentUnits.stream().filter(unit -> unit.getAttachment().getAttachmentType() == AttachmentType.FILE && !unit.getSlides().isEmpty()).forEach(unit -> {
                 toUpdateAttachmentUnits.add(processAttachmentForUpdate(unit));
             });
             if (!toUpdateAttachmentUnits.isEmpty()) {

@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -46,7 +45,6 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.LectureImportService;
 import de.tum.in.www1.artemis.service.LectureService;
-import de.tum.in.www1.artemis.service.connectors.pyris.PyrisWebhookService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -86,11 +84,9 @@ public class LectureResource {
 
     private final ChannelRepository channelRepository;
 
-    private final Optional<PyrisWebhookService> pyrisWebhookService;
-
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService, ChannelService channelService,
-            ChannelRepository channelRepository, Optional<PyrisWebhookService> pyrisWebhookService) {
+            ChannelRepository channelRepository) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
@@ -100,7 +96,6 @@ public class LectureResource {
         this.exerciseService = exerciseService;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
-        this.pyrisWebhookService = pyrisWebhookService;
     }
 
     /**
@@ -261,7 +256,6 @@ public class LectureResource {
 
         final var savedLecture = lectureImportService.importLecture(sourceLecture, destinationCourse);
         channelService.createLectureChannel(savedLecture, Optional.empty());
-        helpExecuteIngestionPipeline(savedLecture);
         return ResponseEntity.created(new URI("/api/lectures/" + savedLecture.getId())).body(savedLecture);
     }
 
@@ -385,18 +379,5 @@ public class LectureResource {
         log.debug("REST request to delete Lecture : {}", lectureId);
         lectureService.delete(lecture);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureId.toString())).build();
-    }
-
-    /**
-     * This method calls the executeLectureIngestionPipeline function with the needed parameters in the right format
-     *
-     * @param lecture the lecture to be updated
-     */
-    private void helpExecuteIngestionPipeline(Lecture lecture) {
-        pyrisWebhookService.ifPresent(service -> {
-            List<AttachmentUnit> attachmentUnitList = lecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit.getType().equals("attachment"))
-                    .map(lectureUnit -> (AttachmentUnit) lectureUnit).collect(Collectors.toCollection(ArrayList::new));
-            service.addLectureToPyrisDB(attachmentUnitList);
-        });
     }
 }

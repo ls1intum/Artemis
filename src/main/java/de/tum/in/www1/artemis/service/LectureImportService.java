@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
@@ -30,6 +31,7 @@ import de.tum.in.www1.artemis.domain.lecture.VideoUnit;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
+import de.tum.in.www1.artemis.service.connectors.pyris.PyrisWebhookService;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -43,10 +45,14 @@ public class LectureImportService {
 
     private final AttachmentRepository attachmentRepository;
 
-    public LectureImportService(LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository, AttachmentRepository attachmentRepository) {
+    private final Optional<PyrisWebhookService> pyrisWebhookService;
+
+    public LectureImportService(LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository, AttachmentRepository attachmentRepository,
+            Optional<PyrisWebhookService> pyrisWebhookService) {
         this.lectureRepository = lectureRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.attachmentRepository = attachmentRepository;
+        this.pyrisWebhookService = pyrisWebhookService;
     }
 
     /**
@@ -92,7 +98,10 @@ public class LectureImportService {
         }
         lecture.setAttachments(attachments);
         attachmentRepository.saveAll(attachments);
-
+        // Send lectures to pyris
+        pyrisWebhookService.ifPresent(service -> service
+                .addLectureToPyrisDB(lectureUnits.stream().filter(unit -> unit instanceof AttachmentUnit && ((AttachmentUnit) unit).getAttachment().getLink().endsWith(".pdf"))
+                        .map(lectureUnit -> (AttachmentUnit) lectureUnit).toList()));
         // Save again to establish the ordered list relationship
         return lectureRepository.save(lecture);
     }
@@ -133,7 +142,6 @@ public class LectureImportService {
             attachment.setAttachmentUnit(attachmentUnit);
             attachmentRepository.save(attachment);
             attachmentUnit.setAttachment(attachment);
-
             return attachmentUnit;
         }
         else if (importedLectureUnit instanceof OnlineUnit importedOnlineUnit) {
