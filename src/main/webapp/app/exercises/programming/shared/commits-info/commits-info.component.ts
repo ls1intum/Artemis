@@ -20,13 +20,14 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
     @Input() submissions?: ProgrammingSubmission[];
     @Input() exerciseProjectKey?: string;
     @Input() isRepositoryView = false;
-    @Input() user?: User;
-    @Input() groupedCommits: { key: string; commits: CommitInfo[]; date: string }[] = [];
 
     private commitHashURLTemplate: string;
     private commitsInfoSubscription: Subscription;
     private profileInfoSubscription: Subscription;
     private userInfoSubscription: Subscription;
+    protected user?: User;
+    protected groupedCommits: { key: string; commits: CommitInfo[]; date: string }[] = [];
+
     localVC = false;
 
     constructor(

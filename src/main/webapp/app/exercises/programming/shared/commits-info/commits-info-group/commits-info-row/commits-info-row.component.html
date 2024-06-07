@@ -19,7 +19,7 @@
     </td>
     <td class="p-2">
         @if (isRepositoryView) {
-            {{ user?.name }}, {{ user?.email }}
+            {{ user?.name ?? commit.author }}, {{ user?.email ?? commit.authorEmail }}
         } @else {
             {{ user?.name }}
         }

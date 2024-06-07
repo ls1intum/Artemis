@@ -286,13 +286,18 @@ public class ProgrammingExerciseParticipationResource {
      * If the user is a student, it checks if the user is the owner of the participation.
      *
      * @param participationId the id of the participation for which to retrieve the user
-     * @return the ResponseEntity with status 200 (OK) and with body the User DTO, or status 404 if the participation or user does not exist
+     * @return the ResponseEntity with status 200 (OK) and with body a UserDTO, or status 404 if the participation or user does not exist or is a team participation
+     *
      */
     @GetMapping("programming-exercise-participations/{participationId}/user")
     @EnforceAtLeastStudent
     public ResponseEntity<UserDTO> getUserForParticipation(@PathVariable long participationId) {
         ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+
+        if (participation.getTeam().isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
 
         return participation.getStudent().map(user -> ResponseEntity.ok(new UserDTO(user))).orElse(ResponseEntity.notFound().build());
     }
