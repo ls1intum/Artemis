@@ -83,6 +83,9 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             this.repositoryLink += `/${this.exercise.id}`;
         }
         if (this.repositoryLink.includes('exams')) {
+            if (this.repositoryLink.includes('test-exam')) {
+                this.repositoryLink = this.repositoryLink.replace('/test-exam/start', '');
+            }
             this.repositoryLink += `/exercises/${this.exercise.id}`;
         }
         if (this.exercise.type === ExerciseType.QUIZ) {
