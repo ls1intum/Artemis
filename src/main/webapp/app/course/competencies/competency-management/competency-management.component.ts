@@ -144,7 +144,11 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
         const prerequisitesObservable = this.prerequisiteService.getAllPrerequisitesForCourse(this.courseId);
         const competencyProgressObservable = this.competencyService.getAllForCourse(this.courseId).pipe(
             switchMap((res) => {
-                this.competencies = res.body!;
+                if (!res.body || res.body.length === 0) {
+                    // return observable with empty array as an empty forkJoin never emits a value, causing infinite loading
+                    return of([]);
+                }
+                this.competencies = res.body;
 
                 const progressObservable = this.competencies.map((lg) => {
                     return this.competencyService.getCourseProgress(lg.id!, this.courseId);
