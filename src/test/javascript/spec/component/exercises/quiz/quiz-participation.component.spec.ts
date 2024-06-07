@@ -480,6 +480,19 @@ describe('QuizParticipationComponent', () => {
             expect(component.quizExercise).toEqual(quizToApply);
             expect(component.quizExercise.releaseDate!.toString()).toBe(releaseDate.toString());
         });
+
+        it('should apply participation', () => {
+            const submission: QuizSubmission = { id: 1, submissionDate: dayjs().subtract(10, 'minutes'), submittedAnswers: [] };
+            const result: Result = { id: 1, submission };
+            const endedQuizExercise = { ...quizExercise, quizEnded: true };
+            const participation: StudentParticipation = { exercise: endedQuizExercise, results: [result] };
+
+            component.quizExercise = quizExercise;
+            component.updateParticipationFromServer(participation);
+
+            expect(component.submission.id).toBe(submission.id);
+            expect(component.quizExercise.quizEnded).toBeTrue();
+        });
     });
 
     describe('preview mode', () => {
