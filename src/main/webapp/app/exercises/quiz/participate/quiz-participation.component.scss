@@ -17,22 +17,6 @@
     .container {
         height: 100%;
     }
-
-    .draganddropcolor-question {
-        background-color: var(--quiz-participation-footer-dnd-background) !important;
-    }
-
-    .multiplechoicecolor-question {
-        background-color: var(--quiz-participation-footer-mc-background) !important;
-    }
-
-    .shortanswercolor-question {
-        background-color: var(--quiz-participation-footer-sa-background) !important;
-    }
-
-    .changed-question {
-        background-color: var(--quiz-participation-footer-changed-background) !important;
-    }
 }
 
 .quiz-content,
@@ -173,22 +157,20 @@
     text-align: center;
 }
 
-.quiz-navigation {
-    .draganddropcolor-question {
-        background-color: var(--quiz-participation-footer-dnd-background) !important;
-    }
+.draganddropcolor-question {
+    background-color: var(--quiz-participation-footer-dnd-background) !important;
+}
 
-    .multiplechoicecolor-question {
-        background-color: var(--quiz-participation-footer-mc-background) !important;
-    }
+.multiplechoicecolor-question {
+    background-color: var(--quiz-participation-footer-mc-background) !important;
+}
 
-    .shortanswercolor-question {
-        background-color: var(--quiz-participation-footer-sa-background) !important;
-    }
+.shortanswercolor-question {
+    background-color: var(--quiz-participation-footer-sa-background) !important;
+}
 
-    .changed-question {
-        background-color: var(--quiz-participation-footer-changed-background) !important;
-    }
+.changed-question {
+    background-color: var(--quiz-participation-footer-changed-background) !important;
 }
 
 .stepwizardquiz {
