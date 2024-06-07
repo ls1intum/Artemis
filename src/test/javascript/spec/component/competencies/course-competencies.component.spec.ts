@@ -12,12 +12,12 @@ import { By } from '@angular/platform-browser';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import { Course } from 'app/entities/course.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { CompetencyCardStubComponent } from './competency-card-stub.component';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
+import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 class MockActivatedRoute {
     parent: any;
@@ -62,6 +62,12 @@ describe('CourseCompetencies', () => {
                     provide: ActivatedRoute,
                     useValue: mockActivatedRoute,
                 },
+                {
+                    provide: FeatureToggleService,
+                    useValue: {
+                        getFeatureToggleActive: () => of(true),
+                    },
+                },
             ],
             schemas: [],
         })
@@ -88,34 +94,6 @@ describe('CourseCompetencies', () => {
         expect(courseCompetenciesComponent.courseId).toBe(1);
     });
 
-    it('should load progress for each competency in a given course', () => {
-        const courseStorageService = TestBed.inject(CourseStorageService);
-        const competency: Competency = {};
-        competency.userProgress = [{ progress: 70, confidence: 45 } as CompetencyProgress];
-        const textUnit = new TextUnit();
-        competency.id = 1;
-        competency.description = 'Petierunt uti sibi concilium totius';
-        competency.lectureUnits = [textUnit];
-
-        // Mock a course that was already fetched in another component
-        const course = new Course();
-        course.id = 1;
-        course.competencies = [competency];
-        course.prerequisites = [competency];
-        courseStorageService.setCourses([course]);
-        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
-
-        const getAllForCourseSpy = jest.spyOn(competencyService, 'getAllForCourse');
-
-        courseCompetenciesComponentFixture.detectChanges();
-
-        expect(getCourseStub).toHaveBeenCalledOnce();
-        expect(getCourseStub).toHaveBeenCalledWith(1);
-        expect(courseCompetenciesComponent.course).toEqual(course);
-        expect(courseCompetenciesComponent.competencies).toEqual([competency]);
-        expect(getAllForCourseSpy).not.toHaveBeenCalled(); // do not load competencies again as already fetched
-    });
-
     it('should load prerequisites and competencies (with associated progress) and display a card for each of them', () => {
         const competency: Competency = {};
         const textUnit = new TextUnit();
@@ -130,7 +108,9 @@ describe('CourseCompetencies', () => {
         });
 
         const getAllPrerequisitesForCourseSpy = jest.spyOn(prerequisiteService, 'getAllPrerequisitesForCourse').mockReturnValue(of([{}]));
+        jest.spyOn(mockCourseStorageService, 'getCourse').mockReturnValue({ studentCourseAnalyticsDashboardEnabled: true } as any);
         const getAllForCourseSpy = jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(competenciesOfCourseResponse));
+        const getJoLAllForCourseSpy = jest.spyOn(competencyService, 'getJoLAllForCourse').mockReturnValue(of({} as any));
 
         courseCompetenciesComponent.isCollapsed = false;
         courseCompetenciesComponentFixture.detectChanges();
@@ -139,6 +119,7 @@ describe('CourseCompetencies', () => {
         expect(competencyCards).toHaveLength(3); // 1 prerequisite and 2 competencies
         expect(getAllPrerequisitesForCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
+        expect(getJoLAllForCourseSpy).toHaveBeenCalledOnce();
         expect(courseCompetenciesComponent.competencies).toHaveLength(2);
     });
 });

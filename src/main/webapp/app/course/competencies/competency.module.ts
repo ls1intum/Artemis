@@ -12,7 +12,7 @@ import { CompetenciesPopoverComponent } from './competencies-popover/competencie
 import { NgxGraphModule } from '@swimlane/ngx-graph';
 import { CompetencyRingsComponent } from 'app/course/competencies/competency-rings/competency-rings.component';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
-import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAccordionModule, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { GenerateCompetenciesComponent } from 'app/course/competencies/generate-competencies/generate-competencies.component';
 import { CompetencyRecommendationDetailComponent } from 'app/course/competencies/generate-competencies/competency-recommendation-detail.component';
 import { CourseDescriptionFormComponent } from 'app/course/competencies/generate-competencies/course-description-form.component';
@@ -23,10 +23,14 @@ import { CompetencySearchComponent } from 'app/course/competencies/import-compet
 import { ImportCompetenciesTableComponent } from 'app/course/competencies/import-competencies/import-competencies-table.component';
 import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select/taxonomy-select.component';
 import { CompetencyRelationGraphComponent } from 'app/course/competencies/competency-management/competency-relation-graph.component';
+import { CompetencyAccordionComponent } from 'app/course/competencies/competency-accordion/competency-accordion.component';
 import { CourseImportStandardizedCompetenciesComponent } from 'app/course/competencies/import-standardized-competencies/course-import-standardized-competencies.component';
 import { ArtemisStandardizedCompetencyModule } from 'app/shared/standardized-competencies/standardized-competency.module';
 import { ImportCompetenciesComponent } from 'app/course/competencies/import-competencies/import-competencies.component';
 import { ImportPrerequisitesComponent } from 'app/course/competencies/import-competencies/import-prerequisites.component';
+import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/course-exercise-row.module';
+import { RatingModule } from 'app/exercises/shared/rating/rating.module';
+import { JudgementOfLearningRatingComponent } from 'app/course/competencies/judgement-of-learning-rating/judgement-of-learning-rating.component';
 
 @NgModule({
     imports: [
@@ -34,6 +38,7 @@ import { ImportPrerequisitesComponent } from 'app/course/competencies/import-com
         FormsModule,
         ReactiveFormsModule,
         NgxGraphModule,
+        NgbModule,
         ArtemisSharedComponentModule,
         RouterModule,
         FormDateTimePickerModule,
@@ -41,6 +46,9 @@ import { ImportPrerequisitesComponent } from 'app/course/competencies/import-com
         ArtemisMarkdownModule,
         IrisModule,
         ArtemisStandardizedCompetencyModule,
+        ArtemisCourseExerciseRowModule,
+        RatingModule,
+        JudgementOfLearningRatingComponent,
     ],
     declarations: [
         CompetencyFormComponent,
@@ -53,6 +61,7 @@ import { ImportPrerequisitesComponent } from 'app/course/competencies/import-com
         CourseDescriptionFormComponent,
         CompetencyManagementComponent,
         CompetencyCardComponent,
+        CompetencyAccordionComponent,
         CompetenciesPopoverComponent,
         ImportAllCompetenciesComponent,
         ImportCompetenciesTableComponent,
@@ -62,6 +71,6 @@ import { ImportPrerequisitesComponent } from 'app/course/competencies/import-com
         ImportCompetenciesComponent,
         ImportPrerequisitesComponent,
     ],
-    exports: [CompetencyCardComponent, CompetenciesPopoverComponent, CompetencyFormComponent, CompetencyRingsComponent, TaxonomySelectComponent],
+    exports: [CompetencyCardComponent, CompetencyAccordionComponent, CompetenciesPopoverComponent, CompetencyFormComponent, CompetencyRingsComponent, TaxonomySelectComponent],
 })
 export class ArtemisCompetenciesModule {}

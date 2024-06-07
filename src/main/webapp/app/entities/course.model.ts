@@ -57,6 +57,7 @@ export class Course implements BaseEntity {
     public id?: number;
     public title?: string;
     public description?: string;
+    public studentCourseAnalyticsDashboardEnabled?: boolean;
     public shortName?: string;
     public studentGroupName?: string;
     public teachingAssistantGroupName?: string;

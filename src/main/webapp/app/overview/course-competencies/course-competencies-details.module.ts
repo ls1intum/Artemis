@@ -11,6 +11,7 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { CourseCompetenciesDetailsComponent } from 'app/overview/course-competencies/course-competencies-details.component';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
 import { FireworksModule } from 'app/shared/fireworks/fireworks.module';
+import { JudgementOfLearningRatingComponent } from 'app/course/competencies/judgement-of-learning-rating/judgement-of-learning-rating.component';
 
 const routes: Routes = [
     {
@@ -34,6 +35,7 @@ const routes: Routes = [
         ArtemisMarkdownModule,
         ArtemisSidePanelModule,
         FireworksModule,
+        JudgementOfLearningRatingComponent,
     ],
     declarations: [CourseCompetenciesDetailsComponent],
     exports: [CourseCompetenciesDetailsComponent],

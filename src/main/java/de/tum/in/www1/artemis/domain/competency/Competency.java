@@ -47,6 +47,9 @@ public class Competency extends CourseCompetency {
     @JsonIgnoreProperties({ "competencies", "course" })
     private Set<LearningPath> learningPaths = new HashSet<>();
 
+    @OneToMany(mappedBy = "competency", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<CompetencyJol> competencyJols = new HashSet<>();
+
     public Competency() {
     }
 
@@ -75,11 +78,6 @@ public class Competency extends CourseCompetency {
         exercise.getCompetencies().add(this);
     }
 
-    public void removeExercise(Exercise exercise) {
-        this.exercises.remove(exercise);
-        exercise.getCompetencies().remove(this);
-    }
-
     public Set<LectureUnit> getLectureUnits() {
         return lectureUnits;
     }
@@ -105,7 +103,7 @@ public class Competency extends CourseCompetency {
 
     /**
      * Removes the lecture unit from the competency (bidirectional)
-     * Note: ExerciseUnits are not accepted, should be set via the connected exercise (see {@link #removeExercise(Exercise)})
+     * Note: ExerciseUnits are not accepted, should be set via the connected exercise
      *
      * @param lectureUnit The lecture unit to remove
      */

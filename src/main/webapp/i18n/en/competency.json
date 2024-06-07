@@ -152,6 +152,7 @@
                 "connectedLectureUnits": "Linked Lecture Units",
                 "connectedLectureUnitsExplanation": "The following lecture units are linked to this competency:",
                 "ringsTooltip": "Your route to competency mastery. (Red = Mastery, Green = Confidence, Blue = Progress)",
+                "ringsTooltipHideProgress": "You have not yet rated your mastery of this competency, please rate it to see your progress.",
                 "exerciseNote": "Please note that we take always the last submission into account for exercise units. Even submissions after the due date. This means for example that you can improve your progress by re-trying a quiz as often as you like. It is therefore normal, that the score here might differ from the score you officially achieved in an exercise.",
                 "delete": {
                     "question": "Do you really want to delete the competency <strong>{{ title }}</strong>? You can not undo this action!",

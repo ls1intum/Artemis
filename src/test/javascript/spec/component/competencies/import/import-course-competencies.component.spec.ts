@@ -178,4 +178,17 @@ describe('ImportCourseCompetenciesComponent', () => {
         expect(component.selectedCourseCompetencies.resultsOnPage).toHaveLength(3);
         expect(component.disabledIds).toHaveLength(3);
     });
+
+    it('should not unload with pending changes', () => {
+        const deactivateWarningSpy = jest.spyOn(component, 'canDeactivateWarning', 'get');
+
+        component['isSubmitted'] = true;
+        component.selectedCourseCompetencies = { resultsOnPage: [{ id: 1 }], numberOfPages: 0 };
+        component['unloadNotification']({ returnValue: '' });
+        expect(deactivateWarningSpy).not.toHaveBeenCalled();
+
+        component['isSubmitted'] = false;
+        component['unloadNotification']({ returnValue: '' });
+        expect(deactivateWarningSpy).toHaveBeenCalled();
+    });
 });

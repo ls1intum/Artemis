@@ -15,6 +15,8 @@ import { Competency } from 'app/entities/competency.model';
 import { By } from '@angular/platform-browser';
 import { CompetencyFormStubComponent } from './competency-form-stub.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { Lecture } from 'app/entities/lecture.model';
+import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 
 describe('CreateCompetency', () => {
     let createCompetencyComponentFixture: ComponentFixture<CreateCompetencyComponent>;
@@ -63,6 +65,23 @@ describe('CreateCompetency', () => {
     it('should initialize', () => {
         createCompetencyComponentFixture.detectChanges();
         expect(createCompetencyComponent).toBeDefined();
+    });
+
+    it('should set lecture units', () => {
+        const lectureService = TestBed.inject(LectureService);
+        const lecture: Lecture = {
+            id: 1,
+            lectureUnits: [{ id: 1, type: LectureUnitType.TEXT }],
+        };
+        const lecturesResponse = new HttpResponse({
+            body: [lecture],
+            status: 200,
+        });
+        jest.spyOn(lectureService, 'findAllByCourseId').mockReturnValue(of(lecturesResponse));
+
+        createCompetencyComponentFixture.detectChanges();
+
+        expect(createCompetencyComponent.lecturesWithLectureUnits).toEqual([lecture]);
     });
 
     it('should send POST request upon form submission and navigate', () => {
