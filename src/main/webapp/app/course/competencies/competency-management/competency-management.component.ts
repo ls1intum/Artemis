@@ -14,7 +14,7 @@ import {
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { filter, map, switchMap } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
-import { Subject, Subscription, forkJoin } from 'rxjs';
+import { Subject, Subscription, forkJoin, of } from 'rxjs';
 import { faFileImport, faPencilAlt, faPlus, faRobot, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
