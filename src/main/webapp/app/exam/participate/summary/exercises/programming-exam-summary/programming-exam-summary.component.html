@@ -9,7 +9,7 @@
                         <a
                             class="btn btn-primary"
                             [class.btn-sm]="true"
-                            [routerLink]="routerLink + '/exercises/' + exercise.id + '/repository/' + participation.id"
+                            [routerLink]="'/courses/' + exam.course?.id + '/exams/' + exam.id + '/exercises/' + exercise.id + '/repository/' + participation.id"
                             target="_blank"
                             rel="noopener noreferrer"
                         >
