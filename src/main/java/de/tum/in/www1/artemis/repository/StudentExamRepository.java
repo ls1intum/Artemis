@@ -218,18 +218,13 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     Optional<StudentExam> findByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
 
     @Query("""
-            SELECT DISTINCT se
+            SELECT se
             FROM StudentExam se
             WHERE se.testRun = FALSE
                 AND se.exam.id = :examId
                 AND se.user.id = :userId
-                AND se.id = (
-                    SELECT MAX(se2.id)
-                    FROM StudentExam se2
-                    WHERE se2.testRun = FALSE
-                        AND se2.exam.id = :examId
-                        AND se2.user.id = :userId
-                )
+            ORDER BY se.id DESC
+            LIMIT 1
             """)
     Optional<StudentExam> findLatestByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
 
