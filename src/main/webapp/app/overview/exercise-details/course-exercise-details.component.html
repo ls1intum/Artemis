@@ -235,6 +235,9 @@
                         <jhi-rating class="mt-2 alert alert-info" [result]="latestRatedResult" />
                     </div>
                 }
+                @if (exercise.type === PROGRAMMING && !exercise.exerciseGroup && irisSettings?.irisChatSettings?.enabled) {
+                    <jhi-exercise-chatbot-button />
+                }
                 <jhi-exercise-hint-button-overlay
                     class="p-3"
                     [availableExerciseHints]="availableExerciseHints"
@@ -254,8 +257,5 @@
             </div>
         </div>
         <jhi-lti-initializer />
-        @if (exercise.type === PROGRAMMING && !exercise.exerciseGroup && irisSettings?.irisChatSettings?.enabled) {
-            <jhi-tutor-chatbot-button />
-        }
     </div>
 }

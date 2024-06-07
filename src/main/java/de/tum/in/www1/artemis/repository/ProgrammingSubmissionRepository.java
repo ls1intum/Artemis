@@ -84,6 +84,7 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
                 )
             ORDER BY s.submissionDate DESC
             """)
+    // TODO: rewrite this query, pageable does not work well with left join fetch, it needs to transfer all results and only page in java
     List<ProgrammingSubmission> findGradedByParticipationIdOrderBySubmissionDateDesc(@Param("participationId") long participationId, Pageable pageable);
 
     @EntityGraph(type = LOAD, attributePaths = "results.feedbacks")

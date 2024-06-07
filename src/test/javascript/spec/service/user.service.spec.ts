@@ -60,12 +60,5 @@ describe('User Service', () => {
             const resourceUrl = 'api/users/accept-iris';
             expect(req.request.url).toBe(`${resourceUrl}`);
         });
-
-        it('should call correct URL to get Iris accepted timestamp', () => {
-            service.getIrisAcceptedAt().subscribe();
-            const req = httpMock.expectOne({ method: 'GET' });
-            const resourceUrl = 'api/users/accept-iris';
-            expect(req.request.url).toBe(`${resourceUrl}`);
-        });
     });
 });
