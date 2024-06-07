@@ -17,30 +17,12 @@
     color: var(--metis-gray);
 }
 
-.posting-header {
-    font-size: 12px;
-
-    .posting-author {
-        font-size: 14px;
-        font-weight: 700;
-        padding-right: 5px;
-    }
-
-    .posting-author-role {
-        font-size: 17px;
-    }
-}
-
 .resolved {
     color: var(--metis-green);
 }
 
 .badge {
     color: white;
-    font-size: 10px;
-    padding: 4px 5px;
-    text-align: center;
-    border-radius: 5px;
 }
 
 .badge-student {
