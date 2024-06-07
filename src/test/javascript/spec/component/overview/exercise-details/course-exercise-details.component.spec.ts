@@ -70,20 +70,25 @@ import { ScienceService } from 'app/shared/science/science.service';
 import { MockScienceService } from '../../../helpers/mocks/service/mock-science-service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { PROFILE_IRIS } from 'app/app.constants';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
     let fixture: ComponentFixture<CourseExerciseDetailsComponent>;
     let profileService: ProfileService;
     let exerciseService: ExerciseService;
+    let exerciseHintService: ExerciseHintService;
     let teamService: TeamService;
     let participationService: ParticipationService;
     let participationWebsocketService: ParticipationWebsocketService;
     let complaintService: ComplaintService;
     let getProfileInfoMock: jest.SpyInstance;
     let getExerciseDetailsMock: jest.SpyInstance;
+    let getActivatedExerciseHintsMock: jest.SpyInstance;
+    let getAvailableExerciseHintsMock: jest.SpyInstance;
     let mergeStudentParticipationMock: jest.SpyInstance;
     let subscribeForParticipationChangesMock: jest.SpyInstance;
+    let participationWebsockerBehaviourSubject: BehaviorSubject<Participation | undefined>;
     let scienceService: ScienceService;
     let logEventStub: jest.SpyInstance;
 
@@ -97,6 +102,20 @@ describe('CourseExerciseDetailsComponent', () => {
     } as unknown as TextExercise;
 
     const plagiarismCaseInfo = { id: 20, verdict: PlagiarismVerdict.WARNING };
+
+    const submissionPolicy = new LockRepositoryPolicy();
+
+    const programmingExercise = {
+        id: exercise.id,
+        type: ExerciseType.PROGRAMMING,
+        studentParticipations: [],
+        course: { id: 2 },
+        allowComplaintsForAutomaticAssessments: true,
+        secondCorrectionEnabled: false,
+        studentAssignedTeamIdComputed: true,
+        numberOfAssessmentsOfCorrectionRounds: [],
+        submissionPolicy: submissionPolicy,
+    } as ProgrammingExercise;
 
     const parentParams = { courseId: 1 };
     const parentRoute = { parent: { parent: { params: of(parentParams) } } } as any as ActivatedRoute;
@@ -152,6 +171,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockProvider(PlagiarismCasesService),
                 MockProvider(AlertService),
                 MockProvider(IrisSettingsService),
+                MockProvider(ExerciseHintService),
             ],
         })
             .compileComponents()
@@ -179,14 +199,22 @@ describe('CourseExerciseDetailsComponent', () => {
                 jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockReturnValue(Promise.resolve(of(teamAssignmentPayload)));
 
                 // mock participationService, needed for team assignment
+                participationWebsockerBehaviourSubject = new BehaviorSubject<Participation | undefined>(undefined);
                 participationWebsocketService = fixture.debugElement.injector.get(ParticipationWebsocketService);
                 subscribeForParticipationChangesMock = jest.spyOn(participationWebsocketService, 'subscribeForParticipationChanges');
-                subscribeForParticipationChangesMock.mockReturnValue(new BehaviorSubject<Participation | undefined>(undefined));
+                subscribeForParticipationChangesMock.mockReturnValue(participationWebsockerBehaviourSubject);
 
                 complaintService = fixture.debugElement.injector.get(ComplaintService);
 
                 scienceService = TestBed.inject(ScienceService);
                 logEventStub = jest.spyOn(scienceService, 'logEvent');
+
+                exerciseHintService = TestBed.inject(ExerciseHintService);
+                getActivatedExerciseHintsMock = jest.spyOn(exerciseHintService, 'getActivatedExerciseHints');
+                getAvailableExerciseHintsMock = jest.spyOn(exerciseHintService, 'getAvailableExerciseHints');
+
+                participationService = TestBed.inject(ParticipationService);
+                mergeStudentParticipationMock = jest.spyOn(participationService, 'mergeStudentParticipations');
             });
     });
 
@@ -225,8 +253,6 @@ describe('CourseExerciseDetailsComponent', () => {
         jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({} as EntityResponseType));
 
         // mock participationService, needed for team assignment
-        participationService = TestBed.inject(ParticipationService);
-        mergeStudentParticipationMock = jest.spyOn(participationService, 'mergeStudentParticipations');
         mergeStudentParticipationMock.mockReturnValue([studentParticipation]);
         const changedParticipation = cloneDeep(studentParticipation);
         const changedResult = { ...result, id: 2 };
@@ -306,20 +332,6 @@ describe('CourseExerciseDetailsComponent', () => {
     });
 
     it('should handle new programming exercise', () => {
-        const submissionPolicy = new LockRepositoryPolicy();
-
-        const programmingExercise = {
-            id: exercise.id,
-            type: ExerciseType.PROGRAMMING,
-            studentParticipations: [],
-            course: { id: 2 },
-            allowComplaintsForAutomaticAssessments: true,
-            secondCorrectionEnabled: false,
-            studentAssignedTeamIdComputed: true,
-            numberOfAssessmentsOfCorrectionRounds: [],
-            submissionPolicy: submissionPolicy,
-        } as ProgrammingExercise;
-
         const childComponent = {} as DiscussionSectionComponent;
         comp.onChildActivate(childComponent);
 
@@ -353,6 +365,33 @@ describe('CourseExerciseDetailsComponent', () => {
 
         expect(alertServiceSpy).toHaveBeenCalledOnce();
         expect(alertServiceSpy).toHaveBeenCalledWith(error.message);
+    }));
+
+    it('should handle participation update', fakeAsync(() => {
+        const submissionId = 55;
+        const submission = { id: submissionId };
+        const participation = { submissions: [submission] };
+        comp.gradedStudentParticipation = participation;
+        comp.sortedHistoryResults = [{ id: 2 }];
+        comp.exercise = { ...programmingExercise };
+
+        comp.courseId = programmingExercise.course!.id!;
+
+        comp.handleNewExercise({ exercise: programmingExercise });
+        tick();
+
+        const newParticipation = { ...participation, submissions: [submission, { id: submissionId + 1 }] };
+
+        getActivatedExerciseHintsMock.mockReturnValue(of({ body: [] }));
+        getAvailableExerciseHintsMock.mockReturnValue(of({ body: [] }));
+        mergeStudentParticipationMock.mockReturnValue([newParticipation]);
+
+        participationWebsockerBehaviourSubject.next({ ...newParticipation, exercise: programmingExercise, results: [] });
+
+        tick();
+
+        expect(getActivatedExerciseHintsMock).toHaveBeenCalledOnce();
+        expect(getAvailableExerciseHintsMock).toHaveBeenCalledOnce();
     }));
 
     it.each<[string[]]>([[[]], [[PROFILE_IRIS]]])(

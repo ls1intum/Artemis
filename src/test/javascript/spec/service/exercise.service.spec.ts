@@ -451,7 +451,8 @@ describe('Exercise Service', () => {
             exercise: {
                 id: exerciseId,
                 posts: undefined,
-            } as Exercise,
+            } as ProgrammingExercise,
+            activatedExerciseHints: [{ id: 42, title: 'testHint' }],
         } as ExerciseDetailsType;
 
         const result = service.getExerciseDetails(exerciseId);
