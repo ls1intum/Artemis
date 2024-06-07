@@ -115,6 +115,15 @@ public class QuizScheduleService {
                 }
             }
         }
+        scheduleCalculateAllResults(quizExercise);
+    }
+
+    /**
+     * schedule the calculation of the results for all participations of the given quiz exercise
+     *
+     * @param quizExercise the quiz exercise for which the results should be calculated
+     */
+    public void scheduleCalculateAllResults(QuizExercise quizExercise) {
         if (quizExercise.getDueDate() != null && !quizExercise.isQuizEnded()) {
             // we only schedule the task if the quiz is not over yet
             scheduleService.scheduleTask(quizExercise, ExerciseLifecycle.DUE,
