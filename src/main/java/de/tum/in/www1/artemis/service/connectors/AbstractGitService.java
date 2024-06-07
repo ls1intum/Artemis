@@ -39,6 +39,7 @@ import org.eclipse.jgit.transport.SshConfigStore;
 import org.eclipse.jgit.transport.SshConstants;
 import org.eclipse.jgit.transport.SshTransport;
 import org.eclipse.jgit.transport.URIish;
+import org.eclipse.jgit.transport.sshd.JGitKeyCache;
 import org.eclipse.jgit.transport.sshd.KeyPasswordProvider;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
@@ -54,7 +55,11 @@ public abstract class AbstractGitService {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractGitService.class);
 
-    protected TransportConfigCallback sshCallback;
+    private JGitKeyCache jgitKeyCache;
+
+    private TransportConfigCallback sshCallback;
+
+    private SshdSessionFactory sshdSessionFactory;
 
     protected static final int JGIT_TIMEOUT_IN_SECONDS = 5;
 
@@ -62,12 +67,6 @@ public abstract class AbstractGitService {
 
     @Value("${artemis.version-control.url}")
     protected URL gitUrl;
-
-    @Value("${artemis.version-control.user}")
-    protected String gitUser;
-
-    @Value("${artemis.version-control.password}")
-    protected String gitPassword;
 
     @Value("${artemis.version-control.token:#{null}}")
     protected Optional<String> gitToken;
@@ -91,11 +90,23 @@ public abstract class AbstractGitService {
         log.debug("Default Charset in Use={}", new OutputStreamWriter(new ByteArrayOutputStream()).getEncoding());
     }
 
-    protected static TransportConfigCallback getSshCallback(SshdSessionFactory sshSessionFactory) {
-        return transport -> {
+    protected boolean useSsh() {
+        return gitSshPrivateKeyPath.isPresent() && sshUrlTemplate.isPresent();
+        // password is optional and will only be applied if the ssh private key was encrypted using a password
+    }
+
+    /**
+     * Configures the SSH settings for the JGit SSH session factory.
+     */
+    protected void configureSsh() {
+        CredentialsProvider.setDefault(new CustomCredentialsProvider());
+        final var sshSessionFactoryBuilder = getSshdSessionFactoryBuilder(gitSshPrivateKeyPath, gitSshPrivateKeyPassphrase, gitUrl);
+        jgitKeyCache = new JGitKeyCache();
+        sshdSessionFactory = sshSessionFactoryBuilder.build(jgitKeyCache);
+        sshCallback = transport -> {
             if (transport instanceof SshTransport sshTransport) {
                 transport.setTimeout(JGIT_TIMEOUT_IN_SECONDS);
-                sshTransport.setSshSessionFactory(sshSessionFactory);
+                sshTransport.setSshSessionFactory(sshdSessionFactory);
             }
             else {
                 log.error("Cannot use ssh properly because of mismatch of Jgit transport object: {}", transport);
@@ -104,13 +115,13 @@ public abstract class AbstractGitService {
     }
 
     protected static SshdSessionFactoryBuilder getSshdSessionFactoryBuilder(Optional<String> gitSshPrivateKeyPath, Optional<String> gitSshPrivateKeyPassphrase, URL gitUrl) {
-        var credentialsProvider = new CustomCredentialsProvider();
-
-        CredentialsProvider.setDefault(credentialsProvider);
-
-        return new SshdSessionFactoryBuilder().setKeyPasswordProvider(keyPasswordProvider -> new CustomKeyPasswordProvider(gitSshPrivateKeyPath, gitSshPrivateKeyPassphrase))
-                .setConfigStoreFactory((homeDir, configFile, localUserName) -> new CustomSshConfigStore(gitUrl)).setSshDirectory(new File(gitSshPrivateKeyPath.orElseThrow()))
-                .setHomeDirectory(new java.io.File(System.getProperty("user.home")));
+        // @formatter:off
+        return new SshdSessionFactoryBuilder()
+            .setKeyPasswordProvider(keyPasswordProvider -> new CustomKeyPasswordProvider(gitSshPrivateKeyPath, gitSshPrivateKeyPassphrase))
+            .setConfigStoreFactory((homeDir, configFile, localUserName) -> new CustomSshConfigStore(gitUrl))
+            .setSshDirectory(new File(gitSshPrivateKeyPath.orElseThrow()))
+            .setHomeDirectory(new java.io.File(System.getProperty("user.home")));
+            // @formatter:on
     }
 
     /**
@@ -217,7 +228,11 @@ public abstract class AbstractGitService {
         }
     }
 
-    protected abstract String getGitUriAsString(VcsRepositoryUri repoUri) throws URISyntaxException;
+    protected String getGitUriAsString(VcsRepositoryUri vcsRepositoryUri) throws URISyntaxException {
+        return getGitUri(vcsRepositoryUri).toString();
+    }
+
+    protected abstract URI getGitUri(VcsRepositoryUri vcsRepositoryUri) throws URISyntaxException;
 
     private LsRemoteCommand lsRemoteCommand() {
         return authenticate(Git.lsRemoteRepository());
@@ -252,6 +267,13 @@ public abstract class AbstractGitService {
         repository.closeBeforeDelete();
         FileUtils.deleteDirectory(repoPath.toFile());
         log.debug("Deleted Repository at {}", repoPath);
+    }
+
+    protected void cleanup() {
+        if (useSsh()) {
+            jgitKeyCache.close();
+            sshdSessionFactory.close();
+        }
     }
 
     static class CustomCredentialsProvider extends CredentialsProvider {

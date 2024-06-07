@@ -175,18 +175,6 @@ public class UserResource {
     }
 
     /**
-     * GET users/accept-iris : gets the irisAccepted flag for the user
-     *
-     * @return the ResponseEntity with status 200 (OK) and with body the flag's value as ZonedDateTime, or with status 404 (Not Found)
-     */
-    @GetMapping("users/accept-iris")
-    @EnforceAtLeastStudent
-    public ResponseEntity<ZonedDateTime> getIrisAcceptedForStudent() {
-        User user = userRepository.getUser();
-        return ResponseEntity.ok().body(user.getIrisAcceptedTimestamp());
-    }
-
-    /**
      * PUT users/sshpublickey : sets the ssh public key
      *
      * @param sshPublicKey the ssh public key to set
