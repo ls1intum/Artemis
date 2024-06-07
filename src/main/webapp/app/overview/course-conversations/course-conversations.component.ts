@@ -234,6 +234,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     onSearch() {
         this.activeConversation = undefined;
+        this.updateQueryParameters();
         this.courseWideSearchConfig.searchTerm = this.courseWideSearchTerm;
         this.courseWideSearch?.onSearch();
     }
