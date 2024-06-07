@@ -578,7 +578,11 @@ public class QuizExerciseResource {
         quizExercise = quizExerciseRepository.saveAndFlush(quizExercise);
         // reload the quiz exercise with questions and statistics to prevent problems with proxy objects
         quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
-        instanceMessageSendService.sendQuizExerciseStartSchedule(quizExercise.getId());
+
+        if (action == QuizAction.START_NOW) {
+            // notify the instance message send service to send the quiz exercise start schedule (if necessary
+            instanceMessageSendService.sendQuizExerciseStartSchedule(quizExercise.getId());
+        }
 
         // get the batch for synchronized quiz exercises and start-now action; otherwise it doesn't matter
         var quizBatch = quizBatchService.getQuizBatchForStudentByLogin(quizExercise, "any").orElse(null);
