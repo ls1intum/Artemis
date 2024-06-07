@@ -49,11 +49,10 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             SELECT se
             FROM StudentExam se
                 LEFT JOIN FETCH se.exercises e
-                LEFT JOIN FETCH e.submissionPolicy
                 LEFT JOIN FETCH se.examSessions
             WHERE se.id = :studentExamId
             """)
-    Optional<StudentExam> findWithExercisesSubmissionPolicyAndSessionsById(@Param("studentExamId") long studentExamId);
+    Optional<StudentExam> findWithExercisesAndSessionsById(@Param("studentExamId") long studentExamId);
 
     @Query("""
             SELECT DISTINCT se
@@ -370,14 +369,14 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     }
 
     /**
-     * Get one student exam by id with exercises, programming exercise submission policy and sessions
+     * Get one student exam by id with exercises and sessions
      *
      * @param studentExamId the id of the student exam
      * @return the student exam with exercises
      */
     @NotNull
-    default StudentExam findByIdWithExercisesSubmissionPolicyAndSessionsElseThrow(Long studentExamId) {
-        return findWithExercisesSubmissionPolicyAndSessionsById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam", studentExamId));
+    default StudentExam findByIdWithExercisesAndSessionsElseThrow(Long studentExamId) {
+        return findWithExercisesAndSessionsById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam", studentExamId));
     }
 
     /**

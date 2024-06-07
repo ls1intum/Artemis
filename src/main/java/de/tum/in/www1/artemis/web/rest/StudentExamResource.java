@@ -178,7 +178,7 @@ public class StudentExamResource {
 
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
 
-        StudentExam studentExam = studentExamRepository.findByIdWithExercisesSubmissionPolicyAndSessionsElseThrow(studentExamId);
+        StudentExam studentExam = studentExamRepository.findByIdWithExercisesAndSessionsElseThrow(studentExamId);
 
         examService.loadQuizExercisesForStudentExam(studentExam);
 
