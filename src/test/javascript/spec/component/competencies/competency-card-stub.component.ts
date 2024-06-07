@@ -6,5 +6,5 @@ export class CompetencyCardStubComponent {
     @Input() courseId?: number;
     @Input() competency: Competency;
     @Input() isPrerequisite: boolean;
-    @Input() displayOnly: boolean;
+    @Input() hideProgress: boolean;
 }

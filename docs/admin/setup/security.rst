@@ -18,6 +18,9 @@ variables (`Spring relaxed binding <https://github.com/spring-projects/spring-bo
                 # can be changed later, Artemis will update the password in the database
                 # and connected systems on the next start
                 password: "artemis-admin"
+        version-control: # only required if using Integrated code lifecycle. In a distributed setup, this needs to be configured for localvc nodes and buildagent nodes
+            build-agent-git-username: "buildagent_user" # Required for https access to localvc
+            build-agent-git-password: "buildagent_password" # Required for https access to localvc. You can otherwise use an ssh key
     jhipster:
         security:
             authentication:
