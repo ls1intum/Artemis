@@ -565,7 +565,7 @@ public class ExamService {
         // If test exam, filter out participations that don't belong to this student exam
         if (studentExam.isTestExam()) {
             Set<Long> ids = studentExam.getStudentParticipations().stream().map(StudentParticipation::getId).collect(Collectors.toSet());
-            participations = participations.stream().filter(participation -> ids.contains(participation.getId())).collect(Collectors.toList());
+            participations = participations.stream().filter(participation -> ids.contains(participation.getId())).toList();
         }
 
         if (!(exercise instanceof QuizExercise)) {
