@@ -75,6 +75,9 @@
                 "noModelAvailable": "Model {{ model }} is not available to use. Please contact your administrator if this problem persists.",
                 "noResponse": "No response from Iris was received.",
                 "parseResponse": "An error occurred while parsing the response from Iris. Cause: {{ cause }}"
+            },
+            "chat": {
+                "helpOffer": "How can I help you today?"
             }
         }
     }

@@ -59,7 +59,8 @@ public class IrisMessageResource {
      * GET /iris/session/{sessionId}/message: Retrieve the messages for the iris session.
      *
      * @param sessionId of the session
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the list of messages, or with status {@code 404 (Not Found)} if the session could not be found.
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the list of messages, or with
+     *         status {@code 404 (Not Found)} if the session could not be found.
      */
     @GetMapping("sessions/{sessionId}/messages")
     @EnforceAtLeastStudent
@@ -76,7 +77,8 @@ public class IrisMessageResource {
      *
      * @param sessionId of the session
      * @param message   to send
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the created message, or with status {@code 404 (Not Found)} if the session could not be found.
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the created message, or with status
+     *         {@code 404 (Not Found)} if the session could not be found.
      */
     @PostMapping("sessions/{sessionId}/messages")
     @EnforceAtLeastStudent
@@ -97,12 +99,13 @@ public class IrisMessageResource {
     }
 
     /**
-     * POST /sessions/{sessionId}/messages/{messageId}/resend: Resend a message if there was previously an error when sending it to the LLM
+     * POST sessions/{sessionId}/messages/{messageId}/resend: Resend a message if there was previously an error when
+     * sending it to the LLM
      *
      * @param sessionId of the session
      * @param messageId of the message
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the existing message, or with status {@code 404 (Not Found)} if the session or message could
-     *         not be found.
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the existing message, or with
+     *         status {@code 404 (Not Found)} if the session or message could not be found.
      */
     @PostMapping("sessions/{sessionId}/messages/{messageId}/resend")
     @EnforceAtLeastStudent
@@ -126,23 +129,17 @@ public class IrisMessageResource {
     }
 
     /**
-     * PUT /iris/sessions/{sessionId}/messages/{messageId}/helpful/{helpful}: Set the helpful attribute of the message
+     * PUT sessions/{sessionId}/messages/{messageId}/helpful: Set the helpful attribute of the message
      *
      * @param sessionId of the session
      * @param messageId of the message
-     * @param helpful   true if the message was helpful, false otherwise, null as default
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated message, or with status {@code 404 (Not Found)} if the session or message could not
-     *         be found.
+     * @param helpful   Request body: true if the message was helpful, false if not helpful, null if no rating.
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated message, or with status
+     *         {@code 404 (Not Found)} if the session or message could not be found.
      */
-    // @formatter:off
-    @PutMapping(value = {
-            "sessions/{sessionId}/messages/{messageId}/helpful/null",
-            "sessions/{sessionId}/messages/{messageId}/helpful/undefined",
-            "sessions/{sessionId}/messages/{messageId}/helpful/{helpful}"
-    })
-    // @formatter:on
+    @PutMapping(value = "sessions/{sessionId}/messages/{messageId}/helpful")
     @EnforceAtLeastStudent
-    public ResponseEntity<IrisMessage> rateMessage(@PathVariable Long sessionId, @PathVariable Long messageId, @PathVariable(required = false) Boolean helpful) {
+    public ResponseEntity<IrisMessage> rateMessage(@PathVariable Long sessionId, @PathVariable Long messageId, @RequestBody(required = false) Boolean helpful) {
         var message = irisMessageRepository.findByIdElseThrow(messageId);
         var session = message.getSession();
         if (!Objects.equals(session.getId(), sessionId)) {
