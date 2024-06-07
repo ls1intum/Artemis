@@ -73,9 +73,9 @@ following dependencies/tools on your machine:
    setup/database
    setup/server
    setup/client
+   setup/integrated-code-lifecycle
    setup/jenkins-gitlab
    setup/gitlabci-gitlab
-   setup/integrated-code-lifecycle
    setup/aeolus
    setup/common-problems
    setup/docker-compose

@@ -29,7 +29,6 @@ export class StarRatingComponent {
     private static readonly VAR_UNCHECKED_COLOR: string = '--unCheckedColor';
     private static readonly VAR_SIZE: string = '--size';
     private static readonly VAR_HALF_WIDTH: string = '--halfWidth';
-    private static readonly VAR_HALF_MARGIN: string = '--halfMargin';
     private static readonly CLS_CHECKED_STAR: string = 'on';
     private static readonly CLS_DEFAULT_STAR: string = 'star';
     private static readonly CLS_HALF_STAR: string = 'half';
@@ -128,8 +127,8 @@ export class StarRatingComponent {
         this.onReadOnlyChange.next(value);
     }
 
-    get readonly(): boolean {
-        return String(this._readOnly) === 'true';
+    get readOnly(): boolean {
+        return this._readOnly;
     }
 
     @Input() set totalStars(value: number) {
@@ -166,7 +165,7 @@ export class StarRatingComponent {
     }
 
     private addEvents() {
-        if (!this.mainElement) {
+        if (!this.mainElement || this.readOnly) {
             return;
         }
         this.mainElement.nativeElement.addEventListener('mouseleave', this.offStar.bind(this));
@@ -250,14 +249,12 @@ export class StarRatingComponent {
             }
 
             const newSize = this.size.match(/\d+/)![0];
-            const halfSize = (parseInt(newSize, 10) * 10) / 24;
-            const halfMargin = 0 - (parseInt(newSize, 10) * 20) / 24;
+            const halfSize = Number(newSize) * (1 - (this.value - Math.floor(this.value)));
 
             this.stars.forEach((star: HTMLElement) => {
                 star.style.setProperty(StarRatingComponent.VAR_SIZE, this.size);
                 if (star.classList.contains(StarRatingComponent.CLS_HALF_STAR)) {
                     star.style.setProperty(StarRatingComponent.VAR_HALF_WIDTH, `${halfSize}px`);
-                    star.style.setProperty(StarRatingComponent.VAR_HALF_MARGIN, `${halfMargin}px`);
                 }
             });
         }
@@ -302,17 +299,18 @@ export class StarRatingComponent {
         }
         this.mainElement.nativeElement.title = this.value;
 
-        let hasDecimals = !!(Number.parseFloat(this.value.toString()) % 1).toString().substring(3, 2);
+        let hasDecimals = this.value % 1 !== 0;
+        const fullStars = Math.floor(this.value);
 
         this.stars.forEach((star: HTMLElement, i: number) => {
             star.className = '';
             this.applyColorStyle(star);
             StarRatingComponent.addDefaultClass(star);
 
-            if (this.value > i) {
+            if (i < fullStars) {
                 // star on
                 StarRatingComponent.addCheckedStarClass(star);
-            } else {
+            } else if (i === fullStars && hasDecimals) {
                 // half star
                 if (hasDecimals) {
                     StarRatingComponent.addHalfStarClass(star);
