@@ -90,7 +90,7 @@ public class BuildJobSpecs {
             if (searchTerm == null || searchTerm.isEmpty()) {
                 return cb.conjunction();
             }
-            Join<BuildJob, Course> courseJoin = root.join(BuildJob_.COURSE_ID, JoinType.LEFT);
+            Join<BuildJob, Course> courseJoin = root.join("course", JoinType.LEFT);
             return cb.or(cb.like(root.get(BuildJob_.REPOSITORY_NAME), "%" + searchTerm + "%"), cb.like(courseJoin.get(Course_.TITLE), "%" + searchTerm + "%"));
         };
     }
