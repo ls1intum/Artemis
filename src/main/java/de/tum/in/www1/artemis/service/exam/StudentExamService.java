@@ -639,8 +639,6 @@ public class StudentExamService {
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
         setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations);
         // TODO: Michael Allgaier: schedule a lock operation for all involved student repositories of this student exam (test exam) at the end of the individual working time
-        studentExam.setStudentParticipations(generatedParticipations);
-        studentExamRepository.save(studentExam);
         studentParticipationRepository.saveAll(generatedParticipations);
     }
 
@@ -693,6 +691,8 @@ public class StudentExamService {
                             student.getParticipantIdentifier(), ex.getMessage(), ex);
                 }
             }
+            studentExam.setStudentParticipations(generatedParticipations);
+            this.studentExamRepository.save(studentExam);
         }
     }
 

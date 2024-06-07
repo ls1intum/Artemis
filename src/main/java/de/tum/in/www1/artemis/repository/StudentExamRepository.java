@@ -50,6 +50,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             FROM StudentExam se
                 LEFT JOIN FETCH se.exercises e
                 LEFT JOIN FETCH se.examSessions
+                LEFT JOIN FETCH se.studentParticipations
             WHERE se.id = :studentExamId
             """)
     Optional<StudentExam> findWithExercisesAndSessionsById(@Param("studentExamId") long studentExamId);
