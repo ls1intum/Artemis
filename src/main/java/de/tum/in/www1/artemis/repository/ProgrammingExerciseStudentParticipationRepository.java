@@ -99,7 +99,8 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
                 AND participation.testRun = :testRun
                 AND participation.id = (SELECT MAX(p2.id) FROM StudentParticipation p2 WHERE p2.exercise.id = :exerciseId AND p2.student.login = :username)
             """)
-    Optional<ProgrammingExerciseStudentParticipation> findLatestByExerciseIdAndStudentLoginAndTestRun(long exerciseId, String username, boolean testRun);
+    Optional<ProgrammingExerciseStudentParticipation> findLatestByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") long exerciseId, @Param("username") String username,
+            @Param("testRun") boolean testRun);
 
     @EntityGraph(type = LOAD, attributePaths = { "team.students" })
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndTeamId(long exerciseId, long teamId);
