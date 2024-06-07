@@ -15,8 +15,11 @@
             } @else {
                 <div
                     class="scrollable-item-content my-2"
-                    [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }"
-                    [ngStyle]="{ '--search-height': sidebarData?.sidebarType === 'conversation' ? '152px' : '97px' }"
+                    [ngClass]="{
+                        'content-height-dev': !isProduction || isTestServer,
+                        'search-height-conversations': sidebarData?.sidebarType === 'conversation',
+                        'search-height-normal': sidebarData?.sidebarType !== 'conversation'
+                    }"
                 >
                     @if (sidebarData?.groupByCategory && sidebarData.groupedData) {
                         <jhi-sidebar-accordion
