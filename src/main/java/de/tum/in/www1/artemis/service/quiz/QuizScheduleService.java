@@ -27,15 +27,18 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
 import de.tum.in.www1.artemis.repository.QuizBatchRepository;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.scheduled.ScheduleService;
 import de.tum.in.www1.artemis.service.util.Tuple;
 import tech.jhipster.config.JHipsterConstants;
@@ -56,7 +59,7 @@ public class QuizScheduleService {
 
     private final QuizStatisticService quizStatisticService;
 
-    private final ParticipationRepository participationRepository;
+    private final StudentParticipationRepository studentParticipationRepository;
 
     private final ResultRepository resultRepository;
 
@@ -66,19 +69,23 @@ public class QuizScheduleService {
 
     private final Environment env;
 
+    private final WebsocketMessagingService websocketMessagingService;
+
     public QuizScheduleService(QuizMessagingService quizMessagingService, QuizExerciseRepository quizExerciseRepository, ScheduleService scheduleService,
-            QuizBatchRepository quizBatchRepository, QuizStatisticService quizStatisticService, ParticipationRepository participationRepository, ResultRepository resultRepository,
-            QuizSubmissionRepository quizSubmissionRepository, Environment env, @Qualifier("taskScheduler") TaskScheduler scheduler) {
+            QuizBatchRepository quizBatchRepository, QuizStatisticService quizStatisticService, StudentParticipationRepository studentParticipationRepository,
+            ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository, Environment env, @Qualifier("taskScheduler") TaskScheduler scheduler,
+            WebsocketMessagingService websocketMessagingService) {
         this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.scheduleService = scheduleService;
         this.quizBatchRepository = quizBatchRepository;
         this.quizStatisticService = quizStatisticService;
-        this.participationRepository = participationRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.scheduler = scheduler;
         this.env = env;
+        this.websocketMessagingService = websocketMessagingService;
     }
 
     /**
@@ -108,7 +115,8 @@ public class QuizScheduleService {
                 }
             }
         }
-        if (quizExercise.getDueDate() != null) {
+        if (quizExercise.getDueDate() != null && !quizExercise.isQuizEnded()) {
+            // we only schedule the task if the quiz is not over yet
             scheduleService.scheduleTask(quizExercise, ExerciseLifecycle.DUE,
                     Set.of(new Tuple<>(quizExercise.getDueDate().plusSeconds(5), () -> calculateAllResults(quizExercise.getId()))));
         }
@@ -122,7 +130,7 @@ public class QuizScheduleService {
     public void calculateAllResults(long quizExerciseId) {
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         log.info("Calculating results for quiz {}", quizExercise.getId());
-        participationRepository.findByExerciseId(quizExercise.getId()).forEach(participation -> {
+        studentParticipationRepository.findByExerciseId(quizExercise.getId()).forEach(participation -> {
             participation.setExercise(quizExercise);
             Optional<QuizSubmission> quizSubmissionOptional = quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId());
 
@@ -153,8 +161,46 @@ public class QuizScheduleService {
 
             quizSubmissionRepository.save(quizSubmission);
             resultRepository.save(result);
+            sendQuizResultToUser(quizExerciseId, participation);
         });
         quizStatisticService.recalculateStatistics(quizExercise);
+        // notify users via websocket about new results for the statistics, filter out solution information
+        quizExercise.filterForStatisticWebsocket();
+        websocketMessagingService.sendMessage("/topic/statistic/" + quizExercise.getId(), quizExercise);
+    }
+
+    private void sendQuizResultToUser(long quizExerciseId, StudentParticipation participation) {
+        // TODO: we should convert this into a DTO instead of removing data from the entity
+        var user = participation.getParticipantIdentifier();
+        removeUnnecessaryObjectsBeforeSendingToClient(participation);
+        websocketMessagingService.sendMessageToUser(user, "/topic/exercise/" + quizExerciseId + "/participation", participation);
+    }
+
+    private void removeUnnecessaryObjectsBeforeSendingToClient(StudentParticipation participation) {
+        if (participation.getExercise() != null) {
+            var quizExercise = (QuizExercise) participation.getExercise();
+            // we do not need the course and lectures
+            quizExercise.setCourse(null);
+            // students should not see statistics
+            // TODO: this would be useful, but leads to problems when the quiz schedule service wants to access the statistics again later on
+            // quizExercise.setQuizPointStatistic(null);
+            // quizExercise.getQuizQuestions().forEach(quizQuestion -> quizQuestion.setQuizQuestionStatistic(null));
+        }
+        // submissions are part of results, so we do not need them twice
+        participation.setSubmissions(null);
+        participation.setParticipant(null);
+        if (participation.getResults() != null && !participation.getResults().isEmpty()) {
+            QuizSubmission quizSubmission = (QuizSubmission) participation.getResults().iterator().next().getSubmission();
+            if (quizSubmission != null && quizSubmission.getSubmittedAnswers() != null) {
+                for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
+                    if (submittedAnswer.getQuizQuestion() != null) {
+                        // we do not need all information of the questions again, they are already stored in the exercise
+                        var question = submittedAnswer.getQuizQuestion();
+                        submittedAnswer.setQuizQuestion(question.copyQuestionId());
+                    }
+                }
+            }
+        }
     }
 
     /**
