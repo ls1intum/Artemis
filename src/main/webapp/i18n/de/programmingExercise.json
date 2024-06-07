@@ -546,15 +546,17 @@
                 }
             },
             "diffReport": {
-                "button": "Anzeigen",
+                "button": "Änderungen überprüfen",
                 "tooltip": "Zeigt den detaillierten Git-Diff zwischen den Template- und Lösungs-Repositories.",
+                "detailedTooltip": "Die Vergleichsansicht hebt alle Änderungen zwischen dem Vorlage- und dem Lösungs-Repository hervor. Rot markierte Zeilen zeigen Löschungen, d.h. Zeilen, die in der Lösung im Vergleich zur Vorlage entfernt wurden. Grün markierte Zeilen zeigen, was in der Lösung hinzugefügt wurde.",
                 "splitView": {
                     "enable": "Getrennte Ansicht aktivieren",
                     "disable": "Getrennte Ansicht deaktivieren",
                     "tooltip": "In der getrennten Ansicht werden beide Versionen jeder geänderten Datei nebeneinander angezeigt. Beachte, dass die getrennte Ansicht nur dann angezeigt wird, wenn dein Browserfenster breit genug ist."
                 },
                 "tooltipBetweenSubmissions": "Zeigt den detaillierten Git-Diff zwischen der aktuellen und der vorherigen Abgabe.",
-                "title": "Template-Lösungs-Diff",
+                "title": "Vergleich von Template und Lösung",
+                "shortDescription": "Überprüfe, welche Änderungen am Template von den Studierenden erwartet werden, um die Aufgabe zu lösen.",
                 "titleForSubmissions": "Abgaben-Diff",
                 "emptyRepository": "Leeres Repository",
                 "template": "Vorlage",
@@ -570,7 +572,6 @@
                 },
                 "errorWhileFetchingRepos": "Fehler beim Abrufen der Repositories. Bitte überprüfe deine Internetverbindung und öffne das Popup erneut.",
                 "404": "Template-Lösungs-Diff wurde noch nicht generiert. Bitte pusche etwas in die Template- oder Lösungs-Repositories, um ihn zu erstellen.",
-                "lineStatLabel": "Zeilen, die zwischen Vorlage und Lösung hinzugefügt/entfernt wurden",
                 "lineStatBetweenSubmissionsCurrentSubmissionLabel": "Zeilen, die zwischen der aktuellen Abgabe mit Commit-Hash <span class=\"font-italic text-info\"> {{ currentCommitHash }} </span>",
                 "lineStatBetweenSubmissionsPreviousSubmissionLabel": "und der vorherigen Abgabe mit Commit-Hash <span class=\"font-italic text-info\"> {{ previousCommitHash }} </span> hinzugefügt/entfernt wurden",
                 "lineStatBetweenSubmissionsTemplateLabel": "und der Vorlage hinzugefügt/entfernt wurden",
