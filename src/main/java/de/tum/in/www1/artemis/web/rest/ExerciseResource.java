@@ -345,7 +345,7 @@ public class ExerciseResource {
             exercise.filterSensitiveInformation();
         }
 
-        IrisCombinedSettingsDTO irisSettings = irisSettingsService.map(service -> service.getCombinedIrisSettingsFor(exercise, service.showMinimalSettings(exercise, user)))
+        IrisCombinedSettingsDTO irisSettings = irisSettingsService.map(service -> service.getCombinedIrisSettingsFor(exercise, service.shouldShowMinimalSettings(exercise, user)))
                 .orElse(null);
         PlagiarismCaseInfoDTO plagiarismCaseInfo = plagiarismCaseService.getPlagiarismCaseInfoForExerciseAndUser(exercise.getId(), user.getId()).orElse(null);
 

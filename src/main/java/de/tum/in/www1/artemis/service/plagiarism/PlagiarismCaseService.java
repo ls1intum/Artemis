@@ -130,8 +130,7 @@ public class PlagiarismCaseService {
                 // the following line is already checked in the SQL statement, but we want to ensure it 100%
                 .filter((plagiarismCase) -> plagiarismCase.getPost() != null).map((plagiarismCase) -> {
                     // Note: we only return the ID and verdict to tell the client there is a confirmed plagiarism case with student notification (post) and to support navigating to
-                    // the
-                    // detail page
+                    // the detail page
                     // all other information might be irrelevant or sensitive and could lead to longer loading times
                     return new PlagiarismCaseInfoDTO(plagiarismCase.getId(), plagiarismCase.getVerdict(), plagiarismCase.isCreatedByContinuousPlagiarismControl());
                 });

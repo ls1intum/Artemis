@@ -413,7 +413,7 @@ public class IrisSettingsService {
      * @param user     The user to check
      * @return Whether we have to show the user the minimal settings
      */
-    public boolean showMinimalSettings(Exercise exercise, User user) {
+    public boolean shouldShowMinimalSettings(Exercise exercise, User user) {
         return !authCheckService.isAtLeastEditorForExercise(exercise, user);
     }
 
