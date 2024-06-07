@@ -55,14 +55,10 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
         this.groupCommits();
 
         if (this.participationId) {
-            this.userInfoSubscription = this.programmingExerciseParticipationService.getUserForParticipation(this.participationId).subscribe({
-                next: (user) => {
+            this.userInfoSubscription = this.programmingExerciseParticipationService.getUserForParticipation(this.participationId).subscribe((user) => {
+                if (user) {
                     this.user = user;
-                    console.log('Fetched user:', user);
-                },
-                error: (error) => {
-                    console.error('Failed to fetch user:', error);
-                },
+                }
             });
         }
     }
