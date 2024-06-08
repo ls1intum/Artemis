@@ -216,7 +216,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.modelingExercise &&
             !!this.modelingExercise.dueDate &&
             !!this.participation.initializationDate &&
-            dayjs(this.participation.initializationDate).isAfter(this.modelingExercise.dueDate);
+            dayjs(this.participation.initializationDate).isAfter(this.modelingExercise.dueDate) &&
+            dayjs(this.participation.initializationDate).isAfter(this.participation?.individualDueDate);
+
         this.isAfterAssessmentDueDate = !this.modelingExercise.assessmentDueDate || dayjs().isAfter(this.modelingExercise.assessmentDueDate);
         if (this.submission.model) {
             this.umlModel = JSON.parse(this.submission.model);
