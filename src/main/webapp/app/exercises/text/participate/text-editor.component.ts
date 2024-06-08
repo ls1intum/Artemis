@@ -192,7 +192,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         const isActive =
             !this.examMode &&
             !this.result &&
-            (this.isAlwaysActive || (this.textExercise && this.textExercise.dueDate && !hasExerciseDueDatePassed(this.textExercise, this.participation)));
+            (this.isAlwaysActive ||
+                (this.textExercise &&
+                    this.textExercise.dueDate &&
+                    (!hasExerciseDueDatePassed(this.textExercise, this.participation) || dayjs().isBefore(this.participation?.individualDueDate))));
         return !!isActive;
     }
 
