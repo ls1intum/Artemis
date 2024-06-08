@@ -1,7 +1,7 @@
 # Generate Code Coverage Table Script
 
-This script generates a code coverage report for changed files in a Bamboo build, comparing a specified Git branch against the develop branch. 
-The generated report is copied to the clipboard, ready for pasting into a pull request or documentation.
+This script generates a code coverage report for changed files in a GitHub build, comparing a specified Git branch against the develop branch. 
+The generated report is copied to the clipboard and pasted into a pull request or documentation.
 
 ## Setup
 
@@ -41,19 +41,15 @@ cp env.example .env
 ```
 Fill out the following variables:
 ```
-BAMBOO_USERNAME=ab12cd
-BAMBOO_PASSWORD=123456
+TOKEN=ab12cd
 ```
 
-Alternatively, you can use the command line arguments `--username` (and `--password`) to pass the credentials.
+Alternatively, you can use the command line argument `--token` to pass the credentials.
+### Token
+The token you must provide is a GitHub token with "Public Repository Access" checked.
 
 **Recommended for security, but not for convenience:**  
-Don't store the `BAMBOO_PASSWORD` in the `.env` file, but let the script prompt you for it.
-
-> **Note:**
-> Ideally, we would use a Bamboo API personal access token instead of the password, but this did not seem to work for
-> requesting the artifact URLs. The artifact could not be downloaded directly from the Bamboo build server, so we had to
-> use user authentication. (PAT would therefore only work partially for this script => User authentication is required)
+Don't store the `TOKEN` in the `.env` file, but let the script prompt you for it.
 
 ## Usage
 

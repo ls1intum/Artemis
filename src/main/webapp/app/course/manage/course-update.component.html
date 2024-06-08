@@ -339,7 +339,7 @@
                             ngbTooltip="{{ 'artemisApp.course.courseCommunicationSetting.messagingEnabled.tooltip' | artemisTranslate }}"
                         />
                     </div>
-                    @if (messagingEnabled) {
+                    @if (messagingEnabled || communicationEnabled) {
                         <div class="form-group">
                             <label class="form-control-label" jhiTranslate="artemisApp.codeOfConduct.title"></label>
                             <jhi-help-icon text="artemisApp.codeOfConduct.tooltip" />
@@ -365,6 +365,22 @@
                         <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.learningPaths.tooltip' | artemisTranslate }}" />
                     </div>
                 </div>
+                @if (this.isAdmin) {
+                    <div class="form-group" [jhiFeatureToggleHide]="FeatureToggle.StudentCourseAnalyticsDashboard">
+                        <div class="form-check">
+                            <input
+                                type="checkbox"
+                                class="form-check-input"
+                                name="studentCourseAnalyticsDashboardEnabled"
+                                id="field_studentCourseAnalyticsDashboardEnabled"
+                                formControlName="studentCourseAnalyticsDashboardEnabled"
+                                [(ngModel)]="course.studentCourseAnalyticsDashboardEnabled"
+                            />
+                            <label class="form-control-label" jhiTranslate="artemisApp.course.dashboard.label" for="field_studentCourseAnalyticsDashboardEnabled"></label>
+                            <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.dashboard.tooltip' | artemisTranslate }}" />
+                        </div>
+                    </div>
+                }
                 @if (this.isAdmin && this.isAthenaEnabled) {
                     <div class="form-check">
                         <input

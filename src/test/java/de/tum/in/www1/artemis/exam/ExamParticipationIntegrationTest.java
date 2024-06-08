@@ -60,10 +60,10 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService;
-import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseTestService;
+import de.tum.in.www1.artemis.exercise.quiz.QuizExerciseFactory;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.BonusRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -82,9 +82,9 @@ import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
-import de.tum.in.www1.artemis.service.QuizSubmissionService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.exam.StudentExamService;
+import de.tum.in.www1.artemis.service.quiz.QuizSubmissionService;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.team.TeamUtilService;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -247,7 +247,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         List<StudentExam> studentExamsDB = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
         assertThat(studentExamsDB).hasSize(3);
         List<StudentParticipation> participationList = new ArrayList<>();
-        Exercise[] exercises = examRepository.findAllExercisesByExamId(exam.getId()).toArray(Exercise[]::new);
+        Exercise[] exercises = examRepository.findAllExercisesWithDetailsByExamId(exam.getId()).toArray(Exercise[]::new);
         for (Exercise value : exercises) {
             participationList.addAll(studentParticipationRepository.findByExerciseId(value.getId()));
         }
@@ -268,7 +268,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         assertThat(studentExamsDB).isEmpty();
 
         // Fetch participations
-        exercises = examRepository.findAllExercisesByExamId(exam.getId()).toArray(Exercise[]::new);
+        exercises = examRepository.findAllExercisesWithDetailsByExamId(exam.getId()).toArray(Exercise[]::new);
         participationList = new ArrayList<>();
         for (Exercise exercise : exercises) {
             participationList.addAll(studentParticipationRepository.findByExerciseId(exercise.getId()));
@@ -295,7 +295,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         List<StudentExam> studentExamsDB = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
         assertThat(studentExamsDB).hasSize(3);
         List<StudentParticipation> participationList = new ArrayList<>();
-        Exercise[] exercises = examRepository.findAllExercisesByExamId(exam.getId()).toArray(Exercise[]::new);
+        Exercise[] exercises = examRepository.findAllExercisesWithDetailsByExamId(exam.getId()).toArray(Exercise[]::new);
         for (Exercise value : exercises) {
             participationList.addAll(studentParticipationRepository.findByExerciseId(value.getId()));
         }
@@ -318,7 +318,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         assertThat(studentExamsDB).isEmpty();
 
         // Fetch participations
-        exercises = examRepository.findAllExercisesByExamId(exam.getId()).toArray(Exercise[]::new);
+        exercises = examRepository.findAllExercisesWithDetailsByExamId(exam.getId()).toArray(Exercise[]::new);
         participationList = new ArrayList<>();
         for (Exercise exercise : exercises) {
             participationList.addAll(studentParticipationRepository.findByExerciseId(exercise.getId()));
@@ -804,18 +804,18 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         // instructor exam checklist checks
         ExamChecklistDTO examChecklistDTO = examService.getStatsForChecklist(exam, true);
         assertThat(examChecklistDTO).isNotNull();
-        assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isEqualTo(exam.getExamUsers().size());
-        assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isTrue();
-        assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isZero();
+        assertThat(examChecklistDTO.numberOfGeneratedStudentExams()).isEqualTo(exam.getExamUsers().size());
+        assertThat(examChecklistDTO.allExamExercisesAllStudentsPrepared()).isTrue();
+        assertThat(examChecklistDTO.numberOfTotalParticipationsForAssessment()).isZero();
 
         // check that an adapted version is computed for tutors
         userUtilService.changeUser(TEST_PREFIX + "tutor1");
 
         examChecklistDTO = examService.getStatsForChecklist(exam, false);
         assertThat(examChecklistDTO).isNotNull();
-        assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isNull();
-        assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isFalse();
-        assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isZero();
+        assertThat(examChecklistDTO.numberOfGeneratedStudentExams()).isNull();
+        assertThat(examChecklistDTO.allExamExercisesAllStudentsPrepared()).isFalse();
+        assertThat(examChecklistDTO.numberOfTotalParticipationsForAssessment()).isZero();
 
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
 
@@ -1085,28 +1085,28 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         examChecklistDTO = examService.getStatsForChecklist(exam, true);
         assertThat(examChecklistDTO).isNotNull();
         var size = examScores.studentResults().size();
-        assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isEqualTo(size);
-        assertThat(examChecklistDTO.getNumberOfExamsSubmitted()).isEqualTo(size);
-        assertThat(examChecklistDTO.getNumberOfExamsStarted()).isEqualTo(size);
-        assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isTrue();
-        assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isEqualTo(size * 6L);
-        assertThat(examChecklistDTO.getNumberOfTestRuns()).isZero();
-        assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound()).hasSize(2).containsExactly(expectedTotalExamAssessmentsFinishedByCorrectionRound);
+        assertThat(examChecklistDTO.numberOfGeneratedStudentExams()).isEqualTo(size);
+        assertThat(examChecklistDTO.numberOfExamsSubmitted()).isEqualTo(size);
+        assertThat(examChecklistDTO.numberOfExamsStarted()).isEqualTo(size);
+        assertThat(examChecklistDTO.allExamExercisesAllStudentsPrepared()).isTrue();
+        assertThat(examChecklistDTO.numberOfTotalParticipationsForAssessment()).isEqualTo(size * 6L);
+        assertThat(examChecklistDTO.numberOfTestRuns()).isZero();
+        assertThat(examChecklistDTO.numberOfTotalExamAssessmentsFinishedByCorrectionRound()).hasSize(2).containsExactly(expectedTotalExamAssessmentsFinishedByCorrectionRound);
 
         // change to a tutor
         userUtilService.changeUser(TEST_PREFIX + "tutor1");
 
         // check that a modified version is returned
-        // check if stats are set correctly for the instructor
+        // check if stats are set correctly for the tutor
         examChecklistDTO = examService.getStatsForChecklist(exam, false);
         assertThat(examChecklistDTO).isNotNull();
-        assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isNull();
-        assertThat(examChecklistDTO.getNumberOfExamsSubmitted()).isNull();
-        assertThat(examChecklistDTO.getNumberOfExamsStarted()).isNull();
-        assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isFalse();
-        assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isEqualTo(size * 6L);
-        assertThat(examChecklistDTO.getNumberOfTestRuns()).isNull();
-        assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound()).hasSize(2).containsExactly(expectedTotalExamAssessmentsFinishedByCorrectionRound);
+        assertThat(examChecklistDTO.numberOfGeneratedStudentExams()).isNull();
+        assertThat(examChecklistDTO.numberOfExamsSubmitted()).isNull();
+        assertThat(examChecklistDTO.numberOfExamsStarted()).isNull();
+        assertThat(examChecklistDTO.allExamExercisesAllStudentsPrepared()).isFalse();
+        assertThat(examChecklistDTO.numberOfTotalParticipationsForAssessment()).isEqualTo(size * 6L);
+        assertThat(examChecklistDTO.numberOfTestRuns()).isNull();
+        assertThat(examChecklistDTO.numberOfTotalExamAssessmentsFinishedByCorrectionRound()).hasSize(2).containsExactly(expectedTotalExamAssessmentsFinishedByCorrectionRound);
 
         jenkinsRequestMockProvider.reset();
 

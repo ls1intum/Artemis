@@ -94,7 +94,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.UriService;
@@ -355,10 +355,7 @@ public class GitlabRequestMockProvider {
             return user;
         }).when(userApi).createUser(any(), any(), anyBoolean());
 
-        var accessTokenResponseDTO = new GitLabPersonalAccessTokenResponseDTO();
-        accessTokenResponseDTO.setName("acccess-token-name");
-        accessTokenResponseDTO.setToken("acccess-token-value");
-        accessTokenResponseDTO.setUserId(userId);
+        var accessTokenResponseDTO = new GitLabPersonalAccessTokenResponseDTO("acccess-token-name", userId, null, null, "acccess-token-value");
         final var response = new ObjectMapper().writeValueAsString(accessTokenResponseDTO);
 
         mockServer.expect(requestTo(gitLabApi.getGitLabServerUrl() + "/api/v4/users/" + userId + "/personal_access_tokens")).andExpect(method(HttpMethod.POST))

@@ -59,6 +59,9 @@ export const isResultPreliminary = (latestResult: Result, programmingExercise?: 
     if (!programmingExercise) {
         return false;
     }
+    if (latestResult.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
+        return false;
+    }
     if (latestResult.participation?.type === ParticipationType.PROGRAMMING && isPracticeMode(latestResult.participation)) {
         return false;
     }

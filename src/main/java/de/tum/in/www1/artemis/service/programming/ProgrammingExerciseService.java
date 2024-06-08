@@ -64,6 +64,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
+import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.ExerciseSpecificationService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.ProfileService;
@@ -175,6 +176,8 @@ public class ProgrammingExerciseService {
 
     private final ProfileService profileService;
 
+    private final ExerciseService exerciseService;
+
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
@@ -188,7 +191,7 @@ public class ProgrammingExerciseService {
             SubmissionPolicyService submissionPolicyService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, ChannelService channelService,
             ProgrammingSubmissionService programmingSubmissionService, Optional<IrisSettingsService> irisSettingsService, Optional<AeolusTemplateService> aeolusTemplateService,
             Optional<BuildScriptGenerationService> buildScriptGenerationService,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProfileService profileService) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProfileService profileService, ExerciseService exerciseService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -220,6 +223,7 @@ public class ProgrammingExerciseService {
         this.buildScriptGenerationService = buildScriptGenerationService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.profileService = profileService;
+        this.exerciseService = exerciseService;
     }
 
     /**
@@ -343,7 +347,7 @@ public class ProgrammingExerciseService {
 
         programmingExercise.validateGeneralSettings();
         programmingExercise.validateProgrammingSettings();
-        programmingExercise.validateManualFeedbackSettings();
+        programmingExercise.validateSettingsForFeedbackRequest();
         auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
         submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
 
@@ -550,9 +554,13 @@ public class ProgrammingExerciseService {
 
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedProgrammingExercise, programmingExerciseBeforeUpdate.getDueDate());
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
-        // TODO: in case of an exam exercise, this is not necessary
-        scheduleOperations(updatedProgrammingExercise.getId());
-        groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText);
+
+        if (programmingExerciseBeforeUpdate.isCourseExercise()) {
+            scheduleOperations(updatedProgrammingExercise.getId());
+        }
+
+        exerciseService.notifyAboutExerciseChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise, notificationText);
+
         return savedProgrammingExercise;
     }
 
@@ -657,13 +665,17 @@ public class ProgrammingExerciseService {
     public ProgrammingExercise updateProblemStatement(ProgrammingExercise programmingExercise, String problemStatement, @Nullable String notificationText)
             throws EntityNotFoundException {
 
+        String oldProblemStatement = programmingExercise.getProblemStatement();
         programmingExercise.setProblemStatement(problemStatement);
         programmingExerciseTaskService.replaceTestNamesWithIds(programmingExercise);
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
+        // Set the old problem statement again for notifyAboutExerciseChanges method, but don't save it
+        programmingExercise.setProblemStatement(oldProblemStatement);
+
         programmingExerciseTaskService.updateTasksFromProblemStatement(updatedProgrammingExercise);
 
-        groupNotificationService.notifyAboutExerciseUpdate(programmingExercise, notificationText);
+        exerciseService.notifyAboutExerciseChanges(programmingExercise, updatedProgrammingExercise, notificationText);
 
         return updatedProgrammingExercise;
     }

@@ -266,6 +266,10 @@ public class CourseResource {
                 throw new BadRequestAlertException("You are not allowed to change the access to restricted Athena modules of a course", Course.ENTITY_NAME,
                         "restrictedAthenaModulesAccessCannotChange", true);
             }
+            // instructors are not allowed to change the dashboard settings
+            if (existingCourse.getStudentCourseAnalyticsDashboardEnabled() != courseUpdate.getStudentCourseAnalyticsDashboardEnabled()) {
+                throw new BadRequestAlertException("You are not allowed to change the dashboard settings of a course", Course.ENTITY_NAME, "dashboardSettingsCannotChange", true);
+            }
         }
 
         if (courseUpdate.getPresentationScore() != null && courseUpdate.getPresentationScore() != 0) {
@@ -850,17 +854,16 @@ public class CourseResource {
         final List<CourseManagementOverviewStatisticsDTO> courseDTOs = new ArrayList<>();
         for (final var course : courseService.getAllCoursesForManagementOverview(onlyActive)) {
             final var courseId = course.getId();
-            final var courseDTO = new CourseManagementOverviewStatisticsDTO();
-            courseDTO.setCourseId(courseId);
-
             var studentsGroup = course.getStudentGroupName();
             var amountOfStudentsInCourse = Math.toIntExact(userRepository.countUserInGroup(studentsGroup));
-            courseDTO.setExerciseDTOS(exerciseService.getStatisticsForCourseManagementOverview(courseId, amountOfStudentsInCourse));
+            var exerciseStatistics = exerciseService.getStatisticsForCourseManagementOverview(courseId, amountOfStudentsInCourse);
 
             var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
             var endDate = courseService.determineEndDateForActiveStudents(course);
             var timeSpanSize = courseService.determineTimeSpanSizeForActiveStudents(course, endDate, 4);
-            courseDTO.setActiveStudents(courseService.getActiveStudents(exerciseIds, 0, timeSpanSize, endDate));
+            var activeStudents = courseService.getActiveStudents(exerciseIds, 0, timeSpanSize, endDate);
+
+            final var courseDTO = new CourseManagementOverviewStatisticsDTO(courseId, activeStudents, exerciseStatistics);
             courseDTOs.add(courseDTO);
         }
 
@@ -879,7 +882,7 @@ public class CourseResource {
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Void> archiveCourse(@PathVariable Long courseId) {
         log.info("REST request to archive Course : {}", courseId);
-        final Course course = courseRepository.findByIdWithExercisesAndLecturesElseThrow(courseId);
+        final Course course = courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         // Archiving a course is only possible after the course is over
         if (now().isBefore(course.getEndDate())) {

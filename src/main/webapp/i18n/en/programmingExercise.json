@@ -318,6 +318,7 @@
                     "bonusMultiplier": "Bonus multiplier: This multiplies the points given for passing a test case without affecting the fractions of other test cases. Multipliers greater than 1 can result in student scores greater than 100%.",
                     "bonusPoints": "Bonus points: Additional points added on top of the regular points for passing a test case. Setting bonus points can result in student scores greater than 100%.",
                     "visibility": "Feedback and points for test cases marked as ‘After Due Date’ only become visible to students after the due date has passed. Tests with visibility ‘Never’ do not influence the student score.",
+                    "visibilityExam": "Feedback and points for test cases marked as ‘After Release Date of Results’ only become visible to students after the exam results release date has passed. Tests with visibility ‘Never’ do not influence the student score.",
                     "points": "The amount of points the student gets for passing this test. This value is rounded according to the course settings.",
                     "type": "The type of the test case determines if the test case has been generated from the test.json (STRUCTURAL), or has been written manually (BEHAVIORAL)."
                 },
@@ -368,9 +369,10 @@
                     "title": "Normalize code style",
                     "tooltip": "Standardize line endings and encoding for consistency"
                 },
+                "successMessageRepo": "Export of repo was successful. The exported zip file is currently being downloaded.",
                 "successMessageRepos": "Export of repos was successful. The exported zip file with all repositories is currently being downloaded.",
                 "successMessageExercise": "Export of exercise was successful. The exported zip file with all exercise material is currently being downloaded.",
-                "notFoundMessageRepos": "No Repsoitories exported for exercise {{exerciseId}}: There are no submission of the given students."
+                "notFoundMessageRepos": "No repos exported for exercise {{exerciseId}}: There are no submissions from the given students."
             },
             "resubmitOnFailedSubmission": "An automatic assessment for this participant's last submission could not be generated. Click the button to submit again. This will trigger a new build run that tests the last submission.",
             "resubmit": "Resubmit the last submission. This will execute a build run on the participant's repository without making a commit.",
@@ -416,30 +418,37 @@
                 "assessmentDueDate": "Assessment Due Date",
                 "assessmentDueDateTooltip": "The due date for manual reviews. As soon as the specified date passes, all manual assessments will be released to students!",
                 "notSet": "not set",
-                "allowFeedbackRequests": "Allow feedback requests",
+                "allowFeedbackRequests": "Allow automatic non graded feedback requests/manual feedback requests",
+                "allowFeedbackRequestsTooltip": "Students can request feedback before the due date. The requests will be processed by Athena, or, if Athena cannot be reached, students can send manual feedback requests.",
                 "manualFeedbackRequests": "Manual feedback requests",
                 "manualFeedbackRequestsTooltip": "Students can request manual feedback before the due date to receive feedback.",
                 "complaintOnAutomaticAssessment": "Complaint on Automatic Assessment",
                 "complaintOnAutomaticAssessmentTooltip": "Students can complain after receiving an automatic assessment. Which will be evaluated by a tutor afterwards.",
                 "exampleSolutionPublicationDateTooltip": "The date when the Solution Repository becomes available to download for students. Leave blank to disable.",
                 "releaseTestsWithExampleSolution": "Include tests into example solution",
-                "releaseTestsWithExampleSolutionTooltip": "In addition to the example solution the automatic tests can be published after the due date."
+                "releaseTestsWithExampleSolutionTooltip": "In addition to the example solution the automatic tests can be published after the due date.",
+                "setTestCaseVisibilityToAfterReleaseDateOfResults": "Set test case visibility to After Release Date of Results",
+                "setTestCaseVisibilityToAfterReleaseDateOfResultsTooltip": "During the exam students will only see if their code compiles. Details about the test results will be displayed after the Release Date of Results."
             },
             "repositoryIsLocked": {
                 "title": "Your repository is locked.",
                 "tooltip": "You are outside of the participation timeframe or you reached your submission limit, your repository is locked. You may still read the code but you may not make any changes to it."
             },
+            "checkoutDirectories": "Checkout directories",
             "preview": {
                 "label": "Preview",
-                "tooltip": "For every programming exercise, repositories and build plans will be generated. Here you can find their generated names based on the short name of the exercise (and course)",
+                "tooltip": "For every programming exercise, repositories and build plans will be generated. Here, you can find their generated names based on the short name of the exercise (and course)",
+                "tooltipLocalVC": "Here, you can find the repositories linked to the exercise and their respective checkout directories during the build execution.",
                 "repositories": "Repositories",
                 "buildPlans": "Build Plans",
                 "templateRepoTooltip": "The repository which contains the template of the exercise",
                 "solutionRepoTooltip": "The repository which contains the solution to the exercise",
                 "testRepoTooltip": "The repository which contains all tests",
                 "auxiliaryRepoTooltip": "{{description}}",
-                "templateBuildPlanTooltip": "The build plan of the template. Runs all tests on the exercise template. Used as a reference in which all tests must fail",
-                "solutionBuildPlanTooltip": "The build plan of the solution. Runs all tests on the exercise solution. Used as a reference in which all tests must succeed"
+                "templateBuildPlanTooltip": "The build plan of the template and student submissions. Runs all tests on the exercise template / student submission. The build for the exercise template is used as reference in which all tests must fail.",
+                "solutionBuildPlanTooltip": "The build plan of the solution. Runs all tests on the exercise solution. Used as a reference in which all tests must succeed.",
+                "submissionBuildPlan": "Submission build plan",
+                "solutionBuildPlan": "Solution build plan"
             },
             "orion": {
                 "openEditor": "Open Editor"
@@ -539,10 +548,17 @@
                 }
             },
             "diffReport": {
-                "button": "Show",
+                "button": "Review Changes",
                 "tooltip": "Shows the detailed git-diff between the template and solution repositories.",
+                "detailedTooltip": "The comparison view highlights all changes between the template and solution repositories. Red indicates deletions from the template, while green shows additions made in the solution.",
+                "splitView": {
+                    "enable": "Enable split view",
+                    "disable": "Disable split view",
+                    "tooltip": "In the split view, both versions of each changed file are displayed next to each other. Note that the split view will only be shown if your browser window is wide enough."
+                },
                 "tooltipBetweenSubmissions": "Shows the detailed git-diff between the current and previous submission.",
-                "title": "Template-Solution-Diff",
+                "title": "Template/Solution Comparison",
+                "shortDescription": "Review which changes to the template are expected from students to solve the exercise.",
                 "titleForSubmissions": "Submission-Diff",
                 "template": "Template",
                 "solution": "Solution",
@@ -551,9 +567,13 @@
                 "previousCommit": "Previous Commit",
                 "currentSubmission": "Current Submission",
                 "currentCommit": "Current Commit",
+                "fileChange": {
+                    "created": "Created",
+                    "deleted": "Deleted",
+                    "renamed": "Renamed"
+                },
                 "errorWhileFetchingRepos": "An error occurred while fetching the repositories. Please check your internet connection and reopen the modal.",
                 "404": "Template-Solution-Diff has not been generated yet. Please do a push to the template or solution repository to generate it.",
-                "lineStatLabel": "Lines added/removed between template and solution",
                 "lineStatBetweenSubmissionsCurrentSubmissionLabel": "Lines added/removed between the current submission with commit hash <span class=\"font-italic text-info\"> {{ currentCommitHash }} </span>",
                 "lineStatBetweenSubmissionsPreviousSubmissionLabel": " and the previous submission with commit hash <span class=\"font-italic text-info\"> {{ previousCommitHash }} </span>",
                 "lineStatBetweenSubmissionsTemplateLabel": "and the template",

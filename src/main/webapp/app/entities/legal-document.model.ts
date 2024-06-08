@@ -19,7 +19,7 @@ export enum LegalDocumentType {
  */
 export class LegalDocument {
     language: LegalDocumentLanguage;
-    text: string;
+    text?: string;
     type: LegalDocumentType;
     constructor(type: LegalDocumentType, language: LegalDocumentLanguage) {
         this.type = type;

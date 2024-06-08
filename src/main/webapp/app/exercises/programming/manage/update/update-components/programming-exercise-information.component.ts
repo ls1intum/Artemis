@@ -2,11 +2,11 @@ import { AfterViewInit, Component, Input, OnDestroy, QueryList, ViewChild, ViewC
 import { NgModel } from '@angular/forms';
 import { ProgrammingExercise, ProjectType } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
-import { ImportOptions } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.component';
 import { Subject, Subscription } from 'rxjs';
 import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
 import { every } from 'lodash-es';
+import { ImportOptions } from 'app/types/programming-exercises';
 
 @Component({
     selector: 'jhi-programming-exercise-info',

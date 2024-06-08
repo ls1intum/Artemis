@@ -1,8 +1,8 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { faArrowUpRightFromSquare, faCodeBranch, faExclamationTriangle, faEye } from '@fortawesome/free-solid-svg-icons';
+import { Component, Input, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { faArrowUpRightFromSquare, faCodeBranch, faCodeCompare, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { isEmpty } from 'lodash-es';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ButtonSize } from 'app/shared/components/button.component';
+import { ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/button.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report-modal.component';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
@@ -37,12 +37,14 @@ export enum DetailType {
     ProgrammingProblemStatement = 'detail-problem-statement',
     ProgrammingTimeline = 'detail-timeline',
     ProgrammingBuildStatistics = 'detail-build-statistics',
+    ProgrammingCheckoutDirectories = 'detail-checkout-directories',
 }
 
 @Component({
     selector: 'jhi-detail-overview-list',
     templateUrl: './detail-overview-list.component.html',
     styleUrls: ['./detail-overview-list.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class DetailOverviewListComponent implements OnInit, OnDestroy {
     protected readonly isEmpty = isEmpty;
@@ -61,12 +63,14 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
     headlinesRecord: Record<string, string>;
 
     // icons
-    faExclamationTriangle = faExclamationTriangle;
-    faEye = faEye;
-    faArrowUpRightFromSquare = faArrowUpRightFromSquare;
-    faCodeBranch = faCodeBranch;
+    readonly faExclamationTriangle = faExclamationTriangle;
+    readonly faCodeCompare = faCodeCompare;
+    readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
+    readonly faCodeBranch = faCodeBranch;
 
-    profileSub: Subscription;
+    WARNING = ButtonType.WARNING;
+
+    profileSubscription: Subscription;
     isLocalVC = false;
 
     constructor(
@@ -83,7 +87,7 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
                 translationKey: section.headline,
             };
         });
-        this.profileSub = this.profileService.getProfileInfo().subscribe((profileInfo) => {
+        this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.isLocalVC = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
         this.headlinesRecord = this.headlines.reduce((previousValue, currentValue) => {
@@ -96,7 +100,7 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const modalRef = this.modalService.open(GitDiffReportModalComponent, { size: 'xl' });
+        const modalRef = this.modalService.open(GitDiffReportModalComponent, { windowClass: 'diff-view-modal' });
         modalRef.componentInstance.report = gitDiff;
     }
 
@@ -111,6 +115,8 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        this.profileSub?.unsubscribe();
+        this.profileSubscription?.unsubscribe();
     }
+
+    protected readonly TooltipPlacement = TooltipPlacement;
 }

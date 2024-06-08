@@ -43,18 +43,17 @@ public class ApollonConversionService {
 
         log.info("Calling Remote Service to convert for model.");
         try {
-            ApollonModelDTO request = new ApollonModelDTO();
-            request.setModel(model);
-
-            var response = restTemplate.postForEntity(apollonConversionUrl + "/pdf", request, Resource.class);
-            assert response.getBody() != null;
-            return response.getBody().getInputStream();
+            var apollonModel = new ApollonModelDTO(model);
+            var response = restTemplate.postForEntity(apollonConversionUrl + "/pdf", apollonModel, Resource.class);
+            if (response.getBody() != null) {
+                return response.getBody().getInputStream();
+            }
         }
         catch (HttpClientErrorException ex) {
             log.error("Error while calling Remote Service: {}", ex.getMessage());
         }
         catch (IOException ex) {
-            log.error(ex.getMessage());
+            log.error(ex.getMessage(), ex);
         }
         return null;
 

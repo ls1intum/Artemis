@@ -31,8 +31,8 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -422,7 +422,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // Check that a student is found by his login and that he is NOT marked as "assignedToTeam" yet
         List<TeamSearchUserDTO> users2 = request.getList(resourceUrlSearchUsersInCourse(TEST_PREFIX + "student1"), HttpStatus.OK, TeamSearchUserDTO.class);
         assertThat(users2).as("Only user with login " + TEST_PREFIX + "'student1' was found").hasSize(1);
-        assertThat(users2.get(0).getAssignedTeamId()).as("User was correctly marked as not being assigned to a team yet").isNull();
+        assertThat(users2.get(0).assignedTeamId()).as("User was correctly marked as not being assigned to a team yet").isNull();
 
         // Check that no student is returned for non-existing login/name
         List<TeamSearchUserDTO> users3 = request.getList(resourceUrlSearchUsersInCourse("chuckNorris"), HttpStatus.OK, TeamSearchUserDTO.class);
@@ -434,7 +434,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         List<TeamSearchUserDTO> users4 = request.getList(resourceUrlSearchUsersInCourse(teamStudent.getLogin()), HttpStatus.OK, TeamSearchUserDTO.class);
         assertThat(users4).as("User from team was found").hasSize(1);
-        assertThat(users4.get(0).getAssignedTeamId()).as("User from team was correctly marked as being assigned to a team already").isEqualTo(team.getId());
+        assertThat(users4.get(0).assignedTeamId()).as("User from team was correctly marked as being assigned to a team already").isEqualTo(team.getId());
     }
 
     @Test

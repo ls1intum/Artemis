@@ -56,7 +56,7 @@ test.describe('Quiz Exercise Management', () => {
 
         test.beforeEach('Create quiz exercise', async ({ login, exerciseAPIRequests }) => {
             await login(admin);
-            quizExercise = await exerciseAPIRequests.createQuizExercise({ course }, [multipleChoiceTemplate]);
+            quizExercise = await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [multipleChoiceTemplate] });
         });
 
         test('Deletes a quiz exercise', async ({ login, navigationBar, courseManagement, courseManagementExercises }) => {
@@ -73,7 +73,7 @@ test.describe('Quiz Exercise Management', () => {
 
         test.beforeEach('Create quiz exercise', async ({ login, exerciseAPIRequests }) => {
             await login(admin);
-            quizExercise = await exerciseAPIRequests.createQuizExercise({ course }, [multipleChoiceTemplate]);
+            quizExercise = await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [multipleChoiceTemplate] });
         });
 
         test('Export quiz exercise questions', async ({ page, login, navigationBar, courseManagement, courseManagementExercises }) => {

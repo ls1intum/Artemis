@@ -1,27 +1,25 @@
 package de.tum.in.www1.artemis.service.iris.session;
 
 import java.time.ZonedDateTime;
-import java.util.concurrent.ExecutionException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
-import de.tum.in.www1.artemis.domain.iris.message.IrisJsonMessageContent;
-import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.session.IrisHestiaSession;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
 import de.tum.in.www1.artemis.repository.iris.IrisHestiaSessionRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
+import de.tum.in.www1.artemis.service.connectors.pyris.PyrisConnectorService;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
-import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
  * Service to handle the Hestia integration of Iris.
@@ -32,7 +30,7 @@ public class IrisHestiaSessionService implements IrisButtonBasedFeatureInterface
 
     private static final Logger log = LoggerFactory.getLogger(IrisHestiaSessionService.class);
 
-    private final IrisConnectorService irisConnectorService;
+    private final PyrisConnectorService pyrisConnectorService;
 
     private final IrisSettingsService irisSettingsService;
 
@@ -42,9 +40,9 @@ public class IrisHestiaSessionService implements IrisButtonBasedFeatureInterface
 
     private final IrisHestiaSessionRepository irisHestiaSessionRepository;
 
-    public IrisHestiaSessionService(IrisConnectorService irisConnectorService, IrisSettingsService irisSettingsService, AuthorizationCheckService authCheckService,
+    public IrisHestiaSessionService(PyrisConnectorService pyrisConnectorService, IrisSettingsService irisSettingsService, AuthorizationCheckService authCheckService,
             IrisSessionRepository irisSessionRepository, IrisHestiaSessionRepository irisHestiaSessionRepository) {
-        this.irisConnectorService = irisConnectorService;
+        this.pyrisConnectorService = pyrisConnectorService;
         this.irisSettingsService = irisSettingsService;
         this.authCheckService = authCheckService;
         this.irisSessionRepository = irisSessionRepository;
@@ -74,13 +72,9 @@ public class IrisHestiaSessionService implements IrisButtonBasedFeatureInterface
         return irisSession;
     }
 
-    // @formatter:off
-    record HestiaDTO(
-            CodeHint codeHint,
-            IrisHestiaSession session,
-            ProgrammingExercise exercise
-    ) {}
-    // @formatter:on
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    record HestiaDTO(CodeHint codeHint, IrisHestiaSession session, ProgrammingExercise exercise) {
+    }
 
     /**
      * Generates the description and content for a code hint.
@@ -92,28 +86,8 @@ public class IrisHestiaSessionService implements IrisButtonBasedFeatureInterface
      */
     @Override
     public CodeHint executeRequest(IrisHestiaSession session) {
-        var irisSession = irisHestiaSessionRepository.findWithMessagesAndContentsAndCodeHintById(session.getId());
-        var codeHint = irisSession.getCodeHint();
-        var parameters = new HestiaDTO(irisSession.getCodeHint(), irisSession, codeHint.getExercise());
-        var settings = irisSettingsService.getCombinedIrisSettingsFor(irisSession.getCodeHint().getExercise(), false).irisHestiaSettings();
-        try {
-            var response = irisConnectorService.sendRequestV2(settings.getTemplate().getContent(), settings.getPreferredModel(), parameters).get();
-            var shortDescription = response.content().get("shortDescription").asText();
-            var longDescription = response.content().get("longDescription").asText();
-            var llmMessage = irisSession.newMessage();
-            llmMessage.setSender(IrisMessageSender.LLM);
-            llmMessage.addContent(new IrisJsonMessageContent(response.content()));
-
-            irisSessionRepository.save(irisSession);
-
-            codeHint.setDescription(shortDescription);
-            codeHint.setContent(longDescription);
-            return codeHint;
-        }
-        catch (InterruptedException | ExecutionException e) {
-            log.error("Unable to generate description", e);
-            throw new InternalServerErrorException("Unable to generate description: " + e.getMessage());
-        }
+        // TODO: Re-add in a future PR. Remember to reenable the test cases!
+        return null;
     }
 
     /**

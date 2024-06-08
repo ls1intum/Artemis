@@ -8,6 +8,7 @@ import { generateUUID } from '../../utils';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exercise } from 'app/entities/exercise.model';
+import { Visibility } from 'app/entities/programming-exercise-test-case.model';
 
 export class ExamExerciseGroupCreationPage {
     private readonly page: Page;
@@ -51,6 +52,12 @@ export class ExamExerciseGroupCreationPage {
             additionalData!.quizExerciseID = quiz.quizQuestions![0].id;
             exercise = { ...quiz, additionalData };
         }
+
+        if (exerciseType === ExerciseType.PROGRAMMING) {
+            const RETRY_NUMBER = 0;
+            await this.exerciseAPIRequests.changeProgrammingExerciseTestVisibility(exercise, Visibility.Always, RETRY_NUMBER);
+        }
+
         return exercise;
     }
 
@@ -62,7 +69,7 @@ export class ExamExerciseGroupCreationPage {
             case ExerciseType.MODELING:
                 return await this.exerciseAPIRequests.createModelingExercise({ exerciseGroup }, title);
             case ExerciseType.QUIZ:
-                return await this.exerciseAPIRequests.createQuizExercise({ exerciseGroup }, [multipleChoiceTemplate], title);
+                return await this.exerciseAPIRequests.createQuizExercise({ body: { exerciseGroup }, quizQuestions: [multipleChoiceTemplate], title });
             case ExerciseType.PROGRAMMING:
                 return await this.exerciseAPIRequests.createProgrammingExercise({ exerciseGroup, title, assessmentType: additionalData.progExerciseAssessmentType });
         }

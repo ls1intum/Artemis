@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.participation;
 
-import static de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory.DEFAULT_BRANCH;
+import static de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseFactory.DEFAULT_BRANCH;
 import static java.time.ZonedDateTime.now;
 
 import java.time.ZonedDateTime;

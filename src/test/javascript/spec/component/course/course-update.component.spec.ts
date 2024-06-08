@@ -40,6 +40,8 @@ import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-to
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal.component';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
 class MarkdownEditorStubComponent {
@@ -91,6 +93,7 @@ describe('Course Management Update Component', () => {
         course.courseIcon = 'testCourseIcon';
         course.timeZone = 'Europe/London';
         course.learningPathsEnabled = true;
+        course.studentCourseAnalyticsDashboardEnabled = false;
 
         const parentRoute = {
             data: of({ course }),
@@ -194,6 +197,7 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.get(['color'])?.value).toBe(course.color);
             expect(comp.courseForm.get(['courseIcon'])?.value).toBe(course.courseIcon);
             expect(comp.courseForm.get(['learningPathsEnabled'])?.value).toBe(course.learningPathsEnabled);
+            expect(comp.courseForm.get(['studentCourseAnalyticsDashboardEnabled'])?.value).toBe(course.studentCourseAnalyticsDashboardEnabled);
             flush();
         }));
     });
@@ -399,6 +403,19 @@ describe('Course Management Update Component', () => {
             });
             comp.updateCourseInformationSharingMessagingCodeOfConduct('# Code of Conduct');
             expect(comp.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'].value).toBe('# Code of Conduct');
+        });
+
+        it('should update course information sharing code of conduct when communication is enabled and messaging disabled', () => {
+            comp.communicationEnabled = true;
+            comp.messagingEnabled = false;
+            comp.course = new Course();
+            comp.courseForm = new FormGroup({
+                courseInformationSharingMessagingCodeOfConduct: new FormControl(),
+            });
+            comp.updateCourseInformationSharingMessagingCodeOfConduct('# Code of Conduct');
+            expect(comp.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'].value).toBe('# Code of Conduct');
+            // Verify the form control is editable
+            expect(comp.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'].enabled).toBeTrue();
         });
     });
 
@@ -811,6 +828,127 @@ describe('Course Management Update Component', () => {
         jest.spyOn(modalService, 'open').mockReturnValue({ closed: of(new Organization()), componentInstance: {} } as NgbModalRef);
         comp.openOrganizationsModal();
         expect(comp.courseOrganizations).toHaveLength(1);
+    });
+});
+
+describe('Course Management Student Course Analytics Dashboard Update', () => {
+    const validTimeZone = 'Europe/Berlin';
+    let fixture: ComponentFixture<CourseUpdateComponent>;
+    let accountService: AccountService;
+    let featureToggleService: FeatureToggleService;
+    let featureToggleSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [
+                ArtemisTestModule,
+                HttpClientTestingModule,
+                MockModule(ReactiveFormsModule),
+                MockModule(FormsModule),
+                ImageCropperModule,
+                MockDirective(NgbTypeahead),
+                MockModule(NgbTooltipModule),
+            ],
+            providers: [
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
+                MockProvider(TranslateService),
+                MockProvider(LoadImageService),
+            ],
+            declarations: [
+                CourseUpdateComponent,
+                MarkdownEditorStubComponent,
+                FeatureToggleHideDirective,
+                MockComponent(ColorSelectorComponent),
+                MockComponent(FormDateTimePickerComponent),
+                MockComponent(HelpIconComponent),
+                MockComponent(SecuredImageComponent),
+                MockDirective(HasAnyAuthorityDirective),
+                MockDirective(TranslateDirective),
+                MockPipe(ArtemisTranslatePipe),
+                MockPipe(RemoveKeysPipe),
+            ],
+        })
+            .compileComponents()
+            .then(() => {
+                (Intl as any).supportedValuesOf = () => [validTimeZone];
+                fixture = TestBed.createComponent(CourseUpdateComponent);
+                accountService = TestBed.inject(AccountService);
+                featureToggleService = TestBed.inject(FeatureToggleService);
+                featureToggleSpy = jest.spyOn(featureToggleService, 'getFeatureToggleActive');
+            });
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+        (Intl as any).supportedValuesOf = undefined;
+    });
+
+    it('should hide the form field for dashboard enable toggle when user is not an admin but the feature is toggled.', () => {
+        // Simulate a user who is not an admin
+        jest.spyOn(accountService, 'isAdmin').mockReturnValue(false);
+
+        // Simulate a feature toggle that includes only the specified feature toggles
+        const featureToggleStub = featureToggleSpy.mockImplementation((feature: string) => {
+            if (feature === FeatureToggle.StudentCourseAnalyticsDashboard) {
+                return of(true);
+            }
+            return of(false);
+        });
+
+        // Run change detection to update the view
+        fixture.detectChanges();
+
+        // Try to find the form field in the DOM
+        const formGroups = fixture.debugElement.queryAll(By.directive(FeatureToggleHideDirective));
+        const filteredFormGroups = formGroups.filter((element) => !element.nativeElement.classList.contains('d-none'));
+
+        expect(featureToggleStub).toHaveBeenCalled();
+        expect(filteredFormGroups).toBeEmpty();
+    });
+    it('should hide the form field for dashboard enable toggle when user is an admin but the feature is not toggled', () => {
+        // Simulate a user who is an admin
+        jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
+
+        const featureToggleStub = featureToggleSpy.mockImplementation((feature: string) => {
+            if (feature === FeatureToggle.StudentCourseAnalyticsDashboard || feature === FeatureToggle.LearningPaths) {
+                return of(false);
+            }
+            return of(true);
+        });
+
+        // Run change detection to update the view
+        fixture.detectChanges();
+
+        // Try to find the form field in the DOM
+        const formGroups = fixture.debugElement.queryAll(By.directive(FeatureToggleHideDirective));
+        const filteredFormGroups = formGroups.filter((element) => !element.nativeElement.classList.contains('d-none'));
+
+        expect(featureToggleStub).toHaveBeenCalled();
+        expect(filteredFormGroups).toBeEmpty();
+    });
+    it('should show the form field for dashboard enable toggle when user is an admin and the feature is toggled', () => {
+        // Simulate a user who is an admin
+        jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
+
+        const featureToggleStub = featureToggleSpy.mockImplementation((feature: string) => {
+            if (feature === FeatureToggle.StudentCourseAnalyticsDashboard || feature === FeatureToggle.LearningPaths) {
+                return of(true);
+            }
+            return of(false);
+        });
+
+        // Run change detection to update the view
+        fixture.detectChanges();
+
+        // Try to find the form field in the DOM
+        const formGroups = fixture.debugElement.queryAll(By.directive(FeatureToggleHideDirective));
+        const filteredFormGroups = formGroups.filter((element) => !element.nativeElement.classList.contains('d-none'));
+
+        expect(featureToggleStub).toHaveBeenCalled();
+        expect(filteredFormGroups).toHaveLength(2);
     });
 });
 

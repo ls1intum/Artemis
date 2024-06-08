@@ -1,21 +1,24 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
 import static de.tum.in.www1.artemis.config.Constants.EXAM_END_WAIT_TIME_FOR_COMPASS_MINUTES;
+import static de.tum.in.www1.artemis.config.StartupDelayConfig.MODELING_EXERCISE_SCHEDULE_DELAY_SEC;
 import static java.time.Instant.now;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
@@ -58,7 +61,12 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
         this.examDateService = examDateService;
     }
 
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
+    public void applicationReady() {
+        // schedule the task after the application has started to avoid delaying the start of the application
+        scheduler.schedule(this::scheduleRunningExercisesOnStartup, Instant.now().plusSeconds(MODELING_EXERCISE_SCHEDULE_DELAY_SEC));
+    }
+
     @Override
     public void scheduleRunningExercisesOnStartup() {
         try {

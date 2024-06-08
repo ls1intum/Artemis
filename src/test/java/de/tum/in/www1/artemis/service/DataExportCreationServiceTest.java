@@ -56,9 +56,9 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseTestService;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.quiz.QuizExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.DataExportRepository;
@@ -342,8 +342,8 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
             assertThat(exerciseDirPath).isDirectoryContaining(resultsFile);
         }
         if (exerciseDirPath.toString().contains("Programming")) {
-            // zip file of the repository
-            assertThat(exerciseDirPath).isDirectoryContaining(path -> path.getFileName().toString().endsWith(FILE_FORMAT_ZIP));
+            // directory of the repository
+            assertThat(exerciseDirPath).isDirectoryContaining(Files::isDirectory);
             // programming course exercise has a plagiarism case
             if (courseExercise) {
                 assertThat(exerciseDirPath)

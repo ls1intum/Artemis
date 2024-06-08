@@ -64,10 +64,10 @@ import de.tum.in.www1.artemis.domain.quiz.QuizGroup;
 import de.tum.in.www1.artemis.domain.quiz.QuizPool;
 import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.modeling.ModelingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.quiz.QuizExerciseFactory;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamLiveEventRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
@@ -80,11 +80,11 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
-import de.tum.in.www1.artemis.service.QuizPoolService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
+import de.tum.in.www1.artemis.service.quiz.QuizPoolService;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.user.UserFactory;
@@ -770,7 +770,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
         assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> examRepository.findByIdWithExerciseGroupsElseThrow(Long.MAX_VALUE));
 
-        assertThat(examRepository.findAllExercisesByExamId(Long.MAX_VALUE)).isEmpty();
+        assertThat(examRepository.findAllExercisesWithDetailsByExamId(Long.MAX_VALUE)).isEmpty();
 
         request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.OK, Exam.class);
 
@@ -1145,17 +1145,18 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         ExamChecklistDTO actualStatistics = examService.getStatsForChecklist(exam1, true);
         ExamChecklistDTO returnedStatistics = request.get("/api/courses/" + exam1.getCourse().getId() + "/exams/" + exam1.getId() + "/statistics", HttpStatus.OK,
                 ExamChecklistDTO.class);
-        assertThat(returnedStatistics.isAllExamExercisesAllStudentsPrepared()).isEqualTo(actualStatistics.isAllExamExercisesAllStudentsPrepared());
-        assertThat(returnedStatistics.getAllExamExercisesAllStudentsPrepared()).isEqualTo(actualStatistics.getAllExamExercisesAllStudentsPrepared());
-        assertThat(returnedStatistics.getNumberOfAllComplaints()).isEqualTo(actualStatistics.getNumberOfAllComplaints());
-        assertThat(returnedStatistics.getNumberOfAllComplaintsDone()).isEqualTo(actualStatistics.getNumberOfAllComplaintsDone());
-        assertThat(returnedStatistics.getNumberOfExamsStarted()).isEqualTo(actualStatistics.getNumberOfExamsStarted());
-        assertThat(returnedStatistics.getNumberOfExamsSubmitted()).isEqualTo(actualStatistics.getNumberOfExamsSubmitted());
-        assertThat(returnedStatistics.getNumberOfTestRuns()).isEqualTo(actualStatistics.getNumberOfTestRuns());
-        assertThat(returnedStatistics.getNumberOfGeneratedStudentExams()).isEqualTo(actualStatistics.getNumberOfGeneratedStudentExams());
-        assertThat(returnedStatistics.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound())
-                .isEqualTo(actualStatistics.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound());
-        assertThat(returnedStatistics.getNumberOfTotalParticipationsForAssessment()).isEqualTo(actualStatistics.getNumberOfTotalParticipationsForAssessment());
+        assertThat(returnedStatistics.allExamExercisesAllStudentsPrepared()).isEqualTo(actualStatistics.allExamExercisesAllStudentsPrepared());
+        assertThat(returnedStatistics.allExamExercisesAllStudentsPrepared()).isEqualTo(actualStatistics.allExamExercisesAllStudentsPrepared());
+        assertThat(returnedStatistics.numberOfAllComplaints()).isEqualTo(actualStatistics.numberOfAllComplaints());
+        assertThat(returnedStatistics.numberOfAllComplaintsDone()).isEqualTo(actualStatistics.numberOfAllComplaintsDone());
+        assertThat(returnedStatistics.numberOfExamsStarted()).isEqualTo(actualStatistics.numberOfExamsStarted());
+        assertThat(returnedStatistics.numberOfExamsSubmitted()).isEqualTo(actualStatistics.numberOfExamsSubmitted());
+        assertThat(returnedStatistics.numberOfTestRuns()).isEqualTo(actualStatistics.numberOfTestRuns());
+        assertThat(returnedStatistics.numberOfGeneratedStudentExams()).isEqualTo(actualStatistics.numberOfGeneratedStudentExams());
+        assertThat(returnedStatistics.numberOfTotalExamAssessmentsFinishedByCorrectionRound()).isEqualTo(actualStatistics.numberOfTotalExamAssessmentsFinishedByCorrectionRound());
+        assertThat(returnedStatistics.numberOfTotalParticipationsForAssessment()).isEqualTo(actualStatistics.numberOfTotalParticipationsForAssessment());
+        assertThat(returnedStatistics.existsUnassessedQuizzes()).isEqualTo(actualStatistics.existsUnassessedQuizzes());
+        assertThat(returnedStatistics.existsUnsubmittedExercises()).isEqualTo(actualStatistics.existsUnsubmittedExercises());
     }
 
     @Test
@@ -1728,13 +1729,13 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
         exam.setVisibleDate(ZonedDateTime.ofInstant(exam.getVisibleDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         received.setVisibleDate(ZonedDateTime.ofInstant(received.getVisibleDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
-        assertThat(received.getVisibleDate()).isEqualToIgnoringSeconds(exam.getVisibleDate());
+        assertThat(received.getVisibleDate()).isCloseTo(exam.getVisibleDate(), within(1, ChronoUnit.SECONDS));
         exam.setStartDate(ZonedDateTime.ofInstant(exam.getStartDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         received.setStartDate(ZonedDateTime.ofInstant(received.getStartDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
-        assertThat(received.getStartDate()).isEqualToIgnoringSeconds(exam.getStartDate());
+        assertThat(received.getStartDate()).isCloseTo(exam.getStartDate(), within(1, ChronoUnit.SECONDS));
         exam.setEndDate(ZonedDateTime.ofInstant(exam.getEndDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         received.setEndDate(ZonedDateTime.ofInstant(received.getEndDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
-        assertThat(received.getEndDate()).isEqualToIgnoringSeconds(exam.getEndDate());
+        assertThat(received.getEndDate()).isCloseTo(exam.getEndDate(), within(1, ChronoUnit.SECONDS));
     }
 
     @Test

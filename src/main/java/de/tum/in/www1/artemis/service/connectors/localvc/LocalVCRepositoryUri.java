@@ -148,12 +148,12 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
      * <ul>
      * <li>
      * Input: Local repository path - {@code Paths.get("/local/path/projectX/my-repo/.git")}
-     * and Local VC server URL - {@code new URL("https://artemis.cit.tum.de")}
+     * and Local VC server URL - {@code new URI("https://artemis.cit.tum.de").getURL()}
      * Output: {@code https://artemis.cit.tum.de/git/projectX/my-repo.git}
      * </li>
      * <li>
      * Input: Remote repository path - {@code Paths.get("/remote/path/projectY/my-repo")}
-     * and Local VC server URL - {@code new URL("https://artemis.cit.tum.de")}
+     * and Local VC server URL - {@code new URI("https://artemis.cit.tum.de").getURL()}
      * Output: {@code https://artemis.cit.tum.de/git/projectY/my-repo.git}
      * </li>
      * </ul>
@@ -278,6 +278,19 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
      * @return The full Path to the repository, which includes the base path, project key, and repository slug with a ".git" suffix.
      */
     public Path getLocalRepositoryPath(String localVCBasePath) {
-        return Paths.get(localVCBasePath, projectKey, repositorySlug + ".git");
+        Path relativeRepositoryPath = getRelativeRepositoryPath();
+        return Path.of(localVCBasePath).resolve(relativeRepositoryPath);
+    }
+
+    /**
+     * Computes and returns the path to the repository stored within the local version control system relative to the base path.
+     * This path is constructed using the project key and repository slug.
+     * The result is a Path object that can be resolved against the base path
+     * to get the directory where the repository is stored or should be stored locally.
+     *
+     * @return The relative Path to the repository, which includes the project key and repository slug with a ".git" suffix.
+     */
+    public Path getRelativeRepositoryPath() {
+        return Paths.get(projectKey, repositorySlug + ".git");
     }
 }

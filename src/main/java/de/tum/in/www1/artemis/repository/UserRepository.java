@@ -45,6 +45,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
+import de.tum.in.www1.artemis.service.dto.UserRoleDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.UserPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -107,8 +108,44 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesById(Long id);
 
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
-    Set<User> findAllWithGroupsAndAuthoritiesByIdIn(Set<Long> ids);
+    /**
+     * Retrieves a list of user roles within a specified course based on the provided user IDs. This method is highly optimized for performance.
+     *
+     * <p>
+     * This query method creates a list of {@link UserRoleDTO} objects containing the user ID,
+     * user login, and assigned role (INSTRUCTOR, TUTOR, or USER) for each user in the specified course. The role is determined
+     * based on the user's authorities and group memberships.
+     * </p>
+     *
+     * <p>
+     * The role assignment follows this precedence:
+     * <ul>
+     * <li>If the user has the ADMIN authority, they are assigned the role 'INSTRUCTOR'.</li>
+     * <li>If the user belongs to the course's instructor group, they are assigned the role 'INSTRUCTOR'.</li>
+     * <li>If the user belongs to the course's editor group or teaching assistant group, they are assigned the role 'TUTOR'.</li>
+     * <li>If the user belongs to the course's student group, they are assigned the role 'USER'.</li>
+     * </ul>
+     * </p>
+     *
+     * @param userIds  a collection of user IDs for which the roles are to be fetched
+     * @param courseId the ID of the course for which the user roles are to be determined
+     * @return a list of {@link UserRoleDTO} objects containing the user ID, user login, and role for each user
+     */
+    @Query("""
+            SELECT new de.tum.in.www1.artemis.service.dto.UserRoleDTO(user.id, user.login,
+                   CASE
+                       WHEN :#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities THEN 'INSTRUCTOR'
+                       WHEN course.instructorGroupName MEMBER OF user.groups THEN 'INSTRUCTOR'
+                       WHEN course.editorGroupName MEMBER OF user.groups THEN 'TUTOR'
+                       WHEN course.teachingAssistantGroupName MEMBER OF user.groups THEN 'TUTOR'
+                       WHEN course.studentGroupName MEMBER OF user.groups THEN 'USER'
+                   END)
+            FROM User user
+            INNER JOIN Course course
+            ON course.id = :courseId
+            WHERE user.id IN :userIds
+            """)
+    List<UserRoleDTO> findUserRolesInCourse(@Param("userIds") Collection<Long> userIds, @Param("courseId") long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "organizations" })
     Optional<User> findOneWithGroupsAndAuthoritiesAndOrganizationsById(Long id);
@@ -118,6 +155,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "guidedTourSettings" })
     Optional<User> findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(String login);
+
+    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "guidedTourSettings", "irisAccepted" })
+    Optional<User> findOneWithGroupsAndAuthoritiesAndGuidedTourSettingsAndIrisAcceptedTimestampByLogin(String login);
 
     @EntityGraph(type = LOAD, attributePaths = { "learningPaths" })
     Optional<User> findOneWithLearningPathsByLogin(String login);
@@ -242,6 +282,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                     OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 )
             """)
+    // TODO: rewrite this query, pageable does not work well with left join fetch, it needs to transfer all results and only page in java
     Page<User> searchAllByLoginOrNameInGroup(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("groupName") String groupName);
 
     @Query(value = """
@@ -267,6 +308,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                 ) AND user.id <> :idOfUser
             ORDER BY CONCAT(user.firstName, ' ', user.lastName)
             """)
+    // TODO: rewrite this query, pageable does not work well with left join fetch, it needs to transfer all results and only page in java
     Page<User> searchAllByLoginOrNameInGroupsNotUserId(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames,
             @Param("idOfUser") long idOfUser);
 
@@ -299,6 +341,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                     OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 )
             """)
+    // TODO: rewrite this query, pageable does not work well with left join fetch, it needs to transfer all results and only page in java
     Page<User> searchAllByLoginOrNameInGroups(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames);
 
     @Query(value = """
@@ -327,6 +370,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                     OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 )
             """)
+    // TODO: rewrite this query, pageable does not work well with left join fetch, it needs to transfer all results and only page in java
     Page<User> searchAllByLoginOrNameInConversation(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId);
 
     @Query(value = """
@@ -356,6 +400,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                     OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 ) AND userGroup IN :groupNames
             """)
+    // TODO: rewrite this query, pageable does not work well with left join fetch, it needs to transfer all results and only page in java
     Page<User> searchAllByLoginOrNameInConversationWithCourseGroups(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId,
             @Param("groupNames") Set<String> groupNames);
 
@@ -386,6 +431,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                     OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 ) AND conversationParticipant.isModerator = TRUE
             """)
+    // TODO: rewrite this query, pageable does not work well with left join fetch
     Page<User> searchChannelModeratorsByLoginOrNameInConversation(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId);
 
     /**
@@ -469,6 +515,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             """)
     Page<User> searchAllByLoginOrNameInCourse(Pageable page, @Param("loginOrName") String loginOrName, @Param("courseId") long courseId);
 
+    // TODO: rewrite this query, pageable does not work well with left join fetch
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     Page<User> findAllWithGroupsByIsDeletedIsFalse(Pageable pageable);
 
@@ -511,6 +558,16 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             WHERE user.id = :userId
             """)
     void updateUserLanguageKey(@Param("userId") long userId, @Param("languageKey") String languageKey);
+
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE User user
+            SET user.sshPublicKeyHash = :sshPublicKeyHash,
+                user.sshPublicKey = :sshPublicKey
+            WHERE user.id = :userId
+            """)
+    void updateUserSshPublicKeyHash(@Param("userId") long userId, @Param("sshPublicKeyHash") String sshPublicKeyHash, @Param("sshPublicKey") String sshPublicKey);
 
     @Modifying
     @Transactional // ok because of modifying query
@@ -604,6 +661,30 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         String currentUserLogin = getCurrentUserLogin();
         Optional<User> user = findOneByLogin(currentUserLogin);
         return unwrapOptionalUser(user, currentUserLogin);
+    }
+
+    /**
+     * Finds user id by login
+     *
+     * @param login the login of the user to search
+     * @return optional of the user id if it exists, empty otherwise
+     */
+    @Query("""
+            SELECT u.id
+            FROM User u
+            WHERE u.login = :login
+            """)
+    Optional<Long> findIdByLogin(@Param("login") String login);
+
+    /**
+     * Get the user id of the currently logged-in user
+     *
+     * @return the user id of the currently logged-in user
+     */
+    default long getUserIdElseThrow() {
+        String currentUserLogin = getCurrentUserLogin();
+        Optional<Long> userId = findIdByLogin(currentUserLogin);
+        return userId.orElseThrow(() -> new EntityNotFoundException("User: " + currentUserLogin));
     }
 
     /**
@@ -873,6 +954,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     default User findByIdElseThrow(long userId) throws EntityNotFoundException {
         return findById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
     }
+
+    Optional<User> findBySshPublicKeyHash(String keyString);
 
     /**
      * Finds all users which a non-null VCS access token that expires before some given date.

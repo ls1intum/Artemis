@@ -2,23 +2,24 @@ package de.tum.in.www1.artemis.service.dto.athena;
 
 import jakarta.validation.constraints.NotNull;
 
-import de.tum.in.www1.artemis.domain.Feedback;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * A DTO representing a Feedback on a ProgrammingExercise, for transferring data to Athena and receiving suggestions from Athena
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ProgrammingFeedbackDTO(long id, long exerciseId, long submissionId, String title, String description, double credits, Long structuredGradingInstructionId,
-        String filePath, Integer lineStart, Integer lineEnd) implements FeedbackDTO {
+        String filePath, Integer lineStart, Integer lineEnd) implements FeedbackBaseDTO {
 
     /**
-     * Creates a TextFeedbackDTO from a Feedback object
+     * Creates a ProgrammingFeedbackDTO from a Feedback object
      *
      * @param exerciseId   the id of the exercise the feedback is given for
      * @param submissionId the id of the submission the feedback is given for
      * @param feedback     the feedback object
-     * @return the TextFeedbackDTO
+     * @return the ProgrammingFeedbackDTO
      */
-    public static ProgrammingFeedbackDTO of(long exerciseId, long submissionId, @NotNull Feedback feedback) {
+    public static ProgrammingFeedbackDTO of(long exerciseId, long submissionId, @NotNull de.tum.in.www1.artemis.domain.Feedback feedback) {
         // Referenced feedback has a reference looking like this: "file:src/main/java/SomeFile.java_line:42"
         String filePath = null;
         Integer lineStart = null;

@@ -7,6 +7,7 @@ import java.util.Map;
 
 import jakarta.annotation.PostConstruct;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -30,7 +31,7 @@ public class FeatureToggleService {
 
     private Map<Feature, Boolean> features;
 
-    public FeatureToggleService(WebsocketMessagingService websocketMessagingService, HazelcastInstance hazelcastInstance) {
+    public FeatureToggleService(WebsocketMessagingService websocketMessagingService, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         this.websocketMessagingService = websocketMessagingService;
         this.hazelcastInstance = hazelcastInstance;
     }
@@ -45,18 +46,14 @@ public class FeatureToggleService {
 
         // Features that are neither enabled nor disabled should be enabled by default
         // This ensures that all features (except the Science API) are enabled once the system starts up
-        // Standardized Competencies are also disabled by default until the feature is ready
         for (Feature feature : Feature.values()) {
-            if (!features.containsKey(feature) && feature != Feature.Science && feature != Feature.StandardizedCompetencies) {
+            if (!features.containsKey(feature) && feature != Feature.Science) {
                 features.put(feature, true);
             }
         }
         // init science feature from config
         if (!features.containsKey(Feature.Science)) {
             features.put(Feature.Science, scienceEnabledOnStart);
-        }
-        if (!features.containsKey(Feature.StandardizedCompetencies)) {
-            features.put(Feature.StandardizedCompetencies, false);
         }
     }
 

@@ -6,6 +6,9 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.util.Set;
+import java.util.TreeSet;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.ArgumentMatcher;
@@ -18,10 +21,10 @@ import de.tum.in.www1.artemis.connector.IrisRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
-import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisExerciseChatSession;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettings;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
@@ -87,6 +90,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
     private void activateSubSettings(IrisSubSettings settings) {
         settings.setEnabled(true);
         settings.setPreferredModel(null);
+        settings.setAllowedModels(new TreeSet<>(Set.of("dummy")));
     }
 
     protected void activateIrisFor(Course course) {
@@ -122,9 +126,9 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
      * @param session  The chat session
      * @param matchers Argument matchers which describe the messages that should have been sent
      */
-    protected void verifyWebsocketActivityWasExactly(IrisChatSession session, ArgumentMatcher<?>... matchers) {
+    protected void verifyWebsocketActivityWasExactly(IrisExerciseChatSession session, ArgumentMatcher<?>... matchers) {
         var userLogin = session.getUser().getLogin();
-        var topicSuffix = "sessions/" + session.getId();
+        var topicSuffix = "" + session.getId();
         for (ArgumentMatcher<?> callDescriptor : matchers) {
             verifyMessageWasSentOverWebsocket(userLogin, topicSuffix, callDescriptor);
         }

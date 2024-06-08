@@ -32,9 +32,9 @@ import de.tum.in.www1.artemis.domain.enumeration.StatisticsView;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.modeling.ModelingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
@@ -287,19 +287,19 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
         parameters.add("exerciseId", "" + firstTextExerciseId);
         ExerciseManagementStatisticsDTO result = request.get("/api/management/statistics/exercise-statistics", HttpStatus.OK, ExerciseManagementStatisticsDTO.class, parameters);
 
-        assertThat(result.getAverageScoreOfExercise()).isEqualTo(75.0);
-        assertThat(result.getMaxPointsOfExercise()).isEqualTo(10);
-        assertThat(result.getNumberOfExerciseScores()).isEqualTo(2);
-        assertThat(result.getNumberOfParticipations()).isEqualTo(2);
-        assertThat(result.getNumberOfStudentsOrTeamsInCourse()).isEqualTo(userRepository.countUserInGroup(course.getStudentGroupName()));
-        assertThat(result.getNumberOfPosts()).isEqualTo(1);
-        assertThat(result.getNumberOfResolvedPosts()).isEqualTo(1);
+        assertThat(result.averageScoreOfExercise()).isEqualTo(75.0);
+        assertThat(result.maxPointsOfExercise()).isEqualTo(10);
+        assertThat(result.numberOfExerciseScores()).isEqualTo(2);
+        assertThat(result.numberOfParticipations()).isEqualTo(2);
+        assertThat(result.numberOfStudentsOrTeamsInCourse()).isEqualTo(userRepository.countUserInGroup(course.getStudentGroupName()));
+        assertThat(result.numberOfPosts()).isEqualTo(1);
+        assertThat(result.numberOfResolvedPosts()).isEqualTo(1);
         var expectedScoresResult = new int[10];
         Arrays.fill(expectedScoresResult, 0);
         // We have one assessment with 50% and one with 100%
         expectedScoresResult[5] = 1;
         expectedScoresResult[9] = 1;
-        assertThat(result.getScoreDistribution()).isEqualTo(expectedScoresResult);
+        assertThat(result.scoreDistribution()).isEqualTo(expectedScoresResult);
     }
 
     private MultiValueMap<String, String> buildParameters(SpanType span, Integer periodIndex, GraphType graph) {
