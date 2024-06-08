@@ -103,4 +103,8 @@ export interface SidebarCardElement {
      * Set for exam, shows the maximum attainable Points
      */
     attainablePoints?: number;
+    /**
+     * Set for exam, indetifies the current status of an exam exercise for exam sidebar
+     */
+    rightIcon?: IconProp;
 }

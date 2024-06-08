@@ -4,13 +4,12 @@
             <div class="scrollable-item-content py-2 px-2 bg-body" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
                 @for (sidebarItem of sidebarData?.ungroupedData; track sidebarItem; let last = $last; let i = $index) {
                     <div [ngClass]="{ 'mb-2': !last }">
-                        <div
-                            (click)="changePage(false, i, false)"
-                            jhiSidebarCard
-                            [size]="sidebarItem.size"
-                            [sidebarType]="sidebarData.sidebarType"
+                        <jhi-medium-sidebar-card
                             [sidebarItem]="sidebarItem"
-                        ></div>
+                            [sidebarType]="sidebarData.sidebarType"
+                            (pageChange)="changePage(false, i, false)"
+                            [itemSelected]="i === exerciseIndex"
+                        />
                     </div>
                 }
             </div>
