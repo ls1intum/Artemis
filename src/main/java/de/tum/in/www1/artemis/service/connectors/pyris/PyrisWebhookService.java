@@ -95,14 +95,19 @@ public class PyrisWebhookService {
      * @return jobToken if the job was created
      */
     public String deleteLectureFromPyrisDB(List<AttachmentUnit> attachmentUnits) {
-        if (lectureIngestionEnabled(attachmentUnits.getFirst().getLecture().getCourse())) {
-            List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentUnits = new ArrayList<>();
-            attachmentUnits.stream().filter(unit -> unit.getAttachment().getAttachmentType() == AttachmentType.FILE).forEach(unit -> {
-                toUpdateAttachmentUnits.add(processAttachmentForDeletion(unit));
-            });
-            if (!toUpdateAttachmentUnits.isEmpty()) {
-                return helpExecuteIngestionPipeline(toUpdateAttachmentUnits);
+        try {
+            if (lectureIngestionEnabled(attachmentUnits.getFirst().getLecture().getCourse())) {
+                List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentUnits = new ArrayList<>();
+                attachmentUnits.stream().filter(unit -> unit.getAttachment().getAttachmentType() == AttachmentType.FILE).forEach(unit -> {
+                    toUpdateAttachmentUnits.add(processAttachmentForDeletion(unit));
+                });
+                if (!toUpdateAttachmentUnits.isEmpty()) {
+                    return helpExecuteIngestionPipeline(toUpdateAttachmentUnits);
+                }
             }
+        }
+        catch (Exception e) {
+            log.error(e.getMessage());
         }
         return null;
     }
@@ -114,14 +119,19 @@ public class PyrisWebhookService {
      * @return jobToken if the job was created
      */
     public String addLectureToPyrisDB(List<AttachmentUnit> attachmentUnits) {
-        if (lectureIngestionEnabled(attachmentUnits.getFirst().getLecture().getCourse())) {
-            List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentUnits = new ArrayList<>();
-            attachmentUnits.stream().filter(unit -> unit.getAttachment().getAttachmentType() == AttachmentType.FILE && !unit.getSlides().isEmpty()).forEach(unit -> {
-                toUpdateAttachmentUnits.add(processAttachmentForUpdate(unit));
-            });
-            if (!toUpdateAttachmentUnits.isEmpty()) {
-                return helpExecuteIngestionPipeline(toUpdateAttachmentUnits);
+        try {
+            if (lectureIngestionEnabled(attachmentUnits.getFirst().getLecture().getCourse())) {
+                List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentUnits = new ArrayList<>();
+                attachmentUnits.stream().filter(unit -> unit.getAttachment().getAttachmentType() == AttachmentType.FILE).forEach(unit -> {
+                    toUpdateAttachmentUnits.add(processAttachmentForUpdate(unit));
+                });
+                if (!toUpdateAttachmentUnits.isEmpty()) {
+                    return helpExecuteIngestionPipeline(toUpdateAttachmentUnits);
+                }
             }
+        }
+        catch (Exception e) {
+            log.error(e.getMessage());
         }
         return null;
     }
