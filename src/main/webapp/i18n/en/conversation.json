@@ -228,13 +228,13 @@
                         "maxLengthValidationError": "Description can be max {{ max }} characters long!"
                     },
                     "isPublicInput": {
-                        "label": "Private Channel / Public Channel",
+                        "label": "Public / Private Channel",
                         "explanation": "Every user except instructors will need an invitation to join a private channel. Everybody can join a public channel.",
                         "public": "Public",
                         "private": "Private"
                     },
                     "isAnnouncementChannelInput": {
-                        "label": "Announcement Channel",
+                        "label": "Announcement / Unrestricted Channel",
                         "explanation": "Only instructors and channel moderators can create new messages in an announcement channel. Students can only read the messages and answer to them.",
                         "true": "Announcement Channel",
                         "false": "Unrestricted Channel"
