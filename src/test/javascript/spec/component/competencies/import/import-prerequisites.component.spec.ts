@@ -55,10 +55,18 @@ describe('ImportPrerequisitesComponent', () => {
     });
 
     it('should import prerequisites on submit', () => {
+        component.courseId = 1;
+        component.selectedCourseCompetencies = {
+            resultsOnPage: [
+                { id: 1, title: 'competency1' },
+                { id: 2, title: 'competency2' },
+            ],
+            numberOfPages: 0,
+        };
         const importBulkSpy = jest.spyOn(prerequisiteService, 'importPrerequisites').mockReturnValue(
             of([
-                { id: 1, title: 'competency1' },
-                { id: 1, title: 'competency2' },
+                { id: 11, title: 'competency1' },
+                { id: 12, title: 'competency2' },
             ]),
         );
         const router: Router = TestBed.inject(Router);
@@ -66,7 +74,7 @@ describe('ImportPrerequisitesComponent', () => {
 
         component.onSubmit();
 
-        expect(importBulkSpy).toHaveBeenCalled();
+        expect(importBulkSpy).toHaveBeenCalledWith([1, 2], 1);
         expect(navigateSpy).toHaveBeenCalled();
     });
 });
