@@ -91,9 +91,9 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         job2 = new BuildJobItem("2", "job2", "address1", 2, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo2, buildConfig, null);
         String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
         agent1 = new BuildAgentInformation(memberAddress, 1, 0, new ArrayList<>(List.of(job1)), false, new ArrayList<>(List.of(job2)));
-        BuildJobItem finishedJobQueueItem1 = new BuildJobItem("3", "job3", "address1", 3, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo,
+        BuildJobItem finishedJobQueueItem1 = new BuildJobItem("3", "job3", "address1", 3, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1,
                 buildConfig, null);
-        BuildJobItem finishedJobQueueItem2 = new BuildJobItem("4", "job4", "address1", 4, course.getId() + 1, 1, 1, 1, BuildStatus.FAILED, repositoryInfo, jobTimingInfo,
+        BuildJobItem finishedJobQueueItem2 = new BuildJobItem("4", "job4", "address1", 4, course.getId() + 1, 1, 1, 1, BuildStatus.FAILED, repositoryInfo, jobTimingInfo2,
                 buildConfig, null);
         var result1 = new Result().successful(true).rated(true).score(100D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
         var result2 = new Result().successful(false).rated(true).score(0D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
