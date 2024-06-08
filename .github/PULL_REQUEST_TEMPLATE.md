@@ -74,6 +74,7 @@ Prerequisites:
 > [!NOTE]
 > These badges show the state of the test servers.
 > Green = Currently available, Red = Currently locked
+> Click on the badges to get to the test servers.
 
 [![](https://byob.yarr.is/ls1intum/Artemis/artemis-test1)](https://artemis-test1.artemis.cit.tum.de)
 [![](https://byob.yarr.is/ls1intum/Artemis/artemis-test2)](https://artemis-test2.artemis.cit.tum.de)
