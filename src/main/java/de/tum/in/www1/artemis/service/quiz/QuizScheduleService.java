@@ -170,6 +170,7 @@ public class QuizScheduleService {
 
             quizSubmissionRepository.save(quizSubmission);
             resultRepository.save(result);
+            participation.setResults(Set.of(result));
             sendQuizResultToUser(quizExerciseId, participation);
         });
         quizStatisticService.recalculateStatistics(quizExercise);
