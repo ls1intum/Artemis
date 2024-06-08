@@ -95,7 +95,7 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
         const commitGroups: { key: string; commits: CommitInfo[]; date: string }[] = [];
         let tempGroup: CommitInfo[] = [];
 
-        this.commits = this.commits.sort((a, b) => (dayjs(b.timestamp!).isAfter(dayjs(a.timestamp!)) ? -1 : 1));
+        this.commits = this.commits?.sort((a, b) => (dayjs(b.timestamp).isAfter(dayjs(a.timestamp)) ? -1 : 1));
 
         for (let i = 0; i < this.commits.length; i++) {
             const commit = this.commits[i];

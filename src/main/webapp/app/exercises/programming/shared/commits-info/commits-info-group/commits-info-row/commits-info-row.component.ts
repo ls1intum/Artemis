@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
-import { CommitInfo } from 'app/entities/programming-submission.model';
-import { User } from 'app/core/user/user.model';
+import type { CommitInfo } from 'app/entities/programming-submission.model';
+import type { User } from 'app/core/user/user.model';
 import { faCircle } from '@fortawesome/free-regular-svg-icons';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 

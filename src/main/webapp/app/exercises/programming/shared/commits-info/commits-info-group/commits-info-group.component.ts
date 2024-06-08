@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
-import { CommitInfo, ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { User } from 'app/core/user/user.model';
+import type { CommitInfo, ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import type { User } from 'app/core/user/user.model';
 
 @Component({
     selector: 'jhi-commits-info-group',
