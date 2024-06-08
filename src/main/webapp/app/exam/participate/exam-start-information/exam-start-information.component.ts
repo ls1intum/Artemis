@@ -28,6 +28,7 @@ export class ExamStartInformationComponent implements OnInit {
     numberOfExercisesInExam: number | undefined;
     examinedStudent: string | undefined;
     startDate: dayjs.Dayjs | undefined;
+    gracePeriodInMinutes: number | undefined;
 
     ngOnInit(): void {
         this.totalPoints = this.exam.examMaxPoints;
@@ -38,6 +39,7 @@ export class ExamStartInformationComponent implements OnInit {
         this.numberOfExercisesInExam = this.exam.numberOfExercisesInExam;
         this.examinedStudent = this.studentExam.user?.name;
         this.startDate = this.exam.startDate;
+        this.gracePeriodInMinutes = Math.floor(this.exam.gracePeriod! / 60);
 
         this.prepareInformationBoxData();
     }

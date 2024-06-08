@@ -43,9 +43,11 @@
 @if (!studentFailedToSubmit) {
     @if (startView) {
         <div [ngClass]="{ 'content-height-dev': (!isProduction || isTestServer) && !testRunStartTime, 'scrollable-content-exam-cover': !testRunStartTime }">
-            <h3 class="mt-3">{{ exam.title }}</h3>
-            <div>
-                <jhi-exam-live-events-button />
+            <div class="d-flex justify-content-between">
+                <h3 class="mt-3">{{ exam.title }}</h3>
+                <div class="mt-3">
+                    <jhi-exam-live-events-button />
+                </div>
             </div>
             <hr />
             <jhi-exam-start-information [exam]="exam" [studentExam]="studentExam" />
