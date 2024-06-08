@@ -145,9 +145,15 @@ public class BuildAgentDockerService {
             // Threshold for "stuck" containers in seconds
             long ageThreshold = containerExpiryMinutes * 60L;
 
-            danglingBuildContainers = dockerClient.listContainersCmd().withShowAll(true).exec().stream()
-                    .filter(container -> container.getNames()[0].startsWith("/" + buildContainerPrefix)).filter(container -> (now - container.getCreated()) > ageThreshold)
-                    .toList();
+            try {
+                danglingBuildContainers = dockerClient.listContainersCmd().withShowAll(true).exec().stream()
+                        .filter(container -> container.getNames()[0].startsWith("/" + buildContainerPrefix)).filter(container -> (now - container.getCreated()) > ageThreshold)
+                        .toList();
+            }
+            catch (Exception ex) {
+                log.error("Make sure Docker is running! Error while listing containers for cleanup: {}", ex.getMessage(), ex);
+                return;
+            }
         }
 
         if (!danglingBuildContainers.isEmpty()) {
