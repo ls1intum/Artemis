@@ -51,7 +51,6 @@ import de.tum.in.www1.artemis.service.notifications.push_notifications.FirebaseP
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
-import de.tum.in.www1.artemis.service.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.ScheduleService;
@@ -157,9 +156,6 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @SpyBean
     protected TextBlockService textBlockService;
-
-    @Autowired
-    protected QuizScheduleService quizScheduleService;
 
     @Autowired
     protected RequestUtilService request;

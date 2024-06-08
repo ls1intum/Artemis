@@ -43,6 +43,7 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.quiz.QuizExerciseService;
+import de.tum.in.www1.artemis.service.quiz.QuizSubmissionService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
@@ -80,6 +81,9 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     protected RequestUtilService request;
+
+    @Autowired
+    private QuizSubmissionService quizSubmissionService;
 
     @BeforeEach
     void init() {
@@ -125,7 +129,7 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         quizExercise.setDueDate(ZonedDateTime.now());
         exerciseRepository.saveAndFlush(quizExercise);
 
-        quizScheduleService.calculateAllResults(quizExercise.getId());
+        quizSubmissionService.calculateAllResults(quizExercise.getId());
 
         verify(lti13Service).onNewResult(any());
     }

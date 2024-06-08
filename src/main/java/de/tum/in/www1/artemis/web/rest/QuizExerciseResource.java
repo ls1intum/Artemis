@@ -79,6 +79,7 @@ import de.tum.in.www1.artemis.service.quiz.QuizExerciseImportService;
 import de.tum.in.www1.artemis.service.quiz.QuizExerciseService;
 import de.tum.in.www1.artemis.service.quiz.QuizMessagingService;
 import de.tum.in.www1.artemis.service.quiz.QuizStatisticService;
+import de.tum.in.www1.artemis.service.quiz.QuizSubmissionService;
 import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -97,6 +98,8 @@ public class QuizExerciseResource {
     private static final Logger log = LoggerFactory.getLogger(QuizExerciseResource.class);
 
     private static final String ENTITY_NAME = "quizExercise";
+
+    private final QuizSubmissionService quizSubmissionService;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -146,7 +149,8 @@ public class QuizExerciseResource {
             ExamDateService examDateService, InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService,
             QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService,
             GroupNotificationScheduleService groupNotificationScheduleService, StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService,
-            QuizBatchRepository quizBatchRepository, FileService fileService, ChannelService channelService, ChannelRepository channelRepository) {
+            QuizBatchRepository quizBatchRepository, FileService fileService, ChannelService channelService, ChannelRepository channelRepository,
+            QuizSubmissionService quizSubmissionService) {
         this.quizExerciseService = quizExerciseService;
         this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -167,6 +171,7 @@ public class QuizExerciseResource {
         this.fileService = fileService;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
+        this.quizSubmissionService = quizSubmissionService;
     }
 
     /**
@@ -582,6 +587,10 @@ public class QuizExerciseResource {
         if (action == QuizAction.START_NOW) {
             // notify the instance message send service to send the quiz exercise start schedule (if necessary
             instanceMessageSendService.sendQuizExerciseStartSchedule(quizExercise.getId());
+        }
+        else if (action == QuizAction.END_NOW) {
+            // when the instructor ends the quiz, calculate the results
+            quizSubmissionService.calculateAllResults(quizExerciseId);
         }
 
         // get the batch for synchronized quiz exercises and start-now action; otherwise it doesn't matter

@@ -129,6 +129,10 @@ public class BuildAgentDockerService {
                 danglingBuildContainers = dockerClient.listContainersCmd().withShowAll(true).exec().stream()
                         .filter(container -> container.getNames()[0].startsWith("/" + buildContainerPrefix)).toList();
             }
+            catch (Exception ex) {
+                log.error("Make sure Docker is running! Error while listing containers for cleanup: {}", ex.getMessage(), ex);
+                return;
+            }
             finally {
                 isFirstCleanup = false;
             }

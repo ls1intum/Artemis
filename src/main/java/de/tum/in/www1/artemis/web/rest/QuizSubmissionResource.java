@@ -105,8 +105,6 @@ public class QuizSubmissionResource {
         String userLogin = SecurityUtils.getCurrentUserLogin().orElseThrow();
         try {
             // we set the submitted flag on the server side
-            // TODO: For saving, there is a small change compared to QuizSubmissionWebsocketService::saveSubmission. The submitted flag is set here, but not in the websocket
-            // service.
             quizSubmission.setSubmitted(submit);
             QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForLiveMode(exerciseId, quizSubmission, userLogin, submit);
             return ResponseEntity.ok(updatedQuizSubmission);
@@ -236,7 +234,7 @@ public class QuizSubmissionResource {
             submittedAnswer.setSubmission(quizSubmission);
         }
 
-        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exerciseId);
+        QuizExercise quizExercise = quizExerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // Apply further checks if it is an exam submission

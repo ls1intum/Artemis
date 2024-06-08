@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -27,9 +28,13 @@ import de.tum.in.www1.artemis.exception.QuizSubmissionException;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SubmittedAnswerRepository;
 import de.tum.in.www1.artemis.service.AbstractQuizSubmissionService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.SubmissionVersionService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Profile(PROFILE_CORE)
@@ -50,9 +55,16 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
 
     private final QuizStatisticService quizStatisticService;
 
+    private final StudentParticipationRepository studentParticipationRepository;
+
+    private final WebsocketMessagingService websocketMessagingService;
+
+    private final SubmittedAnswerRepository submittedAnswerRepository;
+
     public QuizSubmissionService(QuizSubmissionRepository quizSubmissionRepository, ResultRepository resultRepository, SubmissionVersionService submissionVersionService,
-            QuizExerciseRepository quizExerciseRepository, ParticipationService participationService, QuizBatchService quizBatchService,
-            QuizStatisticService quizStatisticService) {
+            QuizExerciseRepository quizExerciseRepository, ParticipationService participationService, QuizBatchService quizBatchService, QuizStatisticService quizStatisticService,
+            StudentParticipationRepository studentParticipationRepository, WebsocketMessagingService websocketMessagingService,
+            SubmittedAnswerRepository submittedAnswerRepository) {
         super(submissionVersionService);
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.resultRepository = resultRepository;
@@ -60,6 +72,9 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         this.participationService = participationService;
         this.quizBatchService = quizBatchService;
         this.quizStatisticService = quizStatisticService;
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.websocketMessagingService = websocketMessagingService;
+        this.submittedAnswerRepository = submittedAnswerRepository;
     }
 
     /**
@@ -112,6 +127,94 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
     }
 
     /**
+     * Calculate the results for all participations of the given quiz exercise
+     *
+     * @param quizExerciseId the id of the quiz exercise for which the results should be calculated
+     */
+    public void calculateAllResults(long quizExerciseId) {
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
+        log.info("Calculating results for quiz {}", quizExercise.getId());
+        studentParticipationRepository.findByExerciseId(quizExercise.getId()).forEach(participation -> {
+            participation.setExercise(quizExercise);
+            Optional<QuizSubmission> quizSubmissionOptional = quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId());
+
+            if (quizSubmissionOptional.isEmpty()) {
+                return;
+            }
+            QuizSubmission quizSubmission = quizSubmissionOptional.get();
+
+            if (quizSubmission.isSubmitted()) {
+                if (quizSubmission.getType() == null) {
+                    quizSubmission.setType(SubmissionType.MANUAL);
+                }
+            }
+            else if (quizExercise.isQuizEnded()) {
+                quizSubmission.setSubmitted(true);
+                quizSubmission.setType(SubmissionType.TIMEOUT);
+                quizSubmission.setSubmissionDate(ZonedDateTime.now());
+            }
+
+            participation.setInitializationState(InitializationState.FINISHED);
+
+            Result result = new Result().participation(participation);
+            result.setRated(true);
+            result.setAssessmentType(AssessmentType.AUTOMATIC);
+            result.setCompletionDate(quizSubmission.getSubmissionDate());
+            result.setSubmission(quizSubmission);
+
+            quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
+            result.evaluateQuizSubmission();
+
+            quizSubmissionRepository.save(quizSubmission);
+            resultRepository.save(result);
+            studentParticipationRepository.save(participation);
+
+            // avoid LazyInitializationException
+            participation.setResults(Set.of(result));
+
+            sendQuizResultToUser(quizExerciseId, participation);
+        });
+        quizStatisticService.recalculateStatistics(quizExercise);
+        // notify users via websocket about new results for the statistics, filter out solution information
+        quizExercise.filterForStatisticWebsocket();
+        websocketMessagingService.sendMessage("/topic/statistic/" + quizExercise.getId(), quizExercise);
+    }
+
+    private void sendQuizResultToUser(long quizExerciseId, StudentParticipation participation) {
+        // TODO: we should convert this into a DTO instead of removing data from the entity
+        var user = participation.getParticipantIdentifier();
+        removeUnnecessaryObjectsBeforeSendingToClient(participation);
+        websocketMessagingService.sendMessageToUser(user, "/topic/exercise/" + quizExerciseId + "/participation", participation);
+    }
+
+    private void removeUnnecessaryObjectsBeforeSendingToClient(StudentParticipation participation) {
+        if (participation.getExercise() != null) {
+            var quizExercise = (QuizExercise) participation.getExercise();
+            // we do not need the course and lectures
+            quizExercise.setCourse(null);
+            // students should not see statistics
+            // TODO: this would be useful, but leads to problems when the quiz schedule service wants to access the statistics again later on
+            // quizExercise.setQuizPointStatistic(null);
+            // quizExercise.getQuizQuestions().forEach(quizQuestion -> quizQuestion.setQuizQuestionStatistic(null));
+        }
+        // submissions are part of results, so we do not need them twice
+        participation.setSubmissions(null);
+        participation.setParticipant(null);
+        if (participation.getResults() != null && !participation.getResults().isEmpty()) {
+            QuizSubmission quizSubmission = (QuizSubmission) participation.getResults().iterator().next().getSubmission();
+            if (quizSubmission != null && quizSubmission.getSubmittedAnswers() != null) {
+                for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
+                    if (submittedAnswer.getQuizQuestion() != null) {
+                        // we do not need all information of the questions again, they are already stored in the exercise
+                        var question = submittedAnswer.getQuizQuestion();
+                        submittedAnswer.setQuizQuestion(question.copyQuestionId());
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Saves a quiz submission into the hash maps for live quizzes. Submitted quizzes are marked to be saved into the database in the QuizScheduleService TODO: Update docs
      *
      * @param exerciseId     the exerciseID to the corresponding QuizExercise
@@ -122,31 +225,36 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
      * @throws QuizSubmissionException handles errors, e.g. when the live quiz has already ended, or when the quiz was already submitted before
      */
     public QuizSubmission saveSubmissionForLiveMode(Long exerciseId, QuizSubmission quizSubmission, String userLogin, boolean submitted) throws QuizSubmissionException {
-        // TODO: what happens if a user executes this call twice in the same moment (using 2 threads)
 
         String logText = submitted ? "submit quiz in live mode:" : "save quiz in live mode:";
 
         long start = System.nanoTime();
         var quizExercise = quizExerciseRepository.findByIdElseThrow(exerciseId);
         quizExercise.setQuizBatches(null);
-        var participation = participationService.findOneByExerciseAndStudentLoginAnyState(quizExercise, userLogin).orElseThrow();
         // A submission always exists because the user has to start the participation before submitting, which creates a submission
-        var existingSubmission = quizSubmissionRepository.findByExerciseIdAndStudentLogin(quizExercise.getId(), userLogin).orElseThrow();
+        var existingSubmission = quizSubmissionRepository.findByExerciseIdAndStudentLogin(quizExercise.getId(), userLogin)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find quiz submission for exercise " + exerciseId + " and user " + userLogin));
         checkSubmissionForLiveModeOrThrow(quizExercise, existingSubmission, userLogin, logText, start);
+
+        // TODO: ideally we only save if something has changed, we can use "if (!isContentEqualTo(existingSubmission, quizSubmission))"
+
         // recreate pointers back to submission in each submitted answer
         for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
             submittedAnswer.setSubmission(quizSubmission);
         }
-        // overwrite the old submission with the new one. TODO: is there a better way to do this?
+        // make sure certain values are not overridden wrongly
         quizSubmission.setId(existingSubmission.getId());
         quizSubmission.setQuizBatch(existingSubmission.getQuizBatch());
 
         // set submission date and link to participation
         quizSubmission.setSubmissionDate(ZonedDateTime.now());
+
+        // make sure the participation is not overridden wrongly
+        var participation = participationService.findOneByExerciseAndStudentLoginAnyState(quizExercise, userLogin).orElseThrow();
         quizSubmission.setParticipation(participation);
         quizSubmission = quizSubmissionRepository.save(quizSubmission);
+        log.info("{} Saved quiz submission for user {} in quiz {} after {} ", logText, userLogin, exerciseId, TimeLogUtil.formatDurationFrom(start));
 
-        log.info("{} Saved quiz submission for user {} in quiz {} after {} µs ", logText, userLogin, exerciseId, (System.nanoTime() - start) / 1000);
         return quizSubmission;
     }
 
@@ -187,7 +295,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
             }
         }
 
-        // TODO: additional checks that may be beneficial
+        // TODO: add additional checks that may be beneficial
         // for example it is possible for students that are not members of the course to submit the quiz
         // but for performance reasons the checks may have to be done in the quiz submission service where no feedback for the students can be generated
     }
