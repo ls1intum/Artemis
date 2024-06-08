@@ -43,10 +43,8 @@ public class ApollonConversionService {
 
         log.info("Calling Remote Service to convert for model.");
         try {
-            ApollonModelDTO request = new ApollonModelDTO();
-            request.setModel(model);
-
-            var response = restTemplate.postForEntity(apollonConversionUrl + "/pdf", request, Resource.class);
+            var apollonModel = new ApollonModelDTO(model);
+            var response = restTemplate.postForEntity(apollonConversionUrl + "/pdf", apollonModel, Resource.class);
             if (response.getBody() != null) {
                 return response.getBody().getInputStream();
             }

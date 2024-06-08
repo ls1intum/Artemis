@@ -82,12 +82,13 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         // temporarily remove listener to avoid triggering build job processing
         sharedQueueProcessingService.removeListener();
 
-        JobTimingInfo jobTimingInfo = new JobTimingInfo(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(2));
+        JobTimingInfo jobTimingInfo1 = new JobTimingInfo(ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(2), ZonedDateTime.now().plusMinutes(3));
+        JobTimingInfo jobTimingInfo2 = new JobTimingInfo(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(2));
         BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
 
-        job1 = new BuildJobItem("1", "job1", "address1", 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
-        job2 = new BuildJobItem("2", "job2", "address1", 2, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
+        job1 = new BuildJobItem("1", "job1", "address1", 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1, buildConfig, null);
+        job2 = new BuildJobItem("2", "job2", "address1", 2, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo2, buildConfig, null);
         String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
         agent1 = new BuildAgentInformation(memberAddress, 1, 0, new ArrayList<>(List.of(job1)), false, new ArrayList<>(List.of(job2)));
         BuildJobItem finishedJobQueueItem1 = new BuildJobItem("3", "job3", "address1", 3, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo,

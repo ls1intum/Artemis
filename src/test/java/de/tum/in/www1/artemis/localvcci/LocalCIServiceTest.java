@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -40,6 +41,7 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItemReference;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.JobTimingInfo;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.RepositoryInfo;
+import de.tum.in.www1.artemis.web.rest.dto.CheckoutDirectoriesDTO;
 
 class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -179,5 +181,54 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         ResponseEntity<byte[]> latestArtifactResponse = continuousIntegrationService.retrieveLatestArtifact(null);
         assertThat(latestArtifactResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
         assertThat(latestArtifactResponse.getBody()).hasSize(0);
+    }
+
+    @Nested
+    class GetCheckoutDirectoriesTests {
+
+        @Test
+        void getCheckoutDirectoriesForJava() {
+            CheckoutDirectoriesDTO checkoutDirectories = continuousIntegrationService.getCheckoutDirectories(ProgrammingLanguage.JAVA, true);
+
+            // Verify submission build plan checkout directories
+            assertThat(checkoutDirectories.submissionBuildPlanCheckoutDirectories().exerciseCheckoutDirectory()).isEqualTo("/assignment");
+            assertThat(checkoutDirectories.submissionBuildPlanCheckoutDirectories().solutionCheckoutDirectory()).isNull();
+            assertThat(checkoutDirectories.submissionBuildPlanCheckoutDirectories().testCheckoutDirectory()).isEqualTo("/");
+
+            // Verify solution build plan checkout directories
+            assertThat(checkoutDirectories.solutionBuildPlanCheckoutDirectories().exerciseCheckoutDirectory()).isEqualTo(null);
+            assertThat(checkoutDirectories.solutionBuildPlanCheckoutDirectories().solutionCheckoutDirectory()).isEqualTo("/assignment");
+            assertThat(checkoutDirectories.solutionBuildPlanCheckoutDirectories().testCheckoutDirectory()).isEqualTo("/");
+        }
+
+        @Test
+        void getCheckoutDirectoriesForOcaml() {
+            CheckoutDirectoriesDTO checkoutDirectories = continuousIntegrationService.getCheckoutDirectories(ProgrammingLanguage.OCAML, true);
+
+            // Verify submission build plan checkout directories
+            assertThat(checkoutDirectories.submissionBuildPlanCheckoutDirectories().exerciseCheckoutDirectory()).isEqualTo("/assignment");
+            assertThat(checkoutDirectories.submissionBuildPlanCheckoutDirectories().solutionCheckoutDirectory()).isEqualTo("/solution");
+            assertThat(checkoutDirectories.submissionBuildPlanCheckoutDirectories().testCheckoutDirectory()).isEqualTo("/tests");
+
+            // Verify solution build plan checkout directories
+            assertThat(checkoutDirectories.solutionBuildPlanCheckoutDirectories().exerciseCheckoutDirectory()).isNull();
+            assertThat(checkoutDirectories.solutionBuildPlanCheckoutDirectories().solutionCheckoutDirectory()).isEqualTo("/assignment");
+            assertThat(checkoutDirectories.solutionBuildPlanCheckoutDirectories().testCheckoutDirectory()).isEqualTo("/tests");
+        }
+
+        @Test
+        void getCheckoutDirectoriesForOcamlWithoutCheckingOutSolution() {
+            CheckoutDirectoriesDTO checkoutDirectories = continuousIntegrationService.getCheckoutDirectories(ProgrammingLanguage.OCAML, false);
+
+            // Verify submission build plan checkout directories
+            assertThat(checkoutDirectories.submissionBuildPlanCheckoutDirectories().exerciseCheckoutDirectory()).isEqualTo("/assignment");
+            assertThat(checkoutDirectories.submissionBuildPlanCheckoutDirectories().solutionCheckoutDirectory()).isNull();
+            assertThat(checkoutDirectories.submissionBuildPlanCheckoutDirectories().testCheckoutDirectory()).isEqualTo("/tests");
+
+            // Verify solution build plan checkout directories
+            assertThat(checkoutDirectories.solutionBuildPlanCheckoutDirectories().exerciseCheckoutDirectory()).isNull();
+            assertThat(checkoutDirectories.solutionBuildPlanCheckoutDirectories().solutionCheckoutDirectory()).isEqualTo("/assignment");
+            assertThat(checkoutDirectories.solutionBuildPlanCheckoutDirectories().testCheckoutDirectory()).isEqualTo("/tests");
+        }
     }
 }

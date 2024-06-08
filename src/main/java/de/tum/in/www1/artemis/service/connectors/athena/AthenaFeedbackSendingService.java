@@ -10,13 +10,15 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.exception.NetworkingException;
-import de.tum.in.www1.artemis.service.dto.athena.ExerciseDTO;
-import de.tum.in.www1.artemis.service.dto.athena.FeedbackDTO;
-import de.tum.in.www1.artemis.service.dto.athena.SubmissionDTO;
+import de.tum.in.www1.artemis.service.dto.athena.ExerciseBaseDTO;
+import de.tum.in.www1.artemis.service.dto.athena.FeedbackBaseDTO;
+import de.tum.in.www1.artemis.service.dto.athena.SubmissionBaseDTO;
 
 /**
  * Service for publishing feedback to the Athena service for further processing
@@ -44,9 +46,11 @@ public class AthenaFeedbackSendingService {
         this.athenaDTOConverterService = athenaDTOConverterService;
     }
 
-    private record RequestDTO(ExerciseDTO exercise, SubmissionDTO submission, List<FeedbackDTO> feedbacks) {
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private record RequestDTO(ExerciseBaseDTO exercise, SubmissionBaseDTO submission, List<FeedbackBaseDTO> feedbacks) {
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private record ResponseDTO(String data) {
     }
 

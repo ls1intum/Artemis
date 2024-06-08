@@ -7,7 +7,6 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import java.net.URL;
-import java.util.Map;
 import java.util.function.Consumer;
 
 import org.mockito.MockitoAnnotations;
@@ -28,10 +27,9 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisErrorResponseDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisHealthStatusDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisModelDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.tutorChat.PyrisTutorChatPipelineExecutionDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.exercise.PyrisExerciseChatPipelineExecutionDTO;
 
 @Component
 @Profile("iris")
@@ -80,34 +78,26 @@ public class IrisRequestMockProvider {
         }
     }
 
-    public void mockRunResponse(Consumer<PyrisTutorChatPipelineExecutionDTO> responseConsumer) {
-        mockServer.expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/tutor-chat/default/run")).andExpect(method(HttpMethod.POST)).andRespond(request -> {
-            var mockRequest = (MockClientHttpRequest) request;
-            var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisTutorChatPipelineExecutionDTO.class);
-            responseConsumer.accept(dto);
-            return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
-        });
-    }
-
-    public void mockRunError(int httpStatus) {
-        mockServer.expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/tutor-chat/default/run")).andExpect(method(HttpMethod.POST))
-                .andRespond(withStatus(HttpStatus.valueOf(httpStatus)));
-    }
-
-    public void mockCustomJsonResponse(URL requestUrl, String responseJson) {
+    public void mockRunResponse(Consumer<PyrisExerciseChatPipelineExecutionDTO> responseConsumer) {
         // @formatter:off
-        mockServer.expect(ExpectedCount.once(), requestTo(requestUrl.toString()))
+        mockServer
+                .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/tutor-chat/default/run"))
                 .andExpect(method(HttpMethod.POST))
-                .andRespond(withSuccess(responseJson, MediaType.APPLICATION_JSON));
+                .andRespond(request -> {
+                    var mockRequest = (MockClientHttpRequest) request;
+                    var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisExerciseChatPipelineExecutionDTO.class);
+                    responseConsumer.accept(dto);
+                    return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
+                });
         // @formatter:on
     }
 
-    private void mockMessageError(URL requestUrl, int status) throws JsonProcessingException {
-        var json = Map.of("detail", new PyrisErrorResponseDTO("Test error"));
+    public void mockRunError(int httpStatus) {
         // @formatter:off
-        mockServer.expect(ExpectedCount.once(), requestTo(requestUrl.toString()))
+        mockServer
+                .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/tutor-chat/default/run"))
                 .andExpect(method(HttpMethod.POST))
-                .andRespond(withRawStatus(status).body(mapper.writeValueAsString(json)));
+                .andRespond(withStatus(HttpStatus.valueOf(httpStatus)));
         // @formatter:on
     }
 
@@ -121,14 +111,20 @@ public class IrisRequestMockProvider {
         // @formatter:on
     }
 
-    public void mockStatusResponse() throws JsonProcessingException {
-        var irisStatusDTOArray = new PyrisHealthStatusDTO[] { new PyrisHealthStatusDTO("TEST_MODEL_UP", PyrisHealthStatusDTO.ModelStatus.UP),
-                new PyrisHealthStatusDTO("TEST_MODEL_DOWN", PyrisHealthStatusDTO.ModelStatus.DOWN),
-                new PyrisHealthStatusDTO("TEST_MODEL_NA", PyrisHealthStatusDTO.ModelStatus.NOT_AVAILABLE) };
+    public void mockStatusResponses() throws JsonProcessingException {
         // @formatter:off
-        shortTimeoutMockServer.expect(ExpectedCount.once(), requestTo(healthApiURL.toString()))
+        PyrisHealthStatusDTO[] activeIrisStatusDTO = new PyrisHealthStatusDTO[] {
+                new PyrisHealthStatusDTO("model", PyrisHealthStatusDTO.ModelStatus.UP)
+           };
+
+        shortTimeoutMockServer
+                .expect(ExpectedCount.once(), requestTo(healthApiURL.toString()))
                 .andExpect(method(HttpMethod.GET))
-                .andRespond(withSuccess(mapper.writeValueAsString(irisStatusDTOArray), MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(mapper.writeValueAsString(activeIrisStatusDTO), MediaType.APPLICATION_JSON));
+        shortTimeoutMockServer
+            .expect(ExpectedCount.once(), requestTo(healthApiURL.toString()))
+            .andExpect(method(HttpMethod.GET))
+            .andRespond(withSuccess(mapper.writeValueAsString(null), MediaType.APPLICATION_JSON));
         // @formatter:on
     }
 
