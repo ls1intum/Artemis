@@ -13,7 +13,10 @@ repositories {
 evaluationDependsOn(':')
 
 dependencies {
-    implementation rootProject.ext.qDoxVersionReusable
+    implementation 'com.github.javaparser:javaparser-symbol-solver-core:3.26.0'
+    implementation 'com.github.javaparser:javaparser-core:3.26.0'
+    implementation 'com.github.javaparser:javaparser-core-serialization:3.26.0'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.0'
     implementation rootProject.ext.springBootStarterWeb
 }
 

@@ -2,6 +2,7 @@ package de.tum.cit.endpointanalysis;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Member;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -12,19 +13,23 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.ArrayList;
 
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.javaparser.StaticJavaParser;
+import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.expr.AnnotationExpr;
+import com.github.javaparser.ast.expr.MemberValuePair;
+import com.github.javaparser.ast.expr.NormalAnnotationExpr;
+import com.github.javaparser.ast.expr.SingleMemberAnnotationExpr;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-
-import com.thoughtworks.qdox.JavaProjectBuilder;
-import com.thoughtworks.qdox.model.JavaAnnotation;
-import com.thoughtworks.qdox.model.JavaClass;
-import com.thoughtworks.qdox.model.JavaMethod;
 
 public class AnalysisOfEndpointConnections {
 
@@ -34,67 +39,119 @@ public class AnalysisOfEndpointConnections {
      * @param args List of files that should be analyzed regarding endpoints.
      */
     public static void main(String[] args) {
-        if (args.length == 0) {
-            System.out.println("No files to analyze.");
-            return;
-        }
-        String[] filePaths = args[0].split("\n");
-        String[] serverFiles = Arrays.stream(filePaths).map(filePath -> Paths.get("..", "..", filePath).toString())
-            .filter(filePath -> Files.exists(Paths.get(filePath)) && filePath.endsWith(".java")).toArray(String[]::new);
-        parseServerEndpoints(serverFiles);
+
+        String[] filePaths = new String[] { "src/main/java/de/tum/in/www1/artemis/web/rest/tutorialgroups/TutorialGroupFreePeriodResource.java" };
+
+//        String[] serverFiles = Arrays.stream(filePaths).map(filePath -> Paths.get("..", "..", filePath).toString())
+//            .filter(filePath -> Files.exists(Paths.get(filePath)) && filePath.endsWith(".java")).toArray(String[]::new);
+        parseServerEndpoints(filePaths);
         analyzeEndpoints();
-        analyzeRestCalls();
+//        analyzeRestCalls();
     }
 
     private static void parseServerEndpoints(String[] filePaths) {
         List<EndpointClassInformation> endpointClasses = new ArrayList<>();
 
-        final Set<String> httpMethodClasses = Set.of(GetMapping.class.getName(), PostMapping.class.getName(), PutMapping.class.getName(), DeleteMapping.class.getName(),
-                PatchMapping.class.getName(), RequestMapping.class.getName());
-
-        JavaProjectBuilder builder = new JavaProjectBuilder();
+        final Set<String> httpMethodClasses = Set.of(GetMapping.class.getSimpleName(), PostMapping.class.getSimpleName(), PutMapping.class.getSimpleName(), DeleteMapping.class.getSimpleName(),
+            PatchMapping.class.getSimpleName(), RequestMapping.class.getSimpleName());
 
         for (String filePath : filePaths) {
-            builder.addSourceTree(new File(filePath));
-        }
+            try {
+                CompilationUnit compilationUnit = StaticJavaParser.parse(new File(filePath));
+                List<ClassOrInterfaceDeclaration> classes = compilationUnit.findAll(ClassOrInterfaceDeclaration.class);
+                for (ClassOrInterfaceDeclaration javaClass : classes) {
+                    List<EndpointInformation> endpoints = new ArrayList<>();
+                    final String[] classRequestMapping = {""};
+                    Optional<AnnotationExpr> requestMappingOptional = javaClass.getAnnotations().stream()
+                        .filter(annotation -> annotation.getNameAsString().equals(RequestMapping.class.getSimpleName())).findFirst();
 
-        Collection<JavaClass> classes = builder.getClasses();
-        for (JavaClass javaClass : classes) {
-            List<EndpointInformation> endpoints = new ArrayList<>();
-            Optional<JavaAnnotation> requestMappingOptional = javaClass.getAnnotations().stream()
-                    .filter(annotation -> annotation.getType().getFullyQualifiedName().equals(RequestMapping.class.getName())).findFirst();
+                    boolean hasEndpoint = javaClass.getMethods().stream().flatMap(method -> method.getAnnotations().stream())
+                        .anyMatch(annotation -> httpMethodClasses.contains(annotation.getNameAsString()));
 
-            for (JavaMethod method : javaClass.getMethods()) {
-                for (JavaAnnotation annotation : method.getAnnotations()) {
-                    if (httpMethodClasses.contains(annotation.getType().getFullyQualifiedName())) {
-                        if (requestMappingOptional.isPresent()) {
-                            System.out.println("Request Mapping: " + requestMappingOptional.get().getProperty("value"));
-                        }
-                        ;
-                        System.out.println("Endpoint: " + method.getName());
-                        System.out.println(
-                                annotation.getType().getFullyQualifiedName().equals(RequestMapping.class.getName()) ? "RequestMapping·method: " + annotation.getProperty("method")
-                                        : "HTTP method annotation: " + annotation.getType().getName());
-                        System.out.println("Path: " + annotation.getProperty("value"));
-                        System.out.println("Class: " + javaClass.getFullyQualifiedName());
-                        System.out.println("Line: " + method.getLineNumber());
-                        List<String> annotations = method.getAnnotations().stream().filter(a -> !a.equals(annotation)).map(a -> a.getType().getName()).toList();
-                        System.out.println("Other annotations: " + annotations);
-                        System.out.println("---------------------------------------------------");
-
-                        List<String> javaAnnotations = method.getAnnotations().stream().filter(a -> !a.equals(annotation)).map(a -> a.getType().getValue()).toList();
-                        EndpointInformation endpointInformation = new EndpointInformation(requestMappingOptional.get().getProperty("value").toString(), method.getName(),
-                            annotation.getType().getName(), annotation.getProperty("value").toString(), javaClass.getFullyQualifiedName(), method.getLineNumber(),
-                            javaAnnotations);
-                        endpoints.add(endpointInformation);
+                    if (hasEndpoint) {
+//                        System.out.println("==================================================");
+//                        System.out.println("Class: " + javaClass.getNameAsString());
+                        requestMappingOptional.ifPresent(annotation -> {
+                            if (annotation instanceof SingleMemberAnnotationExpr) {
+                                SingleMemberAnnotationExpr single = (SingleMemberAnnotationExpr) annotation;
+                                classRequestMapping[0] = single.getMemberValue().toString();
+                            } else if (annotation instanceof NormalAnnotationExpr) {
+                                NormalAnnotationExpr normal = (NormalAnnotationExpr) annotation;
+                                Optional<MemberValuePair> pathOptional = normal.getPairs().stream().filter(pair -> "path".equals(pair.getNameAsString())).findFirst();
+                                pathOptional.ifPresent(pair -> classRequestMapping[0] = pair.getValue().toString());
+                            }
+//                            System.out.println("Class Request Mapping: " + classRequestMapping[0]);
+                        });
+//                        System.out.println("==================================================");
                     }
+
+                    for (MethodDeclaration method : javaClass.getMethods()) {
+                        for (AnnotationExpr annotation : method.getAnnotations()) {
+                            if (httpMethodClasses.contains(annotation.getNameAsString())) {
+                                final String[] annotationPathValue = {""};
+
+//                                System.out.println("Endpoint: " + method.getName());
+
+//                                if (annotation instanceof SingleMemberAnnotationExpr) {
+//                                    SingleMemberAnnotationExpr single = (SingleMemberAnnotationExpr) annotation;
+//                                } else if (annotation instanceof NormalAnnotationExpr) {
+//                                    NormalAnnotationExpr normal = (NormalAnnotationExpr) annotation;
+//                                    normal.getPairs().forEach(pair -> System.out.println(pair.getNameAsString() + ": " + pair.getValue().toString()));
+//                                }
+
+                                if (annotation.getNameAsString().equals(RequestMapping.class.getSimpleName())) {
+                                    if (annotation instanceof SingleMemberAnnotationExpr) {
+                                        SingleMemberAnnotationExpr single = (SingleMemberAnnotationExpr) annotation;
+//                                        System.out.println("RequestMapping method: " + single.getMemberValue().toString());
+                                    } else if (annotation instanceof NormalAnnotationExpr) {
+                                        NormalAnnotationExpr normal = (NormalAnnotationExpr) annotation;
+                                        normal.getPairs().forEach(pair -> System.out.println(pair.getNameAsString() + ": " + pair.getValue().toString()));
+                                    }
+//                                    System.out.println("RequestMapping method: " + annotation);
+                                } else {
+//                                    System.out.println("HTTP method annotation: " + annotation.getNameAsString());
+                                }
+
+                                if (annotation instanceof SingleMemberAnnotationExpr) {
+                                    SingleMemberAnnotationExpr single = (SingleMemberAnnotationExpr) annotation;
+                                    annotationPathValue[0] = single.getMemberValue().toString();
+                                } else if (annotation instanceof NormalAnnotationExpr) {
+                                    NormalAnnotationExpr normal = (NormalAnnotationExpr) annotation;
+                                    Optional<MemberValuePair> annotationPathOptional = normal.getPairs().stream().filter(pair -> "path".equals(pair.getNameAsString())).findFirst();
+                                    annotationPathOptional.ifPresent(pair -> {
+                                        annotationPathValue[0] = pair.getValue().toString();
+                                    });
+                                }
+
+//                                System.out.println("Path: " + annotationPathValue[0]);
+//
+//                                System.out.println("Class: " + javaClass.getNameAsString());
+//                                System.out.println("Line: " + method.getBegin().get().line);
+                                List<String> annotations = method.getAnnotations().stream().filter(a -> !a.equals(annotation)).map(a -> a.getNameAsString()).toList();
+//                                System.out.println("Other annotations: " + annotations);
+//                                System.out.println("---------------------------------------------------");
+
+//                                EndpointInformation endpointInformation = new EndpointInformation(requestMappingOptional.get().getProperty("value").toString(), method.getName(),
+//                            annotation.getType().getName(), annotation.getProperty("value").toString(), javaClass.getFullyQualifiedName(), method.getLineNumber(),
+//                            javaAnnotations);
+
+                                List<String> javaAnnotations = method.getAnnotations().stream().filter(a -> !a.equals(annotation)).map(a -> a.toString()).toList();
+                                EndpointInformation endpointInformation = new EndpointInformation(classRequestMapping[0], method.getNameAsString(),
+                                    annotation.getNameAsString(), annotationPathValue[0], javaClass.getNameAsString(), method.getBegin().get().line,
+                                    javaAnnotations);
+                                endpoints.add(endpointInformation);
+                            }
+                        }
+                    }
+                    if (endpoints.isEmpty()) {
+                        continue;
+                    }
+                    endpointClasses.add(new EndpointClassInformation(javaClass.getNameAsString(),
+                        requestMappingOptional.isPresent() ? requestMappingOptional.get().toString() : "", endpoints));
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-            if (endpoints.isEmpty()) {
-                continue;
-            }
-            endpointClasses.add(new EndpointClassInformation(javaClass.getFullyQualifiedName(),
-                requestMappingOptional.isPresent() ? requestMappingOptional.get().getProperty("value").toString() : "", endpoints));
         }
 
         ObjectMapper mapper = new ObjectMapper();
