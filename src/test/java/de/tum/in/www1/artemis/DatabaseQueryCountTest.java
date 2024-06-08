@@ -75,7 +75,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
             var userCourse = request.get("/api/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, Course.class);
             log.info("Finish courses for dashboard call for one course");
             return userCourse;
-        }).hasBeenCalledTimes(12); // TODO: reduce this number back to 10
+        }).hasBeenCalledTimes(12); // TODO: reduce this number back to 11
         // 1 DB call to get the user from the DB
         // 1 DB call to get the course with lectures
         // 1 DB call to load all exercises with categories
