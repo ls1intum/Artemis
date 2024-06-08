@@ -232,7 +232,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         if (countOfAthenaResultsInProcessOrSuccessful >= 3) {
             throw new BadRequestAlertException("Cannot send additional AI feedback requests now. Try again later!", "participation", "preconditions not met");
         }
-        if (countOfSuccessfulRequests >= 3) {
+        if (countOfSuccessfulRequests >= 20) {
             throw new BadRequestAlertException("Maximum number of AI feedback requests reached.", "participation", "preconditions not met");
         }
     }
