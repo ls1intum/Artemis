@@ -105,7 +105,7 @@ public class AnswerOption extends TempIdObject implements QuizQuestionComponent<
      *
      * @return true if the explanation length is less than or equal to 500 characters, false otherwise.
      */
-    public boolean isValid() {
+    public boolean explanationValid() {
         String explanation = this.getExplanation();
         return explanation == null || explanation.length() <= 500;
     }
