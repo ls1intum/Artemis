@@ -29,7 +29,6 @@ import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.SubmittedAnswerRepository;
 import de.tum.in.www1.artemis.service.AbstractQuizSubmissionService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.SubmissionVersionService;
@@ -59,12 +58,9 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    private final SubmittedAnswerRepository submittedAnswerRepository;
-
     public QuizSubmissionService(QuizSubmissionRepository quizSubmissionRepository, ResultRepository resultRepository, SubmissionVersionService submissionVersionService,
             QuizExerciseRepository quizExerciseRepository, ParticipationService participationService, QuizBatchService quizBatchService, QuizStatisticService quizStatisticService,
-            StudentParticipationRepository studentParticipationRepository, WebsocketMessagingService websocketMessagingService,
-            SubmittedAnswerRepository submittedAnswerRepository) {
+            StudentParticipationRepository studentParticipationRepository, WebsocketMessagingService websocketMessagingService) {
         super(submissionVersionService);
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.resultRepository = resultRepository;
@@ -74,16 +70,32 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         this.quizStatisticService = quizStatisticService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.websocketMessagingService = websocketMessagingService;
-        this.submittedAnswerRepository = submittedAnswerRepository;
     }
 
     /**
-     * Submit the given submission for practice
+     * Submits a quiz submission for practice mode, calculates scores, and creates a result.
+     * This method performs several steps to process a quiz submission in practice mode, including updating
+     * the submission properties, calculating scores, creating a result, and updating statistics.
+     * <p>
+     * The process includes:
+     * <p>
+     * 1. **Updating Submission Properties**: Sets the submission as submitted, marks it as a manual submission,
+     * and records the current date and time as the submission date.
+     * 2. **Calculating Scores**: Computes the scores based on the quiz questions and updates the submission.
+     * 3. **Saving Submission**: Saves the updated submission in the repository.
+     * 4. **Creating Result**: Initializes a new result, associates it with the participation, sets it as unrated
+     * and automatic, and records the current date and time as the completion date.
+     * 5. **Saving Result**: Saves the newly created result in the repository.
+     * 6. **Setting Result-Submission Relation**: Links the result to the submission and recalculates the score.
+     * 7. **Updating Submission with Result**: Adds the result to the submission and saves it again to set the result index column.
+     * 8. **Re-saving Result**: Saves the result again to store the calculated score.
+     * 9. **Fixing Proxy Objects**: Reassigns the participation to the result to avoid proxy issues.
+     * 10. **Recalculating Statistics**: Updates the quiz statistics based on the new result.
      *
-     * @param quizSubmission the submission to submit
-     * @param quizExercise   the exercise to submit in
-     * @param participation  the participation where the result should be saved
-     * @return the result entity
+     * @param quizSubmission The quiz submission to be processed.
+     * @param quizExercise   The quiz exercise related to the submission.
+     * @param participation  The participation object associated with the quiz submission.
+     * @return The created {@link Result} after processing the quiz submission.
      */
     public Result submitForPractice(QuizSubmission quizSubmission, QuizExercise quizExercise, Participation participation) {
         // update submission properties
@@ -187,15 +199,13 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         websocketMessagingService.sendMessageToUser(user, "/topic/exercise/" + quizExerciseId + "/participation", participation);
     }
 
+    // Use a DTO instead of removing data from the entity
+    @Deprecated
     private void removeUnnecessaryObjectsBeforeSendingToClient(StudentParticipation participation) {
         if (participation.getExercise() != null) {
             var quizExercise = (QuizExercise) participation.getExercise();
             // we do not need the course and lectures
             quizExercise.setCourse(null);
-            // students should not see statistics
-            // TODO: this would be useful, but leads to problems when the quiz schedule service wants to access the statistics again later on
-            // quizExercise.setQuizPointStatistic(null);
-            // quizExercise.getQuizQuestions().forEach(quizQuestion -> quizQuestion.setQuizQuestionStatistic(null));
         }
         // submissions are part of results, so we do not need them twice
         participation.setSubmissions(null);
@@ -215,14 +225,28 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
     }
 
     /**
-     * Saves a quiz submission into the hash maps for live quizzes. Submitted quizzes are marked to be saved into the database in the QuizScheduleService TODO: Update docs
+     * Saves or submits a quiz submission for a live quiz mode based on the specified parameters.
+     * This method handles both saving interim quiz data and submitting final quiz responses
+     * depending on the `submitted` flag. The method performs the following steps:
+     * <p>
+     * 1. Logs the start of the operation and determines the log message based on the `submitted` flag.
+     * 2. Retrieves the quiz exercise by its ID and sets its quiz batches to null.
+     * 3. Finds the existing quiz submission for the specified user and exercise.
+     * 4. Checks if the existing submission is valid for live mode and throws an exception if not.
+     * 5. Updates the submission references in each submitted answer to point to the new submission.
+     * 6. Ensures the new submission retains critical identifiers from the existing submission.
+     * 7. Sets the submission date to the current date and time.
+     * 8. Finds the corresponding participation for the user and links it to the new submission.
+     * 9. Saves the updated submission in the repository.
+     * 10. Logs the completion of the operation with details on the duration.
      *
-     * @param exerciseId     the exerciseID to the corresponding QuizExercise
-     * @param quizSubmission the submission which should be saved
-     * @param userLogin      the login of the user who has initiated the request
-     * @param submitted      whether the user has pressed the submit button or not
-     * @return the updated quiz submission object
-     * @throws QuizSubmissionException handles errors, e.g. when the live quiz has already ended, or when the quiz was already submitted before
+     * @param exerciseId     The ID of the quiz exercise.
+     * @param quizSubmission The quiz submission to be saved or submitted.
+     * @param userLogin      The login of the user submitting the quiz.
+     * @param submitted      A boolean indicating whether the quiz is being submitted (true) or saved (false).
+     * @return The saved or submitted {@link QuizSubmission}.
+     * @throws QuizSubmissionException If there is an error during the quiz submission process.
+     * @throws EntityNotFoundException If the quiz exercise or submission cannot be found.
      */
     public QuizSubmission saveSubmissionForLiveMode(Long exerciseId, QuizSubmission quizSubmission, String userLogin, boolean submitted) throws QuizSubmissionException {
 
@@ -259,7 +283,25 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
     }
 
     /**
-     * Check that the user is allowed to currently submit to the specified exercise and throws an exception if not
+     * Checks the validity of a quiz submission for live mode and throws an exception if any condition is not met.
+     * This method performs several validation steps to ensure that the quiz submission process adheres to the rules
+     * of the live quiz mode. The validations include:
+     * <p>
+     * 1. **Logging the Received Exercise**: Logs detailed information about the received quiz exercise, user, and processing time.
+     * 2. **Quiz Active Status Check**: Verifies that the quiz has started and has not ended.
+     * 3. **Existing Submission Check**: Ensures that the existing submission has not already been submitted.
+     * 4. **Quiz Mode Check**: Differentiates checks based on the quiz mode (synchronized or other modes):
+     * - For synchronized mode, ensures that the current batch allows submissions.
+     * - For other modes, verifies the student's batch association and its submission status.
+     * <p>
+     * Additionally, there is a placeholder for potential future checks to enhance security and validation.
+     *
+     * @param quizExercise       The quiz exercise being validated.
+     * @param existingSubmission The existing submission of the user for the quiz.
+     * @param userLogin          The login of the user attempting to submit the quiz.
+     * @param logText            The log text for debugging purposes.
+     * @param start              The start time of the submission process for logging duration.
+     * @throws QuizSubmissionException If any validation fails during the submission process.
      */
     private void checkSubmissionForLiveModeOrThrow(QuizExercise quizExercise, QuizSubmission existingSubmission, String userLogin, String logText, long start)
             throws QuizSubmissionException {

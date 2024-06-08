@@ -60,6 +60,12 @@ public class QuizScheduleService {
         this.quizSubmissionService = quizSubmissionService;
     }
 
+    @EventListener(ApplicationReadyEvent.class)
+    public void applicationReady() {
+        // schedule the task after the application has started to avoid delaying the start of the application
+        scheduler.schedule(this::scheduleRunningExercisesOnStartup, Instant.now().plusSeconds(QUIZ_EXERCISE_SCHEDULE_DELAY_SEC));
+    }
+
     /**
      * Start scheduler of quiz and update the quiz exercise in the hash map
      *
@@ -133,12 +139,6 @@ public class QuizScheduleService {
 
         SecurityUtils.setAuthorizationObject();
         quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, quizBatch, START_NOW);
-    }
-
-    @EventListener(ApplicationReadyEvent.class)
-    public void applicationReady() {
-        // schedule the task after the application has started to avoid delaying the start of the application
-        scheduler.schedule(this::scheduleRunningExercisesOnStartup, Instant.now().plusSeconds(QUIZ_EXERCISE_SCHEDULE_DELAY_SEC));
     }
 
     /**
