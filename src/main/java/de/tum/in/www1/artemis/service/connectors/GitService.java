@@ -29,6 +29,7 @@ import java.util.stream.StreamSupport;
 
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
@@ -62,7 +63,6 @@ import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
-import org.eclipse.jgit.transport.sshd.JGitKeyCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -157,23 +157,9 @@ public class GitService extends AbstractGitService {
         }
     }
 
-    private void configureSsh() {
-
-        final var sshSessionFactoryBuilder = getSshdSessionFactoryBuilder(gitSshPrivateKeyPath, gitSshPrivateKeyPassphrase, gitUrl);
-
-        try (final var sshSessionFactory = sshSessionFactoryBuilder.build(new JGitKeyCache())) {
-            sshCallback = getSshCallback(sshSessionFactory);
-        }
-    }
-
-    private boolean useSsh() {
-        return gitSshPrivateKeyPath.isPresent() && sshUrlTemplate.isPresent();
-        // password is optional and will only be applied if the ssh private key was encrypted using a password
-    }
-
-    @Override
-    protected String getGitUriAsString(VcsRepositoryUri vcsRepositoryUri) throws URISyntaxException {
-        return getGitUri(vcsRepositoryUri).toString();
+    @PreDestroy
+    public void cleanup() {
+        super.cleanup();
     }
 
     /**
@@ -187,7 +173,8 @@ public class GitService extends AbstractGitService {
      * @return the URI (SSH, HTTP(S), or local path)
      * @throws URISyntaxException if SSH is used and the SSH URI could not be retrieved.
      */
-    private URI getGitUri(VcsRepositoryUri vcsRepositoryUri) throws URISyntaxException {
+    @Override
+    protected URI getGitUri(VcsRepositoryUri vcsRepositoryUri) throws URISyntaxException {
         if (profileService.isLocalVcsCiActive()) {
             // Create less generic LocalVCRepositoryUri out of VcsRepositoryUri.
             LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(vcsRepositoryUri.toString());
