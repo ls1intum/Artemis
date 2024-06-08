@@ -14,14 +14,9 @@ export class PrerequisiteService {
     constructor(private httpClient: HttpClient) {}
 
     getAllPrerequisitesForCourse(courseId: number): Observable<Prerequisite[]> {
-        return this.httpClient.get<PrerequisiteResponseDTO[]>(`${this.resourceURL}/courses/${courseId}/competencies/prerequisites`, { observe: 'response' }).pipe(
-            map((resp) => {
-                if (!resp.body) {
-                    return [];
-                }
-                return resp.body.map((prerequisiteDTO) => PrerequisiteService.convertResponseDTOToPrerequisite(prerequisiteDTO));
-            }),
-        );
+        return this.httpClient
+            .get<PrerequisiteResponseDTO[]>(`${this.resourceURL}/courses/${courseId}/competencies/prerequisites`, { observe: 'response' })
+            .pipe(map((resp) => resp.body!.map((prerequisiteDTO) => PrerequisiteService.convertResponseDTOToPrerequisite(prerequisiteDTO))));
         //TODO: send title to entityTitleService when we allow prerequisite detail view.
     }
 
@@ -32,14 +27,7 @@ export class PrerequisiteService {
     importPrerequisites(prerequisiteIds: number[], courseId: number): Observable<Prerequisite[]> {
         return this.httpClient
             .post<PrerequisiteResponseDTO[]>(`${this.resourceURL}/courses/${courseId}/competencies/prerequisites/import`, prerequisiteIds, { observe: 'response' })
-            .pipe(
-                map((resp) => {
-                    if (!resp.body) {
-                        return [];
-                    }
-                    return resp.body.map((prerequisiteDTO) => PrerequisiteService.convertResponseDTOToPrerequisite(prerequisiteDTO));
-                }),
-            );
+            .pipe(map((resp) => resp.body!.map((prerequisiteDTO) => PrerequisiteService.convertResponseDTOToPrerequisite(prerequisiteDTO))));
     }
 
     /**

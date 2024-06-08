@@ -37,17 +37,6 @@ describe('PrerequisiteService', () => {
         expect(actualPrerequisites).toEqual(expectedPrerequisites);
     }));
 
-    it('should return empty array for no found prerequisites', fakeAsync(() => {
-        let actualPrerequisites: any;
-        prerequisiteService.getAllPrerequisitesForCourse(1).subscribe((resp) => (actualPrerequisites = resp));
-
-        const req = httpTestingController.expectOne({ method: 'GET' });
-        req.flush(null);
-        tick();
-
-        expect(actualPrerequisites).toEqual([]);
-    }));
-
     it('should import prerequisites', fakeAsync(() => {
         let actualPrerequisites: any;
         const expectedPrerequisites: Prerequisite[] = [
@@ -62,17 +51,6 @@ describe('PrerequisiteService', () => {
         tick();
 
         expect(actualPrerequisites).toEqual(expectedPrerequisites);
-    }));
-
-    it('should return empty array for no imported prerequisites', fakeAsync(() => {
-        let actualPrerequisites: any;
-        prerequisiteService.importPrerequisites([], 1).subscribe((resp) => (actualPrerequisites = resp));
-
-        const req = httpTestingController.expectOne({ method: 'POST' });
-        req.flush(null);
-        tick();
-
-        expect(actualPrerequisites).toEqual([]);
     }));
 
     it('should remove a prerequisite', fakeAsync(() => {
