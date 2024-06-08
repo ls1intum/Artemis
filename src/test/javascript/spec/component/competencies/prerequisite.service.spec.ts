@@ -63,9 +63,9 @@ describe('PrerequisiteService', () => {
         expect(result).toBeTrue();
     }));
 
-    it('should convert response dto to to prerequisite', () => {
-        const expectedPrerequisite: Prerequisite = { id: 1, title: 'title1', linkedCourseCompetency: { id: 1, course: { id: 1, title: '', semester: 'SS01' } } };
-        const prerequisiteDTO: PrerequisiteResponseDTO = {
+    it('should convert response dtos to to prerequisite', () => {
+        const expectedPrerequisite1: Prerequisite = { id: 1, title: 'title1', linkedCourseCompetency: { id: 1, course: { id: 1, title: '', semester: 'SS01' } } };
+        const prerequisiteDTO1: PrerequisiteResponseDTO = {
             id: 1,
             title: 'title1',
             linkedCourseCompetencyDTO: {
@@ -75,9 +75,13 @@ describe('PrerequisiteService', () => {
                 semester: 'SS01',
             },
         };
+        const expectedPrerequisite2: Prerequisite = { id: 2, title: 'title2' };
+        const prerequisiteDTO2: PrerequisiteResponseDTO = { id: 2, title: 'title2' };
 
-        const actualPrerequisite = PrerequisiteService['convertResponseDTOToPrerequisite'](prerequisiteDTO);
+        const actualPrerequisite1 = PrerequisiteService['convertResponseDTOToPrerequisite'](prerequisiteDTO1);
+        const actualPrerequisite2 = PrerequisiteService['convertResponseDTOToPrerequisite'](prerequisiteDTO2);
 
-        expect(actualPrerequisite).toEqual(expectedPrerequisite);
+        expect(actualPrerequisite1).toEqual(expectedPrerequisite1);
+        expect(actualPrerequisite2).toEqual(expectedPrerequisite2);
     });
 });
