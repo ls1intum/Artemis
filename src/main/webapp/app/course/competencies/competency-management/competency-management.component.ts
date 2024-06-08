@@ -57,15 +57,15 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     readonly documentationType: DocumentationType = 'Competencies';
 
     // Injected services
-    private activatedRoute: ActivatedRoute = inject(ActivatedRoute);
-    private competencyService: CompetencyService = inject(CompetencyService);
-    private prerequisiteService: PrerequisiteService = inject(PrerequisiteService);
-    private alertService: AlertService = inject(AlertService);
-    private modalService: NgbModal = inject(NgbModal);
-    private profileService: ProfileService = inject(ProfileService);
-    private irisSettingsService: IrisSettingsService = inject(IrisSettingsService);
-    private translateService: TranslateService = inject(TranslateService);
-    private featureToggleService: FeatureToggleService = inject(FeatureToggleService);
+    private readonly activatedRoute: ActivatedRoute = inject(ActivatedRoute);
+    private readonly competencyService: CompetencyService = inject(CompetencyService);
+    private readonly prerequisiteService: PrerequisiteService = inject(PrerequisiteService);
+    private readonly alertService: AlertService = inject(AlertService);
+    private readonly modalService: NgbModal = inject(NgbModal);
+    private readonly profileService: ProfileService = inject(ProfileService);
+    private readonly irisSettingsService: IrisSettingsService = inject(IrisSettingsService);
+    private readonly translateService: TranslateService = inject(TranslateService);
+    private readonly featureToggleService: FeatureToggleService = inject(FeatureToggleService);
 
     ngOnInit(): void {
         this.activatedRoute.parent!.params.subscribe((params) => {
