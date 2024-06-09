@@ -305,6 +305,8 @@ public final class Constants {
      */
     public static final String PROFILE_LTI = "lti";
 
+    public static final String PROFILE_SCHEDULING = "scheduling";
+
     /**
      * Size of an unsigned tinyInt in SQL, that is used in the database
      */
