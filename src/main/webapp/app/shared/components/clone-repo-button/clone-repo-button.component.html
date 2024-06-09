@@ -80,9 +80,8 @@
         >
             {{ wasCopied ? ('artemisApp.exerciseActions.copiedUrl' | artemisTranslate) : ('artemisApp.exerciseActions.copyUrl' | artemisTranslate) }}
         </button>
-        @if (jetbrainsIdea) {
-            <a class="btn btn-primary btn-sm me-2" [href]="buildJetbrainsUrl() | safeUrl" [jhiTranslate]="'artemisApp.exerciseActions.jetbrains.clone' + jetbrainsIdea"> </a>
-        }
+        <a class="btn btn-primary btn-sm" [href]="buildJetbrainsUrl() | safeUrl" jhiTranslate="artemisApp.exerciseActions.cloneIntelliJ.button"> </a>
+        <jhi-help-icon placement="right auto" text="artemisApp.exerciseActions.cloneIntelliJ.helpIcon" />
         <a class="btn btn-primary btn-sm" target="hidden-iframe" [href]="buildSourceTreeUrl() | safeUrl" jhiTranslate="artemisApp.exerciseActions.cloneSourceTree.button"> </a>
         <iframe name="hidden-iframe" style="visibility: hidden; position: absolute"></iframe>
         <jhi-help-icon placement="right auto" text="artemisApp.exerciseActions.cloneSourceTree.helpIcon" />

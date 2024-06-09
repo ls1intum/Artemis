@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { ExternalCloningService } from 'app/exercises/programming/shared/service/external-cloning.service';
 
 describe('ExternalCloningService', () => {
@@ -21,26 +20,13 @@ describe('ExternalCloningService', () => {
         expect(service.buildSourceTreeUrl(baseUrl, undefined)).toBeUndefined();
     });
 
-    it('should return correct JetBrains IDE for given programming language', () => {
-        expect(service.getJetbrainsIdeForProgrammingLanguage(ProgrammingLanguage.JAVA)).toBe('idea');
-        expect(service.getJetbrainsIdeForProgrammingLanguage(ProgrammingLanguage.KOTLIN)).toBe('idea');
-        expect(service.getJetbrainsIdeForProgrammingLanguage(ProgrammingLanguage.PYTHON)).toBe('pycharm');
-        expect(service.getJetbrainsIdeForProgrammingLanguage(ProgrammingLanguage.C)).toBe('clion');
-    });
-
     it('should build JetBrains url correctly', () => {
         const cloneUrl = baseUrl + '/git/repo.git';
         const expectedUrl = 'jetbrains://idea/checkout/git?idea.required.plugins.id=Git4Idea&checkout.repo=https%3A%2F%2Fartemis.cit.tum.de%2Fgit%2Frepo.git';
-        expect(service.buildJetbrainsUrl(cloneUrl, ProgrammingLanguage.JAVA)).toEqual(expectedUrl);
+        expect(service.buildJetbrainsUrl(cloneUrl)).toEqual(expectedUrl);
     });
 
-    it('should return undefined when any argument is undefined', () => {
-        const cloneUrl = 'http://clone.url';
-        expect(service.buildJetbrainsUrl(cloneUrl, undefined)).toBeUndefined();
-        expect(service.buildJetbrainsUrl(undefined, ProgrammingLanguage.JAVA)).toBeUndefined();
-    });
-
-    it('should return undefined when not fitting JetBrains IDE is available', () => {
-        expect(service.buildJetbrainsUrl(baseUrl, ProgrammingLanguage.HASKELL)).toBeUndefined();
+    it('should return undefined when the argument is undefined', () => {
+        expect(service.buildJetbrainsUrl(undefined)).toBeUndefined();
     });
 });
