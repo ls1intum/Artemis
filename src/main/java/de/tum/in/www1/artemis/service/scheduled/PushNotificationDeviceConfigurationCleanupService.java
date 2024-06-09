@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_SCHEDULING;
+
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -12,7 +14,7 @@ import de.tum.in.www1.artemis.repository.PushNotificationDeviceConfigurationRepo
 import tech.jhipster.config.JHipsterConstants;
 
 @Service
-@Profile("scheduling")
+@Profile(PROFILE_SCHEDULING)
 public class PushNotificationDeviceConfigurationCleanupService {
 
     private final PushNotificationDeviceConfigurationRepository deviceConfigurationRepository;

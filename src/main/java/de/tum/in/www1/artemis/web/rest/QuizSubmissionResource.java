@@ -10,12 +10,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.Result;
@@ -31,10 +33,9 @@ import de.tum.in.www1.artemis.exception.QuizSubmissionException;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
-import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
@@ -87,21 +88,25 @@ public class QuizSubmissionResource {
     }
 
     /**
+     * TODO: Decide if we want to use this endpoint for both submit and save. If so, we may want to use PUT instead of POST
+     * TODO: Don't trust the user submitted values
      * POST /exercises/:exerciseId/submissions/live : Submit a new quizSubmission for live mode.
      *
      * @param exerciseId     the id of the exercise for which to init a participation
      * @param quizSubmission the quizSubmission to submit
+     * @param submit         flag to determine if the submission should be submitted or saved
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
     @PostMapping("exercises/{exerciseId}/submissions/live")
-    @EnforceAtLeastStudent
-    public ResponseEntity<QuizSubmission> submitForLiveMode(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission) {
-        log.debug("REST request to submit QuizSubmission for live mode : {}", quizSubmission);
+    @EnforceAtLeastStudentInExercise
+    public ResponseEntity<QuizSubmission> saveOrSubmitForLiveMode(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission,
+            @RequestParam(name = "submit", defaultValue = "false") boolean submit) {
+        log.debug("REST request to save or submit QuizSubmission for live mode : {}", quizSubmission);
         String userLogin = SecurityUtils.getCurrentUserLogin().orElseThrow();
         try {
-            // we set the submitted flag to true on the server side
-            quizSubmission.setSubmitted(true);
-            QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForLiveMode(exerciseId, quizSubmission, userLogin, true);
+            // we set the submitted flag on the server side
+            quizSubmission.setSubmitted(submit);
+            QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForLiveMode(exerciseId, quizSubmission, userLogin, submit);
             return ResponseEntity.ok(updatedQuizSubmission);
         }
         catch (QuizSubmissionException e) {
@@ -118,7 +123,7 @@ public class QuizSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
     @PostMapping("exercises/{exerciseId}/submissions/practice")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInExercise
     public ResponseEntity<Result> submitForPractice(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission) {
         log.debug("REST request to submit QuizSubmission for practice : {}", quizSubmission);
 
@@ -132,11 +137,11 @@ public class QuizSubmissionResource {
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "idExists", "A new quizSubmission cannot already have an ID.")).body(null);
         }
 
-        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exerciseId);
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(exerciseId);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, user)) {
-            return ResponseEntity.status(403)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "Forbidden", "You are not allowed to participate in this exercise.")).body(null);
         }
 
@@ -181,7 +186,7 @@ public class QuizSubmissionResource {
      * @return the ResponseEntity with status 200 and body the result or the appropriate error code.
      */
     @PostMapping("exercises/{exerciseId}/submissions/preview")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise
     public ResponseEntity<Result> submitForPreview(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission) {
         log.debug("REST request to submit QuizSubmission for preview : {}", quizSubmission);
 
@@ -191,7 +196,6 @@ public class QuizSubmissionResource {
         }
 
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, quizExercise, null);
 
         // update submission
         quizSubmission.setSubmitted(true);
@@ -220,7 +224,7 @@ public class QuizSubmissionResource {
      * @return the ResponseEntity with status 200 and body the result or the appropriate error code.
      */
     @PutMapping("exercises/{exerciseId}/submissions/exam")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInExercise
     public ResponseEntity<QuizSubmission> submitQuizForExam(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission) {
         long start = System.currentTimeMillis();
         log.debug("REST request to submit QuizSubmission for exam : {}", quizSubmission);
@@ -230,7 +234,7 @@ public class QuizSubmissionResource {
             submittedAnswer.setSubmission(quizSubmission);
         }
 
-        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exerciseId);
+        QuizExercise quizExercise = quizExerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // Apply further checks if it is an exam submission

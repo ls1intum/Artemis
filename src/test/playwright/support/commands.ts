@@ -1,6 +1,8 @@
 import { UserCredentials } from './users';
 import { BASE_API } from './constants';
 import { Locator, Page, expect } from '@playwright/test';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ExerciseAPIRequests } from './requests/ExerciseAPIRequests';
 
 /**
  * A class that encapsulates static helper command methods.
@@ -61,5 +63,34 @@ export class Commands {
         }
 
         throw new Error(`Timed out finding an element matching the "${locator}" locator`);
+    };
+
+    /**
+     * Waits for the build of an exercise to finish.
+     * Throws an error if the build does not finish within the timeout.
+     * @param page - Playwright page object.
+     * @param exerciseAPIRequests - ExerciseAPIRequests object.
+     * @param exerciseId - ID of the exercise to wait for.
+     * @param interval - Interval in milliseconds between checks for the build to finish.
+     * @param timeout - Timeout in milliseconds to wait for the build to finish.
+     */
+    static waitForExerciseBuildToFinish = async (page: Page, exerciseAPIRequests: ExerciseAPIRequests, exerciseId: number, interval: number = 2000, timeout: number = 60000) => {
+        let exerciseParticipation: StudentParticipation;
+        const startTime = Date.now();
+
+        const numberOfBuildResults = (await exerciseAPIRequests.getExerciseParticipation(exerciseId)).results?.length;
+        console.log('Waiting for build of an exercise to finish...');
+
+        while (Date.now() - startTime < timeout) {
+            exerciseParticipation = await exerciseAPIRequests.getExerciseParticipation(exerciseId);
+
+            if (exerciseParticipation.results && exerciseParticipation.results.length > (numberOfBuildResults ?? 0)) {
+                return exerciseParticipation;
+            }
+
+            await new Promise((resolve) => setTimeout(resolve, interval));
+        }
+
+        throw new Error('Timed out while waiting for build to finish.');
     };
 }
