@@ -191,6 +191,7 @@
         },
         "courseCompetency": {
             "title": "Titel",
+            "course": "Kurs",
             "description": "Beschreibung",
             "taxonomy": "Taxonomie",
             "softDueDate": "Empfohlen bis"
@@ -199,6 +200,7 @@
             "title": "Voraussetzungen",
             "empty": "Es existieren keine Voraussetzungen für diesen Kurs",
             "manage": {
+                "createButton": "Voraussetzung erstellen",
                 "importButton": "Voraussetzungen importieren",
                 "importFromCoursesButton": "Aus anderen Kursen importieren",
                 "deleted": "Voraussetzung gelöscht",

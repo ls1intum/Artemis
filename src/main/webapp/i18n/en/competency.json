@@ -191,6 +191,7 @@
         },
         "courseCompetency": {
             "title": "Title",
+            "course": "Kurs",
             "description": "Description",
             "taxonomy": "Taxonomy",
             "softDueDate": "Recommended until"
@@ -199,6 +200,7 @@
             "title": "Prerequisites",
             "empty": "No prerequisites exist for this course",
             "manage": {
+                "createButton": "Create prerequisite",
                 "importButton": "Import prerequisites",
                 "importFromCoursesButton": "Import from other courses",
                 "deleted": "Prerequisite deleted",

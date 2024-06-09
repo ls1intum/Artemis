@@ -147,7 +147,7 @@
             </a>
             <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'competency-management', 'prerequisites', 'create']">
                 <fa-icon [icon]="faPlus" />
-                <span jhiTranslate="TODO TRANSLATION"></span>
+                <span jhiTranslate="artemisApp.prerequisite.manage.createButton"></span>
             </a>
         </div>
     </div>
@@ -160,16 +160,19 @@
                             <span jhiTranslate="global.field.id"></span>
                         </th>
                         <th class="col">
-                            <span jhiTranslate="artemisApp.competency.title"></span>
+                            <span jhiTranslate="artemisApp.courseCompetency.title"></span>
                         </th>
                         <th class="col">
-                            <span jhiTranslate="artemisApp.competency.description"></span>
+                            <span jhiTranslate="artemisApp.courseCompetency.description"></span>
                         </th>
                         <th class="col">
-                            <span jhiTranslate="artemisApp.competency.taxonomy"></span>
+                            <span jhiTranslate="artemisApp.courseCompetency.taxonomy"></span>
                         </th>
                         <th class="col">
-                            <span jhiTranslate="artemisApp.competency.course"></span>
+                            <span jhiTranslate="artemisApp.courseCompetency.softDueDate"></span>
+                        </th>
+                        <th class="col">
+                            <span jhiTranslate="artemisApp.courseCompetency.course"></span>
                         </th>
                         <th class="col"></th>
                     </tr>
@@ -185,6 +188,9 @@
                                     <fa-icon [icon]="getIcon(prerequisite.taxonomy)" [fixedWidth]="true" container="body" />
                                     {{ 'artemisApp.competency.taxonomies.' + (prerequisite.taxonomy ?? 'none') | artemisTranslate }}
                                 </div>
+                            </td>
+                            <td class="d-none col-lg d-lg-table-cell">
+                                {{ prerequisite.softDueDate | artemisDate }}
                             </td>
                             <td class="col">
                                 @if (prerequisite.linkedCourseCompetency?.course?.id) {
