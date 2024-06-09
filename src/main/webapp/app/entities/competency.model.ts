@@ -32,7 +32,7 @@ export enum CompetencyRelationError {
     EXISTING = 'EXISTING',
 }
 
-export enum CompetencyValidators {
+export enum CourseCompetencyValidators {
     TITLE_MAX = 255,
     DESCRIPTION_MAX = 10000,
     MASTERY_THRESHOLD_MIN = 0,

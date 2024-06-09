@@ -1,5 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NgbDropdownModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyFormComponent, CompetencyFormData } from 'app/course/competencies/competency-form/competency-form.component';
@@ -155,6 +155,33 @@ describe('CompetencyFormComponent', () => {
         expect(translateSpy).toHaveBeenCalledTimes(12);
         expect(competencyFormComponent.suggestedTaxonomies).toEqual(['artemisApp.competency.taxonomies.REMEMBER', 'artemisApp.competency.taxonomies.UNDERSTAND']);
     });
+
+    it('validator should verify title is unique', fakeAsync(() => {
+        const competencyService = TestBed.inject(CompetencyService);
+        const existingTitles = ['nameExisting'];
+        jest.spyOn(competencyService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: existingTitles, status: 200 })));
+        competencyFormComponent.isEditMode = true;
+        competencyFormComponent.formData.title = 'initialName';
+
+        competencyFormComponentFixture.detectChanges();
+
+        const titleControl = competencyFormComponent.titleControl!;
+        tick(250);
+        expect(titleControl.errors?.titleUnique).toBeUndefined();
+
+        titleControl.setValue('anotherName');
+        tick(250);
+        expect(titleControl.errors?.titleUnique).toBeUndefined();
+
+        titleControl.setValue('');
+        tick(250);
+        expect(titleControl.errors?.titleUnique).toBeUndefined();
+
+        titleControl.setValue('nameExisting');
+        tick(250);
+        expect(titleControl.errors?.titleUnique).toBeDefined();
+        flush();
+    }));
 
     function createTranslateSpy() {
         return jest.spyOn(translateService, 'instant').mockImplementation((key) => {

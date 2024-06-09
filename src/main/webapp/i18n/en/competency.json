@@ -118,7 +118,7 @@
                 "titlePlaceholder": "Give the competency a title",
                 "titleRequiredValidationError": "A competency needs to have a title",
                 "titleMaxLengthValidationError": "A competency title is limited to {{max}} characters",
-                "titleUniqueValidationError": "There already exists a competency with this title in the course",
+                "titleUniqueValidationError": "There already exists a competency/prerequisite with this title in the course",
                 "descriptionMaxLengthValidationError": "A competency description is limited to {{max}} characters",
                 "softDueDate": "Recommended date of completion",
                 "softDueDateHint": "Guide students by selecting when you expect them to have mastered this competency. This is not a hard deadline.",
@@ -189,6 +189,12 @@
                 }
             }
         },
+        "courseCompetency": {
+            "title": "Title",
+            "description": "Description",
+            "taxonomy": "Taxonomy",
+            "softDueDate": "Recommended until"
+        },
         "prerequisite": {
             "title": "Prerequisites",
             "empty": "No prerequisites exist for this course",
@@ -208,7 +214,16 @@
                 "selectedTableEmpty": "No competencies selected to import as prerequisites"
             },
             "create": {
-                "title": "Create a new Prerequisite"
+                "title": "Create a new Prerequisite",
+                "titlePlaceholder": "Give the prerequisite a title",
+                "softDueDateTooltip": "Guide students by selecting when you expect them to have mastered this prerequisite. This is not a hard deadline.",
+                "suggestedTaxonomy": "Suggested",
+                "error": {
+                    "titleRequired": "A prerequisite needs to have a title",
+                    "titleMaxLength": "The title of a prerequisite is limited to {{max}} characters",
+                    "descriptionMaxLength": "The description of a prerequisite is limited to {{max}} characters",
+                    "titleUnique": "There already exists a competency/prerequisite with this title in the course"
+                }
             },
             "edit": {
                 "title": "Edit a Prerequisite"

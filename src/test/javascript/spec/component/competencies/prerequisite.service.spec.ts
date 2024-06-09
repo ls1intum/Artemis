@@ -81,14 +81,14 @@ describe('PrerequisiteService', () => {
         const expectedPrerequisite: Prerequisite = { id: 1, title: 'newTitle', description: 'newDescription' };
         const returnedFromService: Prerequisite = { ...expectedPrerequisite };
 
-        prerequisiteService.createPrerequisite({ title: 'newTitle', description: 'newDescription' }, 1, 1).subscribe((resp) => (actualPrerequisite = resp));
-        const req = httpTestingController.expectOne({ method: 'POST' });
+        prerequisiteService.createPrerequisite({ title: 'newTitle', description: 'newDescription' }, 1).subscribe((resp) => (actualPrerequisite = resp));
+        const req = httpTestingController.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
         tick();
 
         expect(actualPrerequisite).toEqual(expectedPrerequisite);
     }));
-  
+
     it('should convert response dtos to to prerequisite', () => {
         const expectedPrerequisite1: Prerequisite = { id: 1, title: 'title1', linkedCourseCompetency: { id: 1, course: { id: 1, title: '', semester: 'SS01' } } };
         const prerequisiteDTO1: PrerequisiteResponseDTO = {

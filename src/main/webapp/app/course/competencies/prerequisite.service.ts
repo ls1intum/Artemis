@@ -30,14 +30,14 @@ export class PrerequisiteService {
         const prerequisiteDTO = this.convertToRequestDTO(prerequisite);
         return this.httpClient
             .post<PrerequisiteResponseDTO>(`${this.resourceURL}/courses/${courseId}/competencies/prerequisites`, prerequisiteDTO, { observe: 'response' })
-            .pipe(map((resp) => (resp.body ? PrerequisiteService.convertResponseDTOToPrerequisite(resp.body) : undefined)));
+            .pipe(map((resp) => PrerequisiteService.convertResponseDTOToPrerequisite(resp.body!)));
     }
 
     updatePrerequisite(prerequisite: Prerequisite, prerequisiteId: number, courseId: number): Observable<Prerequisite | undefined> {
         const prerequisiteDTO = this.convertToRequestDTO(prerequisite);
         return this.httpClient
-            .post<PrerequisiteResponseDTO>(`${this.resourceURL}/courses/${courseId}/competencies/prerequisites/${prerequisiteId}`, prerequisiteDTO, { observe: 'response' })
-            .pipe(map((resp) => (resp.body ? PrerequisiteService.convertResponseDTOToPrerequisite(resp.body) : undefined)));
+            .put<PrerequisiteResponseDTO>(`${this.resourceURL}/courses/${courseId}/competencies/prerequisites/${prerequisiteId}`, prerequisiteDTO, { observe: 'response' })
+            .pipe(map((resp) => PrerequisiteService.convertResponseDTOToPrerequisite(resp.body!)));
     }
 
     deletePrerequisite(prerequisiteId: number, courseId: number) {

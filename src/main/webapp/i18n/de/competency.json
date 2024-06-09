@@ -118,7 +118,7 @@
                 "titlePlaceholder": "Gib der Kompetenz einen Titel",
                 "titleRequiredValidationError": "Eine Kompetenz braucht einen Titel",
                 "titleMaxLengthValidationError": "Der Titel einer Kompetenz ist auf maximal {{max}} Symbole beschränkt",
-                "titleUniqueValidationError": "Es gibt bereits eine Kompetenz mit diesem Titel in dem Kurs",
+                "titleUniqueValidationError": "Es gibt bereits eine Kompetenz/Voraussetzung mit diesem Titel in dem Kurs",
                 "descriptionMaxLengthValidationError": "Die Beschreibung der Kompetenz ist auf maximal {{max}} Symbole beschränkt",
                 "softDueDate": "Empfohlenes Fertigstellungsdatum",
                 "softDueDateHint": "Empfehle einen Zeitpunkt zu dem die Studierenden diese Kompetenz gemeistert haben sollten. Dies ist keine harte Frist.",
@@ -189,6 +189,12 @@
                 }
             }
         },
+        "courseCompetency": {
+            "title": "Titel",
+            "description": "Beschreibung",
+            "taxonomy": "Taxonomie",
+            "softDueDate": "Empfohlen bis"
+        },
         "prerequisite": {
             "title": "Voraussetzungen",
             "empty": "Es existieren keine Voraussetzungen für diesen Kurs",
@@ -208,7 +214,16 @@
                 "selectedTableEmpty": "Keine Kompetenzen zum Import als Voraussetzungen ausgewählt"
             },
             "create": {
-                "title": "Erstelle eine neue Voraussetzung"
+                "title": "Erstelle eine neue Voraussetzung",
+                "titlePlaceholder": "Gib der Voraussetzung einen Titel",
+                "softDueDateTooltip": "Empfehle einen Zeitpunkt zu dem die Studierenden diese Voraussetzung gemeistert haben sollten. Dies ist keine harte Frist.",
+                "suggestedTaxonomy": "Vorschlag",
+                "error": {
+                    "titleRequired": "Eine Voraussetzung braucht einen Titel",
+                    "titleMaxLength": "Der Titel einer Voraussetzung ist auf maximal {{max}} Symbole beschränkt",
+                    "descriptionMaxLength": "Die Beschreibung der Voraussetzung ist auf maximal {{max}} Symbole beschränkt",
+                    "titleUnique": "Es gibt bereits eine Kompetenz/Voraussetzung mit diesem Titel in dem Kurs"
+                }
             },
             "edit": {
                 "title": "Bearbeite eine Voraussetzung"

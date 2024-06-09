@@ -1,10 +1,9 @@
 import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CompetencyService } from 'app/course/competencies/competency.service';
-import { merge, of } from 'rxjs';
-import { catchError, delay, map, switchMap } from 'rxjs/operators';
+import { merge } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import { CompetencyTaxonomy, CompetencyValidators, DEFAULT_MASTERY_THRESHOLD } from 'app/entities/competency.model';
+import { CompetencyTaxonomy, CourseCompetencyValidators, DEFAULT_MASTERY_THRESHOLD } from 'app/entities/competency.model';
 import { faBan, faQuestionCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
@@ -15,38 +14,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-
-/**
- * Async Validator to make sure that a competency title is unique within a course
- */
-export const titleUniqueValidator = (competencyService: CompetencyService, courseId: number, initialTitle?: string) => {
-    return (competencyTitleControl: FormControl<string | undefined>) => {
-        return of(competencyTitleControl.value).pipe(
-            delay(250),
-            switchMap((title) => {
-                if (initialTitle && title === initialTitle) {
-                    return of(null);
-                }
-                return competencyService.getCourseCompetencyTitles(courseId).pipe(
-                    map((res) => {
-                        let competencyTitles: string[] = [];
-                        if (res.body) {
-                            competencyTitles = res.body;
-                        }
-                        if (title && competencyTitles.includes(title)) {
-                            return {
-                                titleUnique: { valid: false },
-                            };
-                        } else {
-                            return null;
-                        }
-                    }),
-                    catchError(() => of(null)),
-                );
-            }),
-        );
-    };
-};
+import { titleUniqueValidator } from '../competency-form/competency-form.component';
 
 @Component({
     selector: 'jhi-prerequisite-form',
@@ -82,7 +50,6 @@ export class PrerequisiteFormComponent implements OnInit {
         optional: FormControl<boolean>;
     }>;
     protected suggestedTaxonomies: string[] = [];
-    private titleUniqueValidator = titleUniqueValidator;
 
     // Icons
     protected readonly faTimes = faTimes;
@@ -91,7 +58,7 @@ export class PrerequisiteFormComponent implements OnInit {
     protected readonly faSave = faSave;
     // Constants
     protected readonly competencyTaxonomy = CompetencyTaxonomy;
-    protected readonly competencyValidators = CompetencyValidators;
+    protected readonly competencyValidators = CourseCompetencyValidators;
     protected readonly ButtonSize = ButtonSize;
     protected readonly ButtonType = ButtonType;
     // Services
@@ -103,15 +70,15 @@ export class PrerequisiteFormComponent implements OnInit {
         this.form = this.formBuilder.nonNullable.group({
             title: [
                 this.prerequisite?.title,
-                [Validators.required, Validators.maxLength(CompetencyValidators.TITLE_MAX)],
-                [this.titleUniqueValidator(this.competencyService, this.courseId, this.prerequisite?.title)],
+                [Validators.required, Validators.maxLength(CourseCompetencyValidators.TITLE_MAX)],
+                [titleUniqueValidator(this.competencyService, this.courseId, this.prerequisite?.title)],
             ],
-            description: [this.prerequisite?.description, [Validators.maxLength(CompetencyValidators.DESCRIPTION_MAX)]],
+            description: [this.prerequisite?.description, [Validators.maxLength(CourseCompetencyValidators.DESCRIPTION_MAX)]],
             taxonomy: [this.prerequisite?.taxonomy],
             softDueDate: [this.prerequisite?.softDueDate],
             masteryThreshold: [
                 this.prerequisite?.masteryThreshold ?? DEFAULT_MASTERY_THRESHOLD,
-                [Validators.min(CompetencyValidators.MASTERY_THRESHOLD_MIN), Validators.max(CompetencyValidators.MASTERY_THRESHOLD_MAX)],
+                [Validators.min(CourseCompetencyValidators.MASTERY_THRESHOLD_MIN), Validators.max(CourseCompetencyValidators.MASTERY_THRESHOLD_MAX)],
             ],
             optional: [this.prerequisite?.optional ?? false],
         });
