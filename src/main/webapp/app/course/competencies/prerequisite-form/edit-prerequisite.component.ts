@@ -31,7 +31,6 @@ export class EditPrerequisiteComponent implements OnInit {
         this.activatedRoute.params
             .pipe(
                 switchMap((params) => {
-                    console.log(params);
                     const prerequisiteId = Number(params['prerequisiteId']);
                     this.courseId = Number(params['courseId']);
                     return this.prerequisiteService.getPrerequisite(prerequisiteId, this.courseId);
