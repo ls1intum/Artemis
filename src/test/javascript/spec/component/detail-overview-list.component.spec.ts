@@ -68,7 +68,7 @@ describe('DetailOverviewList', () => {
         expect(DetailOverviewListComponent).not.toBeNull();
 
         component.ngOnDestroy();
-        expect(component.profileSub?.closed).toBeTruthy();
+        expect(component.profileSubscription?.closed).toBeTruthy();
     });
 
     it('should escape all falsy values', () => {
