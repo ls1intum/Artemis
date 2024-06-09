@@ -18,8 +18,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 import de.tum.in.www1.artemis.repository.competency.CompetencyJolRepository;
-import de.tum.in.www1.artemis.service.feature.Feature;
-import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyJolPairDTO;
 
 class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -35,9 +33,6 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
     @Autowired
     private CompetencyJolRepository competencyJOLRepository;
 
-    @Autowired
-    private FeatureToggleService featureToggleService;
-
     private final Competency[] competency = new Competency[3];
 
     private CompetencyProgress competencyProgress;
@@ -50,8 +45,6 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     @BeforeEach
     void setup() {
-        featureToggleService.enableFeature(Feature.StudentCourseAnalyticsDashboard);
-
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         final var course = courseUtilService.createCourse();
         courseId = course.getId();
@@ -69,7 +62,6 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
     @AfterEach
     void tearDown() {
         competencyJOLRepository.deleteAll();
-        featureToggleService.disableFeature(Feature.StudentCourseAnalyticsDashboard);
     }
 
     @Nested
