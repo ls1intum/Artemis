@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.gitlab;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_GITLAB;
+
 import java.net.URL;
 import java.util.Optional;
 
@@ -12,7 +14,7 @@ import org.springframework.stereotype.Component;
 import de.tum.in.www1.artemis.config.Constants;
 
 @Component
-@Profile("gitlab")
+@Profile(PROFILE_GITLAB)
 public class GitlabInfoContributor implements InfoContributor {
 
     @Value("${artemis.version-control.url}")

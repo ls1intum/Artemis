@@ -10,4 +10,5 @@ artemis:
         # In a multi node setup, this folder should be in a shared file system area (e.g. based on NFS), so that user can access the same files over multiple nodes.
         local-vcs-repo-path: ./local-vcs-repos
         url: http://localhost:8000
+        vc-access-token-max-lifetime-in-days: 365
 

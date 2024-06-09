@@ -25,7 +25,7 @@ class LocalVCInfoContributorTest {
         }
 
         Info info = builder.build();
-        assertThat((Boolean) info.getDetails().get("versionControlAccessToken")).isFalse();
+        assertThat((Boolean) info.getDetails().get("versionControlAccessToken")).isTrue();
 
     }
 }

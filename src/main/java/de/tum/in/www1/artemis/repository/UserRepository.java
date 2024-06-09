@@ -526,6 +526,17 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @Transactional // ok because of modifying query
     @Query("""
             UPDATE User user
+            SET user.vcsAccessToken = :vcsAccessToken,
+                user.vcsAccessTokenExpiryDate = :vcsAccessTokenExpiryDate
+            WHERE user.id = :userId
+            """)
+    void updateUserVCAccessToken(@Param("userId") long userId, @Param("vcsAccessToken") String vcsAccessToken,
+            @Param("vcsAccessTokenExpiryDate") ZonedDateTime vcsAccessTokenExpiryDate);
+
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE User user
             SET user.irisAccepted = :acceptDatetime
             WHERE user.id = :userId
             """)
