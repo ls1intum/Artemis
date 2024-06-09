@@ -261,10 +261,10 @@ public class LectureResource {
     }
 
     /**
-     * POST /courses/${courseId}/ingest
+     * POST /courses/{courseId}/ingest
      *
-     * @return the ResponseEntity with status 201 (Created) and with body the new lecture, or with status 400 (Bad Request) if the lecture has already an ID
-     * @throws URISyntaxException if the Location URI syntax is incorrect
+     * @param courseId the ID of the course for which all lectures should be ingested in pyris
+     * @return the ResponseEntity with status 200 (OK) and a message success or null if the operation failed
      */
     @PostMapping("courses/{courseId}/ingest")
     public ResponseEntity<String> IngestLectures(@PathVariable Long courseId) {

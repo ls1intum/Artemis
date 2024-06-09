@@ -159,6 +159,7 @@ public class LectureService {
      * Ingest the lectures when triggered by the ingest lectures button
      *
      * @param lectures set of lectures to be ingested
+     * @return returns the job token if the operation is successful else it returns null
      */
     public String ingestLecturesInPyris(Set<Lecture> lectures) {
         if (pyrisWebhookService.isPresent()) {
