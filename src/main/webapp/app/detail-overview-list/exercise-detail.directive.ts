@@ -38,7 +38,7 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
     /**
      * @return false if the detail is a {@link NotShownDetail}
      */
-    private isShownDetail() {
+    private isShownDetail(): boolean {
         return !!this.detail;
     }
 
