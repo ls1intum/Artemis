@@ -101,9 +101,8 @@ class RepositoryAccessServiceTest extends AbstractSpringIntegrationJenkinsGitlab
         programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, resultRequestBody);
 
         // Should throw an AccessForbiddenException because the submission limit is already reached.
-        AccessForbiddenException exception = catchThrowableOfType(
-                () -> repositoryAccessService.checkAccessRepositoryElseThrow(participation, student, programmingExercise, RepositoryActionType.WRITE),
-                AccessForbiddenException.class);
+        AccessForbiddenException exception = catchThrowableOfType(AccessForbiddenException.class,
+                () -> repositoryAccessService.checkAccessRepositoryElseThrow(participation, student, programmingExercise, RepositoryActionType.WRITE));
 
         assertThat(exception.getMessage()).isEqualTo("You are not allowed to access the repository of this programming exercise.");
     }

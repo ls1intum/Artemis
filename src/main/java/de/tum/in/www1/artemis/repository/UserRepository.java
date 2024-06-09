@@ -1059,11 +1059,16 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             INNER JOIN Exercise exercise
             ON user.login = :login
                 AND exercise.id = :exerciseId
-            INNER JOIN exercise.course course
+            LEFT JOIN exercise.course course
+            LEFT JOIN exercise.exerciseGroup.exam.course examCourse
             WHERE (course.studentGroupName MEMBER OF user.groups)
                     OR (course.teachingAssistantGroupName MEMBER OF user.groups)
                     OR (course.editorGroupName MEMBER OF user.groups)
                     OR (course.instructorGroupName MEMBER OF user.groups)
+                    OR (examCourse.studentGroupName MEMBER OF user.groups)
+                    OR (examCourse.teachingAssistantGroupName MEMBER OF user.groups)
+                    OR (examCourse.editorGroupName MEMBER OF user.groups)
+                    OR (examCourse.instructorGroupName MEMBER OF user.groups)
                     OR (:#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastStudentInExercise(@Param("login") String login, @Param("exerciseId") long exerciseId);
@@ -1074,10 +1079,14 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             INNER JOIN Exercise exercise
             ON user.login = :login
                 AND exercise.id = :exerciseId
-            INNER JOIN exercise.course course
+            LEFT JOIN exercise.course course
+            LEFT JOIN exercise.exerciseGroup.exam.course examCourse
             WHERE (course.teachingAssistantGroupName MEMBER OF user.groups)
                     OR (course.editorGroupName MEMBER OF user.groups)
                     OR (course.instructorGroupName MEMBER OF user.groups)
+                    OR (examCourse.teachingAssistantGroupName MEMBER OF user.groups)
+                    OR (examCourse.editorGroupName MEMBER OF user.groups)
+                    OR (examCourse.instructorGroupName MEMBER OF user.groups)
                     OR (:#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastTeachingAssistantInExercise(@Param("login") String login, @Param("exerciseId") long exerciseId);
@@ -1088,9 +1097,12 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             INNER JOIN Exercise exercise
             ON user.login = :login
                 AND exercise.id = :exerciseId
-            INNER JOIN exercise.course course
+            LEFT JOIN exercise.course course
+            LEFT JOIN exercise.exerciseGroup.exam.course examCourse
             WHERE (course.editorGroupName MEMBER OF user.groups)
                     OR (course.instructorGroupName MEMBER OF user.groups)
+                    OR (examCourse.editorGroupName MEMBER OF user.groups)
+                    OR (examCourse.instructorGroupName MEMBER OF user.groups)
                     OR (:#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastEditorInExercise(@Param("login") String login, @Param("exerciseId") long exerciseId);
@@ -1101,8 +1113,10 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             INNER JOIN Exercise exercise
             ON user.login = :login
                 AND exercise.id = :exerciseId
-            INNER JOIN exercise.course course
+            LEFT JOIN exercise.course course
+            LEFT JOIN exercise.exerciseGroup.exam.course examCourse
             WHERE (course.instructorGroupName MEMBER OF user.groups)
+                    OR (examCourse.instructorGroupName MEMBER OF user.groups)
                     OR (:#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastInstructorInExercise(@Param("login") String login, @Param("exerciseId") long exerciseId);

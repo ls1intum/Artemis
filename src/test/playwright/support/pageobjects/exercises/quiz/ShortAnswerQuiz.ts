@@ -17,7 +17,7 @@ export class ShortAnswerQuiz {
     }
 
     async submit() {
-        const responsePromise = this.page.waitForResponse(`${EXERCISE_BASE}/*/submissions/live`);
+        const responsePromise = this.page.waitForResponse(`${EXERCISE_BASE}/*/submissions/live?submit=true`);
         await this.page.locator('#submit-quiz').click();
         await responsePromise;
     }

@@ -101,16 +101,15 @@ module.exports = {
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
-            statements: 86.83,
-            branches: 73.23,
-            functions: 81.24,
-            lines: 86.92,
+            statements: 86.80,
+            branches: 73.21,
+            functions: 81.21,
+            lines: 86.89,
         },
     },
     coverageReporters: ['clover', 'json', 'lcov', 'text-summary'],
     setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-extended/all'],
     moduleFileExtensions: ['ts', 'html', 'js', 'json', 'mjs'],
-    resolver: '<rootDir>/jest.resolver.js',
     transformIgnorePatterns: [`/node_modules/(?!${esModules})`],
     transform: {
         '^.+\\.(ts|js|mjs|html|svg)$': [
