@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_SCHEDULING;
 import static de.tum.in.www1.artemis.config.StartupDelayConfig.NOTIFICATION_SCHEDULE_DELAY_SEC;
 
 import java.time.Instant;
@@ -25,7 +26,7 @@ import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 
 @Service
-@Profile("scheduling")
+@Profile(PROFILE_SCHEDULING)
 public class NotificationScheduleService {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationScheduleService.class);
