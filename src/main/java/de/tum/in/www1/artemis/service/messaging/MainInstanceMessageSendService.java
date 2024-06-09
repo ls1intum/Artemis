@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.messaging;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_SCHEDULING;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -9,7 +11,7 @@ import org.springframework.stereotype.Service;
  * Important: There is no need to go through the broker, as this class is only active on the main instance!
  */
 @Service
-@Profile("scheduling")
+@Profile(PROFILE_SCHEDULING)
 public class MainInstanceMessageSendService implements InstanceMessageSendService {
 
     public final InstanceMessageReceiveService instanceMessageReceiveService;
@@ -133,5 +135,15 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
     @Override
     public void sendParticipantScoreSchedule(Long exerciseId, Long participantId, Long resultIdToBeDeleted) {
         instanceMessageReceiveService.processScheduleParticipantScore(exerciseId, participantId, resultIdToBeDeleted);
+    }
+
+    @Override
+    public void sendQuizExerciseStartSchedule(Long exerciseId) {
+        instanceMessageReceiveService.processScheduleQuizStart(exerciseId);
+    }
+
+    @Override
+    public void sendQuizExerciseStartCancel(Long exerciseId) {
+        instanceMessageReceiveService.processCancelQuizStart(exerciseId);
     }
 }
