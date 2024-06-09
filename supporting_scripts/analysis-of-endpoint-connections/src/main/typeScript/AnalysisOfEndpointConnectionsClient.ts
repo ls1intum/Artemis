@@ -1,5 +1,13 @@
-import * as ts from 'typescript';
-import * as fs from 'node:fs';
+import {
+    createSourceFile, forEachChild,
+    isCallExpression, isPropertyAccessExpression,
+    isPropertyDeclaration,
+    isStringLiteral,
+    ScriptTarget,
+    SourceFile,
+    Node, createProgram
+} from 'typescript';
+import { readFileSync } from 'node:fs';
 
 // Get the file names from the command line arguments
 const fileNames = process.argv.slice(2);
@@ -7,7 +15,8 @@ const HTTP_METHODS = ['get', 'post', 'put', 'delete'];
 
 for (const fileName of fileNames.filter(fileName => fileName.endsWith('.ts')))  {
     // Load the TypeScript file
-    const sourceFile = ts.createSourceFile(fileName, fs.readFileSync(fileName).toString(), ts.ScriptTarget.ES2022, true);
+    const sourceFile = createSourceFile(fileName, readFileSync(fileName).toString(), ScriptTarget.ES2022, true);
+    console.log(fileName);
 
     // Store class property definitions
     const classProperties: { [key: string]: string } = {};
@@ -17,21 +26,21 @@ for (const fileName of fileNames.filter(fileName => fileName.endsWith('.ts')))  
 };
 
 // This function will be called for each node in the AST
-function visit(node: ts.Node, classProperties: { [key: string]: string }, sourceFile: ts.SourceFile, fileName: string) {
-    if (ts.isPropertyDeclaration(node) && node.initializer && ts.isStringLiteral(node.initializer)) {
-        const name = node.name.getText();
+function visit(node: Node, classProperties: { [key: string]: string }, sourceFile: SourceFile, fileName: string) {
+    if (isPropertyDeclaration(node) && node.initializer && isStringLiteral(node.initializer)) {
+        const key = node.name.getText();
         const value = node.initializer.getText().slice(1, -1); // Remove the quotes
-        classProperties[name] = value;
+        classProperties[key] = value;
     }
 
-    if (ts.isCallExpression(node)) {
+    if (isCallExpression(node)) {
         const expression = node.expression;
         // Check if the expression is a property access expression (e.g. httpClient.get)
-        if (ts.isPropertyAccessExpression(expression)) {
-            const name = expression.name.getText();
+        if (isPropertyAccessExpression(expression)) {
+            const methodName = expression.name.getText();
             // Check if the property name is one of the httpClient methods
-            if (HTTP_METHODS.includes(name)) {
-                console.log(`Found REST call: ${name}`);
+            if (HTTP_METHODS.includes(methodName)) {
+                console.log(`Found REST call: ${methodName}`);
                 if (node.arguments.length > 0) {
                     let url = node.arguments[0].getText();
                     // Replace class properties in the URL
@@ -39,6 +48,11 @@ function visit(node: ts.Node, classProperties: { [key: string]: string }, source
                         url = url.replace(new RegExp(`\\$\\{this.${prop}\\}`, 'g'), classProperties[prop]);
                     }
                     console.log(`with URL: ${url}`);
+
+                    // Log the other arguments
+                    for (let i = 1; i < node.arguments.length; i++) {
+                        console.log(`Argument ${i}: ${node.arguments[i].getText()}`);
+                    }
                 } else {
                     console.log('No arguments provided for this REST call');
                 }
@@ -50,5 +64,5 @@ function visit(node: ts.Node, classProperties: { [key: string]: string }, source
     }
 
     // Continue traversing the AST
-    ts.forEachChild(node, (childNode) => visit(childNode, classProperties, sourceFile, fileName));
+    forEachChild(node, (childNode) => visit(childNode, classProperties, sourceFile, fileName));
 }
