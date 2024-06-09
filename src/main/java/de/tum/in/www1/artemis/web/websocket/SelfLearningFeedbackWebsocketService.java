@@ -39,8 +39,9 @@ public class SelfLearningFeedbackWebsocketService {
      */
     public void broadcastNewSelfLearningRequest(StudentParticipation studentParticipation, SelfLearningFeedbackRequestDTO selfLearningFeedbackRequest) {
         final Exercise exercise = studentParticipation.getExercise();
-        if (exercise.isExamExercise() || ZonedDateTime.now().isAfter(exercise.getDueDate()))
+        if (exercise.isExamExercise() || ZonedDateTime.now().isAfter(exercise.getDueDate())) {
             return;
+        }
 
         var students = studentParticipation.getStudents();
 
