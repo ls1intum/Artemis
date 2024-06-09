@@ -4,7 +4,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { NgbDropdownModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyFormComponent, CompetencyFormData } from 'app/course/competencies/competency-form/competency-form.component';
 import { CompetencyService } from 'app/course/competencies/competency.service';
-import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
+import { CompetencyTaxonomy } from 'app/entities/competency.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
@@ -59,17 +59,7 @@ describe('CompetencyFormComponent', () => {
     it('should submit valid form', fakeAsync(() => {
         // stubbing competency service for asynchronous validator
         const competencyService = TestBed.inject(CompetencyService);
-
-        const competencyOfResponse: Competency = {};
-        competencyOfResponse.id = 1;
-        competencyOfResponse.title = 'test';
-
-        const response: HttpResponse<Competency[]> = new HttpResponse({
-            body: [competencyOfResponse],
-            status: 200,
-        });
-
-        const getAllForCourseSpy = jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(response));
+        const getAllTitlesSpy = jest.spyOn(competencyService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: ['test'], status: 200 })));
 
         competencyFormComponentFixture.detectChanges();
 
@@ -92,7 +82,7 @@ describe('CompetencyFormComponent', () => {
         competencyFormComponentFixture.detectChanges();
         tick(250); // async validator fires after 250ms and fully filled in form should now be valid!
         expect(competencyFormComponent.form.valid).toBeTrue();
-        expect(getAllForCourseSpy).toHaveBeenCalledOnce();
+        expect(getAllTitlesSpy).toHaveBeenCalledOnce();
         const submitFormSpy = jest.spyOn(competencyFormComponent, 'submitForm');
         const submitFormEventSpy = jest.spyOn(competencyFormComponent.formSubmitted, 'emit');
 

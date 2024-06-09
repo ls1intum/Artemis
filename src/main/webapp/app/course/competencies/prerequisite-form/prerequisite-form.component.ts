@@ -9,25 +9,16 @@ import dayjs from 'dayjs/esm';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { Prerequisite } from 'app/entities/prerequisite.model';
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { titleUniqueValidator } from '../competency-form/competency-form.component';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 @Component({
     selector: 'jhi-prerequisite-form',
     templateUrl: './prerequisite-form.component.html',
-    imports: [
-        ArtemisCompetenciesModule,
-        ArtemisSharedCommonModule,
-        ArtemisSharedComponentModule,
-        FormDateTimePickerModule,
-        ArtemisMarkdownEditorModule,
-        FontAwesomeModule,
-        ReactiveFormsModule,
-    ],
+    imports: [ArtemisCompetenciesModule, ArtemisSharedCommonModule, ArtemisSharedComponentModule, FormDateTimePickerModule, ArtemisMarkdownEditorModule, ReactiveFormsModule],
     standalone: true,
 })
 export class PrerequisiteFormComponent implements OnInit {
