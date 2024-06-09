@@ -508,7 +508,7 @@ export class ExerciseAPIRequests {
             ...multipleChoiceSubmissionTemplate,
             submittedAnswers,
         };
-        await this.page.request.post(`${EXERCISE_BASE}/${quizExercise.id}/submissions/live`, { data: multipleChoiceSubmission });
+        await this.page.request.post(`${EXERCISE_BASE}/${quizExercise.id}/submissions/live?submit=true`, { data: multipleChoiceSubmission });
     }
 
     /**
@@ -540,7 +540,7 @@ export class ExerciseAPIRequests {
             ...shortAnswerSubmissionTemplate,
             submittedAnswers,
         };
-        await this.page.request.post(`${EXERCISE_BASE}/${quizExercise.id}/submissions/live`, { data: shortAnswerSubmission });
+        await this.page.request.post(`${EXERCISE_BASE}/${quizExercise.id}/submissions/live?submit=true`, { data: shortAnswerSubmission });
     }
 
     /**
