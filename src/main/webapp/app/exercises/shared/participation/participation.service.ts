@@ -66,6 +66,16 @@ export class ParticipationService {
             .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
     }
 
+    /**
+     * starts the student participation for the quiz exercise with the identifier quizExerciseId
+     * @param quizExerciseId The unique identifier of the quiz exercise
+     */
+    startQuizParticipation(quizExerciseId: number): Observable<EntityResponseType> {
+        return this.http
+            .post<StudentParticipation>(`api/quiz-exercises/${quizExerciseId}/start-participation`, {}, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
+    }
+
     findAllParticipationsByExercise(exerciseId: number, withLatestResults = false): Observable<EntityArrayResponseType> {
         const options = createRequestOption({ withLatestResults });
         return this.http

@@ -233,7 +233,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
 
         List<Result> athenaResults = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
 
-        if (athenaResults.size() >= 3) {
+        if (athenaResults.size() >= 20) {
             throw new BadRequestAlertException("Maximum number of AI feedback requests reached.", "participation", "preconditions not met");
         }
     }

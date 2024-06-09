@@ -13,6 +13,7 @@ import { Router } from '@angular/router';
 import { faPenAlt } from '@fortawesome/free-solid-svg-icons';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
+import { sortCourses } from 'app/shared/util/course.util';
 
 @Component({
     selector: 'jhi-overview',
@@ -71,7 +72,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
                     res.body.courses.forEach((courseDto: CourseForDashboardDTO) => {
                         courses.push(courseDto.course);
                     });
-                    this.courses = courses.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
+                    this.courses = sortCourses(courses);
                     this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(this.courses, courseOverviewTour, true);
 
                     this.nextRelevantExams = res.body.activeExams ?? [];
@@ -89,7 +90,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
         if (this.courses.length <= 5) {
             this.regularCourses = this.courses;
         } else {
-            const lastAccessedCourseIds = this.courseAccessStorageService.getLastAccessedCourses();
+            const lastAccessedCourseIds = this.courseAccessStorageService.getLastAccessedCourses(CourseAccessStorageService.STORAGE_KEY);
             this.recentlyAccessedCourses = this.courses.filter((course) => lastAccessedCourseIds.includes(course.id!));
             this.regularCourses = this.courses.filter((course) => !lastAccessedCourseIds.includes(course.id!));
         }
