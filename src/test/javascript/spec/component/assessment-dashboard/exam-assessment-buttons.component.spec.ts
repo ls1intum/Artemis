@@ -24,7 +24,6 @@ import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-rout
 describe('ExamAssessmentButtons', () => {
     let examAssessmentButtonsFixture: ComponentFixture<ExamAssessmentButtonsComponent>;
     let examAssessmentButtonsComponent: ExamAssessmentButtonsComponent;
-    let studentExams: StudentExam[] = [];
     let course: Course;
     let studentOne: User;
     let studentExamOne: StudentExam | undefined;
@@ -59,13 +58,8 @@ describe('ExamAssessmentButtons', () => {
             },
         }),
         MockProvider(StudentExamService, {
-            findAllForExam: () => {
-                return of(
-                    new HttpResponse({
-                        body: studentExams,
-                        status: 200,
-                    }),
-                );
+            getLongestWorkingTimeForExam: () => {
+                return of(studentExamOne?.workingTime ?? 0);
             },
         }),
         MockProvider(CourseManagementService, {
@@ -119,8 +113,6 @@ describe('ExamAssessmentButtons', () => {
         studentExamOne.id = 1;
         studentExamOne.workingTime = 70;
         studentExamOne.user = studentOne;
-
-        studentExams = [studentExamOne];
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
