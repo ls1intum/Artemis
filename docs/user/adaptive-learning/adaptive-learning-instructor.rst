@@ -1,4 +1,4 @@
-Managing Adaptive Learning (Instructor)
+Manage Adaptive Learning (Instructor)
 =======================================
 
 .. contents:: Content of this document
