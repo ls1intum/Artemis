@@ -65,7 +65,6 @@ public class QuizStatisticService {
      * @param quizExercise the changed QuizExercise object which will be used to recalculate the existing Results and Statistics
      */
     public void recalculateStatistics(QuizExercise quizExercise) {
-
         // reset all statistics
         if (quizExercise.getQuizPointStatistic() != null) {
             quizExercise.getQuizPointStatistic().resetStatistic();
@@ -83,14 +82,12 @@ public class QuizStatisticService {
 
         // add the Results in every participation of the given quizExercise to the statistics
         for (StudentParticipation participation : studentParticipationRepository.findByExerciseId(quizExercise.getId())) {
-
             Result latestRatedResult = null;
             Result latestUnratedResult = null;
 
             var results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participation.getId());
             // update all Results of a participation
             for (Result result : results) {
-
                 // find the latest rated Result
                 if (Boolean.TRUE.equals(result.isRated()) && (latestRatedResult == null || latestRatedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
                     latestRatedResult = result;

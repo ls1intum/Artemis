@@ -275,7 +275,7 @@ public class QuizExerciseFactory {
         quizExercise.setPresentationScoreEnabled(false);
         quizExercise.setIsOpenForPractice(false);
         quizExercise.setAllowedNumberOfAttempts(1);
-        quizExercise.setDuration(10);
+        quizExercise.setDuration(120);
         quizExercise.setRandomizeQuestionOrder(true);
         quizExercise.setQuizMode(quizMode);
         if (quizMode == QuizMode.SYNCHRONIZED) {

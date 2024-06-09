@@ -49,7 +49,7 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.ExerciseSpecificationService;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -69,7 +69,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private final QuizSubmissionRepository quizSubmissionRepository;
 
-    private final QuizScheduleService quizScheduleService;
+    private final InstanceMessageSendService instanceMessageSendService;
 
     private final QuizStatisticService quizStatisticService;
 
@@ -81,12 +81,12 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
             QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService, QuizBatchService quizBatchService,
-            ExerciseSpecificationService exerciseSpecificationService, FileService fileService) {
+            ExerciseSpecificationService exerciseSpecificationService, FileService fileService, InstanceMessageSendService instanceMessageSendService) {
         super();
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
-        this.quizScheduleService = quizScheduleService;
+        this.instanceMessageSendService = instanceMessageSendService;
         this.quizStatisticService = quizStatisticService;
         this.quizBatchService = quizBatchService;
         this.exerciseSpecificationService = exerciseSpecificationService;
@@ -187,25 +187,22 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         QuizExercise savedQuizExercise = save(quizExercise);
 
         // in case the quiz has not yet started or the quiz is currently running, we have to clean up
-        quizScheduleService.cancelScheduledQuizStart(savedQuizExercise.getId());
-        quizScheduleService.clearQuizData(savedQuizExercise.getId());
+        instanceMessageSendService.sendQuizExerciseStartSchedule(savedQuizExercise.getId());
 
         // clean up the statistics
         quizStatisticService.recalculateStatistics(savedQuizExercise);
     }
 
     public void cancelScheduledQuiz(Long quizExerciseId) {
-        quizScheduleService.cancelScheduledQuizStart(quizExerciseId);
-        quizScheduleService.clearQuizData(quizExerciseId);
+        instanceMessageSendService.sendQuizExerciseStartCancel(quizExerciseId);
     }
 
     /**
      * Update a QuizExercise so that it ends at a specific date and moves the start date of the batches as required. Does not save the quiz.
      *
      * @param quizExercise The quiz to end
-     * @param endDate      When the quize should end
      */
-    public void endQuiz(QuizExercise quizExercise, ZonedDateTime endDate) {
+    public void endQuiz(QuizExercise quizExercise) {
         quizExercise.setDueDate(ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS));
         quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(quizBatchService.quizBatchStartDate(quizExercise, batch.getStartTime())));
     }
@@ -430,7 +427,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
         if (savedQuizExercise.isCourseExercise()) {
             // only schedule quizzes for course exercises, not for exam exercises
-            quizScheduleService.scheduleQuizStart(savedQuizExercise.getId());
+            instanceMessageSendService.sendQuizExerciseStartSchedule(savedQuizExercise.getId());
         }
 
         return savedQuizExercise;

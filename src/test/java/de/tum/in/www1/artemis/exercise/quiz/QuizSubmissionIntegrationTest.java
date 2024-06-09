@@ -9,7 +9,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.io.IOException;
-import java.security.Principal;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -43,6 +42,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.AnswerOption;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropMapping;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
@@ -74,7 +74,7 @@ import de.tum.in.www1.artemis.service.quiz.QuizExerciseService;
 import de.tum.in.www1.artemis.service.quiz.QuizStatisticService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.QuizUpdaterService;
-import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
+import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
 
 class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -132,55 +132,16 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     ParticipationUtilService participationUtilService;
 
     @Autowired
-    QuizSubmissionWebsocketService quizSubmissionWebsocketService;
-
-    @Autowired
     QuizUpdaterService quizUpdaterService;
 
     @BeforeEach
     void init() {
-        // do not use the schedule service based on a time interval in the tests, because this would result in flaky tests that run much slower
-        quizScheduleService.stopSchedule();
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, 0, 1);
     }
 
     @AfterEach
     protected void resetSpyBeans() {
         super.resetSpyBeans();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testQuizSubmitWebsocket() {
-        QuizExercise quizExercise = setupQuizExerciseParameters();
-        quizExercise = quizExerciseService.save(quizExercise);
-
-        QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, null);
-
-        String username = TEST_PREFIX + "student1";
-        Principal principal = () -> username;
-
-        quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, principal);
-        verify(websocketMessagingService, never()).sendMessageToUser(eq(username), any(), any());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testQuizSubmitUnactiveQuizWebsocket() {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusDays(1), null, QuizMode.SYNCHRONIZED);
-        quizExercise.duration(240);
-
-        quizUpdaterService.updateQuizQuestions(quizExercise);
-
-        quizExerciseRepository.save(quizExercise);
-
-        QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, null);
-
-        String username = TEST_PREFIX + "student1";
-        Principal principal = () -> username;
-
-        quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, principal);
-        verify(websocketMessagingService).sendMessageToUser(eq(username), any(), any());
     }
 
     @Test
@@ -351,23 +312,12 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "student4", roles = "USER")
     @EnumSource(QuizMode.class)
-    void testQuizSubmitLiveMode_badRequest_notActive(QuizMode quizMode) throws Exception {
+    void testQuizSubmitLiveMode_forbidden_notActive(QuizMode quizMode) throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusSeconds(20), ZonedDateTime.now().plusSeconds(30), quizMode);
         quizExercise.setDuration(10);
         quizExercise = quizExerciseService.save(quizExercise);
 
-        if (quizMode != QuizMode.SYNCHRONIZED) {
-            var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().plusSeconds(10)));
-            quizExerciseUtilService.joinQuizBatch(quizExercise, batch, TEST_PREFIX + "student4");
-        }
-
-        QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, null);
-        request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
-
-        // Delete the quiz exercise to not interfere with other tests
-        if (quizMode == QuizMode.SYNCHRONIZED) {
-            quizExerciseRepository.delete(quizExercise);
-        }
+        request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -381,13 +331,10 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(ZonedDateTime.now().minusMinutes(5)));
         quizExerciseService.save(quizExercise);
 
-        quizScheduleService.clearAllQuizData();
-        quizScheduleService.clearQuizData(quizExercise.getId());
-
         QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, ZonedDateTime.now());
 
-        // submit quiz more times than the allowed number of attempts, expected status = BAD_REQUEST
-        request.postWithResponseBody("/api/exercises/" + invalidExerciseId + "/submissions/live", quizSubmission, Result.class, HttpStatus.NOT_FOUND);
+        // submit quiz more times than the allowed number of attempts
+        request.postWithResponseBody("/api/exercises/" + invalidExerciseId + "/submissions/live", quizSubmission, Result.class, HttpStatus.FORBIDDEN);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -407,6 +354,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         for (int i = 1; i <= NUMBER_OF_STUDENTS; i++) {
             QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, i, true, null);
             userUtilService.changeUser(TEST_PREFIX + "student" + i);
+
             Result receivedResult = request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/practice", quizSubmission, Result.class, HttpStatus.OK);
             assertThat(((QuizSubmission) receivedResult.getSubmission()).getSubmittedAnswers()).hasSameSizeAs(quizSubmission.getSubmittedAnswers());
         }
@@ -541,13 +489,13 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testQuizSubmitPreview_badRequest_noQuiz() throws Exception {
-        request.postWithResponseBody("/api/exercises/" + 11223344 + "/submissions/preview", new QuizSubmission(), Result.class, HttpStatus.NOT_FOUND);
+        request.postWithResponseBody("/api/exercises/" + 11223344 + "/submissions/preview", new QuizSubmission(), Result.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testQuizSubmitPractice_badRequest_noQuiz() throws Exception {
-        request.postWithResponseBody("/api/exercises/" + 11223344 + "/submissions/practice", new QuizSubmission(), Result.class, HttpStatus.NOT_FOUND);
+        request.postWithResponseBody("/api/exercises/" + 11223344 + "/submissions/practice", new QuizSubmission(), Result.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -616,7 +564,6 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     }
 
     @Test
-
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testQuizSubmitScheduledAndDeleted() throws Exception {
         Course course = courseUtilService.createCourse();
@@ -631,6 +578,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         log.debug("// Saving the quiz initially");
         quizExercise = quizExerciseService.save(quizExercise);
         checkQuizNotStarted(publishQuizPath);
+
+        request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
 
         // check that submission fails
         QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
@@ -780,6 +729,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
         QuizSubmission quizSubmission = new QuizSubmission();
         quizSubmission.addSubmittedAnswers(submittedAnswer);
+        request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
+
         request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class,
                 tooLarge ? HttpStatus.BAD_REQUEST : HttpStatus.OK);
     }
@@ -843,14 +794,19 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
             assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExercise.getId())).isEmpty();
             assertThat(participationRepository.findByExerciseId(quizExercise.getId())).isEmpty();
 
+            request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
+
             if (quizMode != QuizMode.SYNCHRONIZED) {
                 var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(10)));
-                quizExerciseUtilService.joinQuizBatch(quizExercise, batch, TEST_PREFIX + "student1");
+                request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO(batch.getPassword()), QuizBatch.class, HttpStatus.OK);
+
+                // quizExerciseUtilService.joinQuizBatch(quizExercise, batch, TEST_PREFIX + "student1");
             }
 
             QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, null);
-            QuizSubmission updatedSubmission = request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, QuizSubmission.class,
-                    HttpStatus.OK);
+
+            QuizSubmission updatedSubmission = request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission,
+                    QuizSubmission.class, HttpStatus.OK);
             // check whether submission flag was updated
             assertThat(updatedSubmission.isSubmitted()).isTrue();
             // check whether all answers were submitted properly
@@ -867,16 +823,18 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
             quizExercise.setDuration(10);
             quizExercise = quizExerciseService.save(quizExercise);
 
+            request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
+
             if (quizMode != QuizMode.SYNCHRONIZED) {
                 var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(5)));
-                quizExerciseUtilService.joinQuizBatch(quizExercise, batch, TEST_PREFIX + "student3");
+                request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO(batch.getPassword()), QuizBatch.class, HttpStatus.OK);
             }
 
             // create a submission for the first time
             QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, ZonedDateTime.now());
-            quizScheduleService.updateSubmission(quizExercise.getId(), TEST_PREFIX + "student3", quizSubmission);
             // submit quiz for the second time, expected status = BAD_REQUEST
-            request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
+            request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission, Result.class, HttpStatus.OK);
+            request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
         }
     }
 }
