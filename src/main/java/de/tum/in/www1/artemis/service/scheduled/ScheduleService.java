@@ -20,6 +20,8 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.domain.enumeration.ParticipationLifecycle;
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.service.ExerciseLifecycleService;
 import de.tum.in.www1.artemis.service.ParticipationLifecycleService;
 import de.tum.in.www1.artemis.service.util.Tuple;
@@ -76,6 +78,22 @@ public class ScheduleService {
         // no exercise should be scheduled more than once.
         cancelScheduledTaskForLifecycle(exercise.getId(), lifecycle);
         ScheduledFuture<?> scheduledTask = exerciseLifecycleService.scheduleTask(exercise, lifecycle, task);
+        addScheduledTask(exercise, lifecycle, Set.of(scheduledTask));
+    }
+
+    /**
+     * Schedule a task for the given QuizExercise for the provided ExerciseLifecycle.
+     *
+     * @param exercise  QuizExercise
+     * @param batch     QuizBatch
+     * @param lifecycle ExerciseLifecycle
+     * @param task      Runnable task to be executed on the lifecycle hook
+     */
+    public void scheduleTask(QuizExercise exercise, QuizBatch batch, ExerciseLifecycle lifecycle, Runnable task) {
+        // check if already scheduled for exercise. if so, cancel.
+        // no exercise should be scheduled more than once.
+        cancelScheduledTaskForLifecycle(exercise.getId(), lifecycle);
+        ScheduledFuture<?> scheduledTask = exerciseLifecycleService.scheduleTask(exercise, batch, lifecycle, task);
         addScheduledTask(exercise, lifecycle, Set.of(scheduledTask));
     }
 
@@ -169,7 +187,7 @@ public class ScheduleService {
     }
 
     /**
-     * cancels all futures tasks, only us this for testing purposes
+     * cancels all futures tasks, only use this for testing purposes
      */
     public void clearAllTasks() {
         scheduledParticipationTasks.values().forEach(futures -> futures.forEach(future -> future.cancel(true)));
