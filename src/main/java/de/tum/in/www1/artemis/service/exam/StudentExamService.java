@@ -691,9 +691,9 @@ public class StudentExamService {
                             student.getParticipantIdentifier(), ex.getMessage(), ex);
                 }
             }
-            studentExam.setStudentParticipations(generatedParticipations);
-            this.studentExamRepository.save(studentExam);
         }
+        studentExam.setStudentParticipations(generatedParticipations);
+        this.studentExamRepository.save(studentExam);
     }
 
     /**

@@ -152,8 +152,8 @@ public class ExamSubmissionService {
      * @return the submission. If a submission already exists for the exercise we will set the id
      */
     public Submission preventMultipleSubmissions(Exercise exercise, Submission submission, User user) {
-        // Return immediately if it is not an exam submissions or if it is a programming exercise
-        if (!exercise.isExamExercise() || exercise instanceof ProgrammingExercise) {
+        // Return immediately if it is not an exam submissions or if it is a programming exercise or if it is a test exam exercise
+        if (!exercise.isExamExercise() || exercise instanceof ProgrammingExercise || exercise.getExamViaExerciseGroupOrCourseMember().isTestExam()) {
             return submission;
         }
 
