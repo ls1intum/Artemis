@@ -66,7 +66,7 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic {
 
             if (mcSubmittedAnswer.getSelectedOptions() != null) {
                 // change rated answerCounter if answer is selected
-                for (AnswerCounter answerCounter : answerCounters) {
+                for (AnswerCounter answerCounter : getAnswerCounters()) {
                     if (mcSubmittedAnswer.getSelectedOptions().contains(answerCounter.getAnswer())) {
                         answerCounter.setRatedCounter(answerCounter.getRatedCounter() + change);
                     }
@@ -83,7 +83,7 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic {
             setParticipantsUnrated(getParticipantsUnrated() + change);
 
             if (mcSubmittedAnswer.getSelectedOptions() != null) {
-                for (AnswerCounter answerCounter : answerCounters) {
+                for (AnswerCounter answerCounter : getAnswerCounters()) {
                     // change unrated answerCounter if answer is selected
                     if (mcSubmittedAnswer.getSelectedOptions().contains(answerCounter.getAnswer())) {
                         answerCounter.setUnratedCounter(answerCounter.getUnratedCounter() + change);
@@ -104,7 +104,7 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic {
     @Override
     public void resetStatistic() {
         super.resetStatistic();
-        for (AnswerCounter answerCounter : answerCounters) {
+        for (AnswerCounter answerCounter : getAnswerCounters()) {
             answerCounter.setRatedCounter(0);
             answerCounter.setUnratedCounter(0);
         }

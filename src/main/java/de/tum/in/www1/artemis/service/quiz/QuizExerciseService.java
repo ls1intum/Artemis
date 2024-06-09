@@ -18,6 +18,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
@@ -244,7 +245,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         for (var question : quizExercise.getQuizQuestions()) {
             if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
                 if (dragAndDropQuestion.getBackgroundFilePath() != null) {
-                    saveDndQuestionBackground(dragAndDropQuestion, fileMap);
+                    saveDndQuestionBackground(dragAndDropQuestion, fileMap, null);
                 }
                 handleDndQuizDragItemsCreation(dragAndDropQuestion, fileMap);
             }
@@ -311,7 +312,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             }
             else {
                 // Path changed and file was provided
-                saveDndQuestionBackground(dragAndDropQuestion, fileMap);
+                saveDndQuestionBackground(dragAndDropQuestion, fileMap, questionUpdate.getId());
             }
         }
 
@@ -356,17 +357,18 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     /**
      * Saves the background image of a drag and drop question without saving the question itself
      *
-     * @param question the drag and drop question
-     * @param files    all provided files
+     * @param question   the drag and drop question
+     * @param files      all provided files
+     * @param questionId the id of the question, null on creation
      */
-    public void saveDndQuestionBackground(DragAndDropQuestion question, Map<String, MultipartFile> files) throws IOException {
+    public void saveDndQuestionBackground(DragAndDropQuestion question, Map<String, MultipartFile> files, @Nullable Long questionId) throws IOException {
         MultipartFile file = files.get(question.getBackgroundFilePath());
         if (file == null) {
             // Should not be reached as the file is validated before
             throw new BadRequestAlertException("The file " + question.getBackgroundFilePath() + " was not provided", ENTITY_NAME, null);
         }
 
-        question.setBackgroundFilePath(saveDragAndDropImage(FilePathService.getDragAndDropBackgroundFilePath(), file, null).toString());
+        question.setBackgroundFilePath(saveDragAndDropImage(FilePathService.getDragAndDropBackgroundFilePath(), file, questionId).toString());
     }
 
     /**

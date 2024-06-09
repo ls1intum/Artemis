@@ -24,6 +24,10 @@ public class QuizIdAssigner {
      * @param <T>   the type of objects in the collection, which must extend TempIdObject
      */
     public static <T extends TempIdObject> void assignIds(Collection<T> items) {
+        if (items == null) {
+            throw new RuntimeException("Items should not be null");
+        }
+
         Long currentId = items.stream().filter(item -> item.getId() != null).mapToLong(TempIdObject::getId).max().orElse(0L);
 
         for (TempIdObject item : items) {
