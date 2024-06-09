@@ -56,7 +56,7 @@
             },
             "cloneIntelliJ": {
                 "button": "In IntelliJ klonen",
-                "helpIcon": "Klone das Repository direkt in IntelliJ. Diese Feature benötigt die Jetbrains Toolbox."
+                "helpIcon": "Klone das Repository direkt in IntelliJ. Dieses Feature benötigt die Jetbrains Toolbox."
             },
             "goToBuildPlan": "Zum Build Plan gehen",
             "openTextEditor": "Texteditor öffnen",
