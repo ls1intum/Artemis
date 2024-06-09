@@ -49,6 +49,7 @@ import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -257,6 +258,25 @@ public class LectureResource {
         final var savedLecture = lectureImportService.importLecture(sourceLecture, destinationCourse);
         channelService.createLectureChannel(savedLecture, Optional.empty());
         return ResponseEntity.created(new URI("/api/lectures/" + savedLecture.getId())).body(savedLecture);
+    }
+
+    /**
+     * POST /courses/${courseId}/ingest
+     *
+     * @return the ResponseEntity with status 201 (Created) and with body the new lecture, or with status 400 (Bad Request) if the lecture has already an ID
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PostMapping("courses/{courseId}/ingest")
+    public ResponseEntity<String> IngestLectures(@PathVariable Long courseId) {
+        log.debug("REST request to ingest lectures of course : {}", courseId);
+        Course course = courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courseId);
+        try {
+            return ResponseEntity.ok().body(lectureService.ingestLecturesInPyris(course.getLectures()));
+        }
+        catch (Exception e) {
+            log.error("Could not ingestfile", e);
+            throw new InternalServerErrorException("Could not ingest file");
+        }
     }
 
     /**

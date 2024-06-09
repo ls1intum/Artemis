@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisCourseSettings;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
@@ -31,6 +33,7 @@ import de.tum.in.www1.artemis.domain.lecture.VideoUnit;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
+import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisWebhookService;
 
 @Profile(PROFILE_CORE)
@@ -47,12 +50,15 @@ public class LectureImportService {
 
     private final Optional<PyrisWebhookService> pyrisWebhookService;
 
+    private final Optional<IrisSettingsRepository> irisSettingsRepository;
+
     public LectureImportService(LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository, AttachmentRepository attachmentRepository,
-            Optional<PyrisWebhookService> pyrisWebhookService) {
+            Optional<PyrisWebhookService> pyrisWebhookService, Optional<IrisSettingsRepository> irisSettingsRepository) {
         this.lectureRepository = lectureRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.pyrisWebhookService = pyrisWebhookService;
+        this.irisSettingsRepository = irisSettingsRepository;
     }
 
     /**
@@ -99,9 +105,20 @@ public class LectureImportService {
         lecture.setAttachments(attachments);
         attachmentRepository.saveAll(attachments);
         // Send lectures to pyris
-        pyrisWebhookService.ifPresent(service -> service
-                .addLectureToPyrisDB(lectureUnits.stream().filter(unit -> unit instanceof AttachmentUnit && ((AttachmentUnit) unit).getAttachment().getLink().endsWith(".pdf"))
-                        .map(lectureUnit -> (AttachmentUnit) lectureUnit).toList()));
+        try {
+            irisSettingsRepository.ifPresent(settingsRepository -> {
+                IrisCourseSettings courseSettings = settingsRepository.findCourseSettings(course.getId()).orElseThrow();
+                if (courseSettings.getIrisLectureIngestionSettings().isEnabled()
+                        && Boolean.TRUE.equals(courseSettings.getIrisLectureIngestionSettings().getAutoIngestOnLectureAttachmentUpload())) {
+                    pyrisWebhookService.ifPresent(service -> service.addLectureToPyrisDB(
+                            lectureUnits.stream().filter(unit -> unit instanceof AttachmentUnit && ((AttachmentUnit) unit).getAttachment().getLink().endsWith(".pdf"))
+                                    .map(lectureUnit -> (AttachmentUnit) lectureUnit).toList()));
+                }
+            });
+        }
+        catch (NoSuchElementException e) {
+            // needed to create the attachment unit successfully even if the ingestion fails
+        }
         // Save again to establish the ordered list relationship
         return lectureRepository.save(lecture);
     }

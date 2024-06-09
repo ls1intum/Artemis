@@ -8,7 +8,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
-import { faFile, faFileImport, faFilter, faPencilAlt, faPlus, faPuzzlePiece, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faFile, faFileExport, faFileImport, faFilter, faPencilAlt, faPlus, faPuzzlePiece, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { LectureImportComponent } from 'app/lecture/lecture-import.component';
 import { Subject } from 'rxjs';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
@@ -43,6 +43,7 @@ export class LectureComponent implements OnInit {
     // Icons
     faPlus = faPlus;
     faFileImport = faFileImport;
+    faFileExport = faFileExport;
     faTrash = faTrash;
     faPencilAlt = faPencilAlt;
     faFile = faFile;
@@ -176,5 +177,14 @@ export class LectureComponent implements OnInit {
         }
 
         this.sortRows();
+    }
+
+    /**
+     * Trigger the Ingestion of all Lectures in the course.
+     */
+    ingestLecturesInPyris() {
+        if (this.lectures.first()) {
+            this.lectureService.ingestLecturesInPyris(this.lectures.first()!.course!.id!);
+        }
     }
 }

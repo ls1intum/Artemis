@@ -4,13 +4,25 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
-                            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
 
     <changeSet id="20240601123000" author="yassinsws">
-        <!-- Add new column for enable_auto_update_lecture_ingestion -->
+        <!-- Add new column for pyris_ingestion_state in lecture_unit table, specific for AttachmentUnit entries -->
+        <addColumn tableName="lecture_unit">
+            <column name="pyris_ingestion_state" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        <!-- Add new column for enable_auto_update_lecture_ingestion settings -->
         <addColumn tableName="iris_settings">
             <column name="enable_auto_update_lecture_ingestion" type="boolean" defaultValueBoolean="false">
                 <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <!-- Add new column for auto_ingest_on_lecture_attachment_upload -->
+        <addColumn tableName="iris_sub_settings">
+            <column name="auto_ingest_on_lecture_attachment_upload" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="true"/>
             </column>
         </addColumn>
         <!-- Add new column for iris_lecture_ingestion_settings_id -->
@@ -23,7 +35,7 @@
         <addForeignKeyConstraint
                 baseColumnNames="iris_lecture_ingestion_settings_id"
                 baseTableName="iris_settings"
-                constraintName="fk_iris_lecture_ingestion_settings"
+                constraintName="FK_IRIS_SETTINGS_ON_IRIS_LECTURE_INGESTION_SETTINGS"
                 referencedColumnNames="id"
                 referencedTableName="iris_sub_settings"/>
     </changeSet>

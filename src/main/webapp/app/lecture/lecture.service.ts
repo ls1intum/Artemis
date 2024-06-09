@@ -112,6 +112,11 @@ export class LectureService {
             );
     }
 
+    ingestLecturesInPyris(courseId: number) {
+        this.http.post(`api/courses/${courseId}/ingest`, { observe: 'response' }).subscribe({
+            error: (error) => console.error(`Failed to send Ingestion request`, error),
+        });
+    }
     /**
      * Clones and imports the lecture to the course
      *
