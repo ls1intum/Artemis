@@ -856,8 +856,14 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
             assertThat(competencyDTOList).hasSize(2);
             // competency 2 should be the tail of one relation
-            assertThat(competencyDTOList.get(0).tailRelations()).isNull();
-            assertThat(competencyDTOList.get(1).tailRelations()).hasSize(1);
+            var importedHead = competencyDTOList.getFirst();
+            var importedTail = competencyDTOList.get(1);
+            if (!importedHead.competency().getTitle().equals(head.getTitle())) {
+                importedHead = importedTail;
+                importedTail = competencyDTOList.getFirst();
+            }
+            assertThat(importedHead.tailRelations()).isNull();
+            assertThat(importedTail.tailRelations()).hasSize(1);
 
             competencyDTOList = request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/import-all/" + course3.getId() + "?importRelations=false", null,
                     CompetencyWithTailRelationDTO.class, HttpStatus.CREATED);
