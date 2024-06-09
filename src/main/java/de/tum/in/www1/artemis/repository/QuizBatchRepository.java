@@ -47,7 +47,7 @@ public interface QuizBatchRepository extends JpaRepository<QuizBatch, Long> {
             WHERE participation.exercise = :quizExercise
                 AND participation.student.login = :studentLogin
             """)
-    Set<QuizBatch> findAllByQuizExerciseAndStudentLogin(@Param("quizExercise") QuizExercise quizExercise, @Param("studentLogin") String studentLogin);
+    Optional<QuizBatch> findByQuizExerciseAndStudentLogin(@Param("quizExercise") QuizExercise quizExercise, @Param("studentLogin") String studentLogin);
 
     @NotNull
     default QuizBatch findByIdElseThrow(Long quizBatchId) throws EntityNotFoundException {

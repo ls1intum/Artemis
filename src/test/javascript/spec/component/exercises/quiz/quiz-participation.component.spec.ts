@@ -134,6 +134,7 @@ describe('QuizParticipationComponent', () => {
     let httpMock: HttpTestingController;
     let exerciseService: QuizExerciseService;
     let participationService: ParticipationService;
+    let quizExerciseService: QuizExerciseService;
 
     describe('live mode', () => {
         beforeEach(() => {
@@ -144,8 +145,13 @@ describe('QuizParticipationComponent', () => {
                     {
                         provide: ActivatedRoute,
                         useValue: {
-                            params: of({ courseId: 1, exerciseId: quizExercise.id }),
+                            params: of({ exerciseId: quizExercise.id }),
                             data: of({ mode: 'live' }),
+                            parent: {
+                                parent: {
+                                    params: of({ courseId: 1 }),
+                                },
+                            },
                         },
                     },
                     {
@@ -174,8 +180,10 @@ describe('QuizParticipationComponent', () => {
                     participationService = fixture.debugElement.injector.get(ParticipationService);
                     const participation: StudentParticipation = { exercise: { ...quizExercise } };
                     participationSpy = jest
-                        .spyOn(participationService, 'findParticipationForCurrentUser')
+                        .spyOn(participationService, 'startQuizParticipation')
                         .mockReturnValue(of({ body: participation } as HttpResponse<StudentParticipation>));
+                    quizExerciseService = fixture.debugElement.injector.get(QuizExerciseService);
+                    jest.spyOn(quizExerciseService, 'findForStudent').mockReturnValue(of({ body: { ...quizExercise } } as HttpResponse<QuizExercise>));
                     httpMock = fixture.debugElement.injector.get(HttpTestingController);
                 });
         });
@@ -218,7 +226,7 @@ describe('QuizParticipationComponent', () => {
                 },
             ];
             participationSpy = jest
-                .spyOn(participationService, 'findParticipationForCurrentUser')
+                .spyOn(participationService, 'startQuizParticipation')
                 .mockReturnValue(of({ body: { exercise: individualQuizExercise } } as HttpResponse<StudentParticipation>));
             fixture.detectChanges();
 
@@ -243,7 +251,7 @@ describe('QuizParticipationComponent', () => {
                 },
             ];
             participationSpy = jest
-                .spyOn(participationService, 'findParticipationForCurrentUser')
+                .spyOn(participationService, 'startQuizParticipation')
                 .mockReturnValue(of({ body: { exercise: notIndividualQuizExercise } } as HttpResponse<StudentParticipation>));
             fixture.detectChanges();
 
@@ -270,16 +278,15 @@ describe('QuizParticipationComponent', () => {
             expect(checkQuizEndSpy).toHaveBeenCalledTimes(50);
         }));
 
-        it('should add alert on quiz end', fakeAsync(() => {
+        it('should trigger a save on quiz end if the answers were not submitted', fakeAsync(() => {
             fixture.detectChanges();
 
             component.endDate = dayjs().add(1, 'seconds');
             component.quizExercise.quizMode = QuizMode.BATCHED;
             component.submission.submissionDate = dayjs();
+            component.submission.submitted = false;
 
-            const alertService = fixture.debugElement.injector.get(AlertService);
-            const alertSpy = jest.spyOn(alertService, 'success');
-
+            const triggerSaveStub = jest.spyOn(component, 'triggerSave').mockImplementation();
             const checkQuizEndSpy = jest.spyOn(component, 'checkForQuizEnd');
 
             tick(2000);
@@ -287,7 +294,7 @@ describe('QuizParticipationComponent', () => {
             discardPeriodicTasks();
 
             expect(checkQuizEndSpy).toHaveBeenCalledTimes(20);
-            expect(alertSpy).toHaveBeenCalledOnce();
+            expect(triggerSaveStub).toHaveBeenCalledOnce();
         }));
 
         it('should refresh quiz', () => {
@@ -331,9 +338,7 @@ describe('QuizParticipationComponent', () => {
             exerciseService = fixture.debugElement.injector.get(QuizExerciseService);
             const participationService = fixture.debugElement.injector.get(ParticipationService);
             const participation: StudentParticipation = { exercise: { ...quizExercise, quizBatches: [], quizMode, quizStarted: false } as QuizExercise };
-            participationSpy = jest
-                .spyOn(participationService, 'findParticipationForCurrentUser')
-                .mockReturnValue(of({ body: participation } as HttpResponse<StudentParticipation>));
+            participationSpy = jest.spyOn(participationService, 'startQuizParticipation').mockReturnValue(of({ body: participation } as HttpResponse<StudentParticipation>));
 
             fixture.detectChanges();
 
@@ -358,7 +363,7 @@ describe('QuizParticipationComponent', () => {
             const individualQuizExercise = { ...quizExercise };
             individualQuizExercise.quizMode = QuizMode.INDIVIDUAL;
             participationSpy = jest
-                .spyOn(participationService, 'findParticipationForCurrentUser')
+                .spyOn(participationService, 'startQuizParticipation')
                 .mockReturnValue(of({ body: { exercise: individualQuizExercise } } as HttpResponse<StudentParticipation>));
             fixture.detectChanges();
 
@@ -439,16 +444,10 @@ describe('QuizParticipationComponent', () => {
             expect(component.showingResult).toBeTrue();
         });
 
-        it('should update on selection changes', () => {
-            const webSocketService = fixture.debugElement.injector.get(JhiWebsocketService);
-            const webSocketSpy = jest.spyOn(webSocketService, 'send').mockImplementation();
-            const applySpy = jest.spyOn(component, 'applySelection');
+        it('should mark changes as unsaved when an answer changes', () => {
             fixture.detectChanges();
-
             component.onSelectionChanged();
-
-            expect(applySpy).toHaveBeenCalledOnce();
-            expect(webSocketSpy).toHaveBeenCalledOnce();
+            expect(component.unsavedChanges).toBeTrue();
         });
 
         it('should react to errors', () => {
