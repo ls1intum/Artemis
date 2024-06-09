@@ -18,7 +18,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
@@ -248,7 +247,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         for (var question : quizExercise.getQuizQuestions()) {
             if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
                 if (dragAndDropQuestion.getBackgroundFilePath() != null) {
-                    saveDndQuestionBackground(dragAndDropQuestion, fileMap, null);
+                    saveDndQuestionBackground(dragAndDropQuestion, fileMap);
                 }
                 handleDndQuizDragItemsCreation(dragAndDropQuestion, fileMap);
             }
@@ -258,7 +257,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     private void handleDndQuizDragItemsCreation(DragAndDropQuestion dragAndDropQuestion, Map<String, MultipartFile> fileMap) throws IOException {
         for (var dragItem : dragAndDropQuestion.getDragItems()) {
             if (dragItem.getPictureFilePath() != null) {
-                saveDndDragItemPicture(dragItem, fileMap, dragAndDropQuestion.getId().toString() + "/" + dragItem.getId().toString());
+                saveDndDragItemPicture(dragItem, fileMap, dragAndDropQuestion.getId());
             }
         }
     }
@@ -315,7 +314,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             }
             else {
                 // Path changed and file was provided
-                saveDndQuestionBackground(dragAndDropQuestion, fileMap, questionUpdate.getId());
+                saveDndQuestionBackground(dragAndDropQuestion, fileMap);
             }
         }
 
@@ -323,7 +322,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             String newDragItemPath = dragItem.getPictureFilePath();
             if (dragItem.getPictureFilePath() != null && !oldPaths.contains(newDragItemPath)) {
                 // Path changed and file was provided
-                saveDndDragItemPicture(dragItem, fileMap, dragAndDropQuestion.getId().toString() + "/" + dragItem.getId().toString());
+                saveDndDragItemPicture(dragItem, fileMap, dragAndDropQuestion.getId());
             }
         }
     }
@@ -360,26 +359,24 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     /**
      * Saves the background image of a drag and drop question without saving the question itself
      *
-     * @param question   the drag and drop question
-     * @param files      all provided files
-     * @param questionId the id of the question, null on creation
+     * @param question the drag and drop question
+     * @param files    all provided files
      */
-    public void saveDndQuestionBackground(DragAndDropQuestion question, Map<String, MultipartFile> files, @Nullable Long questionId) throws IOException {
+    public void saveDndQuestionBackground(DragAndDropQuestion question, Map<String, MultipartFile> files) throws IOException {
         MultipartFile file = files.get(question.getBackgroundFilePath());
         if (file == null) {
             // Should not be reached as the file is validated before
             throw new BadRequestAlertException("The file " + question.getBackgroundFilePath() + " was not provided", ENTITY_NAME, null);
         }
 
-        question.setBackgroundFilePath(saveDragAndDropImage(FilePathService.getDragAndDropBackgroundFilePath(), file, questionId).toString());
+        question.setBackgroundFilePath(saveDragAndDropImage(FilePathService.getDragAndDropBackgroundFilePath(), file, null).toString());
     }
 
     /**
      * Saves the picture of a drag item without saving the drag item itself
      *
-     * @param dragItem   the drag item
-     * @param files      all provided files
-     * @param questionId id of the drag and drop question
+     * @param dragItem the drag item
+     * @param files    all provided files
      */
     public void saveDndDragItemPicture(DragItem dragItem, Map<String, MultipartFile> files, Long questionId) throws IOException {
         MultipartFile file = files.get(dragItem.getPictureFilePath());
@@ -392,44 +389,15 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     }
 
     /**
-     * Saves the picture of a drag item without saving the drag item itself
-     *
-     * @param dragItem      the drag item
-     * @param files         all provided files
-     * @param idCombination ids of the question and the drag item associated with the file
-     */
-    public void saveDndDragItemPicture(DragItem dragItem, Map<String, MultipartFile> files, String idCombination) throws IOException {
-        MultipartFile file = files.get(dragItem.getPictureFilePath());
-        if (file == null) {
-            // Should not be reached as the file is validated before
-            throw new BadRequestAlertException("The file " + dragItem.getPictureFilePath() + " was not provided", ENTITY_NAME, null);
-        }
-
-        dragItem.setPictureFilePath(saveDragAndDropImage(FilePathService.getDragItemFilePath(), file, idCombination).toString());
-    }
-
-    /**
      * Saves an image for an DragAndDropQuestion. Either a background image or a drag item image.
      *
      * @return the public path of the saved image
      */
-    private URI saveDragAndDropImage(Path basePath, MultipartFile file, @Nullable Long entityId) throws IOException {
+    private URI saveDragAndDropImage(Path basePath, MultipartFile file, Long questionId) throws IOException {
         String sanitizedFilename = fileService.checkAndSanitizeFilename(file.getOriginalFilename());
         Path savePath = basePath.resolve(fileService.generateFilename("dnd_image_", sanitizedFilename, true));
         FileUtils.copyToFile(file.getInputStream(), savePath.toFile());
-        return FilePathService.publicPathForActualPathOrThrow(savePath, entityId);
-    }
-
-    /**
-     * Saves an image for an DragAndDropQuestion. Either a background image or a drag item image.
-     *
-     * @return the public path of the saved image
-     */
-    private URI saveDragAndDropImage(Path basePath, MultipartFile file, @Nullable String idCombination) throws IOException {
-        String sanitizedFilename = fileService.checkAndSanitizeFilename(file.getOriginalFilename());
-        Path savePath = basePath.resolve(fileService.generateFilename("dnd_image_", sanitizedFilename, true));
-        FileUtils.copyToFile(file.getInputStream(), savePath.toFile());
-        return FilePathService.publicPathForActualPathOrThrow(savePath, idCombination);
+        return FilePathService.publicPathForActualPathOrThrow(savePath, questionId);
     }
 
     /**
