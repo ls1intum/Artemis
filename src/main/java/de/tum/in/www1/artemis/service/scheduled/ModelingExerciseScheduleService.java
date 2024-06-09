@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
 import static de.tum.in.www1.artemis.config.Constants.EXAM_END_WAIT_TIME_FOR_COMPASS_MINUTES;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_SCHEDULING;
 import static de.tum.in.www1.artemis.config.StartupDelayConfig.MODELING_EXERCISE_SCHEDULE_DELAY_SEC;
 import static java.time.Instant.now;
 
@@ -34,7 +35,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import tech.jhipster.config.JHipsterConstants;
 
 @Service
-@Profile("scheduling")
+@Profile(PROFILE_SCHEDULING)
 public class ModelingExerciseScheduleService implements IExerciseScheduleService<ModelingExercise> {
 
     private static final Logger log = LoggerFactory.getLogger(ModelingExerciseScheduleService.class);

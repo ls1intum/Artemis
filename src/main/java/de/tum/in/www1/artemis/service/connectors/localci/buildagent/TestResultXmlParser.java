@@ -87,7 +87,8 @@ class TestResultXmlParser {
         }
     }
 
-    // Intentionally empty record to represent the skipped tag (</skipped>)
+    // Intentionally empty record to represent the skipped tag (<skipped/>)
+    @JsonIgnoreProperties(ignoreUnknown = true)
     record Skip() {
     }
 
