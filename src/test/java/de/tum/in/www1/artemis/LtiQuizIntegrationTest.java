@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
@@ -42,8 +43,9 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.quiz.QuizExerciseService;
+import de.tum.in.www1.artemis.service.quiz.QuizSubmissionService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
+import de.tum.in.www1.artemis.util.RequestUtilService;
 
 @Isolated
 class LtiQuizIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -63,9 +65,6 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private QuizExerciseRepository quizExerciseRepository;
 
     @Autowired
-    private QuizSubmissionWebsocketService quizSubmissionWebsocketService;
-
-    @Autowired
     private SubmissionRepository submissionRepository;
 
     @Autowired
@@ -80,10 +79,14 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    protected RequestUtilService request;
+
+    @Autowired
+    private QuizSubmissionService quizSubmissionService;
+
     @BeforeEach
     void init() {
-        // do not use the schedule service based on a time interval in the tests, because this would result in flaky tests that run much slower
-        quizScheduleService.stopSchedule();
         doNothing().when(lti13Service).onNewResult(any());
     }
 
@@ -95,8 +98,7 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testLtiServicesAreCalledUponQuizSubmission(boolean isSubmitted) {
-
+    void testLtiServicesAreCalledUponQuizSubmission(boolean isSubmitted) throws Exception {
         QuizExercise quizExercise = createSimpleQuizExercise(ZonedDateTime.now().minusMinutes(1), 240);
         quizExercise = quizExerciseService.save(quizExercise);
 
@@ -107,10 +109,17 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
         quizSubmission.submitted(isSubmitted);
-        quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, () -> TEST_PREFIX + "student1");
 
-        assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isZero();
-        quizScheduleService.processCachedQuizSubmissions();
+        request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
+        request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live?submit=" + isSubmitted, quizSubmission, QuizSubmission.class, HttpStatus.OK);
+
+        if (isSubmitted) {
+            assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isOne();
+        }
+        else {
+            assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isZero();
+
+        }
 
         verifyNoInteractions(lti13Service);
 
@@ -120,10 +129,9 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         quizExercise.setDueDate(ZonedDateTime.now());
         exerciseRepository.saveAndFlush(quizExercise);
 
-        quizScheduleService.processCachedQuizSubmissions();
+        quizSubmissionService.calculateAllResults(quizExercise.getId());
 
         verify(lti13Service).onNewResult(any());
-
     }
 
     @Test
