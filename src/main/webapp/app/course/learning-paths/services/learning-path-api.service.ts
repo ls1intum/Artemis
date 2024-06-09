@@ -19,20 +19,21 @@ export class LearningPathApiService {
         }
     }
 
-    private async get<T>(url: string, params?: HttpParams): Promise<T> {
-        const response = await lastValueFrom(this.httpClient.get<T>(url, { observe: 'response', params: params }));
+    private handleHttpResponse<T>(response: HttpResponse<any>): T {
         if (!response.ok) {
             this.handleHttpError(response);
         }
         return response.body!;
     }
 
+    private async get<T>(url: string, params?: HttpParams): Promise<T> {
+        const response = await lastValueFrom(this.httpClient.get<T>(url, { observe: 'response', params: params }));
+        return this.handleHttpResponse<T>(response);
+    }
+
     private async post<T>(url: string, body: any): Promise<T> {
         const response = await lastValueFrom(this.httpClient.post<T>(url, body, { observe: 'response' }));
-        if (!response.ok) {
-            this.handleHttpError(response);
-        }
-        return response.body!;
+        return this.handleHttpResponse<T>(response);
     }
 
     async getLearningPathId(courseId: number): Promise<number> {
