@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import type { CommitInfo } from 'app/entities/programming-submission.model';
 import type { User } from 'app/core/user/user.model';
 import { faCircle } from '@fortawesome/free-regular-svg-icons';
@@ -17,11 +17,15 @@ export class CommitsInfoRowComponent {
     @Input() user?: User;
     @Input() rowNumber: number;
     @Input() isExpanded: boolean;
-    @Input() toggleExpand: () => void;
     @Input() pushNumber: number;
     @Input() firstCommit: boolean;
     @Input() groupCommitCount: number;
     @Input() groupCommitIndex: number;
+    @Output() toggleExpandEvent = new EventEmitter<void>();
+
+    onToggleExpand() {
+        this.toggleExpandEvent.emit();
+    }
 
     localVC = false;
     faCircle = faCircle;

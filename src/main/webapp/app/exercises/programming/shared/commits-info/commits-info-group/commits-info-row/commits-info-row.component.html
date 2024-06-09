@@ -54,7 +54,7 @@
     <td class="flex-container p-2">
         @if (groupCommitIndex === 0 && groupCommitCount > 1) {
             {{ groupCommitCount }}
-            <button class="btn btn-link" (click)="toggleExpand()">
+            <button class="btn btn-link" (click)="onToggleExpand()">
                 <span class="text-body-secondary">
                     @if (isExpanded) {
                         <fa-icon [icon]="faAngleDown" size="lg" />

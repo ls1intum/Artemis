@@ -302,7 +302,7 @@ public class ProgrammingExerciseParticipationResource {
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
         if (participation.getTeam().isPresent()) {
-            return ResponseEntity.notFound().build();
+            throw new BadRequestAlertException("Team participation cannot have a single user.", ENTITY_NAME, "participationIsTeam");
         }
 
         return participation.getStudent().map(user -> ResponseEntity.ok(new UserDTO(user))).orElse(ResponseEntity.notFound().build());
