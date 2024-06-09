@@ -18,6 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -191,6 +192,21 @@ public class UserResource {
         PublicKey publicKey = keyEntry.resolvePublicKey(null, null, null);
         String keyHash = HashUtils.getSha512Fingerprint(publicKey);
         userRepository.updateUserSshPublicKeyHash(user.getId(), keyHash, sshPublicKey);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * PUT users/sshpublickey : sets the ssh public key
+     *
+     * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
+     */
+    @DeleteMapping("users/sshpublickey")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> deleteSshPublicKey() {
+        User user = userRepository.getUser();
+
+        userRepository.updateUserSshPublicKeyHash(user.getId(), null, null);
+
         return ResponseEntity.ok().build();
     }
 }

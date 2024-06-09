@@ -5,12 +5,24 @@
             "saveChanges": "Änderungen speichern",
             "saveSettingsSuccessAlert": "Die Einstellungen wurden erfolgreich gespeichert.",
             "userSettings": "Benutzereinstellungen",
+            "sshSettings": "SSH Einstellungen",
             "accountInformation": "Account Informationen",
             "notificationSettings": "Benachrichtigungen",
             "notificationSettingsFilterInfo": "Diese Einstellungen filtern auch die Seitenleiste für Mitteilungen",
             "scienceSettings": "Forschung",
             "scienceSettingsFeatureDisabled": "Dieses Feature ist derzeit deaktiviert. Du kannst deine Einstellungen trotzdem bearbeiten, falls das Feature wieder aktiviert wird.",
             "scienceSettingsInfo": "Hilf Artemis dabei besser zu werden!",
+            "sshSettingsPage": {
+                "sshSettingsInfoText": "Hier kannst du einen öffentlichen SSH-Schlüssel festlegen, um Git-Repositories über SSH zu klonen. Weitere Einzelheiten findest du in der Dokumentation.",
+                "deleteSshKeyQuestion": "Möchtest du deinen öffentlichen SSH-Schlüssel wirklich löschen?",
+                "saveSshKey": "Speichern",
+                "cancelSavingSshKey": "Abbrechen",
+                "editExistingSshKey": "SSH-Schlüssel bearbeiten",
+                "addNewSshKey": "Neuer SSH-Schlüssel",
+                "deleteSshKey": "Löschen",
+                "sshKeyDisplayedInformation": "Das ist dein aktuell konfigurierter SSH-Schlüssel:",
+                "key": "SSH Schlüssel"
+            },
             "accountInformationPage": {
                 "registrationNumber": "Matrikelnummer",
                 "fullName": "Vollständiger Name",
@@ -21,7 +33,8 @@
             },
             "categories": {
                 "NOTIFICATION_SETTINGS": "Benachrichtigungseinstellungen",
-                "SCIENCE_SETTINGS": "Forschungseinstellungen"
+                "SCIENCE_SETTINGS": "Forschungseinstellungen",
+                "SSH_SETTINGS": "SSH"
             },
             "settingGroupNames": {
                 "weeklySummary": "Wöchentliche Zusammenfassung",

@@ -5,12 +5,24 @@
             "saveChanges": "Save Changes",
             "saveSettingsSuccessAlert": "Your Settings have been successfully saved.",
             "userSettings": "User Settings",
+            "sshSettings": "SSH Settings",
             "accountInformation": "Account Information",
             "notificationSettings": "Notifications",
             "notificationSettingsFilterInfo": "These settings also filter the notification sidebar",
             "scienceSettings": "Science",
             "scienceSettingsFeatureDisabled": "The science feature is currently disabled. You can still edit your settings in case the feature gets enabled again.",
             "scienceSettingsInfo": "Help Artemis to get better!",
+            "sshSettingsPage": {
+                "sshSettingsInfoText": "Here you can set a public SSH key to clone git repositories via SSH. For more details see the documentation.",
+                "deleteSshKeyQuestion": "Are you sure you want to delete your public SSH key?",
+                "saveSshKey": "Save",
+                "cancelSavingSshKey": "Cancel",
+                "editExistingSshKey": "Edit SSH key",
+                "addNewSshKey": "New SSH key",
+                "deleteSshKey": "Delete",
+                "sshKeyDisplayedInformation": "This is your currently configured SSH key:",
+                "key": "SSH Key"
+            },
             "accountInformationPage": {
                 "registrationNumber": "Registration Number",
                 "fullName": "Full Name",
@@ -21,7 +33,8 @@
             },
             "categories": {
                 "NOTIFICATION_SETTINGS": "Notification Settings",
-                "SCIENCE_SETTINGS": "Science Settings"
+                "SCIENCE_SETTINGS": "Science Settings",
+                "SSH_SETTINGS": "SSH"
             },
             "settingGroupNames": {
                 "weeklySummary": "Weekly Summary",

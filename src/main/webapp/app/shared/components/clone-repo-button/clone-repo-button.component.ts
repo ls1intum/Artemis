@@ -33,7 +33,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     exercise?: Exercise;
 
     useSsh = false;
-    sshKeysUrl?: string;
+    setupSshKeysUrl?: string;
     sshEnabled = false;
     sshTemplateUrl?: string;
     repositoryPassword?: string;
@@ -67,14 +67,18 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
 
         // Get ssh information from the user
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.sshKeysUrl = profileInfo.sshKeysURL;
+            this.setupSshKeysUrl = profileInfo.sshKeysURL;
             this.sshTemplateUrl = profileInfo.sshCloneURLTemplate;
+            console.log(window.location.origin);
             this.sshEnabled = !!this.sshTemplateUrl;
             if (profileInfo.versionControlUrl) {
                 this.versionControlUrl = profileInfo.versionControlUrl;
             }
             this.versionControlAccessTokenRequired = profileInfo.versionControlAccessToken;
             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
+            if (this.localVCEnabled) {
+                this.setupSshKeysUrl = window.location.origin + '/user-settings/account';
+            }
         });
 
         this.useSsh = this.localStorage.retrieve('useSsh') || false;
@@ -170,7 +174,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
      * Inserts the correct link to the translated ssh tip.
      */
     getSshKeyTip() {
-        return this.translateService.instant('artemisApp.exerciseActions.sshKeyTip').replace(/{link:(.*)}/, '<a href="' + this.sshKeysUrl + '" target="_blank">$1</a>');
+        return this.translateService.instant('artemisApp.exerciseActions.sshKeyTip').replace(/{link:(.*)}/, '<a href="' + this.setupSshKeysUrl + '" target="_blank">$1</a>');
     }
 
     /**

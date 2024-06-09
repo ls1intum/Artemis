@@ -1,8 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
-import { AccountService } from 'app/core/auth/account.service';
-import { AccountInformationComponent } from 'app/shared/user-settings/account-information/account-information.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { PROFILE_LOCALVC } from 'app/app.constants';
+import { User } from 'app/core/user/user.model';
 
 /**
  * UserSettingsContainerComponent serves as the common ground for different settings
@@ -12,11 +12,18 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
     templateUrl: 'user-settings-container.component.html',
     styleUrls: ['user-settings-container.component.scss'],
 })
-export class UserSettingsContainerComponent extends AccountInformationComponent {
+export class UserSettingsContainerComponent implements OnInit {
     // Icons
     faUser = faUser;
 
-    constructor(accountService: AccountService, profileService: ProfileService) {
-        super(accountService, profileService);
+    currentUser?: User;
+    localVCEnabled: boolean = false;
+
+    constructor(private profileService: ProfileService) {}
+
+    ngOnInit() {
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
+        });
     }
 }

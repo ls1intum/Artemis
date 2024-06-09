@@ -333,4 +333,11 @@ export class AccountService implements IAccountService {
         }
         return this.http.put<void>('api/users/sshpublickey', sshPublicKey);
     }
+
+    deleteSshPublicKey() {
+        if (this.userIdentity) {
+            this.userIdentity.sshPublicKey = '';
+        }
+        return this.http.delete<void>('api/users/sshpublickey');
+    }
 }
