@@ -33,7 +33,7 @@ test.describe('Quiz Exercise Participation', () => {
         test('Student can see a visible quiz', async ({ login, exerciseAPIRequests, courseOverview }) => {
             await login(admin);
             await exerciseAPIRequests.setQuizVisible(quizExercise.id!);
-            await login(studentOne, '/courses/' + course.id);
+            await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id!}`);
             await courseOverview.openRunningExercise(quizExercise.id!);
         });
 
@@ -41,7 +41,7 @@ test.describe('Quiz Exercise Participation', () => {
             await login(admin);
             await exerciseAPIRequests.setQuizVisible(quizExercise.id!);
             await exerciseAPIRequests.startQuizNow(quizExercise.id!);
-            await login(studentOne, '/courses/' + course.id);
+            await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id!}`);
             await courseOverview.startExercise(quizExercise.id!);
             await quizExerciseMultipleChoice.tickAnswerOption(quizExercise.id!, 0);
             await quizExerciseMultipleChoice.tickAnswerOption(quizExercise.id!, 2);
@@ -61,13 +61,13 @@ test.describe('Quiz Exercise Participation', () => {
         });
 
         test('Student cannot participate in scheduled quiz before start of working time', async ({ login, courseOverview, quizExerciseParticipation }) => {
-            await login(studentOne, '/courses/' + course.id);
+            await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
             await courseOverview.openRunningExercise(quizExercise.id!);
             await expect(quizExerciseParticipation.getWaitingForStartAlert()).toBeVisible();
         });
 
         test('Student can participate in scheduled quiz when working time arrives', async ({ page, login, courseOverview, quizExerciseParticipation }) => {
-            await login(studentOne, `/courses/${course.id}`);
+            await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
             await courseOverview.openRunningExercise(quizExercise.id!);
             await page.waitForTimeout(timeUntilQuizStartInSeconds * 1000);
             await expect(quizExerciseParticipation.getWaitingForStartAlert()).not.toBeVisible();
@@ -104,7 +104,7 @@ test.describe('Quiz Exercise Participation', () => {
             await courseManagement.openExercisesOfCourse(course.id!);
             const quizBatch = await quizExerciseOverview.addQuizBatch(quizExercise.id!);
             await quizExerciseOverview.startQuizBatch(quizExercise.id!, quizBatch.id!);
-            await login(studentOne, '/courses/' + course.id);
+            await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
             await courseOverview.openRunningExercise(quizExercise.id!);
             await quizExerciseParticipation.joinQuizBatch(quizBatch.password!);
             await expect(quizExerciseParticipation.getQuizQuestion(0)).toBeVisible();
@@ -121,7 +121,7 @@ test.describe('Quiz Exercise Participation', () => {
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.endQuiz(quizExercise);
-            await login(studentOne, '/courses/' + course.id);
+            await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
             await expect(courseOverview.getOpenRunningExerciseButton(quizExercise.id!)).not.toBeVisible();
         });
 
@@ -138,7 +138,7 @@ test.describe('Quiz Exercise Participation', () => {
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.endQuiz(quizExercise);
             await courseManagementExercises.getExercise(quizExercise.id!).locator('button', { hasText: 'Release For Practice' }).click();
-            await login(studentOne, `/courses/${course.id}`);
+            await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
             await courseOverview.practiceExercise();
             await expect(quizExerciseParticipation.getQuizQuestion(0)).toBeVisible();
         });
@@ -159,7 +159,7 @@ test.describe('Quiz Exercise Participation', () => {
         });
 
         test('Student can start a batch in an individual quiz', async ({ login, courseOverview, quizExerciseParticipation }) => {
-            await login(studentOne, '/courses/' + course.id);
+            await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
             await courseOverview.openRunningExercise(quizExercise.id!);
             await quizExerciseParticipation.startQuizBatch();
             await expect(quizExerciseParticipation.getQuizQuestion(0)).toBeVisible();
@@ -177,9 +177,9 @@ test.describe('Quiz Exercise Participation', () => {
         });
 
         test('Student can participate in SA quiz', async ({ login, courseOverview, quizExerciseShortAnswerQuiz }) => {
-            const quizQuestionId = quizExercise.quizQuestions![0].id!;
-            await login(studentOne, '/courses/' + course.id);
+            await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
             await courseOverview.startExercise(quizExercise.id!);
+            const quizQuestionId = quizExercise.quizQuestions![0].id!;
             await quizExerciseShortAnswerQuiz.typeAnswer(0, 1, quizQuestionId, 'give');
             await quizExerciseShortAnswerQuiz.typeAnswer(1, 1, quizQuestionId, 'let');
             await quizExerciseShortAnswerQuiz.typeAnswer(2, 1, quizQuestionId, 'run');
@@ -205,7 +205,7 @@ test.describe('Quiz Exercise Participation', () => {
         });
 
         test('Student can participate in DnD Quiz', async ({ login, courseOverview, quizExerciseDragAndDropQuiz }) => {
-            await login(studentOne, '/courses/' + course.id);
+            await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
             await courseOverview.startExercise(quizExercise.id!);
             await quizExerciseDragAndDropQuiz.dragItemIntoDragArea(0);
             await quizExerciseDragAndDropQuiz.submit();
