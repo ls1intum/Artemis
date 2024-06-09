@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -22,6 +23,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.competency.CompetencyProgressUtilService;
 import de.tum.in.www1.artemis.competency.CompetencyUtilService;
+import de.tum.in.www1.artemis.competency.PrerequisiteUtilService;
 import de.tum.in.www1.artemis.competency.StandardizedCompetencyUtilService;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
@@ -37,6 +39,7 @@ import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.CompetencyTaxonomy;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.competency.RelationType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
@@ -54,6 +57,7 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseUnitRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
+import de.tum.in.www1.artemis.repository.PrerequisiteRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TextUnitRepository;
@@ -104,6 +108,9 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     private CompetencyRelationRepository competencyRelationRepository;
 
     @Autowired
+    private PrerequisiteRepository prerequisiteRepository;
+
+    @Autowired
     private LectureUnitRepository lectureUnitRepository;
 
     @Autowired
@@ -120,6 +127,9 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
     @Autowired
     private CompetencyUtilService competencyUtilService;
+
+    @Autowired
+    private PrerequisiteUtilService prerequisiteUtilService;
 
     @Autowired
     private PageableSearchUtilService pageableSearchUtilService;
@@ -979,6 +989,24 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
             final var search = pageableSearchUtilService.configureCompetencySearch(competency.getTitle(), "", "", "");
             final var result = request.getSearchResult("/api/competencies/for-import", HttpStatus.OK, Competency.class, pageableSearchUtilService.searchMapping(search));
             assertThat(result.getResultsOnPage()).hasSize(1);
+        }
+    }
+
+    @Nested
+    class GetCourseCompetencyTitles {
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        void shouldGetCourseCompetencyTitles() throws Exception {
+            competencyUtilService.createCompetencies(course, 5);
+            var competencyTitles = competencyRepository.findAllForCourse(course.getId()).stream().map(CourseCompetency::getTitle).toList();
+            prerequisiteUtilService.createPrerequisites(course, 5);
+            var prerequisiteTitles = prerequisiteRepository.findAllByCourseIdOrderById(course.getId()).stream().map(CourseCompetency::getTitle).toList();
+            var expectedTitles = Stream.concat(competencyTitles.stream(), prerequisiteTitles.stream()).toList();
+
+            final var actualTitles = request.getList("/api/courses/" + course.getId() + "/competencies/titles", HttpStatus.OK, String.class);
+
+            assertThat(actualTitles).containsAll(expectedTitles);
         }
     }
 }

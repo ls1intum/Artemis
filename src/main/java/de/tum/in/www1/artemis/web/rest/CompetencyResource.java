@@ -107,14 +107,15 @@ public class CompetencyResource {
     private final CompetencyRelationService competencyRelationService;
 
     private final CourseCompetencyRepository courseCompetencyRepository;
-  
+
     private final CompetencyJolService competencyJolService;
 
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CompetencyRepository competencyRepository, CompetencyRelationRepository competencyRelationRepository, CompetencyService competencyService,
             CompetencyProgressRepository competencyProgressRepository, CompetencyProgressService competencyProgressService, ExerciseService exerciseService,
             LectureUnitService lectureUnitService, CompetencyRelationService competencyRelationService,
-            Optional<IrisCompetencyGenerationSessionService> irisCompetencyGenerationSessionService, CourseCompetencyRepository courseCompetencyRepository, CompetencyJolService competencyJolService) {
+            Optional<IrisCompetencyGenerationSessionService> irisCompetencyGenerationSessionService, CourseCompetencyRepository courseCompetencyRepository,
+            CompetencyJolService competencyJolService) {
         this.courseRepository = courseRepository;
         this.competencyRelationRepository = competencyRelationRepository;
         this.authorizationCheckService = authorizationCheckService;
