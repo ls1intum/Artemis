@@ -53,6 +53,8 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
+import { CoursesForDashboardDTO } from 'app/course/manage/courses-for-dashboard-dto';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -108,6 +110,11 @@ const course2: Course = {
     numberOfPrerequisites: 1,
     numberOfTutorialGroups: 1,
 };
+const course1Dashboard = { course: course1 } as CourseForDashboardDTO;
+const course2Dashboard = { course: course2 } as CourseForDashboardDTO;
+const coursesInDashboard: CourseForDashboardDTO[] = [course1Dashboard, course2Dashboard];
+const courses: Course[] = [course2];
+const coursesDashboard = { courses: coursesInDashboard } as CoursesForDashboardDTO;
 
 @Component({
     template: '<ng-template #controls><button id="test-button">TestButton</button></ng-template>',
@@ -139,6 +146,7 @@ describe('CourseOverviewComponent', () => {
     let findOneForDashboardStub: jest.SpyInstance;
     let route: ActivatedRoute;
     let findOneForRegistrationStub: jest.SpyInstance;
+    let findAllForDashboardSpy: jest.SpyInstance;
 
     let metisConversationService: MetisConversationService;
 
@@ -222,6 +230,9 @@ describe('CourseOverviewComponent', () => {
                     .spyOn(courseService, 'findOneForRegistration')
                     .mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
                 jest.spyOn(metisConversationService, 'course', 'get').mockReturnValue(course);
+                findAllForDashboardSpy = jest
+                    .spyOn(courseService, 'findAllForDashboard')
+                    .mockReturnValue(of(new HttpResponse({ body: coursesDashboard, headers: new HttpHeaders() })));
             });
     }));
 
@@ -251,7 +262,16 @@ describe('CourseOverviewComponent', () => {
         expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
         expect(getSidebarItems).toHaveBeenCalledOnce();
         expect(getCourseActionItems).toHaveBeenCalledOnce();
-        expect(notifyAboutCourseAccessStub).toHaveBeenCalledExactlyOnceWith(course1.id);
+        expect(notifyAboutCourseAccessStub).toHaveBeenCalledWith(
+            course1.id,
+            CourseAccessStorageService.STORAGE_KEY,
+            CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_OVERVIEW,
+        );
+        expect(notifyAboutCourseAccessStub).toHaveBeenCalledWith(
+            course1.id,
+            CourseAccessStorageService.STORAGE_KEY_DROPDOWN,
+            CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_DROPDOWN,
+        );
         expect(getUpdateVisibility).toHaveBeenCalledOnce();
         expect(getUpdateMenuPosition).toHaveBeenCalledOnce();
     });
@@ -653,5 +673,35 @@ describe('CourseOverviewComponent', () => {
         clickOnMoreItem.click();
 
         expect(component.dropdownOpen).toBeTrue();
+    });
+
+    it('should initialize courses attribute when page is loaded', () => {
+        component.ngOnInit();
+
+        expect(component.courses).toEqual(courses);
+        expect(component.courses?.length).toBe(1);
+    });
+
+    it('should not initialize courses attribute when page has error while loading', () => {
+        findAllForDashboardSpy.mockReturnValue(throwError(() => new HttpResponse({ status: 404 })));
+
+        component.ngOnInit();
+        expect(component.courses?.length).toBeUndefined();
+    });
+
+    it('should not display current course in dropdown', () => {
+        component.ngOnInit();
+
+        expect(component.courses).toEqual(courses);
+        expect(component.courses?.pop()).toBe(course2);
+    });
+
+    it('should unsubscribe from dashboardSubscription on ngOnDestroy', () => {
+        component.updateRecentlyAccessedCourses();
+        fixture.detectChanges();
+        component.ngOnDestroy();
+
+        expect(courseService.findAllForDashboard).toHaveBeenCalled();
+        expect(component.dashboardSubscription.closed).toBeTrue();
     });
 });
