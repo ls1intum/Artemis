@@ -189,7 +189,7 @@
                             <div class="dotstyle dotstyle--scaleup">
                                 @if (guidedTourService.currentTour && guidedTourService.currentTour.steps.length > 1) {
                                     <ul #dotNavigation [ngStyle]="{ transform: 'translateX(' + transformX + 'px)' }">
-                                        @for (i of guidedTourService.currentTour.steps; track i) {
+                                        @for (i of guidedTourService.currentTour.steps; let index = $index; track index) {
                                             <li
                                                 #dotElements
                                                 class="dot-index-{{ guidedTourService.currentTour.steps.indexOf(i) }}"

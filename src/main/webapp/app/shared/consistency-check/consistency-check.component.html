@@ -41,7 +41,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @for (error of inconsistencies; track error.id) {
+                            @for (error of inconsistencies; let index = $index; track index) {
                                 <tr>
                                     <td>
                                         <a [routerLink]="['/course-management', error.programmingExerciseCourseId, 'programming-exercises', error.programmingExercise!.id]">
