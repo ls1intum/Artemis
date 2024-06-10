@@ -23,6 +23,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -250,6 +251,40 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             """)
     List<User> searchByNameInGroups(@Param("groupNames") Set<String> groupNames, @Param("nameOfUser") String nameOfUser);
 
+    @Query(value = """
+            SELECT * FROM (
+                SELECT
+                    u.id AS user_id,
+                    u.*,
+                    ug.*,
+                    ROW_NUMBER() OVER (ORDER BY u.id) AS rn
+                FROM User u
+                LEFT JOIN UserGroup ug ON u.id = ug.user_id
+                WHERE u.is_deleted = FALSE
+                  AND :groupName = ug.group_name
+                  AND (
+                      u.login LIKE :loginOrName%
+                      OR CONCAT(u.first_name, ' ', u.last_name) LIKE %:loginOrName%
+                  )
+            ) sub
+            WHERE sub.rn BETWEEN :from AND :to
+            """, nativeQuery = true)
+    List<User> searchAllByLoginOrNameInGroupWithRowBounds(@Param("loginOrName") String loginOrName, @Param("groupName") String groupName, @Param("from") int from,
+            @Param("to") int to);
+
+    @Query(value = """
+            SELECT COUNT(u.id)
+            FROM User u
+            LEFT JOIN UserGroup ug ON u.id = ug.user_id
+            WHERE u.is_deleted = FALSE
+              AND :groupName = ug.group_name
+              AND (
+                  u.login LIKE :loginOrName%
+                  OR CONCAT(u.first_name, ' ', u.last_name) LIKE %:loginOrName%
+              )
+            """, nativeQuery = true)
+    long countAllByLoginOrNameInGroup(@Param("loginOrName") String loginOrName, @Param("groupName") String groupName);
+
     /**
      * Search for all users by login or name in a group
      *
@@ -258,56 +293,103 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @param groupName   Name of group in which to search for users
      * @return all users matching search criteria in the group converted to DTOs
      */
-    @Query(value = """
-            SELECT user
-            FROM User user
-                LEFT JOIN FETCH user.groups userGroup
-            WHERE user.isDeleted = FALSE
-                AND :groupName = userGroup
-                AND (
-                    user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-                )
-            """, countQuery = """
-            SELECT COUNT(user)
-            FROM User user
-                LEFT JOIN user.groups userGroup
-            WHERE user.isDeleted = FALSE
-                AND :groupName = userGroup
-                AND (
-                    user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-                )
-            """)
-    // TODO: rewrite this query, pageable does not work well with left join fetch, it needs to transfer all results and only page in java
-    Page<User> searchAllByLoginOrNameInGroup(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("groupName") String groupName);
+    default Page<User> searchAllByLoginOrNameInGroup(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("groupName") String groupName) {
+
+        int pageNumber = pageable.getPageNumber();
+        int pageSize = pageable.getPageSize();
+        int from = pageNumber * pageSize + 1;
+        int to = (pageNumber + 1) * pageSize;
+
+        List<User> users = searchAllByLoginOrNameInGroupWithRowBounds(loginOrName, groupName, from, to);
+
+        // We need a count for the total number of items
+        long count = countAllByLoginOrNameInGroup(loginOrName, groupName);
+
+        return new PageImpl<>(users, pageable, count);
+    }
 
     @Query(value = """
-            SELECT user
-            FROM User user
-                LEFT JOIN FETCH user.groups userGroup
-            WHERE user.isDeleted = FALSE
-                AND userGroup IN :groupNames
-                AND (
-                    user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-                ) AND user.id <> :idOfUser
-            ORDER BY CONCAT(user.firstName, ' ', user.lastName)
-            """, countQuery = """
-            SELECT COUNT(user)
-            FROM User user
-                LEFT JOIN user.groups userGroup
-            WHERE user.isDeleted = FALSE
-                AND userGroup IN :groupNames
-                AND (
-                    user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-                ) AND user.id <> :idOfUser
-            ORDER BY CONCAT(user.firstName, ' ', user.lastName)
-            """)
-    // TODO: rewrite this query, pageable does not work well with left join fetch, it needs to transfer all results and only page in java
-    Page<User> searchAllByLoginOrNameInGroupsNotUserId(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames,
-            @Param("idOfUser") long idOfUser);
+            SELECT COUNT(u.id)
+            FROM User u
+            LEFT JOIN UserGroup ug ON u.id = ug.user_id
+            WHERE u.is_deleted = FALSE
+              AND ug.group_name IN :groupNames
+              AND (
+                  u.login LIKE :loginOrName%
+                  OR CONCAT(u.first_name, ' ', u.last_name) LIKE %:loginOrName%
+              ) AND u.id <> :idOfUser
+            """, nativeQuery = true)
+    long countAllByLoginOrNameInGroupsNotUserId(@Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames, @Param("idOfUser") long idOfUser);
+
+    @Query(value = """
+            SELECT * FROM (
+                SELECT
+                    u.id AS user_id,
+                    u.*,
+                    ug.*,
+                    ROW_NUMBER() OVER (ORDER BY CONCAT(u.first_name, ' ', u.last_name)) AS rn
+                FROM User u
+                LEFT JOIN UserGroup ug ON u.id = ug.user_id
+                WHERE u.is_deleted = FALSE
+                  AND ug.group_name IN :groupNames
+                  AND (
+                      u.login LIKE :loginOrName%
+                      OR CONCAT(u.first_name, ' ', u.last_name) LIKE %:loginOrName%
+                  ) AND u.id <> :idOfUser
+            ) sub
+            WHERE sub.rn BETWEEN :from AND :to
+            """, nativeQuery = true)
+    List<User> searchAllByLoginOrNameInGroupsNotUserIdWithRowBounds(@Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames,
+            @Param("idOfUser") long idOfUser, @Param("from") int from, @Param("to") int to);
+
+    default Page<User> searchAllByLoginOrNameInGroupsNotUserId(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames,
+            @Param("idOfUser") long idOfUser) {
+
+        int pageNumber = pageable.getPageNumber();
+        int pageSize = pageable.getPageSize();
+        int from = pageNumber * pageSize + 1;
+        int to = (pageNumber + 1) * pageSize;
+
+        List<User> users = searchAllByLoginOrNameInGroupsNotUserIdWithRowBounds(loginOrName, groupNames, idOfUser, from, to);
+
+        long count = countAllByLoginOrNameInGroupsNotUserId(loginOrName, groupNames, idOfUser);
+
+        return new PageImpl<>(users, pageable, count);
+    }
+
+    @Query(value = """
+            SELECT COUNT(u.id)
+            FROM User u
+            LEFT JOIN UserGroup ug ON u.id = ug.user_id
+            WHERE u.is_deleted = FALSE
+              AND ug.group_name IN :groupNames
+              AND (
+                  u.login LIKE :loginOrName%
+                  OR CONCAT(u.first_name, ' ', u.last_name) LIKE %:loginOrName%
+              )
+            """, nativeQuery = true)
+    long countAllByLoginOrNameInGroups(@Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames);
+
+    @Query(value = """
+            SELECT * FROM (
+                SELECT
+                    u.id AS user_id,
+                    u.*,
+                    ug.*,
+                    ROW_NUMBER() OVER (ORDER BY u.id) AS rn
+                FROM User u
+                LEFT JOIN UserGroup ug ON u.id = ug.user_id
+                WHERE u.is_deleted = FALSE
+                  AND ug.group_name IN :groupNames
+                  AND (
+                      u.login LIKE :loginOrName%
+                      OR CONCAT(u.first_name, ' ', u.last_name) LIKE %:loginOrName%
+                  )
+            ) sub
+            WHERE sub.rn BETWEEN :from AND :to
+            """, nativeQuery = true)
+    List<User> searchAllByLoginOrNameInGroupsWithRowBounds(@Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames, @Param("from") int from,
+            @Param("to") int to);
 
     /**
      * Search for all users by login or name within the provided groups
@@ -317,119 +399,187 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @param groupNames  Names of groups in which to search for users
      * @return All users matching search criteria
      */
-    @Query(value = """
-            SELECT user
-            FROM User user
-                LEFT JOIN FETCH user.groups userGroup
-            WHERE user.isDeleted = FALSE
-                AND userGroup IN :groupNames
-                AND (
-                    user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-                )
-            """, countQuery = """
-            SELECT COUNT(user)
-            FROM User user
-                LEFT JOIN user.groups userGroup
-            WHERE user.isDeleted = FALSE
-                AND userGroup IN :groupNames
-                AND (
-                    user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-                )
-            """)
-    // TODO: rewrite this query, pageable does not work well with left join fetch, it needs to transfer all results and only page in java
-    Page<User> searchAllByLoginOrNameInGroups(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames);
+    default Page<User> searchAllByLoginOrNameInGroups(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames) {
+
+        int pageNumber = pageable.getPageNumber();
+        int pageSize = pageable.getPageSize();
+        int from = pageNumber * pageSize + 1;
+        int to = (pageNumber + 1) * pageSize;
+
+        List<User> users = searchAllByLoginOrNameInGroupsWithRowBounds(loginOrName, groupNames, from, to);
+
+        long count = countAllByLoginOrNameInGroups(loginOrName, groupNames);
+
+        return new PageImpl<>(users, pageable, count);
+    }
 
     @Query(value = """
-            SELECT DISTINCT user
-            FROM User user
-                LEFT JOIN FETCH user.groups
-                JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
-                JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
-            WHERE user.isDeleted = FALSE
-                AND conversation.id = :conversationId
-                AND (
-                    :loginOrName = ''
-                    OR user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-                )
-            """, countQuery = """
-            SELECT COUNT(DISTINCT user)
-            FROM User user
-                JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
-                JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
-            WHERE user.isDeleted = FALSE
-                AND conversation.id = :conversationId
-                AND (
-                    :loginOrName = ''
-                    OR user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-                )
-            """)
-    // TODO: rewrite this query, pageable does not work well with left join fetch, it needs to transfer all results and only page in java
-    Page<User> searchAllByLoginOrNameInConversation(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId);
+            SELECT COUNT(DISTINCT u.id)
+            FROM User u
+            JOIN ConversationParticipant cp ON cp.user_id = u.id
+            JOIN Conversation c ON c.id = cp.conversation_id
+            WHERE u.is_deleted = FALSE
+              AND c.id = :conversationId
+              AND (
+                  :loginOrName = ''
+                  OR u.login LIKE :loginOrName%
+                  OR CONCAT(u.first_name, ' ', u.last_name) LIKE %:loginOrName%
+              )
+            """, nativeQuery = true)
+    long countAllByLoginOrNameInConversation(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId);
 
     @Query(value = """
-             SELECT DISTINCT user
-             FROM User user
-                 LEFT JOIN FETCH user.groups userGroup
-                 JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
-                 JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
-             WHERE user.isDeleted = FALSE
-                AND conversation.id = :conversationId
-                AND (
-                    :loginOrName = ''
-                    OR user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-                ) AND userGroup IN :groupNames
-            """, countQuery = """
-            SELECT COUNT(DISTINCT user)
-            FROM User user
-                JOIN user.groups userGroup
-                JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
-                JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
-            WHERE user.isDeleted = FALSE
-                AND conversation.id = :conversationId
-                AND (
-                    :loginOrName = ''
-                    OR user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-                ) AND userGroup IN :groupNames
-            """)
-    // TODO: rewrite this query, pageable does not work well with left join fetch, it needs to transfer all results and only page in java
-    Page<User> searchAllByLoginOrNameInConversationWithCourseGroups(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId,
+            SELECT * FROM (
+                SELECT
+                    u.id AS user_id,
+                    u.*,
+                    ug.*,
+                    ROW_NUMBER() OVER (ORDER BY u.id) AS rn
+                FROM User u
+                LEFT JOIN UserGroup ug ON u.id = ug.user_id
+                JOIN ConversationParticipant cp ON cp.user_id = u.id
+                JOIN Conversation c ON c.id = cp.conversation_id
+                WHERE u.is_deleted = FALSE
+                  AND c.id = :conversationId
+                  AND (
+                      :loginOrName = ''
+                      OR u.login LIKE :loginOrName%
+                      OR CONCAT(u.first_name, ' ', u.last_name) LIKE %:loginOrName%
+                  )
+            ) sub
+            WHERE sub.rn BETWEEN :from AND :to
+            """, nativeQuery = true)
+    List<User> searchAllByLoginOrNameInConversationWithRowBounds(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId, @Param("from") int from,
+            @Param("to") int to);
+
+    default Page<User> searchAllByLoginOrNameInConversation(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId) {
+
+        int pageNumber = pageable.getPageNumber();
+        int pageSize = pageable.getPageSize();
+        int from = pageNumber * pageSize + 1;
+        int to = (pageNumber + 1) * pageSize;
+
+        List<User> users = searchAllByLoginOrNameInConversationWithRowBounds(loginOrName, conversationId, from, to);
+
+        long count = countAllByLoginOrNameInConversation(loginOrName, conversationId);
+
+        return new PageImpl<>(users, pageable, count);
+    }
+
+    @Query(value = """
+            SELECT COUNT(DISTINCT u.id)
+            FROM User u
+            JOIN UserGroup ug ON u.id = ug.user_id
+            JOIN ConversationParticipant cp ON cp.user_id = u.id
+            JOIN Conversation c ON c.id = cp.conversation_id
+            WHERE u.is_deleted = FALSE
+              AND c.id = :conversationId
+              AND (
+                  :loginOrName = ''
+                  OR u.login LIKE :loginOrName%
+                  OR CONCAT(u.first_name, ' ', u.last_name) LIKE %:loginOrName%
+              )
+              AND ug.group_name IN :groupNames
+            """, nativeQuery = true)
+    long countAllByLoginOrNameInConversationWithCourseGroups(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId,
             @Param("groupNames") Set<String> groupNames);
 
     @Query(value = """
-            SELECT DISTINCT user
-            FROM User user
-                JOIN FETCH user.groups userGroup
-                JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
-                JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
-            WHERE user.isDeleted = FALSE
-                AND conversation.id = :conversationId
-                AND (
-                    :loginOrName = ''
-                    OR user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-                ) AND conversationParticipant.isModerator = TRUE
-            """, countQuery = """
-            SELECT COUNT(DISTINCT user)
-            FROM User user
-                JOIN user.groups userGroup
-                JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
-                JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
-            WHERE user.isDeleted = FALSE
-                AND conversation.id = :conversationId
-                AND (
-                    :loginOrName = ''
-                    OR user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-                ) AND conversationParticipant.isModerator = TRUE
-            """)
-    // TODO: rewrite this query, pageable does not work well with left join fetch
-    Page<User> searchChannelModeratorsByLoginOrNameInConversation(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId);
+            SELECT * FROM (
+                SELECT
+                    u.id AS user_id,
+                    u.*,
+                    ug.*,
+                    ROW_NUMBER() OVER (ORDER BY u.id) AS rn
+                FROM User u
+                LEFT JOIN UserGroup ug ON u.id = ug.user_id
+                JOIN ConversationParticipant cp ON cp.user_id = u.id
+                JOIN Conversation c ON c.id = cp.conversation_id
+                WHERE u.is_deleted = FALSE
+                  AND c.id = :conversationId
+                  AND (
+                      :loginOrName = ''
+                      OR u.login LIKE :loginOrName%
+                      OR CONCAT(u.first_name, ' ', u.last_name) LIKE %:loginOrName%
+                  )
+                  AND ug.group_name IN :groupNames
+            ) sub
+            WHERE sub.rn BETWEEN :from AND :to
+            """, nativeQuery = true)
+    List<User> searchAllByLoginOrNameInConversationWithCourseGroupsWithRowBounds(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId,
+            @Param("groupNames") Set<String> groupNames, @Param("from") int from, @Param("to") int to);
+
+    default Page<User> searchAllByLoginOrNameInConversationWithCourseGroups(Pageable pageable, @Param("loginOrName") String loginOrName,
+            @Param("conversationId") long conversationId, @Param("groupNames") Set<String> groupNames) {
+
+        int pageNumber = pageable.getPageNumber();
+        int pageSize = pageable.getPageSize();
+        int from = pageNumber * pageSize + 1;
+        int to = (pageNumber + 1) * pageSize;
+
+        List<User> users = searchAllByLoginOrNameInConversationWithCourseGroupsWithRowBounds(loginOrName, conversationId, groupNames, from, to);
+
+        long count = countAllByLoginOrNameInConversationWithCourseGroups(loginOrName, conversationId, groupNames);
+
+        return new PageImpl<>(users, pageable, count);
+    }
+
+    @Query(value = """
+            SELECT COUNT(DISTINCT u.id)
+            FROM User u
+            JOIN UserGroup ug ON u.id = ug.user_id
+            JOIN ConversationParticipant cp ON cp.user_id = u.id
+            JOIN Conversation c ON c.id = cp.conversation_id
+            WHERE u.is_deleted = FALSE
+              AND c.id = :conversationId
+              AND (
+                  :loginOrName = ''
+                  OR u.login LIKE :loginOrName%
+                  OR CONCAT(u.first_name, ' ', u.last_name) LIKE %:loginOrName%
+              )
+              AND cp.is_moderator = TRUE
+            """, nativeQuery = true)
+    long countChannelModeratorsByLoginOrNameInConversation(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId);
+
+    @Query(value = """
+            SELECT * FROM (
+                SELECT
+                    u.id AS user_id,
+                    u.*,
+                    ug.*,
+                    ROW_NUMBER() OVER (ORDER BY u.id) AS rn
+                FROM User u
+                JOIN UserGroup ug ON u.id = ug.user_id
+                JOIN ConversationParticipant cp ON cp.user_id = u.id
+                JOIN Conversation c ON c.id = cp.conversation_id
+                WHERE u.is_deleted = FALSE
+                  AND c.id = :conversationId
+                  AND (
+                      :loginOrName = ''
+                      OR u.login LIKE :loginOrName%
+                      OR CONCAT(u.first_name, ' ', u.last_name) LIKE %:loginOrName%
+                  )
+                  AND cp.is_moderator = TRUE
+            ) sub
+            WHERE sub.rn BETWEEN :from AND :to
+            """, nativeQuery = true)
+    List<User> searchChannelModeratorsByLoginOrNameInConversationWithRowBounds(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId,
+            @Param("from") int from, @Param("to") int to);
+
+    default Page<User> searchChannelModeratorsByLoginOrNameInConversation(Pageable pageable, @Param("loginOrName") String loginOrName,
+            @Param("conversationId") long conversationId) {
+
+        int pageNumber = pageable.getPageNumber();
+        int pageSize = pageable.getPageSize();
+        int from = pageNumber * pageSize + 1;
+        int to = (pageNumber + 1) * pageSize;
+
+        List<User> users = searchChannelModeratorsByLoginOrNameInConversationWithRowBounds(loginOrName, conversationId, from, to);
+
+        long count = countChannelModeratorsByLoginOrNameInConversation(loginOrName, conversationId);
+
+        return new PageImpl<>(users, pageable, count);
+    }
 
     /**
      * Search for all users by login or name in a group and convert them to {@link UserDTO}
@@ -512,9 +662,41 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             """)
     Page<User> searchAllByLoginOrNameInCourse(Pageable page, @Param("loginOrName") String loginOrName, @Param("courseId") long courseId);
 
-    // TODO: rewrite this query, pageable does not work well with left join fetch
-    @EntityGraph(type = LOAD, attributePaths = { "groups" })
-    Page<User> findAllWithGroupsByIsDeletedIsFalse(Pageable pageable);
+    @Query(value = """
+            SELECT COUNT(u.id)
+            FROM User u
+            WHERE u.is_deleted = FALSE
+            """, nativeQuery = true)
+    long countAllWithGroupsByIsDeletedIsFalse();
+
+    @Query(value = """
+            SELECT * FROM (
+                SELECT
+                    u.id AS user_id,
+                    u.*,
+                    ug.*,
+                    ROW_NUMBER() OVER (ORDER BY u.id) AS rn
+                FROM User u
+                LEFT JOIN UserGroup ug ON u.id = ug.user_id
+                WHERE u.is_deleted = FALSE
+            ) sub
+            WHERE sub.rn BETWEEN :from AND :to
+            """, nativeQuery = true)
+    List<User> findAllWithGroupsByIsDeletedIsFalseWithRowBounds(@Param("from") int from, @Param("to") int to);
+
+    default Page<User> findAllWithGroupsByIsDeletedIsFalse(Pageable pageable) {
+
+        int pageNumber = pageable.getPageNumber();
+        int pageSize = pageable.getPageSize();
+        int from = pageNumber * pageSize + 1;
+        int to = (pageNumber + 1) * pageSize;
+
+        List<User> users = findAllWithGroupsByIsDeletedIsFalseWithRowBounds(from, to);
+
+        long count = countAllWithGroupsByIsDeletedIsFalse();
+
+        return new PageImpl<>(users, pageable, count);
+    }
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Set<User> findAllWithGroupsAndAuthoritiesByIsDeletedIsFalse();

@@ -20,6 +20,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -644,29 +645,54 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
     @Query(value = """
-            SELECT p
+            SELECT * FROM (
+                SELECT
+                    p.id AS participation_id,
+                    p.*,
+                    s.*,
+                    r.*,
+                    ROW_NUMBER() OVER (PARTITION BY p.id ORDER BY p.id) AS rn
+                FROM StudentParticipation p
+                LEFT JOIN Submission s ON p.id = s.participation_id
+                LEFT JOIN Result r ON p.id = r.participation_id
+                WHERE p.exercise_id = :exerciseId
+                  AND (
+                      p.student_first_name LIKE %:partialStudentName%
+                      OR p.student_last_name LIKE %:partialStudentName%
+                  ) AND r.completion_date IS NOT NULL
+            ) sub
+            WHERE sub.rn BETWEEN :from AND :to
+            """, nativeQuery = true)
+    List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsByExerciseIdAndRowBounds(@Param("exerciseId") long exerciseId,
+            @Param("partialStudentName") String partialStudentName, @Param("from") int from, @Param("to") int to);
+
+    @Query(value = """
+            SELECT COUNT(*)
             FROM StudentParticipation p
-                LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH p.results r
-            WHERE p.exercise.id = :exerciseId
-                AND (
-                    p.student.firstName LIKE %:partialStudentName%
-                    OR p.student.lastName LIKE %:partialStudentName%
-                ) AND r.completionDate IS NOT NULL
-            """, countQuery = """
-            SELECT COUNT(p)
-            FROM StudentParticipation p
-                LEFT JOIN p.submissions s
-                LEFT JOIN p.results r
-            WHERE p.exercise.id = :exerciseId
-                AND (
-                    p.student.firstName LIKE %:partialStudentName%
-                    OR p.student.lastName LIKE %:partialStudentName%
-                ) AND r.completionDate IS NOT NULL
-            """)
-    // TODO: rewrite this query, pageable does not work well with left join fetch, it needs to transfer all results and only page in java
-    Page<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsByExerciseId(@Param("exerciseId") long exerciseId, @Param("partialStudentName") String partialStudentName,
-            Pageable pageable);
+            LEFT JOIN Result r ON p.id = r.participation_id
+            WHERE p.exercise_id = :exerciseId
+              AND (
+                  p.student_first_name LIKE %:partialStudentName%
+                  OR p.student_last_name LIKE %:partialStudentName%
+              ) AND r.completion_date IS NOT NULL
+            """, nativeQuery = true)
+    long countAllWithEagerSubmissionsAndEagerResultsByExerciseId(@Param("exerciseId") long exerciseId, @Param("partialStudentName") String partialStudentName);
+
+    default Page<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsByExerciseId(long exerciseId, String partialStudentName, Pageable pageable) {
+
+        int pageNumber = pageable.getPageNumber();
+        int pageSize = pageable.getPageSize();
+        int from = pageNumber * pageSize + 1;
+        int to = (pageNumber + 1) * pageSize;
+
+        List<StudentParticipation> participations = findAllWithEagerSubmissionsAndEagerResultsByExerciseIdAndRowBounds(exerciseId, partialStudentName, from, to);
+
+        // We need a count for the total number of items
+        // phantom read problems?
+        long count = countAllWithEagerSubmissionsAndEagerResultsByExerciseId(exerciseId, partialStudentName);
+
+        return new PageImpl<>(participations, pageable, count);
+    }
 
     @Query("""
             SELECT DISTINCT p
