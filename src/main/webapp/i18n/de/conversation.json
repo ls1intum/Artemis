@@ -229,7 +229,7 @@
                         "maxLengthValidationError": "Beschreibung kann max {{ max }} Zeichen lang sein!"
                     },
                     "isPublicInput": {
-                        "label": "Kanal Sichtbarkeit",
+                        "label": "Sichtbarkeit",
                         "explanation": "Alle Nutzer:innen, ausser Lehrende, brauchen eine Einladung um sich einem privaten Kanal anzuschließen. Jeder/Jede Nutzer:in kann einem öffentlichen Kanal beitreten.",
                         "public": "Öffentlich",
                         "private": "Privat"
