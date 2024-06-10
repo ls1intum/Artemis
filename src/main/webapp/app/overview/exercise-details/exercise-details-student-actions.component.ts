@@ -88,6 +88,15 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             }
             this.repositoryLink += `/exercises/${this.exercise.id}`;
         }
+        if (this.repositoryLink.includes('dashboard')) {
+            const parts = this.repositoryLink.split('/');
+            this.repositoryLink = [...parts.slice(0, parts.indexOf('dashboard')), 'exercises', this.exercise.id].join('/');
+        }
+        if (this.repositoryLink.includes('lectures')) {
+            const parts = this.repositoryLink.split('/');
+            this.repositoryLink = [...parts.slice(0, parts.indexOf('lectures')), 'exercises', this.exercise.id].join('/');
+        }
+
         if (this.exercise.type === ExerciseType.QUIZ) {
             const quizExercise = this.exercise as QuizExercise;
             this.uninitializedQuiz = ArtemisQuizService.isUninitialized(quizExercise);
@@ -322,7 +331,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             const athenaResults = this.gradedParticipation.results.filter((result) => result.assessmentType === 'AUTOMATIC_ATHENA');
             const countOfSuccessfulRequests = athenaResults.filter((result) => result.successful === true).length;
 
-            if (countOfSuccessfulRequests >= 3) {
+            if (countOfSuccessfulRequests >= 20) {
                 const rateLimitExceededWarning = this.translateService.instant('artemisApp.exercise.maxAthenaResultsReached');
                 window.alert(rateLimitExceededWarning);
                 return false;

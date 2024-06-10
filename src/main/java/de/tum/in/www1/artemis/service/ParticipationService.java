@@ -249,12 +249,11 @@ public class ParticipationService {
      *
      * @param exercise                           the programming exercise that the currently active user (student) wants to start
      * @param participation                      inactive participation
-     * @param setInitializationDate              flag if the InitializationDate should be set to the current time
      * @param optionalGradedStudentParticipation the graded participation of that student, if present
      * @param useGradedParticipation             flag if the graded student participation should be used as baseline for the new repository
      * @return started participation
      */
-    private StudentParticipation startPracticeMode(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean setInitializationDate,
+    private StudentParticipation startPracticeMode(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation,
             Optional<StudentParticipation> optionalGradedStudentParticipation, boolean useGradedParticipation) {
         // Step 1a) create the student repository (based on the template repository or graded participation)
         if (useGradedParticipation && optionalGradedStudentParticipation.isPresent()
@@ -268,7 +267,7 @@ public class ParticipationService {
         // For practice mode 1 is always set. For more information see Participation.class
         participation.setNumberOfAttempts(1);
 
-        return startProgrammingParticipation(exercise, participation, setInitializationDate);
+        return startProgrammingParticipation(exercise, participation, true);
     }
 
     private StudentParticipation startProgrammingParticipation(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean setInitializationDate) {
@@ -303,7 +302,7 @@ public class ParticipationService {
      */
     public StudentParticipation startPracticeMode(Exercise exercise, Participant participant, Optional<StudentParticipation> optionalGradedStudentParticipation,
             boolean useGradedParticipation) {
-        if (!(exercise instanceof ProgrammingExercise programmingExercise)) {
+        if (!(exercise instanceof ProgrammingExercise)) {
             throw new IllegalStateException("Only programming exercises support the practice mode at the moment");
         }
 
@@ -328,9 +327,8 @@ public class ParticipationService {
             participation.setExercise(exercise);
         }
 
-        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-        participation = startPracticeMode(programmingExercise, (ProgrammingExerciseStudentParticipation) participation, true, optionalGradedStudentParticipation,
-                useGradedParticipation);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+        participation = startPracticeMode(programmingExercise, (ProgrammingExerciseStudentParticipation) participation, optionalGradedStudentParticipation, useGradedParticipation);
 
         return studentParticipationRepository.saveAndFlush(participation);
     }
@@ -653,7 +651,6 @@ public class ParticipationService {
             return studentParticipationRepository.findLatestWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
         }
         return studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
-
     }
 
     /**

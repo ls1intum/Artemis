@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.quiz;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.domain.enumeration.QuizAction.START_BATCH;
 
 import jakarta.annotation.Nullable;
 
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.in.www1.artemis.domain.enumeration.QuizAction;
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
@@ -45,7 +47,7 @@ public class QuizMessagingService {
      * @param quizBatch    the batch that has been started
      * @param quizChange   the change that was applied to the quiz, which decides to which topic subscriptions the quiz exercise is sent
      */
-    public void sendQuizExerciseToSubscribedClients(QuizExercise quizExercise, @Nullable QuizBatch quizBatch, String quizChange) {
+    public void sendQuizExerciseToSubscribedClients(QuizExercise quizExercise, @Nullable QuizBatch quizBatch, QuizAction quizChange) {
         try {
             long start = System.currentTimeMillis();
             Class<?> view = quizExercise.viewForStudentsInQuizExercise(quizBatch);
@@ -53,12 +55,12 @@ public class QuizMessagingService {
             // For each change we send the same message. The client needs to decide how to handle the date based on the quiz status
             if (quizExercise.isVisibleToStudents() && quizExercise.isCourseExercise()) {
                 // Create a group notification if actions is 'start-now'.
-                if ("start-now".equals(quizChange)) {
+                if (quizChange == QuizAction.START_NOW) {
                     groupNotificationService.notifyStudentGroupAboutQuizExerciseStart(quizExercise);
                 }
                 // Send quiz via websocket.
                 String destination = "/topic/courses/" + quizExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/quizExercises";
-                if ("start-batch".equals(quizChange) && quizBatch != null) {
+                if (quizChange == START_BATCH && quizBatch != null) {
                     destination = destination + "/" + quizBatch.getId();
                 }
                 websocketMessagingService.sendMessage(destination, MessageBuilder.withPayload(payload).build());

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject, Subscription } from 'rxjs';
@@ -33,13 +33,14 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
+import { scrollToTopOfPage } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-course-management-tab-bar',
     templateUrl: './course-management-tab-bar.component.html',
     styleUrls: ['./course-management-tab-bar.component.scss'],
 })
-export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
+export class CourseManagementTabBarComponent implements OnInit, OnDestroy, AfterViewInit {
     readonly FeatureToggle = FeatureToggle;
     readonly ButtonSize = ButtonSize;
 
@@ -116,9 +117,21 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
         });
 
         // Notify the course access storage service that the course has been accessed
-        this.courseAccessStorageService.onCourseAccessed(courseId);
+        this.courseAccessStorageService.onCourseAccessed(
+            courseId,
+            CourseAccessStorageService.STORAGE_KEY,
+            CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_OVERVIEW,
+        );
+        this.courseAccessStorageService.onCourseAccessed(
+            courseId,
+            CourseAccessStorageService.STORAGE_KEY_DROPDOWN,
+            CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_DROPDOWN,
+        );
     }
 
+    ngAfterViewInit() {
+        scrollToTopOfPage();
+    }
     /**
      * Subscribe to changes in course.
      */

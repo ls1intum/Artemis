@@ -156,6 +156,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "guidedTourSettings" })
     Optional<User> findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(String login);
 
+    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "guidedTourSettings", "irisAccepted" })
+    Optional<User> findOneWithGroupsAndAuthoritiesAndGuidedTourSettingsAndIrisAcceptedTimestampByLogin(String login);
+
     @EntityGraph(type = LOAD, attributePaths = { "learningPaths" })
     Optional<User> findOneWithLearningPathsByLogin(String login);
 
@@ -661,6 +664,30 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     }
 
     /**
+     * Finds user id by login
+     *
+     * @param login the login of the user to search
+     * @return optional of the user id if it exists, empty otherwise
+     */
+    @Query("""
+            SELECT u.id
+            FROM User u
+            WHERE u.login = :login
+            """)
+    Optional<Long> findIdByLogin(@Param("login") String login);
+
+    /**
+     * Get the user id of the currently logged-in user
+     *
+     * @return the user id of the currently logged-in user
+     */
+    default long getUserIdElseThrow() {
+        String currentUserLogin = getCurrentUserLogin();
+        Optional<Long> userId = findIdByLogin(currentUserLogin);
+        return userId.orElseThrow(() -> new EntityNotFoundException("User: " + currentUserLogin));
+    }
+
+    /**
      * Retrieve a user by its login, or else throw exception
      *
      * @param login the login of the user to search
@@ -1021,11 +1048,16 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             INNER JOIN Exercise exercise
             ON user.login = :login
                 AND exercise.id = :exerciseId
-            INNER JOIN exercise.course course
+            LEFT JOIN exercise.course course
+            LEFT JOIN exercise.exerciseGroup.exam.course examCourse
             WHERE (course.studentGroupName MEMBER OF user.groups)
                     OR (course.teachingAssistantGroupName MEMBER OF user.groups)
                     OR (course.editorGroupName MEMBER OF user.groups)
                     OR (course.instructorGroupName MEMBER OF user.groups)
+                    OR (examCourse.studentGroupName MEMBER OF user.groups)
+                    OR (examCourse.teachingAssistantGroupName MEMBER OF user.groups)
+                    OR (examCourse.editorGroupName MEMBER OF user.groups)
+                    OR (examCourse.instructorGroupName MEMBER OF user.groups)
                     OR (:#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastStudentInExercise(@Param("login") String login, @Param("exerciseId") long exerciseId);
@@ -1036,10 +1068,14 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             INNER JOIN Exercise exercise
             ON user.login = :login
                 AND exercise.id = :exerciseId
-            INNER JOIN exercise.course course
+            LEFT JOIN exercise.course course
+            LEFT JOIN exercise.exerciseGroup.exam.course examCourse
             WHERE (course.teachingAssistantGroupName MEMBER OF user.groups)
                     OR (course.editorGroupName MEMBER OF user.groups)
                     OR (course.instructorGroupName MEMBER OF user.groups)
+                    OR (examCourse.teachingAssistantGroupName MEMBER OF user.groups)
+                    OR (examCourse.editorGroupName MEMBER OF user.groups)
+                    OR (examCourse.instructorGroupName MEMBER OF user.groups)
                     OR (:#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastTeachingAssistantInExercise(@Param("login") String login, @Param("exerciseId") long exerciseId);
@@ -1050,9 +1086,12 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             INNER JOIN Exercise exercise
             ON user.login = :login
                 AND exercise.id = :exerciseId
-            INNER JOIN exercise.course course
+            LEFT JOIN exercise.course course
+            LEFT JOIN exercise.exerciseGroup.exam.course examCourse
             WHERE (course.editorGroupName MEMBER OF user.groups)
                     OR (course.instructorGroupName MEMBER OF user.groups)
+                    OR (examCourse.editorGroupName MEMBER OF user.groups)
+                    OR (examCourse.instructorGroupName MEMBER OF user.groups)
                     OR (:#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastEditorInExercise(@Param("login") String login, @Param("exerciseId") long exerciseId);
@@ -1063,8 +1102,10 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             INNER JOIN Exercise exercise
             ON user.login = :login
                 AND exercise.id = :exerciseId
-            INNER JOIN exercise.course course
+            LEFT JOIN exercise.course course
+            LEFT JOIN exercise.exerciseGroup.exam.course examCourse
             WHERE (course.instructorGroupName MEMBER OF user.groups)
+                    OR (examCourse.instructorGroupName MEMBER OF user.groups)
                     OR (:#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastInstructorInExercise(@Param("login") String login, @Param("exerciseId") long exerciseId);
