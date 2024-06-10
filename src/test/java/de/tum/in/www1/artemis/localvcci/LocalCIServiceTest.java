@@ -4,9 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -70,7 +72,7 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     protected IQueue<BuildJobItemReference> queuedJobs;
 
-    protected IMap<Long, BuildJobItem> buildJobItemIMap;
+    private IMap<Long, CircularFifoQueue<BuildJobItem>> buildJobItemIMap;
 
     protected IMap<String, BuildJobItem> processingJobs;
 
@@ -121,7 +123,7 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         assertThat(continuousIntegrationService.getBuildStatus(participation)).isEqualTo(BuildStatus.INACTIVE);
 
         queuedJobs.add(job1Reference);
-        buildJobItemIMap.put(job1.participationId(), job1);
+        buildJobItemIMap.put(job1.participationId(), new CircularFifoQueue<>(List.of(job1)));
         processingJobs.put(job2.id(), job2);
 
         // At least one build job for the participation is queued

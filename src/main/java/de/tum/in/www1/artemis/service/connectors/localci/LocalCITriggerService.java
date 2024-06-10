@@ -10,10 +10,12 @@ import java.util.Optional;
 
 import jakarta.annotation.PostConstruct;
 
+import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -76,7 +78,10 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private IMap<String, ZonedDateTime> dockerImageCleanupInfo;
 
-    private IMap<Long, BuildJobItem> buildJobItemMap;
+    private IMap<Long, CircularFifoQueue<BuildJobItem>> buildJobItemMap;
+
+    @Value("${artemis.continuous-integration.max-build-job-items:2}")
+    private int MAX_BUILD_JOB_ITEMS;
 
     public LocalCITriggerService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, AeolusTemplateService aeolusTemplateService,
             ProgrammingLanguageConfiguration programmingLanguageConfiguration, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
@@ -164,7 +169,22 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         BuildJobItemReference buildJobItemReference = new BuildJobItemReference(buildJobItem);
 
-        buildJobItemMap.put(participation.getId(), buildJobItem);
+        buildJobItemMap.lock(participation.getId());
+        try {
+            CircularFifoQueue<BuildJobItem> buildJobItems = buildJobItemMap.get(participation.getId());
+            if (buildJobItems == null) {
+                buildJobItems = new CircularFifoQueue<>(MAX_BUILD_JOB_ITEMS);
+            }
+            buildJobItems.add(buildJobItem);
+            buildJobItemMap.put(participation.getId(), buildJobItems);
+        }
+        catch (Exception e) {
+            log.error("Error while adding build job item to map", e);
+            throw new LocalCIException("Error while adding build job item to map", e);
+        }
+        finally {
+            buildJobItemMap.unlock(participation.getId());
+        }
         queue.add(buildJobItemReference);
         log.info("Added build job {} to the queue", buildJobId);
 

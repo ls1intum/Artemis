@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -62,7 +63,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
 
     protected IQueue<BuildJobItemReference> queuedJobs;
 
-    protected IMap<Long, BuildJobItem> buildJobItemMap;
+    private IMap<Long, CircularFifoQueue<BuildJobItem>> buildJobItemMap;
 
     protected IMap<Long, BuildJobItem> processingJobs;
 
@@ -106,7 +107,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
 
         queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
         processingJobs = hazelcastInstance.getMap("processingJobs");
-        buildJobItemMap = this.hazelcastInstance.getMap("buildJobItemMap");
+        buildJobItemMap = hazelcastInstance.getMap("buildJobItemMap");
         buildAgentInformation = hazelcastInstance.getMap("buildAgentInformation");
 
         processingJobs.put(Long.valueOf(job1.id()), job1);
@@ -131,8 +132,8 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         assertThat(retrievedJobs).isEmpty();
         // Adding a lot of jobs as they get processed very quickly due to mocking
         queuedJobs.addAll(List.of(new BuildJobItemReference(job1), new BuildJobItemReference(job2)));
-        buildJobItemMap.put(job1.participationId(), job1);
-        buildJobItemMap.put(job2.participationId(), job2);
+        buildJobItemMap.put(job1.participationId(), new CircularFifoQueue<>(List.of(job1)));
+        buildJobItemMap.put(job2.participationId(), new CircularFifoQueue<>(List.of(job2)));
         var retrievedJobs1 = request.get("/api/admin/queued-jobs", HttpStatus.OK, List.class);
         assertThat(retrievedJobs1).hasSize(2);
     }
@@ -157,8 +158,8 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         assertThat(retrievedJobs).isEmpty();
         // Adding a lot of jobs as they get processed very quickly due to mocking
         queuedJobs.addAll(List.of(new BuildJobItemReference(job1), new BuildJobItemReference(job2)));
-        buildJobItemMap.put(job1.participationId(), job1);
-        buildJobItemMap.put(job2.participationId(), job2);
+        buildJobItemMap.put(job1.participationId(), new CircularFifoQueue<>(List.of(job1)));
+        buildJobItemMap.put(job2.participationId(), new CircularFifoQueue<>(List.of(job2)));
         var retrievedJobs1 = request.get("/api/courses/" + course.getId() + "/queued-jobs", HttpStatus.OK, List.class);
         assertThat(retrievedJobs1).hasSize(2);
     }
@@ -206,7 +207,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testCancelQueuedBuildJob() throws Exception {
-        buildJobItemMap.put(job1.participationId(), job1);
+        buildJobItemMap.put(job1.participationId(), new CircularFifoQueue<>(List.of(job1)));
         queuedJobs.put(new BuildJobItemReference(job1));
         request.delete("/api/admin/cancel-job/" + job1.id(), HttpStatus.NO_CONTENT);
     }
@@ -233,9 +234,9 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCancelAllQueuedBuildJobsForCourse() throws Exception {
-        buildJobItemMap.put(job1.participationId(), job1);
+        buildJobItemMap.put(job1.participationId(), new CircularFifoQueue<>(List.of(job1)));
         queuedJobs.put(new BuildJobItemReference(job1));
-        buildJobItemMap.put(job2.participationId(), job2);
+        buildJobItemMap.put(job2.participationId(), new CircularFifoQueue<>(List.of(job2)));
         queuedJobs.put(new BuildJobItemReference(job2));
         request.delete("/api/courses/" + course.getId() + "/cancel-all-queued-jobs", HttpStatus.NO_CONTENT);
     }

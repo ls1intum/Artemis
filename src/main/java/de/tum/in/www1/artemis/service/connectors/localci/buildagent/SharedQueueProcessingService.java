@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
+import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -70,7 +71,7 @@ public class SharedQueueProcessingService {
 
     private IQueue<BuildJobItemReference> queue;
 
-    private IMap<Long, BuildJobItem> buildJobItemMap;
+    private IMap<Long, CircularFifoQueue<BuildJobItem>> buildJobItemMap;
 
     private IQueue<ResultQueueItem> resultQueue;
 
@@ -205,9 +206,21 @@ public class SharedQueueProcessingService {
     private BuildJobItem addToProcessingJobs() {
         BuildJobItemReference buildJobReference = queue.poll();
         if (buildJobReference != null) {
-            BuildJobItem buildJob = buildJobItemMap.remove(buildJobReference.participationId());
-            if (buildJob == null) {
-                return null;
+            buildJobItemMap.lock(buildJobReference.participationId());
+            BuildJobItem buildJob;
+            try {
+                CircularFifoQueue<BuildJobItem> buildJobItems = buildJobItemMap.get(buildJobReference.participationId());
+                if (buildJobItems == null) {
+                    return null;
+                }
+                buildJob = buildJobItems.poll();
+                if (buildJob == null) {
+                    return null;
+                }
+                buildJobItemMap.put(buildJobReference.participationId(), buildJobItems);
+            }
+            finally {
+                buildJobItemMap.unlock(buildJobReference.participationId());
             }
 
             String hazelcastMemberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();

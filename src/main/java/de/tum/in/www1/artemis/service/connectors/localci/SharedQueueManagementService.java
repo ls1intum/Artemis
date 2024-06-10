@@ -8,10 +8,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import jakarta.annotation.PostConstruct;
 
+import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -47,7 +47,7 @@ public class SharedQueueManagementService {
 
     private IQueue<BuildJobItemReference> queue;
 
-    private IMap<Long, BuildJobItem> buildJobItemMap;
+    private IMap<Long, CircularFifoQueue<BuildJobItem>> buildJobItemMap;
 
     private final ProfileService profileService;
 
@@ -105,7 +105,7 @@ public class SharedQueueManagementService {
     }
 
     public List<BuildJobItem> getQueuedJobs() {
-        return buildJobItemMap.values().stream().filter(Objects::nonNull).toList();
+        return buildJobItemMap.values().stream().flatMap(queue -> queue.stream().filter(Objects::nonNull)).toList();
     }
 
     public List<BuildJobItem> getProcessingJobs() {
@@ -114,7 +114,7 @@ public class SharedQueueManagementService {
 
     public List<BuildJobItem> getQueuedJobsForCourse(long courseId) {
         Set<Long> participationIds = queue.stream().filter(job -> job.courseId() == courseId).map(BuildJobItemReference::participationId).collect(toSet());
-        return buildJobItemMap.getAll(participationIds).values().stream().filter(Objects::nonNull).toList();
+        return buildJobItemMap.getAll(participationIds).values().stream().flatMap(queue -> queue.stream().filter(Objects::nonNull)).toList();
     }
 
     public List<BuildJobItem> getProcessingJobsForCourse(long courseId) {
@@ -122,7 +122,7 @@ public class SharedQueueManagementService {
     }
 
     public List<BuildJobItem> getQueuedJobsForParticipation(long participationId) {
-        return Stream.of(buildJobItemMap.get(participationId)).filter(Objects::nonNull).toList();
+        return buildJobItemMap.get(participationId).stream().filter(Objects::nonNull).toList();
     }
 
     public List<BuildJobItem> getProcessingJobsForParticipation(long participationId) {
@@ -152,8 +152,17 @@ public class SharedQueueManagementService {
                 for (BuildJobItemReference job : queue) {
                     if (Objects.equals(job.id(), buildJobId)) {
                         toRemove.add(job);
-                        // Used delete instead of RemoveAll(predicate) to avoid unnecessary deserialization
-                        buildJobItemMap.delete(job.participationId());
+                        buildJobItemMap.lock(job.participationId());
+                        try {
+                            CircularFifoQueue<BuildJobItem> buildJobItems = buildJobItemMap.get(job.participationId());
+                            if (buildJobItems != null) {
+                                buildJobItems.removeIf(buildJobItem -> Objects.equals(buildJobItem.id(), buildJobId));
+                                buildJobItemMap.put(job.participationId(), buildJobItems);
+                            }
+                        }
+                        finally {
+                            buildJobItemMap.unlock(job.participationId());
+                        }
                     }
                 }
                 queue.removeAll(toRemove);
