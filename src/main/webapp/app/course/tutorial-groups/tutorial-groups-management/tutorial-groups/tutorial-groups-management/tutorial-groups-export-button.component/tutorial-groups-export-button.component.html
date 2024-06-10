@@ -1,17 +1,17 @@
-<button (click)="openExportDialog($event)" ngbDropdownItem>{{ 'artemisApp.tutorialGroupExportDialog.buttonHeader' | artemisTranslate }}</button>
+<button (click)="openExportDialog($event)" [jhiTranslate]="'artemisApp.tutorialGroupExportDialog.buttonHeader'" ngbDropdownItem></button>
 
 <ng-template #exportDialog let-modal>
     <div class="modal-header">
-        <h4 class="modal-title">{{ 'artemisApp.tutorialGroupExportDialog.header' | artemisTranslate }}</h4>
+        <h4 class="modal-title" [jhiTranslate]="'artemisApp.tutorialGroupExportDialog.header'"></h4>
         <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('cancel')"></button>
     </div>
     <div class="modal-body">
         <form>
-            <p>{{ 'artemisApp.tutorialGroupExportDialog.description' | artemisTranslate }}</p>
+            <p [jhiTranslate]="'artemisApp.tutorialGroupExportDialog.description'"></p>
             <div>
                 <div class="form-check" style="margin-bottom: 1rem">
                     <input class="form-check-input" type="checkbox" (change)="toggleSelectAll()" [checked]="selectAll" />
-                    <label class="form-check-label">{{ 'artemisApp.tutorialGroupExportDialog.selectAll' | artemisTranslate }}</label>
+                    <label class="form-check-label" [jhiTranslate]="'artemisApp.tutorialGroupExportDialog.selectAll'"></label>
                 </div>
             </div>
             @for (field of availableFields; track field) {
@@ -25,12 +25,24 @@
         </form>
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="modal.dismiss('cancel')">{{ 'artemisApp.tutorialGroupExportDialog.cancel' | artemisTranslate }}</button>
-        <button type="button" class="btn btn-primary" (click)="exportJSON(modal)" [disabled]="selectedFields.length === 0">
-            {{ 'artemisApp.tutorialGroupExportDialog.exportJSON' | artemisTranslate }}
+        <button type="button" class="btn btn-secondary" (click)="modal.dismiss('cancel')" [jhiTranslate]="'artemisApp.tutorialGroupExportDialog.cancel'"></button>
+        <button
+            type="button"
+            class="btn btn-primary"
+            (click)="exportJSON(modal)"
+            [disabled]="selectedFields.length === 0"
+            [jhiTranslate]="'artemisApp.tutorialGroupExportDialog.exportJSON'"
+        >
+            >
         </button>
-        <button type="button" class="btn btn-primary" (click)="exportCSV(modal)" [disabled]="selectedFields.length === 0">
-            {{ 'artemisApp.tutorialGroupExportDialog.exportCSV' | artemisTranslate }}
+        <button
+            type="button"
+            class="btn btn-primary"
+            (click)="exportCSV(modal)"
+            [disabled]="selectedFields.length === 0"
+            [jhiTranslate]="'artemisApp.tutorialGroupExportDialog.exportCSV'"
+        >
+            >
         </button>
     </div>
 </ng-template>
