@@ -979,7 +979,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
 
     /**
      * Get all participations for the given studentExam and exercises combined with their submissions with a result.
-     * Distinguishes between student exams and test runs and only loads the respective participations
+     * Distinguishes between real exams, test exams and test runs and only loads the respective participations
      *
      * @param studentExam  studentExam with exercises loaded
      * @param withAssessor (only for non-test runs) if assessor should be loaded with the result
@@ -989,6 +989,18 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
         if (studentExam.isTestRun()) {
             return findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(studentExam.getUser().getId(), studentExam.getExercises());
         }
+
+        if (studentExam.isTestExam()) {
+            if (withAssessor) {
+                // TODO Michal Kawka
+                return findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(studentExam.getUser().getId(), studentExam.getExercises());
+            }
+            else {
+                // TODO Michal Kawka
+                return findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(studentExam.getUser().getId(), studentExam.getExercises());
+            }
+        }
+
         else {
             if (withAssessor) {
                 return findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultAndAssessorIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
