@@ -3,8 +3,6 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { EMPTY, Subject, from } from 'rxjs';
 import { catchError, takeUntil } from 'rxjs/operators';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
-import { HttpErrorResponse } from '@angular/common/http';
-import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
@@ -96,8 +94,8 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
                 this.resetSelections();
                 modal.close();
             },
-            error: (res: HttpErrorResponse) => {
-                onError(this.alertService, res);
+            error: () => {
+                alert('Failed to export CSV');
                 this.resetSelections();
                 modal.dismiss('error');
             },
@@ -120,6 +118,7 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
             () => {
                 alert('Failed to export JSON');
                 this.resetSelections();
+                modal.dismiss('error');
             },
         );
     }
