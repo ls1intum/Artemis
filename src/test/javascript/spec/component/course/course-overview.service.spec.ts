@@ -44,38 +44,33 @@ describe('CourseOverviewService', () => {
         const nextWeeks = dayjs().add(2, 'week');
 
         course = new Course();
-
         course.id = 1;
+
         pastExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
         pastExercise.dueDate = lastWeek;
         pastExercise.releaseDate = lastWeek;
         pastExercise.title = 'Past Exercise';
 
-        course.id = 2;
         dueSoonExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
         dueSoonExercise.dueDate = tomorrow;
         dueSoonExercise.releaseDate = lastWeek;
         dueSoonExercise.title = 'DueSoon Exercise';
 
-        course.id = 2;
         currentExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
         currentExercise.dueDate = nextWeeks;
         currentExercise.releaseDate = lastWeek;
         currentExercise.title = 'Current Exercise';
 
-        course.id = 2;
         currentExerciseNoDueDate = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
         currentExerciseNoDueDate.dueDate = undefined;
         currentExerciseNoDueDate.releaseDate = lastWeek;
         currentExerciseNoDueDate.title = 'Current Exercise No Due Date';
 
-        course.id = 3;
         futureExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
         futureExercise.dueDate = nextWeeks;
         futureExercise.releaseDate = tomorrow;
         futureExercise.title = 'Future Exercise';
 
-        course.id = 3;
         futureExercise2 = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
         futureExercise2.dueDate = nextWeeks;
         futureExercise2.releaseDate = lastWeek;
