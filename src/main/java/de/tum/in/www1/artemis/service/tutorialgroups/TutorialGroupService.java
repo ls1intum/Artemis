@@ -622,6 +622,15 @@ public class TutorialGroupService {
         return userOptional.isPresent() && userOptional.get().getGroups().contains(studentCourseGroupName) ? userOptional : Optional.empty();
     }
 
+    /**
+     * Exports tutorial groups for a specific course to a CSV file.
+     *
+     * @param course the course for which the tutorial groups should be exported
+     * @param user   the user performing the export operation
+     * @param fields the list of fields to include in the CSV export
+     * @return a String containing the CSV data
+     * @throws IOException if an I/O error occurs
+     */
     public String exportTutorialGroupsToCSV(Course course, User user, List<String> fields) throws IOException {
         Set<TutorialGroup> tutorialGroups = findAllForCourse(course, user);
 
@@ -806,6 +815,12 @@ public class TutorialGroupService {
         return days[dayOfWeek - 1];
     }
 
+    /**
+     * Retrieves the set of students registered for a specific tutorial group.
+     *
+     * @param registrations the set of tutorial group registrations
+     * @return a set of users (students) registered for the tutorial group
+     */
     public Set<User> getStudentsRegisteredForTutorial(Set<TutorialGroupRegistration> registrations) {
         Set<User> students = new HashSet<>();
         for (TutorialGroupRegistration registration : registrations) {
