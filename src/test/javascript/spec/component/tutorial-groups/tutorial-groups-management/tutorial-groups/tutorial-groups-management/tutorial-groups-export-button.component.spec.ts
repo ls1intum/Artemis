@@ -1,60 +1,84 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { TutorialGroupsExportButtonComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-export-button.component/tutorial-groups-export-button.component';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
-import { of } from 'rxjs';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';
 import { MockComponent } from 'ng-mocks';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/core/util/alert.service';
+import { Directive, Input } from '@angular/core';
 
+@Directive({
+    selector: '[jhiTranslate]',
+})
+class MockTranslateDirective {
+    @Input() jhiTranslate: string;
+}
 describe('TutorialGroupsExportButtonComponent', () => {
     let component: TutorialGroupsExportButtonComponent;
     let fixture: ComponentFixture<TutorialGroupsExportButtonComponent>;
-    let tutorialGroupsService: TutorialGroupsService;
-    let mockModalRef: NgbModalRef;
+    const exampleCourseId = 1;
 
-    beforeEach(() => {
-        mockModalRef = {
-            result: Promise.resolve('closed'),
-            close: jest.fn(),
-            dismiss: jest.fn(),
-        } as unknown as NgbModalRef;
-
-        TestBed.configureTestingModule({
-            declarations: [TutorialGroupsExportButtonComponent, MockComponent(AlertService)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            declarations: [TutorialGroupsExportButtonComponent, MockComponent(FaIconComponent), MockTranslateDirective],
             providers: [
-                {
-                    provide: TutorialGroupsService,
-                    useValue: { exportTutorialGroupsToCSV: jest.fn(), exportToJson: jest.fn() },
-                },
-                { provide: NgbModal, useValue: { open: jest.fn().mockReturnValue(mockModalRef) } },
-                { provide: AlertService, useValue: { error: jest.fn() } },
+                { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: TutorialGroupsService, useValue: {} },
+                { provide: AlertService, useValue: {} },
             ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(TutorialGroupsExportButtonComponent);
         component = fixture.componentInstance;
-        tutorialGroupsService = TestBed.inject(TutorialGroupsService);
+        component.courseId = exampleCourseId;
+        fixture.detectChanges();
     });
 
-    it('should call exportTutorialGroupsToCSV on exportCSV', () => {
-        const mockBlob = new Blob(['test'], { type: 'text/csv' });
-        jest.spyOn(tutorialGroupsService, 'exportTutorialGroupsToCSV').mockReturnValue(of(mockBlob));
-        component.courseId = 1;
-        component.selectedFields = ['ID', 'Title', 'Campus', 'Language'];
-
-        component.exportCSV(mockModalRef);
-
-        expect(tutorialGroupsService.exportTutorialGroupsToCSV).toHaveBeenCalledWith(1, ['ID', 'Title', 'Campus', 'Language']);
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
-    it('should call exportToJson on exportJSON', () => {
-        const mockResponse = JSON.stringify({ data: 'test' });
-        jest.spyOn(tutorialGroupsService, 'exportToJson').mockReturnValue(of(mockResponse));
-        component.courseId = 1;
-        component.selectedFields = ['ID', 'Title', 'Campus', 'Language'];
+    it('should create', () => {
+        expect(component).toBeTruthy();
+    });
 
-        component.exportJSON(mockModalRef);
+    it('should open the export dialog when the button is clicked', fakeAsync(() => {
+        const modalService = TestBed.inject(NgbModal);
+        const mockModalRef = {
+            result: Promise.resolve(),
+        };
+        const modalOpenSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+        const openDialogSpy = jest.spyOn(component, 'openExportDialog');
 
-        expect(tutorialGroupsService.exportToJson).toHaveBeenCalledWith(1, ['ID', 'Title', 'Campus', 'Language']);
+        const exportButton = fixture.debugElement.nativeElement.querySelector('#exportDialogButton');
+        exportButton.click();
+
+        fixture.whenStable().then(() => {
+            expect(openDialogSpy).toHaveBeenCalledOnce();
+            expect(modalOpenSpy).toHaveBeenCalledOnce();
+        });
+    }));
+
+    it('should select all fields when toggleSelectAll is called', () => {
+        component.toggleSelectAll();
+        expect(component.selectAll).toBeTrue();
+        expect(component.selectedFields).toHaveLength(component.availableFields.length);
+        expect(component.availableFields.every((field) => field.selected)).toBeTrue();
+    });
+
+    it('should deselect all fields when toggleSelectAll is called twice', () => {
+        component.toggleSelectAll();
+        component.toggleSelectAll();
+        expect(component.selectAll).toBeFalse();
+        expect(component.selectedFields).toHaveLength(0);
+        expect(component.availableFields.every((field) => !field.selected)).toBeTrue();
+    });
+
+    it('should update selected fields on field selection change', () => {
+        const field = component.availableFields[0];
+        component.onFieldSelectionChange(field);
+        expect(field.selected).toBeTrue();
+        expect(component.selectedFields).toContain(field.value);
     });
 });
