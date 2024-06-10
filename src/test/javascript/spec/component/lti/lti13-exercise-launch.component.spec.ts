@@ -23,19 +23,12 @@ describe('Lti13ExerciseLaunchComponent', () => {
         navigate: jest.fn(() => Promise.resolve(true)),
     } as unknown as Router;
     const navigateSpy = jest.spyOn(mockRouter, 'navigate');
-    const originalWindow = { ...window };
 
     beforeEach(() => {
         route = {
             snapshot: { queryParamMap: convertToParamMap({ state: 'state', id_token: 'id_token' }) },
         } as ActivatedRoute;
 
-        Object.defineProperty(window, 'location', {
-            value: {
-                replace: jest.fn(),
-                host: 'http://localhost',
-            },
-        });
         window.sessionStorage.setItem('state', 'state');
 
         TestBed.configureTestingModule({
@@ -59,7 +52,6 @@ describe('Lti13ExerciseLaunchComponent', () => {
     });
 
     afterEach(() => {
-        Object.defineProperty(global, 'window', { value: originalWindow });
         window.sessionStorage.clear();
         jest.restoreAllMocks();
         navigateSpy.mockClear();
@@ -151,6 +143,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
     }));
 
     it('should redirect user to target link when user is already logged in', fakeAsync(() => {
+        window.location.replace = jest.fn();
         jest.spyOn(comp, 'authenticateUserThenRedirect');
         jest.spyOn(comp, 'redirectUserToTargetLink');
         const loggedInUserUser: User = { id: 3, login: 'lti_user', firstName: 'TestUser', lastName: 'Moodle' } as User;
@@ -169,6 +162,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
     }));
 
     it('should redirect user to target link after user logged in', fakeAsync(() => {
+        window.location.replace = jest.fn();
         jest.spyOn(comp, 'authenticateUserThenRedirect');
         jest.spyOn(comp, 'redirectUserToTargetLink');
         jest.spyOn(comp, 'redirectUserToLoginThenTargetLink');
