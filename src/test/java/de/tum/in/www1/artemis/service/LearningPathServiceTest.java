@@ -31,12 +31,14 @@ import de.tum.in.www1.artemis.domain.LearningObject;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.domain.competency.RelationType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
+import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
@@ -88,6 +90,9 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private StudentScoreUtilService studentScoreUtilService;
+
+    @Autowired
+    private CompetencyRelationRepository competencyRelationRepository;
 
     private Course course;
 
@@ -494,7 +499,9 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Nested
     class GenerateNgxPathRepresentationLearningObjectOrder {
 
-        private Competency competency;
+        private Competency competency1;
+
+        private Competency competency2;
 
         private Lecture lecture;
 
@@ -516,24 +523,39 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
 
             lecture = lectureUtilService.createLecture(course, ZonedDateTime.now());
 
-            competency = competencyUtilService.createCompetency(course);
-            competency.setMasteryThreshold(90);
-            competency = competencyRepository.save(competency);
-            expectedNodes = new HashSet<>(getExpectedNodesOfEmptyCompetency(competency));
+            competency1 = competencyUtilService.createCompetency(course);
+            competency1.setMasteryThreshold(90);
+            competency1 = competencyRepository.save(competency1);
+
+            competency2 = competencyUtilService.createCompetency(course);
+            competency2.setMasteryThreshold(90);
+            competency2 = competencyRepository.save(competency2);
+
+            CompetencyRelation relation = new CompetencyRelation();
+            relation.setHeadCompetency(competency1);
+            relation.setTailCompetency(competency2);
+            relation.setType(RelationType.EXTENDS);
+            competencyRelationRepository.save(relation);
+
+            expectedNodes = new HashSet<>();
+            expectedNodes.addAll(getExpectedNodesOfEmptyCompetency(competency1));
+            expectedNodes.addAll(getExpectedNodesOfEmptyCompetency(competency2));
             expectedEdges = new HashSet<>();
         }
 
         @Test
         void testCompetencyWithLectureUnitAndExercise() {
-            competency.setMasteryThreshold(70);
-            competency = competencyRepository.save(competency);
+            competency1.setMasteryThreshold(70);
+            competency1 = competencyRepository.save(competency1);
 
             generateLectureUnits(1);
             generateExercises(1);
 
-            addNodes(lectureUnits);
-            addNodes(exercises);
-            addEdges(competency, lectureUnits[0], exercises[0]);
+            addNodes(competency1, lectureUnits);
+            addNodes(competency1, exercises);
+            addEdges(competency1, lectureUnits[0], exercises[0]);
+            addEdge(competency1, competency2);
+            addDirectEdge(competency2);
             generatePathAndAssert(new NgxLearningPathDTO(expectedNodes, expectedEdges));
         }
 
@@ -545,8 +567,11 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
             exercises[2].setDifficulty(DifficultyLevel.MEDIUM);
             exerciseRepository.saveAll(List.of(exercises));
 
-            addNodes(exercises);
-            addEdges(competency, exercises[1], exercises[2], exercises[0]);
+            addNodes(competency1, exercises[2], exercises[0]);
+            addNodes(competency2, exercises[1]);
+            addEdges(competency1, exercises[2], exercises[0]);
+            addEdges(competency2, exercises[1]);
+            addEdge(competency1, competency2);
             generatePathAndAssert(new NgxLearningPathDTO(expectedNodes, expectedEdges));
         }
 
@@ -566,29 +591,34 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
             exercises[5].setDifficulty(DifficultyLevel.HARD);
             exerciseRepository.saveAll(List.of(exercises));
 
-            addNodes(lectureUnits[1]);
-            addNodes(exercises[1], exercises[3], exercises[5]);
-            addEdges(competency, lectureUnits[1], exercises[1], exercises[3], exercises[5]);
+            addNodes(competency1, lectureUnits[1]);
+            addNodes(competency2, exercises[1], exercises[3], exercises[5]);
+            addEdges(competency1, lectureUnits[1]);
+            addEdges(competency2, exercises[1], exercises[3], exercises[5]);
+            addEdge(competency1, competency2);
             generatePathAndAssert(new NgxLearningPathDTO(expectedNodes, expectedEdges));
         }
 
         @Test
         void testRecommendCorrectAmountOfLearningObjects() {
-            competency.setMasteryThreshold(55);
-            competency = competencyRepository.save(competency);
+            competency1.setMasteryThreshold(55);
+            competency1 = competencyRepository.save(competency1);
 
             generateLectureUnits(1);
             generateExercises(10);
             exercises[0].setDifficulty(DifficultyLevel.EASY);
-            exercises[1].setDifficulty(DifficultyLevel.MEDIUM);
-            exercises[2].setDifficulty(DifficultyLevel.HARD);
+            exercises[2].setDifficulty(DifficultyLevel.MEDIUM);
+            exercises[4].setDifficulty(DifficultyLevel.HARD);
+            exercises[1].setDifficulty(DifficultyLevel.EASY);
+            exercises[3].setDifficulty(DifficultyLevel.MEDIUM);
+            exercises[5].setDifficulty(DifficultyLevel.HARD);
             exerciseRepository.saveAll(List.of(exercises));
 
             LearningPath learningPath = learningPathUtilService.createLearningPathInCourseForUser(course, user);
             learningPath = learningPathService.findWithCompetenciesAndLearningObjectsAndCompletedUsersById(learningPath.getId());
             NgxLearningPathDTO actual = learningPathService.generateNgxPathRepresentation(learningPath);
             // competency start & end, lecture unit, and one exercise per difficulty level
-            assertThat(actual.nodes()).hasSize(6);
+            assertThat(actual.nodes()).hasSize(10);
         }
 
         private void generateLectureUnits(int numberOfLectureUnits) {
@@ -596,7 +626,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
             for (int i = 0; i < lectureUnits.length; i++) {
                 lectureUnits[i] = lectureUtilService.createTextUnit();
                 lectureUtilService.addLectureUnitsToLecture(lecture, List.of(lectureUnits[i]));
-                competencyUtilService.linkLectureUnitToCompetency(competency, lectureUnits[i]);
+                competencyUtilService.linkLectureUnitToCompetency(competency1, lectureUnits[i]);
             }
         }
 
@@ -604,11 +634,16 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
             exercises = new Exercise[numberOfExercises];
             for (int i = 0; i < exercises.length; i++) {
                 exercises[i] = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
-                exercises[i] = competencyUtilService.linkExerciseToCompetency(competency, exercises[i]);
+                if (i % 2 == 0) {
+                    exercises[i] = competencyUtilService.linkExerciseToCompetency(competency1, exercises[i]);
+                }
+                else {
+                    exercises[i] = competencyUtilService.linkExerciseToCompetency(competency2, exercises[i]);
+                }
             }
         }
 
-        private void addNodes(LearningObject... learningObjects) {
+        private void addNodes(Competency competency, LearningObject... learningObjects) {
             for (var learningObject : learningObjects) {
                 if (learningObject instanceof LectureUnit lectureUnit) {
                     expectedNodes.add(getNodeForLectureUnit(competency, lectureUnit));
@@ -643,6 +678,17 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
             final var sourceId = LearningPathNgxService.getLearningObjectNodeId(competency.getId(), learningObject);
             final var targetId = LearningPathNgxService.getCompetencyEndNodeId(competency.getId());
             expectedEdges.add(new NgxLearningPathDTO.Edge(LearningPathNgxService.getEdgeFromToId(sourceId, targetId), sourceId, targetId));
+        }
+
+        private void addEdge(Competency from, Competency to) {
+            final var sourceId = LearningPathNgxService.getCompetencyEndNodeId(from.getId());
+            final var targetId = LearningPathNgxService.getCompetencyStartNodeId(to.getId());
+            expectedEdges.add(new NgxLearningPathDTO.Edge(LearningPathNgxService.getEdgeFromToId(sourceId, targetId), sourceId, targetId));
+        }
+
+        private void addDirectEdge(Competency competency) {
+            expectedEdges.add(new NgxLearningPathDTO.Edge(LearningPathNgxService.getDirectEdgeId(competency.getId()),
+                    LearningPathNgxService.getCompetencyStartNodeId(competency.getId()), LearningPathNgxService.getCompetencyEndNodeId(competency.getId())));
         }
     }
 
