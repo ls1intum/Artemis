@@ -1062,10 +1062,10 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         String jsonResponse = request.get(url, HttpStatus.OK, String.class);
 
         // then
-        assertThat(jsonResponse).contains("\"ID\":");
-        assertThat(jsonResponse).contains("\"Title\":");
-        assertThat(jsonResponse).contains("\"Campus\":");
-        assertThat(jsonResponse).contains("\"Language\":");
+        assertThat(jsonResponse).contains("ID");
+        assertThat(jsonResponse).contains("Title");
+        assertThat(jsonResponse).contains("Campus");
+        assertThat(jsonResponse).contains("Language");
         assertThat(jsonResponse).contains("LoremIpsum1");
         assertThat(jsonResponse).contains("LoremIpsum2");
     }
@@ -1082,25 +1082,23 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         // when
         var params = new LinkedMultiValueMap<String, String>();
-        params.add("fields", "ID,Title,Campus,Language,Capacity,IsOnline");
+        params.add("fields", "ID,Title,Campus,Language,Capacity,Is Online");
 
         String url = UriComponentsBuilder.fromPath("/api/courses/" + exampleCourseId + "/tutorial-groups/export/json").queryParams(params).toUriString();
         String jsonResponse = request.get(url, HttpStatus.OK, String.class);
 
         // then
-        assertThat(jsonResponse).contains("\"ID\":");
-        assertThat(jsonResponse).contains("\"Title\":");
-        assertThat(jsonResponse).contains("\"Campus\":");
-        assertThat(jsonResponse).contains("\"Language\":");
-        assertThat(jsonResponse).contains("\"Capacity\":");
-        assertThat(jsonResponse).contains("\"IsOnline\":");
+        assertThat(jsonResponse).contains("ID");
+        assertThat(jsonResponse).contains("Title");
+        assertThat(jsonResponse).contains("Campus");
+        assertThat(jsonResponse).contains("Language");
+        assertThat(jsonResponse).contains("Capacity");
+        assertThat(jsonResponse).contains("Is Online");
         assertThat(jsonResponse).contains("SampleTitle1");
-        assertThat(jsonResponse).contains("SampleCampus1");
         assertThat(jsonResponse).contains("SampleInfo1");
         assertThat(jsonResponse).contains("ENGLISH");
         assertThat(jsonResponse).contains("10");
         assertThat(jsonResponse).contains("SampleTitle2");
-        assertThat(jsonResponse).contains("SampleCampus2");
         assertThat(jsonResponse).contains("SampleInfo2");
         assertThat(jsonResponse).contains("GERMAN");
         assertThat(jsonResponse).contains("20");

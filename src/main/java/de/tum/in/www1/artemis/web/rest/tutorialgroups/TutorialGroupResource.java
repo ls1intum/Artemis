@@ -576,7 +576,7 @@ public class TutorialGroupResource {
      * @param fields   the fields to be included in the export
      * @return ResponseEntity with the JSON data of the tutorial groups
      */
-    @GetMapping(path = "courses/{courseId}/tutorial-groups/export/json", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "courses/{courseId}/tutorial-groups/export/json", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastInstructorInCourse
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<String> exportTutorialGroupsToJSON(@PathVariable Long courseId, @RequestParam List<String> fields) {
