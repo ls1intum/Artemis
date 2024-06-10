@@ -59,7 +59,7 @@
                 "example1": "Dieses Beispiel-CSV-Format zeigt die minimal erforderlichen Header zum Parsen einer CSV-Datei:",
                 "example2": "Dieses Beispiel-CSV-Format zeigt die Header, die erforderlich sind, um Studenten mit einer Matrikelnummer zu registrieren, wobei Vorname und Nachname optional sind:",
                 "example3": "Dieses Beispiel-CSV-Format zeigt die Header, die erforderlich sind, um Studenten mit einem Login zu registrieren, wobei Vorname und Nachname optional sind:",
-                "template": "Wenn auf dem obigen Text geklickt wird, wird ein Beispiel-CSV generiert, das zeigt, welche Header für dieses Beispiel verwendet werden sollen.",
+                "template": "Beispiel Herunterladen",
                 "showNotImportedButton": "Nicht importierte Registrierungen",
                 "showImportedButton": "Importierte Registrierungen",
                 "showAllButton": "Alle Registrierungen",
