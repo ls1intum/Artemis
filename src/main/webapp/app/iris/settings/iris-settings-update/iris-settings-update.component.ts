@@ -135,25 +135,14 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
             },
             (error) => {
                 this.isSaving = false;
-                console.error('Error saving iris settings', error); // Log the entire error response
+                console.error('Error saving iris settings', error);
                 if (error.status === 400 && error.error && error.error.message) {
-                    this.alertService.error(error.error.message); // Display specific error message
+                    this.alertService.error(error.error.message);
                 } else {
                     this.alertService.error('artemisApp.iris.settings.error.save');
                 }
             },
         );
-    }
-
-    saveIrisSettingsObservable(): Observable<HttpResponse<IrisSettings | undefined>> {
-        switch (this.settingsType) {
-            case IrisSettingsType.GLOBAL:
-                return this.irisSettingsService.setGlobalSettings(this.irisSettings!);
-            case IrisSettingsType.COURSE:
-                return this.irisSettingsService.setCourseSettings(this.courseId!, this.irisSettings!);
-            case IrisSettingsType.EXERCISE:
-                return this.irisSettingsService.setProgrammingExerciseSettings(this.exerciseId!, this.irisSettings!);
-        }
     }
 
     loadParentIrisSettingsObservable(): Observable<IrisSettings | undefined> {
@@ -176,6 +165,17 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
                 return this.irisSettingsService.getUncombinedCourseSettings(this.courseId!);
             case IrisSettingsType.EXERCISE:
                 return this.irisSettingsService.getUncombinedProgrammingExerciseSettings(this.exerciseId!);
+        }
+    }
+
+    saveIrisSettingsObservable(): Observable<HttpResponse<IrisSettings | undefined>> {
+        switch (this.settingsType) {
+            case IrisSettingsType.GLOBAL:
+                return this.irisSettingsService.setGlobalSettings(this.irisSettings!);
+            case IrisSettingsType.COURSE:
+                return this.irisSettingsService.setCourseSettings(this.courseId!, this.irisSettings!);
+            case IrisSettingsType.EXERCISE:
+                return this.irisSettingsService.setProgrammingExerciseSettings(this.exerciseId!, this.irisSettings!);
         }
     }
 }

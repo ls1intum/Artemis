@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
-import de.tum.in.www1.artemis.domain.enumeration.PyrisIngestionState;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
@@ -164,8 +163,7 @@ public class LectureService {
     public String ingestLecturesInPyris(Set<Lecture> lectures) {
         if (pyrisWebhookService.isPresent()) {
             List<AttachmentUnit> attachmentUnitList = lectures.stream().flatMap(lec -> lec.getLectureUnits().stream()).filter(unit -> unit instanceof AttachmentUnit)
-                    .map(unit -> (AttachmentUnit) unit).filter(au -> au.getAttachment().getAttachmentType() == AttachmentType.FILE && au.getAttachment().getLink().endsWith(".pdf")
-                            && au.getPyrisIngestionState() != PyrisIngestionState.DONE && au.getPyrisIngestionState() != PyrisIngestionState.IN_PROGRESS)
+                    .map(unit -> (AttachmentUnit) unit).filter(au -> au.getAttachment().getAttachmentType() == AttachmentType.FILE && au.getAttachment().getLink().endsWith(".pdf"))
                     .toList();
             if (!attachmentUnitList.isEmpty()) {
                 return pyrisWebhookService.get().addLectureToPyrisDB(attachmentUnitList);

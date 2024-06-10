@@ -110,7 +110,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         });
         if (lecture1.getLectureUnits().getFirst() instanceof AttachmentUnit attachmentUnit) {
             String jobToken = pyrisWebhookService.deleteLectureFromPyrisDB(List.of(attachmentUnit));
-            assertThat(jobToken).isNull();
+            assertThat(jobToken).isNotNull();
         }
     }
 
