@@ -219,7 +219,7 @@ The ``traefik.toml`` file should be configured as follows:
       StartUTC = "drop"
 
 
-The docker-compose.yml file could look like this for an Artemis, Jenkins and MySQL setup with Traefik as a reverse proxy:
+The ``docker-compose.yml`` file could look like this for an Artemis, Jenkins and MySQL setup with Traefik as a reverse proxy:
 
 .. code:: yaml
 
