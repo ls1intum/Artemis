@@ -25,6 +25,7 @@ export class IrisChatSubSettings extends IrisSubSettings {
 
 export class IrisLectureIngestionSubSettings extends IrisSubSettings {
     type = IrisSubSettingsType.LECTURE_INGESTION;
+    autoIngestOnLectureAttachmentUpload: boolean;
 }
 
 export class IrisHestiaSubSettings extends IrisSubSettings {

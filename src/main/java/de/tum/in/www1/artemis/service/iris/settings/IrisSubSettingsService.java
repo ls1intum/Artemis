@@ -106,6 +106,7 @@ public class IrisSubSettingsService {
 
         if (authCheckService.isAdmin() && (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.GLOBAL)) {
             currentSettings.setEnabled(newSettings.isEnabled());
+            currentSettings.setAutoIngestOnLectureAttachmentUpload(newSettings.getAutoIngestOnLectureAttachmentUpload());
         }
 
         return currentSettings;

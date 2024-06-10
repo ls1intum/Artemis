@@ -21,7 +21,10 @@
                 },
                 "subSettings": {
                     "chatSettings": "Chat Einstellungen",
-                    "lectureIngestionSettings": "Vorlesung Erfassung Einstellungen",
+                    "lectureIngestionSettings": {
+                        "title": "Vorlesung Erfassung Einstellungen",
+                        "autoIngestOnAttachmentUpload": "Vorlesungen automatisch an Pyris senden"
+                    },
                     "hestiaSettings": "Hestia Einstellungen",
                     "competencyGenerationSettings": "Kompetenzgenerierung Einstellungen",
                     "enabled-disabled": "Aktiviert/Deaktiviert",

@@ -27,12 +27,13 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     public courseId?: number;
     @Input()
     public exerciseId?: number;
-
     public irisSettings?: IrisSettings;
     public parentIrisSettings?: IrisSettings;
     public allIrisModels?: IrisModel[];
 
     originalIrisSettings?: IrisSettings;
+
+    public autoLectureIngestion?: boolean;
 
     // Status bools
     isLoading = false;
@@ -89,6 +90,7 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
             this.irisSettings = settings;
             this.fillEmptyIrisSubSettings();
             this.originalIrisSettings = cloneDeep(settings);
+            this.autoLectureIngestion = this.irisSettings?.irisLectureIngestionSettings?.autoIngestOnLectureAttachmentUpload;
             this.isDirty = false;
         });
         this.loadParentIrisSettingsObservable().subscribe((settings) => {
@@ -119,6 +121,9 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
 
     saveIrisSettings(): void {
         this.isSaving = true;
+        if (this.irisSettings && this.irisSettings.irisLectureIngestionSettings) {
+            this.irisSettings.irisLectureIngestionSettings.autoIngestOnLectureAttachmentUpload = this.autoLectureIngestion ?? false;
+        }
         this.saveIrisSettingsObservable().subscribe(
             (response) => {
                 this.isSaving = false;

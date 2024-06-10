@@ -21,7 +21,10 @@
                 },
                 "subSettings": {
                     "chatSettings": "Chat Settings",
-                    "lectureIngestionSettings": "Lecture Ingestion Settings",
+                    "lectureIngestionSettings": {
+                        "title": "Lecture Ingestion Settings",
+                        "autoIngestOnAttachmentUpload": "Send Lectures To Pyris Automatically"
+                    },
                     "hestiaSettings": "Hestia Settings",
                     "competencyGenerationSettings": "Competency Generation Settings",
                     "enabled-disabled": "Enabled/Disabled",
