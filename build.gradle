@@ -32,7 +32,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "7.2.0"
+version = "7.2.1"
 description = "Interactive Learning with Individual Feedback"
 
 java {
