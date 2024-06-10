@@ -191,7 +191,7 @@
         },
         "courseCompetency": {
             "title": "Title",
-            "course": "Kurs",
+            "course": "Course",
             "description": "Description",
             "taxonomy": "Taxonomy",
             "softDueDate": "Recommended until"
