@@ -32,6 +32,7 @@ export function mockSettings() {
     irisSettings.irisChatSettings = mockChatSettings;
     irisSettings.irisHestiaSettings = mockHestiaSettings;
     irisSettings.irisCompetencyGenerationSettings = mockCompetencyGenerationSettings;
+    irisSettings.irisLectureIngestionSettings = mockLectureIngestionSettings;
     return irisSettings;
 }
 

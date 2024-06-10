@@ -33,7 +33,7 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
 
     originalIrisSettings?: IrisSettings;
 
-    public autoLectureIngestion?: boolean;
+    public autoLectureIngestion = false;
 
     // Status bools
     isLoading = false;
@@ -90,7 +90,7 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
             this.irisSettings = settings;
             this.fillEmptyIrisSubSettings();
             this.originalIrisSettings = cloneDeep(settings);
-            this.autoLectureIngestion = this.irisSettings?.irisLectureIngestionSettings?.autoIngestOnLectureAttachmentUpload;
+            this.autoLectureIngestion = this.irisSettings?.irisLectureIngestionSettings?.autoIngestOnLectureAttachmentUpload ?? false;
             this.isDirty = false;
         });
         this.loadParentIrisSettingsObservable().subscribe((settings) => {
@@ -122,7 +122,7 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     saveIrisSettings(): void {
         this.isSaving = true;
         if (this.irisSettings && this.irisSettings.irisLectureIngestionSettings) {
-            this.irisSettings.irisLectureIngestionSettings.autoIngestOnLectureAttachmentUpload = this.autoLectureIngestion ?? false;
+            this.irisSettings.irisLectureIngestionSettings.autoIngestOnLectureAttachmentUpload = this.autoLectureIngestion;
         }
         this.saveIrisSettingsObservable().subscribe(
             (response) => {
