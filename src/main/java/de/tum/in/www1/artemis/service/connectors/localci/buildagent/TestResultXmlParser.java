@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.service.connectors.localci.buildagent;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
@@ -27,10 +29,13 @@ class TestResultXmlParser {
             throws IOException {
         TestSuite testSuite = mapper.readValue(testResultFileString, TestSuite.class);
 
-        if (testSuite.testCases() != null) {
+        // If the xml file is only one test suite, parse it directly
+        if (!testSuite.testCases().isEmpty()) {
             processTestSuite(testSuite, failedTests, successfulTests);
         }
         else {
+            // Else, check if the file contains an outer <testsuites> element
+            // And parse the inner test suites
             TestSuites suites = mapper.readValue(testResultFileString, TestSuites.class);
             if (suites.testsuites() == null) {
                 return;
@@ -44,6 +49,9 @@ class TestResultXmlParser {
 
     private static void processTestSuite(TestSuite testSuite, List<BuildResult.LocalCITestJobDTO> failedTests, List<BuildResult.LocalCITestJobDTO> successfulTests) {
         for (TestCase testCase : testSuite.testCases()) {
+            if (testCase.isSkipped()) {
+                continue;
+            }
             Failure failure = testCase.extractFailure();
             if (failure != null) {
                 failedTests.add(new BuildResult.LocalCITestJobDTO(testCase.name(), List.of(failure.extractMessage())));
@@ -60,15 +68,28 @@ class TestResultXmlParser {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     record TestSuite(@JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "testcase") List<TestCase> testCases) {
+
+        TestSuite {
+            testCases = Objects.requireNonNullElse(testCases, Collections.emptyList());
+        }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     record TestCase(@JacksonXmlProperty(isAttribute = true, localName = "name") String name, @JacksonXmlProperty(localName = "failure") Failure failure,
-            @JacksonXmlProperty(localName = "error") Failure error) {
+            @JacksonXmlProperty(localName = "error") Failure error, @JacksonXmlProperty(localName = "skipped") Skip skipped) {
+
+        private boolean isSkipped() {
+            return skipped != null;
+        }
 
         private Failure extractFailure() {
             return failure != null ? failure : error;
         }
+    }
+
+    // Intentionally empty record to represent the skipped tag (<skipped/>)
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record Skip() {
     }
 
     // Due to issues with Jackson this currently cannot be a record.

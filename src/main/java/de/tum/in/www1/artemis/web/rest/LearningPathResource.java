@@ -40,6 +40,7 @@ import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyProgressForLearningPathDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathCompetencyGraphDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDTO;
@@ -171,6 +172,25 @@ public class LearningPathResource {
     }
 
     /**
+     * GET learning-path/:learningPathId/competency-graph : Gets the competency graph
+     *
+     * @param learningPathId the id of the learning path for which the graph should be fetched
+     * @return the ResponseEntity with status 200 (OK) and with body the graph
+     */
+    @GetMapping("learning-path/{learningPathId}/competency-graph")
+    @FeatureToggle(Feature.LearningPaths)
+    @EnforceAtLeastStudent
+    public ResponseEntity<LearningPathCompetencyGraphDTO> getLearningPathCompetencyGraph(@PathVariable long learningPathId) {
+        log.debug("REST request to get competency graph for learning path with id: {}", learningPathId);
+        LearningPath learningPath = learningPathRepository.findWithEagerCourseAndCompetenciesByIdElseThrow(learningPathId);
+        User user = userRepository.getUser();
+
+        checkLearningPathAccessElseThrow(learningPath.getCourse(), learningPath, user);
+
+        return ResponseEntity.ok(learningPathService.generateLearningPathCompetencyGraph(learningPath));
+    }
+
+    /**
      * GET learning-path/:learningPathId/graph : Gets the ngx representation of the learning path as a graph.
      *
      * @param learningPathId the id of the learning path that should be fetched
@@ -237,14 +257,8 @@ public class LearningPathResource {
         Course course = courseRepository.findByIdElseThrow(learningPath.getCourse().getId());
         courseService.checkLearningPathsEnabledElseThrow(course);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (authorizationCheckService.isAtLeastStudentInCourse(course, user) && !authorizationCheckService.isAtLeastInstructorInCourse(course, user)) {
-            if (!user.getId().equals(learningPath.getUser().getId())) {
-                throw new AccessForbiddenException("You are not allowed to access another users learning path.");
-            }
-        }
-        else if (!authorizationCheckService.isAtLeastInstructorInCourse(course, user)) {
-            throw new AccessForbiddenException("You are not allowed to access another users learning path.");
-        }
+
+        checkLearningPathAccessElseThrow(course, learningPath, user);
 
         NgxLearningPathDTO ngxLearningPathDTO = switch (type) {
             case GRAPH -> learningPathService.generateNgxGraphRepresentation(learningPath);
@@ -306,9 +320,7 @@ public class LearningPathResource {
         final var learningPath = learningPathRepository.findWithEagerCourseAndCompetenciesByIdElseThrow(learningPathId);
         final var user = userRepository.getUserWithGroupsAndAuthorities();
 
-        if (!user.getId().equals(learningPath.getUser().getId()) && !authorizationCheckService.isAtLeastInstructorInCourse(learningPath.getCourse(), user)) {
-            throw new AccessForbiddenException("You are not authorized to access other students competency progress.");
-        }
+        checkLearningPathAccessElseThrow(learningPath.getCourse(), learningPath, user);
 
         // update progress and construct DTOs
         final var progressDTOs = learningPath.getCompetencies().stream().map(competency -> {
@@ -316,6 +328,12 @@ public class LearningPathResource {
             return new CompetencyProgressForLearningPathDTO(competency.getId(), competency.getMasteryThreshold(), progress.getProgress(), progress.getConfidence());
         }).collect(Collectors.toSet());
         return ResponseEntity.ok(progressDTOs);
+    }
+
+    private void checkLearningPathAccessElseThrow(Course course, LearningPath learningPath, User user) {
+        if (!user.equals(learningPath.getUser()) && !authorizationCheckService.isAtLeastInstructorInCourse(course, user)) {
+            throw new AccessForbiddenException("You are not allowed to access another user's learning path.");
+        }
     }
 
     /**

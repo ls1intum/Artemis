@@ -20,7 +20,7 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { CompetencyPageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import * as dateUtils from 'app/utils/date.utils';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Dayjs } from 'dayjs/esm/index';
 import { Exercise } from 'app/entities/exercise.model';
 import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
