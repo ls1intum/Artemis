@@ -69,7 +69,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.setupSshKeysUrl = profileInfo.sshKeysURL;
             this.sshTemplateUrl = profileInfo.sshCloneURLTemplate;
-            console.log(window.location.origin);
+
             this.sshEnabled = !!this.sshTemplateUrl;
             if (profileInfo.versionControlUrl) {
                 this.versionControlUrl = profileInfo.versionControlUrl;
@@ -77,7 +77,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
             this.versionControlAccessTokenRequired = profileInfo.versionControlAccessToken;
             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
             if (this.localVCEnabled) {
-                this.setupSshKeysUrl = window.location.origin + '/user-settings/account';
+                this.setupSshKeysUrl = window.location.origin + '/user-settings/sshSettings';
             }
         });
 

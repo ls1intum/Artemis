@@ -17,7 +17,7 @@ export class UserSettingsContainerComponent implements OnInit {
     faUser = faUser;
 
     currentUser?: User;
-    localVCEnabled: boolean = false;
+    localVCEnabled = false;
 
     constructor(private profileService: ProfileService) {}
 
