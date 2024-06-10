@@ -387,15 +387,17 @@ public class LearningPathRecommendationService {
     /**
      * Analyzes the current progress within the learning path and generates a recommended ordering of learning objects in a competency.
      *
-     * @param learningPath              the learning path that should be analyzed
-     * @param competency                the competency
-     * @param state                     the current state of the recommendation
-     * @param alreadyScheduledExercises the exercises that have already been scheduled
+     * @param learningPath                    the learning path that should be analyzed
+     * @param competency                      the competency
+     * @param state                           the current state of the recommendation
+     * @param alreadyScheduledLearningObjects the learning objects that have already been scheduled
      * @return the recommended ordering of learning objects
      */
     public List<LearningObject> getRecommendedOrderOfLearningObjects(LearningPath learningPath, Competency competency, RecommendationState state,
-            Set<Exercise> alreadyScheduledExercises) {
-        var pendingLectureUnits = competency.getLectureUnits().stream().filter(lectureUnit -> !lectureUnit.isCompletedFor(learningPath.getUser())).toList();
+            Set<LearningObject> alreadyScheduledLearningObjects) {
+        var pendingLectureUnits = competency.getLectureUnits().stream()
+                .filter(lectureUnit -> !lectureUnit.isCompletedFor(learningPath.getUser()) && !alreadyScheduledLearningObjects.contains(lectureUnit)).toList();
+        alreadyScheduledLearningObjects.addAll(pendingLectureUnits);
         List<LearningObject> recommendedOrder = new ArrayList<>(pendingLectureUnits);
 
         // early return if competency can be trivially mastered
@@ -409,32 +411,33 @@ public class LearningPathRecommendationService {
         final var numberOfExercisesRequiredToMaster = predictNumberOfExercisesRequiredToMaster(learningPath, competency, combinedPriorConfidence, pendingExercises.size());
         Map<DifficultyLevel, Set<Exercise>> difficultyLevelMap = generateDifficultyLevelMap(competency.getExercises());
         if (numberOfExercisesRequiredToMaster >= competency.getExercises().size()) {
-            scheduleAllExercises(recommendedOrder, difficultyLevelMap, alreadyScheduledExercises);
+            scheduleAllExercises(recommendedOrder, difficultyLevelMap, alreadyScheduledLearningObjects);
             return recommendedOrder;
         }
         final var recommendedExerciseDistribution = getRecommendedExerciseDistribution(numberOfExercisesRequiredToMaster, combinedPriorConfidence);
         if (Arrays.stream(recommendedExerciseDistribution).sum() >= competency.getExercises().size()) {
             // The calculation of the distribution uses the ceiling of the recommendation to schedule sufficiently many exercises required for mastery.
             // For competencies with only few exercises, this might cause the number of recommended exercises to surpass the number of linked exercises.
-            scheduleAllExercises(recommendedOrder, difficultyLevelMap, alreadyScheduledExercises);
+            scheduleAllExercises(recommendedOrder, difficultyLevelMap, alreadyScheduledLearningObjects);
             return recommendedOrder;
         }
 
-        scheduleExercisesByDistribution(recommendedOrder, recommendedExerciseDistribution, learningPath, competency, alreadyScheduledExercises);
+        scheduleExercisesByDistribution(recommendedOrder, recommendedExerciseDistribution, learningPath, competency, alreadyScheduledLearningObjects);
         return recommendedOrder;
     }
 
     /**
      * Adds all exercises of the given difficulty map to the recommended order of learning objects.
      *
-     * @param recommendedOrder          the list storing the recommended order of learning objects
-     * @param difficultyLevelMap        a map from difficulty level to a set of corresponding exercises
-     * @param alreadyScheduledExercises the exercises that have already been scheduled
+     * @param recommendedOrder                the list storing the recommended order of learning objects
+     * @param difficultyLevelMap              a map from difficulty level to a set of corresponding exercises
+     * @param alreadyScheduledLearningObjects the learning objects that have already been scheduled
      */
-    private void scheduleAllExercises(List<LearningObject> recommendedOrder, Map<DifficultyLevel, Set<Exercise>> difficultyLevelMap, Set<Exercise> alreadyScheduledExercises) {
+    private void scheduleAllExercises(List<LearningObject> recommendedOrder, Map<DifficultyLevel, Set<Exercise>> difficultyLevelMap,
+            Set<LearningObject> alreadyScheduledLearningObjects) {
         for (var difficulty : DifficultyLevel.values()) {
-            var unscheduledExercises = difficultyLevelMap.get(difficulty).stream().filter(exercise -> !alreadyScheduledExercises.contains(exercise)).toList();
-            alreadyScheduledExercises.addAll(unscheduledExercises);
+            var unscheduledExercises = difficultyLevelMap.get(difficulty).stream().filter(exercise -> !alreadyScheduledLearningObjects.contains(exercise)).toList();
+            alreadyScheduledLearningObjects.addAll(unscheduledExercises);
             recommendedOrder.addAll(unscheduledExercises);
         }
     }
@@ -446,10 +449,10 @@ public class LearningPathRecommendationService {
      * @param recommendedExercisesDistribution an array containing the number of exercises that should be scheduled per difficulty (easy to hard)
      * @param learningPath                     the learning path for which the recommendation should be performed
      * @param competency                       the competency from which the exercises should be chosen
-     * @param alreadyScheduledExercises        the exercises that have already been scheduled
+     * @param alreadyScheduledLearningObjects  the learning objects that have already been scheduled
      */
     private void scheduleExercisesByDistribution(List<LearningObject> recommendedOrder, int[] recommendedExercisesDistribution, LearningPath learningPath, Competency competency,
-            Set<Exercise> alreadyScheduledExercises) {
+            Set<LearningObject> alreadyScheduledLearningObjects) {
         var exerciseCandidates = competency.getExercises().stream().filter(exercise -> !hasScoredAtLeast(exercise, learningPath.getUser(), SCORE_THRESHOLD))
                 .collect(Collectors.toSet());
         final var difficultyMap = generateDifficultyLevelMap(exerciseCandidates);
@@ -481,13 +484,13 @@ public class LearningPathRecommendationService {
             selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.HARD, numberOfMissingExercises, hardExercises);
         }
 
-        easyExercises.removeIf(alreadyScheduledExercises::contains);
-        mediumExercises.removeIf(alreadyScheduledExercises::contains);
-        hardExercises.removeIf(alreadyScheduledExercises::contains);
+        easyExercises.removeIf(alreadyScheduledLearningObjects::contains);
+        mediumExercises.removeIf(alreadyScheduledLearningObjects::contains);
+        hardExercises.removeIf(alreadyScheduledLearningObjects::contains);
 
-        alreadyScheduledExercises.addAll(easyExercises);
-        alreadyScheduledExercises.addAll(mediumExercises);
-        alreadyScheduledExercises.addAll(hardExercises);
+        alreadyScheduledLearningObjects.addAll(easyExercises);
+        alreadyScheduledLearningObjects.addAll(mediumExercises);
+        alreadyScheduledLearningObjects.addAll(hardExercises);
 
         recommendedOrder.addAll(easyExercises);
         recommendedOrder.addAll(mediumExercises);
