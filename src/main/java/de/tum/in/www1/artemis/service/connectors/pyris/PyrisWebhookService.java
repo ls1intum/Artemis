@@ -96,14 +96,12 @@ public class PyrisWebhookService {
      */
     public String deleteLectureFromPyrisDB(List<AttachmentUnit> attachmentUnits) {
         try {
-            if (lectureIngestionEnabled(attachmentUnits.getFirst().getLecture().getCourse())) {
-                List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentUnits = new ArrayList<>();
-                attachmentUnits.stream().filter(unit -> unit.getAttachment().getAttachmentType() == AttachmentType.FILE).forEach(unit -> {
-                    toUpdateAttachmentUnits.add(processAttachmentForDeletion(unit));
-                });
-                if (!toUpdateAttachmentUnits.isEmpty()) {
-                    return helpExecuteIngestionPipeline(toUpdateAttachmentUnits);
-                }
+            List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentUnits = new ArrayList<>();
+            attachmentUnits.stream().filter(unit -> unit.getAttachment().getAttachmentType() == AttachmentType.FILE).forEach(unit -> {
+                toUpdateAttachmentUnits.add(processAttachmentForDeletion(unit));
+            });
+            if (!toUpdateAttachmentUnits.isEmpty()) {
+                return helpExecuteIngestionPipeline(toUpdateAttachmentUnits);
             }
         }
         catch (Exception e) {

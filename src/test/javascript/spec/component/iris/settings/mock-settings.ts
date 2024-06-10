@@ -19,6 +19,7 @@ export function mockSettings() {
     const mockLectureIngestionSettings = new IrisLectureIngestionSubSettings();
     mockLectureIngestionSettings.id = 7;
     mockLectureIngestionSettings.enabled = true;
+    mockLectureIngestionSettings.autoIngestOnLectureAttachmentUpload = true;
     const mockHestiaSettings = new IrisHestiaSubSettings();
     mockHestiaSettings.id = 2;
     mockHestiaSettings.template = mockTemplate;
