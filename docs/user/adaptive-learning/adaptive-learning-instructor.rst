@@ -90,17 +90,17 @@ Once the feature is enabled, instructors get access to each student's learning p
 
 |instructors-learning-path-management|
 
-.. |instructors-competency-management| image:: instructors-competency-management.png
+.. |instructors-competency-management| image:: instructor/manage-competencies.png
     :width: 1000
-.. |import-all| image:: import-all.png
+.. |import-all| image:: instructor/import-all-competencies.png
     :width: 600
-.. |import-course| image:: import-course.png
+.. |import-course| image:: instructor/import-course-competencies.png
     :width: 600
-.. |import-standardized| image:: import-standardized.png
+.. |import-standardized| image:: instructor/import-standardized-competencies.png
     :width: 600
-.. |instructors-learning-goal-edit| image:: instructors-learning-goal-edit.png
+.. |instructors-learning-goal-edit| image:: instructor/competency-edit.png
     :width: 1000
-.. |instructors-learning-goals-link| image:: instructors-learning-goals-link.png
+.. |instructors-learning-goals-link| image:: instructor/competency-link.png
     :width: 600
-.. |instructors-learning-path-management| image:: instructors-learning-path-management.png
+.. |instructors-learning-path-management| image:: instructor/learning-path-management.png
     :width: 1000

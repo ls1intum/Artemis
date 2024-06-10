@@ -6,12 +6,12 @@ Manage Standardized Competencies (Administrator)
     :depth: 2
 
 Standardized Competencies
-------------
+-------------------------
 
 .. _competencies_admin:
 
 Manage Standardized Competencies
-------------
+--------------------------------
 
 .. raw:: html
 
@@ -22,7 +22,7 @@ Manage Standardized Competencies
 |admin-manage|
 
 Import a Standardized Competency Catalog
-------------
+----------------------------------------
 |admin-import|
 
 .. |admin-import| image:: admin/admin-import-standardized.png
