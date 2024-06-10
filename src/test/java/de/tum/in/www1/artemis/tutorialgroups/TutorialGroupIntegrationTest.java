@@ -1019,7 +1019,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("fields", "ID,Title,Campus,Language");
 
-        String url = UriComponentsBuilder.fromPath("/api/courses/" + exampleCourseId + "/tutorial-groups/export").queryParams(params).toUriString();
+        String url = UriComponentsBuilder.fromPath("/api/courses/" + exampleCourseId + "/tutorial-groups/export/csv").queryParams(params).toUriString();
         String csvContent = request.get(url, HttpStatus.OK, String.class);
 
         // then
@@ -1042,13 +1042,68 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("fields", "ID,Title,Campus,Language,Capacity,IsOnline");
 
-        String url = UriComponentsBuilder.fromPath("/api/courses/" + exampleCourseId + "/tutorial-groups/export").queryParams(params).toUriString();
+        String url = UriComponentsBuilder.fromPath("/api/courses/" + exampleCourseId + "/tutorial-groups/export/csv").queryParams(params).toUriString();
         String csvContent = request.get(url, HttpStatus.OK, String.class);
 
         // then
         assertThat(csvContent).contains("ID,Title,Campus,Language,Capacity,IsOnline");
         assertThat(csvContent).contains("SampleTitle1,SampleInfo1,ENGLISH,10");
         assertThat(csvContent).contains("SampleTitle2,SampleInfo2,GERMAN,20");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportTutorialGroupsToJSON() throws Exception {
+        // when
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("fields", "ID,Title,Campus,Language");
+
+        String url = UriComponentsBuilder.fromPath("/api/courses/" + exampleCourseId + "/tutorial-groups/export/json").queryParams(params).toUriString();
+        String jsonResponse = request.get(url, HttpStatus.OK, String.class);
+
+        // then
+        assertThat(jsonResponse).contains("\"ID\":");
+        assertThat(jsonResponse).contains("\"Title\":");
+        assertThat(jsonResponse).contains("\"Campus\":");
+        assertThat(jsonResponse).contains("\"Language\":");
+        assertThat(jsonResponse).contains("LoremIpsum1");
+        assertThat(jsonResponse).contains("LoremIpsum2");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testJSONContentWithSampleData() throws Exception {
+        // given
+        List<TutorialGroup> tutorialGroups = new ArrayList<>();
+        tutorialGroups
+                .add(tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle1", "SampleCampus1", 10, false, "SampleInfo1", "ENGLISH", tutor1, Set.of(student1)));
+        tutorialGroups
+                .add(tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle2", "SampleCampus2", 20, true, "SampleInfo2", "GERMAN", tutor1, Set.of(student2)));
+
+        // when
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("fields", "ID,Title,Campus,Language,Capacity,IsOnline");
+
+        String url = UriComponentsBuilder.fromPath("/api/courses/" + exampleCourseId + "/tutorial-groups/export/json").queryParams(params).toUriString();
+        String jsonResponse = request.get(url, HttpStatus.OK, String.class);
+
+        // then
+        assertThat(jsonResponse).contains("\"ID\":");
+        assertThat(jsonResponse).contains("\"Title\":");
+        assertThat(jsonResponse).contains("\"Campus\":");
+        assertThat(jsonResponse).contains("\"Language\":");
+        assertThat(jsonResponse).contains("\"Capacity\":");
+        assertThat(jsonResponse).contains("\"IsOnline\":");
+        assertThat(jsonResponse).contains("SampleTitle1");
+        assertThat(jsonResponse).contains("SampleCampus1");
+        assertThat(jsonResponse).contains("SampleInfo1");
+        assertThat(jsonResponse).contains("ENGLISH");
+        assertThat(jsonResponse).contains("10");
+        assertThat(jsonResponse).contains("SampleTitle2");
+        assertThat(jsonResponse).contains("SampleCampus2");
+        assertThat(jsonResponse).contains("SampleInfo2");
+        assertThat(jsonResponse).contains("GERMAN");
+        assertThat(jsonResponse).contains("20");
     }
 
 }
