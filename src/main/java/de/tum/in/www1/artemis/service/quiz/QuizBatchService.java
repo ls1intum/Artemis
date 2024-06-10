@@ -4,13 +4,13 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.security.SecureRandom;
 import java.time.ZonedDateTime;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
 import jakarta.annotation.Nullable;
 
 import org.apache.commons.lang3.RandomStringUtils;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -21,9 +21,12 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.exception.QuizJoinException;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.QuizBatchRepository;
-import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
+import de.tum.in.www1.artemis.service.ParticipationService;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -41,11 +44,12 @@ public class QuizBatchService {
 
     private final QuizBatchRepository quizBatchRepository;
 
-    private final QuizScheduleService quizScheduleService;
+    private final QuizSubmissionRepository quizSubmissionRepository;
 
-    public QuizBatchService(QuizBatchRepository quizBatchRepository, QuizScheduleService quizScheduleService) {
+    public QuizBatchService(QuizBatchRepository quizBatchRepository, QuizSubmissionRepository quizSubmissionRepository, ParticipationRepository participationRepository,
+            ParticipationService participationService) {
         this.quizBatchRepository = quizBatchRepository;
-        this.quizScheduleService = quizScheduleService;
+        this.quizSubmissionRepository = quizSubmissionRepository;
     }
 
     /**
@@ -70,7 +74,7 @@ public class QuizBatchService {
             throw new IllegalStateException();
         }
 
-        if (quizExercise.getQuizBatches() == null) {
+        if (quizExercise.getQuizBatches() == null || !Hibernate.isInitialized(quizExercise.getQuizBatches())) {
             var quizBatch = quizBatchRepository.findFirstByQuizExercise(quizExercise);
             if (quizBatch.isPresent()) {
                 return quizBatch.get();
@@ -103,12 +107,19 @@ public class QuizBatchService {
                 quizBatchRepository.findByQuizExerciseAndPassword(quizExercise, password).orElseThrow(() -> new QuizJoinException("quizBatchNotFound", "Batch does not exist"));
             case INDIVIDUAL -> createIndividualBatch(quizExercise, user);
         };
-
+        Optional<QuizBatch> existingBatch = quizBatchRepository.findByQuizExerciseAndStudentLogin(quizExercise, user.getLogin());
         if (quizBatch.isEnded()) {
             throw new QuizJoinException("quizBatchExpired", "Batch has expired");
         }
+        else if (existingBatch.isPresent()) {
+            throw new QuizJoinException("quizBatchAlreadyJoined", "User is already part of a batch");
+        }
 
-        quizScheduleService.joinQuizBatch(quizExercise, quizBatch, user);
+        QuizSubmission quizSubmission = quizSubmissionRepository.findByExerciseIdAndStudentLogin(quizExercise.getId(), user.getLogin()).orElseThrow();
+        quizSubmission.setQuizBatch(quizBatch.getId());
+
+        quizSubmissionRepository.save(quizSubmission);
+
         return quizBatch;
     }
 
@@ -187,19 +198,10 @@ public class QuizBatchService {
      * @return the batch that the user currently takes part in or empty
      */
     public Optional<QuizBatch> getQuizBatchForStudentByLogin(QuizExercise quizExercise, String login) {
-        var batchIdOptional = quizScheduleService.getQuizBatchForStudentByLogin(quizExercise, login);
-        if (batchIdOptional.isEmpty()) {
-            if (quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
-                return Optional.of(getOrCreateSynchronizedQuizBatch(quizExercise));
-            }
-            else {
-                return quizBatchRepository.findAllByQuizExerciseAndStudentLogin(quizExercise, login).stream().findFirst();
-            }
+        Optional<QuizBatch> optionalQuizBatch = quizBatchRepository.findByQuizExerciseAndStudentLogin(quizExercise, login);
+        if (optionalQuizBatch.isEmpty() && quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
+            return Optional.of(getOrCreateSynchronizedQuizBatch(quizExercise));
         }
-        if (quizExercise.getQuizBatches() != null) {
-            final Long batchId = batchIdOptional.get();
-            return quizExercise.getQuizBatches().stream().filter(quizBatch -> Objects.equals(quizBatch.getId(), batchId)).findAny().or(() -> quizBatchRepository.findById(batchId));
-        }
-        return batchIdOptional.flatMap(quizBatchRepository::findById);
+        return optionalQuizBatch;
     }
 }

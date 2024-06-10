@@ -107,7 +107,7 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
                 if (this.judgementOfLearningEnabled) {
                     const competenciesMap: { [key: number]: Competency } = Object.fromEntries(this.competencies.map((competency) => [competency.id, competency]));
                     this.judgementOfLearningMap = Object.fromEntries(
-                        Object.entries((judgementOfLearningMap?.body! ?? {}) as { [key: number]: { current: CompetencyJol; prior?: CompetencyJol } }).filter(([key, value]) => {
+                        Object.entries((judgementOfLearningMap?.body ?? {}) as { [key: number]: { current: CompetencyJol; prior?: CompetencyJol } }).filter(([key, value]) => {
                             const progress = competenciesMap[Number(key)]?.userProgress?.first();
                             return value.current.competencyProgress === (progress?.progress ?? 0) && value.current.competencyConfidence === (progress?.confidence ?? 0);
                         }),

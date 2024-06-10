@@ -68,7 +68,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
             this.courseId = parseInt(params['courseId'], 10);
 
             // HD3-GROUPS: Experiment groups for IRIS are 1 & 2. Disable for group 0
-            if (this.accountService.userIdentity?.id! % 3 > 0) {
+            if (this.accountService.userIdentity && this.accountService.userIdentity!.id! % 3 > 0) {
                 this.profileService.getProfileInfo().subscribe((profileInfo) => {
                     if (profileInfo?.activeProfiles.includes(PROFILE_IRIS)) {
                         this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {

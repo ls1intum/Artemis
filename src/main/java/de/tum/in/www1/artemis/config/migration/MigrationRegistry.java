@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config.migration;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_SCHEDULING;
+
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.SortedMap;
@@ -14,7 +16,7 @@ import org.springframework.stereotype.Component;
  * This component allows registering certain entries containing functionality that gets executed on application startup. The entries must extend {@link MigrationEntry}.
  */
 @Component
-@Profile("scheduling")
+@Profile(PROFILE_SCHEDULING)
 public class MigrationRegistry {
 
     // Using SortedMap to allow sorting. I'm using a map because with a list entries could accidentally be switched.

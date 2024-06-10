@@ -233,6 +233,12 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.setId(id);
     }
 
+    public User(Long id, String firstName, String lastName) {
+        this(id);
+        this.firstName = firstName;
+        this.lastName = lastName;
+    }
+
     public User(Long id, String login, String firstName, String lastName, String langKey, String email) {
         this(id);
         this.login = login;

@@ -608,11 +608,37 @@ Verify the exercise configuration
     .. figure:: programming/solution-template-result.png
               :align: center
 
-- The template result should have a score of **0%** with **0 of X passed** or **0 of X passed, 0 issues** (if static code analysis is enabled)
-- The solution result should have a score of **100%** with **X of X passed** or **X of X passed, 0 issues** (if static code analysis is enabled)
+    - The template result should have a score of **0%** with **0 of X passed** or **0 of X passed, 0 issues** (if static code analysis is enabled)
+    - The solution result should have a score of **100%** with **X of X passed** or **X of X passed, 0 issues** (if static code analysis is enabled)
 
-.. note::
-  If static code analysis is enabled and issues are found in the template/solution result, instructors should improve the template/solution or disable the rule, which produced the unwanted/unimportant issue.
+    .. raw:: html
+
+        <br>
+
+    .. note::
+      If static code analysis is enabled and issues are found in the template/solution result, instructors should improve the template/solution or disable the rule, which produced the unwanted/unimportant issue.
+
+
+- You can review differences between the **template** and **solution** repositories.
+  The comparison allows you to review the changes students are expected to make to the exercise template to solve the exercise.
+
+  .. figure:: programming/course-management-template-solution-diff.png
+     :alt: Template/Solution Comparison in Exercise Management Page
+     :align: center
+
+     Template/Solution Comparison in Exercise Management Page
+
+  You can open the comparison view by clicking the |review-changes-button| button.
+
+  .. figure:: programming/course-management-template-solution-diff-example.png
+     :alt: Template/Solution Comparison Example
+     :align: center
+
+     Template/Solution Comparison View Example
+
+  .. |review-changes-button| image:: programming/course-management-template-solution-diff-review-changes-button.png
+      :alt: '*Review Changes*'
+      :width: 150px
 
 - Click on |edit|
 
