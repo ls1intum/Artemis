@@ -16,14 +16,14 @@
                 <ul>
                     <li>{{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.tutorialGroupTitle' | artemisTranslate: { headers: supportedTitleHeader } }}</li>
                 </ul>
-                <li>{{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.requiredIfStudentRegistration' | artemisTranslate }}</li>
+                <li jhiTranslate="artemisApp.tutorialGroupImportDialog.supportedHeaderNames.requiredIfStudentRegistration"></li>
                 <ul>
                     <li>
                         {{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.registrationNumber' | artemisTranslate: { headers: supportedRegistrationNumberHeaders } }}
                     </li>
                     <li>{{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.login' | artemisTranslate: { headers: supportedLoginHeaders } }}</li>
                 </ul>
-                <li>{{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.alwaysOptional' | artemisTranslate }}</li>
+                <li jhiTranslate="artemisApp.tutorialGroupImportDialog.supportedHeaderNames.alwaysOptional"></li>
                 <ul>
                     <li>{{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.firstName' | artemisTranslate: { headers: supportedFirstNameHeaders } }}</li>
                     <li>{{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.lastName' | artemisTranslate: { headers: supportedLastNameHeaders } }}</li>
@@ -33,52 +33,50 @@
         <!-- Example Tables -->
         <div class="form-group">
             <label class="font-weight-bold pointer" (click)="generateCSV(1)">
-                <th>{{ 'artemisApp.tutorialGroupImportDialog.table.example1' | artemisTranslate }}</th>
+                <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.example1"></th>
             </label>
             <div>
-                <small>{{ 'artemisApp.tutorialGroupImportDialog.table.template' | artemisTranslate }}</small>
+                <small jhiTranslate="artemisApp.tutorialGroupImportDialog.table.template"></small>
             </div>
             <table class="table table-striped table-bordered table-sm mt-2">
                 <thead>
                     <tr>
-                        <th>{{ 'artemisApp.tutorialGroupImportDialog.table.columns.title' | artemisTranslate }}</th>
+                        <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.title"></th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <th>{{ 'artemisApp.tutorialGroupImportDialog.table.groupA' | artemisTranslate }}</th>
+                        <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.groupA"></th>
                     </tr>
                     <tr>
-                        <th>{{ 'artemisApp.tutorialGroupImportDialog.table.groupB' | artemisTranslate }}</th>
+                        <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.groupB"></th>
                     </tr>
                 </tbody>
             </table>
         </div>
         <div class="form-group">
-            <label class="font-weight-bold pointer" (click)="generateCSV(2)"
-                ><th>{{ 'artemisApp.tutorialGroupImportDialog.table.example2' | artemisTranslate }}</th></label
-            >
+            <label class="font-weight-bold pointer" (click)="generateCSV(2)"><th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.example2"></th></label>
             <div>
-                <small>{{ 'artemisApp.tutorialGroupImportDialog.table.template' | artemisTranslate }}</small>
+                <small jhiTranslate="artemisApp.tutorialGroupImportDialog.table.template"></small>
             </div>
             <table class="table table-striped table-bordered table-sm mt-2">
                 <thead>
                     <tr>
-                        <th>{{ 'artemisApp.tutorialGroupImportDialog.table.columns.title' | artemisTranslate }}</th>
-                        <th>{{ 'artemisApp.tutorialGroupImportDialog.table.columns.registrationNumber' | artemisTranslate }}</th>
-                        <th>{{ 'artemisApp.tutorialGroupImportDialog.table.columns.firstName' | artemisTranslate }}</th>
-                        <th>{{ 'artemisApp.tutorialGroupImportDialog.table.columns.lastName' | artemisTranslate }}</th>
+                        <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.title"></th>
+                        <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.registrationNumber"></th>
+                        <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.firstName"></th>
+                        <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.lastName"></th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <th>{{ 'artemisApp.tutorialGroupImportDialog.table.groupA' | artemisTranslate }}</th>
+                        <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.groupA"></th>
                         <td>123456</td>
                         <td>John</td>
                         <td>Doe</td>
                     </tr>
                     <tr>
-                        <th>{{ 'artemisApp.tutorialGroupImportDialog.table.groupB' | artemisTranslate }}</th>
+                        <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.groupB"></th>
                         <td>789012</td>
                         <td>Anna</td>
                         <td>Smith</td>
@@ -87,17 +85,15 @@
             </table>
         </div>
         <div class="form-group">
-            <label class="font-weight-bold pointer" (click)="generateCSV(3)"
-                ><th>{{ 'artemisApp.tutorialGroupImportDialog.table.example3' | artemisTranslate }}</th></label
-            >
+            <label class="font-weight-bold pointer" (click)="generateCSV(3)"><th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.example3"></th></label>
             <div>
-                <small>{{ 'artemisApp.tutorialGroupImportDialog.table.template' | artemisTranslate }}</small>
+                <small jhiTranslate="artemisApp.tutorialGroupImportDialog.table.template"></small>
             </div>
             <table class="table table-striped table-bordered table-sm mt-2">
                 <thead>
                     <tr>
-                        <th>{{ 'artemisApp.tutorialGroupImportDialog.table.columns.title' | artemisTranslate }}</th>
-                        <th>{{ 'artemisApp.tutorialGroupImportDialog.table.columns.login' | artemisTranslate }}</th>
+                        <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.title"></th>
+                        <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.login"></th>
                         <th>{{ 'artemisApp.tutorialGroupImportDialog.table.columns.firstName' | artemisTranslate }}</th>
                         <th>{{ 'artemisApp.tutorialGroupImportDialog.table.columns.lastName' | artemisTranslate }}</th>
                     </tr>
