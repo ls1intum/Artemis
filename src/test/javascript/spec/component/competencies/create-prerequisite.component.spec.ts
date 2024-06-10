@@ -6,7 +6,6 @@ import { of, throwError } from 'rxjs';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { CreatePrerequisiteComponent } from 'app/course/competencies/prerequisite-form/create-prerequisite.component';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Prerequisite } from 'app/entities/prerequisite.model';
@@ -37,7 +36,6 @@ describe('CreatePrerequisiteComponent', () => {
             providers: [
                 provideHttpClient(),
                 MockProvider(PrerequisiteService),
-                MockProvider(ArtemisNavigationUtilService),
                 MockProvider(AlertService),
                 {
                     provide: TranslateService,
@@ -77,8 +75,8 @@ describe('CreatePrerequisiteComponent', () => {
 
     it('should navigate back after creating prerequisite', () => {
         const createSpy = jest.spyOn(prerequisiteService, 'createPrerequisite').mockReturnValue(of(prerequisite));
-        const navigationUtilService = TestBed.inject(ArtemisNavigationUtilService);
-        const navigateSpy = jest.spyOn(navigationUtilService, 'navigateBack');
+        const router = TestBed.inject(Router);
+        const navigateSpy = jest.spyOn(router, 'navigate');
 
         componentFixture.detectChanges();
         const prerequisiteForm: PrerequisiteFormStubComponent = componentFixture.debugElement.query(By.directive(PrerequisiteFormStubComponent)).componentInstance;
@@ -89,8 +87,8 @@ describe('CreatePrerequisiteComponent', () => {
     });
 
     it('should navigate on cancel', () => {
-        const navigationUtilService = TestBed.inject(ArtemisNavigationUtilService);
-        const navigateSpy = jest.spyOn(navigationUtilService, 'navigateBack');
+        const router = TestBed.inject(Router);
+        const navigateSpy = jest.spyOn(router, 'navigate');
 
         componentFixture.detectChanges();
         const prerequisiteForm: PrerequisiteFormStubComponent = componentFixture.debugElement.query(By.directive(PrerequisiteFormStubComponent)).componentInstance;

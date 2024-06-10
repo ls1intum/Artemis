@@ -6,7 +6,6 @@ import { of, throwError } from 'rxjs';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { EditPrerequisiteComponent } from 'app/course/competencies/prerequisite-form/edit-prerequisite.component';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Prerequisite } from 'app/entities/prerequisite.model';
@@ -38,7 +37,6 @@ describe('EditPrerequisiteComponent', () => {
             providers: [
                 provideHttpClient(),
                 MockProvider(PrerequisiteService),
-                MockProvider(ArtemisNavigationUtilService),
                 MockProvider(AlertService),
                 {
                     provide: TranslateService,
@@ -85,8 +83,8 @@ describe('EditPrerequisiteComponent', () => {
     });
 
     it('should navigate back after updating prerequisite', () => {
-        const navigationUtilService = TestBed.inject(ArtemisNavigationUtilService);
-        const navigateSpy = jest.spyOn(navigationUtilService, 'navigateBack');
+        const router = TestBed.inject(Router);
+        const navigateSpy = jest.spyOn(router, 'navigate');
         const updatedPrerequisite: Prerequisite = { ...prerequisite, title: 'new title', description: 'new description' };
         const updateSpy = jest.spyOn(prerequisiteService, 'updatePrerequisite').mockReturnValue(of(updatedPrerequisite));
 
@@ -99,8 +97,8 @@ describe('EditPrerequisiteComponent', () => {
     });
 
     it('should navigate on cancel', () => {
-        const navigationUtilService = TestBed.inject(ArtemisNavigationUtilService);
-        const navigateSpy = jest.spyOn(navigationUtilService, 'navigateBack');
+        const router = TestBed.inject(Router);
+        const navigateSpy = jest.spyOn(router, 'navigate');
 
         componentFixture.detectChanges();
         const prerequisiteForm: PrerequisiteFormStubComponent = componentFixture.debugElement.query(By.directive(PrerequisiteFormStubComponent)).componentInstance;

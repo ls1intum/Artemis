@@ -1,6 +1,6 @@
 <div>
     @if (form) {
-        <form [formGroup]="form" (ngSubmit)="submit()">
+        <form [formGroup]="form">
             <div class="form-group">
                 <label for="title" jhiTranslate="artemisApp.courseCompetency.title"></label>
                 <input type="text" class="form-control" id="title" formControlName="title" [placeholder]="'artemisApp.prerequisite.create.titlePlaceholder' | artemisTranslate" />

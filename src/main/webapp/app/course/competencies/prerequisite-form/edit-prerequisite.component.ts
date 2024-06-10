@@ -7,8 +7,7 @@ import { Prerequisite } from 'app/entities/prerequisite.model';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { PrerequisiteFormComponent } from 'app/course/competencies/prerequisite-form/prerequisite-form.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
     selector: 'jhi-edit-prerequisite',
@@ -24,7 +23,7 @@ export class EditPrerequisiteComponent implements OnInit {
     private readonly activatedRoute: ActivatedRoute = inject(ActivatedRoute);
     private readonly alertService: AlertService = inject(AlertService);
     private readonly prerequisiteService: PrerequisiteService = inject(PrerequisiteService);
-    private readonly navigationUtilService: ArtemisNavigationUtilService = inject(ArtemisNavigationUtilService);
+    private readonly router: Router = inject(Router);
 
     ngOnInit(): void {
         this.isLoading = true;
@@ -56,13 +55,13 @@ export class EditPrerequisiteComponent implements OnInit {
             )
             .subscribe({
                 next: () => {
-                    this.navigationUtilService.navigateBack(['course-management', this.courseId, 'competency-management']);
+                    this.router.navigate(['course-management', this.courseId, 'competency-management']);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
     }
 
     cancel() {
-        this.navigationUtilService.navigateBack(['course-management', this.courseId, 'competency-management']);
+        this.router.navigate(['course-management', this.courseId, 'competency-management']);
     }
 }
