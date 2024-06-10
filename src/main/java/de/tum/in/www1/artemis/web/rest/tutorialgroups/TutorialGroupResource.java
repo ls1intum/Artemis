@@ -546,10 +546,10 @@ public class TutorialGroupResource {
      * @param fields   the list of fields to include in the CSV export
      * @return the ResponseEntity with status 200 (OK) and the CSV file containing the tutorial groups
      */
-    @GetMapping("courses/{courseId}/tutorial-groups/export/csv")
+    @GetMapping(value = "courses/{courseId}/tutorial-groups/export/csv", produces = "text/csv")
     @EnforceAtLeastInstructorInCourse
     @FeatureToggle(Feature.TutorialGroups)
-    public ResponseEntity<byte[]> exportTutorialGroups(@PathVariable Long courseId, @RequestParam List<String> fields) {
+    public ResponseEntity<byte[]> exportTutorialGroupsToCSV(@PathVariable Long courseId, @RequestParam List<String> fields) {
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         String csvContent = "";
@@ -570,14 +570,14 @@ public class TutorialGroupResource {
     }
 
     /**
-     * POST /courses/:courseId/tutorial-groups/export/json : Export tutorial groups to JSON.
+     * GET /courses/:courseId/tutorial-groups/export/json : Export tutorial groups to JSON.
      *
-     * @param courseId       the id of the course to which the tutorial groups belong to
-     * @param selectedFields the fields to be included in the export
+     * @param courseId the id of the course to which the tutorial groups belong to
+     * @param fields   the fields to be included in the export
      * @return ResponseEntity with the JSON data of the tutorial groups
      */
     @GetMapping(path = "courses/{courseId}/tutorial-groups/export/json", produces = MediaType.APPLICATION_JSON_VALUE)
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<String> exportTutorialGroupsToJSON(@PathVariable Long courseId, @RequestParam List<String> fields) {
         log.debug("REST request to export TutorialGroups to JSON for course: {}", courseId);

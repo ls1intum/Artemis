@@ -639,23 +639,17 @@ public class TutorialGroupService {
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(fields.toArray(new String[0])).build();
         try (CSVPrinter printer = new CSVPrinter(out, csvFormat)) {
             for (TutorialGroup tutorialGroup : tutorialGroups) {
+                writeTutorialGroupRow(printer, tutorialGroup, fields, null);
                 if (includeStudents) {
                     Set<User> students = getStudentsRegisteredForTutorial(tutorialGroup.getRegistrations());
-                    if (students.isEmpty()) {
-                        writeTutorialGroupRow(printer, tutorialGroup, fields, null);
-                    }
-                    else {
+                    if (!students.isEmpty()) {
                         for (User student : students) {
                             writeTutorialGroupRow(printer, tutorialGroup, fields, student);
                         }
                     }
                 }
-                else {
-                    writeTutorialGroupRow(printer, tutorialGroup, fields, null);
-                }
             }
         }
-
         return out.toString();
     }
 
@@ -663,25 +657,145 @@ public class TutorialGroupService {
     private void writeTutorialGroupRow(CSVPrinter printer, TutorialGroup tutorialGroup, List<String> fields, User student) throws IOException {
         for (String field : fields) {
             switch (field) {
-                case "ID" -> printer.print(tutorialGroup.getId() != null ? tutorialGroup.getId() : "");
-                case "Title" -> printer.print(tutorialGroup.getTitle() != null ? tutorialGroup.getTitle() : "");
-                case "Campus" -> printer.print(tutorialGroup.getCampus() != null ? tutorialGroup.getCampus() : "");
-                case "Language" -> printer.print(tutorialGroup.getLanguage() != null ? tutorialGroup.getLanguage() : "");
-                case "Additional Information" -> printer.print(tutorialGroup.getAdditionalInformation() != null ? tutorialGroup.getAdditionalInformation() : "");
-                case "Capacity" -> printer.print(tutorialGroup.getCapacity() != null ? tutorialGroup.getCapacity() : "");
-                case "Is Online" -> printer.print(tutorialGroup.getIsOnline() != null ? tutorialGroup.getIsOnline() : "");
-                case "Day of Week" -> printer
-                        .print(getDayOfWeekString(tutorialGroup.getTutorialGroupSchedule().getDayOfWeek() != null ? tutorialGroup.getTutorialGroupSchedule().getDayOfWeek() : 8));
-                case "Start Time" -> printer.print(tutorialGroup.getTutorialGroupSchedule().getStartTime() != null ? tutorialGroup.getTutorialGroupSchedule().getStartTime() : "");
-                case "End Time" -> printer.print(tutorialGroup.getTutorialGroupSchedule().getEndTime() != null ? tutorialGroup.getTutorialGroupSchedule().getEndTime() : "");
-                case "Location" -> printer.print(tutorialGroup.getTutorialGroupSchedule().getLocation() != null ? tutorialGroup.getTutorialGroupSchedule().getLocation() : "");
-                case "Registration Number" -> printer.print(student != null ? student.getRegistrationNumber() : "");
-                case "First Name" -> printer.print(student != null ? student.getFirstName() : "");
-                case "Last Name" -> printer.print(student != null ? student.getLastName() : "");
+                case "ID" -> printer.print(getValueOrDefault(tutorialGroup.getId()));
+                case "Title" -> printer.print(getValueOrDefault(tutorialGroup.getTitle()));
+                case "Campus" -> printer.print(getValueOrDefault(tutorialGroup.getCampus()));
+                case "Language" -> printer.print(getValueOrDefault(tutorialGroup.getLanguage()));
+                case "Additional Information" -> printer.print(getValueOrDefault(tutorialGroup.getAdditionalInformation()));
+                case "Capacity" -> printer.print(getValueOrDefault(tutorialGroup.getCapacity()));
+                case "Is Online" -> printer.print(getValueOrDefault(tutorialGroup.getIsOnline()));
+                case "Day of Week" -> printer.print(getDayOfWeek(tutorialGroup));
+                case "Start Time" -> printer.print(getScheduleField(tutorialGroup, ScheduleField.START_TIME));
+                case "End Time" -> printer.print(getScheduleField(tutorialGroup, ScheduleField.END_TIME));
+                case "Location" -> printer.print(getScheduleField(tutorialGroup, ScheduleField.LOCATION));
+                case "Registration Number" -> printer.print(getStudentField(student, StudentField.REGISTRATION_NUMBER));
+                case "First Name" -> printer.print(getStudentField(student, StudentField.FIRST_NAME));
+                case "Last Name" -> printer.print(getStudentField(student, StudentField.LAST_NAME));
                 default -> printer.print("");
             }
         }
         printer.println();
+    }
+
+    /**
+     * Exports the tutorial groups for a given course to a JSON string.
+     * Each tutorial group and its related information, including optional fields specified in the selectedFields list, are included in the export.
+     * The method utilizes helper methods to handle null checks and field assignments.
+     *
+     * @param courseId       the ID of the course for which tutorial groups are to be exported
+     * @param selectedFields the list of fields to include in the JSON export
+     * @return a JSON string representing the exported tutorial groups and their details
+     * @throws JsonProcessingException if an error occurs during JSON processing
+     */
+    public String exportTutorialGroupsToJSON(Long courseId, List<String> selectedFields) throws JsonProcessingException {
+        Set<TutorialGroup> tutorialGroups = tutorialGroupRepository.findAllByCourseIdWithTeachingAssistantRegistrationsAndSchedule(courseId);
+
+        List<Map<String, Object>> exportData = new ArrayList<>();
+        for (TutorialGroup tutorialGroup : tutorialGroups) {
+            Map<String, Object> groupData = new LinkedHashMap<>();
+            writeTutorialGroupJSON(groupData, tutorialGroup, selectedFields);
+            if (selectedFields.contains("Students")) {
+                if ((tutorialGroup.getRegistrations() != null) && (!tutorialGroup.getRegistrations().isEmpty())) {
+                    for (TutorialGroupRegistration registration : tutorialGroup.getRegistrations()) {
+                        User student = registration.getStudent();
+                        groupData.put("Students",
+                                groupData.get("Students") != null ? groupData.get("Students") + convertStudentToString(student) : convertStudentToString(student));
+                    }
+                    groupData.put("Students", groupData.get("Students").toString().substring(0, groupData.get("Students").toString().length() - 1));
+                }
+            }
+            exportData.add(groupData);
+        }
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(exportData);
+    }
+
+    private Map<String, Object> writeTutorialGroupJSON(Map<String, Object> groupData, TutorialGroup tutorialGroup, List<String> selectedFields) throws JsonProcessingException {
+        for (String field : selectedFields) {
+            switch (field) {
+                case "ID" -> groupData.put("ID", getValueOrDefault(tutorialGroup.getId()));
+                case "Title" -> groupData.put("Title", getValueOrDefault(tutorialGroup.getTitle()));
+                case "Campus" -> groupData.put("Campus", getValueOrDefault(tutorialGroup.getCampus()));
+                case "Language" -> groupData.put("Language", getValueOrDefault(tutorialGroup.getLanguage()));
+                case "Additional Information" -> groupData.put("Additional Information", getValueOrDefault(tutorialGroup.getAdditionalInformation()));
+                case "Capacity" -> groupData.put("Capacity", getValueOrDefault(tutorialGroup.getCapacity()));
+                case "Is Online" -> groupData.put("Is Online", getValueOrDefault(tutorialGroup.getIsOnline()));
+                case "Day of Week" -> groupData.put("Day of Week", getDayOfWeek(tutorialGroup));
+                case "Start Time" -> groupData.put("Start Time", getScheduleField(tutorialGroup, ScheduleField.START_TIME));
+                case "End Time" -> groupData.put("End Time", getScheduleField(tutorialGroup, ScheduleField.END_TIME));
+                case "Location" -> groupData.put("Location", getScheduleField(tutorialGroup, ScheduleField.LOCATION));
+                default -> groupData.put("", "");
+            }
+        }
+        return groupData;
+    }
+
+    private String getValueOrDefault(Object value) {
+        return value != null ? value.toString() : "";
+    }
+
+    /**
+     * Returns the string representation of the day of the week for the tutorial group's schedule.
+     * If the schedule or day of the week is null, returns the default day of "None".
+     */
+    private String getDayOfWeek(TutorialGroup tutorialGroup) {
+        if (tutorialGroup.getTutorialGroupSchedule() != null && tutorialGroup.getTutorialGroupSchedule().getDayOfWeek() != null) {
+            return getDayOfWeekString(tutorialGroup.getTutorialGroupSchedule().getDayOfWeek());
+        }
+        return getDayOfWeekString(8); // Default to "None"
+    }
+
+    /**
+     * Returns the requested field (start time, end time, location) from the tutorial group's schedule.
+     * If the schedule or the requested field is null, returns an empty string.
+     */
+    private String getScheduleField(TutorialGroup tutorialGroup, ScheduleField field) {
+        if (tutorialGroup.getTutorialGroupSchedule() != null) {
+            switch (field) {
+                case START_TIME -> {
+                    return getValueOrDefault(tutorialGroup.getTutorialGroupSchedule().getStartTime());
+                }
+                case END_TIME -> {
+                    return getValueOrDefault(tutorialGroup.getTutorialGroupSchedule().getEndTime());
+                }
+                case LOCATION -> {
+                    return getValueOrDefault(tutorialGroup.getTutorialGroupSchedule().getLocation());
+                }
+            }
+        }
+        return "";
+    }
+
+    /**
+     * Returns the requested field (registration number, first name, last name) from the student.
+     * If the student or the requested field is null, returns an empty string.
+     */
+    private String getStudentField(User student, StudentField field) {
+        if (student != null) {
+            switch (field) {
+                case REGISTRATION_NUMBER -> {
+                    return getValueOrDefault(student.getRegistrationNumber());
+                }
+                case FIRST_NAME -> {
+                    return getValueOrDefault(student.getFirstName());
+                }
+                case LAST_NAME -> {
+                    return getValueOrDefault(student.getLastName());
+                }
+            }
+        }
+        return "";
+    }
+
+    // Enum to represent the different fields of the schedule
+    private enum ScheduleField {
+        START_TIME, END_TIME, LOCATION
+    }
+
+    // Enum to represent the different fields of the student
+    private enum StudentField {
+        REGISTRATION_NUMBER, FIRST_NAME, LAST_NAME
     }
 
     /**
@@ -711,47 +825,14 @@ public class TutorialGroupService {
         return students;
     }
 
-    private String convertStudentsToString(Set<User> students) {
-        StringBuilder sb = new StringBuilder();
-        int size = students.size();
-        int counter = 0;
-        for (User student : students) {
-            sb.append(student.getFirstName()).append(" ").append(student.getLastName());
-            if (counter < size - 1) {
-                sb.append(",");
-            }
-            counter++;
-        }
-        return sb.toString();
-    }
-
-    public String exportTutorialGroupsToJSON(Long courseId, List<String> selectedFields) throws JsonProcessingException {
-        Set<TutorialGroup> tutorialGroups = tutorialGroupRepository.findAllByCourseIdWithTeachingAssistantRegistrationsAndSchedule(courseId);
-
-        List<Map<String, Object>> exportData = new ArrayList<>();
-        for (TutorialGroup tutorialGroup : tutorialGroups) {
-            Map<String, Object> groupData = new LinkedHashMap<>();
-            for (String field : selectedFields) {
-                switch (field) {
-                    case "ID" -> groupData.put("ID", tutorialGroup.getId());
-                    case "Title" -> groupData.put("Title", tutorialGroup.getTitle());
-                    case "Campus" -> groupData.put("Campus", tutorialGroup.getCampus());
-                    case "Language" -> groupData.put("Language", tutorialGroup.getLanguage());
-                    case "Additional Information" -> groupData.put("Additional Information", tutorialGroup.getAdditionalInformation());
-                    case "Capacity" -> groupData.put("Capacity", tutorialGroup.getCapacity());
-                    case "Is Online" -> groupData.put("Is Online", tutorialGroup.getIsOnline());
-                    case "Day of Week" -> groupData.put("Day of Week", getDayOfWeekString(tutorialGroup.getTutorialGroupSchedule().getDayOfWeek()));
-                    case "Start Time" -> groupData.put("Start Time", tutorialGroup.getTutorialGroupSchedule().getStartTime());
-                    case "End Time" -> groupData.put("End Time", tutorialGroup.getTutorialGroupSchedule().getEndTime());
-                    case "Location" -> groupData.put("Location", tutorialGroup.getTutorialGroupSchedule().getLocation());
-                    case "Students" -> groupData.put("Students", convertStudentsToString(getStudentsRegisteredForTutorial(tutorialGroup.getRegistrations())));
-                    default -> groupData.put("", "");
-                }
-            }
-            exportData.add(groupData);
-        }
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        return objectMapper.writeValueAsString(exportData);
+    private String convertStudentToString(User student) {
+        StringBuilder studentString = new StringBuilder();
+        studentString.append(student.getRegistrationNumber());
+        studentString.append(" ");
+        studentString.append(student.getFirstName());
+        studentString.append(" ");
+        studentString.append(student.getLastName());
+        studentString.append(",");
+        return studentString.toString();
     }
 }

@@ -186,7 +186,7 @@ export class TutorialGroupsService {
         });
     }
 
-    exportToJson(courseId: number, fields: string[]): Observable<any> {
+    exportToJson(courseId: number, fields: string[]): Observable<string> {
         const params = { fields };
         return this.httpClient.get(`${this.resourceURL}/courses/${courseId}/tutorial-groups/export/json`, {
             params,
