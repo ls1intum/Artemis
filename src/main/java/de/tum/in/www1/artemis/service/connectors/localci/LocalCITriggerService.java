@@ -41,7 +41,7 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildConfig;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItem;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItemReference;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItemReferenceDTO;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.JobTimingInfo;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.RepositoryInfo;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
@@ -74,7 +74,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final GitService gitService;
 
-    private IQueue<BuildJobItemReference> queue;
+    private IQueue<BuildJobItemReferenceDTO> queue;
 
     private IMap<String, ZonedDateTime> dockerImageCleanupInfo;
 
@@ -167,7 +167,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         BuildJobItem buildJobItem = new BuildJobItem(buildJobId, participation.getBuildPlanId(), null, participation.getId(), courseId, programmingExercise.getId(), 0, priority,
                 null, repositoryInfo, jobTimingInfo, buildConfig, null);
 
-        BuildJobItemReference buildJobItemReference = new BuildJobItemReference(buildJobItem);
+        BuildJobItemReferenceDTO buildJobItemReference = new BuildJobItemReferenceDTO(buildJobItem);
 
         buildJobItemMap.lock(participation.getId());
         try {

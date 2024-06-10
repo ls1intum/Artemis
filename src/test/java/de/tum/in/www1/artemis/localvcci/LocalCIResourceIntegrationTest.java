@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.service.connectors.localci.buildagent.SharedQueueP
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildConfig;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItem;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItemReference;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItemReferenceDTO;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.JobTimingInfo;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.RepositoryInfo;
 import de.tum.in.www1.artemis.service.dto.FinishedBuildJobDTO;
@@ -61,7 +61,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @Autowired
     private BuildLogEntryService buildLogEntryService;
 
-    protected IQueue<BuildJobItemReference> queuedJobs;
+    protected IQueue<BuildJobItemReferenceDTO> queuedJobs;
 
     private IMap<Long, CircularFifoQueue<BuildJobItem>> buildJobItemMap;
 
@@ -131,7 +131,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         var retrievedJobs = request.get("/api/admin/queued-jobs", HttpStatus.OK, List.class);
         assertThat(retrievedJobs).isEmpty();
         // Adding a lot of jobs as they get processed very quickly due to mocking
-        queuedJobs.addAll(List.of(new BuildJobItemReference(job1), new BuildJobItemReference(job2)));
+        queuedJobs.addAll(List.of(new BuildJobItemReferenceDTO(job1), new BuildJobItemReferenceDTO(job2)));
         buildJobItemMap.put(job1.participationId(), new CircularFifoQueue<>(List.of(job1)));
         buildJobItemMap.put(job2.participationId(), new CircularFifoQueue<>(List.of(job2)));
         var retrievedJobs1 = request.get("/api/admin/queued-jobs", HttpStatus.OK, List.class);
@@ -157,7 +157,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         var retrievedJobs = request.get("/api/courses/" + course.getId() + "/queued-jobs", HttpStatus.OK, List.class);
         assertThat(retrievedJobs).isEmpty();
         // Adding a lot of jobs as they get processed very quickly due to mocking
-        queuedJobs.addAll(List.of(new BuildJobItemReference(job1), new BuildJobItemReference(job2)));
+        queuedJobs.addAll(List.of(new BuildJobItemReferenceDTO(job1), new BuildJobItemReferenceDTO(job2)));
         buildJobItemMap.put(job1.participationId(), new CircularFifoQueue<>(List.of(job1)));
         buildJobItemMap.put(job2.participationId(), new CircularFifoQueue<>(List.of(job2)));
         var retrievedJobs1 = request.get("/api/courses/" + course.getId() + "/queued-jobs", HttpStatus.OK, List.class);
@@ -208,7 +208,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testCancelQueuedBuildJob() throws Exception {
         buildJobItemMap.put(job1.participationId(), new CircularFifoQueue<>(List.of(job1)));
-        queuedJobs.put(new BuildJobItemReference(job1));
+        queuedJobs.put(new BuildJobItemReferenceDTO(job1));
         request.delete("/api/admin/cancel-job/" + job1.id(), HttpStatus.NO_CONTENT);
     }
 
@@ -235,9 +235,9 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCancelAllQueuedBuildJobsForCourse() throws Exception {
         buildJobItemMap.put(job1.participationId(), new CircularFifoQueue<>(List.of(job1)));
-        queuedJobs.put(new BuildJobItemReference(job1));
+        queuedJobs.put(new BuildJobItemReferenceDTO(job1));
         buildJobItemMap.put(job2.participationId(), new CircularFifoQueue<>(List.of(job2)));
-        queuedJobs.put(new BuildJobItemReference(job2));
+        queuedJobs.put(new BuildJobItemReferenceDTO(job2));
         request.delete("/api/courses/" + course.getId() + "/cancel-all-queued-jobs", HttpStatus.NO_CONTENT);
     }
 

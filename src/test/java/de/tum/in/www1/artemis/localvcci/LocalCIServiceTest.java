@@ -40,7 +40,7 @@ import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService
 import de.tum.in.www1.artemis.service.connectors.localci.buildagent.SharedQueueProcessingService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildConfig;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItem;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItemReference;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItemReferenceDTO;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.JobTimingInfo;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.RepositoryInfo;
 import de.tum.in.www1.artemis.web.rest.dto.CheckoutDirectoriesDTO;
@@ -70,7 +70,7 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     @Autowired
     private HazelcastInstance hazelcastInstance;
 
-    protected IQueue<BuildJobItemReference> queuedJobs;
+    protected IQueue<BuildJobItemReferenceDTO> queuedJobs;
 
     private IMap<Long, CircularFifoQueue<BuildJobItem>> buildJobItemIMap;
 
@@ -113,7 +113,7 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         BuildJobItem job2 = new BuildJobItem("2", "job2", "address1", participation.getId(), course.getId(), 1, 1, 1,
                 de.tum.in.www1.artemis.domain.enumeration.BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
 
-        BuildJobItemReference job1Reference = new BuildJobItemReference(job1);
+        BuildJobItemReferenceDTO job1Reference = new BuildJobItemReferenceDTO(job1);
 
         queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
         buildJobItemIMap = hazelcastInstance.getMap("buildJobItemMap");

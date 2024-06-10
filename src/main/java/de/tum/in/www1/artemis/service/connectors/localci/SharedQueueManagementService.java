@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.repository.BuildJobRepository;
 import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItem;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItemReference;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItemReferenceDTO;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild;
 
 /**
@@ -45,7 +45,7 @@ public class SharedQueueManagementService {
 
     private final HazelcastInstance hazelcastInstance;
 
-    private IQueue<BuildJobItemReference> queue;
+    private IQueue<BuildJobItemReferenceDTO> queue;
 
     private IMap<Long, CircularFifoQueue<BuildJobItem>> buildJobItemMap;
 
@@ -113,7 +113,7 @@ public class SharedQueueManagementService {
     }
 
     public List<BuildJobItem> getQueuedJobsForCourse(long courseId) {
-        Set<Long> participationIds = queue.stream().filter(job -> job.courseId() == courseId).map(BuildJobItemReference::participationId).collect(toSet());
+        Set<Long> participationIds = queue.stream().filter(job -> job.courseId() == courseId).map(BuildJobItemReferenceDTO::participationId).collect(toSet());
         return buildJobItemMap.getAll(participationIds).values().stream().flatMap(queue -> queue.stream().filter(Objects::nonNull)).toList();
     }
 
@@ -122,7 +122,8 @@ public class SharedQueueManagementService {
     }
 
     public List<BuildJobItem> getQueuedJobsForParticipation(long participationId) {
-        return buildJobItemMap.get(participationId).stream().filter(Objects::nonNull).toList();
+        CircularFifoQueue<BuildJobItem> buildJobItems = buildJobItemMap.get(participationId);
+        return buildJobItems != null ? buildJobItems.stream().toList() : List.of();
     }
 
     public List<BuildJobItem> getProcessingJobsForParticipation(long participationId) {
@@ -148,8 +149,8 @@ public class SharedQueueManagementService {
         try {
             // Remove build job if it is queued
             if (queue.stream().anyMatch(job -> Objects.equals(job.id(), buildJobId))) {
-                List<BuildJobItemReference> toRemove = new ArrayList<>();
-                for (BuildJobItemReference job : queue) {
+                List<BuildJobItemReferenceDTO> toRemove = new ArrayList<>();
+                for (BuildJobItemReferenceDTO job : queue) {
                     if (Objects.equals(job.id(), buildJobId)) {
                         toRemove.add(job);
                         buildJobItemMap.lock(job.participationId());
@@ -245,8 +246,8 @@ public class SharedQueueManagementService {
     public void cancelAllQueuedBuildJobsForCourse(long courseId) {
         sharedLock.lock();
         try {
-            List<BuildJobItemReference> toRemove = new ArrayList<>();
-            for (BuildJobItemReference job : queue) {
+            List<BuildJobItemReferenceDTO> toRemove = new ArrayList<>();
+            for (BuildJobItemReferenceDTO job : queue) {
                 if (job.courseId() == courseId) {
                     toRemove.add(job);
                     // Used delete instead of RemoveAll(predicate) to avoid unnecessary deserialization
@@ -281,8 +282,8 @@ public class SharedQueueManagementService {
     public void cancelAllJobsForParticipation(long participationId) {
         sharedLock.lock();
         try {
-            List<BuildJobItemReference> toRemove = new ArrayList<>();
-            for (BuildJobItemReference queuedJob : queue) {
+            List<BuildJobItemReferenceDTO> toRemove = new ArrayList<>();
+            for (BuildJobItemReferenceDTO queuedJob : queue) {
                 if (queuedJob.participationId() == participationId) {
                     toRemove.add(queuedJob);
                 }

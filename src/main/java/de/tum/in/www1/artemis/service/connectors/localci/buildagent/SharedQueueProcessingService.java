@@ -40,7 +40,7 @@ import de.tum.in.www1.artemis.domain.enumeration.BuildStatus;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItem;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItemReference;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItemReferenceDTO;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildResult;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.JobTimingInfo;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.ResultQueueItem;
@@ -69,7 +69,7 @@ public class SharedQueueProcessingService {
      */
     private FencedLock sharedLock;
 
-    private IQueue<BuildJobItemReference> queue;
+    private IQueue<BuildJobItemReferenceDTO> queue;
 
     private IMap<Long, CircularFifoQueue<BuildJobItem>> buildJobItemMap;
 
@@ -204,7 +204,7 @@ public class SharedQueueProcessingService {
     }
 
     private BuildJobItem addToProcessingJobs() {
-        BuildJobItemReference buildJobReference = queue.poll();
+        BuildJobItemReferenceDTO buildJobReference = queue.poll();
         if (buildJobReference != null) {
             buildJobItemMap.lock(buildJobReference.participationId());
             BuildJobItem buildJob;
@@ -379,16 +379,16 @@ public class SharedQueueProcessingService {
         return localProcessingJobs.get() < localCIBuildExecutorService.getMaximumPoolSize();
     }
 
-    public class QueuedBuildJobItemListener implements ItemListener<BuildJobItemReference> {
+    public class QueuedBuildJobItemListener implements ItemListener<BuildJobItemReferenceDTO> {
 
         @Override
-        public void itemAdded(ItemEvent<BuildJobItemReference> event) {
+        public void itemAdded(ItemEvent<BuildJobItemReferenceDTO> event) {
             log.debug("CIBuildJobQueueItem added to queue: {}", event.getItem());
             checkAvailabilityAndProcessNextBuild();
         }
 
         @Override
-        public void itemRemoved(ItemEvent<BuildJobItemReference> event) {
+        public void itemRemoved(ItemEvent<BuildJobItemReferenceDTO> event) {
             log.debug("CIBuildJobQueueItem removed from queue: {}", event.getItem());
         }
     }
