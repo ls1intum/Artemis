@@ -766,6 +766,30 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
 
     @Query("""
             SELECT DISTINCT p
+            FROM StudentExam se
+                JOIN se.studentParticipations p
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.assessor
+            WHERE p.testRun = FALSE
+                AND se.id IN :studentExamId
+            """)
+    List<StudentParticipation> findTestExamParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultAndAssessorIgnoreTestRuns(
+            @Param("studentExamId") long studentExamId);
+
+    @Query("""
+            SELECT DISTINCT p
+                FROM StudentExam se
+                    JOIN se.studentParticipations p
+                    LEFT JOIN FETCH p.submissions s
+                    LEFT JOIN FETCH s.results r
+                WHERE p.testRun = FALSE
+                    AND se.id IN :studentExamId
+            """)
+    List<StudentParticipation> findTestExamParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(@Param("studentExamId") long studentExamId);
+
+    @Query("""
+            SELECT DISTINCT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
@@ -992,12 +1016,10 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
 
         if (studentExam.isTestExam()) {
             if (withAssessor) {
-                // TODO Michal Kawka
-                return findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(studentExam.getUser().getId(), studentExam.getExercises());
+                return findTestExamParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultAndAssessorIgnoreTestRuns(studentExam.getId());
             }
             else {
-                // TODO Michal Kawka
-                return findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(studentExam.getUser().getId(), studentExam.getExercises());
+                return findTestExamParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentExam.getId());
             }
         }
 

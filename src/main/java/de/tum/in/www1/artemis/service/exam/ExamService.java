@@ -562,12 +562,6 @@ public class ExamService {
         // remove the unnecessary inner course attribute
         exercise.setCourse(null);
 
-        // If test exam, filter out participations that don't belong to this student exam
-        if (studentExam.isTestExam()) {
-            Set<Long> ids = studentExam.getStudentParticipations().stream().map(StudentParticipation::getId).collect(Collectors.toSet());
-            participations = participations.stream().filter(participation -> ids.contains(participation.getId())).toList();
-        }
-
         if (!(exercise instanceof QuizExercise)) {
             // Note: quiz exercises are filtered below
             exercise.filterSensitiveInformation();
