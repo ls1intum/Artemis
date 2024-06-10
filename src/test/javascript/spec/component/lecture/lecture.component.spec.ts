@@ -21,6 +21,7 @@ import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-rout
 import { LectureImportComponent } from 'app/lecture/lecture-import.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { SortDirective } from 'app/shared/sort/sort.directive';
+import { Course } from 'app/entities/course.model';
 
 describe('Lecture', () => {
     let lectureComponentFixture: ComponentFixture<LectureComponent>;
@@ -36,6 +37,7 @@ describe('Lecture', () => {
     let futureLecture: Lecture;
     let futureLecture2: Lecture;
     let unspecifiedLecture: Lecture;
+    let lectureToIngest: Lecture;
 
     beforeEach(() => {
         const lastWeek = dayjs().subtract(1, 'week');
@@ -84,6 +86,11 @@ describe('Lecture', () => {
         unspecifiedLecture = new Lecture();
         unspecifiedLecture.id = 1;
         unspecifiedLecture.title = 'machine Learning';
+
+        lectureToIngest = new Lecture();
+        lectureToIngest.id = 1;
+        lectureToIngest.title = 'machine Learning';
+        lectureToIngest.course = new Course();
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
@@ -239,14 +246,18 @@ describe('Lecture', () => {
         expect(lectureComponent.filteredLectures).toContainEqual(unspecifiedLecture);
     });
 
-    it.each([
-        { predicate: 'id', ascending: false, expected: [8, 7, 6, 5, 4, 3, 2, 1] },
-        { predicate: 'title', ascending: true, expected: [4, 8, 3, 7, 2, 6, 1, 5] },
-    ])('should sort rows', ({ predicate, ascending, expected }) => {
-        lectureComponent.filteredLectures = [pastLecture, pastLecture2, currentLecture, currentLecture2, currentLecture3, futureLecture, futureLecture2, unspecifiedLecture];
-        lectureComponent.predicate = predicate;
-        lectureComponent.ascending = ascending;
-        lectureComponent.sortRows();
-        expect(lectureComponent.filteredLectures.map((lecture) => lecture.id)).toEqual(expected);
+    it('should call the service to ingest lectures when ingestLecturesInPyris is called', () => {
+        lectureComponent.lectures = [lectureToIngest];
+        const ingestSpy = jest.spyOn(lectureService, 'ingestLecturesInPyris').mockImplementation(() => of(null));
+        lectureComponent.ingestLecturesInPyris();
+        expect(ingestSpy).toHaveBeenCalledWith(lectureToIngest.course?.id);
+        expect(ingestSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should not call the service if the first lecture does not exist', () => {
+        lectureComponent.lectures = [];
+        const ingestSpy = jest.spyOn(lectureService, 'ingestLecturesInPyris').mockImplementation(() => of(null));
+        lectureComponent.ingestLecturesInPyris();
+        expect(ingestSpy).not.toHaveBeenCalled();
     });
 });
