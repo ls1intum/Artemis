@@ -23,10 +23,6 @@ describe('LearningPathApiService', () => {
         httpClient.verify();
     });
 
-    it('should initialize', () => {
-        expect(learningPathApiService).toBeTruthy();
-    });
-
     it('should get learning path id', waitForAsync(async () => {
         const courseId = 1;
 
