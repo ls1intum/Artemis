@@ -9,6 +9,7 @@ describe('TutorialGroupService', () => {
     let service: TutorialGroupsService;
     let httpMock: HttpTestingController;
     let elemDefault: TutorialGroup;
+    const resourceURL = 'api';
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -143,4 +144,38 @@ describe('TutorialGroupService', () => {
         req.flush([returnedFromService]);
         tick();
     }));
+
+    it('should export tutorial groups to CSV', () => {
+        const courseId = 1;
+        const fields = ['ID', 'Title', 'Campus', 'Language'];
+        const mockBlob = new Blob(['test'], { type: 'text/csv' });
+
+        service
+            .exportTutorialGroupsToCSV(courseId, fields)
+            .pipe(take(1))
+            .subscribe((blob) => {
+                expect(blob).toEqual(mockBlob);
+            });
+
+        const req = httpMock.expectOne(`${resourceURL}/courses/${courseId}/tutorial-groups/export/csv?fields=ID&fields=Title&fields=Campus&fields=Language`);
+        expect(req.request.method).toBe('GET');
+        req.flush(mockBlob);
+    });
+
+    it('should export tutorial groups to JSON', () => {
+        const courseId = 1;
+        const fields = ['ID', 'Title', 'Campus', 'Language'];
+        const mockResponse = JSON.stringify({ data: 'test' });
+
+        service
+            .exportToJson(courseId, fields)
+            .pipe(take(1))
+            .subscribe((response) => {
+                expect(response).toEqual(mockResponse);
+            });
+
+        const req = httpMock.expectOne(`${resourceURL}/courses/${courseId}/tutorial-groups/export/json?fields=ID&fields=Title&fields=Campus&fields=Language`);
+        expect(req.request.method).toBe('GET');
+        req.flush(mockResponse, { headers: { 'Content-Type': 'application/json' } });
+    });
 });

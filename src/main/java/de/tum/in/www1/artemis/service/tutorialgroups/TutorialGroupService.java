@@ -656,25 +656,31 @@ public class TutorialGroupService {
     // Method to write a row for a tutorial group, optionally including student details
     private void writeTutorialGroupRow(CSVPrinter printer, TutorialGroup tutorialGroup, List<String> fields, User student) throws IOException {
         for (String field : fields) {
-            switch (field) {
-                case "ID" -> printer.print(getValueOrDefault(tutorialGroup.getId()));
-                case "Title" -> printer.print(getValueOrDefault(tutorialGroup.getTitle()));
-                case "Campus" -> printer.print(getValueOrDefault(tutorialGroup.getCampus()));
-                case "Language" -> printer.print(getValueOrDefault(tutorialGroup.getLanguage()));
-                case "Additional Information" -> printer.print(getValueOrDefault(tutorialGroup.getAdditionalInformation()));
-                case "Capacity" -> printer.print(getValueOrDefault(tutorialGroup.getCapacity()));
-                case "Is Online" -> printer.print(getValueOrDefault(tutorialGroup.getIsOnline()));
-                case "Day of Week" -> printer.print(getDayOfWeek(tutorialGroup));
-                case "Start Time" -> printer.print(getScheduleField(tutorialGroup, ScheduleField.START_TIME));
-                case "End Time" -> printer.print(getScheduleField(tutorialGroup, ScheduleField.END_TIME));
-                case "Location" -> printer.print(getScheduleField(tutorialGroup, ScheduleField.LOCATION));
-                case "Registration Number" -> printer.print(getStudentField(student, StudentField.REGISTRATION_NUMBER));
-                case "First Name" -> printer.print(getStudentField(student, StudentField.FIRST_NAME));
-                case "Last Name" -> printer.print(getStudentField(student, StudentField.LAST_NAME));
-                default -> printer.print("");
-            }
+            printer.print(switch (field) {
+                case "Registration Number" -> getStudentField(student, StudentField.REGISTRATION_NUMBER);
+                case "First Name" -> getStudentField(student, StudentField.FIRST_NAME);
+                case "Last Name" -> getStudentField(student, StudentField.LAST_NAME);
+                default -> getCSVInput(tutorialGroup, field);
+            });
         }
         printer.println();
+    }
+
+    private String getCSVInput(TutorialGroup tutorialGroup, String field) {
+        return switch (field) {
+            case "ID" -> getValueOrDefault(tutorialGroup.getId());
+            case "Title" -> getValueOrDefault(tutorialGroup.getTitle());
+            case "Campus" -> getValueOrDefault(tutorialGroup.getCampus());
+            case "Language" -> getValueOrDefault(tutorialGroup.getLanguage());
+            case "Additional Information" -> getValueOrDefault(tutorialGroup.getAdditionalInformation());
+            case "Capacity" -> getValueOrDefault(tutorialGroup.getCapacity());
+            case "Is Online" -> getValueOrDefault(tutorialGroup.getIsOnline());
+            case "Day of Week" -> getDayOfWeek(tutorialGroup);
+            case "Start Time" -> getScheduleField(tutorialGroup, ScheduleField.START_TIME);
+            case "End Time" -> getScheduleField(tutorialGroup, ScheduleField.END_TIME);
+            case "Location" -> getScheduleField(tutorialGroup, ScheduleField.LOCATION);
+            default -> "";
+        };
     }
 
     /**
@@ -711,24 +717,10 @@ public class TutorialGroupService {
         return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(exportData);
     }
 
-    private Map<String, Object> writeTutorialGroupJSON(Map<String, Object> groupData, TutorialGroup tutorialGroup, List<String> selectedFields) throws JsonProcessingException {
+    private void writeTutorialGroupJSON(Map<String, Object> groupData, TutorialGroup tutorialGroup, List<String> selectedFields) throws JsonProcessingException {
         for (String field : selectedFields) {
-            switch (field) {
-                case "ID" -> groupData.put("ID", getValueOrDefault(tutorialGroup.getId()));
-                case "Title" -> groupData.put("Title", getValueOrDefault(tutorialGroup.getTitle()));
-                case "Campus" -> groupData.put("Campus", getValueOrDefault(tutorialGroup.getCampus()));
-                case "Language" -> groupData.put("Language", getValueOrDefault(tutorialGroup.getLanguage()));
-                case "Additional Information" -> groupData.put("Additional Information", getValueOrDefault(tutorialGroup.getAdditionalInformation()));
-                case "Capacity" -> groupData.put("Capacity", getValueOrDefault(tutorialGroup.getCapacity()));
-                case "Is Online" -> groupData.put("Is Online", getValueOrDefault(tutorialGroup.getIsOnline()));
-                case "Day of Week" -> groupData.put("Day of Week", getDayOfWeek(tutorialGroup));
-                case "Start Time" -> groupData.put("Start Time", getScheduleField(tutorialGroup, ScheduleField.START_TIME));
-                case "End Time" -> groupData.put("End Time", getScheduleField(tutorialGroup, ScheduleField.END_TIME));
-                case "Location" -> groupData.put("Location", getScheduleField(tutorialGroup, ScheduleField.LOCATION));
-                default -> groupData.put("", "");
-            }
+            groupData.put(field, getCSVInput(tutorialGroup, field));
         }
-        return groupData;
     }
 
     private String getValueOrDefault(Object value) {
