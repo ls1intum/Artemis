@@ -8,13 +8,13 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildResult;
 
 class TestResultXmlParserTest {
 
-    private final List<LocalCIBuildResult.LocalCITestJobDTO> failedTests = new ArrayList<>();
+    private final List<BuildResult.LocalCITestJobDTO> failedTests = new ArrayList<>();
 
-    private final List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests = new ArrayList<>();
+    private final List<BuildResult.LocalCITestJobDTO> successfulTests = new ArrayList<>();
 
     @Test
     void testParseResultXmlInnerText() throws IOException {
@@ -142,6 +142,20 @@ class TestResultXmlParserTest {
         TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
         assertThat(failedTests).isEmpty();
         assertThat(successfulTests).isNotEmpty().hasSize(12);
+    }
 
+    @Test
+    void testSkippedTest() throws IOException {
+        String input = """
+                <testsuite>
+                    <testcase name="testBubbleSort()" classname="testpackage.SortingExampleBehaviorTest" time="0.000306">
+                        <skipped message="This test was skipped."/>
+                    </testcase>
+                </testsuite>
+                """;
+
+        TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
+        assertThat(failedTests).isEmpty();
+        assertThat(successfulTests).isEmpty();
     }
 }

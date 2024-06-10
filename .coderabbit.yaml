@@ -1,0 +1,224 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+
+# *******************************************************
+# * DO NOT MODIFY this file without maintainer approval *
+# *******************************************************
+
+language: en-US
+tone_instructions: ''
+early_access: true
+enable_free_tier: true
+reviews:
+  profile: assertive
+  request_changes_workflow: true
+  high_level_summary: true
+  high_level_summary_placeholder: '@coderabbitai summary'
+  auto_title_placeholder: '@coderabbitai title'
+  poem: false
+  review_status: false
+  collapse_walkthrough: false
+  path_filters:
+    - '!dist/**'
+    - '!**/*.app'
+    - '!**/*.bin'
+    - '!**/*.bz2'
+    - '!**/*.class'
+    - '!**/*.db'
+    - '!**/*.csv'
+    - '!**/*.tsv'
+    - '!**/*.dat'
+    - '!**/*.dll'
+    - '!**/*.dylib'
+    - '!**/*.egg'
+    - '!**/*.glif'
+    - '!**/*.gz'
+    - '!**/*.xz'
+    - '!**/*.zip'
+    - '!**/*.7z'
+    - '!**/*.rar'
+    - '!**/*.zst'
+    - '!**/*.ico'
+    - '!**/*.jar'
+    - '!**/*.tar'
+    - '!**/*.war'
+    - '!**/*.lo'
+    - '!**/*.log'
+    - '!**/*.mp3'
+    - '!**/*.wav'
+    - '!**/*.wma'
+    - '!**/*.mp4'
+    - '!**/*.avi'
+    - '!**/*.mkv'
+    - '!**/*.wmv'
+    - '!**/*.m4a'
+    - '!**/*.m4v'
+    - '!**/*.3gp'
+    - '!**/*.3g2'
+    - '!**/*.rm'
+    - '!**/*.mov'
+    - '!**/*.flv'
+    - '!**/*.iso'
+    - '!**/*.swf'
+    - '!**/*.flac'
+    - '!**/*.nar'
+    - '!**/*.o'
+    - '!**/*.ogg'
+    - '!**/*.otf'
+    - '!**/*.p'
+    - '!**/*.pdf'
+    - '!**/*.doc'
+    - '!**/*.docx'
+    - '!**/*.xls'
+    - '!**/*.xlsx'
+    - '!**/*.map'
+    - '!**/*.out'
+    - '!**/*.ppt'
+    - '!**/*.pptx'
+    - '!**/*.pkl'
+    - '!**/*.pickle'
+    - '!**/*.pyc'
+    - '!**/*.pyd'
+    - '!**/*.pyo'
+    - '!**/*.pub'
+    - '!**/*.pem'
+    - '!**/*.rkt'
+    - '!**/*.so'
+    - '!**/*.ss'
+    - '!**/*.eot'
+    - '!**/*.exe'
+    - '!**/*.pb.go'
+    - '!**/*.pb.gw.go'
+    - '!**/*.lock'
+    - '!**/*.ttf'
+    - '!**/*.yaml'
+    - '!**/*.yml'
+    - '!**/*.xml'
+    - '!**/*.cfg'
+    - '!**/*.toml'
+    - '!**/*.ini'
+    - '!**/*.mod'
+    - '!**/*.sum'
+    - '!**/*.work'
+    - '!**/*.mmd'
+    - '!**/*.svg'
+    - '!**/*.jpeg'
+    - '!**/*.jpg'
+    - '!**/*.png'
+    - '!**/*.gif'
+    - '!**/*.bmp'
+    - '!**/*.tiff'
+    - '!**/*.webm'
+    - '!**/*.woff'
+    - '!**/*.woff2'
+    - '!**/*.dot'
+    - '!**/*.md5sum'
+    - '!**/*.wasm'
+    - '!**/*.snap'
+    - '!**/*.parquet'
+    - '!**/gen/**'
+    - '!**/_gen/**'
+    - '!**/generated/**'
+    - '!**/@generated/**'
+    - '!**/vendor/**'
+    - '!**/*.min.js'
+    - '!**/*.min.js.map'
+    - '!**/*.min.js.css'
+    - '!**/*.tfstate'
+    - '!**/*.tfstate.backup'
+  path_instructions:
+    - path: src/main/webapp/**/*.ts
+      instructions: >-
+        angular_style:https://angular.io/guide/styleguide;methods_in_html:false;lazy_loading:true;code_reuse:true;tests:meaningful;types:PascalCase;enums:PascalCase;funcs:camelCase;props:camelCase;no_priv_prefix:true;strings:single_quotes;localize:true;btns:functionality;links:navigation;icons_text:newline;labels:associate;code_style:arrow_funcs,curly_braces,open_braces_same_line,indent_4;memory_leak_prevention:true;routes:naming_schema;chart_framework:ngx-charts;responsive_layout:true
+    - path: src/main/java/**/*.java
+      instructions: >-
+        naming:CamelCase;
+        principles:{single_responsibility,small_methods,no_duplication};
+        db:{perf_queries,datetime_not_timestamp};
+        rest:{stateless,singleton,delegate_logic,http_only,minimal_dtos};
+        dtos:{java_records,no_entities,min_data,single_resp};
+        di:constructor_injection; kiss:simple_code;
+        file_handling:os_indep_paths;
+        practices:{least_access,avoid_transactions,code_reuse,static_member_ref,prefer_primitives};
+        sql:{param_annotation,uppercase,avoid_subqueries};java:avoid_star_imports
+    - path: src/test/javascript/spec/**/*.ts
+      instructions: >-
+        jest: true; mock: NgMocks; bad_practices: avoid_full_module_import;
+        perf_improvements: mock_irrelevant_deps; service_testing:
+        mock_http_for_logic; no_schema: avoid_NO_ERRORS_SCHEMA;
+        expectation_specificity: true; solutions: {boolean: toBeTrue/False,
+        reference: toBe, existence: toBeNull/NotNull, undefined: toBeUndefined,
+        class_obj: toContainEntries/toEqual, spy_calls: {not_called:
+        not.toHaveBeenCalled, once: toHaveBeenCalledOnce, with_value:
+        toHaveBeenCalledWith|toHaveBeenCalledExactlyOnceWith}}
+    - path: src/test/java/**/*.java
+      instructions: >-
+        test_naming: descriptive; test_size: small_specific; fixed_data: true;
+        junit5_features: true; assert_use: assertThat; assert_specificity: true;
+        archunit_use: enforce_package_rules; db_query_count_tests:
+        track_performance; util_service_factory_pattern: true; avoid_db_access:
+        true; mock_strategy: static_mocks; context_restart_minimize: true
+    - path: src/main/webapp/**/*.html
+      instructions: >-
+        @if and @for are new and valid Angular syntax replacing *ngIf and
+        *ngFor. They should always be used over the old style.
+    - path: src/main/webapp/i18n/de/**/*.json
+      instructions: >-
+        German language translations should be informal (dutzen) and should
+        never be formal (sietzen). So the user should always be addressed with
+        "du/dein" and never with "sie/ihr".
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    ignore_title_keywords: []
+    labels: []
+    drafts: false
+    base_branches: []
+  tools:
+    shellcheck:
+      enabled: true
+    ruff:
+      enabled: true
+    markdownlint:
+      enabled: true
+    github-checks:
+      enabled: true
+      timeout_ms: 90000
+    languagetool:
+      enabled: true
+      disabled_rules:
+        - EN_UNPAIRED_BRACKETS
+      disabled_categories:
+        - TYPOS
+        - TYPOGRAPHY
+        - CASING
+      enabled_only: false
+      level: picky
+      enabled_rules: []
+      enabled_categories: []
+    biome:
+      enabled: true
+    hadolint:
+      enabled: true
+    swiftlint:
+      enabled: true
+    phpstan:
+      enabled: true
+      level: '5'
+    golangci-lint:
+      enabled: true
+    ast-grep:
+      packages: []
+      rule_dirs: []
+      util_dirs: []
+      essential_rules: true
+chat:
+  auto_reply: true
+knowledge_base:
+  learnings:
+    scope: auto
+  issues:
+    scope: auto
+  jira:
+    project_keys: []
+  linear:
+    team_keys: []

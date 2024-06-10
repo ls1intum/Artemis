@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.text;
 
+import static de.tum.in.www1.artemis.util.TestResourceUtils.HalfSecond;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.within;
@@ -276,8 +277,9 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         TextSubmission storedSubmission = request.get("/api/exercises/" + finishedTextExercise.getId() + "/text-submission-without-assessment?lock=true", HttpStatus.OK,
                 TextSubmission.class);
 
-        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(textSubmission, "results", "submissionDate", "blocks");
-        assertThat(storedSubmission.getSubmissionDate()).as("submission date is correct").isEqualToIgnoringNanos(textSubmission.getSubmissionDate());
+        final String[] ignoringFields = { "results", "submissionDate", "blocks", "participation" };
+        assertThat(storedSubmission).as("submission was found").usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(textSubmission);
+        assertThat(storedSubmission.getSubmissionDate()).as("submission date is correct").isCloseTo(textSubmission.getSubmissionDate(), HalfSecond());
         assertThat(storedSubmission.getLatestResult()).as("result is set").isNotNull();
         assertThat(storedSubmission.getLatestResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
         checkDetailsHidden(storedSubmission, false);

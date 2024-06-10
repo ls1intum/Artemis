@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
+import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
@@ -37,6 +38,9 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyProgressDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyRelationDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathCompetencyGraphDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDTO;
@@ -288,6 +292,21 @@ public class LearningPathService {
         if (competencyRelationRepository.countByCourseId(course.getId()) == 0) {
             status.add(LearningPathHealthDTO.HealthStatus.NO_RELATIONS);
         }
+    }
+
+    /**
+     * Generates the graph of competencies with the student's progress for the given learning path.
+     *
+     * @param learningPath the learning path for which the graph should be generated
+     * @return dto containing the competencies and relations of the learning path
+     */
+    public LearningPathCompetencyGraphDTO generateLearningPathCompetencyGraph(@NotNull LearningPath learningPath) {
+        Set<CompetencyProgress> progresses = competencyProgressRepository.findAllByUserIdAndLearningPathId(learningPath.getUser().getId(), learningPath.getId());
+        Set<CompetencyProgressDTO> progressDTOs = progresses.stream().map(CompetencyProgressDTO::of).collect(Collectors.toSet());
+
+        Set<CompetencyRelation> relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(learningPath.getCourse().getId());
+        Set<CompetencyRelationDTO> relationDTOs = relations.stream().map(CompetencyRelationDTO::of).collect(Collectors.toSet());
+        return new LearningPathCompetencyGraphDTO(progressDTOs, relationDTOs);
     }
 
     /**

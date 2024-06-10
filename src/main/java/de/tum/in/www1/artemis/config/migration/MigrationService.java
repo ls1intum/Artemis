@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.config.migration;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_SCHEDULING;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.nio.charset.StandardCharsets;
@@ -32,7 +33,7 @@ import de.tum.in.www1.artemis.repository.MigrationChangeRepository;
  * This service contains utility functionality that verifies a changelog to prevent corruption and executes a given changelog.
  */
 @Service
-@Profile("scheduling")
+@Profile(PROFILE_SCHEDULING)
 public class MigrationService {
 
     private static final Logger log = LoggerFactory.getLogger(MigrationService.class);

@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_SCHEDULING;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
@@ -33,8 +34,8 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.localvcci.LocalCITestConfiguration;
 import de.tum.in.www1.artemis.localvcci.LocalVCLocalCITestService;
+import de.tum.in.www1.artemis.localvcci.TestBuildAgentConfiguration;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
@@ -54,7 +55,7 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 @ResourceLock("AbstractSpringIntegrationLocalCILocalVCTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", PROFILE_CORE, "localci", "localvc", "scheduling", "ldap-only", "lti", "aeolus", "iris", PROFILE_BUILDAGENT })
+@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", PROFILE_CORE, "localci", "localvc", PROFILE_SCHEDULING, "ldap-only", "lti", "aeolus", "iris", PROFILE_BUILDAGENT })
 
 // Note: the server.port property must correspond to the port used in the artemis.version-control.url property.
 @TestPropertySource(properties = { "server.port=49152", "artemis.version-control.url=http://localhost:49152", "artemis.user-management.use-external=false",
@@ -62,8 +63,8 @@ import de.tum.in.www1.artemis.user.UserUtilService;
         "artemis.continuous-integration.specify-concurrent-builds=true", "artemis.continuous-integration.concurrent-build-size=1",
         "artemis.continuous-integration.asynchronous=false", "artemis.continuous-integration.build.images.java.default=dummy-docker-image",
         "artemis.continuous-integration.image-cleanup.enabled=true", "artemis.continuous-integration.image-cleanup.disk-space-threshold-mb=1000000000",
-        "spring.liquibase.enabled=true" })
-@ContextConfiguration(classes = LocalCITestConfiguration.class)
+        "spring.liquibase.enabled=true", "artemis.iris.health-ttl=500" })
+@ContextConfiguration(classes = TestBuildAgentConfiguration.class)
 public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractArtemisIntegrationTest {
 
     @Autowired
@@ -97,7 +98,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     protected UserUtilService userUtilService;
 
     /**
-     * This is the mock(DockerClient.class) provided by the {@link LocalCITestConfiguration}.
+     * This is the mock(DockerClient.class) provided by the {@link TestBuildAgentConfiguration}.
      * Subclasses can use this to dynamically mock methods of the DockerClient.
      */
     @Autowired
@@ -156,7 +157,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     /**
      * Note: Mocking requests to the VC and CI server is not necessary for local VC and local CI.
      * The VC system is part of the application context and can thus be called directly.
-     * For the CI system, all communication with the DockerClient is mocked (see {@link LocalCITestConfiguration}).
+     * For the CI system, all communication with the DockerClient is mocked (see {@link TestBuildAgentConfiguration}).
      */
 
     @Override

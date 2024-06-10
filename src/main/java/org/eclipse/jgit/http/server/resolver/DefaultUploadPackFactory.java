@@ -35,7 +35,8 @@ public class DefaultUploadPackFactory implements UploadPackFactory<HttpServletRe
         }
     }
 
-    @Override public UploadPack create(HttpServletRequest req, Repository db) throws ServiceNotEnabledException, ServiceNotAuthorizedException {
+    @Override
+    public UploadPack create(HttpServletRequest req, Repository db) throws ServiceNotEnabledException, ServiceNotAuthorizedException {
         if (db.getConfig().get(ServiceConfig::new).enabled) {
             UploadPack up = new UploadPack(db);
             String header = req.getHeader("Git-Protocol"); //$NON-NLS-1$

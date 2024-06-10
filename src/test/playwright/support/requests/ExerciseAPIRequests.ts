@@ -10,7 +10,6 @@ import fileUploadExerciseTemplate from '../../fixtures/exercise/file-upload/temp
 import modelingExerciseSubmissionTemplate from '../../fixtures/exercise/modeling/submission.json';
 import modelingExerciseTemplate from '../../fixtures/exercise/modeling/template.json';
 import cProgrammingExerciseTemplate from '../../fixtures/exercise/programming/c/template.json';
-import javaAssessmentSubmission from '../../fixtures/exercise/programming/java/assessment/submission.json';
 import javaProgrammingExerciseTemplate from '../../fixtures/exercise/programming/java/template.json';
 import pythonProgrammingExerciseTemplate from '../../fixtures/exercise/programming/python/template.json';
 import multipleChoiceSubmissionTemplate from '../../fixtures/exercise/quiz/multiple_choice/submission.json';
@@ -29,6 +28,7 @@ import {
     ProgrammingExerciseAssessmentType,
     ProgrammingLanguage,
     QUIZ_EXERCISE_BASE,
+    QuizMode,
     TEXT_EXERCISE_BASE,
     UPLOAD_EXERCISE_BASE,
 } from '../constants';
@@ -39,7 +39,10 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Exam } from 'app/entities/exam.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Team } from 'app/entities/team.model';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
+import { ProgrammingExerciseSubmission } from '../pageobjects/exercises/programming/OnlineEditorPage';
+import { Fixtures } from '../../fixtures/fixtures';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming-exercise-test-case.model';
 
 type PatchProgrammingExerciseTestVisibilityDto = {
@@ -187,12 +190,26 @@ export class ExerciseAPIRequests {
      * Submits the example submission to the specified repository.
      *
      * @param repositoryId - The repository ID. The repository ID is equal to the participation ID.
+     * @param submission - The example submission to be submitted.
      */
-    async makeProgrammingExerciseSubmission(repositoryId: number) {
-        // TODO: For now it is enough to submit the one prepared json file, but in the future this method should support different package names and submissions.
-        await this.page.request.put(`${BASE_API}/repository/${repositoryId}/files?commit=yes`, {
-            data: javaAssessmentSubmission,
-        });
+    async makeProgrammingExerciseSubmission(repositoryId: number, submission: ProgrammingExerciseSubmission) {
+        const data = await Promise.all(
+            submission.files.map(async (file) => {
+                let fileName = file.name;
+                if (submission.packageName) {
+                    fileName = `src/${submission.packageName.replace(/\./g, '/')}/${file.name}`;
+                }
+                return {
+                    fileName,
+                    fileContent: await Fixtures.get(file.path),
+                };
+            }),
+        );
+        await this.page.request.put(`${BASE_API}/repository/${repositoryId}/files?commit=yes`, { data });
+    }
+
+    async createProgrammingExerciseFile(repositoryId: number, filename: string) {
+        return await this.page.request.post(`${BASE_API}/repository/${repositoryId}/file?file=${filename}`);
     }
 
     /**
@@ -364,34 +381,53 @@ export class ExerciseAPIRequests {
 
     /**
      * Creates a quiz exercise.
-     *
-     * @param body - An object containing either the course or exercise group the exercise will be added to.
-     * @param quizQuestions - A list of quiz question objects that make up the quiz (e.g., multiple choice, short answer, or drag and drop).
-     * @param title - The title for the quiz exercise (optional, default: auto-generated).
-     * @param releaseDate - The release date of the quiz exercise (optional, default: current date + 1 year).
-     * @param duration - The duration in seconds that students get to complete the quiz (optional, default: 600 seconds).
+     * @param options An object containing the options for creating the programming exercise
+     * - body - An object containing either the course or exercise group the exercise will be added to.
+     * - quizQuestions - A list of quiz question objects that make up the quiz (e.g., multiple choice, short answer, or drag and drop).
+     * - title - The title for the quiz exercise (optional, default: auto-generated).
+     * - releaseDate - The release date of the quiz exercise (optional, default: current date + 1 year).
+     * - startOfWorkingTime - The start of working time of the quiz exercise (optional, default: none).
+     * - duration - The duration in seconds that students get to complete the quiz (optional, default: 600 seconds).
+     * - quizMode - The mode of the quiz exercise (optional, default: synchronized).
      * @returns Promise<QuizExercise> representing the quiz exercise created.
      */
-    async createQuizExercise(
-        body: { course: Course } | { exerciseGroup: ExerciseGroup },
-        quizQuestions: any[],
-        title = 'Quiz ' + generateUUID(),
-        releaseDate = dayjs().add(1, 'year'),
-        duration = 600,
-    ): Promise<QuizExercise> {
+    async createQuizExercise(options: {
+        body: { course: Course } | { exerciseGroup: ExerciseGroup };
+        quizQuestions: any[];
+        title?: string;
+        releaseDate?: dayjs.Dayjs;
+        startOfWorkingTime?: dayjs.Dayjs;
+        duration?: number;
+        quizMode?: QuizMode;
+    }): Promise<QuizExercise> {
+        const {
+            body,
+            quizQuestions,
+            title = 'Quiz ' + generateUUID(),
+            releaseDate = dayjs().add(1, 'year'),
+            startOfWorkingTime,
+            duration = 600,
+            quizMode = QuizMode.SYNCHRONIZED,
+        } = options;
+
         const quizExercise: any = {
             ...quizTemplate,
             title,
             quizQuestions,
             duration,
+            quizMode,
             channelName: 'exercise-' + titleLowercase(title),
         };
         const dates = {
             releaseDate: dayjsToString(releaseDate),
         };
+        const quizBatches = [];
+        if (startOfWorkingTime) {
+            quizBatches.push({ startTime: dayjsToString(startOfWorkingTime) });
+        }
 
         // eslint-disable-next-line no-prototype-builtins
-        const newQuizExercise = body.hasOwnProperty('course') ? { ...quizExercise, ...dates, ...body } : { ...quizExercise, ...body };
+        const newQuizExercise = body.hasOwnProperty('course') ? { ...quizExercise, quizBatches, ...dates, ...body } : { ...quizExercise, ...body };
         const multipartData = {
             exercise: {
                 name: 'exercise',
@@ -460,7 +496,7 @@ export class ExerciseAPIRequests {
             ...multipleChoiceSubmissionTemplate,
             submittedAnswers,
         };
-        await this.page.request.post(`${EXERCISE_BASE}/${quizExercise.id}/submissions/live`, { data: multipleChoiceSubmission });
+        await this.page.request.post(`${EXERCISE_BASE}/${quizExercise.id}/submissions/live?submit=true`, { data: multipleChoiceSubmission });
     }
 
     /**
@@ -492,7 +528,7 @@ export class ExerciseAPIRequests {
             ...shortAnswerSubmissionTemplate,
             submittedAnswers,
         };
-        await this.page.request.post(`${EXERCISE_BASE}/${quizExercise.id}/submissions/live`, { data: shortAnswerSubmission });
+        await this.page.request.post(`${EXERCISE_BASE}/${quizExercise.id}/submissions/live?submit=true`, { data: shortAnswerSubmission });
     }
 
     /**
@@ -553,5 +589,24 @@ export class ExerciseAPIRequests {
                 throw new Error(`Exercise type '${type}' is not supported yet!`);
         }
         return await this.page.request.put(url, { data: exercise });
+    }
+
+    /**
+     * Creates a team for a team-based exercise.
+     *
+     * @param exerciseId - The ID of the exercise for which to create a team.
+     * @param students - A list of student users to be added to the team.
+     * @param tutor - The tutor user who is the owner of the team.
+     * @returns A Promise<Team> representing the team created.
+     */
+    async createTeam(exerciseId: number, students: any[], tutor: any) {
+        const teamId = generateUUID();
+        const team: Team = {
+            name: `Team ${teamId}`,
+            shortName: `team${teamId}`,
+            students,
+            owner: tutor,
+        };
+        return await this.page.request.post(`${EXERCISE_BASE}/${exerciseId}/teams`, { data: team });
     }
 }

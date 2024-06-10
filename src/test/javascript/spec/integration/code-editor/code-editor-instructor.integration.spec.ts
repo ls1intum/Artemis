@@ -66,7 +66,6 @@ import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/exercises
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { IrisStateStore } from 'app/iris/state-store.service';
 import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 
 describe('CodeEditorInstructorIntegration', () => {
@@ -123,7 +122,6 @@ describe('CodeEditorInstructorIntegration', () => {
             providers: [
                 JhiLanguageHelper,
                 ChangeDetectorRef,
-                IrisStateStore,
                 { provide: Router, useClass: MockRouter },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
