@@ -73,6 +73,7 @@ import { ExamParticipationActions } from './pageobjects/exam/ExamParticipationAc
  */
 export type ArtemisCommands = {
     login: (credentials: UserCredentials, url?: string) => Promise<void>;
+    waitForExerciseBuildToFinish: (exerciseId: number, interval?: number, timeout?: number) => Promise<void>;
 };
 
 export type ArtemisPageObjects = {
@@ -157,6 +158,11 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     login: async ({ page }, use) => {
         await use(async (credentials: UserCredentials, url?: string) => {
             await Commands.login(page, credentials, url);
+        });
+    },
+    waitForExerciseBuildToFinish: async ({ page, exerciseAPIRequests }, use) => {
+        await use(async (exerciseId: number, interval?, timeout?) => {
+            await Commands.waitForExerciseBuildToFinish(page, exerciseAPIRequests, exerciseId, interval, timeout);
         });
     },
     navigationBar: async ({ page }, use) => {

@@ -241,7 +241,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     assertProgrammingExercise(programmingExerciseExercise, true, null, null, null, null, null);
                 }
                 else if (exerciseServer instanceof QuizExercise quizExercise) {
-                    assertQuizExercise(quizExercise, 10, 1, null, List.of());
+                    assertQuizExercise(quizExercise, 120, 1, null, List.of());
                 }
                 else if (exerciseServer instanceof TextExercise textExercise) {
                     assertThat(textExercise.getExampleSolution()).as("Sample solution was filtered out").isNull();
@@ -390,7 +390,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     assertThat(programmingExerciseExercise.getStudentParticipations()).as("Number of participations is correct").hasSize(2);
                 }
                 else if (exerciseWithDetails instanceof QuizExercise quizExercise) {
-                    assertQuizExercise(quizExercise, 10, 1, null, List.of());
+                    assertQuizExercise(quizExercise, 120, 1, null, List.of());
                     assertThat(quizExercise.getStudentParticipations()).as("Number of participations is correct").isEmpty();
                 }
                 else if (exerciseWithDetails instanceof TextExercise textExercise) {
@@ -526,7 +526,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 exercise.getStudentParticipations().iterator().next().setResults(Set.of(participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC,
                         ZonedDateTime.now().minusHours(1L), exercise.getStudentParticipations().iterator().next())));
             }
-            exerciseService.filterForCourseDashboard(exercise, Set.copyOf(exercise.getStudentParticipations()), "student1", true);
+            exerciseService.filterForCourseDashboard(exercise, Set.copyOf(exercise.getStudentParticipations()), true);
 
             StudentParticipation participation = exercise.getStudentParticipations().iterator().next();
             Submission submission = participation.getSubmissions().iterator().next();
@@ -557,7 +557,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 exercise.getStudentParticipations().iterator().next().getSubmissions().iterator().next().setResults(new ArrayList<>());
                 exercise.getStudentParticipations().iterator().next().getSubmissions().iterator().next().addResult(result);
             }
-            exerciseService.filterForCourseDashboard(exercise, Set.copyOf(exercise.getStudentParticipations()), "student1", true);
+            exerciseService.filterForCourseDashboard(exercise, Set.copyOf(exercise.getStudentParticipations()), true);
             // All exercises have one result
             assertThat(exercise.getStudentParticipations().iterator().next().getResults()).hasSize(1);
             // Programming exercises should now have one manual result
@@ -603,7 +603,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     assertThat(programmingExerciseExercise.getProjectKey()).as("Project key was set").isNotNull();
                 }
                 else if (exerciseForAssessmentDashboard instanceof QuizExercise quizExercise) {
-                    assertThat(quizExercise.getDuration()).as("Duration was set correctly").isEqualTo(10);
+                    assertThat(quizExercise.getDuration()).as("Duration was set correctly").isEqualTo(120);
                     assertThat(quizExercise.getAllowedNumberOfAttempts()).as("Allowed number of attempts was set correctly").isEqualTo(1);
                 }
             }

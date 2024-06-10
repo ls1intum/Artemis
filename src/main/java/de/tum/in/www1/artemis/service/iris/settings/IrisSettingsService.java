@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.iris.settings;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_SCHEDULING;
 import static de.tum.in.www1.artemis.domain.iris.settings.IrisSettingsType.COURSE;
 import static de.tum.in.www1.artemis.domain.iris.settings.IrisSettingsType.EXERCISE;
 import static de.tum.in.www1.artemis.domain.iris.settings.IrisSettingsType.GLOBAL;
@@ -83,7 +84,7 @@ public class IrisSettingsService {
      *
      * @param event Unused event param used to specify when the method should be executed
      */
-    @Profile("scheduling")
+    @Profile(PROFILE_SCHEDULING)
     @EventListener
     public void execute(ApplicationReadyEvent event) throws Exception {
         var allGlobalSettings = irisSettingsRepository.findAllGlobalSettings();
