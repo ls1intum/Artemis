@@ -231,11 +231,11 @@ public class LearningPathNgxService {
                 .map(id -> learningPath.getCompetencies().stream().filter(competency -> competency.getId().equals(id)).findFirst().get()).toList();
 
         // Save all learning objects that were already scheduled, so they are not scheduled again if they are linked in multiple competencies
-        Set<Exercise> alreadyScheduledExercises = new HashSet<>();
+        Set<LearningObject> alreadyScheduledLearningObjects = new HashSet<>();
 
         // generate ngx representation of recommended competencies
         recommendedOrderOfCompetencies
-                .forEach(competency -> generateNgxPathRepresentationForCompetency(learningPath, competency, nodes, edges, recommendationState, alreadyScheduledExercises));
+                .forEach(competency -> generateNgxPathRepresentationForCompetency(learningPath, competency, nodes, edges, recommendationState, alreadyScheduledLearningObjects));
         // generate edges between competencies
         for (int i = 0; i < recommendedOrderOfCompetencies.size() - 1; i++) {
             var sourceNodeId = getCompetencyEndNodeId(recommendationState.recommendedOrderOfCompetencies().get(i));
@@ -258,15 +258,15 @@ public class LearningPathNgxService {
      * <li>edges from each learning unit to end node</li>
      * </ul>
      *
-     * @param learningPath              the learning path for which the representation should be created
-     * @param competency                the competency for which the representation will be created
-     * @param nodes                     set of nodes to store the new nodes
-     * @param edges                     set of edges to store the new edges
-     * @param state                     the recommendation state for the learning path
-     * @param alreadyScheduledExercises the exercises that have already been scheduled
+     * @param learningPath                    the learning path for which the representation should be created
+     * @param competency                      the competency for which the representation will be created
+     * @param nodes                           set of nodes to store the new nodes
+     * @param edges                           set of edges to store the new edges
+     * @param state                           the recommendation state for the learning path
+     * @param alreadyScheduledLearningObjects the lecture units that have already been scheduled
      */
     private void generateNgxPathRepresentationForCompetency(LearningPath learningPath, Competency competency, Set<NgxLearningPathDTO.Node> nodes,
-            Set<NgxLearningPathDTO.Edge> edges, LearningPathRecommendationService.RecommendationState state, Set<Exercise> alreadyScheduledExercises) {
+            Set<NgxLearningPathDTO.Edge> edges, LearningPathRecommendationService.RecommendationState state, Set<LearningObject> alreadyScheduledLearningObjects) {
         Set<NgxLearningPathDTO.Node> currentCluster = new HashSet<>();
         // generates start and end node
         final var startNodeId = getCompetencyStartNodeId(competency.getId());
@@ -274,7 +274,8 @@ public class LearningPathNgxService {
         currentCluster.add(NgxLearningPathDTO.Node.of(startNodeId, NgxLearningPathDTO.NodeType.COMPETENCY_START, competency.getId()));
         currentCluster.add(NgxLearningPathDTO.Node.of(endNodeId, NgxLearningPathDTO.NodeType.COMPETENCY_END, competency.getId()));
 
-        final var recommendedLearningObjects = learningPathRecommendationService.getRecommendedOrderOfLearningObjects(learningPath, competency, state, alreadyScheduledExercises);
+        final var recommendedLearningObjects = learningPathRecommendationService.getRecommendedOrderOfLearningObjects(learningPath, competency, state,
+                alreadyScheduledLearningObjects);
         for (int i = 0; i < recommendedLearningObjects.size(); i++) {
 
             // add node for learning object
