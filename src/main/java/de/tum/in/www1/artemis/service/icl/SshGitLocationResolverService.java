@@ -71,13 +71,19 @@ public class SshGitLocationResolverService implements GitLocationResolver {
 
         // git-upload-pack means fetch (read operation), git-receive-pack means push (write operation)
         final var repositoryAction = gitCommand.equals("git-upload-pack") ? RepositoryActionType.READ : gitCommand.equals("git-receive-pack") ? RepositoryActionType.WRITE : null;
-        final var user = session.getAttribute(SshConstants.USER_KEY);
-        try {
-            localVCServletService.authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, localVCRepositoryUri.isPracticeRepository());
+
+        if (session.getAttribute(SshConstants.IS_BUILD_AGENT_KEY) && repositoryAction == RepositoryActionType.READ) {
+            // We already checked for build agent authenticity
         }
-        catch (LocalVCForbiddenException e) {
-            log.error("User {} does not have access to the repository {}", user.getLogin(), repositoryPath);
-            throw new AccessDeniedException("User does not have access to this repository", e);
+        else {
+            final var user = session.getAttribute(SshConstants.USER_KEY);
+            try {
+                localVCServletService.authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, localVCRepositoryUri.isPracticeRepository());
+            }
+            catch (LocalVCForbiddenException e) {
+                log.error("User {} does not have access to the repository {}", user.getLogin(), repositoryPath);
+                throw new AccessDeniedException("User does not have access to this repository", e);
+            }
         }
 
         // we cannot trust unvalidated user input

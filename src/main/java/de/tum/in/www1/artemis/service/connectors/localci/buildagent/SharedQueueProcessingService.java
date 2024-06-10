@@ -2,10 +2,12 @@ package de.tum.in.www1.artemis.service.connectors.localci.buildagent;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 
+import java.security.PublicKey;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
@@ -62,6 +64,8 @@ public class SharedQueueProcessingService {
 
     private final AtomicInteger localProcessingJobs = new AtomicInteger(0);
 
+    private final BuildAgentSSHKeyService buildAgentSSHKeyService;
+
     /**
      * Lock to prevent multiple nodes from processing the same build job.
      */
@@ -86,11 +90,12 @@ public class SharedQueueProcessingService {
     private UUID listenerId;
 
     public SharedQueueProcessingService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService,
-            BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap) {
+            BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap, BuildAgentSSHKeyService buildAgentSSHKeyService) {
         this.hazelcastInstance = hazelcastInstance;
         this.localCIBuildExecutorService = (ThreadPoolExecutor) localCIBuildExecutorService;
         this.buildJobManagementService = buildJobManagementService;
         this.buildLogsMap = buildLogsMap;
+        this.buildAgentSSHKeyService = buildAgentSSHKeyService;
     }
 
     /**
@@ -103,7 +108,7 @@ public class SharedQueueProcessingService {
         this.sharedLock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
         this.resultQueue = this.hazelcastInstance.getQueue("buildResultQueue");
-        this.listenerId = this.queue.addItemListener(new SharedQueueProcessingService.QueuedBuildJobItemListener(), true);
+        this.listenerId = this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
     }
 
     @PreDestroy
@@ -253,7 +258,9 @@ public class SharedQueueProcessingService {
             recentBuildJobs.add(recentBuildJob);
         }
 
-        return new BuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, active, recentBuildJobs);
+        Optional<PublicKey> sshKey = buildAgentSSHKeyService.getPublicKey();
+
+        return new BuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, active, recentBuildJobs, sshKey);
     }
 
     private List<BuildJobQueueItem> getProcessingJobsOfNode(String memberAddress) {

@@ -128,7 +128,7 @@ public class SharedQueueManagementService {
 
     public List<BuildAgentInformation> getBuildAgentInformationWithoutRecentBuildJobs() {
         return buildAgentInformation.values().stream().map(agent -> new BuildAgentInformation(agent.name(), agent.maxNumberOfConcurrentBuildJobs(),
-                agent.numberOfCurrentBuildJobs(), agent.runningBuildJobs(), agent.status(), null)).toList();
+                agent.numberOfCurrentBuildJobs(), agent.runningBuildJobs(), agent.status(), null, null)).toList();
     }
 
     /**

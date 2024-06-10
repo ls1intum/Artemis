@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.icl;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
 
 import java.security.PublicKey;
+import java.util.Optional;
 
 import org.apache.sshd.server.auth.pubkey.PublickeyAuthenticator;
 import org.apache.sshd.server.session.ServerSession;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.config.icl.ssh.HashUtils;
 import de.tum.in.www1.artemis.config.icl.ssh.SshConstants;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.connectors.localci.SharedQueueManagementService;
 
 @Profile(PROFILE_LOCALVC)
 @Service
@@ -23,8 +25,11 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
 
     private final UserRepository userRepository;
 
-    public GitPublickeyAuthenticatorService(UserRepository userRepository) {
+    private final Optional<SharedQueueManagementService> localCIBuildJobQueueService;
+
+    public GitPublickeyAuthenticatorService(UserRepository userRepository, Optional<SharedQueueManagementService> localCIBuildJobQueueService) {
         this.userRepository = userRepository;
+        this.localCIBuildJobQueueService = localCIBuildJobQueueService;
     }
 
     @Override
@@ -33,7 +38,18 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
         var user = userRepository.findBySshPublicKeyHash(keyHash);
         if (user.isPresent()) {
             log.info("Found user {} for public key authentication", user.get().getLogin());
+            session.setAttribute(SshConstants.IS_BUILD_AGENT_KEY, false);
             session.setAttribute(SshConstants.USER_KEY, user.get());
+            return true;
+        }
+        else if (localCIBuildJobQueueService.isPresent() && localCIBuildJobQueueService.orElseThrow().getBuildAgentInformation().stream().anyMatch(agent -> {
+            if (agent.publicSshKey().isEmpty()) {
+                return false;
+            }
+            return agent.publicSshKey().orElseThrow().equals(publicKey);
+        })) {
+            log.info("Authenticating as build agent");
+            session.setAttribute(SshConstants.IS_BUILD_AGENT_KEY, true);
             return true;
         }
         return false;
