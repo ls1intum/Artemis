@@ -8,31 +8,32 @@ Manage Adaptive Learning (Instructor)
 Competencies
 ------------
 A competency is a overarching learning objective that ties together various lectures and exercises. It has a title, description and a `taxonomy <https://en.wikipedia.org/wiki/Bloom%27s_taxonomy>`_.
-Students can then view their their progress in a competency (see also :ref:`Competencies for Students <competencies_student>`).
+By completing lectures and exercises, students gain mastery of a competency (see also :ref:`Competencies for Students<competencies_student>`).
 
 A prerequisite is a competency that students are expected to have already mastered before the course. Instructors select competencies from previous courses they taught as a prerequisite, or create new ones.
 
 Manage Competencies
 ^^^^^^^^^^^^^^^^^^^^
-Instructors can manage competencies and prerequisites of a course in the *Competency Management* view.
+Instructors can manage competencies and prerequisites of a course in the *Competency Management* view. Here they can:
+
+* View all competencies and prerequisites of their course
+* Create, edit or delete competencies and prerequisites
+* Manage relations between competencies (which are necessary to build learning paths)
+* :ref:`import_competencies` from other courses or the :ref:`standardized competency catalog<competencies_admin>`
+* :ref:`generate_competencies` using Iris
 
 |instructors-competency-management|
-
-From this view, they can create view, edit and delete all competencies (and prerequisites) of their course and create new ones.
-Additionally, they have multiple options to :ref:`import_competencies` and they can :ref:`generate_competencies` using Iris.
-Most of the following actions are also possible for prerequisites (except for some import actions and generating). As the workflows are quite similar they will only be described for competencies.
 
 Create/Edit Competencies
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-An instructor can create or edit competencies using the following form.
+| An instructor can create or edit competencies using the following form.
+  Besides a title and description, they can set a `taxonomy <https://en.wikipedia.org/wiki/Bloom%27s_taxonomy>`_.
+| The mastery threshold describes the minimum average score required for a student to reach 100% confidence in this competency.
+  The current average score of all linked exercises shown on this page can be used as a basis for defining a reasonable threshold value.
+| Instructors can link competencies to lecture units on this page by first choosing a lecture and then selecting desired lecture units.
 
 |instructors-learning-goal-edit|
-
-Besides a title and description, they can optionally set a `taxonomy <https://en.wikipedia.org/wiki/Bloom%27s_taxonomy>`_.
-The mastery threshold describes the minimum average score required for a student to reach 100% confidence in this competency.
-The current average score of all linked exercises shown on this page can be used as a basis for defining a reasonable threshold value.
-Instructors can link competencies to lecture units on this page by first choosing a lecture and then selecting desired lecture units.
 
 Alternatively, instructors can also link competencies to an exercise or lecture unit on the respective management page using the selection box shown below.
 
@@ -43,28 +44,32 @@ Alternatively, instructors can also link competencies to an exercise or lecture 
 Import Competencies
 ^^^^^^^^^^^^^^^^^^^
 
-Instructors have three ways to import competencies.
+Instructors have three ways to import competencies: Import all competencies of another course, import from other courses or import standardized competencies.
 
-*1. Import all Competencies of a Course*
-This option opens a modal in which instructors can select one of their previous courses, importing all competencies (and relations) into the current course.
-Use this option to directly import the complete competency model of another course.
+**1. Import all Competencies of another Course**
+
+| This option opens a modal in which instructors can select one of their previous courses, importing all competencies (and relations) into the current course.
+| The purpose of this feature is to directly import the complete competency model of another course, e.g. when holding courses repeatedly.
 
 |import-all|
 
-*2. Import from another Course*
+**2. Import from other Courses**
 
-TODO
-Use this option if you only want to import some competencies of another course.
+| When importing from other courses, instructors can view a list of competencies from all courses they have access to.
+  They can sort the list based on all fields except for competency description.
+  They can also filter the list through the *Competency Search* at the top of the page, which can be expanded for advanced search options.
+| All selected competencies are displayed in the *Selected Competencies* table and can be de-selected again by clicking on the trash icon.
+  Finally, they can select if they also want to import the relations between the imported competencies.
 
 |import-course|
 
-*3. Import Standardized Competencies*
+**3. Import Standardized Competencies**
 
-TODO
-three ways to import -> show button
-- import all
-- import from other courses
-- import from srandardized -> link to admin guide
+| When importing standardized competencies, instructors can view the complete standardized competency catalog (TODO: link! also fix other link) of their instance.
+  They can filter the displayed competencies by title and knowledge area.
+
+| Clicking on the name of a competency opens its details on the right side and clicking on the checkbox next to the name selects it for import.
+  Again, selected competencies are displayed in a table and can be de-selected again by clicking on the trash icon.
 
 |import-standardized|
 
@@ -80,6 +85,8 @@ Generate Competencies
     </iframe>
 
 TODO
+* description
+* screenshot
 
 Learning Paths
 --------------
@@ -95,9 +102,9 @@ Once the feature is enabled, instructors get access to each student's learning p
 .. |import-all| image:: instructor/import-all-competencies.png
     :width: 600
 .. |import-course| image:: instructor/import-course-competencies.png
-    :width: 600
+    :width: 1000
 .. |import-standardized| image:: instructor/import-standardized-competencies.png
-    :width: 600
+    :width: 1000
 .. |instructors-learning-goal-edit| image:: instructor/competency-edit.png
     :width: 1000
 .. |instructors-learning-goals-link| image:: instructor/competency-link.png
