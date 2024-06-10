@@ -183,7 +183,7 @@ export class LectureComponent implements OnInit {
      * Trigger the Ingestion of all Lectures in the course.
      */
     ingestLecturesInPyris() {
-        if (this.lectures.first()) {
+        if (this.lectures.first()?.course?.id) {
             this.lectureService.ingestLecturesInPyris(this.lectures.first()!.course!.id!);
         }
     }

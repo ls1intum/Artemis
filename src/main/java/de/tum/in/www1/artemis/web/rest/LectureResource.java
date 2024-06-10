@@ -274,7 +274,7 @@ public class LectureResource {
             return ResponseEntity.ok().body(lectureService.ingestLecturesInPyris(course.getLectures()));
         }
         catch (Exception e) {
-            log.error("Could not ingestfile", e);
+            log.error("Failed to ingest lectures for course {}: {}", courseId, e.getMessage(), e);
             throw new InternalServerErrorException("Could not ingest file");
         }
     }

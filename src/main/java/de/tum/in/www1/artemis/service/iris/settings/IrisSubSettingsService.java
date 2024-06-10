@@ -242,7 +242,7 @@ public class IrisSubSettingsService {
      *
      * @param settingsList List of {@link IrisSettings} objects to combine.
      * @param minimal      Whether to return a minimal version of the combined settings.
-     * @return Combined chat settings.
+     * @return Combined Lecture Ingestion settings.
      */
     public IrisCombinedLectureIngestionSubSettingsDTO combineLectureIngestionSubSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
         var enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisLectureIngestionSettings);
