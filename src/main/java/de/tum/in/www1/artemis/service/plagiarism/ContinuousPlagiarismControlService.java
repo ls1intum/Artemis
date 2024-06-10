@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_SCHEDULING;
+
 import java.time.ZonedDateTime;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -33,7 +35,7 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
  * Manages continuous plagiarism control.
  */
 @Service
-@Profile("scheduling")
+@Profile(PROFILE_SCHEDULING)
 public class ContinuousPlagiarismControlService {
 
     private static final Logger log = LoggerFactory.getLogger(ContinuousPlagiarismControlService.class);
