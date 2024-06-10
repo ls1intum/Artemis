@@ -54,7 +54,6 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.ScheduleService;
-import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.user.UserFactory;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.HibernateQueryInterceptor;
@@ -159,9 +158,6 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected TextBlockService textBlockService;
 
     @Autowired
-    protected QuizScheduleService quizScheduleService;
-
-    @Autowired
     protected RequestUtilService request;
 
     @Autowired
@@ -186,8 +182,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @AfterEach
     void stopQuizScheduler() {
-        quizScheduleService.stopSchedule();
-        quizScheduleService.clearAllQuizData();
+        scheduleService.clearAllTasks();
     }
 
     @AfterEach

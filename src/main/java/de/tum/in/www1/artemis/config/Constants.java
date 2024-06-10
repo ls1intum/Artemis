@@ -305,6 +305,8 @@ public final class Constants {
      */
     public static final String PROFILE_LTI = "lti";
 
+    public static final String PROFILE_SCHEDULING = "scheduling";
+
     /**
      * The name of the Spring profile used for running the API documentation generation.
      */

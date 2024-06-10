@@ -317,6 +317,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
         @Override
         public void check(JavaClass item, ConditionEvents events) {
             item.getDirectDependenciesFromSelf().stream().map(Dependency::getTargetClass).filter(targetClass -> targetClass.isAnnotatedWith(RestController.class))
+                    .filter(targetClass -> item.getEnclosingClass().map(c -> !c.equals(targetClass)).orElse(true))
                     .forEach(targetClass -> events.add(violated(item, "%s imports the RestController %s".formatted(item.getName(), targetClass.getName()))));
         }
     };

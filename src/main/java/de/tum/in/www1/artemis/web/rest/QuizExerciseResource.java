@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.beans.PropertyEditorSupport;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -23,8 +24,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -37,6 +40,7 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.QuizAction;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
@@ -45,18 +49,19 @@ import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
 import de.tum.in.www1.artemis.exception.QuizJoinException;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.QuizBatchRepository;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
-import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.ExerciseDeletionService;
@@ -64,6 +69,7 @@ import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
@@ -72,7 +78,7 @@ import de.tum.in.www1.artemis.service.quiz.QuizExerciseImportService;
 import de.tum.in.www1.artemis.service.quiz.QuizExerciseService;
 import de.tum.in.www1.artemis.service.quiz.QuizMessagingService;
 import de.tum.in.www1.artemis.service.quiz.QuizStatisticService;
-import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.service.quiz.QuizSubmissionService;
 import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -91,6 +97,8 @@ public class QuizExerciseResource {
 
     private static final String ENTITY_NAME = "quizExercise";
 
+    private final QuizSubmissionService quizSubmissionService;
+
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
@@ -104,15 +112,13 @@ public class QuizExerciseResource {
 
     private final CourseService courseService;
 
-    private final CourseRepository courseRepository;
-
     private final ExerciseService exerciseService;
 
     private final ExerciseDeletionService exerciseDeletionService;
 
     private final ExamDateService examDateService;
 
-    private final QuizScheduleService quizScheduleService;
+    private final InstanceMessageSendService instanceMessageSendService;
 
     private final QuizStatisticService quizStatisticService;
 
@@ -130,8 +136,6 @@ public class QuizExerciseResource {
 
     private final QuizBatchRepository quizBatchRepository;
 
-    private final SubmissionRepository submissionRepository;
-
     private final FileService fileService;
 
     private final ChannelService channelService;
@@ -139,22 +143,21 @@ public class QuizExerciseResource {
     private final ChannelRepository channelRepository;
 
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizMessagingService quizMessagingService, QuizExerciseRepository quizExerciseRepository,
-            UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
-            ExerciseDeletionService exerciseDeletionService, ExamDateService examDateService, QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService,
+            UserRepository userRepository, CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
+            ExamDateService examDateService, InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService,
             QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService,
             GroupNotificationScheduleService groupNotificationScheduleService, StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService,
-            QuizBatchRepository quizBatchRepository, SubmissionRepository submissionRepository, FileService fileService, ChannelService channelService,
-            ChannelRepository channelRepository) {
+            QuizBatchRepository quizBatchRepository, FileService fileService, ChannelService channelService, ChannelRepository channelRepository,
+            QuizSubmissionService quizSubmissionService) {
         this.quizExerciseService = quizExerciseService;
         this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
-        this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.examDateService = examDateService;
-        this.quizScheduleService = quizScheduleService;
+        this.instanceMessageSendService = instanceMessageSendService;
         this.quizStatisticService = quizStatisticService;
         this.quizExerciseImportService = quizExerciseImportService;
         this.authCheckService = authCheckService;
@@ -163,10 +166,32 @@ public class QuizExerciseResource {
         this.studentParticipationRepository = studentParticipationRepository;
         this.quizBatchService = quizBatchService;
         this.quizBatchRepository = quizBatchRepository;
-        this.submissionRepository = submissionRepository;
         this.fileService = fileService;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
+        this.quizSubmissionService = quizSubmissionService;
+    }
+
+    /**
+     * Initialize the data binder for the quiz action enumeration
+     *
+     * @param binder the WebDataBinder for this controller
+     */
+    @InitBinder
+    protected void initBinder(WebDataBinder binder) {
+        binder.registerCustomEditor(QuizAction.class, new PropertyEditorSupport() {
+
+            @Override
+            public void setAsText(String text) {
+                for (QuizAction action : QuizAction.values()) {
+                    if (action.getValue().equals(text)) {
+                        setValue(action);
+                        return;
+                    }
+                }
+                throw new IllegalArgumentException("Invalid value for QuizAction: " + text);
+            }
+        });
     }
 
     /**
@@ -221,7 +246,7 @@ public class QuizExerciseResource {
      *         (Internal Server Error) if the quizExercise couldn't be updated
      */
     @PutMapping(value = "quiz-exercises/{exerciseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<QuizExercise> updateQuizExercise(@PathVariable Long exerciseId, @RequestPart("exercise") QuizExercise quizExercise,
             @RequestPart(value = "files", required = false) List<MultipartFile> files, @RequestParam(value = "notificationText", required = false) String notificationText)
             throws IOException {
@@ -241,10 +266,7 @@ public class QuizExerciseResource {
 
         final var originalQuiz = quizExerciseRepository.findWithEagerQuestionsByIdOrElseThrow(exerciseId);
 
-        // Retrieve the course over the exerciseGroup or the given courseId
-        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(originalQuiz);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(quizExercise, originalQuiz, ENTITY_NAME);
@@ -282,12 +304,10 @@ public class QuizExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and the list of quiz exercises in body
      */
     @GetMapping("courses/{courseId}/quiz-exercises")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<List<QuizExercise>> getQuizExercisesForCourse(@PathVariable Long courseId) {
         log.info("REST request to get all quiz exercises for the course with id : {}", courseId);
-        var course = courseRepository.findByIdElseThrow(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
         var quizExercises = quizExerciseRepository.findByCourseIdWithCategories(courseId);
 
         for (QuizExercise quizExercise : quizExercises) {
@@ -332,18 +352,15 @@ public class QuizExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the quizExercise, or with status 404 (Not Found)
      */
     @GetMapping("quiz-exercises/{quizExerciseId}")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise(resourceIdFieldName = "quizExerciseId")
     public ResponseEntity<QuizExercise> getQuizExercise(@PathVariable Long quizExerciseId) {
         // TODO: Split this route in two: One for normal and one for exam exercises
         log.info("REST request to get quiz exercise : {}", quizExerciseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithGroupsAndAuthorities();
         var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsAndCompetenciesElseThrow(quizExerciseId);
         if (quizExercise.isExamExercise()) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, quizExercise, user);
             studentParticipationRepository.checkTestRunsExist(quizExercise);
-        }
-        else if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
-            throw new AccessForbiddenException();
         }
         if (quizExercise.isCourseExercise()) {
             Channel channel = channelRepository.findChannelByExerciseId(quizExercise.getId());
@@ -362,13 +379,10 @@ public class QuizExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the quizExercise, or with status 404 (Not Found)
      */
     @GetMapping("quiz-exercises/{quizExerciseId}/recalculate-statistics")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise(resourceIdFieldName = "quizExerciseId")
     public ResponseEntity<QuizExercise> recalculateStatistics(@PathVariable Long quizExerciseId) {
         log.info("REST request to recalculate quiz statistics : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
-        if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
-            throw new AccessForbiddenException();
-        }
         quizStatisticService.recalculateStatistics(quizExercise);
         // fetch the quiz exercise again to make sure the latest changes are included
         return ResponseEntity.ok(quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId()));
@@ -410,18 +424,10 @@ public class QuizExerciseResource {
     @EnforceAtLeastStudent
     public ResponseEntity<QuizBatch> joinBatch(@PathVariable Long quizExerciseId, @RequestBody QuizBatchJoinDTO joinRequest) {
         log.info("REST request to join quiz batch : {}, {}", quizExerciseId, joinRequest);
-        QuizExercise quizExercise = quizExerciseRepository.findByIdElseThrow(quizExerciseId);
+        var quizExercise = quizExerciseRepository.findByIdElseThrow(quizExerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, user) || !quizExercise.isQuizStarted() || quizExercise.isQuizEnded()) {
             throw new AccessForbiddenException();
-        }
-        if (quizScheduleService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin()).isPresent()) {
-            throw new BadRequestAlertException("Previous submission for this quiz is still pending.", ENTITY_NAME, "quizBatchPending");
-        }
-
-        var submissions = submissionRepository.countByExerciseIdAndStudentLogin(quizExerciseId, user.getLogin());
-        if (quizExercise.getAllowedNumberOfAttempts() != null && submissions >= quizExercise.getAllowedNumberOfAttempts()) {
-            throw new BadRequestAlertException("Maximum number of attempts reached.", ENTITY_NAME, "quizAttemptsExceeded");
         }
 
         try {
@@ -429,7 +435,7 @@ public class QuizExerciseResource {
             return ResponseEntity.ok(batch);
         }
         catch (QuizJoinException ex) {
-            return ResponseEntity.notFound().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", ex.getError(), ex.getMessage())).build();
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", ex.getError(), ex.getMessage())).build();
         }
     }
 
@@ -440,12 +446,11 @@ public class QuizExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the new batch
      */
     @PutMapping("quiz-exercises/{quizExerciseId}/add-batch")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise(resourceIdFieldName = "quizExerciseId")
     public ResponseEntity<QuizBatch> addBatch(@PathVariable Long quizExerciseId) {
         log.info("REST request to add quiz batch : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithBatchesElseThrow(quizExerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, quizExercise, user);
 
         // TODO: quiz cleanup: it should be possible to limit the number of batches a tutor can create
 
@@ -456,6 +461,7 @@ public class QuizExerciseResource {
     }
 
     /**
+     * TODO: URL should be /quiz-exercises/batches/:batchId/join or smth for clarity
      * POST /quiz-exercises/:quizBatchId/start-batch : start a particular batch of the quiz
      *
      * @param quizBatchId the id of the quizBatch to start
@@ -478,10 +484,10 @@ public class QuizExerciseResource {
         batch = quizBatchService.save(batch);
 
         // ensure that there is no scheduler that thinks the batch hasn't started yet
-        quizScheduleService.updateQuizExercise(quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId()));
+        instanceMessageSendService.sendQuizExerciseStartSchedule(quizExercise.getId());
 
         quizExercise.setQuizBatches(Set.of(batch));
-        quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, batch, "start-batch");
+        quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, batch, QuizAction.START_BATCH);
 
         return ResponseEntity.ok(batch);
     }
@@ -494,37 +500,38 @@ public class QuizExerciseResource {
      * @return the response entity with status 200 if quiz was started, appropriate error code otherwise
      */
     @PutMapping("quiz-exercises/{quizExerciseId}/{action}")
-    @EnforceAtLeastEditor
-    public ResponseEntity<QuizExercise> performActionForQuizExercise(@PathVariable Long quizExerciseId, @PathVariable String action) {
+    @EnforceAtLeastEditorInExercise(resourceIdFieldName = "quizExerciseId")
+    public ResponseEntity<QuizExercise> performActionForQuizExercise(@PathVariable Long quizExerciseId, @PathVariable QuizAction action) {
         log.debug("REST request to perform action {} on quiz exercise {}", action, quizExerciseId);
         var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, quizExercise, user);
 
         switch (action) {
-            case "start-now" -> {
+            case START_NOW -> {
                 // only synchronized quiz exercises can be started like this
                 if (quizExercise.getQuizMode() != QuizMode.SYNCHRONIZED) {
                     return ResponseEntity.badRequest()
                             .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizNotSynchronized", "Quiz is not synchronized.")).build();
                 }
 
+                var quizBatch = quizBatchService.getOrCreateSynchronizedQuizBatch(quizExercise);
                 // check if quiz hasn't already started
-                if (quizBatchService.getOrCreateSynchronizedQuizBatch(quizExercise).isStarted()) {
+                if (quizBatch.isStarted()) {
                     return ResponseEntity.badRequest()
                             .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizAlreadyStarted", "Quiz has already started.")).build();
                 }
 
                 // set release date to now, truncated to seconds
                 var now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
-                quizBatchService.getOrCreateSynchronizedQuizBatch(quizExercise).setStartTime(now);
+                quizBatch.setStartTime(now);
+                quizBatchRepository.save(quizBatch);
                 if (quizExercise.getReleaseDate() != null && quizExercise.getReleaseDate().isAfter(now)) {
                     // preserve null and valid releaseDates for quiz start lifecycle event
                     quizExercise.setReleaseDate(now);
                 }
                 quizExercise.setDueDate(now.plusSeconds(quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS));
             }
-            case "end-now" -> {
+            case END_NOW -> {
                 // editors may not end the quiz
                 authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, quizExercise, user);
                 // only synchronized quiz exercises can be started like this
@@ -534,9 +541,9 @@ public class QuizExerciseResource {
                 }
 
                 // set release date to now, truncated to seconds because the database only stores seconds
-                quizExerciseService.endQuiz(quizExercise, ZonedDateTime.now());
+                quizExerciseService.endQuiz(quizExercise);
             }
-            case "set-visible" -> {
+            case SET_VISIBLE -> {
                 // check if quiz is already visible
                 if (quizExercise.isVisibleToStudents()) {
                     return ResponseEntity.badRequest()
@@ -546,7 +553,7 @@ public class QuizExerciseResource {
                 // set quiz to visible
                 quizExercise.setReleaseDate(ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS));
             }
-            case "open-for-practice" -> {
+            case OPEN_FOR_PRACTICE -> {
                 // check if quiz has ended
                 if (!quizExercise.isQuizEnded()) {
                     return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizNotEndedYet", "Quiz hasn't ended yet."))
@@ -563,8 +570,9 @@ public class QuizExerciseResource {
                 quizExercise.setIsOpenForPractice(true);
                 groupNotificationService.notifyStudentGroupAboutExercisePractice(quizExercise);
             }
-            default -> {
-                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "unknownAction", "Unknown action: " + action))
+            case START_BATCH -> {
+                // Use the start-batch endpoint for starting batches instead
+                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizBatchActionNotAllowed", "Action not allowed."))
                         .build();
             }
         }
@@ -573,7 +581,15 @@ public class QuizExerciseResource {
         quizExercise = quizExerciseRepository.saveAndFlush(quizExercise);
         // reload the quiz exercise with questions and statistics to prevent problems with proxy objects
         quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
-        quizScheduleService.updateQuizExercise(quizExercise);
+
+        if (action == QuizAction.START_NOW) {
+            // notify the instance message send service to send the quiz exercise start schedule (if necessary
+            instanceMessageSendService.sendQuizExerciseStartSchedule(quizExercise.getId());
+        }
+        else if (action == QuizAction.END_NOW) {
+            // when the instructor ends the quiz, calculate the results
+            quizSubmissionService.calculateAllResults(quizExerciseId);
+        }
 
         // get the batch for synchronized quiz exercises and start-now action; otherwise it doesn't matter
         var quizBatch = quizBatchService.getQuizBatchForStudentByLogin(quizExercise, "any").orElse(null);
@@ -590,12 +606,11 @@ public class QuizExerciseResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("quiz-exercises/{quizExerciseId}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise(resourceIdFieldName = "quizExerciseId")
     public ResponseEntity<Void> deleteQuizExercise(@PathVariable Long quizExerciseId) {
         log.info("REST request to delete quiz exercise : {}", quizExerciseId);
         var quizExercise = quizExerciseRepository.findWithEagerQuestionsByIdOrElseThrow(quizExerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, quizExercise, user);
 
         List<DragAndDropQuestion> dragAndDropQuestions = quizExercise.getQuizQuestions().stream().filter(question -> question instanceof DragAndDropQuestion)
                 .map(question -> ((DragAndDropQuestion) question)).toList();
@@ -639,7 +654,7 @@ public class QuizExerciseResource {
      *         status 500 (Internal Server Error) if the quizExercise couldn't be re-evaluated
      */
     @PutMapping(value = "quiz-exercises/{quizExerciseId}/re-evaluate", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise(resourceIdFieldName = "quizExerciseId")
     public ResponseEntity<QuizExercise> reEvaluateQuizExercise(@PathVariable Long quizExerciseId, @RequestPart("exercise") QuizExercise quizExercise,
             @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException {
         log.info("REST request to re-evaluate quiz exercise : {}", quizExerciseId);
@@ -658,7 +673,6 @@ public class QuizExerciseResource {
         }
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, quizExercise, user);
 
         List<MultipartFile> nullsafeFiles = files == null ? new ArrayList<>() : files;
 

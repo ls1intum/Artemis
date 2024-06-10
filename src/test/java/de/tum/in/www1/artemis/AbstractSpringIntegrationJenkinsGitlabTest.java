@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_SCHEDULING;
 import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
@@ -49,7 +50,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 
 @ResourceLock("AbstractSpringIntegrationJenkinsGitlabTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", PROFILE_CORE, "gitlab", "jenkins", "athena", "scheduling", "lti", "aeolus", "apollon" })
+@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", PROFILE_CORE, "gitlab", "jenkins", "athena", PROFILE_SCHEDULING, "lti", "aeolus", "apollon" })
 @TestPropertySource(properties = { "info.guided-tour.course-group-tutors=artemis-artemistutorial-tutors", "info.guided-tour.course-group-students=artemis-artemistutorial-students",
         "info.guided-tour.course-group-editors=artemis-artemistutorial-editors", "info.guided-tour.course-group-instructors=artemis-artemistutorial-instructors",
         "artemis.user-management.use-external=false", "artemis.user-management.course-enrollment.allowed-username-pattern=^(?!authorizationservicestudent2).*$" })
