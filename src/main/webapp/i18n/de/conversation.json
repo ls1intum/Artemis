@@ -229,13 +229,13 @@
                         "maxLengthValidationError": "Beschreibung kann max {{ max }} Zeichen lang sein!"
                     },
                     "isPublicInput": {
-                        "label": "Öffentlicher / Privatkanal",
+                        "label": "Kanal Sichtbarkeit",
                         "explanation": "Alle Nutzer:innen, ausser Lehrende, brauchen eine Einladung um sich einem privaten Kanal anzuschließen. Jeder/Jede Nutzer:in kann einem öffentlichen Kanal beitreten.",
                         "public": "Öffentlich",
                         "private": "Privat"
                     },
                     "isAnnouncementChannelInput": {
-                        "label": "Ankündigungs- / Uneingeschränkter Kanal",
+                        "label": "Kanaltyp",
                         "explanation": "Nur Lehrende und Kanalmoderator:innen können neue Nachrichten in einem Ankündigungskanal erstellen. Studierende können die Nachrichten nur lesen und darauf antworten.",
                         "true": "Ankündigungskanal",
                         "false": "Uneingeschränkter Kanal"
