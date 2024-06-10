@@ -41,7 +41,8 @@ export class LearningPathStudentPageComponent implements OnInit {
     private async loadLearningPathId(courseId: number): Promise<void> {
         this.isLoading.set(true);
         try {
-            this.learningPathId.set(await this.learningApiService.getLearningPathId(courseId));
+            const learningPathId = await this.learningApiService.getLearningPathId(courseId);
+            this.learningPathId.set(learningPathId);
         } catch (error) {
             if (error instanceof EntityNotFoundError) {
                 await this.generateLearningPath(courseId);
