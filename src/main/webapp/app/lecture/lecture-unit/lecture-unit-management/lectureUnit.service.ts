@@ -164,12 +164,7 @@ export class LectureUnitService {
         });
     }
 
-    async getLectureUnitById(lectureUnitId: number): Promise<LectureUnit> {
-        try {
-            const response = await fetch(`${this.resourceURL}/lecture-units/${lectureUnitId}`);
-            return await response.json();
-        } catch {
-            throw new Error(`Error while fetching lecture unit`);
-        }
+    getLectureUnitById(lectureUnitId: number): Observable<LectureUnit> {
+        return this.httpClient.get<LectureUnit>(`${this.resourceURL}/lecture-units/${lectureUnitId}`);
     }
 }

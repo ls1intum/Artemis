@@ -5,6 +5,7 @@ import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureU
 import { ArtemisLectureUnitsModule } from 'app/overview/course-lectures/lecture-units.module';
 import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
 import { LearningPathNavigationService } from 'app/course/learning-paths/services/learning-path-navigation.service';
+import { lastValueFrom } from 'rxjs';
 
 @Component({
     selector: 'jhi-learning-path-lecture-unit',
@@ -30,7 +31,7 @@ export class LearningPathLectureUnitComponent implements OnInit {
     async loadLectureUnit(lectureUnitId: number): Promise<void> {
         this.isLectureUnitLoading.set(true);
         try {
-            const lectureUnit = await this.lectureUnitService.getLectureUnitById(lectureUnitId);
+            const lectureUnit = await lastValueFrom(this.lectureUnitService.getLectureUnitById(lectureUnitId));
             this.lectureUnit.set(lectureUnit);
         } catch (error) {
             this.alertService.error(error);

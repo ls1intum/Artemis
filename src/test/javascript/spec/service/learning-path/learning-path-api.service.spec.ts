@@ -7,7 +7,7 @@ describe('LearningPathApiService', () => {
     let httpClient: HttpTestingController;
     let learningPathApiService: LearningPathApiService;
 
-    const url = 'api';
+    const baseUrl = 'api';
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -27,7 +27,7 @@ describe('LearningPathApiService', () => {
         const courseId = 1;
 
         const methodCall = learningPathApiService.getLearningPathId(courseId);
-        httpClient.expectOne({ method: 'GET', url: `${url}/courses/${courseId}/learning-path-id` });
+        httpClient.expectOne({ method: 'GET', url: `${baseUrl}/courses/${courseId}/learning-path-id` });
         await methodCall;
     }));
 
@@ -39,7 +39,7 @@ describe('LearningPathApiService', () => {
         const methodCall = learningPathApiService.getLearningPathNavigation(learningPathId, learningObjectId, learningObjectType);
         httpClient.expectOne({
             method: 'GET',
-            url: `${url}/learning-path/${learningPathId}/navigation?learningObjectId=${learningObjectId}&learningObjectType=${learningObjectType}`,
+            url: `${baseUrl}/learning-path/${learningPathId}/navigation?learningObjectId=${learningObjectId}&learningObjectType=${learningObjectType}`,
         });
         await methodCall;
     }));
@@ -48,7 +48,7 @@ describe('LearningPathApiService', () => {
         const learningPathId = 1;
 
         const methodCall = learningPathApiService.getLearningPathNavigationOverview(learningPathId);
-        httpClient.expectOne({ method: 'GET', url: `${url}/learning-path/${learningPathId}/navigation-overview` });
+        httpClient.expectOne({ method: 'GET', url: `${baseUrl}/learning-path/${learningPathId}/navigation-overview` });
         await methodCall;
     }));
 
@@ -56,7 +56,7 @@ describe('LearningPathApiService', () => {
         const courseId = 1;
 
         const methodCall = learningPathApiService.generateLearningPath(courseId);
-        httpClient.expectOne({ method: 'POST', url: `${url}/courses/${courseId}/learning-path` });
+        httpClient.expectOne({ method: 'POST', url: `${baseUrl}/courses/${courseId}/learning-path` });
         await methodCall;
     }));
 });
