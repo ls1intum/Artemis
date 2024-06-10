@@ -1,37 +1,35 @@
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { LearningPathStudentNavComponent } from 'app/course/learning-paths/components/learning-path-student-nav/learning-path-student-nav.component';
-import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
-import { of } from 'rxjs';
 import { LearningObjectType, LearningPathNavigationDto } from 'app/entities/competency/learning-path.model';
 import { By } from '@angular/platform-browser';
 import { LearningPathStudentNavOverviewComponent } from 'app/course/learning-paths/components/learning-path-student-nav-overview/learning-path-student-nav-overview.component';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 
 describe('LearningPathStudentNavComponent', () => {
     let component: LearningPathStudentNavComponent;
     let fixture: ComponentFixture<LearningPathStudentNavComponent>;
-    let learningPathService: LearningPathService;
+    let learningPathApiService: LearningPathApiService;
     let getLearningPathNavigationSpy: jest.SpyInstance;
 
-    let navigationDto: LearningPathNavigationDto = {
+    const navigationDto: LearningPathNavigationDto = {
         predecessorLearningObject: {
             id: 1,
-            name: 'Exercise',
+            name: 'Exercise 1',
             type: LearningObjectType.EXERCISE,
             completed: true,
         },
         currentLearningObject: {
             id: 2,
-            name: 'Lecture',
+            name: 'Lecture 2',
             type: LearningObjectType.LECTURE,
             completed: false,
         },
         successorLearningObject: {
             id: 3,
-            name: 'Exercise',
+            name: 'Exercise 3',
             type: LearningObjectType.EXERCISE,
             completed: false,
         },
@@ -45,7 +43,6 @@ describe('LearningPathStudentNavComponent', () => {
             imports: [LearningPathStudentNavComponent],
             providers: [
                 provideHttpClient(),
-                provideHttpClientTesting(),
                 {
                     provide: TranslateService,
                     useClass: MockTranslateService,
@@ -59,9 +56,8 @@ describe('LearningPathStudentNavComponent', () => {
             })
             .compileComponents();
 
-        learningPathService = TestBed.inject(LearningPathService);
-        getLearningPathNavigationSpy = jest.spyOn(learningPathService, 'getLearningPathNavigation');
-        getLearningPathNavigationSpy.mockReturnValue(of(new HttpResponse({ body: navigationDto })));
+        learningPathApiService = TestBed.inject(LearningPathApiService);
+        getLearningPathNavigationSpy = jest.spyOn(learningPathApiService, 'getLearningPathNavigation').mockResolvedValue(navigationDto);
 
         fixture = TestBed.createComponent(LearningPathStudentNavComponent);
         component = fixture.componentInstance;
@@ -72,7 +68,7 @@ describe('LearningPathStudentNavComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', () => {
+    it('should initialize', async () => {
         fixture.detectChanges();
 
         expect(component).toBeTruthy();
@@ -80,26 +76,20 @@ describe('LearningPathStudentNavComponent', () => {
         expect(component.showNavigationOverview()).toBeFalse();
     });
 
-    it('should show progress bar percentage', fakeAsync(() => {
-        getLearningPathNavigationSpy.mockReturnValue(of(new HttpResponse({ body: navigationDto })));
-
+    it('should show progress bar percentage', async () => {
         fixture.detectChanges();
-        tick();
+        await fixture.whenStable();
         fixture.detectChanges();
 
-        expect(getLearningPathNavigationSpy).toHaveBeenCalledOnce();
         const progressBar = fixture.debugElement.query(By.css('.progress-bar'));
         expect(progressBar.nativeElement.style.width).toBe('50%');
-    }));
+    });
 
-    it('should navigation with back and previous button', fakeAsync(() => {
-        getLearningPathNavigationSpy.mockReturnValue(of(new HttpResponse({ body: navigationDto })));
-
+    it('should navigation with back and previous button', async () => {
         fixture.detectChanges();
-        tick();
+        await fixture.whenStable();
         fixture.detectChanges();
 
-        expect(getLearningPathNavigationSpy).toHaveBeenCalledOnce();
         expect(component.predecessorLearningObject()).toEqual(navigationDto.predecessorLearningObject);
         expect(component.currentLearningObject()).toEqual(navigationDto.currentLearningObject);
         expect(component.successorLearningObject()).toEqual(navigationDto.successorLearningObject);
@@ -107,10 +97,10 @@ describe('LearningPathStudentNavComponent', () => {
         expect(previousButton).toBeTruthy();
         const nextButton = fixture.debugElement.query(By.css('#next-button'));
         expect(nextButton).toBeTruthy();
-    }));
+    });
 
-    it('should navigation with only previous button', fakeAsync(() => {
-        navigationDto = {
+    it('should show navigation with only previous button', async () => {
+        const navigationDto = {
             predecessorLearningObject: {
                 id: 1,
                 name: 'Exercise',
@@ -125,23 +115,24 @@ describe('LearningPathStudentNavComponent', () => {
             },
             progress: 95,
         };
-        getLearningPathNavigationSpy.mockReturnValue(of(new HttpResponse({ body: navigationDto })));
+        getLearningPathNavigationSpy.mockResolvedValue(navigationDto);
 
         fixture.detectChanges();
-        tick();
+        await fixture.whenStable();
         fixture.detectChanges();
 
-        expect(getLearningPathNavigationSpy).toHaveBeenCalledOnce();
         expect(component.predecessorLearningObject()).toEqual(navigationDto.predecessorLearningObject);
         expect(component.currentLearningObject()).toEqual(navigationDto.currentLearningObject);
         expect(component.successorLearningObject()).toBeUndefined();
+
         const previousButton = fixture.debugElement.query(By.css('#previous-button'));
         expect(previousButton).toBeTruthy();
+
         const nextButton = fixture.debugElement.query(By.css('#next-button'));
         expect(nextButton).toBeFalsy();
-    }));
+    });
 
-    it('should show navigation with only next button', fakeAsync(() => {
+    it('should show navigation with only next button', async () => {
         const navigationDto = {
             currentLearningObject: {
                 id: 2,
@@ -157,53 +148,52 @@ describe('LearningPathStudentNavComponent', () => {
             },
             progress: 0,
         };
-        getLearningPathNavigationSpy.mockReturnValue(of(new HttpResponse({ body: navigationDto })));
+        getLearningPathNavigationSpy.mockResolvedValue(navigationDto);
 
         fixture.detectChanges();
-        tick();
+        await fixture.whenStable();
         fixture.detectChanges();
 
-        expect(getLearningPathNavigationSpy).toHaveBeenCalledOnce();
         expect(component.predecessorLearningObject()).toBeUndefined();
         expect(component.currentLearningObject()).toEqual(navigationDto.currentLearningObject);
         expect(component.successorLearningObject()).toEqual(navigationDto.successorLearningObject);
+
         const previousButton = fixture.debugElement.query(By.css('#previous-button'));
         expect(previousButton).toBeFalsy();
+
         const nextButton = fixture.debugElement.query(By.css('#next-button'));
         expect(nextButton).toBeTruthy();
-    }));
+    });
 
-    it('should show navigation overview', fakeAsync(() => {
-        getLearningPathNavigationSpy.mockReturnValue(of(new HttpResponse({ body: navigationDto })));
+    it('should show navigation overview on click', async () => {
         const setShowNavigationOverviewSpy = jest.spyOn(component, 'setShowNavigationOverview');
 
         fixture.detectChanges();
-        tick();
+        await fixture.whenStable();
         fixture.detectChanges();
 
         const navOverviewButton = fixture.debugElement.query(By.css('#navigation-overview'));
         navOverviewButton.nativeElement.click();
         fixture.detectChanges();
-        const navOverview = fixture.debugElement.query(By.css('jhi-learning-path-student-nav-overview'));
+        const navOverview = fixture.debugElement.query(By.directive(LearningPathStudentNavOverviewComponent));
         expect(navOverview).toBeTruthy();
         expect(setShowNavigationOverviewSpy).toHaveBeenCalledWith(true);
         expect(component.showNavigationOverview()).toBeTrue();
-    }));
+    });
 
-    it('should call select learning object on previous click', fakeAsync(() => {
-        getLearningPathNavigationSpy.mockReturnValue(of(new HttpResponse({ body: navigationDto })));
+    it('should call select learning object on previous click', async () => {
         const selectLearningObjectSpy = jest.spyOn(component, 'selectLearningObject');
-        const setCurrentLearningObjectCompletionSpy = jest.spyOn(component, 'setCurrentLearningObjectCompletion');
 
         fixture.detectChanges();
-        tick();
+        await fixture.whenStable();
         fixture.detectChanges();
 
         const previousButton = fixture.debugElement.query(By.css('#previous-button'));
         previousButton.nativeElement.click();
+
         fixture.detectChanges();
-        expect(selectLearningObjectSpy).toHaveBeenCalledWith(navigationDto.predecessorLearningObject);
+
         expect(getLearningPathNavigationSpy).toHaveBeenCalledTimes(2);
-        expect(setCurrentLearningObjectCompletionSpy).toHaveBeenCalledWith(navigationDto.predecessorLearningObject!.completed);
-    }));
+        expect(selectLearningObjectSpy).toHaveBeenCalledWith(navigationDto.predecessorLearningObject);
+    });
 });

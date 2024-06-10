@@ -11,6 +11,8 @@ describe('LearningPathNavigationService', () => {
     let learningPathApiService: LearningPathApiService;
     let alertService: AlertService;
 
+    const learningPathId = 1;
+
     const learningPathNavigationDto = {
         predecessorLearningObject: {
             id: 1,
@@ -55,7 +57,6 @@ describe('LearningPathNavigationService', () => {
     });
 
     it('should load initial learning path navigation', async () => {
-        const learningPathId = 1;
         const loadLearningPathNavigationSpy = jest.spyOn(learningPathApiService, 'getLearningPathNavigation').mockResolvedValue(learningPathNavigationDto);
 
         await learningPathNavigationService.loadInitialLearningPathNavigation(learningPathId);
@@ -67,7 +68,6 @@ describe('LearningPathNavigationService', () => {
     });
 
     it('should load relative learning path navigation', async () => {
-        const learningPathId = 1;
         const selectedLearningObject = learningPathNavigationDto.currentLearningObject;
         const loadLearningPathNavigationSpy = jest.spyOn(learningPathApiService, 'getLearningPathNavigation').mockResolvedValue(learningPathNavigationDto);
 
@@ -80,8 +80,6 @@ describe('LearningPathNavigationService', () => {
     });
 
     it('should call alert service on learning path loading fail', async () => {
-        const learningPathId = 1;
-
         jest.spyOn(learningPathApiService, 'getLearningPathNavigation').mockRejectedValue(Error('Server error'));
         const alertServiceErrorSpy = jest.spyOn(alertService, 'error');
 

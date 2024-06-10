@@ -45,8 +45,4 @@ export class LearningPathStudentNavComponent implements OnInit {
     setShowNavigationOverview(show: boolean): void {
         this.showNavigationOverview.set(show);
     }
-
-    setCurrentLearningObjectCompletion(completed: boolean): void {
-        this.learningPathNavigationService.setCurrentLearningObjectCompletion(completed);
-    }
 }

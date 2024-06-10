@@ -1,42 +1,46 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LearningPathStudentPageComponent } from 'app/course/learning-paths/pages/learning-path-student-page/learning-path-student-page.component';
-import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { of, throwError } from 'rxjs';
-import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
+import { of } from 'rxjs';
 import { LearningPathStudentNavComponent } from 'app/course/learning-paths/components/learning-path-student-nav/learning-path-student-nav.component';
 import { By } from '@angular/platform-browser';
 import { LearningPathExerciseComponent } from 'app/course/learning-paths/components/learning-path-exercise/learning-path-exercise.component';
 import { LearningPathLectureUnitComponent } from 'app/course/learning-paths/components/learning-path-lecture-unit/learning-path-lecture-unit.component';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 
 describe('LearningPathStudentPageComponent', () => {
     let component: LearningPathStudentPageComponent;
     let fixture: ComponentFixture<LearningPathStudentPageComponent>;
-    let learningPathService: LearningPathService;
-    let getLearningPathIdSpy: jest.SpyInstance;
+    let learningPathApiService: LearningPathApiService;
+    let alertService: AlertService;
+
+    const learningPathId = 1;
+    const courseId = 2;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [LearningPathStudentPageComponent],
             providers: [
                 provideHttpClient(),
-                provideHttpClientTesting(),
                 {
                     provide: ActivatedRoute,
                     useValue: {
                         parent: {
                             parent: {
                                 params: of({
-                                    courseId: 1,
+                                    courseId: courseId,
                                 }),
                             },
                         },
                     },
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AlertService, useClass: MockAlertService },
             ],
         })
             .overrideComponent(LearningPathStudentPageComponent, {
@@ -49,8 +53,8 @@ describe('LearningPathStudentPageComponent', () => {
             })
             .compileComponents();
 
-        learningPathService = TestBed.inject(LearningPathService);
-        getLearningPathIdSpy = jest.spyOn(learningPathService, 'getLearningPathId');
+        learningPathApiService = TestBed.inject(LearningPathApiService);
+        alertService = TestBed.inject(AlertService);
 
         fixture = TestBed.createComponent(LearningPathStudentPageComponent);
         component = fixture.componentInstance;
@@ -62,38 +66,49 @@ describe('LearningPathStudentPageComponent', () => {
 
     it('should initialize', () => {
         expect(component).toBeTruthy();
-        expect(component.courseId()).toBe(1);
+        expect(component.courseId()).toBe(courseId);
     });
 
-    it('should get learning path id (success)', fakeAsync(() => {
-        getLearningPathIdSpy = jest.spyOn(learningPathService, 'getLearningPathId').mockReturnValue(of(new HttpResponse({ body: 1 })));
+    it('should get learning path id', async () => {
+        const getLearningPathIdSpy = jest.spyOn(learningPathApiService, 'getLearningPathId').mockResolvedValue(learningPathId);
 
         fixture.detectChanges();
-        tick(); // simulate async
+        await fixture.whenStable();
 
-        expect(getLearningPathIdSpy).toHaveBeenCalledOnce();
-        expect(component.learningPathId()).toBe(1);
-    }));
+        expect(getLearningPathIdSpy).toHaveBeenCalledWith(courseId);
+        expect(component.learningPathId()).toEqual(learningPathId);
+    });
 
-    it('should generate learning path if not found', fakeAsync(() => {
-        const generateLearningPathSpy = jest.spyOn(learningPathService, 'generateLearningPath').mockReturnValue(of(new HttpResponse({ body: 2 })));
-        jest.spyOn(learningPathService, 'getLearningPathId').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
-
-        fixture.detectChanges();
-        tick(); // Simulate async
-
-        expect(generateLearningPathSpy).toHaveBeenCalled();
-        expect(component.learningPathId()).toBe(2);
-    }));
-
-    it('should show navigation when learning path id is available', fakeAsync(() => {
-        jest.spyOn(learningPathService, 'getLearningPathId').mockReturnValue(of(new HttpResponse({ body: 1 })));
+    it('should show navigation on successful load', async () => {
+        jest.spyOn(learningPathApiService, 'getLearningPathId').mockResolvedValue(learningPathId);
 
         fixture.detectChanges();
-        tick(); // Simulate async
+        await fixture.whenStable();
         fixture.detectChanges();
 
         const navComponent = fixture.debugElement.query(By.directive(LearningPathStudentNavComponent));
         expect(navComponent).toBeTruthy();
-    }));
+    });
+
+    it('should show error when learning path id could not be loaded', async () => {
+        const getLearningPathIdSpy = jest.spyOn(learningPathApiService, 'getLearningPathId').mockRejectedValue(new Error());
+        const alertServiceErrorSpy = jest.spyOn(alertService, 'error');
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(getLearningPathIdSpy).toHaveBeenCalledWith(courseId);
+        expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should set isLoading correctly during load', async () => {
+        jest.spyOn(learningPathApiService, 'getLearningPathId').mockResolvedValue(learningPathId);
+        const loadingSpy = jest.spyOn(component.isLoading, 'set');
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(loadingSpy).toHaveBeenCalledWith(true);
+        expect(loadingSpy).toHaveBeenCalledWith(false);
+    });
 });

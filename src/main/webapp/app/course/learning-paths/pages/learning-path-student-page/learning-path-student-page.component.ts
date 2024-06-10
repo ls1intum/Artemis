@@ -54,7 +54,8 @@ export class LearningPathStudentPageComponent implements OnInit {
 
     private async generateLearningPath(courseId: number): Promise<void> {
         try {
-            this.learningPathId.set(await this.learningApiService.generateLearningPath(courseId));
+            const learningPathId = await this.learningApiService.generateLearningPath(courseId);
+            this.learningPathId.set(learningPathId);
         } catch (error) {
             this.alertService.error(error);
         }
