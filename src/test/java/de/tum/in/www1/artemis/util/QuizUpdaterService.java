@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.util;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +15,7 @@ import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestion;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestionStatistic;
 import de.tum.in.www1.artemis.service.quiz.QuizExerciseService;
 import de.tum.in.www1.artemis.service.quiz.QuizIdAssigner;
+import de.tum.in.www1.artemis.service.quiz.QuizService;
 
 @Service
 public class QuizUpdaterService {
@@ -36,20 +40,41 @@ public class QuizUpdaterService {
             }
 
             if (quizQuestion instanceof MultipleChoiceQuestion multipleChoiceQuestion) {
-                quizExerciseService.fixReferenceMultipleChoice(multipleChoiceQuestion);
+                invokePrivateMethod("fixReferenceMultipleChoice", multipleChoiceQuestion);
+
                 QuizIdAssigner.assignIds(multipleChoiceQuestion.getAnswerOptions());
                 QuizIdAssigner.assignIds(((MultipleChoiceQuestionStatistic) multipleChoiceQuestion.getQuizQuestionStatistic()).getAnswerCounters());
             }
             else if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
-                quizExerciseService.fixReferenceDragAndDrop(dragAndDropQuestion);
-                quizExerciseService.restoreCorrectMappingsFromIndicesDragAndDrop(dragAndDropQuestion);
+                invokePrivateMethod("fixReferenceDragAndDrop", dragAndDropQuestion);
+                invokePrivateMethod("restoreCorrectMappingsFromIndicesDragAndDrop", dragAndDropQuestion);
+
                 QuizIdAssigner.assignIds(((DragAndDropQuestionStatistic) dragAndDropQuestion.getQuizQuestionStatistic()).getDropLocationCounters());
             }
             else if (quizQuestion instanceof ShortAnswerQuestion shortAnswerQuestion) {
-                quizExerciseService.fixReferenceShortAnswer(shortAnswerQuestion);
-                quizExerciseService.restoreCorrectMappingsFromIndicesShortAnswer(shortAnswerQuestion);
+                invokePrivateMethod("fixReferenceShortAnswer", shortAnswerQuestion);
+                invokePrivateMethod("restoreCorrectMappingsFromIndicesShortAnswer", shortAnswerQuestion);
+
                 QuizIdAssigner.assignIds(((ShortAnswerQuestionStatistic) shortAnswerQuestion.getQuizQuestionStatistic()).getShortAnswerSpotCounters());
             }
+        }
+    }
+
+    /**
+     * Invokes a private method on a class instance using reflection.
+     *
+     * @param methodName The name of the method to be invoked.
+     * @param parameter  The parameter to be passed to the method.
+     * @throws RuntimeException If the method cannot be found, accessed, or invoked.
+     */
+    private void invokePrivateMethod(String methodName, Object parameter) {
+        try {
+            Method privateMethod = QuizService.class.getDeclaredMethod(methodName, parameter.getClass());
+            privateMethod.setAccessible(true);
+            privateMethod.invoke(quizExerciseService, parameter);
+        }
+        catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException(e);
         }
     }
 }
