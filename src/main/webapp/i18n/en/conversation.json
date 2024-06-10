@@ -228,7 +228,7 @@
                         "maxLengthValidationError": "Description can be max {{ max }} characters long!"
                     },
                     "isPublicInput": {
-                        "label": "Channel Visibility",
+                        "label": "Visibility",
                         "explanation": "Every user except instructors will need an invitation to join a private channel. Everybody can join a public channel.",
                         "public": "Public",
                         "private": "Private"
