@@ -434,6 +434,7 @@ public class LearningPathRecommendationService {
     private void scheduleAllExercises(List<LearningObject> recommendedOrder, Map<DifficultyLevel, Set<Exercise>> difficultyLevelMap, Set<Exercise> alreadyScheduledExercises) {
         for (var difficulty : DifficultyLevel.values()) {
             var unscheduledExercises = difficultyLevelMap.get(difficulty).stream().filter(exercise -> !alreadyScheduledExercises.contains(exercise)).toList();
+            alreadyScheduledExercises.addAll(unscheduledExercises);
             recommendedOrder.addAll(unscheduledExercises);
         }
     }
@@ -483,6 +484,10 @@ public class LearningPathRecommendationService {
         easyExercises.removeIf(alreadyScheduledExercises::contains);
         mediumExercises.removeIf(alreadyScheduledExercises::contains);
         hardExercises.removeIf(alreadyScheduledExercises::contains);
+
+        alreadyScheduledExercises.addAll(easyExercises);
+        alreadyScheduledExercises.addAll(mediumExercises);
+        alreadyScheduledExercises.addAll(hardExercises);
 
         recommendedOrder.addAll(easyExercises);
         recommendedOrder.addAll(mediumExercises);
