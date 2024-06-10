@@ -1,18 +1,18 @@
 <div class="tutorial-group-import-dialog">
     <div class="modal-header">
         <h4 class="modal-title">
-            <span>{{ 'artemisApp.tutorialGroupImportDialog.dialogTitle' | artemisTranslate }} </span>
+            <span jhiTranslate="artemisApp.tutorialGroupImportDialog.dialogTitle"></span>
         </h4>
         <button type="button" class="btn-close" (click)="clear()"></button>
     </div>
     <div class="modal-body">
         <!-- Intro-->
         <div class="form-group">
-            <p>{{ 'artemisApp.tutorialGroupImportDialog.explanations.description' | artemisTranslate }}</p>
-            <p>{{ 'artemisApp.tutorialGroupImportDialog.explanations.requirements' | artemisTranslate }}</p>
-            <p>{{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.label' | artemisTranslate }}</p>
+            <p jhiTranslate="artemisApp.tutorialGroupImportDialog.explanations.description"></p>
+            <p jhiTranslate="artemisApp.tutorialGroupImportDialog.explanations.requirements"></p>
+            <p jhiTranslate="artemisApp.tutorialGroupImportDialog.supportedHeaderNames.label"></p>
             <ul>
-                <li>{{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.alwaysRequired' | artemisTranslate }}</li>
+                <li jhiTranslate="artemisApp.tutorialGroupImportDialog.supportedHeaderNames.alwaysRequired"></li>
                 <ul>
                     <li>{{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.tutorialGroupTitle' | artemisTranslate: { headers: supportedTitleHeader } }}</li>
                 </ul>
