@@ -63,6 +63,8 @@ import { ExamScoresPage } from './pageobjects/exam/ExamScoresPage';
 import { ProgrammingExerciseParticipationsPage } from './pageobjects/exercises/programming/ProgrammingExerciseParticipationsPage';
 import { ExamResultsPage } from './pageobjects/exam/ExamResultsPage';
 import { ExerciseTeamsPage } from './pageobjects/exercises/ExerciseTeamsPage';
+import { QuizExerciseOverviewPage } from './pageobjects/exercises/quiz/QuizExerciseOverviewPage';
+import { QuizExerciseParticipationPage } from './pageobjects/exercises/quiz/QuizExerciseParticipationPage';
 import { ModalDialogBox } from './pageobjects/exam/ModalDialogBox';
 import { ExamParticipationActions } from './pageobjects/exam/ExamParticipationActions';
 
@@ -71,6 +73,7 @@ import { ExamParticipationActions } from './pageobjects/exam/ExamParticipationAc
  */
 export type ArtemisCommands = {
     login: (credentials: UserCredentials, url?: string) => Promise<void>;
+    waitForExerciseBuildToFinish: (exerciseId: number, interval?: number, timeout?: number) => Promise<void>;
 };
 
 export type ArtemisPageObjects = {
@@ -125,6 +128,8 @@ export type ArtemisPageObjects = {
     quizExerciseCreation: QuizExerciseCreationPage;
     quizExerciseDragAndDropQuiz: DragAndDropQuiz;
     quizExerciseMultipleChoice: MultipleChoiceQuiz;
+    quizExerciseOverview: QuizExerciseOverviewPage;
+    quizExerciseParticipation: QuizExerciseParticipationPage;
     quizExerciseShortAnswerQuiz: ShortAnswerQuiz;
     textExerciseCreation: TextExerciseCreationPage;
     textExerciseEditor: TextEditorPage;
@@ -153,6 +158,11 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     login: async ({ page }, use) => {
         await use(async (credentials: UserCredentials, url?: string) => {
             await Commands.login(page, credentials, url);
+        });
+    },
+    waitForExerciseBuildToFinish: async ({ page, exerciseAPIRequests }, use) => {
+        await use(async (exerciseId: number, interval?, timeout?) => {
+            await Commands.waitForExerciseBuildToFinish(page, exerciseAPIRequests, exerciseId, interval, timeout);
         });
     },
     navigationBar: async ({ page }, use) => {
@@ -320,6 +330,12 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     },
     quizExerciseMultipleChoice: async ({ page }, use) => {
         await use(new MultipleChoiceQuiz(page));
+    },
+    quizExerciseOverview: async ({ page }, use) => {
+        await use(new QuizExerciseOverviewPage(page));
+    },
+    quizExerciseParticipation: async ({ page }, use) => {
+        await use(new QuizExerciseParticipationPage(page));
     },
     quizExerciseShortAnswerQuiz: async ({ page }, use) => {
         await use(new ShortAnswerQuiz(page));
