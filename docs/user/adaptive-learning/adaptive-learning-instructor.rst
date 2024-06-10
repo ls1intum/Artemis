@@ -1,4 +1,4 @@
-Managing Adaptive Learning (Instructor)
+Manage Adaptive Learning (Instructor)
 =======================================
 
 .. contents:: Content of this document
@@ -34,6 +34,12 @@ Alternatively, instructors can also link competencies to an exercise or lecture 
 Generate Competencies
 ^^^^^^^^^^^^^^^^^^^^^
 
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/46941?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
+
 TODO
 
 .. _import_competencies:
@@ -56,11 +62,11 @@ Once the feature is enabled, instructors get access to each student's learning p
 
 |instructors-learning-path-management|
 
-.. |instructors-learning-goals-manage| image:: instructor/instructors-learning-goals-manage.png
+.. |instructors-learning-goals-manage| image:: instructors-learning-goals-manage.png
     :width: 1000
-.. |instructors-learning-goal-edit| image:: instructor/instructors-learning-goal-edit.png
+.. |instructors-learning-goal-edit| image:: instructors-learning-goal-edit.png
     :width: 1000
-.. |instructors-learning-goals-link| image:: instructor/instructors-learning-goals-link.png
+.. |instructors-learning-goals-link| image:: instructors-learning-goals-link.png
     :width: 600
-.. |instructors-learning-path-management| image:: instructor/instructors-learning-path-management.png
+.. |instructors-learning-path-management| image:: instructors-learning-path-management.png
     :width: 1000

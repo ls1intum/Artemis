@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -72,7 +73,7 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
             WHERE p.exercise IN :exercises
             GROUP BY p.exercise.id
             """)
-    List<Map<String, Object>> findAverageScoreForExercises(@Param("exercises") List<Exercise> exercises);
+    List<Map<String, Object>> findAverageScoreForExercises(@Param("exercises") Collection<Exercise> exercises);
 
     /**
      * Gets average score for a single exercise

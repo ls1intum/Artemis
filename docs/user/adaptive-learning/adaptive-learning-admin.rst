@@ -1,28 +1,29 @@
-Managing Standardized Competencies (Administrator)
+Manage Standardized Competencies (Administrator)
 ==================================================
 
 .. contents:: Content of this document
     :local:
     :depth: 2
 
-Standardized Competency Management
-----------------------------------
+Standardized Competencies
+------------
+
+.. _competencies_admin:
+
+Manage Standardized Competencies
+------------
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/46942?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
 
 |admin-manage|
 
-
-Standardized Competency Catalog Import
---------------------------------------
-
+Import a Standardized Competency Catalog
+------------
 |admin-import|
-
-TODO
-- explain what standardized are
-- video
-- explain manage
-    - what cann all be done
-    - show edit :)
-- import
 
 .. |admin-import| image:: admin/admin-import-standardized.png
     :width: 1000

@@ -29,6 +29,7 @@ import java.util.stream.StreamSupport;
 
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
@@ -62,7 +63,6 @@ import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
-import org.eclipse.jgit.transport.sshd.JGitKeyCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -108,6 +108,12 @@ public class GitService extends AbstractGitService {
     @Value("${artemis.git.email}")
     private String artemisGitEmail;
 
+    @Value("${artemis.version-control.user}")
+    protected String gitUser;
+
+    @Value("${artemis.version-control.password}")
+    protected String gitPassword;
+
     // TODO: clean up properly in multi node environments
     private final Map<Path, Repository> cachedRepositories = new ConcurrentHashMap<>();
 
@@ -151,23 +157,9 @@ public class GitService extends AbstractGitService {
         }
     }
 
-    private void configureSsh() {
-
-        final var sshSessionFactoryBuilder = getSshdSessionFactoryBuilder(gitSshPrivateKeyPath, gitSshPrivateKeyPassphrase, gitUrl);
-
-        try (final var sshSessionFactory = sshSessionFactoryBuilder.build(new JGitKeyCache())) {
-            sshCallback = getSshCallback(sshSessionFactory);
-        }
-    }
-
-    private boolean useSsh() {
-        return gitSshPrivateKeyPath.isPresent() && sshUrlTemplate.isPresent();
-        // password is optional and will only be applied if the ssh private key was encrypted using a password
-    }
-
-    @Override
-    protected String getGitUriAsString(VcsRepositoryUri vcsRepositoryUri) throws URISyntaxException {
-        return getGitUri(vcsRepositoryUri).toString();
+    @PreDestroy
+    public void cleanup() {
+        super.cleanup();
     }
 
     /**
@@ -181,7 +173,8 @@ public class GitService extends AbstractGitService {
      * @return the URI (SSH, HTTP(S), or local path)
      * @throws URISyntaxException if SSH is used and the SSH URI could not be retrieved.
      */
-    private URI getGitUri(VcsRepositoryUri vcsRepositoryUri) throws URISyntaxException {
+    @Override
+    protected URI getGitUri(VcsRepositoryUri vcsRepositoryUri) throws URISyntaxException {
         if (profileService.isLocalVcsCiActive()) {
             // Create less generic LocalVCRepositoryUri out of VcsRepositoryUri.
             LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(vcsRepositoryUri.toString());
@@ -1193,31 +1186,42 @@ public class GitService extends AbstractGitService {
     }
 
     /**
-     * Zip the content of a git repository that contains a participation.
+     * Get the content of a git repository that contains a participation, as zip or directory.
      *
      * @param repo            Local Repository Object.
      * @param repositoryDir   path where the repo is located on disk
-     * @param hideStudentName option to hide the student name for the zip file
-     * @return path to zip file.
-     * @throws IOException if the zipping process failed.
+     * @param hideStudentName option to hide the student name for the zip file or directory
+     * @param zipOutput       If true the method returns a zip file otherwise a directory.
+     * @return path to zip file or directory.
+     * @throws IOException if the zipping or copying process failed.
      */
-    public Path zipRepositoryWithParticipation(Repository repo, String repositoryDir, boolean hideStudentName) throws IOException, UncheckedIOException {
+    public Path getRepositoryWithParticipation(Repository repo, String repositoryDir, boolean hideStudentName, boolean zipOutput) throws IOException, UncheckedIOException {
         var exercise = repo.getParticipation().getProgrammingExercise();
         var courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         var participation = (ProgrammingExerciseStudentParticipation) repo.getParticipation();
 
-        // The zip filename is either the student login, team short name or some default string.
-        var studentTeamOrDefault = Objects.requireNonNullElse(participation.getParticipantIdentifier(), "student-submission" + repo.getParticipation().getId());
-
-        String zipRepoName = FileService.sanitizeFilename(courseShortName + "-" + exercise.getTitle() + "-" + participation.getId());
+        String repoName = FileService.sanitizeFilename(courseShortName + "-" + exercise.getTitle() + "-" + participation.getId());
         if (hideStudentName) {
-            zipRepoName += "-student-submission.git.zip";
+            repoName += "-student-submission.git";
         }
         else {
-            zipRepoName += "-" + studentTeamOrDefault + ".zip";
+            // The zip filename is either the student login, team short name or some default string.
+            var studentTeamOrDefault = Objects.requireNonNullElse(participation.getParticipantIdentifier(), "student-submission" + repo.getParticipation().getId());
+
+            repoName += "-" + studentTeamOrDefault;
         }
-        zipRepoName = participation.addPracticePrefixIfTestRun(zipRepoName);
-        return zipFiles(repo.getLocalPath(), zipRepoName, repositoryDir, null);
+        repoName = participation.addPracticePrefixIfTestRun(repoName);
+
+        if (zipOutput) {
+            return zipFiles(repo.getLocalPath(), repoName, repositoryDir, null);
+        }
+        else {
+            Path targetDir = Path.of(repositoryDir, repoName);
+
+            FileUtils.copyDirectory(repo.getLocalPath().toFile(), targetDir.toFile());
+            return targetDir;
+        }
+
     }
 
     /**

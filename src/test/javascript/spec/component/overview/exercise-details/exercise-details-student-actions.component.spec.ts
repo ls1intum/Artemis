@@ -573,6 +573,13 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
     it('assureConditionsSatisfied should alert and return false if the maximum number of successful Athena results is reached', () => {
         jest.spyOn(window, 'alert').mockImplementation(() => {});
+        const numResults = 20;
+        const results: Array<{ assessmentType: AssessmentType; successful: boolean }> = [];
+
+        for (let i = 0; i < numResults; i++) {
+            results.push({ assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true });
+        }
+
         comp.exercise = {
             type: ExerciseType.PROGRAMMING,
             dueDate: dayjs().add(5, 'minutes'),
@@ -585,9 +592,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
                             assessmentType: AssessmentType.AUTOMATIC,
                             score: 100,
                         },
-                        { assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true },
-                        { assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true },
-                        { assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true },
+                        ...results,
                     ],
                 },
             ] as StudentParticipation[],

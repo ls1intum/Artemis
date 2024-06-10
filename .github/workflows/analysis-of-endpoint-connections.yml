@@ -10,7 +10,7 @@ on:
       - 'src/main/webapp/**'
 
 jobs:
-  show-modified-files:
+  analysis-of-endpoint-connections:
     timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
@@ -23,7 +23,12 @@ jobs:
         run: |
           git diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD > modified_files.txt
 
-      - name: Display modified files
+      - name: Set up JDK 21
+        uses: actions/setup-java@v2
+        with:
+          java-version: '21'
+          distribution: 'adopt'
+
+      - name: Run analysis-of-endpoint-connections
         run: |
-          echo "Modified files in this pull request:"
-          cat modified_files.txt
+          ./gradlew :supporting_scripts:analysis-of-endpoint-connections:run --args="$(cat modified_files.txt)"

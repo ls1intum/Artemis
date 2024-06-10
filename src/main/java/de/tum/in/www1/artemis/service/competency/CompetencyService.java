@@ -40,6 +40,7 @@ import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.CompetencyPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
@@ -51,6 +52,8 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 public class CompetencyService {
 
     private static final Logger log = LoggerFactory.getLogger(CompetencyService.class);
+
+    private static final String ENTITY_NAME = "Competency";
 
     private final CompetencyRepository competencyRepository;
 
@@ -551,5 +554,18 @@ public class CompetencyService {
             }
         }
         return graph.hasCycle();
+    }
+
+    /**
+     * Checks if the competency is part of the course
+     *
+     * @param competencyId The id of the competency
+     * @param courseId     The id of the course
+     * @throws BadRequestAlertException if the competency does not belong to the course
+     */
+    public void checkIfCompetencyBelongsToCourse(long competencyId, long courseId) {
+        if (!competencyRepository.existsByIdAndCourseId(competencyId, courseId)) {
+            throw new BadRequestAlertException("The competency does not belong to the course", ENTITY_NAME, "competencyWrongCourse");
+        }
     }
 }
