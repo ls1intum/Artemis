@@ -31,6 +31,7 @@ import { ArtemisExamLiveEventsModule } from 'app/exam/participate/events/exam-li
 import { ExamStartInformationComponent } from 'app/exam/participate/exam-start-information/exam-start-information.component';
 import { ArtemisSidebarModule } from 'app/shared/sidebar/sidebar.module';
 import { ExamNavigationSidebarComponent } from 'app/exam/participate/exam-navigation-sidebar/exam-navigation-sidebar.component';
+import { ExamBarComponent } from 'app/exam/participate/exam-bar/exam-bar.component';
 const ENTITY_STATES = [...examParticipationState];
 
 @NgModule({
@@ -62,6 +63,7 @@ const ENTITY_STATES = [...examParticipationState];
         ExamStartInformationComponent,
         ArtemisSidebarModule,
         ExamNavigationSidebarComponent,
+        ExamBarComponent,
     ],
     declarations: [ExamParticipationComponent, ExamParticipationCoverComponent, ExamExerciseOverviewPageComponent],
 })

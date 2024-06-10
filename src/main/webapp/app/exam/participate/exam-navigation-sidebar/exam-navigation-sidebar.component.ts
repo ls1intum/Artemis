@@ -22,6 +22,8 @@ import { map } from 'rxjs/operators';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import { CommitState, DomainChange, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { faCheck, faFileLines, faHourglassHalf, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exam-navigation-sidebar',
@@ -64,9 +66,12 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     static itemsVisiblePerSideDefault = 4;
     itemsVisiblePerSide = ExamNavigationSidebarComponent.itemsVisiblePerSideDefault;
 
-    criticalTime = dayjs.duration(5, 'minutes');
+    //criticalTime = dayjs.duration(5, 'minutes');
 
     subscriptionToLiveExamExerciseUpdates: Subscription;
+
+    icon: IconProp;
+    overviewIcon: IconProp = faFileLines;
 
     constructor(
         private profileService: ProfileService,
@@ -138,6 +143,10 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     triggerExamAboutToEnd() {
         this.saveExercise(false);
         this.examAboutToEnd.emit();
+    }
+
+    getOverviewString(): string {
+        return 'Overview';
     }
 
     /**
@@ -215,18 +224,18 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
      * @param exerciseIndex index of the exercise
      * @return the sync status of the exercise (whether the corresponding submission is saved on the server or not)
      */
-    setExerciseButtonStatus(exerciseIndex: number): 'synced' | 'synced active' | 'notSynced' {
-        //this.icon = faCheck;
+    setExerciseButtonStatus(exerciseIndex: number): 'synced' | 'synced saved' | 'notSynced' {
+        this.icon = faCheck;
         // If we are in the exam timeline we do not use not synced as not synced shows
         // that the current submission is not saved which doesn't make sense in the timeline.
         if (this.examTimeLineView) {
-            return this.exerciseIndex === exerciseIndex ? 'synced active' : 'synced';
+            return this.exerciseIndex === exerciseIndex ? 'synced saved' : 'synced';
         }
 
         // start with a yellow status (edit icon)
         // TODO: it's a bit weird, that it works that multiple icons (one per exercise) are hold in the same instance variable of the component
         //  we should definitely refactor this and e.g. use the same ExamExerciseOverviewItem as in exam-exercise-overview-page.component.ts !
-        //this.icon = faEdit;
+        this.icon = faHourglassHalf;
         const exercise = this.exercises[exerciseIndex];
         const submission = ExamParticipationService.getSubmissionForExercise(exercise);
         if (!submission) {
@@ -234,19 +243,16 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
             // this should only occur for programming exercises
             return 'synced';
         }
-        if (submission.submitted) {
-            //this.icon = faCheck;
+        if (submission.submitted && submission.isSynced) {
+            this.icon = faCheck;
+            return 'synced saved';
         }
         if (submission.isSynced || this.isOnlyOfflineIDE(exercise)) {
             // make button blue (except for the current page)
-            if (exerciseIndex === this.exerciseIndex && !this.overviewPageOpen) {
-                return 'synced active';
-            } else {
-                return 'synced';
-            }
+            return 'synced';
         } else {
             // make button yellow except for programming exercises with only offline IDE
-            //this.icon = faEdit;
+            this.icon = faTriangleExclamation;
             return 'notSynced';
         }
     }

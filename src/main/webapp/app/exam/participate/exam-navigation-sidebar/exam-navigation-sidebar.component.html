@@ -2,14 +2,44 @@
     <div class="w-100 bg-module">
         <div class="sidebar-content" [ngClass]="{ collapsed: isCollapsed }">
             <div class="scrollable-item-content py-2 px-2 bg-body" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
+                <div
+                    id="test-sidebar-card-medium"
+                    class="pointer rounded-3 col-12 px-1 pt-2 pb-1 mb-2 border-5 highlight-card bg-module"
+                    [ngClass]="{ 'bg-selected border-selected': -1 === exerciseIndex }"
+                    (click)="changePage(true, -1)"
+                >
+                    <div class="d-flex justify-content-between mb-1 align-items-baseline">
+                        <span id="test-sidebar-card-title" class="small fw-semibold text-truncate me-2" [title]="getOverviewString()">
+                            <fa-icon [fixedWidth]="true" [icon]="overviewIcon" />
+                            {{ getOverviewString() }}
+                        </span>
+                        <span>
+                            <div class="small fw-semibold">{{ exerciseIndex + 1 }}/{{ exercises.length }}</div>
+                        </span>
+                    </div>
+                </div>
                 @for (sidebarItem of sidebarData?.ungroupedData; track sidebarItem; let last = $last; let i = $index) {
                     <div [ngClass]="{ 'mb-2': !last }">
-                        <jhi-medium-sidebar-card
-                            [sidebarItem]="sidebarItem"
-                            [sidebarType]="sidebarData.sidebarType"
-                            (pageChange)="changePage(false, i, false)"
-                            [itemSelected]="i === exerciseIndex"
-                        />
+                        <div
+                            id="test-sidebar-card-medium"
+                            class="pointer rounded-3 col-12 px-1 pt-2 pb-1 border-5 highlight-card bg-module"
+                            [ngClass]="{ 'bg-selected border-selected': i === exerciseIndex }"
+                            (click)="changePage(false, i, false)"
+                        >
+                            <div class="d-flex justify-content-between mb-1 align-items-baseline">
+                                <span id="test-sidebar-card-title" class="small fw-semibold text-truncate me-2" [title]="sidebarItem.title">
+                                    @if (sidebarItem.icon) {
+                                        <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" />
+                                    }
+                                    {{ sidebarItem.title }}</span
+                                >
+                                <span [ngClass]="setExerciseButtonStatus(i)">
+                                    @if (sidebarItem.rightIcon) {
+                                        <fa-icon [fixedWidth]="true" [icon]="icon" />
+                                    }
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 }
             </div>

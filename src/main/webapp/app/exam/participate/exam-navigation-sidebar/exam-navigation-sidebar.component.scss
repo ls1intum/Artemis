@@ -38,3 +38,27 @@ $breadcrumb-height: 38px;
 .sidebar-width {
     width: 275px !important;
 }
+
+.synced {
+    color: var(--black);
+}
+
+.notSynced {
+    color: var(--warning);
+}
+
+.saved {
+    color: var(--success);
+}
+
+.border-module {
+    border-color: var(--module-bg) !important;
+}
+
+.bg-selected {
+    background-color: var(--sidebar-card-selected-bg);
+
+    &.border-module {
+        border-color: var(--sidebar-card-selected-bg) !important;
+    }
+}

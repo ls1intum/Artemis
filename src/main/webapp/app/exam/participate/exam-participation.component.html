@@ -32,11 +32,21 @@
                     (examAboutToEnd)="examEnded()"
                     (onExamHandInEarly)="toggleHandInEarly()"
                 /> -->
-                <div class="h5 module-bg m-3 mt-0 px-3 py-2 rounded rounded-3 justify-content-between sticky-top">
+                <!-- <div class="h5 module-bg m-3 mt-0 px-3 py-2 rounded rounded-3 justify-content-between sticky-top">
                     <div class="align-self-center d-flex">
                         <h3 class="align-self-center mb-0">{{ exam.title }}</h3>
                     </div>
-                </div>
+                </div> -->
+
+                <jhi-exam-bar
+                    [examTitle]="exam.title!"
+                    [endDate]="individualStudentEndDate"
+                    [exerciseIndex]="exerciseIndex"
+                    [exercises]="studentExam.exercises!"
+                    (examAboutToEnd)="examEnded()"
+                    (onExamHandInEarly)="toggleHandInEarly()"
+                />
+
                 <div class="d-flex justify-content-between gap-3 content-exam-height">
                     <div class="ms-3 bg-body">
                         <!-- <jhi-sidebar [itemSelected]="true" [courseId]="courseId" [sidebarData]="sidebarData" [searchFieldEnabled]="false" [isExamMode]="true" [itemSelected]="exerciseSelected"/> -->
