@@ -92,7 +92,6 @@ describe('TutorialGroupFormComponent', () => {
                 validTeachingAssistant.login = 'testLogin';
                 component = fixture.componentInstance;
                 component.course = course;
-                testFormIsInvalidOnMissingRequiredProperty = generateTestFormIsInvalidOnMissingRequiredProperty(component, fixture, setValidFormValues, clickSubmit);
                 fixture.detectChanges();
             });
     });
@@ -122,6 +121,7 @@ describe('TutorialGroupFormComponent', () => {
                     location: validLocation,
                 },
             });
+            testFormIsInvalidOnMissingRequiredProperty = generateTestFormIsInvalidOnMissingRequiredProperty(component, fixture, setValidFormValues, clickSubmit);
         });
 
         it('should block submit when required property is missing', fakeAsync(() => {
@@ -209,6 +209,7 @@ describe('TutorialGroupFormComponent', () => {
                 campus: validCampus,
                 additionalInformation: validAdditionalInformation,
             });
+            testFormIsInvalidOnMissingRequiredProperty = generateTestFormIsInvalidOnMissingRequiredProperty(component, fixture, setValidFormValues, clickSubmit);
         });
 
         it('should block submit when required property is missing', fakeAsync(() => {
