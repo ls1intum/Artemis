@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -20,7 +19,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 })
 // @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public abstract class QuizQuestionStatistic implements QuizQuestionComponent<QuizQuestion>, Serializable {
+public abstract class QuizQuestionStatistic implements QuizQuestionComponent<QuizQuestion> {
 
     @JsonView(QuizView.Before.class)
     private Long id;

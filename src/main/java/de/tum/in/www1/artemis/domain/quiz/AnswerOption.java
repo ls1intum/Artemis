@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
@@ -12,7 +10,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
  * A AnswerOption.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class AnswerOption extends TempIdObject implements QuizQuestionComponent<MultipleChoiceQuestion>, Serializable {
+public class AnswerOption extends TempIdObject implements QuizQuestionComponent<MultipleChoiceQuestion> {
 
     @JsonView(QuizView.Before.class)
     private String text;

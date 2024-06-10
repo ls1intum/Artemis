@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.domain.quiz;
 
 import static de.tum.in.www1.artemis.config.Constants.MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH;
 
-import java.io.Serializable;
 import java.util.Objects;
 
 import jakarta.validation.constraints.Size;
@@ -19,7 +18,7 @@ import me.xdrop.fuzzywuzzy.FuzzySearch;
  * A ShortAnswerSubmittedText.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ShortAnswerSubmittedText extends TempIdObject implements Serializable {
+public class ShortAnswerSubmittedText extends TempIdObject {
 
     @Size(max = MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH, message = "The submitted answer text is too long.")
     @JsonView(QuizView.Before.class)

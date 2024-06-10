@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
@@ -12,7 +10,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
  * A ShortAnswerMapping.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ShortAnswerMapping extends TempIdObject implements QuizQuestionComponent<ShortAnswerQuestion>, Serializable {
+public class ShortAnswerMapping extends TempIdObject implements QuizQuestionComponent<ShortAnswerQuestion> {
 
     @JsonView(QuizView.Before.class)
     private Integer shortAnswerSpotIndex;

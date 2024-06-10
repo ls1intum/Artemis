@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
-
 import jakarta.persistence.Transient;
 
 import org.slf4j.Logger;
@@ -18,7 +16,7 @@ import de.tum.in.www1.artemis.service.FileService;
  * A DragItem.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class DragItem extends TempIdObject implements QuizQuestionComponent<DragAndDropQuestion>, Serializable {
+public class DragItem extends TempIdObject implements QuizQuestionComponent<DragAndDropQuestion> {
 
     private static final Logger log = LoggerFactory.getLogger(DragItem.class);
 

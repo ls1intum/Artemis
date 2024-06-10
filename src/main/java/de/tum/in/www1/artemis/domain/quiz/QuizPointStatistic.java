@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -10,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * A QuizPointStatistic.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class QuizPointStatistic implements Serializable {
+public class QuizPointStatistic {
 
     private Set<PointCounter> pointCounters = new HashSet<>();
 
