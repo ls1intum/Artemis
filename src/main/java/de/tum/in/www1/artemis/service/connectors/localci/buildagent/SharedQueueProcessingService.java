@@ -206,6 +206,7 @@ public class SharedQueueProcessingService {
     private BuildJobItem addToProcessingJobs() {
         BuildJobItemReferenceDTO buildJobReference = queue.poll();
         if (buildJobReference != null) {
+            var timeStart = System.currentTimeMillis();
             buildJobItemMap.lock(buildJobReference.participationId());
             BuildJobItem buildJob;
             try {
@@ -228,6 +229,7 @@ public class SharedQueueProcessingService {
             BuildJobItem processingJob = new BuildJobItem(buildJob, hazelcastMemberAddress);
 
             processingJobs.put(processingJob.id(), processingJob);
+            log.debug("Time taken to add build job to processing jobs: {} ms", System.currentTimeMillis() - timeStart);
             localProcessingJobs.incrementAndGet();
 
             updateLocalBuildAgentInformation();

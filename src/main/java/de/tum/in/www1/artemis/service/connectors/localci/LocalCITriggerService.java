@@ -169,6 +169,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         BuildJobItemReferenceDTO buildJobItemReference = new BuildJobItemReferenceDTO(buildJobItem);
 
+        var timeStart = System.currentTimeMillis();
         buildJobItemMap.lock(participation.getId());
         try {
             CircularFifoQueue<BuildJobItem> buildJobItems = buildJobItemMap.get(participation.getId());
@@ -187,6 +188,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         }
         queue.add(buildJobItemReference);
         log.info("Added build job {} to the queue", buildJobId);
+        log.debug("Time to add build job to queue: {}ms", System.currentTimeMillis() - timeStart);
 
         dockerImageCleanupInfo.put(buildConfig.dockerImage(), jobTimingInfo.submissionDate());
     }
