@@ -114,6 +114,7 @@
             "numberOfQuestions": "Number of Questions",
             "quizInstructions": {
                 "live": "Answer all questions in the remaining time and only click the \"Submit\" button once you are done.",
+                "autoSave": "Your answers are saved automatically every 30 seconds.",
                 "wait": "Please wait until the quiz has ended to see your results.",
                 "result": "You completed the quiz with {{userScore}} out of {{maxScore}} points ({{percentage}} %).",
                 "waitForStart": "Please wait.<br><br>This page will refresh automatically, when the quiz starts.",
