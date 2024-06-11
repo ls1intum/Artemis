@@ -76,9 +76,8 @@ Instructors have three ways to import competencies: Import all competencies of a
 
 **3. Import Standardized Competencies**
 
-| When importing standardized competencies, instructors can view the complete :ref:`standardized competency catalog<standardized_competency_catalog>` of their instance.
+| When importing standardized competencies, instructors can view the complete :ref:`standardized competency catalog<standardized_competency_catalog>` of their Artemis instance.
   They can filter the displayed competencies by title and knowledge area.
-
 | Clicking on the name of a competency opens its details on the right side and clicking on the checkbox next to the name selects it for import.
   Again, selected competencies are displayed in a table and can be de-selected again by clicking on the trash icon.
 
@@ -96,7 +95,7 @@ Generate Competencies
     </iframe>
 
 | Instructors can use Iris, the AI subsystem for Artemis, to generate competencies for their course.
-| Based on a course description, Iris generates around 10 recommendations for possible competencies (this amount may vary depending on the description length).
+| Based on a course description, Iris generates around 10 recommendations for possible competencies (the amount may vary depending on the description provided).
 
 |instructor-generate-competencies|
 
@@ -130,6 +129,6 @@ Once the feature is enabled, instructors get access to each student's learning p
 .. |instructor-generate-competencies| image:: instructor/generate-competencies.png
     :width: 1000
 .. |instructor-competency-recommendation| image:: instructor/competency-recommendation.png
-    :width: 600
+    :width: 1000
 .. |instructors-learning-path-management| image:: instructor/learning-path-management.png
     :width: 1000

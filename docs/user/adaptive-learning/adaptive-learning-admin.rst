@@ -30,7 +30,7 @@ Manage Standardized Competencies
 | They can filter the displayed content by by competency title and knowledge area.
   Clicking on a knowledge area expands it and clicking on the eye icon shows the knowledge area details on the right.
 | From this detail view they can edit or delete the knowledge area, or create new knowledge areas and competencies under it.
-| Likewise, clicking on a standardized competency opens its details, allowing administrators to edit or delete it.
+  Likewise, clicking on a standardized competency opens its details, allowing administrators to edit or delete it.
 | Finally, administrators can also import a standardized competency catalog from a JSON file,
   or export the standardized competency catalog of their Artemis instance into a JSON file.
 
@@ -40,8 +40,10 @@ Manage Standardized Competencies
 Import a Standardized Competency Catalog
 ----------------------------------------
 
-| Administrators can import a complete standardized catalog into their Artemis instance.
-  To obtain a file containing such a catalog, you can contact the Artemis developer team.
+.. note::
+
+    To obtain a file containing a standardized competency catalog, you can contact the Artemis developer team.
+
 
 | When importing, administrators first view a collapsible example of the expected file structure.
   They can then select a file containing standardized competencies from their local system.
