@@ -9,7 +9,7 @@ Manage Adaptive Learning (Instructor)
 
     When introducing adaptive learning into a course for the first time, you can quickly create a competency model by:
 
-    - :ref:`Generating competencies using Iris<generate_competencies>`
+    - :ref:`Generating competencies using an integrated LLM<generate_competencies>`
     - :ref:`Importing standardized competencies into your course<instructor_import_standardized_competencies>`
 
     (Given that these features are enabled on your Artemis instance)
@@ -29,7 +29,7 @@ Instructors can manage competencies and prerequisites of a course in the *Compet
 * Create, edit or delete competencies and prerequisites
 * Manage relations between competencies (which are necessary to build learning paths)
 * :ref:`import_competencies` from other courses or the :ref:`standardized competency catalog<standardized_competency_catalog>`
-* :ref:`generate_competencies` using Iris
+* :ref:`generate_competencies` using LLMs
 
 |instructor-competency-management|
 

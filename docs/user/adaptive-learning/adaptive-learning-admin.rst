@@ -12,7 +12,7 @@ Standardized Competencies
 
 | The **Standardized Competency Catalog** is a catalog of competencies that is accessible to all instructors in an Artemis instance.
   Instructors may view this catalog and import competencies from it into their course.
-| The competencies consist of a title, description and taxonomy. Instead of being part of courses, they are sorted under knowledge areas.
+| The competencies consist of a title, description and taxonomy. Instead of being tied to specific courses, competencies are organized under knowledge areas.
 | Knowledge areas may also contain other knowledge areas, enabling a hierarchical structure (e.g., Artificial Intelligence -> Machine Learning).
 
 Manage Standardized Competencies
@@ -27,7 +27,7 @@ Manage Standardized Competencies
 | Administrators can manage the standardized competency catalog of their Artemis instance
   in the *Standardized Competency Management* view.
 
-| They can filter the displayed content by by competency title and knowledge area.
+| They can filter the displayed content by competency title and knowledge area.
   Clicking on a knowledge area expands it and clicking on the eye icon shows the knowledge area details on the right.
 | From this detail view they can edit or delete the knowledge area, or create new knowledge areas and competencies under it.
   Likewise, clicking on a standardized competency opens its details, allowing administrators to edit or delete it.
