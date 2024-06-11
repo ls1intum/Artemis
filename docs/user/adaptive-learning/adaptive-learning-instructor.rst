@@ -109,7 +109,7 @@ Once the feature is enabled, instructors get access to each student's learning p
 
 .. |instructor-competency-management| image:: instructor/manage-competencies.png
     :width: 1000
-.. |instructor-import-all-competencies|-all| image:: instructor/import-all-competencies.png
+.. |instructor-import-all-competencies| image:: instructor/import-all-competencies.png
     :width: 600
 .. |instructor-import-competencies| image:: instructor/import-course-competencies.png
     :width: 1000
