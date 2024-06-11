@@ -3,8 +3,6 @@
 Adaptive Learning
 =================
 
-Overview
---------
 Adaptive Learning in Artemis is centered around **competencies**, overarching learning objectives that tie together various lectures and exercises. Artemis is also able to provide students with individualized **learning paths** based on competencies and their relations.
 
 .. raw:: html
