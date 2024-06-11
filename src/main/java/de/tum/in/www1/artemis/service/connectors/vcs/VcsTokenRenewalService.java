@@ -50,6 +50,7 @@ public class VcsTokenRenewalService {
         this.versionControlAccessToken = versionControlAccessToken;
         this.vcsTokenManagementService = vcsTokenManagementService;
         this.userRepository = userRepository;
+        renewAllVcsAccessTokens();
     }
 
     /**
