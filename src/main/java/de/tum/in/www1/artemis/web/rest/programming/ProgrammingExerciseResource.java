@@ -81,6 +81,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseRepositoryS
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
+import de.tum.in.www1.artemis.web.rest.dto.CheckoutDirectoriesDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -878,4 +879,23 @@ public class ProgrammingExerciseResource {
         return ResponseEntity.ok(buildLogStatistics);
     }
 
+    /**
+     * GET programming-exercises/repository-checkout-directories
+     *
+     * @param programmingLanguage for which the checkout directories should be retrieved
+     * @param checkoutSolution    whether the checkout solution repository shall be checked out during the template and submission build plan,
+     *                                if not supplied set to true as default
+     * @return a DTO containing the checkout directories for the exercise, solution, and tests repository
+     *         for the requested programming language for the submission and solution build.
+     */
+    @GetMapping("programming-exercises/repository-checkout-directories")
+    @EnforceAtLeastEditor
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<CheckoutDirectoriesDTO> getRepositoryCheckoutDirectories(@RequestParam(value = "programmingLanguage") ProgrammingLanguage programmingLanguage,
+            @RequestParam(value = "checkoutSolution", defaultValue = "true") boolean checkoutSolution) {
+        log.debug("REST request to get checkout directories for programming language: {}", programmingLanguage);
+
+        CheckoutDirectoriesDTO repositoriesCheckoutDirectoryDTO = continuousIntegrationService.orElseThrow().getCheckoutDirectories(programmingLanguage, checkoutSolution);
+        return ResponseEntity.ok(repositoriesCheckoutDirectoryDTO);
+    }
 }

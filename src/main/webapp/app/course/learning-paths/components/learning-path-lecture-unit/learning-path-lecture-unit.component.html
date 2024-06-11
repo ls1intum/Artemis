@@ -1,0 +1,26 @@
+@if (isLectureUnitLoading()) {
+    <div class="row justify-content-center m-4">
+        <div class="spinner-border text-primary" role="status">
+            <span class="sr-only"></span>
+        </div>
+    </div>
+}
+@if (lectureUnit(); as lectureUnit) {
+    @switch (lectureUnit.type) {
+        @case (LectureUnitType.VIDEO) {
+            <jhi-video-unit [videoUnit]="lectureUnit" (onCompletion)="setLearningObjectCompletion($event)" />
+        }
+        @case (LectureUnitType.TEXT) {
+            <jhi-text-unit [textUnit]="lectureUnit" (onCompletion)="setLearningObjectCompletion($event)" />
+        }
+        @case (LectureUnitType.ATTACHMENT) {
+            <jhi-attachment-unit [attachmentUnit]="lectureUnit" (onCompletion)="setLearningObjectCompletion($event)" />
+        }
+        @case (LectureUnitType.EXERCISE) {
+            <jhi-exercise-unit [exerciseUnit]="lectureUnit" />
+        }
+        @case (LectureUnitType.ONLINE) {
+            <jhi-online-unit [onlineUnit]="lectureUnit" (onCompletion)="setLearningObjectCompletion($event)" />
+        }
+    }
+}

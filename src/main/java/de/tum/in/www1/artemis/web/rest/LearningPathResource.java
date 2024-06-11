@@ -7,6 +7,8 @@ import java.net.URISyntaxException;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.annotation.Nullable;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -37,8 +40,12 @@ import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyProgressForLearningPathDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathCompetencyGraphDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationObjectDTO.LearningObjectType;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDto;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -165,6 +172,25 @@ public class LearningPathResource {
     }
 
     /**
+     * GET learning-path/:learningPathId/competency-graph : Gets the competency graph
+     *
+     * @param learningPathId the id of the learning path for which the graph should be fetched
+     * @return the ResponseEntity with status 200 (OK) and with body the graph
+     */
+    @GetMapping("learning-path/{learningPathId}/competency-graph")
+    @FeatureToggle(Feature.LearningPaths)
+    @EnforceAtLeastStudent
+    public ResponseEntity<LearningPathCompetencyGraphDTO> getLearningPathCompetencyGraph(@PathVariable long learningPathId) {
+        log.debug("REST request to get competency graph for learning path with id: {}", learningPathId);
+        LearningPath learningPath = learningPathRepository.findWithEagerCourseAndCompetenciesByIdElseThrow(learningPathId);
+        User user = userRepository.getUser();
+
+        checkLearningPathAccessElseThrow(learningPath.getCourse(), learningPath, user);
+
+        return ResponseEntity.ok(learningPathService.generateLearningPathCompetencyGraph(learningPath));
+    }
+
+    /**
      * GET learning-path/:learningPathId/graph : Gets the ngx representation of the learning path as a graph.
      *
      * @param learningPathId the id of the learning path that should be fetched
@@ -192,19 +218,47 @@ public class LearningPathResource {
         return getLearningPathNgx(learningPathId, NgxRequestType.PATH);
     }
 
+    /**
+     * GET learning-path/:learningPathId/navigation : Gets the navigation information for the learning path,
+     * optionally relative to a learning object.
+     *
+     * @param learningPathId     the id of the learning path for which the navigation should be fetched
+     * @param learningObjectId   an optional id of the learning object to navigate to
+     * @param learningObjectType an optional type of the learning object to navigate to
+     * @return the ResponseEntity with status 200 (OK) and with body the navigation information
+     */
+    @GetMapping("learning-path/{learningPathId}/navigation")
+    @FeatureToggle(Feature.LearningPaths)
+    @EnforceAtLeastStudent
+    public ResponseEntity<LearningPathNavigationDTO> getLearningPathNavigation(@PathVariable @Valid long learningPathId,
+            @RequestParam(required = false, name = "learningObjectId") @Nullable @Valid Long learningObjectId,
+            @RequestParam(required = false, name = "learningObjectType") @Nullable @Valid LearningObjectType learningObjectType) {
+        log.debug("REST request to get navigation for learning path with id: {} relative to learning object with id: {} and type: {}", learningPathId, learningObjectId,
+                learningObjectType);
+        return ResponseEntity.ok(learningPathService.getLearningPathNavigation(learningPathId, learningObjectId, learningObjectType));
+    }
+
+    /**
+     * GET learning-path/:learningPathId/navigation-overview : Gets the navigation overview for the learning path.
+     *
+     * @param learningPathId the id of the learning path for which the navigation overview should be fetched
+     * @return the ResponseEntity with status 200 (OK) and with body the navigation overview
+     */
+    @GetMapping("learning-path/{learningPathId}/navigation-overview")
+    @FeatureToggle(Feature.LearningPaths)
+    @EnforceAtLeastStudent
+    public ResponseEntity<LearningPathNavigationOverviewDto> getLearningPathNavigationOverview(@PathVariable @Valid long learningPathId) {
+        log.debug("REST request to get navigation overview for learning path with id: {}", learningPathId);
+        return ResponseEntity.ok(learningPathService.getLearningPathNavigationOverview(learningPathId));
+    }
+
     private ResponseEntity<NgxLearningPathDTO> getLearningPathNgx(@PathVariable long learningPathId, NgxRequestType type) {
         LearningPath learningPath = learningPathService.findWithCompetenciesAndLearningObjectsAndCompletedUsersById(learningPathId);
         Course course = courseRepository.findByIdElseThrow(learningPath.getCourse().getId());
         courseService.checkLearningPathsEnabledElseThrow(course);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (authorizationCheckService.isAtLeastStudentInCourse(course, user) && !authorizationCheckService.isAtLeastInstructorInCourse(course, user)) {
-            if (!user.getId().equals(learningPath.getUser().getId())) {
-                throw new AccessForbiddenException("You are not allowed to access another users learning path.");
-            }
-        }
-        else if (!authorizationCheckService.isAtLeastInstructorInCourse(course, user)) {
-            throw new AccessForbiddenException("You are not allowed to access another users learning path.");
-        }
+
+        checkLearningPathAccessElseThrow(course, learningPath, user);
 
         NgxLearningPathDTO ngxLearningPathDTO = switch (type) {
             case GRAPH -> learningPathService.generateNgxGraphRepresentation(learningPath);
@@ -266,9 +320,7 @@ public class LearningPathResource {
         final var learningPath = learningPathRepository.findWithEagerCourseAndCompetenciesByIdElseThrow(learningPathId);
         final var user = userRepository.getUserWithGroupsAndAuthorities();
 
-        if (!user.getId().equals(learningPath.getUser().getId()) && !authorizationCheckService.isAtLeastInstructorInCourse(learningPath.getCourse(), user)) {
-            throw new AccessForbiddenException("You are not authorized to access other students competency progress.");
-        }
+        checkLearningPathAccessElseThrow(learningPath.getCourse(), learningPath, user);
 
         // update progress and construct DTOs
         final var progressDTOs = learningPath.getCompetencies().stream().map(competency -> {
@@ -276,6 +328,12 @@ public class LearningPathResource {
             return new CompetencyProgressForLearningPathDTO(competency.getId(), competency.getMasteryThreshold(), progress.getProgress(), progress.getConfidence());
         }).collect(Collectors.toSet());
         return ResponseEntity.ok(progressDTOs);
+    }
+
+    private void checkLearningPathAccessElseThrow(Course course, LearningPath learningPath, User user) {
+        if (!user.equals(learningPath.getUser()) && !authorizationCheckService.isAtLeastInstructorInCourse(course, user)) {
+            throw new AccessForbiddenException("You are not allowed to access another user's learning path.");
+        }
     }
 
     /**

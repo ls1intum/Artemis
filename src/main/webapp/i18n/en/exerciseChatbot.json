@@ -1,7 +1,7 @@
 {
     "artemisApp": {
         "exerciseChatbot": {
-            "popUpMessage": "By choosing to continue, you agree that your interactions with Iris will be processed by Microsoft and OpenAI, with data transfer occurring outside of our university data center. If you do not agree with these terms, please select 'Decline'. To acknowledge this and begin your chat with IrisBot, press 'Accept'.",
+            "popUpMessage": "By choosing to continue, you agree that your interactions with Iris and required context data, such as your code, will be processed by Microsoft and OpenAI, with data processing occurring outside of our university data center.",
             "inputMessage": "Write a message...",
             "accept": "Accept",
             "decline": "Decline",
@@ -27,7 +27,6 @@
             "text4_4": "<b>Full Screen Feature:</b> You can expand the widget to full screen mode by clicking on the full screen button (top right corner of the widget).",
             "text4_5": "<b>Clear chat history:</b> You can clear your chat history by clicking on the trash can button (top right corner of the widget). Thereby, all previous messages are deleted and you can start a new conversation.",
             "supportText": "(If you have any problems using the widget or messaging Iris, please create an issue on GitHub: https://github.com/ls1intum/Artemis)",
-            "unreadMessages": "Unread messages",
             "clearSession": {
                 "title": "Clear chat history",
                 "text": "Are you sure you want to clear the chat history?",

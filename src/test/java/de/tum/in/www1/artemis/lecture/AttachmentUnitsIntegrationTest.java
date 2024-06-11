@@ -26,6 +26,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.ResourceUtils;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.Lecture;
@@ -181,6 +182,19 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getAttachmentUnitsData_asInstructor_realSlides() throws Exception {
+        var realFile = readFromFile();
+        String filename = manualFileUpload(lecture1.getId(), realFile);
+
+        LectureUnitInformationDTO lectureUnitSplitInfo = request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/data/" + filename, HttpStatus.OK,
+                LectureUnitInformationDTO.class);
+
+        assertThat(lectureUnitSplitInfo.units()).hasSize(4);
+        assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(102);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getAttachmentUnitsData_asInstructor_shouldThrowError() throws Exception {
         var lectureFile = createLectureFile(false);
         String filename = manualFileUpload(lecture1.getId(), lectureFile);
@@ -317,73 +331,70 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
      * @return MockMultipartFile lecture file
      */
     private MockMultipartFile createLectureFile(boolean shouldBePDF) throws IOException {
-
         var font = new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN);
-
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument document = new PDDocument()) {
             if (shouldBePDF) {
                 for (int i = 1; i <= 20; i++) {
                     document.addPage(new PDPage());
                     PDPageContentStream contentStream = new PDPageContentStream(document, document.getPage(i - 1));
 
-                    if (i == 6) {
-                        contentStream.beginText();
-                        contentStream.setFont(font, 12);
-                        contentStream.newLineAtOffset(25, -15);
-                        contentStream.showText("itp20..");
-                        contentStream.newLineAtOffset(25, 500);
-                        contentStream.showText("Break");
-                        contentStream.newLineAtOffset(0, -15);
-                        contentStream.showText("Have fun");
-                        contentStream.endText();
-                        contentStream.close();
-                        continue;
+                    switch (i) {
+                        case 6 -> generateBreakSlide(contentStream, font);
+                        case 7 -> generateOutlineSlide(contentStream, font, "Example solution");
+                        case 2, 8 -> generateOutlineSlide(contentStream, font, "Outline");
+                        default -> generateContentSlide(contentStream, font);
                     }
-
-                    if (i == 7) {
-                        contentStream.beginText();
-                        contentStream.setFont(font, 12);
-                        contentStream.newLineAtOffset(25, -15);
-                        contentStream.showText("itp20..");
-                        contentStream.newLineAtOffset(25, 500);
-                        contentStream.showText("Example solution");
-                        contentStream.newLineAtOffset(0, -15);
-                        contentStream.showText("First Unit");
-                        contentStream.newLineAtOffset(0, -15);
-                        contentStream.showText("Second Unit");
-                        contentStream.endText();
-                        contentStream.close();
-                        continue;
-                    }
-
-                    if (i == 2 || i == 8) {
-                        contentStream.beginText();
-                        contentStream.setFont(font, 12);
-                        contentStream.newLineAtOffset(25, -15);
-                        contentStream.showText("itp20..");
-                        contentStream.newLineAtOffset(25, 500);
-                        contentStream.showText("Outline");
-                        contentStream.newLineAtOffset(0, -15);
-                        contentStream.showText("First Unit");
-                        contentStream.newLineAtOffset(0, -15);
-                        contentStream.showText("Second Unit");
-                        contentStream.endText();
-                        contentStream.close();
-                        continue;
-                    }
-                    contentStream.beginText();
-                    contentStream.setFont(font, 12);
-                    contentStream.newLineAtOffset(25, 500);
-                    String text = "This is the sample document";
-                    contentStream.showText(text);
-                    contentStream.endText();
-                    contentStream.close();
                 }
                 document.save(outputStream);
                 document.close();
                 return new MockMultipartFile("file", "lectureFile.pdf", "application/json", outputStream.toByteArray());
             }
             return new MockMultipartFile("file", "lectureFileWord.doc", "application/msword", outputStream.toByteArray());
+        }
+    }
+
+    private void generateBreakSlide(PDPageContentStream contentStream, PDType1Font font) throws IOException {
+        contentStream.beginText();
+        contentStream.setFont(font, 12);
+        contentStream.newLineAtOffset(25, -15);
+        contentStream.showText("itp20..");
+        contentStream.newLineAtOffset(25, 500);
+        contentStream.showText("Break");
+        contentStream.newLineAtOffset(0, -15);
+        contentStream.showText("Have fun");
+        contentStream.endText();
+        contentStream.close();
+    }
+
+    private void generateOutlineSlide(PDPageContentStream contentStream, PDType1Font font, String header) throws IOException {
+        contentStream.beginText();
+        contentStream.setFont(font, 12);
+        contentStream.newLineAtOffset(25, -15);
+        contentStream.showText("itp20..");
+        contentStream.newLineAtOffset(25, 500);
+        contentStream.showText(header);
+        contentStream.newLineAtOffset(0, -15);
+        contentStream.showText("First Unit");
+        contentStream.newLineAtOffset(0, -15);
+        contentStream.showText("Second Unit");
+        contentStream.endText();
+        contentStream.close();
+    }
+
+    private void generateContentSlide(PDPageContentStream contentStream, PDType1Font font) throws IOException {
+        contentStream.beginText();
+        contentStream.setFont(font, 12);
+        contentStream.newLineAtOffset(25, 500);
+        String text = "This is the sample document";
+        contentStream.showText(text);
+        contentStream.endText();
+        contentStream.close();
+    }
+
+    private MockMultipartFile readFromFile() throws IOException {
+        var file = ResourceUtils.getFile("classpath:test-data/attachment/Infun.pdf");
+        try (var inputStream = Files.newInputStream(file.toPath())) {
+            return new MockMultipartFile("file", "lectureFile.pdf", "application/json", inputStream.readAllBytes());
         }
     }
 
