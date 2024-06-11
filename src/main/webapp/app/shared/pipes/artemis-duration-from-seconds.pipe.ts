@@ -27,7 +27,7 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform {
      * @param seconds the number of seconds that are turned into a human-readable format
      * @param short allows the format to be shortened
      */
-    transform(seconds: number, short = false): string {
+    transform(seconds: number, short = false, isExam = false): string {
         seconds = Math.max(0, seconds ?? 0);
 
         const duration = this.secondsToDuration(seconds);
@@ -35,7 +35,7 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform {
         if (short) {
             return ArtemisDurationFromSecondsPipe.handleShortFormat(duration);
         } else {
-            return ArtemisDurationFromSecondsPipe.handleLongFormat(duration);
+            return ArtemisDurationFromSecondsPipe.handleLongFormat(duration, isExam);
         }
     }
 
@@ -84,23 +84,24 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform {
     /**
      * Converts the given duration into a human-readable long format as required by {@link transform}.
      * @param duration that should be converted into a human-readable format.
+     * @param isExam determines if this format is used during the exam, so suffixes like 'd,h,min,s' are not used.
      */
-    private static handleLongFormat(duration: Duration): string {
+    private static handleLongFormat(duration: Duration, isExam = false): string {
         const result = [];
 
-        if (duration.days > 0) {
-            result.push(`${duration.days}d`);
-        }
-        if (duration.hours > 0) {
-            result.push(`${duration.hours}h`);
-        }
-        if (duration.minutes > 0) {
-            result.push(`${duration.minutes}min`);
-        }
-        if (duration.seconds > 0 || result.length === 0) {
-            result.push(`${duration.seconds}s`);
+        const timeUnits = [
+            { value: duration.days, suffix: isExam ? ':' : 'd' },
+            { value: duration.hours, suffix: isExam ? ':' : 'h' },
+            { value: duration.minutes, suffix: isExam ? ':' : 'min' },
+            { value: duration.seconds, suffix: isExam ? '' : 's' },
+        ];
+
+        for (const unit of timeUnits) {
+            if (unit.value > 0 || (unit.suffix === (isExam ? ':' : 's') && result.length === 0)) {
+                result.push(`${unit.value}${unit.suffix}`);
+            }
         }
 
-        return result.join(' ');
+        return result.join(isExam ? '' : ' ');
     }
 }
