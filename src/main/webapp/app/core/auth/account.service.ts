@@ -344,7 +344,7 @@ export class AccountService implements IAccountService {
      */
     deleteSshPublicKey(): Observable<void> {
         if (this.userIdentity) {
-            this.userIdentity.sshPublicKey = '';
+            this.userIdentity.sshPublicKey = undefined;
         }
         return this.http.delete<void>('api/users/sshpublickey');
     }
