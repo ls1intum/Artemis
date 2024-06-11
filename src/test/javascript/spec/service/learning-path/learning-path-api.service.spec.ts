@@ -9,6 +9,9 @@ describe('LearningPathApiService', () => {
 
     const baseUrl = 'api';
 
+    const learningPathId = 1;
+    const courseId = 2;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
@@ -32,7 +35,6 @@ describe('LearningPathApiService', () => {
     }));
 
     it('should get learning path navigation', waitForAsync(async () => {
-        const learningPathId = 1;
         const learningObjectId = 2;
 
         const learningObjectType = LearningObjectType.LECTURE;
@@ -45,18 +47,20 @@ describe('LearningPathApiService', () => {
     }));
 
     it('should get learning path navigation overview', waitForAsync(async () => {
-        const learningPathId = 1;
-
         const methodCall = learningPathApiService.getLearningPathNavigationOverview(learningPathId);
         httpClient.expectOne({ method: 'GET', url: `${baseUrl}/learning-path/${learningPathId}/navigation-overview` });
         await methodCall;
     }));
 
     it('should generate learning path', waitForAsync(async () => {
-        const courseId = 1;
-
         const methodCall = learningPathApiService.generateLearningPath(courseId);
         httpClient.expectOne({ method: 'POST', url: `${baseUrl}/courses/${courseId}/learning-path` });
+        await methodCall;
+    }));
+
+    it('should get learning path competency graph', waitForAsync(async () => {
+        const methodCall = learningPathApiService.getLearningPathCompetencyGraph(learningPathId);
+        httpClient.expectOne({ method: 'GET', url: `${baseUrl}/learning-path/${learningPathId}/competency-graph` });
         await methodCall;
     }));
 });
