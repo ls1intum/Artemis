@@ -5,6 +5,9 @@ import java.time.ZonedDateTime;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 
+/**
+ * A competency that students are expected to have mastered before participating in a course.
+ */
 @Entity
 @DiscriminatorValue("P")
 public class Prerequisite extends CourseCompetency {
