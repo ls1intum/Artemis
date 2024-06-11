@@ -374,8 +374,9 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     /**
      * Saves the picture of a drag item without saving the drag item itself
      *
-     * @param dragItem the drag item
-     * @param files    all provided files
+     * @param dragItem   the drag item
+     * @param files      all provided files
+     * @param questionId id of the drag and drop question
      */
     public void saveDndDragItemPicture(DragItem dragItem, Map<String, MultipartFile> files, Long questionId) throws IOException {
         MultipartFile file = files.get(dragItem.getPictureFilePath());
