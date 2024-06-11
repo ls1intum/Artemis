@@ -24,16 +24,10 @@ describe('Lti13ExerciseLaunchComponent', () => {
     } as unknown as Router;
     const navigateSpy = jest.spyOn(mockRouter, 'navigate');
 
-    const replace = window.location.replace;
-
     beforeAll(() => {
-        Object.defineProperty(window, 'location', {
-            value: { replace: jest.fn() },
-        });
-    });
-
-    afterAll(() => {
-        window.location.replace = replace;
+        // @ts-ignore
+        delete window.location;
+        window.location = { replace: jest.fn() } as any;
     });
 
     beforeEach(() => {
