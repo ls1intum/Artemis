@@ -25,8 +25,8 @@ Import a Standardized Competency Catalog
 ----------------------------------------
 |admin-import|
 
-.. |admin-import| image:: admin/admin-import-standardized.png
+.. |admin-import| image:: admin/import-standardized-competency-catalog.png
     :width: 1000
 
-.. |admin-manage| image:: admin/admin-manage-standardized.png
+.. |admin-manage| image:: admin/standardized-competency-management.png
     :width: 1000
