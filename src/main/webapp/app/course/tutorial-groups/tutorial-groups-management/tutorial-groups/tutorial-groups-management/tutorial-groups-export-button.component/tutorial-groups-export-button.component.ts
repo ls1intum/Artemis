@@ -95,7 +95,7 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
                 modal.close();
             },
             error: () => {
-                alert('Failed to export CSV');
+                this.alertService.error('artemisApp.tutorialGroupExportDialog.failedCSV');
                 this.resetSelections();
                 modal.dismiss('error');
             },
@@ -116,7 +116,7 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
                 modal.close();
             },
             () => {
-                alert('Failed to export JSON');
+                this.alertService.error('artemisApp.tutorialGroupExportDialog.failedJSON');
                 this.resetSelections();
                 modal.dismiss('error');
             },

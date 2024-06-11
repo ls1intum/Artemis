@@ -651,10 +651,8 @@ public class TutorialGroupService {
                 writeTutorialGroupRow(printer, tutorialGroup, fields, null);
                 if (includeStudents) {
                     Set<User> students = getStudentsRegisteredForTutorial(tutorialGroup.getRegistrations());
-                    if (!students.isEmpty()) {
-                        for (User student : students) {
-                            writeTutorialGroupRow(printer, tutorialGroup, fields, student);
-                        }
+                    for (User student : students) {
+                        writeTutorialGroupRow(printer, tutorialGroup, fields, student);
                     }
                 }
             }

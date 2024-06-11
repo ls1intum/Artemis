@@ -550,6 +550,7 @@ public class TutorialGroupResource {
     @EnforceAtLeastInstructorInCourse
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<byte[]> exportTutorialGroupsToCSV(@PathVariable Long courseId, @RequestParam List<String> fields) {
+        log.debug("REST request to export TutorialGroups to CSV for course: {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         String csvContent = "";
