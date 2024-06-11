@@ -21,7 +21,7 @@ export class CompetencyNodeComponent {
     private readonly nodeHeight = 45.59;
 
     readonly competencyNode = input.required<CompetencyGraphNodeDto>();
-    readonly mastery = computed(() => this.competencyNode().mastery);
+    readonly mastery = computed(() => Math.round(this.competencyNode().mastery));
     private readonly element: ElementRef = inject(ElementRef);
 
     readonly onSizeSet = output<SizeUpdate>();
