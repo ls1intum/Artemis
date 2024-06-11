@@ -1,5 +1,7 @@
+-- Update quiz_question table for multiple-choice questions.
 UPDATE quiz_question q
 SET q.content = (
+    -- Select JSON array of answer options and their details.
     SELECT JSON_ARRAYAGG(
                JSON_OBJECT(
                    'id', ao.id,
@@ -13,13 +15,16 @@ SET q.content = (
     FROM answer_option ao
     WHERE ao.question_id = q.id
 )
-WHERE q.discriminator = 'MC';
+WHERE q.discriminator = 'MC'; -- Only update multiple-choice questions.
 
 
+-- Update quiz_question table for short answer questions.
 UPDATE quiz_question q
 SET q.content = (
+    -- Select JSON object containing spots, solutions, and correct mappings.
     SELECT JSON_OBJECT(
                'spots', (
+            -- Select JSON array of short answer spots and their details.
             SELECT JSON_ARRAYAGG(
                        JSON_OBJECT(
                            'id', sas.id,
@@ -32,6 +37,7 @@ SET q.content = (
             WHERE sas.question_id = q.id AND q.discriminator = 'SA'
         ),
                'solutions', (
+                   -- Select JSON array of short answer solutions and their details.
                    SELECT JSON_ARRAYAGG(
                               JSON_OBJECT(
                                   'id', saso.id,
@@ -43,10 +49,12 @@ SET q.content = (
                    WHERE saso.question_id = q.id AND q.discriminator = 'SA'
                ),
                'correctMappings', (
+                   -- Select JSON array of correct mappings between spots and solutions.
                    SELECT JSON_ARRAYAGG(
                               JSON_OBJECT(
                                   'id', sam.id,
                                   'spot', (
+                                      -- Select JSON object for spot details.
                                       SELECT JSON_OBJECT(
                                                  'id', sas.id,
                                                  'invalid', sas.invalid,
@@ -58,6 +66,7 @@ SET q.content = (
                                   ),
                                   'invalid', sam.invalid,
                                   'solution', (
+                                      -- Select JSON object for solution details.
                                       SELECT JSON_OBJECT(
                                                  'id', saso.id,
                                                  'invalid', saso.invalid,
@@ -75,13 +84,16 @@ SET q.content = (
                )
            )
 )
-WHERE q.discriminator = 'SA';
+WHERE q.discriminator = 'SA'; -- Only update short answer questions.
 
 
+-- Update quiz_question table for drag-and-drop questions.
 UPDATE quiz_question q
 SET q.content = (
+    -- Select JSON object containing drop locations, drag items, and correct mappings.
     SELECT JSON_OBJECT(
                'dropLocations', (
+            -- Select JSON array of drop locations and their details.
             SELECT JSON_ARRAYAGG(
                        JSON_OBJECT(
                            'id', dl.id,
@@ -95,6 +107,7 @@ SET q.content = (
             WHERE dl.question_id = q.id AND q.discriminator = 'DD'
         ),
                'dragItems', (
+                   -- Select JSON array of drag items and their details.
                    SELECT JSON_ARRAYAGG(
                               JSON_OBJECT(
                                   'id', di.id,
@@ -107,10 +120,12 @@ SET q.content = (
                    WHERE di.question_id = q.id AND q.discriminator = 'DD'
                ),
                'correctMappings', (
+                   -- Select JSON array of correct mappings between drag items and drop locations.
                    SELECT JSON_ARRAYAGG(
                               JSON_OBJECT(
                                   'id', ddm.id,
                                   'dragItem', (
+                                      -- Select JSON object for drag item details.
                                       SELECT JSON_OBJECT(
                                                  'id', di.id,
                                                  'invalid', di.invalid,
@@ -122,6 +137,7 @@ SET q.content = (
                                   ),
                                   'invalid', ddm.invalid,
                                   'dropLocation', (
+                                      -- Select JSON object for drop location details.
                                       SELECT JSON_OBJECT(
                                                  'id', dl.id,
                                                  'posX', dl.pos_x,
@@ -141,11 +157,13 @@ SET q.content = (
                )
            )
 )
-WHERE q.discriminator = 'DD';
+WHERE q.discriminator = 'DD'; -- Only update drag-and-drop questions.
 
 
+-- Update submitted_answer table for multiple-choice questions.
 UPDATE submitted_answer s
 SET s.selection = (
+    -- Select JSON array of selected answer options and their details.
     SELECT JSON_ARRAYAGG(
                JSON_OBJECT(
                    'id', ao.id,
@@ -158,19 +176,21 @@ SET s.selection = (
            )
     FROM answer_option ao
     WHERE ao.question_id = s.quiz_question_id
-
 )
-WHERE s.discriminator = 'MC';
+WHERE s.discriminator = 'MC'; -- Only update multiple-choice answers.
 
 
+-- Update submitted_answer table for short answer questions.
 UPDATE submitted_answer s
 SET s.selection = (
+    -- Select JSON array of submitted short answer texts and their details.
     SELECT JSON_ARRAYAGG(
                JSON_OBJECT(
                    'id', sast.id,
                    'text', sast.text,
                    'isCorrect', sast.is_correct,
                    'spot', (
+                       -- Select JSON object for spot details.
                        SELECT JSON_OBJECT(
                                   'id', sas.id,
                                   'invalid', sas.invalid,
@@ -185,11 +205,13 @@ SET s.selection = (
     FROM short_answer_submitted_text sast
     WHERE sast.submitted_answer_id = s.id
 )
-WHERE s.discriminator = 'SA';
+WHERE s.discriminator = 'SA'; -- Only update short answer answers.
 
 
+-- Update submitted_answer table for drag-and-drop questions.
 UPDATE submitted_answer s
 SET s.selection = (
+    -- Select JSON array of submitted drag-and-drop mappings and their details.
     SELECT JSON_ARRAYAGG(
                JSON_OBJECT(
                    'id', ddm.id,
@@ -197,6 +219,7 @@ SET s.selection = (
                    'dropLocationIndex', ddm.drop_location_index,
                    'invalid', ddm.invalid,
                    'dragItem', (
+                       -- Select JSON object for drag item details.
                        SELECT JSON_OBJECT(
                                   'id', di.id,
                                   'invalid', di.invalid,
@@ -207,6 +230,7 @@ SET s.selection = (
                        WHERE di.id = ddm.drag_item_id
                    ),
                    'dropLocation', (
+                       -- Select JSON object for drop location details.
                        SELECT JSON_OBJECT(
                                   'id', dl.id,
                                   'posX', dl.pos_x,
@@ -222,20 +246,24 @@ SET s.selection = (
     FROM drag_and_drop_mapping ddm
     WHERE ddm.submitted_answer_id = s.id
 )
-WHERE s.discriminator = 'DD';
+WHERE s.discriminator = 'DD'; -- Only update drag-and-drop answers.
 
 
+-- Update quiz_question table for multiple-choice questions with statistics.
 UPDATE quiz_question q
 SET q.statistics = (
+    -- Select JSON object containing question type, answer counters, and participant data.
     SELECT JSON_OBJECT(
                'type', 'multiple-choice',
                'answerCounters', (
+                   -- Select JSON array of answer counters with detailed answers.
                    SELECT JSON_ARRAYAGG(
                               JSON_OBJECT(
                                   'id', qsc.id,
                                   'ratedCounter', qsc.rated_counter,
                                   'unratedCounter', qsc.un_rated_counter,
                                   'answer', (
+                                      -- Select JSON object for detailed answer.
                                       SELECT JSON_OBJECT(
                                                  'id', ao.id,
                                                  'text', ao.text,
@@ -260,20 +288,24 @@ SET q.statistics = (
     FROM quiz_statistic qs
     WHERE qs.id = q.quiz_question_statistic_id AND q.discriminator = 'MC'
 )
-WHERE q.discriminator = 'MC';
+WHERE q.discriminator = 'MC'; -- Only update multiple-choice questions.
 
 
+-- Update quiz_question table for short answer questions with statistics.
 UPDATE quiz_question q
 SET q.statistics = (
+    -- Select JSON object containing question type, short answer spot counters, and participant data.
     SELECT JSON_OBJECT(
                'type', 'short-answer',
                'shortAnswerSpotCounters', (
+                   -- Select JSON array of short answer spot counters with detailed spots.
                    SELECT JSON_ARRAYAGG(
                               JSON_OBJECT(
                                   'id', qsc.id,
                                   'ratedCounter', qsc.rated_counter,
                                   'unratedCounter', qsc.un_rated_counter,
                                   'spot', (
+                                      -- Select JSON object for detailed spot.
                                       SELECT JSON_OBJECT(
                                                  'id', sas.id,
                                                  'invalid', sas.invalid,
@@ -296,20 +328,24 @@ SET q.statistics = (
     FROM quiz_statistic qs
     WHERE qs.id = q.quiz_question_statistic_id AND q.discriminator = 'SA'
 )
-WHERE q.discriminator = 'SA';
+WHERE q.discriminator = 'SA'; -- Only update short answer questions.
 
 
+-- Update quiz_question table for drag-and-drop questions with statistics.
 UPDATE quiz_question q
 SET q.statistics = (
+    -- Select JSON object containing question type, drop location counters, and participant data.
     SELECT JSON_OBJECT(
                'type', 'drag-and-drop',
                'dropLocationCounters', (
+                   -- Select JSON array of drop location counters with detailed locations.
                    SELECT JSON_ARRAYAGG(
                               JSON_OBJECT(
                                   'id', qsc.id,
                                   'ratedCounter', qsc.rated_counter,
                                   'unratedCounter', qsc.un_rated_counter,
                                   'dropLocation', (
+                                      -- Select JSON object for detailed drop location.
                                       SELECT JSON_OBJECT(
                                                  'id', dl.id,
                                                  'posX', dl.pos_x,
@@ -333,13 +369,16 @@ SET q.statistics = (
     FROM quiz_statistic qs
     WHERE qs.id = q.quiz_question_statistic_id AND q.discriminator = 'DD'
 )
-WHERE q.discriminator = 'DD';
+WHERE q.discriminator = 'DD'; -- Only update drag-and-drop questions.
 
 
+-- Update exercise table for quiz point statistics.
 UPDATE exercise q
 SET q.statistics = (
+    -- Select JSON object containing point counters and participant data.
     SELECT JSON_OBJECT(
                'pointCounters', (
+            -- Select JSON array of point counters with detailed points.
             SELECT JSON_ARRAYAGG(
                        JSON_OBJECT(
                            'id', qsc.id,
@@ -359,6 +398,7 @@ SET q.statistics = (
       AND qs.discriminator = 'QP'
 )
 WHERE EXISTS (
+    -- Ensure corresponding quiz statistics exist for the exercise.
     SELECT *
     FROM quiz_statistic qs
     WHERE qs.id = q.quiz_point_statistic_id
