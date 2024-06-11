@@ -9,7 +9,7 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Exercise } from 'app/entities/exercise.model';
-import { PROFILE_LOCALVC } from 'app/app.constants';
+import { PROFILE_GITLAB, PROFILE_LOCALVC } from 'app/app.constants';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { faDownload, faExternalLink } from '@fortawesome/free-solid-svg-icons';
 
@@ -40,6 +40,8 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     versionControlUrl: string;
     versionControlAccessTokenRequired?: boolean;
     localVCEnabled = false;
+    gitlabVCEnabled = false;
+
     user: User;
     cloneHeadline: string;
     wasCopied = false;
@@ -74,8 +76,11 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
             if (profileInfo.versionControlUrl) {
                 this.versionControlUrl = profileInfo.versionControlUrl;
             }
+
             this.versionControlAccessTokenRequired = profileInfo.versionControlAccessToken;
             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
+            this.gitlabVCEnabled = profileInfo.activeProfiles.includes(PROFILE_GITLAB);
+
             if (this.localVCEnabled) {
                 this.setupSshKeysUrl = window.location.origin + '/user-settings/sshSettings';
             }
