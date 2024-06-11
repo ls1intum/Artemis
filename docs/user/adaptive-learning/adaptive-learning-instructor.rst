@@ -5,8 +5,14 @@ Manage Adaptive Learning (Instructor)
     :local:
     :depth: 2
 
-TODO: when using competencies for the first time :)
-* generate competencies or use the standardized competency catalog
+.. note::
+
+    When introducing adaptive learning into a course for the first time, you can quickly create a competency model by:
+
+    - :ref:`Generating competencies using Iris<_import_competencies>`
+    - :ref:`Importing standardized competencies into your course<instructor_import_standardized_competencies>`
+
+    (Given that these features are enabled on your Artemis instance)
 
 Competencies
 ------------
@@ -65,6 +71,8 @@ Instructors have three ways to import competencies: Import all competencies of a
   Finally, instructors can select if they also want to import the relations between the imported competencies.
 
 |instructor-import-competencies|
+
+.. _instructor_import_standardized_competencies:
 
 **3. Import Standardized Competencies**
 
