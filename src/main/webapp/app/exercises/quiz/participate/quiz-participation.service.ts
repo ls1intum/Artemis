@@ -30,10 +30,10 @@ export class QuizParticipationService {
             .pipe(map((res: ResultResponseType) => this.submissionService.convertResponse(res)));
     }
 
-    submitForLiveMode(quizSubmission: QuizSubmission, exerciseId: number): Observable<EntityResponseType> {
+    saveOrSubmitForLiveMode(quizSubmission: QuizSubmission, exerciseId: number, submit: boolean): Observable<EntityResponseType> {
         const copy = this.submissionService.convert(quizSubmission);
         return this.http
-            .post<QuizSubmission>(`api/exercises/${exerciseId}/submissions/live`, copy, { observe: 'response' })
+            .post<QuizSubmission>(`api/exercises/${exerciseId}/submissions/live`, copy, { observe: 'response', params: { submit } })
             .pipe(map((res: EntityResponseType) => this.submissionService.convertResponse(res)));
     }
 }
