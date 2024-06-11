@@ -100,11 +100,12 @@ public class PyrisConnectorService {
         }
         catch (HttpStatusCodeException e) {
             log.error("Failed to send lectures to Pyris", e);
+            throw toIrisException(e);
             // TODO : add error ingestion UI.
         }
         catch (RestClientException | IllegalArgumentException e) {
             log.error("Failed to send lectures to Pyris", e);
-            throw new PyrisConnectorException("Could not fetch response from Iris");
+            throw new PyrisConnectorException("Could not fetch response from Pyris");
         }
     }
 

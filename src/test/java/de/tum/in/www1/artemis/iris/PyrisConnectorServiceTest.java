@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.stream.Stream;
@@ -45,10 +44,9 @@ class PyrisConnectorServiceTest extends AbstractIrisIntegrationTest {
 
     @ParameterizedTest
     @MethodSource("irisExceptions")
-    void testExceptionIngestionV2(int httpStatus) {
+    void testExceptionIngestionV2(int httpStatus, Class<?> exceptionClass) {
         irisRequestMockProvider.mockIngestionWebhookRunError(httpStatus);
-
-        assertThatNoException().isThrownBy(() -> pyrisConnectorService.executeLectureWebhook("fullIngestion", null));
+        assertThatThrownBy(() -> pyrisConnectorService.executeLectureWebhook("fullIngestion", null)).isInstanceOf(exceptionClass);
     }
 
     @Test
