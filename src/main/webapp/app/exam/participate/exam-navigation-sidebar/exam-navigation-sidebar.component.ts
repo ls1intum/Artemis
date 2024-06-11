@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { ArtemisSidebarModule } from 'app/shared/sidebar/sidebar.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { SidebarCardDirective } from 'app/shared/sidebar/sidebar-card.directive';
@@ -23,7 +23,7 @@ import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.servic
 import { CommitState, DomainChange, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faCheck, faFileLines, faHourglassHalf, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faChevronRight, faFileLines, faHourglass, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exam-navigation-sidebar',
@@ -72,6 +72,8 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
 
     icon: IconProp;
     overviewIcon: IconProp = faFileLines;
+
+    faChevronRight = faChevronRight;
 
     constructor(
         private profileService: ProfileService,
@@ -235,7 +237,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
         // start with a yellow status (edit icon)
         // TODO: it's a bit weird, that it works that multiple icons (one per exercise) are hold in the same instance variable of the component
         //  we should definitely refactor this and e.g. use the same ExamExerciseOverviewItem as in exam-exercise-overview-page.component.ts !
-        this.icon = faHourglassHalf;
+        this.icon = faHourglass;
         const exercise = this.exercises[exerciseIndex];
         const submission = ExamParticipationService.getSubmissionForExercise(exercise);
         if (!submission) {
@@ -270,5 +272,15 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
      */
     handInEarly() {
         this.onExamHandInEarly.emit();
+    }
+
+    toggleCollapseState() {
+        this.isCollapsed = !this.isCollapsed;
+    }
+
+    @HostListener('window:keydown.Control.m', ['$event'])
+    onKeyDownControlM(event: KeyboardEvent) {
+        event.preventDefault();
+        this.toggleCollapseState();
     }
 }
