@@ -9,7 +9,7 @@ Manage Adaptive Learning (Instructor)
 
     When introducing adaptive learning into a course for the first time, you can quickly create a competency model by:
 
-    - :ref:`Generating competencies using Iris<_import_competencies>`
+    - :ref:`Generating competencies using Iris<generate_competencies>`
     - :ref:`Importing standardized competencies into your course<instructor_import_standardized_competencies>`
 
     (Given that these features are enabled on your Artemis instance)
