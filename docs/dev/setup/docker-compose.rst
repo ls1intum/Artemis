@@ -241,14 +241,18 @@ The ``docker-compose.yml`` file could look like this for an Artemis, Jenkins and
           - TZ=Europe/Berlin
         labels:
           - "traefik.enable=true"
+          - "traefik.http.routers.api.entrypoints=websecure"
+          - "traefik.http.routers.api.tls=true"
+            # Manage Access to the Traefik Dashboard. Replace <<USERNAME>> and <<PASSWORD_HASH>> with your credentials.
+            # The dashboard will be available at https://<<ARTEMIS_HOST_NAME>>/dashboard/
+            # Artemis will be available at another domain: https://<<ARTEMIS_SERVER_NAME>>/
+            # If you don't want to use the dashboard, you can remove the following lines and disable the dashboard in the traefik.toml file.
           - "traefik.http.routers.api.rule=Host(`${ARTEMIS_HOST_NAME}`) && (PathPrefix(`/api/`) || PathPrefix(`/dashboard/`)) || Path(`/dashboard`) || Path(`/api`)"
           - "traefik.http.middlewares.api-redirect.redirectregex.regex=^https?://([^/]+)(/[^/]+)$"
           - "traefik.http.middlewares.api-redirect.redirectregex.replacement=https://$$1$$2/"
           - "traefik.http.routers.api.service=api@internal"
           - "traefik.http.routers.api.middlewares=api-redirect,api-auth"
           - "traefik.http.middlewares.api-auth.basicauth.users=<<USERNAME>>:<<PASSWORD_HASH>>"
-          - "traefik.http.routers.api.entrypoints=websecure"
-          - "traefik.http.routers.api.tls=true"
 
       jenkins:
         image: jenkins/jenkins:lts
