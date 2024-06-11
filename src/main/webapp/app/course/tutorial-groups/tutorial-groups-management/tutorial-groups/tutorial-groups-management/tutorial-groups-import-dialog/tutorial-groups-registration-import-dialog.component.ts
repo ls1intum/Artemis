@@ -34,10 +34,6 @@ const POSSIBLE_CAPACITY_HEADERS = ['capacity'];
 const POSSIBLE_LANGUAGE_HEADERS = ['language'];
 const POSSIBLE_ADDITIONAL_INFO_HEADERS = ['additionalinformation'];
 const POSSIBLE_IS_ONLINE_HEADERS = ['isonline'];
-const POSSIBLE_DAY_OF_WEEK_HEADERS = ['dayOfWeek'];
-const POSSIBLE_START_TIME_HEADERS = ['startTime'];
-const POSSIBLE_END_TIME_HEADERS = ['endTime'];
-const POSSIBLE_LOCATION_HEADERS = ['location'];
 
 type filterValues = 'all' | 'onlyImported' | 'onlyNotImported';
 
@@ -229,10 +225,6 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
         const usedLanguageHeader = parsedHeaders.find((value) => POSSIBLE_LANGUAGE_HEADERS.includes(value)) || '';
         const usedAdditionalInfoHeader = parsedHeaders.find((value) => POSSIBLE_ADDITIONAL_INFO_HEADERS.includes(value)) || '';
         const usedIsOnlineHeader = parsedHeaders.find((value) => POSSIBLE_IS_ONLINE_HEADERS.includes(value)) || '';
-        const usedDayOfWeekHeader = parsedHeaders.find((value) => POSSIBLE_DAY_OF_WEEK_HEADERS.includes(value)) || '';
-        const usedStartTimeHeader = parsedHeaders.find((value) => POSSIBLE_START_TIME_HEADERS.includes(value)) || '';
-        const usedEndTimeHeader = parsedHeaders.find((value) => POSSIBLE_END_TIME_HEADERS.includes(value)) || '';
-        const usedLocationHeader = parsedHeaders.find((value) => POSSIBLE_LOCATION_HEADERS.includes(value)) || '';
 
         // if status header is used filter out those rows that do not have a fixed place
         const statusColumn = cleanString(this.statusHeaderControl?.value);
@@ -256,10 +248,6 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
                 registration.language = csvRow[usedLanguageHeader]?.trim() || '';
                 registration.additionalInformation = csvRow[usedAdditionalInfoHeader]?.trim() || '';
                 registration.isOnline = csvRow[usedIsOnlineHeader]?.trim().toLowerCase() || '';
-                registration.dayOfWeek = csvRow[usedDayOfWeekHeader] ? parseInt(csvRow[usedDayOfWeekHeader], 10) : undefined;
-                registration.startTime = csvRow[usedStartTimeHeader]?.trim() || '';
-                registration.endTime = csvRow[usedEndTimeHeader]?.trim() || '';
-                registration.location = csvRow[usedLocationHeader]?.trim() || '';
 
                 return registration;
             })
@@ -303,6 +291,9 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
                 break;
             case 3:
                 csvContent = 'data:text/csv;charset=utf-8,Title,Login,First Name,Last Name\n';
+                break;
+            case 4:
+                csvContent = 'data:text/csv;charset=utf-8,Title,Registration Number,First Name,Last Name,Campus,Language,Additional Information,Capacity,Is Online\n';
                 break;
             default:
                 csvContent = '';

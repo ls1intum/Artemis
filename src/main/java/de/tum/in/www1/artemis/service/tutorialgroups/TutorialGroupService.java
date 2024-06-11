@@ -30,7 +30,6 @@ import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
 import de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupRegistrationType;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
-import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSchedule;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
@@ -320,6 +319,12 @@ public class TutorialGroupService {
         Set<TutorialGroupRegistrationImportDTO> registrationsWithTitle = filterOutWithoutTitle(registrations, failedRegistrations);
         Map<String, TutorialGroup> tutorialGroupTitleToTutorialGroup = findOrCreateTutorialGroups(course, registrationsWithTitle).stream()
                 .collect(Collectors.toMap(TutorialGroup::getTitle, Function.identity()));
+        // Add registrations to failedRegistrations if the tutorial group already exists
+        registrationsWithTitle.forEach(registration -> {
+            if (tutorialGroupTitleToTutorialGroup.containsKey(registration.title())) {
+                failedRegistrations.add(registration);
+            }
+        });
 
         // === Step 2: If the registration contains a student, try to find a user in the database with the mentioned registration number ===
         Set<TutorialGroupRegistrationImportDTO> registrationWithUserIdentifier = registrationsWithTitle.stream().filter(registration -> {
@@ -426,25 +431,7 @@ public class TutorialGroupService {
                         if (registration.isOnline() != null) {
                             tutorialGroup.setIsOnline(registration.isOnline());
                         }
-
-                        // Create and set the schedule
-                        TutorialGroupSchedule schedule = new TutorialGroupSchedule();
-                        if (registration.dayOfWeek() != null) {
-                            schedule.setDayOfWeek(registration.dayOfWeek());
-                        }
-                        if (registration.startTime() != null) {
-                            schedule.setStartTime(registration.startTime());
-                        }
-                        if (registration.endTime() != null) {
-                            schedule.setEndTime(registration.endTime());
-                        }
-                        if (registration.location() != null) {
-                            schedule.setLocation(registration.location());
-                        }
-                        schedule.setTutorialGroup(tutorialGroup);
-                        tutorialGroup.setTutorialGroupSchedule(schedule);
                     });
-
                     return tutorialGroup;
                 }).collect(Collectors.toSet());
 

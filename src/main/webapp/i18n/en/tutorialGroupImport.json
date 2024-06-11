@@ -18,7 +18,12 @@
                 "registrationNumber": "registrationnumber, matriculationnumber, matrikelnummer, number -> After parsing the CSV this will be saved as a header named Matriculation Number",
                 "login": "login, user, username, benutzer, benutzername -> After parsing the CSV this will be saved as a header named Login",
                 "firstName": "firstname, firstnameofstudent, givenname, forename, vorname -> After parsing the CSV this will be saved as a header named First Name",
-                "lastName": "familyname, lastname, familynameofstudent, surname, nachname, familienname, name -> After parsing the CSV this will be saved as a header named Last Name"
+                "lastName": "familyname, lastname, familynameofstudent, surname, nachname, familienname, name -> After parsing the CSV this will be saved as a header named Last Name",
+                "campus": "campus -> After parsing the CSV this will be saved as a header named Campus",
+                "language": "language -> After parsing the CSV this will be saved as a header named Language",
+                "additionalInformation": "additionalinformation -> After parsing the CSV this will be saved as a header named Additional Information",
+                "capacity": "capacity -> After parsing the CSV this will be saved as a header named Capacity",
+                "isOnline": "isonline -> After parsing the CSV this will be saved as a header named Is Online"
             },
             "errorMessages": {
                 "genericErrorMessage": "Import of tutorial groups failed!",
@@ -59,6 +64,7 @@
                 "example1": "This example CSV format shows the minimum required headers to parse a CSV:",
                 "example2": "This example CSV format shows the headers required to register students with a registration number, with First Name and Last Name being optional:",
                 "example3": "This example CSV format shows the headers required to register students with a login, with First Name and Last Name being optional:",
+                "example4": "This example CSV format shows the optional headers in addition to the headers which allow student import that can be added (it is not necessary to have all optional headers in order to import one optional header):",
                 "template": "Download Example",
                 "showNotImportedButton": "Not imported registrations",
                 "showImportedButton": "Imported registrations",
@@ -71,6 +77,11 @@
                     "login": "Login",
                     "firstName": "First Name",
                     "lastName": "Last Name",
+                    "campus": "Campus",
+                    "language": "Language",
+                    "additionalInformation": "Additional Information",
+                    "capacity": "Capacity",
+                    "isOnline": "is Online",
                     "error": "Error"
                 },
                 "footer": {

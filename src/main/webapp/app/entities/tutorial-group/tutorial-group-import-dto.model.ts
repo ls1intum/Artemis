@@ -8,10 +8,6 @@ export class TutorialGroupRegistrationImportDTO {
     language?: string;
     additionalInformation?: string;
     isOnline?: string;
-    dayOfWeek?: number;
-    startTime?: string;
-    endTime?: string;
-    location?: string;
 
     // properties set by the server when the import is done
     public importSuccessful?: boolean;

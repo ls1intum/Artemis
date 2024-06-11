@@ -544,17 +544,15 @@ public class TutorialGroupResource {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record TutorialGroupRegistrationImportDTO(@Nullable String title, @Nullable StudentDTO student, @Nullable Boolean importSuccessful,
             @Nullable TutorialGroupImportErrors error, @Nullable String campus, @Nullable Integer capacity, @Nullable String language, @Nullable String additionalInformation,
-            @Nullable Boolean isOnline, @Nullable Integer dayOfWeek, @Nullable String startTime, @Nullable String endTime, @Nullable String location) {
+            @Nullable Boolean isOnline) {
 
         public TutorialGroupRegistrationImportDTO withImportResult(boolean importSuccessful, TutorialGroupImportErrors error) {
-            return new TutorialGroupRegistrationImportDTO(title(), student(), importSuccessful, error, campus(), capacity(), language(), additionalInformation(), isOnline(),
-                    dayOfWeek(), startTime(), endTime(), location());
+            return new TutorialGroupRegistrationImportDTO(title(), student(), importSuccessful, error, campus(), capacity(), language(), additionalInformation(), isOnline());
         }
 
         public TutorialGroupRegistrationImportDTO(@Nullable String title, @Nullable StudentDTO student, @Nullable String campus, @Nullable Integer capacity,
-                @Nullable String language, @Nullable String additionalInformation, @Nullable Boolean isOnline, @Nullable Integer dayOfWeek, @Nullable String startTime,
-                @Nullable String endTime, @Nullable String location) {
-            this(title, student, null, null, campus, capacity, language, additionalInformation, isOnline, dayOfWeek, startTime, endTime, location);
+                @Nullable String language, @Nullable String additionalInformation, @Nullable Boolean isOnline) {
+            this(title, student, null, null, campus, capacity, language, additionalInformation, isOnline);
         }
 
         @Override
@@ -585,7 +583,7 @@ public class TutorialGroupResource {
         public String toString() {
             return "TutorialGroupRegistrationImportDTO{" + "title='" + title + '\'' + ", student=" + student + ", importSuccessful=" + importSuccessful + ", error=" + error
                     + ", campus=" + campus + ", capacity=" + capacity + ", language=" + language + ", additionalInformation=" + additionalInformation + ", isOnline=" + isOnline
-                    + ", dayOfWeek=" + dayOfWeek + ", startTime=" + startTime + ", endTime=" + endTime + ", location=" + location + '}';
+                    + '}';
         }
     }
 }
