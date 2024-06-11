@@ -317,17 +317,22 @@ public class TutorialGroupService {
 
         // === Step 1: Try to find all tutorial groups with the mentioned title. Create them if they do not exist yet ===
         Set<TutorialGroupRegistrationImportDTO> registrationsWithTitle = filterOutWithoutTitle(registrations, failedRegistrations);
-        Map<String, TutorialGroup> tutorialGroupTitleToTutorialGroup = findOrCreateTutorialGroups(course, registrationsWithTitle).stream()
-                .collect(Collectors.toMap(TutorialGroup::getTitle, Function.identity()));
         // Add registrations to failedRegistrations if the tutorial group already exists
+        var titlesMentionedInRegistrations = registrations.stream().map(TutorialGroupRegistrationImportDTO::title).filter(Objects::nonNull).map(String::trim)
+                .collect(Collectors.toSet());
+
+        var foundTutorialGroups = tutorialGroupRepository.findAllByCourseId(course.getId()).stream()
+                .filter(tutorialGroup -> titlesMentionedInRegistrations.contains(tutorialGroup.getTitle())).collect(Collectors.toSet());
+
         registrationsWithTitle.forEach(registration -> {
-            if (tutorialGroupTitleToTutorialGroup.containsKey(registration.title())) {
-                assert registration.student() != null;
-                if (registration.student().registrationNumber().isEmpty() && registration.student().login().isEmpty()) {
+            if (foundTutorialGroups.stream().anyMatch(tutorialGroup -> tutorialGroup.getTitle().equals(registration.title().trim()))) {
+                if (registration.student() != null && !StringUtils.hasText(registration.student().registrationNumber()) && !StringUtils.hasText(registration.student().login())) {
                     failedRegistrations.add(registration);
                 }
             }
         });
+        Map<String, TutorialGroup> tutorialGroupTitleToTutorialGroup = findOrCreateTutorialGroups(course, registrationsWithTitle).stream()
+                .collect(Collectors.toMap(TutorialGroup::getTitle, Function.identity()));
 
         // === Step 2: If the registration contains a student, try to find a user in the database with the mentioned registration number ===
         Set<TutorialGroupRegistrationImportDTO> registrationWithUserIdentifier = registrationsWithTitle.stream().filter(registration -> {

@@ -430,4 +430,13 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         expect(component.registrationsDisplayedInTable[0].capacity).toBe(25);
         expect(component.registrationsDisplayedInTable[0].isOnline).toBe('');
     });
+    it('should remove spaces from header names correctly', () => {
+        const headerWithSpaces = ' Header Name ';
+        const headerWithUnderscores = 'Header_Name';
+        const headerWithMixed = ' Header_Name With  Spaces ';
+
+        expect(component.removeSpacesFromHeaderName(headerWithSpaces)).toBe('headername');
+        expect(component.removeSpacesFromHeaderName(headerWithUnderscores)).toBe('header-name');
+        expect(component.removeSpacesFromHeaderName(headerWithMixed)).toBe('header-namewithspaces');
+    });
 });

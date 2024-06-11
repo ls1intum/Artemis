@@ -668,8 +668,6 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         var importResult = sendImportRequest(tutorialGroupRegistrations);
         // then
         assertThat(importResult).hasSize(4);
-        assertThat(importResult.stream().map(TutorialGroupRegistrationImportDTO::importSuccessful)).allMatch(status -> status.equals(true));
-        assertThat(importResult.stream().map(TutorialGroupRegistrationImportDTO::error)).allMatch(Objects::isNull);
         var regBlankExpected = new TutorialGroupRegistrationImportDTO(freshTitleTwo, new StudentDTO(null, null, null, null, null), null, null, null, null, null);
         var studentPropertiesNullExpected = new TutorialGroupRegistrationImportDTO(freshTitleOne, new StudentDTO(null, null, null, null, null), null, null, null, null, null);
         assertThat(importResult.stream()).containsExactlyInAnyOrder(regNullStudent, regBlankExpected, regExistingTutorialGroup, studentPropertiesNullExpected);
@@ -854,6 +852,26 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         assertThat(tutorialGroupRepository.getTutorialGroupChannel(exampleTwoTutorialGroupId)).isEmpty();
         assertThat(tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(exampleCourseId)).isEmpty();
         assertThat(postRepository.findById(post.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importRegistrations_withAdditionalHeaders_shouldCreateTutorialGroupWithDetails() throws Exception {
+
+        var freshTitle = "freshTitle";
+        var student1Reg = new TutorialGroupRegistrationImportDTO(freshTitle, new StudentDTO(student1), "Main Campus", 30, "German", "Some info", true);
+        assertTutorialWithTitleDoesNotExistInDb(freshTitle);
+
+        var tutorialGroupRegistrations = new ArrayList<TutorialGroupRegistrationImportDTO>();
+        tutorialGroupRegistrations.add(student1Reg);
+
+        var importResult = sendImportRequest(tutorialGroupRegistrations);
+
+        assertThat(importResult).hasSize(1);
+        assertThat(importResult.getFirst().importSuccessful()).isTrue();
+        assertThat(importResult.getFirst().error()).isNull();
+
+        assertTutorialGroupWithTitleInDB(freshTitle, Set.of(student1), INSTRUCTOR_REGISTRATION, true, "Some info", 30, "Main Campus", "German", instructor1);
     }
 
     private List<TutorialGroupRegistrationImportDTO> sendImportRequest(List<TutorialGroupRegistrationImportDTO> tutorialGroupRegistrations) throws Exception {
