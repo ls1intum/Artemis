@@ -82,7 +82,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
             this.gitlabVCEnabled = profileInfo.activeProfiles.includes(PROFILE_GITLAB);
 
             if (this.localVCEnabled) {
-                this.setupSshKeysUrl = window.location.origin + '/user-settings/sshSettings';
+                this.setupSshKeysUrl = `${window.location.origin}/user-settings/sshSettings`;
             }
         });
 
