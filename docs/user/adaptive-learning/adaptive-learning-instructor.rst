@@ -67,7 +67,7 @@ Instructors have three ways to import competencies: Import all competencies of a
 | When importing from other courses, instructors can view a list of competencies from all courses they have access to.
   They can sort the list based on all fields except for competency description.
   They can also filter the list through the *Competency Search* at the top of the page, which can be expanded for advanced search options.
-| All selected competencies are displayed in the *Selected Competencies* table and can be de-selected again by clicking on the trash icon.
+| All selected competencies are displayed in the *Selected Competencies* table and can be de-selected again by clicking on the trash bin icon.
   Finally, instructors can select if they also want to import the relations between the imported competencies.
 
 |instructor-import-competencies|
@@ -76,10 +76,15 @@ Instructors have three ways to import competencies: Import all competencies of a
 
 **3. Import Standardized Competencies**
 
+.. note::
+
+    To use this feature, the *standardized competency feature toggle* needs to be enabled.
+    If you have no access to the feature, contact your instance administrators.
+
 | When importing standardized competencies, instructors can view the complete :ref:`standardized competency catalog<standardized_competency_catalog>` of their Artemis instance.
   They can filter the displayed competencies by title and knowledge area.
 | Clicking on the name of a competency opens its details on the right side and clicking on the checkbox next to the name selects it for import.
-  Again, selected competencies are displayed in a table and can be de-selected again by clicking on the trash icon.
+  Again, selected competencies are displayed in a table and can be de-selected again by clicking on the trash bin icon.
 
 |instructor-import-standardized-competencies|
 
@@ -87,6 +92,13 @@ Instructors have three ways to import competencies: Import all competencies of a
 
 Generate Competencies
 ^^^^^^^^^^^^^^^^^^^^^
+
+.. note::
+
+    To use this feature, Iris needs to be enabled for your Artemis instance and *Competency Generation* needs to be enabled in the Iris global settings **as well as the Iris settings of your course** (see image below).
+    If you cannot enable *Competency Generation* in your Iris course settings, contact your instance administrators.
+
+|competency-generation-settings|
 
 .. raw:: html
 
@@ -131,4 +143,6 @@ Once the feature is enabled, instructors get access to each student's learning p
 .. |instructor-competency-recommendation| image:: instructor/competency-recommendation.png
     :width: 1000
 .. |instructors-learning-path-management| image:: instructor/learning-path-management.png
+    :width: 1000
+.. |competency-generation-settings| image:: competency-generation-settings.png
     :width: 1000

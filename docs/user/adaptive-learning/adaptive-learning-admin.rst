@@ -18,6 +18,14 @@ Standardized Competencies
 Manage Standardized Competencies
 --------------------------------
 
+.. hint::
+    This is the documentation for administrators. If you are looking for the documentation on importing standardized competencies as an instructor, go :ref:`here<instructor_import_standardized_competencies>`.
+
+.. hint::
+
+    To use this feature, the *standardized competency feature toggle* needs to be enabled.
+    To enable it go to Server Administration -> Feature Toggles and make sure the box next to *StandardizedCompetencies* is checked
+
 .. raw:: html
 
     <iframe src="https://live.rbg.tum.de/w/artemisintro/46942?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
@@ -29,7 +37,7 @@ Manage Standardized Competencies
 
 | They can filter the displayed content by competency title and knowledge area.
   Clicking on a knowledge area expands it and clicking on the eye icon shows the knowledge area details on the right.
-| From this detail view they can edit or delete the knowledge area, or create new knowledge areas and competencies under it.
+| From this details view they can edit or delete the knowledge area, or create new knowledge areas and competencies under it.
   Likewise, clicking on a standardized competency opens its details, allowing administrators to edit or delete it.
 | Finally, administrators can also import a standardized competency catalog from a JSON file,
   or export the standardized competency catalog of their Artemis instance into a JSON file.
