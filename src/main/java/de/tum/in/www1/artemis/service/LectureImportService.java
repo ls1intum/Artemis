@@ -110,9 +110,7 @@ public class LectureImportService {
                 IrisCourseSettings courseSettings = settingsRepository.findCourseSettings(course.getId()).orElseThrow();
                 if (courseSettings.getIrisLectureIngestionSettings().isEnabled()
                         && Boolean.TRUE.equals(courseSettings.getIrisLectureIngestionSettings().getAutoIngestOnLectureAttachmentUpload())) {
-                    pyrisWebhookService.ifPresent(service -> service.addLectureToPyrisDB(
-                            lectureUnits.stream().filter(unit -> unit instanceof AttachmentUnit && ((AttachmentUnit) unit).getAttachment().getLink().endsWith(".pdf"))
-                                    .map(lectureUnit -> (AttachmentUnit) lectureUnit).toList()));
+                    pyrisWebhookService.ifPresent(service -> service.addLectureToPyrisDB(lectureUnits.stream().map(lectureUnit -> (AttachmentUnit) lectureUnit).toList()));
                 }
             });
         }

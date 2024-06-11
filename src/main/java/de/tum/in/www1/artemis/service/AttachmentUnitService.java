@@ -17,7 +17,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisCourseSettings;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.Slide;
@@ -83,19 +82,17 @@ public class AttachmentUnitService {
         Attachment savedAttachment = attachmentRepository.saveAndFlush(attachment);
         savedAttachmentUnit.setAttachment(savedAttachment);
         evictCache(file, savedAttachmentUnit);
-        if (savedAttachment.getAttachmentType() == AttachmentType.FILE && Objects.equals(FilenameUtils.getExtension(file.getOriginalFilename()), "pdf")) {
-            try {
-                irisSettingsRepository.ifPresent(settingsRepository -> {
-                    IrisCourseSettings courseSettings = settingsRepository.findCourseSettings(lecture.getCourse().getId()).orElseThrow();
-                    if (courseSettings.getIrisLectureIngestionSettings().isEnabled()
-                            && Boolean.TRUE.equals(courseSettings.getIrisLectureIngestionSettings().getAutoIngestOnLectureAttachmentUpload())) {
-                        pyrisWebhookService.ifPresent(service -> service.addLectureToPyrisDB(List.of(savedAttachmentUnit)));
-                    }
-                });
-            }
-            catch (NoSuchElementException e) {
-                // needed to create the attachment unit successfully even if the ingestion fails
-            }
+        try {
+            irisSettingsRepository.ifPresent(settingsRepository -> {
+                IrisCourseSettings courseSettings = settingsRepository.findCourseSettings(lecture.getCourse().getId()).orElseThrow();
+                if (courseSettings.getIrisLectureIngestionSettings().isEnabled()
+                        && Boolean.TRUE.equals(courseSettings.getIrisLectureIngestionSettings().getAutoIngestOnLectureAttachmentUpload())) {
+                    pyrisWebhookService.ifPresent(service -> service.addLectureToPyrisDB(List.of(savedAttachmentUnit)));
+                }
+            });
+        }
+        catch (NoSuchElementException e) {
+            // needed to create the attachment unit successfully even if the ingestion fails
         }
         return savedAttachmentUnit;
     }

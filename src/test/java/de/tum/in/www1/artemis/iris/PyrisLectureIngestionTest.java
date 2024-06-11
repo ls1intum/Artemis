@@ -77,14 +77,15 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
 
         int numberOfSlides = 2;
-        AttachmentUnit attachmentUnitWithSlides = lectureUtilService.createAttachmentUnitWithSlidesAndFile(numberOfSlides);
-        lecture1 = lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(attachmentUnitWithSlides));
+        AttachmentUnit pdfAttachmentUnitWithSlides = lectureUtilService.createAttachmentUnitWithSlidesAndFile(numberOfSlides, true);
+        AttachmentUnit imageAttachmentUnitWithSlides = lectureUtilService.createAttachmentUnitWithSlidesAndFile(numberOfSlides, false);
+        lecture1 = lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(pdfAttachmentUnitWithSlides, imageAttachmentUnitWithSlides));
         this.lecture1 = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testaddLectureToPyrisDatabaseWithCourseSettingsDisabled() {
+    void testAddLectureToPyrisDatabaseWithCourseSettingsDisabled() {
         activateIrisFor(lecture1.getCourse());
         IrisCourseSettings courseSettings = irisSettingsService.getRawIrisSettingsFor(lecture1.getCourse());
         courseSettings.getIrisLectureIngestionSettings().setEnabled(false);
@@ -92,15 +93,15 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
-        if (lecture1.getLectureUnits().getFirst() instanceof AttachmentUnit attachmentUnit) {
-            String jobToken = pyrisWebhookService.addLectureToPyrisDB(List.of(attachmentUnit));
-            assertThat(jobToken).isNull();
-        }
+        String jobToken = pyrisWebhookService.addLectureToPyrisDB(List.of((AttachmentUnit) lecture1.getLectureUnits().getFirst()));
+        assertThat(jobToken).isNull();
+        jobToken = pyrisWebhookService.addLectureToPyrisDB(List.of((AttachmentUnit) lecture1.getLectureUnits().getLast()));
+        assertThat(jobToken).isNull();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testdeleteLectureToPyrisDatabaseWithCourseSettingsDisabled() {
+    void testDeleteLecturefromPyrisDatabaseWithCourseSettingsDisabled() {
         activateIrisFor(lecture1.getCourse());
         IrisCourseSettings courseSettings = irisSettingsService.getRawIrisSettingsFor(lecture1.getCourse());
         courseSettings.getIrisLectureIngestionSettings().setEnabled(false);
@@ -108,23 +109,39 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
-        if (lecture1.getLectureUnits().getFirst() instanceof AttachmentUnit attachmentUnit) {
-            String jobToken = pyrisWebhookService.deleteLectureFromPyrisDB(List.of(attachmentUnit));
-            assertThat(jobToken).isNotNull();
-        }
+        String jobToken = pyrisWebhookService.deleteLectureFromPyrisDB(List.of((AttachmentUnit) lecture1.getLectureUnits().getFirst()));
+        assertThat(jobToken).isNotNull();
+        jobToken = pyrisWebhookService.deleteLectureFromPyrisDB(List.of((AttachmentUnit) lecture1.getLectureUnits().getLast()));
+        assertThat(jobToken).isNull();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testaddLectureToPyrisDBAddJobWithCourseSettingsEnabled() {
+    void testDeleteLecturefromPyrisDatabaseWithCourseSettingsEnabled() {
+        activateIrisFor(lecture1.getCourse());
+        IrisCourseSettings courseSettings = irisSettingsService.getRawIrisSettingsFor(lecture1.getCourse());
+        courseSettings.getIrisLectureIngestionSettings().setEnabled(false);
+        this.irisSettingsRepository.save(courseSettings);
+        irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+        });
+        String jobToken = pyrisWebhookService.deleteLectureFromPyrisDB(List.of((AttachmentUnit) lecture1.getLectureUnits().getFirst()));
+        assertThat(jobToken).isNotNull();
+        jobToken = pyrisWebhookService.deleteLectureFromPyrisDB(List.of((AttachmentUnit) lecture1.getLectureUnits().getLast()));
+        assertThat(jobToken).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testAddLectureToPyrisDBAddJobWithCourseSettingsEnabled() {
         activateIrisFor(lecture1.getCourse());
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
-        if (lecture1.getLectureUnits().getFirst() instanceof AttachmentUnit attachmentUnit) {
-            String jobToken = pyrisWebhookService.addLectureToPyrisDB(List.of(attachmentUnit));
-            assertThat(jobToken).isNotNull();
-        }
+        String jobToken = pyrisWebhookService.addLectureToPyrisDB(List.of((AttachmentUnit) lecture1.getLectureUnits().getFirst()));
+        assertThat(jobToken).isNotNull();
+        jobToken = pyrisWebhookService.addLectureToPyrisDB(List.of((AttachmentUnit) lecture1.getLectureUnits().getLast()));
+        assertThat(jobToken).isNull();
     }
 
     @Test

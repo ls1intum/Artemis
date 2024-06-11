@@ -241,14 +241,16 @@ public class LectureUtilService {
      * The Slides link to image files.
      *
      * @param numberOfSlides The number of Slides to create
+     * @param shouldBePdf    if true file will be pdf, else image
      * @return The created AttachmentUnit
      */
-    public AttachmentUnit createAttachmentUnitWithSlidesAndFile(int numberOfSlides) {
+    public AttachmentUnit createAttachmentUnitWithSlidesAndFile(int numberOfSlides, boolean shouldBePdf) {
         ZonedDateTime started = ZonedDateTime.now().minusDays(5);
         AttachmentUnit attachmentUnit = new AttachmentUnit();
         attachmentUnit.setDescription("Lorem Ipsum");
         attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
-        Attachment attachmentOfAttachmentUnit = LectureFactory.generateAttachmentWithFile(started, attachmentUnit.getId(), true);
+        Attachment attachmentOfAttachmentUnit = shouldBePdf ? LectureFactory.generateAttachmentWithPdfFile(started, attachmentUnit.getId(), true)
+                : LectureFactory.generateAttachmentWithFile(started, attachmentUnit.getId(), true);
         attachmentOfAttachmentUnit.setAttachmentUnit(attachmentUnit);
         attachmentOfAttachmentUnit = attachmentRepository.save(attachmentOfAttachmentUnit);
         attachmentUnit.setAttachment(attachmentOfAttachmentUnit);

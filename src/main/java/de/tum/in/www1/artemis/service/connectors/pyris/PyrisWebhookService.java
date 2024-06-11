@@ -97,9 +97,10 @@ public class PyrisWebhookService {
     public String deleteLectureFromPyrisDB(List<AttachmentUnit> attachmentUnits) {
         try {
             List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentUnits = new ArrayList<>();
-            attachmentUnits.stream().filter(unit -> unit.getAttachment().getAttachmentType() == AttachmentType.FILE).forEach(unit -> {
-                toUpdateAttachmentUnits.add(processAttachmentForDeletion(unit));
-            });
+            attachmentUnits.stream().filter(unit -> unit.getAttachment().getAttachmentType() == AttachmentType.FILE && unit.getAttachment().getLink().endsWith(".pdf"))
+                    .forEach(unit -> {
+                        toUpdateAttachmentUnits.add(processAttachmentForDeletion(unit));
+                    });
             if (!toUpdateAttachmentUnits.isEmpty()) {
                 return helpExecuteIngestionPipeline(toUpdateAttachmentUnits);
             }
@@ -120,9 +121,10 @@ public class PyrisWebhookService {
         try {
             if (lectureIngestionEnabled(attachmentUnits.getFirst().getLecture().getCourse())) {
                 List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentUnits = new ArrayList<>();
-                attachmentUnits.stream().filter(unit -> unit.getAttachment().getAttachmentType() == AttachmentType.FILE).forEach(unit -> {
-                    toUpdateAttachmentUnits.add(processAttachmentForUpdate(unit));
-                });
+                attachmentUnits.stream().filter(unit -> unit.getAttachment().getAttachmentType() == AttachmentType.FILE && unit.getAttachment().getLink().endsWith(".pdf"))
+                        .forEach(unit -> {
+                            toUpdateAttachmentUnits.add(processAttachmentForUpdate(unit));
+                        });
                 if (!toUpdateAttachmentUnits.isEmpty()) {
                     return helpExecuteIngestionPipeline(toUpdateAttachmentUnits);
                 }
