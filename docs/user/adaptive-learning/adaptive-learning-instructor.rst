@@ -145,4 +145,4 @@ Once the feature is enabled, instructors get access to each student's learning p
 .. |instructors-learning-path-management| image:: instructor/learning-path-management.png
     :width: 1000
 .. |competency-generation-settings| image:: competency-generation-settings.png
-    :width: 1000
+    :width: 600

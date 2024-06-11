@@ -18,10 +18,10 @@ Standardized Competencies
 Manage Standardized Competencies
 --------------------------------
 
-.. hint::
+.. note::
     This is the documentation for administrators. If you are looking for the documentation on importing standardized competencies as an instructor, go :ref:`here<instructor_import_standardized_competencies>`.
 
-.. hint::
+.. note::
 
     To use this feature, the *standardized competency feature toggle* needs to be enabled.
     To enable it go to Server Administration -> Feature Toggles and make sure the box next to *StandardizedCompetencies* is checked
