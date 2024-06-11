@@ -162,7 +162,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         Set<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(textExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
         participationUtilService.addAssessmentWithFeedbackWithGradingInstructionsForExercise(textExercise, STUDENT_OF_COURSE);
-        competencyUtilService.linkExerciseToCompetency(competencies[1], textExercise);
+        competencyUtilService.linkExerciseToCompetency(competencies[0], textExercise);
 
         Lecture lecture = new Lecture();
         lecture.setDescription("Test Lecture");
@@ -171,7 +171,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         textUnit = lectureUtilService.createTextUnit();
         lectureUtilService.addLectureUnitsToLecture(lecture, List.of(textUnit));
-        competencyUtilService.linkLectureUnitToCompetency(competencies[2], textUnit);
+        competencyUtilService.linkLectureUnitToCompetency(competencies[1], textUnit);
 
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         lectureUnitService.setLectureUnitCompletion(textUnit, student, true);
