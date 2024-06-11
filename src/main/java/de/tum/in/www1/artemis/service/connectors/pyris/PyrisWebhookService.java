@@ -93,8 +93,10 @@ public class PyrisWebhookService {
     /**
      * send the updated / created attachment to Pyris for ingestion if autoLecturesUpdate is enabled
      *
-     * @param courseId           Id of the course where the attachment is added
-     * @param newAttachmentUnits the new attachment Units to be sent to pyris for ingestion
+     * @param courseId               Id of the course where the attachment is added
+     * @param newAttachmentUnits     the new attachment Units to be sent to pyris for ingestion
+     * @param irisSettingsRepository the repository to get the course settings from
+     * @return true if the units were sent to pyris
      */
     public boolean autoUpdateAttachmentUnitsInPyris(IrisSettingsRepository irisSettingsRepository, Long courseId, List<AttachmentUnit> newAttachmentUnits) {
         IrisCourseSettings courseSettings = irisSettingsRepository.findCourseSettings(courseId).orElseThrow();
