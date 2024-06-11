@@ -125,6 +125,8 @@ describe('TutorialGroupFormComponent', () => {
         });
 
         it('should block submit when required property is missing', fakeAsync(() => {
+            jest.spyOn(console, 'warn').mockImplementation(() => {});
+
             const requiredGroupControlNames = ['title', 'teachingAssistant', 'isOnline', 'language'];
             const requiredScheduleControlNames = ['dayOfWeek', 'startTime', 'endTime', 'repetitionFrequency', 'period', 'location'];
 
@@ -213,6 +215,8 @@ describe('TutorialGroupFormComponent', () => {
         });
 
         it('should block submit when required property is missing', fakeAsync(() => {
+            jest.spyOn(console, 'warn').mockImplementation(() => {});
+
             const requiredGroupControlNames = ['title', 'teachingAssistant', 'isOnline', 'language'];
             for (const controlName of requiredGroupControlNames) {
                 testFormIsInvalidOnMissingRequiredProperty(controlName);
