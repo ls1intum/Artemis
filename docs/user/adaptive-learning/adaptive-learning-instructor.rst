@@ -94,8 +94,8 @@ Generate Competencies
         Watch this video on TUM-Live.
     </iframe>
 
-| Instructors can use Iris, the AI subsystem for Artemis, to generate competencies for their course.
-| Based on a course description, Iris generates around 10 recommendations for possible competencies (the amount may vary depending on the description provided).
+| Instructors can use the integrated LLM subsystem of Artemis, to generate competencies for their course.
+| Based on a course description, the LLM generates around 10 recommendations for possible competencies (the amount may vary depending on the description provided).
 
 |instructor-generate-competencies|
 
