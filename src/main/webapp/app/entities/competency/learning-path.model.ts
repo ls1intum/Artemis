@@ -1,7 +1,7 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { Course } from 'app/entities/course.model';
 import { User, UserNameAndLoginDTO } from 'app/core/user/user.model';
-import { Competency } from 'app/entities/competency.model';
+import { Competency, CompetencyRelationType } from 'app/entities/competency.model';
 import { Edge, Node, NodeDimension } from '@swimlane/ngx-graph';
 import { faCheckCircle, faCircle, faFlag, faFlagCheckered, faPlayCircle, faSignsPost } from '@fortawesome/free-solid-svg-icons';
 
@@ -42,6 +42,28 @@ export interface LearningPathNavigationDto {
 
 export interface LearningPathNavigationOverviewDto {
     learningObjects: LearningPathNavigationObjectDto[];
+}
+
+export interface CompetencyGraphNodeDto {
+    id: string;
+    label: string;
+    softDueDate: Date;
+    progress: number;
+    confidence: number;
+    mastery: number;
+    dimension?: NodeDimension;
+}
+
+export interface CompetencyGraphEdgeDto {
+    id: string;
+    source: string;
+    target: string;
+    relationType: CompetencyRelationType;
+}
+
+export interface CompetencyGraphDto {
+    nodes: CompetencyGraphNodeDto[];
+    edges: CompetencyGraphEdgeDto[];
 }
 
 export class NgxLearningPathDTO {

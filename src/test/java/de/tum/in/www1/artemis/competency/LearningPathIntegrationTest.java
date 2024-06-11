@@ -50,7 +50,7 @@ import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.LearningPathResource;
-import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyProgressDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyGraphNodeDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathCompetencyGraphDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
@@ -488,18 +488,18 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 LearningPathCompetencyGraphDTO.class);
 
         assertThat(response).isNotNull();
-        assertThat(response.competencies().stream().map(CompetencyProgressDTO::id))
-                .containsExactlyInAnyOrderElementsOf(Arrays.stream(competencies).map(Competency::getId).toList());
-        assertThat(response.competencies()).allMatch(progressDTO -> {
-            CompetencyProgress progress = competencyProgressRepository.findByCompetencyIdAndUserIdOrElseThrow(progressDTO.id(), student.getId());
-            return Objects.equals(progressDTO.progress(), progress.getProgress()) && Objects.equals(progressDTO.confidence(), progress.getConfidence())
-                    && progressDTO.mastery() == CompetencyProgressService.getMastery(progress);
+        assertThat(response.nodes().stream().map(CompetencyGraphNodeDTO::id))
+                .containsExactlyInAnyOrderElementsOf(Arrays.stream(competencies).map(Competency::getId).map(Object::toString).toList());
+        assertThat(response.nodes()).allMatch(nodeDTO -> {
+            CompetencyProgress progress = competencyProgressRepository.findByCompetencyIdAndUserIdOrElseThrow(Long.parseLong(nodeDTO.id()), student.getId());
+            return Objects.equals(nodeDTO.progress(), progress.getProgress()) && Objects.equals(nodeDTO.confidence(), progress.getConfidence())
+                    && nodeDTO.mastery() == CompetencyProgressService.getMastery(progress);
         });
 
         Set<CompetencyRelation> relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(course.getId());
-        assertThat(response.competencyRelations()).hasSameSizeAs(relations);
-        assertThat(response.competencyRelations()).allMatch(relationDTO -> relations.stream().anyMatch(relation -> relation.getId() == relationDTO.id()
-                && relation.getTailCompetency().getId() == relationDTO.tailCompetencyId() && relation.getHeadCompetency().getId() == relationDTO.headCompetencyId()));
+        assertThat(response.edges()).hasSameSizeAs(relations);
+        assertThat(response.edges()).allMatch(relationDTO -> relations.stream().anyMatch(relation -> relation.getId() == Long.parseLong(relationDTO.id())
+                && relation.getTailCompetency().getId() == Long.parseLong(relationDTO.target()) && relation.getHeadCompetency().getId() == Long.parseLong(relationDTO.source())));
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

@@ -66,7 +66,22 @@ export abstract class BaseApiHttpService {
         return await this.request<T>(HttpMethod.Get, url, options);
     }
 
-    protected async post<T>(url: string, body?: any): Promise<T> {
-        return await this.request<T>(HttpMethod.Post, url, { body: body });
+    protected async post<T>(
+        url: string,
+        body?: any,
+        options?: {
+            headers?:
+                | HttpHeaders
+                | {
+                      [header: string]: string | string[];
+                  };
+            params?:
+                | HttpParams
+                | {
+                      [param: string]: string | number | boolean | ReadonlyArray<string | number | boolean>;
+                  };
+        },
+    ): Promise<T> {
+        return await this.request<T>(HttpMethod.Post, url, { body: body, ...options });
     }
 }

@@ -1,29 +1,10 @@
-import { Component, afterNextRender, computed, signal } from '@angular/core';
-import { Layout, NgxGraphModule, NgxGraphZoomOptions, NodeDimension } from '@swimlane/ngx-graph';
+import { Component, OnInit, afterNextRender, computed, inject, input, signal } from '@angular/core';
+import { Layout, NgxGraphModule, NgxGraphZoomOptions } from '@swimlane/ngx-graph';
 import { Subject } from 'rxjs';
-import { NodeType } from 'app/entities/competency/learning-path.model';
+import { CompetencyGraphDto, NodeType } from 'app/entities/competency/learning-path.model';
 import { CompetencyNodeComponent, SizeUpdate } from 'app/course/learning-paths/components/competency-node/competency-node.component';
-
-export interface CompetencyNode {
-    id: string;
-    label: string;
-    progress: number;
-    mastery: number;
-    confidence: number;
-    dimension?: NodeDimension;
-}
-
-export interface Edge {
-    id?: string;
-    source: string;
-    target: string;
-    type: string;
-}
-
-export interface CompetencyGraph {
-    nodes: CompetencyNode[];
-    edges: Edge[];
-}
+import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-competency-graph',
@@ -32,76 +13,16 @@ export interface CompetencyGraph {
     templateUrl: './competency-graph.component.html',
     styleUrl: './competency-graph.component.scss',
 })
-export class CompetencyGraphComponent {
+export class CompetencyGraphComponent implements OnInit {
     protected readonly NodeType = NodeType;
 
-    private readonly competencyGraph = signal({
-        nodes: [
-            {
-                id: '1',
-                label: 'Variablen und Funktionen',
-                mastery: 90,
-            },
-            {
-                id: '2',
-                label: 'Kontrollstrukturen',
-                mastery: 40,
-            },
-            {
-                id: '3',
-                label: 'Basistypen und Operatoren',
-                mastery: 20,
-            },
-            {
-                id: '4',
-                label: 'Arrays',
-                mastery: 0,
-            },
-            {
-                id: '5',
-                label: 'Switche',
-                mastery: 0,
-            },
-            {
-                id: '6',
-                label: 'Schleifen',
-                mastery: 0,
-            },
-        ] as CompetencyNode[],
-        edges: [
-            {
-                id: 'a',
-                source: '1',
-                target: '2',
-            },
-            {
-                id: 'b',
-                source: '1',
-                target: '3',
-            },
-            {
-                id: 'c',
-                source: '3',
-                target: '4',
-            },
-            {
-                id: 'd',
-                source: '3',
-                target: '5',
-            },
-            {
-                id: 'e',
-                source: '4',
-                target: '5',
-            },
-            {
-                id: 'f',
-                source: '2',
-                target: '6',
-            },
-        ] as Edge[],
-    } as CompetencyGraph);
+    private readonly learningPathApiService = inject(LearningPathApiService);
+    private readonly alertService = inject(AlertService);
 
+    learningPathId = input.required<number>();
+    readonly isLoading = signal<boolean>(false);
+
+    private readonly competencyGraph = signal<CompetencyGraphDto>({ nodes: [], edges: [] });
     readonly nodes = computed(() => this.competencyGraph().nodes);
     readonly edges = computed(() => this.competencyGraph().edges);
 
@@ -114,6 +35,22 @@ export class CompetencyGraphComponent {
         afterNextRender(() => {
             this.zoomToFit$.next({ autoCenter: true });
         });
+    }
+
+    ngOnInit(): void {
+        this.loadCompetencyGraph(this.learningPathId());
+    }
+
+    async loadCompetencyGraph(learningPathId: number) {
+        try {
+            this.isLoading.set(true);
+            const competencyGraph = await this.learningPathApiService.getLearningPathCompetencyGraph(learningPathId);
+            this.competencyGraph.set(competencyGraph);
+        } catch (error) {
+            this.alertService.error(error);
+        } finally {
+            this.isLoading.set(false);
+        }
     }
 
     setNodeDimension(sizeUpdate: SizeUpdate) {

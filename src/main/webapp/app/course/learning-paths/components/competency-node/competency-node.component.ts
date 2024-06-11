@@ -1,9 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, OnInit, afterNextRender, computed, inject, input, output } from '@angular/core';
+import { Component, ElementRef, afterNextRender, computed, inject, input, output } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbAccordionModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { NodeDimension } from '@swimlane/ngx-graph';
-import { CompetencyNode } from 'app/course/learning-paths/components/competency-graph/competency-graph.component';
+import { CompetencyGraphNodeDto } from 'app/entities/competency/learning-path.model';
 
 export interface SizeUpdate {
     id: string;
@@ -17,10 +17,10 @@ export interface SizeUpdate {
     templateUrl: './competency-node.component.html',
     styleUrl: './competency-node.component.scss',
 })
-export class CompetencyNodeComponent implements OnInit {
+export class CompetencyNodeComponent {
     private readonly nodeHeight = 45.59;
 
-    readonly competencyNode = input.required<CompetencyNode>();
+    readonly competencyNode = input.required<CompetencyGraphNodeDto>();
     readonly mastery = computed(() => this.competencyNode().mastery);
     private readonly element: ElementRef = inject(ElementRef);
 
@@ -30,11 +30,6 @@ export class CompetencyNodeComponent implements OnInit {
         afterNextRender(() => {
             this.setDimensions();
         });
-    }
-
-    ngOnInit() {
-        console.log('CompetencyNodeComponent initialized');
-        console.log('Master:', this.mastery());
     }
 
     isMastered(): boolean {

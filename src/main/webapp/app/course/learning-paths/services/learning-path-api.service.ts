@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { LearningObjectType, LearningPathNavigationDto, LearningPathNavigationOverviewDto } from 'app/entities/competency/learning-path.model';
+import { CompetencyGraphDto, LearningObjectType, LearningPathNavigationDto, LearningPathNavigationOverviewDto } from 'app/entities/competency/learning-path.model';
 import { HttpParams } from '@angular/common/http';
 import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
 
@@ -30,5 +30,9 @@ export class LearningPathApiService extends BaseApiHttpService {
 
     async getLearningPathNavigationOverview(learningPathId: number): Promise<LearningPathNavigationOverviewDto> {
         return await this.get<LearningPathNavigationOverviewDto>(`learning-path/${learningPathId}/navigation-overview`);
+    }
+
+    async getLearningPathCompetencyGraph(learningPathId: number): Promise<CompetencyGraphDto> {
+        return await this.get<CompetencyGraphDto>(`learning-path/${learningPathId}/competency-graph`);
     }
 }
