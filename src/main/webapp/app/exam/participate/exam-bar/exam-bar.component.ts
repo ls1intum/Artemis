@@ -5,6 +5,8 @@ import { ArtemisExamTimerModule } from 'app/exam/participate/timer/exam-timer.mo
 import { ArtemisExamLiveEventsModule } from 'app/exam/participate/events/exam-live-events.module';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { faDoorClosed } from '@fortawesome/free-solid-svg-icons';
 
 import dayjs from 'dayjs/esm';
 
@@ -24,6 +26,8 @@ export class ExamBarComponent {
     @Input() endDate: dayjs.Dayjs;
     @Input() exerciseIndex = 0;
     @Input() exercises: Exercise[] = [];
+
+    icon: IconProp = faDoorClosed;
 
     criticalTime = dayjs.duration(5, 'minutes');
 

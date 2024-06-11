@@ -59,7 +59,7 @@ $breadcrumb-height: 38px;
 
 .content-exam-height {
     height: calc(100vh - var(--sidebar-footer-height-dev) - $breadcrumb-height);
-
+    overflow-y: auto;
     &.content-height-dev {
         height: calc(100vh - var(--sidebar-footer-height-dev) - $breadcrumb-height);
     }

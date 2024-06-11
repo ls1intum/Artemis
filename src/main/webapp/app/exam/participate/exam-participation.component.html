@@ -47,7 +47,7 @@
                     (onExamHandInEarly)="toggleHandInEarly()"
                 />
 
-                <div class="d-flex justify-content-between gap-3 content-exam-height">
+                <div class="d-flex justify-content-between gap-3">
                     <div class="ms-3 bg-body">
                         <!-- <jhi-sidebar [itemSelected]="true" [courseId]="courseId" [sidebarData]="sidebarData" [searchFieldEnabled]="false" [isExamMode]="true" [itemSelected]="exerciseSelected"/> -->
                         <jhi-exam-navigation-sidebar
@@ -65,14 +65,14 @@
                         />
                     </div>
                     <!-- exercises -->
-                    <div class="vw-100 module-bg rounded-3 me-3 px-3 pt-3">
+                    <div class="vw-100 module-bg rounded-3 me-3 p-3 content-exam-height">
                         <div [hidden]="activePageIndex !== -1">
                             <jhi-exam-exercise-overview-page [studentExam]="studentExam" (onPageChanged)="onPageChange($event)" />
                         </div>
                         @for (exercise of studentExam.exercises; track exercise; let i = $index) {
                             @if (exercise && exercise.studentParticipations && exercise.studentParticipations[0]) {
                                 @if (pageComponentVisited[i]) {
-                                    <div class="content-exam-height" [hidden]="i !== activePageIndex" [id]="'exercise-' + exercise.id">
+                                    <div [hidden]="i !== activePageIndex" [id]="'exercise-' + exercise.id">
                                         @switch (exercise.type) {
                                             @case (QUIZ) {
                                                 <jhi-quiz-submission-exam [quizConfiguration]="exercise" [studentSubmission]="exercise.studentParticipations[0].submissions![0]" />
