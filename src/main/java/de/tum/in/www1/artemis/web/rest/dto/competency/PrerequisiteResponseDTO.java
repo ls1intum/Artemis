@@ -32,8 +32,4 @@ public record PrerequisiteResponseDTO(long id, String title, String description,
                 prerequisite.getMasteryThreshold(), prerequisite.isOptional(), linkedCourseCompetencyDTO);
     }
 
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private record LinkedCourseCompetencyDTO(long id, long courseId, String courseTitle, String semester) {
-
-    }
 }

@@ -11,6 +11,9 @@ import de.tum.in.www1.artemis.domain.competency.Prerequisite;
 import de.tum.in.www1.artemis.repository.PrerequisiteRepository;
 import de.tum.in.www1.artemis.web.rest.dto.competency.PrerequisiteRequestDTO;
 
+/**
+ * Service responsible for initializing the database with specific test data related to prerequisites for use in integration tests.
+ */
 @Service
 public class PrerequisiteUtilService {
 
