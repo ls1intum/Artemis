@@ -1,12 +1,15 @@
 package de.tum.in.www1.artemis.service.user;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
 import static de.tum.in.www1.artemis.security.Role.EDITOR;
 import static de.tum.in.www1.artemis.security.Role.INSTRUCTOR;
 import static de.tum.in.www1.artemis.security.Role.STUDENT;
 import static de.tum.in.www1.artemis.security.Role.TEACHING_ASSISTANT;
 
+import java.time.Duration;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -32,7 +35,9 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.OrganizationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.connectors.ci.CIUserManagementService;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCPersonalAccessTokenManagementService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VcsUserManagementService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 import tech.jhipster.security.RandomUtil;
@@ -40,6 +45,8 @@ import tech.jhipster.security.RandomUtil;
 @Profile(PROFILE_CORE)
 @Service
 public class UserCreationService {
+
+    private final ProfileService profileService;
 
     @Value("${artemis.user-management.use-external}")
     private Boolean useExternalUserManagement;
@@ -55,6 +62,12 @@ public class UserCreationService {
 
     @Value("${info.guided-tour.course-group-instructors:#{null}}")
     private Optional<String> tutorialGroupInstructors;
+
+    @Value("${artemis.version-control.version-control-access-token:#{false}}")
+    private Boolean versionControlAccessToken;
+
+    @Value("${artemis.version-control.vc-access-token-max-lifetime-in-days:365}")
+    private int vcMaxLifetimeInDays;
 
     private static final Logger log = LoggerFactory.getLogger(UserCreationService.class);
 
@@ -76,7 +89,7 @@ public class UserCreationService {
 
     public UserCreationService(UserRepository userRepository, PasswordService passwordService, AuthorityRepository authorityRepository, CourseRepository courseRepository,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService, CacheManager cacheManager,
-            OrganizationRepository organizationRepository) {
+            OrganizationRepository organizationRepository, ProfileService profileService) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.authorityRepository = authorityRepository;
@@ -85,6 +98,7 @@ public class UserCreationService {
         this.optionalCIUserManagementService = optionalCIUserManagementService;
         this.cacheManager = cacheManager;
         this.organizationRepository = organizationRepository;
+        this.profileService = profileService;
     }
 
     /**
@@ -130,6 +144,11 @@ public class UserCreationService {
         // new user gets registration key
         newUser.setActivationKey(RandomUtil.generateActivationKey());
         newUser.setInternal(isInternal);
+        // new users gets new VCS access tokens, for the LocalVC setup
+        if (versionControlAccessToken && profileService.isProfileActive(PROFILE_LOCALVC)) {
+            newUser.setVcsAccessToken(LocalVCPersonalAccessTokenManagementService.generateSecureToken());
+            newUser.setVcsAccessTokenExpiryDate(ZonedDateTime.now().plus(Duration.ofDays(vcMaxLifetimeInDays)));
+        }
 
         final var authority = authorityRepository.findById(STUDENT.getAuthority()).orElseThrow();
         // needs to be mutable --> new HashSet<>(Set.of(...))
@@ -184,6 +203,12 @@ public class UserCreationService {
         }
         catch (InvalidDataAccessApiUsageException | PatternSyntaxException pse) {
             log.warn("Could not retrieve matching organizations from pattern: {}", pse.getMessage());
+        }
+
+        // new users gets new VCS access tokens, for the LocalVC setup
+        if (versionControlAccessToken && profileService.isProfileActive(PROFILE_LOCALVC)) {
+            user.setVcsAccessToken(LocalVCPersonalAccessTokenManagementService.generateSecureToken());
+            user.setVcsAccessTokenExpiryDate(ZonedDateTime.now().plus(Duration.ofDays(vcMaxLifetimeInDays)));
         }
         user.setGroups(userDTO.getGroups());
         user.setActivated(true);
