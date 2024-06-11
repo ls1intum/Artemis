@@ -6,7 +6,6 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -17,7 +16,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.iris.settings.IrisCourseSettings;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.Slide;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
@@ -82,17 +80,8 @@ public class AttachmentUnitService {
         Attachment savedAttachment = attachmentRepository.saveAndFlush(attachment);
         savedAttachmentUnit.setAttachment(savedAttachment);
         evictCache(file, savedAttachmentUnit);
-        try {
-            irisSettingsRepository.ifPresent(settingsRepository -> {
-                IrisCourseSettings courseSettings = settingsRepository.findCourseSettings(lecture.getCourse().getId()).orElseThrow();
-                if (courseSettings.getIrisLectureIngestionSettings().isEnabled()
-                        && Boolean.TRUE.equals(courseSettings.getIrisLectureIngestionSettings().getAutoIngestOnLectureAttachmentUpload())) {
-                    pyrisWebhookService.ifPresent(service -> service.addLectureToPyrisDB(List.of(savedAttachmentUnit)));
-                }
-            });
-        }
-        catch (NoSuchElementException e) {
-            // needed to create the attachment unit successfully even if the ingestion fails
+        if (pyrisWebhookService.isPresent() && irisSettingsRepository.isPresent()) {
+            pyrisWebhookService.get().autoUpdateAttachmentUnitsInPyris(irisSettingsRepository.get(), lecture.getCourse().getId(), List.of(savedAttachmentUnit));
         }
         return savedAttachmentUnit;
     }
@@ -140,21 +129,12 @@ public class AttachmentUnitService {
             // Split the updated file into single slides only if it is a pdf
             if (Objects.equals(FilenameUtils.getExtension(updateFile.getOriginalFilename()), "pdf")) {
                 slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
-                try {
-                    irisSettingsRepository.ifPresent(settingsRepository -> {
-                        IrisCourseSettings courseSettings = settingsRepository.findCourseSettings(existingAttachmentUnit.getLecture().getCourse().getId()).orElseThrow();
-                        if (courseSettings.getIrisLectureIngestionSettings().isEnabled()
-                                && Boolean.TRUE.equals(courseSettings.getIrisLectureIngestionSettings().getAutoIngestOnLectureAttachmentUpload())) {
-                            pyrisWebhookService.ifPresent(service -> service.addLectureToPyrisDB(List.of(savedAttachmentUnit)));
-                        }
-                    });
-                }
-                catch (NoSuchElementException e) {
-                    // needed to create the attachment unit successfully even if the ingestion fails
-                }
+            }
+            if (pyrisWebhookService.isPresent() && irisSettingsRepository.isPresent()) {
+                pyrisWebhookService.get().autoUpdateAttachmentUnitsInPyris(irisSettingsRepository.get(), savedAttachmentUnit.getLecture().getCourse().getId(),
+                        List.of(savedAttachmentUnit));
             }
         }
-
         return savedAttachmentUnit;
     }
 

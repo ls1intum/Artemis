@@ -86,6 +86,22 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testAutoUpdateAttachmentUnitsWithAutoUpdateEnabled() {
+        activateIrisFor(lecture1.getCourse());
+        IrisCourseSettings courseSettings = irisSettingsService.getRawIrisSettingsFor(lecture1.getCourse());
+        courseSettings.getIrisLectureIngestionSettings().setAutoIngestOnLectureAttachmentUpload(true);
+        this.irisSettingsRepository.save(courseSettings);
+        irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+        });
+        assertThat(pyrisWebhookService.autoUpdateAttachmentUnitsInPyris(irisSettingsRepository, lecture1.getCourse().getId(),
+                List.of((AttachmentUnit) lecture1.getLectureUnits().getFirst()))).isTrue();
+        assertThat(pyrisWebhookService.autoUpdateAttachmentUnitsInPyris(irisSettingsRepository, lecture1.getCourse().getId(),
+                List.of((AttachmentUnit) lecture1.getLectureUnits().getLast()))).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAddLectureToPyrisDatabaseWithCourseSettingsDisabled() {
         activateIrisFor(lecture1.getCourse());
         IrisCourseSettings courseSettings = irisSettingsService.getRawIrisSettingsFor(lecture1.getCourse());

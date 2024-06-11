@@ -17,7 +17,9 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.aop.logging.LoggingAspect;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisCourseSettings;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
+import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisPipelineExecutionSettingsDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureingestionwebhook.PyrisLectureUnitWebhookDTO;
@@ -86,6 +88,21 @@ public class PyrisWebhookService {
         int lectureId = attachmentUnit.getLecture().hashCode();
         int courseId = attachmentUnit.getLecture().getCourse().hashCode();
         return new PyrisLectureUnitWebhookDTO(false, artemisBaseUrl, "", lectureUnitId, "", lectureId, "", courseId, "", "");
+    }
+
+    /**
+     * send the updated / created attachment to Pyris for ingestion if autoLecturesUpdate is enabled
+     *
+     * @param courseId           Id of the course where the attachment is added
+     * @param newAttachmentUnits the new attachment Units to be sent to pyris for ingestion
+     */
+    public boolean autoUpdateAttachmentUnitsInPyris(IrisSettingsRepository irisSettingsRepository, Long courseId, List<AttachmentUnit> newAttachmentUnits) {
+        IrisCourseSettings courseSettings = irisSettingsRepository.findCourseSettings(courseId).orElseThrow();
+        if (courseSettings.getIrisLectureIngestionSettings().isEnabled()
+                && Boolean.TRUE.equals(courseSettings.getIrisLectureIngestionSettings().getAutoIngestOnLectureAttachmentUpload())) {
+            return addLectureToPyrisDB(newAttachmentUnits) != null;
+        }
+        return false;
     }
 
     /**

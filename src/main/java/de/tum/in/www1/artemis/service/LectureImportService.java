@@ -9,7 +9,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 
@@ -23,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.iris.settings.IrisCourseSettings;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
@@ -105,17 +103,9 @@ public class LectureImportService {
         lecture.setAttachments(attachments);
         attachmentRepository.saveAll(attachments);
         // Send lectures to pyris
-        try {
-            irisSettingsRepository.ifPresent(settingsRepository -> {
-                IrisCourseSettings courseSettings = settingsRepository.findCourseSettings(course.getId()).orElseThrow();
-                if (courseSettings.getIrisLectureIngestionSettings().isEnabled()
-                        && Boolean.TRUE.equals(courseSettings.getIrisLectureIngestionSettings().getAutoIngestOnLectureAttachmentUpload())) {
-                    pyrisWebhookService.ifPresent(service -> service.addLectureToPyrisDB(lectureUnits.stream().map(lectureUnit -> (AttachmentUnit) lectureUnit).toList()));
-                }
-            });
-        }
-        catch (NoSuchElementException e) {
-            // needed to create the attachment unit successfully even if the ingestion fails
+        if (pyrisWebhookService.isPresent() && irisSettingsRepository.isPresent()) {
+            pyrisWebhookService.get().autoUpdateAttachmentUnitsInPyris(irisSettingsRepository.get(), lecture.getCourse().getId(),
+                    lectureUnits.stream().map(lectureUnit -> (AttachmentUnit) lectureUnit).toList());
         }
         // Save again to establish the ordered list relationship
         return lectureRepository.save(lecture);
