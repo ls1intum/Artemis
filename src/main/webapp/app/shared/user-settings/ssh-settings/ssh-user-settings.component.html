@@ -7,9 +7,7 @@
         <div class="list-group-item">
             <dt>
                 {{ 'artemisApp.userSettings.sshSettingsPage.sshSettingsInfoText' | artemisTranslate }}
-                <a href="https://docs.artemis.cit.tum.de/user/exercises/programming.html#repository-access">
-                    <fa-icon [icon]="faLink" />
-                </a>
+                <jhi-documentation-button [type]="documentationType" />
             </dt>
         </div>
         @if (storedSshKey === '' && !editSshKey) {

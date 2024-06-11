@@ -4,7 +4,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Subject, Subscription, tap } from 'rxjs';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALVC } from 'app/app.constants';
-import { faEdit, faLink, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-account-information',
@@ -12,6 +13,7 @@ import { faEdit, faLink, faSave, faTrash } from '@fortawesome/free-solid-svg-ico
     styleUrls: ['../user-settings.scss'],
 })
 export class SshUserSettingsComponent implements OnInit {
+    readonly documentationType: DocumentationType = 'SshSetup';
     currentUser?: User;
     localVCEnabled = false;
     sshKey = '';
@@ -21,7 +23,6 @@ export class SshUserSettingsComponent implements OnInit {
     faEdit = faEdit;
     faSave = faSave;
     faTrash = faTrash;
-    faLink = faLink;
     private authStateSubscription: Subscription;
     private dialogErrorSource = new Subject<string>();
 
