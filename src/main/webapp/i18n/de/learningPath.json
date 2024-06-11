@@ -4,7 +4,13 @@
             "navigation": {
                 "nextButton": "Weiter",
                 "previousButton": "Zurück",
-                "overviewTitle": "Lerneinheiten"
+                "overview": {
+                    "title": "Lernpfad Kompetenzen",
+                    "showCompetenciesGraphButton": "Kompetenzgraph"
+                }
+            },
+            "competencyGraphModal": {
+                "title": "Abhängigkeiten der Lernpfadkompetenzen"
             }
         }
     }
