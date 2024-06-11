@@ -49,7 +49,6 @@ import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -270,13 +269,7 @@ public class LectureResource {
     public ResponseEntity<Boolean> IngestLectures(@PathVariable Long courseId) {
         log.debug("REST request to ingest lectures of course : {}", courseId);
         Course course = courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courseId);
-        try {
-            return ResponseEntity.ok().body(lectureService.ingestLecturesInPyris(course.getLectures()));
-        }
-        catch (Exception e) {
-            log.error("Failed to ingest lectures for course {}: {}", courseId, e.getMessage(), e);
-            throw new InternalServerErrorException("Could not ingest file");
-        }
+        return ResponseEntity.ok().body(lectureService.ingestLecturesInPyris(course.getLectures()));
     }
 
     /**

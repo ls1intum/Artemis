@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
 import java.util.Map;
@@ -30,6 +31,7 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureingestionwebho
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageState;
 import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
 
@@ -96,6 +98,22 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         });
         assertThat(pyrisWebhookService.autoUpdateAttachmentUnitsInPyris(irisSettingsRepository, lecture1.getCourse().getId(),
                 List.of((AttachmentUnit) lecture1.getLectureUnits().getFirst()))).isTrue();
+        assertThat(pyrisWebhookService.autoUpdateAttachmentUnitsInPyris(irisSettingsRepository, lecture1.getCourse().getId(),
+                List.of((AttachmentUnit) lecture1.getLectureUnits().getLast()))).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testAutoUpdateAttachmentUnitsWithAutoUpdateDisabled() {
+        activateIrisFor(lecture1.getCourse());
+        IrisCourseSettings courseSettings = irisSettingsService.getRawIrisSettingsFor(lecture1.getCourse());
+        courseSettings.getIrisLectureIngestionSettings().setAutoIngestOnLectureAttachmentUpload(false);
+        this.irisSettingsRepository.save(courseSettings);
+        irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+        });
+        assertThat(pyrisWebhookService.autoUpdateAttachmentUnitsInPyris(irisSettingsRepository, lecture1.getCourse().getId(),
+                List.of((AttachmentUnit) lecture1.getLectureUnits().getFirst()))).isFalse();
         assertThat(pyrisWebhookService.autoUpdateAttachmentUnitsInPyris(irisSettingsRepository, lecture1.getCourse().getId(),
                 List.of((AttachmentUnit) lecture1.getLectureUnits().getLast()))).isFalse();
     }
@@ -268,6 +286,23 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
             var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of("Authorization", List.of("Bearer " + jobToken))));
             request.postWithoutResponseBody("/api/public/pyris/webhooks/ingestion/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
             assertThat(pyrisJobService.getJob(jobToken)).isNull();
+        }
+    }
+
+    @Test
+    void testRunIdIngestionJob() throws Exception {
+        activateIrisFor(lecture1.getCourse());
+        irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+        });
+        if (lecture1.getLectureUnits().getFirst() instanceof AttachmentUnit attachmentUnit) {
+            String jobToken = pyrisWebhookService.addLectureToPyrisDB(List.of(attachmentUnit));
+            PyrisStageDTO errorStage = new PyrisStageDTO("error", 1, PyrisStageState.ERROR, "Stage not broke due to error.");
+            PyrisLectureIngestionStatusUpdateDTO statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("Success", List.of(errorStage));
+            var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of("Authorization", List.of("Bearer " + jobToken))));
+            assertThatThrownBy(() -> {
+                request.postWithoutResponseBody("/api/public/pyris/webhooks/ingestion/runs/" + jobToken + "1" + "/status", statusUpdate, HttpStatus.OK, headers);
+            }).isInstanceOf(ConflictException.class);
         }
     }
 }

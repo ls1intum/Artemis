@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,7 +100,7 @@ public class PyrisWebhookService {
      * @return true if the units were sent to pyris
      */
     public boolean autoUpdateAttachmentUnitsInPyris(IrisSettingsRepository irisSettingsRepository, Long courseId, List<AttachmentUnit> newAttachmentUnits) {
-        IrisCourseSettings courseSettings = irisSettingsRepository.findCourseSettings(courseId).orElseThrow();
+        IrisCourseSettings courseSettings = irisSettingsRepository.findCourseSettings(courseId).orElseThrow(() -> new NoSuchElementException("Course settings not found"));
         if (courseSettings.getIrisLectureIngestionSettings().isEnabled()
                 && Boolean.TRUE.equals(courseSettings.getIrisLectureIngestionSettings().getAutoIngestOnLectureAttachmentUpload())) {
             return addLectureToPyrisDB(newAttachmentUnits) != null;
@@ -121,7 +122,7 @@ public class PyrisWebhookService {
                         toUpdateAttachmentUnits.add(processAttachmentForDeletion(unit));
                     });
             if (!toUpdateAttachmentUnits.isEmpty()) {
-                return helpExecuteIngestionPipeline(toUpdateAttachmentUnits);
+                return executeLectureWebhook(toUpdateAttachmentUnits);
             }
         }
         catch (Exception e) {
@@ -145,7 +146,7 @@ public class PyrisWebhookService {
                             toUpdateAttachmentUnits.add(processAttachmentForUpdate(unit));
                         });
                 if (!toUpdateAttachmentUnits.isEmpty()) {
-                    return helpExecuteIngestionPipeline(toUpdateAttachmentUnits);
+                    return executeLectureWebhook(toUpdateAttachmentUnits);
                 }
             }
         }
@@ -161,7 +162,7 @@ public class PyrisWebhookService {
      * @param toUpdateAttachmentUnits The attachmentUnit that are goin to be Updated / deleted
      * @return jobToken if the job was created
      */
-    private String helpExecuteIngestionPipeline(List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentUnits) {
+    private String executeLectureWebhook(List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentUnits) {
         String jobToken = pyrisJobService.addIngestionWebhookJob();
         PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
         PyrisWebhookLectureIngestionExecutionDTO executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(toUpdateAttachmentUnits, settingsDTO, List.of());
