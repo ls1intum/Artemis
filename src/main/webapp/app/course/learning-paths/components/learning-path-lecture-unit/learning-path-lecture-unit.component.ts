@@ -1,11 +1,12 @@
-import { Component, InputSignal, OnInit, inject, input, signal } from '@angular/core';
+import { Component, InputSignal, inject, input, signal } from '@angular/core';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { ArtemisLectureUnitsModule } from 'app/overview/course-lectures/lecture-units.module';
 import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
 import { LearningPathNavigationService } from 'app/course/learning-paths/services/learning-path-navigation.service';
-import { lastValueFrom } from 'rxjs';
+import { lastValueFrom, switchMap } from 'rxjs';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
     selector: 'jhi-learning-path-lecture-unit',
@@ -13,7 +14,7 @@ import { lastValueFrom } from 'rxjs';
     imports: [ArtemisLectureUnitsModule],
     templateUrl: './learning-path-lecture-unit.component.html',
 })
-export class LearningPathLectureUnitComponent implements OnInit {
+export class LearningPathLectureUnitComponent {
     protected readonly LectureUnitType = LectureUnitType;
 
     private readonly lectureUnitService: LectureUnitService = inject(LectureUnitService);
@@ -22,21 +23,18 @@ export class LearningPathLectureUnitComponent implements OnInit {
 
     readonly lectureUnitId: InputSignal<number> = input.required<number>();
     readonly isLectureUnitLoading = signal(false);
-    readonly lectureUnit = signal<LectureUnit | undefined>(undefined);
+    private readonly lectureUnit$ = toObservable(this.lectureUnitId).pipe(switchMap((lectureUnitId) => this.getLectureUnit(lectureUnitId)));
+    readonly lectureUnit = toSignal(this.lectureUnit$);
 
-    async ngOnInit(): Promise<void> {
-        await this.loadLectureUnit(this.lectureUnitId());
-    }
-
-    async loadLectureUnit(lectureUnitId: number): Promise<void> {
-        this.isLectureUnitLoading.set(true);
+    async getLectureUnit(lectureUnitId: number): Promise<LectureUnit | undefined> {
         try {
-            const lectureUnit = await lastValueFrom(this.lectureUnitService.getLectureUnitById(lectureUnitId));
-            this.lectureUnit.set(lectureUnit);
+            this.isLectureUnitLoading.set(true);
+            return await lastValueFrom(this.lectureUnitService.getLectureUnitById(lectureUnitId));
         } catch (error) {
             this.alertService.error(error);
+        } finally {
+            this.isLectureUnitLoading.set(false);
         }
-        this.isLectureUnitLoading.set(false);
     }
 
     setLearningObjectCompletion(completionEvent: LectureUnitCompletionEvent): void {

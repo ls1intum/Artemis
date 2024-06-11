@@ -1,5 +1,5 @@
 import { Component, OnInit, Signal, inject, signal } from '@angular/core';
-import { LearningObjectType, LearningPathNavigationObjectDto } from 'app/entities/competency/learning-path.model';
+import { LearningObjectType } from 'app/entities/competency/learning-path.model';
 import { map } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
@@ -28,14 +28,13 @@ export class LearningPathStudentPageComponent implements OnInit {
     private readonly alertService: AlertService = inject(AlertService);
     private readonly activatedRoute: ActivatedRoute = inject(ActivatedRoute);
 
-    readonly currentLearningObject: Signal<LearningPathNavigationObjectDto | undefined> = this.learningPathNavigationService.currentLearningObject;
-
     readonly isLoading = signal(false);
     readonly learningPathId = signal<number | undefined>(undefined);
     readonly courseId: Signal<number> = toSignal(this.activatedRoute.parent!.parent!.params.pipe(map((params) => params.courseId)));
+    readonly currentLearningObject = this.learningPathNavigationService.currentLearningObject;
 
-    async ngOnInit(): Promise<void> {
-        await this.loadLearningPathId(this.courseId());
+    ngOnInit(): void {
+        this.loadLearningPathId(this.courseId());
     }
 
     private async loadLearningPathId(courseId: number): Promise<void> {
