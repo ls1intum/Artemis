@@ -13,9 +13,9 @@ import { faEdit, faLink, faSave, faTrash } from '@fortawesome/free-solid-svg-ico
 })
 export class SshUserSettingsComponent implements OnInit {
     currentUser?: User;
-    localVCEnabled: boolean = false;
-    sshKey: string = '';
-    storedSshKey: string = '';
+    localVCEnabled = false;
+    sshKey = '';
+    storedSshKey = '';
     editSshKey = false;
 
     faEdit = faEdit;
@@ -43,7 +43,8 @@ export class SshUserSettingsComponent implements OnInit {
                 tap((user: User) => {
                     this.storedSshKey = user.sshPublicKey || '';
                     this.sshKey = this.storedSshKey;
-                    return (this.currentUser = user);
+                    this.currentUser = user;
+                    return this.currentUser;
                 }),
             )
             .subscribe();
