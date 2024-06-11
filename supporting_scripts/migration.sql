@@ -335,28 +335,35 @@ SET q.statistics = (
 )
 WHERE q.discriminator = 'DD';
 
-#
-# UPDATE quiz_exercise q
-# SET q.statistics = (
-#     SELECT JSON_OBJECT(
-#                'pointCounters', (
-#             SELECT JSON_ARRAYAGG(
-#                        JSON_OBJECT(
-#                            'id', qsc.id,
-#                            'points', qsc.points,
-#                            'ratedCounter', qsc.rated_counter,
-#                            'unratedCounter', qsc.un_rated_counter
-#                        )
-#                    )
-#             FROM quiz_statistic_counter qsc
-#             WHERE qsc.quiz_point_statistic_id = qs.id
-#         ),
-#                'participantsRated', qs.participants_rated,
-#                'participantsUnrated', qs.participants_unrated
-#            )
-#     FROM quiz_statistic qs
-#     WHERE qs.id = q.quiz_point_statistic_id
-# )
-# WHERE q.discriminator = 'QP';
-#
+
+UPDATE exercise q
+SET q.statistics = (
+    SELECT JSON_OBJECT(
+               'pointCounters', (
+            SELECT JSON_ARRAYAGG(
+                       JSON_OBJECT(
+                           'id', qsc.id,
+                           'points', qsc.points,
+                           'ratedCounter', qsc.rated_counter,
+                           'unratedCounter', qsc.un_rated_counter
+                       )
+                   )
+            FROM quiz_statistic_counter qsc
+            WHERE qsc.quiz_point_statistic_id = qs.id
+        ),
+               'participantsRated', qs.participants_rated,
+               'participantsUnrated', qs.participants_unrated
+           )
+    FROM quiz_statistic qs
+    WHERE qs.id = q.quiz_point_statistic_id
+      AND qs.discriminator = 'QP'
+)
+WHERE EXISTS (
+    SELECT *
+    FROM quiz_statistic qs
+    WHERE qs.id = q.quiz_point_statistic_id
+      AND qs.discriminator = 'QP'
+);
+
+
 
