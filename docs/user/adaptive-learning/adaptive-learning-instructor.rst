@@ -5,6 +5,9 @@ Manage Adaptive Learning (Instructor)
     :local:
     :depth: 2
 
+TODO: when using competencies for the first time :)
+* generate competencies or use the standardized competency catalog
+
 Competencies
 ------------
 A competency is a overarching learning objective that ties together various lectures and exercises. It has a title, description and a `taxonomy <https://en.wikipedia.org/wiki/Bloom%27s_taxonomy>`_.
@@ -19,7 +22,7 @@ Instructors can manage competencies and prerequisites of a course in the *Compet
 * View all competencies and prerequisites of their course
 * Create, edit or delete competencies and prerequisites
 * Manage relations between competencies (which are necessary to build learning paths)
-* :ref:`import_competencies` from other courses or the :ref:`standardized competency catalog<competencies_admin>`
+* :ref:`import_competencies` from other courses or the :ref:`standardized competency catalog<standardized_competency_catalog>`
 * :ref:`generate_competencies` using Iris
 
 |instructor-competency-management|
@@ -59,13 +62,13 @@ Instructors have three ways to import competencies: Import all competencies of a
   They can sort the list based on all fields except for competency description.
   They can also filter the list through the *Competency Search* at the top of the page, which can be expanded for advanced search options.
 | All selected competencies are displayed in the *Selected Competencies* table and can be de-selected again by clicking on the trash icon.
-  Finally, they can select if they also want to import the relations between the imported competencies.
+  Finally, instructors can select if they also want to import the relations between the imported competencies.
 
 |instructor-import-competencies|
 
 **3. Import Standardized Competencies**
 
-| When importing standardized competencies, instructors can view the complete standardized competency catalog (TODO: link! also fix other link) of their instance.
+| When importing standardized competencies, instructors can view the complete :ref:`standardized competency catalog<standardized_competency_catalog>` of their instance.
   They can filter the displayed competencies by title and knowledge area.
 
 | Clicking on the name of a competency opens its details on the right side and clicking on the checkbox next to the name selects it for import.
@@ -84,9 +87,16 @@ Generate Competencies
         Watch this video on TUM-Live.
     </iframe>
 
-TODO
-* description
-* screenshot
+| Instructors can use Iris, the AI subsystem for Artemis, to generate competencies for their course.
+| Based on a course description, Iris generates around 10 recommendations for possible competencies (this amount may vary depending on the description length).
+
+|instructor-generate-competencies|
+
+| Instructors can view the details (title, description and taxonomy) of each recommendation by expanding it.
+  They can then edit these details or delete the recommendation if it is unfit.
+| After saving, the recommendations are saved as actual competencies into the course of the instructor.
+
+|instructor-competency-recommendation|
 
 Learning Paths
 --------------
@@ -108,6 +118,10 @@ Once the feature is enabled, instructors get access to each student's learning p
 .. |instructor-competency-edit| image:: instructor/competency-edit.png
     :width: 1000
 .. |instructor-competency-link| image:: instructor/competency-link.png
+    :width: 600
+.. |instructor-generate-competencies| image:: instructor/generate-competencies.png
+    :width: 1000
+.. |instructor-competency-recommendation| image:: instructor/competency-recommendation.png
     :width: 600
 .. |instructors-learning-path-management| image:: instructor/learning-path-management.png
     :width: 1000

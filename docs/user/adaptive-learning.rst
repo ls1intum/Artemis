@@ -24,4 +24,4 @@ Students are able to track their progress in :ref:`competencies_student` and can
 Instructors have multiple ways to add competencies to their course: They can create new competencies, :ref:`importing existing ones <import_competencies>` or :ref:`generate competencies <generate_competencies>` with Iris.
 They can then link exercises and lecture units to competencies and define relations between them to build a structure for learning paths.
 
-Administrators are able to :ref:`manage the standardized competency catalog <competencies_admin>`, an instance-wide catalog from which instructors can import competencies into their course.
+Administrators are able to :ref:`manage the standardized competency catalog <standardized_competency_catalog>`, an instance-wide catalog from which instructors can import competencies into their course.

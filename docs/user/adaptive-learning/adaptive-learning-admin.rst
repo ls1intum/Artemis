@@ -5,10 +5,11 @@ Manage Standardized Competencies (Administrator)
     :local:
     :depth: 2
 
+.. _standardized_competency_catalog:
+
 Standardized Competencies
 -------------------------
 
-.. _competencies_admin:
 
 Manage Standardized Competencies
 --------------------------------
