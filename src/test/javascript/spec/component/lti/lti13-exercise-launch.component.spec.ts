@@ -24,6 +24,18 @@ describe('Lti13ExerciseLaunchComponent', () => {
     } as unknown as Router;
     const navigateSpy = jest.spyOn(mockRouter, 'navigate');
 
+    const replace = window.location.replace;
+
+    beforeAll(() => {
+        Object.defineProperty(window, 'location', {
+            value: { replace: jest.fn() },
+        });
+    });
+
+    afterAll(() => {
+        window.location.replace = replace;
+    });
+
     beforeEach(() => {
         route = {
             snapshot: { queryParamMap: convertToParamMap({ state: 'state', id_token: 'id_token' }) },
@@ -143,7 +155,6 @@ describe('Lti13ExerciseLaunchComponent', () => {
     }));
 
     it('should redirect user to target link when user is already logged in', fakeAsync(() => {
-        window.location.replace = jest.fn();
         jest.spyOn(comp, 'authenticateUserThenRedirect');
         jest.spyOn(comp, 'redirectUserToTargetLink');
         const loggedInUserUser: User = { id: 3, login: 'lti_user', firstName: 'TestUser', lastName: 'Moodle' } as User;
@@ -162,7 +173,6 @@ describe('Lti13ExerciseLaunchComponent', () => {
     }));
 
     it('should redirect user to target link after user logged in', fakeAsync(() => {
-        window.location.replace = jest.fn();
         jest.spyOn(comp, 'authenticateUserThenRedirect');
         jest.spyOn(comp, 'redirectUserToTargetLink');
         jest.spyOn(comp, 'redirectUserToLoginThenTargetLink');
