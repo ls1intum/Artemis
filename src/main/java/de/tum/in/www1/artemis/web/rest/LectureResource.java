@@ -267,7 +267,7 @@ public class LectureResource {
      * @return the ResponseEntity with status 200 (OK) and a message success or null if the operation failed
      */
     @PostMapping("courses/{courseId}/ingest")
-    public ResponseEntity<String> IngestLectures(@PathVariable Long courseId) {
+    public ResponseEntity<Boolean> IngestLectures(@PathVariable Long courseId) {
         log.debug("REST request to ingest lectures of course : {}", courseId);
         Course course = courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courseId);
         try {

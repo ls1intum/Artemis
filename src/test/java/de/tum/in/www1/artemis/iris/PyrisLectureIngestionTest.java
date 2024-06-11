@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -117,10 +118,20 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testIngestLecturesButtonInPyris() throws Exception {
+        activateIrisFor(lecture1.getCourse());
+        irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+        });
+        Boolean reponse = request.postWithResponseBody("/api/courses/" + lecture1.getCourse().getId() + "/ingest", Optional.empty(), boolean.class, HttpStatus.OK);
+        assertThat(reponse).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteLecturefromPyrisDatabaseWithCourseSettingsEnabled() {
         activateIrisFor(lecture1.getCourse());
         IrisCourseSettings courseSettings = irisSettingsService.getRawIrisSettingsFor(lecture1.getCourse());
-        courseSettings.getIrisLectureIngestionSettings().setEnabled(false);
         this.irisSettingsRepository.save(courseSettings);
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();

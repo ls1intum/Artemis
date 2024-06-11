@@ -159,14 +159,14 @@ public class LectureService {
      * @param lectures set of lectures to be ingested
      * @return returns the job token if the operation is successful else it returns null
      */
-    public String ingestLecturesInPyris(Set<Lecture> lectures) {
+    public boolean ingestLecturesInPyris(Set<Lecture> lectures) {
         if (pyrisWebhookService.isPresent()) {
             List<AttachmentUnit> attachmentUnitList = lectures.stream().flatMap(lec -> lec.getLectureUnits().stream()).filter(unit -> unit instanceof AttachmentUnit)
                     .map(unit -> (AttachmentUnit) unit).toList();
             if (!attachmentUnitList.isEmpty()) {
-                return pyrisWebhookService.get().addLectureToPyrisDB(attachmentUnitList);
+                return pyrisWebhookService.get().addLectureToPyrisDB(attachmentUnitList) != null;
             }
         }
-        return null;
+        return false;
     }
 }
