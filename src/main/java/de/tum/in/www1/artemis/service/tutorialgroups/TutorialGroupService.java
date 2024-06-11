@@ -322,7 +322,10 @@ public class TutorialGroupService {
         // Add registrations to failedRegistrations if the tutorial group already exists
         registrationsWithTitle.forEach(registration -> {
             if (tutorialGroupTitleToTutorialGroup.containsKey(registration.title())) {
-                failedRegistrations.add(registration);
+                assert registration.student() != null;
+                if (registration.student().registrationNumber().isEmpty() && registration.student().login().isEmpty()) {
+                    failedRegistrations.add(registration);
+                }
             }
         });
 

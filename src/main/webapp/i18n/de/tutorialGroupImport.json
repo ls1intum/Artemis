@@ -6,7 +6,7 @@
             "importButton": "Übunsgruppen importieren",
             "dialogTitle": "Übungsgruppen importieren",
             "explanations": {
-                "description": "Dieses Dialogfeld ermöglicht es, Tutoriumsgruppen und Studierendenregistrierungen aus einer CSV-Datei zu importieren. Wenn eine Tutoriumsgruppe noch nicht existiert, wird sie erstellt. Wenn Studierende in der CSV-Datei aufgeführt sind, werden sie von ihrer aktuellen Tutoriumsgruppe in die neue, in der CSV-Datei angegebene, Gruppe verschoben.",
+                "description": "Dieses Dialogfeld ermöglicht es, Tutoriumsgruppen und Studierendenregistrierungen aus einer CSV-Datei zu importieren. Wenn eine Tutoriumsgruppe noch nicht existiert, wird sie erstellt. Wenn Studierende in der CSV-Datei aufgeführt sind, werden sie von ihrer aktuellen Tutoriumsgruppe in die neue, in der CSV-Datei angegebene, Gruppe verschoben. Falls eine Tutoriumsgruppe schon existiert, aber keine Studierenden registriert dann wird diese nicht importiert.",
                 "requirements": "Die oberste Zeile der CSV-Datei muss die Spaltennamen angeben. Jede Zeile muss den Titel der Tutoriumsgruppe enthalten. Um Studenten zu registrieren, muss jede Zeile zusätzlich entweder eine Matrikelnummer oder einen Anmeldenamen enthalten. Vor- und Nachname sind optional."
             },
             "supportedHeaderNames": {
