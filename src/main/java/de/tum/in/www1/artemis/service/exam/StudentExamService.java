@@ -692,8 +692,10 @@ public class StudentExamService {
                 }
             }
         }
-        studentExam.setStudentParticipations(generatedParticipations);
-        this.studentExamRepository.save(studentExam);
+        if (!generatedParticipations.isEmpty()) {
+            studentExam.setStudentParticipations(generatedParticipations);
+            this.studentExamRepository.save(studentExam);
+        }
     }
 
     /**
