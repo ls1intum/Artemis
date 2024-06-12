@@ -32,9 +32,6 @@ $breadcrumb-height: 38px;
 .connected {
     background-color: var(--exam-participation-footer-connected-background);
 }
-.disconnected {
-    background-color: var(--exam-participation-footer-disconnected-background);
-}
 
 .submissionSuccessfulHint {
     display: flex;
@@ -65,5 +62,24 @@ $breadcrumb-height: 38px;
     }
     @media (max-width: 768px) {
         height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height)) !important;
+    }
+}
+
+.update-footer {
+    margin-top: 1rem;
+    padding: 0.5rem 0 0.75rem 0;
+    width: 100%;
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    z-index: 10;
+    background: var(--update-footer-background);
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    border-top: 1px solid var(--border-color);
+
+    &.disconnected {
+        background-color: var(--exam-participation-footer-disconnected-background);
     }
 }
