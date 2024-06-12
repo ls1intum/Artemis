@@ -1,4 +1,4 @@
-import { Component, OnInit, afterNextRender, computed, inject, input, signal } from '@angular/core';
+import { AfterViewInit, Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { Layout, NgxGraphModule, NgxGraphZoomOptions } from '@swimlane/ngx-graph';
 import { Subject } from 'rxjs';
 import { CompetencyGraphDto, NodeType } from 'app/entities/competency/learning-path.model';
@@ -13,7 +13,7 @@ import { AlertService } from 'app/core/util/alert.service';
     templateUrl: './competency-graph.component.html',
     styleUrl: './competency-graph.component.scss',
 })
-export class CompetencyGraphComponent implements OnInit {
+export class CompetencyGraphComponent implements OnInit, AfterViewInit {
     protected readonly NodeType = NodeType;
 
     private readonly learningPathApiService = inject(LearningPathApiService);
@@ -31,14 +31,12 @@ export class CompetencyGraphComponent implements OnInit {
     readonly center$: Subject<boolean> = new Subject<boolean>();
     readonly zoomToFit$: Subject<NgxGraphZoomOptions> = new Subject<NgxGraphZoomOptions>();
 
-    constructor() {
-        afterNextRender(() => {
-            this.zoomToFit$.next({ autoCenter: true });
-        });
-    }
-
     ngOnInit(): void {
         this.loadCompetencyGraph(this.learningPathId());
+    }
+
+    ngAfterViewInit(): void {
+        this.zoomToFit$.next({ autoCenter: true });
     }
 
     async loadCompetencyGraph(learningPathId: number) {

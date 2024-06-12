@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, afterNextRender, computed, inject, input, output } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, computed, inject, input, output } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbAccordionModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { NodeDimension } from '@swimlane/ngx-graph';
@@ -17,7 +17,8 @@ export interface SizeUpdate {
     templateUrl: './competency-node.component.html',
     styleUrl: './competency-node.component.scss',
 })
-export class CompetencyNodeComponent {
+export class CompetencyNodeComponent implements AfterViewInit {
+    // height of node element in pixels
     private readonly nodeHeight = 45.59;
 
     readonly competencyNode = input.required<CompetencyGraphNodeDto>();
@@ -26,10 +27,8 @@ export class CompetencyNodeComponent {
 
     readonly onSizeSet = output<SizeUpdate>();
 
-    constructor() {
-        afterNextRender(() => {
-            this.setDimensions();
-        });
+    ngAfterViewInit(): void {
+        this.setDimensions();
     }
 
     isMastered(): boolean {
