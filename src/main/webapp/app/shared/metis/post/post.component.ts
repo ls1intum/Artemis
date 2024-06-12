@@ -140,11 +140,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
      * sets the current post tags, empty error if none exit
      */
     private updateTags(): void {
-        if (this.posting.tags) {
-            this.tags = this.posting.tags;
-        } else {
-            this.tags = [];
-        }
+        this.tags = this.posting.tags ?? [];
     }
 
     /**
