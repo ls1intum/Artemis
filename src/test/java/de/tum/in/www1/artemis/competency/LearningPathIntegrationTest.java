@@ -57,7 +57,7 @@ import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationObjectDTO;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDto;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 
 class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -725,7 +725,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
-        final var result = request.get("/api/learning-path/" + learningPath.getId() + "/navigation-overview", HttpStatus.OK, LearningPathNavigationOverviewDto.class);
+        final var result = request.get("/api/learning-path/" + learningPath.getId() + "/navigation-overview", HttpStatus.OK, LearningPathNavigationOverviewDTO.class);
 
         // TODO: currently learning objects connected to more than one competency are provided twice in the learning path
         // TODO: this is not a problem for the navigation overview as the duplicates are filtered out
@@ -740,7 +740,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
-        request.get("/api/learning-path/" + learningPath.getId() + "/navigation-overview", HttpStatus.FORBIDDEN, LearningPathNavigationOverviewDto.class);
+        request.get("/api/learning-path/" + learningPath.getId() + "/navigation-overview", HttpStatus.FORBIDDEN, LearningPathNavigationOverviewDTO.class);
     }
 
     void testGetCompetencyProgressForLearningPath() throws Exception {

@@ -45,7 +45,7 @@ import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationObjectDTO.LearningObjectType;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDto;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -356,7 +356,7 @@ public class LearningPathService {
      * @param learningPathId the id of the learning path
      * @return the navigation overview
      */
-    public LearningPathNavigationOverviewDto getLearningPathNavigationOverview(long learningPathId) {
+    public LearningPathNavigationOverviewDTO getLearningPathNavigationOverview(long learningPathId) {
         var learningPath = findWithCompetenciesAndLearningObjectsAndCompletedUsersById(learningPathId);
         if (!userRepository.getUser().equals(learningPath.getUser())) {
             throw new AccessForbiddenException("You are not allowed to access this learning path");

@@ -45,7 +45,7 @@ import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationObjectDTO.LearningObjectType;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDto;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -247,7 +247,7 @@ public class LearningPathResource {
     @GetMapping("learning-path/{learningPathId}/navigation-overview")
     @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastStudent
-    public ResponseEntity<LearningPathNavigationOverviewDto> getLearningPathNavigationOverview(@PathVariable @Valid long learningPathId) {
+    public ResponseEntity<LearningPathNavigationOverviewDTO> getLearningPathNavigationOverview(@PathVariable @Valid long learningPathId) {
         log.debug("REST request to get navigation overview for learning path with id: {}", learningPathId);
         return ResponseEntity.ok(learningPathService.getLearningPathNavigationOverview(learningPathId));
     }

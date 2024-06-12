@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.service.learningpath.LearningPathRecommendationSer
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationObjectDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationObjectDTO.LearningObjectType;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDto;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDTO;
 
 /**
  * Service for navigating through a learning path.
@@ -131,12 +131,12 @@ public class LearningPathNavigationService {
      * @param learningPath the learning path
      * @return the navigation overview
      */
-    public LearningPathNavigationOverviewDto getNavigationOverview(LearningPath learningPath) {
+    public LearningPathNavigationOverviewDTO getNavigationOverview(LearningPath learningPath) {
         var learningPathUser = learningPath.getUser();
         var learningObjects = Stream
                 .concat(learningObjectService.getCompletedLearningObjectsForUserAndCompetencies(learningPath.getUser(), learningPath.getCompetencies()),
                         learningPathRecommendationService.getUncompletedLearningObjects(learningPath))
                 .map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, learningPathUser)).distinct().toList();
-        return new LearningPathNavigationOverviewDto(learningObjects);
+        return new LearningPathNavigationOverviewDTO(learningObjects);
     }
 }
