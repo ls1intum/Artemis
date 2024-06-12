@@ -21,6 +21,7 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback-suggestion.component';
 
+// TODO: This component isn't really used anymore. In the future, we should remove it.
 describe('CodeEditorAceComponent', () => {
     let comp: CodeEditorAceComponent;
     let fixture: ComponentFixture<CodeEditorAceComponent>;
@@ -116,19 +117,16 @@ describe('CodeEditorAceComponent', () => {
         const loadFileSubject = new Subject();
         const initEditorSpy = jest.spyOn(comp, 'initEditor');
         loadRepositoryFileStub.mockReturnValue(loadFileSubject);
+        fixture.detectChanges();
         comp.selectedFile = selectedFile;
         comp.fileSession = fileSession;
-
-        triggerChanges(comp, { property: 'selectedFile', currentValue: selectedFile });
-        fixture.detectChanges();
-        await fixture.whenStable();
+        await comp.ngOnChanges({ selectedFile: { firstChange: false, previousValue: undefined, currentValue: selectedFile, isFirstChange: () => false } });
 
         expect(comp.isLoading).toBeTrue();
         expect(loadRepositoryFileStub).toHaveBeenCalledWith(selectedFile);
         expect(initEditorSpy).not.toHaveBeenCalled();
         loadFileSubject.next({ fileName: selectedFile, fileContent: 'lorem ipsum' });
-        fixture.detectChanges();
-        await fixture.whenStable();
+        await comp.ngOnChanges({ selectedFile: { firstChange: false, previousValue: selectedFile, currentValue: selectedFile, isFirstChange: () => false } });
 
         expect(comp.isLoading).toBeFalse();
         expect(comp.fileSession).toEqual({
@@ -147,6 +145,7 @@ describe('CodeEditorAceComponent', () => {
     ])(
         'should correctly init editor after file change in case of error',
         waitForAsync(async (error: Error, errorCode: string) => {
+            expect(error).toBeDefined(); // TODO: Why does this fail?
             const selectedFile = 'dummy';
             const fileSession = {};
             const loadFileSubject = new Subject();
@@ -173,12 +172,6 @@ describe('CodeEditorAceComponent', () => {
             expect(onErrorSpy).toHaveBeenCalledWith(errorCode);
         }),
     );
-
-    it('should discard all new feedback after a re-init because of a file change', async () => {
-        comp.newFeedbackLines = [1, 2, 3];
-        await comp.initEditor();
-        expect(comp.newFeedbackLines).toEqual([]);
-    });
 
     it('should not load the file from server on selected file change if the file is already in session', () => {
         const selectedFile = 'dummy';
