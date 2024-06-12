@@ -3,7 +3,7 @@ import { By } from '@angular/platform-browser';
 import { DebugElement, EventEmitter } from '@angular/core';
 import { NgModel } from '@angular/forms';
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
-import { Subject } from 'rxjs';
+import { Subject, firstValueFrom } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { CreateFileChange, FileType, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { triggerChanges } from '../../helpers/utils/general.utils';
@@ -142,36 +142,32 @@ describe('CodeEditorAceComponent', () => {
     it.each([
         [new ConnectionError(), 'loadingFailedInternetDisconnected'],
         [new Error(), 'loadingFailed'],
-    ])(
-        'should correctly init editor after file change in case of error',
-        waitForAsync(async (error: Error, errorCode: string) => {
-            expect(error).toBeDefined(); // TODO: Why does this fail?
-            const selectedFile = 'dummy';
-            const fileSession = {};
-            const loadFileSubject = new Subject();
-            const initEditorSpy = jest.spyOn(comp, 'initEditor');
-            const onErrorSpy = jest.spyOn(comp.onError, 'emit');
-            loadRepositoryFileStub.mockReturnValue(loadFileSubject);
-            comp.selectedFile = selectedFile;
-            comp.fileSession = fileSession;
+    ])('should correctly init editor after file change in case of error', async (error: Error, errorCode: string) => {
+        const selectedFile = 'dummy';
+        const fileSession = {};
+        const loadFileSubject = new Subject();
+        const initEditorSpy = jest.spyOn(comp, 'initEditor');
+        const onErrorSpy = jest.spyOn(comp.onError, 'emit');
+        loadRepositoryFileStub.mockReturnValue(loadFileSubject);
+        comp.selectedFile = selectedFile;
+        comp.fileSession = fileSession;
 
-            triggerChanges(comp, { property: 'selectedFile', currentValue: selectedFile });
-            fixture.detectChanges();
-            await fixture.whenStable();
+        triggerChanges(comp, { property: 'selectedFile', currentValue: selectedFile });
+        fixture.detectChanges();
+        await fixture.whenStable();
 
-            expect(comp.isLoading).toBeTrue();
-            expect(loadRepositoryFileStub).toHaveBeenCalledWith(selectedFile);
-            expect(initEditorSpy).not.toHaveBeenCalled();
-            loadFileSubject.error(error);
-            fixture.detectChanges();
-            await fixture.whenStable();
+        expect(comp.isLoading).toBeTrue();
+        expect(loadRepositoryFileStub).toHaveBeenCalledWith(selectedFile);
+        expect(initEditorSpy).not.toHaveBeenCalled();
+        loadFileSubject.error(error);
+        fixture.detectChanges();
 
-            expect(comp.isLoading).toBeFalse();
-            expect(comp.fileSession).toEqual({ dummy: { code: '', cursor: { column: 0, row: 0 }, loadingError: true } });
-            expect(initEditorSpy).toHaveBeenCalledWith();
-            expect(onErrorSpy).toHaveBeenCalledWith(errorCode);
-        }),
-    );
+        await firstValueFrom(comp.onFileLoad);
+        expect(onErrorSpy).toHaveBeenCalledWith(errorCode);
+        expect(comp.isLoading).toBeFalse();
+        expect(comp.fileSession).toEqual({ dummy: { code: '', cursor: { column: 0, row: 0 }, loadingError: true } });
+        expect(initEditorSpy).toHaveBeenCalledOnce();
+    });
 
     it('should not load the file from server on selected file change if the file is already in session', () => {
         const selectedFile = 'dummy';
