@@ -169,6 +169,12 @@ describe('CodeEditorAceComponent', () => {
         expect(initEditorSpy).toHaveBeenCalledOnce();
     });
 
+    it('should discard all new feedback after a re-init because of a file change', async () => {
+        comp.newFeedbackLines = [1, 2, 3];
+        await comp.initEditor();
+        expect(comp.newFeedbackLines).toEqual([]);
+    });
+
     it('should not load the file from server on selected file change if the file is already in session', () => {
         const selectedFile = 'dummy';
         const fileSession = { [selectedFile]: { code: 'lorem ipsum', cursor: { column: 0, row: 0 }, loadingError: false } };
