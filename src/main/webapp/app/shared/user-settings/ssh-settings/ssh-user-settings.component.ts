@@ -20,9 +20,9 @@ export class SshUserSettingsComponent implements OnInit {
     storedSshKey = '';
     editSshKey = false;
 
-    faEdit = faEdit;
-    faSave = faSave;
-    faTrash = faTrash;
+    readonly faEdit = faEdit;
+    readonly faSave = faSave;
+    readonly faTrash = faTrash;
     private authStateSubscription: Subscription;
     private dialogErrorSource = new Subject<string>();
 
