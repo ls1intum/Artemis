@@ -223,11 +223,11 @@ describe('CourseOverviewService', () => {
             exercise.dueDate = endDate;
 
             const groupedExercises = service.groupExercisesByDueDate([exercise]);
-            for (const possibleGroup in ['past', 'current', 'dueSoon', 'future', 'noDate']) {
-                if (possibleGroup == group) {
+            for (const possibleGroup of ['past', 'current', 'dueSoon', 'future', 'noDate']) {
+                if (possibleGroup === group) {
                     expect(groupedExercises[possibleGroup].entityData).toHaveLength(1);
                 } else {
-                    expect(groupedExercises[possibleGroup]).toBeUndefined();
+                    expect(groupedExercises[possibleGroup].entityData).toHaveLength(0);
                 }
             }
         });
