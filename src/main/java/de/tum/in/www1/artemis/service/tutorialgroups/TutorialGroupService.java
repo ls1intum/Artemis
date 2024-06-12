@@ -424,16 +424,16 @@ public class TutorialGroupService {
                     // Set additional fields from registrations
                     Optional<TutorialGroupRegistrationImportDTO> registrationOpt = registrations.stream().filter(r -> title.equals(r.title())).findFirst();
                     registrationOpt.ifPresent(registration -> {
-                        if (registration.campus() != null) {
+                        if (registration.campus() != null && !registration.campus().isEmpty()) {
                             tutorialGroup.setCampus(registration.campus());
                         }
                         if (registration.capacity() != null) {
                             tutorialGroup.setCapacity(registration.capacity());
                         }
-                        if (registration.language() != null) {
+                        if (registration.language() != null && !registration.language().isEmpty()) {
                             tutorialGroup.setLanguage(registration.language());
                         }
-                        if (registration.additionalInformation() != null) {
+                        if (registration.additionalInformation() != null && !registration.additionalInformation().isEmpty()) {
                             tutorialGroup.setAdditionalInformation(registration.additionalInformation());
                         }
                         if (registration.isOnline() != null) {
