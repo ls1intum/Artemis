@@ -15,15 +15,15 @@ import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-loc
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
+import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
+import { of } from 'rxjs';
 
 describe('LearningPathLectureUnitComponent', () => {
     let component: LearningPathLectureUnitComponent;
     let fixture: ComponentFixture<LearningPathLectureUnitComponent>;
 
-    // TODO: Activate tests when lecture unit methods are migrated to using Promises
-    // let lectureUnitService: LectureUnitService;
-    // let learningPathNavigationService: LearningPathNavigationService;
-    // let getLectureUnitSpy: jest.SpyInstance;
+    let lectureUnitService: LectureUnitService;
+    let getLectureUnitByIdSpy: jest.SpyInstance;
 
     const learningPathId = 1;
     const lectureUnit = new VideoUnit();
@@ -59,10 +59,9 @@ describe('LearningPathLectureUnitComponent', () => {
             })
             .compileComponents();
 
-        // TODO: Activate tests when lecture unit methods are migrated to using Promises
-        // learningPathNavigationService = TestBed.inject(LearningPathNavigationService);
-        // getLectureUnitSpy = jest.spyOn(lectureUnitService, 'getLectureUnitById').mockReturnValue(of(lectureUnit));
-        // lectureUnitService = TestBed.inject(LectureUnitService);
+        lectureUnitService = TestBed.inject(LectureUnitService);
+        getLectureUnitByIdSpy = jest.spyOn(lectureUnitService, 'getLectureUnitById').mockReturnValue(of(lectureUnit));
+        lectureUnitService = TestBed.inject(LectureUnitService);
 
         lectureUnit.id = 1;
         lectureUnit.description = 'Example video unit';
@@ -71,7 +70,7 @@ describe('LearningPathLectureUnitComponent', () => {
 
         fixture = TestBed.createComponent(LearningPathLectureUnitComponent);
         component = fixture.componentInstance;
-        fixture.componentRef.setInput('lectureUnitId', 1);
+        fixture.componentRef.setInput('lectureUnitId', learningPathId);
     });
 
     afterEach(() => {
@@ -83,35 +82,28 @@ describe('LearningPathLectureUnitComponent', () => {
         expect(component.lectureUnitId()).toBe(learningPathId);
     });
 
-    // TODO: Activate tests when lecture unit methods are migrated to using Promises
-    // it('should get lecture unit', async () => {
-    //     fixture.detectChanges();
-    //     await fixture.whenStable();
-    //     fixture.detectChanges();
-    //
-    //     expect(component.lectureUnit()).toEqual(lectureUnit);
-    //     expect(getLectureUnitSpy).toHaveBeenCalledWith(learningPathId);
-    // });
-    //
-    // it('should call lecture unit service on completion', async () => {
-    //     const lectureCompletionSpy = jest.spyOn(lectureUnitService, 'completeLectureUnit').mockReturnValue();
-    //     const setCurrentLearningObjectCompletionSpy = jest.spyOn(learningPathNavigationService, 'setCurrentLearningObjectCompletion');
-    //
-    //     fixture.detectChanges();
-    //     await fixture.whenStable();
-    //
-    //     component.setLearningObjectCompletion({ lectureUnit: component.lectureUnit()!, completed: true });
-    //     expect(lectureCompletionSpy).toHaveBeenCalledOnce();
-    //     expect(setCurrentLearningObjectCompletionSpy).toHaveBeenCalledWith(true);
-    // });
-    //
-    // it('should set isLoading correctly on load', async () => {
-    //     const setIsLoadingSpy = jest.spyOn(component.isLectureUnitLoading, 'set');
-    //
-    //     fixture.detectChanges();
-    //     await fixture.whenStable();
-    //
-    //     expect(setIsLoadingSpy).toHaveBeenCalledWith(true);
-    //     expect(setIsLoadingSpy).toHaveBeenCalledWith(false);
-    // });
+    it('should get lecture unit', async () => {
+        const getLectureUnitSpy = jest.spyOn(component, 'getLectureUnit');
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(getLectureUnitSpy).toHaveBeenCalledWith(learningPathId);
+        expect(getLectureUnitByIdSpy).toHaveBeenCalledWith(learningPathId);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(component.lectureUnit()).toEqual(lectureUnit);
+    });
+
+    it('should set loading state correctly', async () => {
+        const setIsLoadingSpy = jest.spyOn(component.isLectureUnitLoading, 'set');
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(setIsLoadingSpy).toHaveBeenCalledWith(true);
+        expect(setIsLoadingSpy).toHaveBeenCalledWith(false);
+    });
 });
