@@ -175,7 +175,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     onSearch() {
-        this.activeConversation = undefined;
+        this.metisConversationService.setActiveConversation(undefined);
         this.courseWideSearchConfig.searchTerm = this.courseWideSearchTerm;
         this.courseWideSearch?.onSearch();
     }
@@ -201,5 +201,9 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             filterToOwn: false,
             filterToAnsweredOrReacted: false,
         });
+    }
+
+    getConversationDTO(conversationId: number): ConversationDTO {
+        return this.conversationsOfUser.find((conversation) => conversation.id === conversationId)!;
     }
 }

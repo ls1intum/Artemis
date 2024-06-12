@@ -100,7 +100,7 @@
             <div class="col d-flex flex-grow-1 justify-end px-0" style="max-width: min-content">
                 @if (!!postInThread) {
                     <jhi-conversation-thread-sidebar
-                        [activeConversation]="postInThread.conversation!"
+                        [activeConversation]="activeConversation ?? getConversationDTO(postInThread.conversation?.id!)"
                         [readOnlyMode]="!!getAsChannel(postInThread.conversation)?.isArchived"
                         [activePost]="postInThread"
                         (closePostThread)="postInThread = undefined"
