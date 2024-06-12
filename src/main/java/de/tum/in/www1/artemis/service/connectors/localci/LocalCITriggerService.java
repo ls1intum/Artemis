@@ -80,8 +80,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private IMap<Long, CircularFifoQueue<BuildJobItem>> buildJobItemMap;
 
-    @Value("${artemis.continuous-integration.max-build-job-items:2}")
-    private int MAX_BUILD_JOB_ITEMS;
+    @Value("${artemis.continuous-integration.parallel-jobs-per-participation}")
+    private int PARALLEL_JOBS_PER_PARTICIPATION;
 
     public LocalCITriggerService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, AeolusTemplateService aeolusTemplateService,
             ProgrammingLanguageConfiguration programmingLanguageConfiguration, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
@@ -174,7 +174,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         try {
             CircularFifoQueue<BuildJobItem> buildJobItems = buildJobItemMap.get(participation.getId());
             if (buildJobItems == null) {
-                buildJobItems = new CircularFifoQueue<>(MAX_BUILD_JOB_ITEMS);
+                buildJobItems = new CircularFifoQueue<>(PARALLEL_JOBS_PER_PARTICIPATION);
             }
             buildJobItems.add(buildJobItem);
             buildJobItemMap.put(participation.getId(), buildJobItems);
