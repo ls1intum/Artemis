@@ -4,13 +4,17 @@
     }
     @if (!disconnected) {
         <div [ngClass]="{ 'badge bg-success connectedExam': isExamMode }">
-            <fa-icon [fixedWidth]="true" [icon]="faTowerBroadcast" />
+            @if (isExamMode) {
+                <fa-icon [fixedWidth]="true" [icon]="faTowerBroadcast" />
+            }
             <span jhiTranslate="connectionStatus.connected"></span>
         </div>
     }
     @if (disconnected) {
         <div [ngClass]="{ 'badge bg-danger connectedExam': isExamMode }">
-            <fa-icon [fixedWidth]="true" [icon]="faExclamation" />
+            @if (isExamMode) {
+                <fa-icon [fixedWidth]="true" [icon]="faExclamation" />
+            }
             <span jhiTranslate="connectionStatus.disconnected"></span>
         </div>
     }
