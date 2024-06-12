@@ -16,21 +16,21 @@ import { readFileSync } from 'node:fs';
 // Get the file names from the command line arguments
 const fileNames = process.argv.slice(2);
 const HTTP_METHODS = ['get', 'post', 'put', 'delete'];
+let isFirstRestCall = true;
 
 for (const fileName of fileNames.filter(fileName => fileName.endsWith('.ts')))  {
     // Load the TypeScript file
     const sourceFile = createSourceFile(fileName, readFileSync(fileName).toString(), ScriptTarget.ES2022, true);
-    console.log(fileName);
 
     // Store class property definitions
     const classProperties: { [key: string]: string } = {};
-    const classMethods: { [key: string]: string } = {};
 
     // Store parameter types
     const parameterTypes: { [key: string]: string } = {};
 
     // Start traversing the AST from the root
     visit(sourceFile, classProperties, parameterTypes, sourceFile, fileName);
+    isFirstRestCall = true;
 };
 
 // This function will be called for each node in the AST
@@ -85,6 +85,12 @@ function processCallExpression(callExpression: CallExpression, classProperties: 
 }
 
 function logRestCall(restCall: CallExpression, methodName: string, classProperties: { [key: string]: string }, sourceFile: SourceFile, fileName: string) {
+    if (isFirstRestCall) {
+        console.log('===================================');
+        console.log('REST calls found in the following file: ' + fileName);
+        console.log('===================================');
+        isFirstRestCall = false;
+    }
     console.log(`Found REST call: ${methodName}`);
     if (restCall.arguments.length > 0) {
         let url = restCall.arguments[0].getText();
@@ -102,6 +108,5 @@ function logRestCall(restCall: CallExpression, methodName: string, classProperti
         console.log('No arguments provided for this REST call');
     }
     console.log(`At line: ${sourceFile.getLineAndCharacterOfPosition(restCall.getStart()).line + 1}`);
-    console.log(`At file path: ${fileName}`);
     console.log('-----------------------------------');
 }
