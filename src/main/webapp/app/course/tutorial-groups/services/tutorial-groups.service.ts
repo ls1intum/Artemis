@@ -15,7 +15,7 @@ type EntityArrayResponseType = HttpResponse<TutorialGroup[]>;
 
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupsService {
-    private resourceURL = 'api'; // testChange
+    private resourceURL = 'api';
 
     constructor(
         private httpClient: HttpClient,
