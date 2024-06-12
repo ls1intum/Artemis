@@ -32,17 +32,20 @@ export class IrisWebsocketService implements OnDestroy {
      * @param sessionId The session ID to subscribe to.
      */
     public subscribeToSession(sessionId: number): Observable<any> {
+        console.log('Subscribing to session:', sessionId);
         if (!sessionId) {
             throw new Error('Session ID is required');
         }
 
         const subscribedChannel = this.subscribedChannels.computeIfAbsent(sessionId, () => {
             const channel = this.getChannelFromSessionId(sessionId);
+            console.log('Subscribing to channel:', channel);
             const subject = new Subject<any>();
             const wsSubscription = this.jhiWebsocketService
                 .subscribe(channel)
                 .receive(channel)
                 .subscribe((response: any) => {
+                    console.log('Response:', response);
                     subject.next(response);
                 });
             return { wsSubscription, subject };

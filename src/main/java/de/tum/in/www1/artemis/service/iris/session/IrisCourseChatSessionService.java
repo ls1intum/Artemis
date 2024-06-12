@@ -95,7 +95,7 @@ public class IrisCourseChatSessionService implements IrisChatBasedFeatureInterfa
 
     @Override
     public void sendOverWebsocket(IrisMessage message) {
-        irisChatWebsocketService.sendMessage(message, null);
+        irisChatWebsocketService.sendMessage(message, null, null);
     }
 
     @Override
@@ -130,9 +130,10 @@ public class IrisCourseChatSessionService implements IrisChatBasedFeatureInterfa
         var session = (IrisCourseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId());
         if (statusUpdate.result() != null) {
             var message = new IrisMessage();
+
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));
             var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
-            irisChatWebsocketService.sendMessage(savedMessage, statusUpdate.stages());
+            irisChatWebsocketService.sendMessage(savedMessage, statusUpdate.stages(), statusUpdate.suggestions());
         }
         else {
             irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages());

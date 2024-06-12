@@ -119,6 +119,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
                 this.scrollToBottom('auto');
             }
             this.messages = [...messages].reverse();
+            console.log(this.messages);
         });
         this.stagesSubscription = this.chatService.currentStages().subscribe((stages) => {
             this.stages = stages;
@@ -138,8 +139,8 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
             this.active = active;
         });
         this.suggestionsSubscription = this.chatService.currentSuggestions().subscribe((suggestions) => {
+            this.suggestions = suggestions;
             if (suggestions.length > 0) {
-                this.suggestions = suggestions;
                 console.log('Suggestions:', suggestions);
             }
         });
@@ -374,5 +375,10 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         const messagesElement = this.messagesElement.nativeElement;
         const scrollTop = messagesElement.scrollTop;
         this.isScrolledToBottom = scrollTop < 50;
+    }
+
+    onSuggestionClick(suggestion: string) {
+        this.newMessageTextContent = suggestion;
+        this.onSend();
     }
 }

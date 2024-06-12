@@ -75,6 +75,7 @@ export class IrisChatService implements OnDestroy {
         if (!this.sessionId) {
             return throwError(() => new Error('Not initialized'));
         }
+        this.suggestions.next([]);
 
         const newMessage = new IrisUserMessage();
         newMessage.content = [new IrisTextMessageContent(message)];
@@ -216,6 +217,7 @@ export class IrisChatService implements OnDestroy {
             this.sessionId = undefined;
             this.messages.next([]);
             this.stages.next([]);
+            this.suggestions.next([]);
             this.numNewMessages.next(0);
         }
         this.error.next(undefined);
