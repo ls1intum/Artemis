@@ -19,7 +19,7 @@ import { TutorialGroupFreePeriodsManagementComponent } from 'app/course/tutorial
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
-    isLoading = false;
+    isLoading = false; //testChange
 
     @Input()
     tutorialGroupFreePeriod: TutorialGroupFreePeriod;
