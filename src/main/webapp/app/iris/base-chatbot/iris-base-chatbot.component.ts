@@ -140,9 +140,6 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         });
         this.suggestionsSubscription = this.chatService.currentSuggestions().subscribe((suggestions) => {
             this.suggestions = suggestions;
-            if (suggestions.length > 0) {
-                console.log('Suggestions:', suggestions);
-            }
         });
 
         this.checkIfUserAcceptedIris();
