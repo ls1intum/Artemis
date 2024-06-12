@@ -3,7 +3,7 @@ import { AfterViewInit, Component, ElementRef, computed, inject, input, output }
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbAccordionModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { NodeDimension } from '@swimlane/ngx-graph';
-import { CompetencyGraphNodeDto } from 'app/entities/competency/learning-path.model';
+import { CompetencyGraphNodeDTO } from 'app/entities/competency/learning-path.model';
 
 export interface SizeUpdate {
     id: string;
@@ -21,7 +21,7 @@ export class CompetencyNodeComponent implements AfterViewInit {
     // height of node element in pixels
     private readonly nodeHeight = 45.59;
 
-    readonly competencyNode = input.required<CompetencyGraphNodeDto>();
+    readonly competencyNode = input.required<CompetencyGraphNodeDTO>();
     readonly mastery = computed(() => Math.round(this.competencyNode().mastery));
     private readonly element: ElementRef = inject(ElementRef);
 

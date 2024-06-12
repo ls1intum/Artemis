@@ -26,25 +26,25 @@ export enum LearningObjectType {
     EXERCISE = 'EXERCISE',
 }
 
-export interface LearningPathNavigationObjectDto {
+export interface LearningPathNavigationObjectDTO {
     id: number;
     completed: boolean;
     name: string;
     type: LearningObjectType;
 }
 
-export interface LearningPathNavigationDto {
-    predecessorLearningObject?: LearningPathNavigationObjectDto;
-    currentLearningObject: LearningPathNavigationObjectDto;
-    successorLearningObject?: LearningPathNavigationObjectDto;
+export interface LearningPathNavigationDTO {
+    predecessorLearningObject?: LearningPathNavigationObjectDTO;
+    currentLearningObject: LearningPathNavigationObjectDTO;
+    successorLearningObject?: LearningPathNavigationObjectDTO;
     progress: number;
 }
 
-export interface LearningPathNavigationOverviewDto {
-    learningObjects: LearningPathNavigationObjectDto[];
+export interface LearningPathNavigationOverviewDTO {
+    learningObjects: LearningPathNavigationObjectDTO[];
 }
 
-export interface CompetencyGraphNodeDto {
+export interface CompetencyGraphNodeDTO {
     id: string;
     label: string;
     softDueDate: Date;
@@ -54,16 +54,16 @@ export interface CompetencyGraphNodeDto {
     dimension?: NodeDimension;
 }
 
-export interface CompetencyGraphEdgeDto {
+export interface CompetencyGraphEdgeDTO {
     id: string;
     source: string;
     target: string;
     relationType: CompetencyRelationType;
 }
 
-export interface CompetencyGraphDto {
-    nodes: CompetencyGraphNodeDto[];
-    edges: CompetencyGraphEdgeDto[];
+export interface CompetencyGraphDTO {
+    nodes: CompetencyGraphNodeDTO[];
+    edges: CompetencyGraphEdgeDTO[];
 }
 
 export class NgxLearningPathDTO {

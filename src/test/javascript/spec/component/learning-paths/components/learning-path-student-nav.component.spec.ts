@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { LearningPathStudentNavComponent } from 'app/course/learning-paths/components/learning-path-student-nav/learning-path-student-nav.component';
-import { LearningObjectType, LearningPathNavigationDto } from 'app/entities/competency/learning-path.model';
+import { LearningObjectType, LearningPathNavigationDTO } from 'app/entities/competency/learning-path.model';
 import { By } from '@angular/platform-browser';
 import { LearningPathStudentNavOverviewComponent } from 'app/course/learning-paths/components/learning-path-student-nav-overview/learning-path-student-nav-overview.component';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
@@ -14,7 +14,7 @@ describe('LearningPathStudentNavComponent', () => {
     let learningPathApiService: LearningPathApiService;
     let getLearningPathNavigationSpy: jest.SpyInstance;
 
-    const navigationDto: LearningPathNavigationDto = {
+    const navigationDto: LearningPathNavigationDTO = {
         predecessorLearningObject: {
             id: 1,
             name: 'Exercise 1',

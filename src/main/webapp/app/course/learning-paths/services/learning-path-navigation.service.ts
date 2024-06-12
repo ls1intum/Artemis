@@ -1,5 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { LearningPathNavigationDto, LearningPathNavigationObjectDto } from 'app/entities/competency/learning-path.model';
+import { LearningPathNavigationDTO, LearningPathNavigationObjectDTO } from 'app/entities/competency/learning-path.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 
@@ -10,7 +10,7 @@ export class LearningPathNavigationService {
 
     readonly isLoading = signal(false);
 
-    readonly learningPathNavigation = signal<LearningPathNavigationDto | undefined>(undefined);
+    readonly learningPathNavigation = signal<LearningPathNavigationDTO | undefined>(undefined);
     readonly currentLearningObject = computed(() => this.learningPathNavigation()?.currentLearningObject);
 
     readonly isCurrentLearningObjectCompleted = signal(false);
@@ -21,11 +21,11 @@ export class LearningPathNavigationService {
         this.isLoading.set(false);
     }
 
-    async loadRelativeLearningPathNavigation(learningPathId: number, selectedLearningObject: LearningPathNavigationObjectDto) {
+    async loadRelativeLearningPathNavigation(learningPathId: number, selectedLearningObject: LearningPathNavigationObjectDTO) {
         await this.loadLearningPathNavigation(learningPathId, selectedLearningObject);
     }
 
-    private async loadLearningPathNavigation(learningPathId: number, selectedLearningObject: LearningPathNavigationObjectDto | undefined) {
+    private async loadLearningPathNavigation(learningPathId: number, selectedLearningObject: LearningPathNavigationObjectDTO | undefined) {
         try {
             const learningPathNavigation = await this.learningPathApiService.getLearningPathNavigation(learningPathId, selectedLearningObject?.id, selectedLearningObject?.type);
             this.learningPathNavigation.set(learningPathNavigation);

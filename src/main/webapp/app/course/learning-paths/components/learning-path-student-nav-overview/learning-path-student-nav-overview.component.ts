@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { IconDefinition, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/core/util/alert.service';
-import { LearningObjectType, LearningPathNavigationObjectDto, LearningPathNavigationOverviewDto } from 'app/entities/competency/learning-path.model';
+import { LearningObjectType, LearningPathNavigationObjectDTO, LearningPathNavigationOverviewDTO } from 'app/entities/competency/learning-path.model';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { LearningPathNavigationService } from 'app/course/learning-paths/services/learning-path-navigation.service';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
@@ -28,7 +28,7 @@ export class LearningPathStudentNavOverviewComponent implements OnInit {
 
     readonly onLearningObjectSelected = output<void>();
     readonly isLoading = signal(false);
-    private readonly navigationOverview = signal<LearningPathNavigationOverviewDto | undefined>(undefined);
+    private readonly navigationOverview = signal<LearningPathNavigationOverviewDTO | undefined>(undefined);
     readonly learningObjects = computed(() => this.navigationOverview()?.learningObjects ?? []);
     readonly currentLearningObject = this.learningPathNavigationService.currentLearningObject;
 
@@ -47,7 +47,7 @@ export class LearningPathStudentNavOverviewComponent implements OnInit {
         this.isLoading.set(false);
     }
 
-    selectLearningObject(learningObject: LearningPathNavigationObjectDto): void {
+    selectLearningObject(learningObject: LearningPathNavigationObjectDTO): void {
         if (this.isLearningObjectSelectable(learningObject)) {
             this.learningPathNavigationService.loadRelativeLearningPathNavigation(this.learningPathId(), learningObject);
             this.onLearningObjectSelected.emit();
@@ -58,7 +58,7 @@ export class LearningPathStudentNavOverviewComponent implements OnInit {
         return this.currentLearningObject()?.id === id && this.currentLearningObject()?.type === type;
     }
 
-    isLearningObjectSelectable(learningObject: LearningPathNavigationObjectDto): boolean {
+    isLearningObjectSelectable(learningObject: LearningPathNavigationObjectDTO): boolean {
         const indexOfLearningObject = this.learningObjects().indexOf(learningObject);
         return indexOfLearningObject > 0 ? this.learningObjects()[indexOfLearningObject - 1].completed : true;
     }

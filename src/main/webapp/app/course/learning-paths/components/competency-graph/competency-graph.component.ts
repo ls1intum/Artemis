@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { Layout, NgxGraphModule, NgxGraphZoomOptions } from '@swimlane/ngx-graph';
 import { Subject } from 'rxjs';
-import { CompetencyGraphDto, NodeType } from 'app/entities/competency/learning-path.model';
+import { CompetencyGraphDTO, NodeType } from 'app/entities/competency/learning-path.model';
 import { CompetencyNodeComponent, SizeUpdate } from 'app/course/learning-paths/components/competency-node/competency-node.component';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 import { AlertService } from 'app/core/util/alert.service';
@@ -22,7 +22,7 @@ export class CompetencyGraphComponent implements OnInit, AfterViewInit {
     learningPathId = input.required<number>();
     readonly isLoading = signal<boolean>(false);
 
-    private readonly competencyGraph = signal<CompetencyGraphDto>({ nodes: [], edges: [] });
+    private readonly competencyGraph = signal<CompetencyGraphDTO>({ nodes: [], edges: [] });
     readonly nodes = computed(() => this.competencyGraph().nodes);
     readonly edges = computed(() => this.competencyGraph().edges);
 

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CompetencyNodeComponent } from 'app/course/learning-paths/components/competency-node/competency-node.component';
-import { CompetencyGraphNodeDto } from 'app/entities/competency/learning-path.model';
+import { CompetencyGraphNodeDTO } from 'app/entities/competency/learning-path.model';
 
 describe('CompetencyNodeComponent', () => {
     let component: CompetencyNodeComponent;
@@ -14,7 +14,7 @@ describe('CompetencyNodeComponent', () => {
         mastery: 71.44,
         progress: 80,
         softDueDate: new Date(),
-    } as CompetencyGraphNodeDto;
+    } as CompetencyGraphNodeDTO;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -46,15 +46,15 @@ describe('CompetencyNodeComponent', () => {
     });
 
     it('should check if competency is mastered', () => {
-        expect(component.isMastered()).toBeFalsy();
+        expect(component.isMastered()).toBeFalse();
     });
 
     it('should check if competency is started', () => {
-        expect(component.isStarted()).toBeTruthy();
+        expect(component.isStarted()).toBeTrue();
     });
 
     it('should check if competency is not started', () => {
-        expect(component.isNotStarted()).toBeFalsy();
+        expect(component.isNotStarted()).toBeFalse();
     });
 
     it('should set dimensions', () => {

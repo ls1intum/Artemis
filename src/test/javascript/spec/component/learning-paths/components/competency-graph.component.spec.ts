@@ -5,7 +5,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
-import { CompetencyGraphEdgeDto, CompetencyGraphNodeDto } from 'app/entities/competency/learning-path.model';
+import { CompetencyGraphEdgeDTO, CompetencyGraphNodeDTO } from 'app/entities/competency/learning-path.model';
 import { CompetencyNodeComponent } from 'app/course/learning-paths/components/competency-node/competency-node.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
@@ -23,17 +23,17 @@ describe('CompetencyGraphComponent', () => {
             {
                 id: '1',
                 label: 'Node 1',
-            } as CompetencyGraphNodeDto,
+            } as CompetencyGraphNodeDTO,
             {
                 id: '2',
                 label: 'Node 2',
-            } as CompetencyGraphNodeDto,
+            } as CompetencyGraphNodeDTO,
         ],
         edges: [
             {
                 source: '1',
                 target: '2',
-            } as CompetencyGraphEdgeDto,
+            } as CompetencyGraphEdgeDTO,
         ],
     };
 

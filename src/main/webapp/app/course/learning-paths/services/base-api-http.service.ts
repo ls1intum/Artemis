@@ -9,6 +9,13 @@ export abstract class BaseApiHttpService {
 
     private readonly baseUrl = 'api';
 
+    /**
+     * Handles the error response from the server and throws specific errors
+     * which can be handled on service or component level.
+     *
+     * @param error
+     * @private
+     */
     private handleHttpError(error: HttpResponse<any>): void {
         const statusCode = error.status;
         if (statusCode == 404) {
@@ -16,6 +23,16 @@ export abstract class BaseApiHttpService {
         }
     }
 
+    /**
+     * Constructs a request which interprets the body as a JavaScript object and returns
+     * the response body as a Promise in the requested type.
+     *
+     * @param method  The HTTP method.
+     * @param url     The endpoint URL excluding the base server url (/api).
+     * @param options The HTTP options to send with the request.
+     *
+     * @return  An `Promise` of the response body of type `T`.
+     */
     private async request<T>(
         method: HttpMethod,
         url: string,
@@ -48,6 +65,16 @@ export abstract class BaseApiHttpService {
         }
     }
 
+    /**
+     * Constructs a `GET` request that interprets the body as JSON and
+     * returns a Promise of an object of type `T`.
+     *
+     * @param url     The endpoint URL excluding the base server url (/api).
+     * @param options The HTTP options to send with the request.
+     * @protected
+     *
+     * @return An `Promise` of type `Object` (T),
+     */
     protected async get<T>(
         url: string,
         options?: {
@@ -66,6 +93,17 @@ export abstract class BaseApiHttpService {
         return await this.request<T>(HttpMethod.Get, url, options);
     }
 
+    /**
+     * Constructs a `POST` request that interprets the body as JSON and
+     * returns a Promise of an object of type `T`.
+     *
+     * @param url The endpoint URL excluding the base server url (/api).
+     * @param body The content to include in the body of the request.
+     * @param options The HTTP options to send with the request.
+     * @protected
+     *
+     * @return An `Promise` of type `Object` (T),
+     */
     protected async post<T>(
         url: string,
         body?: any,
