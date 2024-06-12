@@ -19,25 +19,6 @@
         <!-- exam participation -->
         @if (isVisible() && isActive() && !isOver() && examStartConfirmed) {
             <div class="exam-background-wrapper">
-                <!-- exam nav -->
-                <!-- <jhi-exam-navigation-bar
-                    id="exam-navigation-bar"
-                    class="exam-navigation-sticky d-block"
-                    [exercises]="studentExam.exercises!"
-                    [exerciseIndex]="exerciseIndex"
-                    [endDate]="individualStudentEndDate"
-                    [overviewPageOpen]="activePageIndex === -1"
-                    [examSessions]="studentExam.examSessions"
-                    (onPageChanged)="onPageChange($event)"
-                    (examAboutToEnd)="examEnded()"
-                    (onExamHandInEarly)="toggleHandInEarly()"
-                /> -->
-                <!-- <div class="h5 module-bg m-3 mt-0 px-3 py-2 rounded rounded-3 justify-content-between sticky-top">
-                    <div class="align-self-center d-flex">
-                        <h3 class="align-self-center mb-0">{{ exam.title }}</h3>
-                    </div>
-                </div> -->
-
                 <jhi-exam-bar
                     [examTitle]="exam.title!"
                     [endDate]="individualStudentEndDate"
@@ -49,7 +30,6 @@
 
                 <div class="d-flex justify-content-between gap-3">
                     <div class="ms-3 bg-body">
-                        <!-- <jhi-sidebar [itemSelected]="true" [courseId]="courseId" [sidebarData]="sidebarData" [searchFieldEnabled]="false" [isExamMode]="true" [itemSelected]="exerciseSelected"/> -->
                         <jhi-exam-navigation-sidebar
                             [itemSelected]="true"
                             [courseId]="courseId"
@@ -112,6 +92,43 @@
                                 <button class="btn btn-sm btn-primary px-3 ms-2" (click)="createParticipationForExercise(this.activeExamPage.exercise!).subscribe()">
                                     {{ 'artemisApp.examParticipation.generateParticipationRetry' | artemisTranslate }}
                                 </button>
+                            </div>
+                        }
+                        <!-- exam connection status footer bar -->
+                        @if (connected) {
+                            <div class="exam-footer connected">
+                                <div class="container">
+                                    <div class="exam-footer-content">
+                                        <!-- Note by SK: this case shows an empty <p> on purpose -->
+                                        @if (isProgrammingExercise()) {
+                                            <p jhiTranslate="artemisApp.examParticipation.ideConnected" class="mb-0"></p>
+                                        } @else {
+                                            <p jhiTranslate="artemisApp.examParticipation.connected" class="mb-0"></p>
+                                        }
+                                        <jhi-connection-status class="connection-status-exam-participation" />
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        @if (!connected) {
+                            <div class="exam-footer disconnected">
+                                <div class="container">
+                                    <div class="exam-footer-content">
+                                        @if (!isProgrammingExercise()) {
+                                            <p jhiTranslate="artemisApp.examParticipation.disconnected" class="mb-0"></p>
+                                        }
+                                        @if (isProgrammingExerciseWithCodeEditor() && isProgrammingExerciseWithOfflineIDE()) {
+                                            <p jhiTranslate="artemisApp.examParticipation.disconnectedCodeEditorAndOfflineIDE" class="mb-0"></p>
+                                        }
+                                        @if (isProgrammingExerciseWithCodeEditor() && !isProgrammingExerciseWithOfflineIDE()) {
+                                            <p jhiTranslate="artemisApp.examParticipation.disconnectedCodeEditorNoOfflineIDE" class="mb-0"></p>
+                                        }
+                                        @if (!isProgrammingExerciseWithCodeEditor() && isProgrammingExerciseWithOfflineIDE()) {
+                                            <p jhiTranslate="artemisApp.examParticipation.disconnectedNoCodeEditor" class="mb-0"></p>
+                                        }
+                                        <jhi-connection-status class="connection-status-exam-participation" />
+                                    </div>
+                                </div>
                             </div>
                         }
                     </div>
