@@ -80,7 +80,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private IMap<Long, CircularFifoQueue<BuildJobItem>> buildJobItemMap;
 
-    @Value("${artemis.continuous-integration.parallel-jobs-per-participation}")
+    @Value("${artemis.continuous-integration.parallel-jobs-per-participation:2}")
     private int PARALLEL_JOBS_PER_PARTICIPATION;
 
     public LocalCITriggerService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, AeolusTemplateService aeolusTemplateService,
