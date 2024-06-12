@@ -3,16 +3,14 @@
         <span>
             {{ exercise.title }}
         </span>
-        <span
-            >({{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}
-            @if (exercise.bonusPoints) {
-                <span>, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>
-            }
-            )
-            @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore" />
-            }
-        </span>
+        <!-- prettier-ignore -->
+        <span left-header>&nbsp;({{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}@if (exercise.bonusPoints) {
+            <span
+            >, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>
+            }) @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+            <jhi-included-in-score-badge
+            [includedInOverallScore]="exercise.includedInOverallScore" />
+          }</span>
     </h3>
     <hr />
     <!--resizable container-->
