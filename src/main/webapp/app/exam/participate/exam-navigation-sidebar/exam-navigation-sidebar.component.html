@@ -10,10 +10,10 @@
                         (click)="changePage(true, -1)"
                     >
                         <div class="d-flex justify-content-between mb-1 align-items-baseline">
-                            <span id="test-sidebar-card-title" class="small fw-semibold text-truncate me-2" [title]="getOverviewString()">
+                            <span id="test-sidebar-card-title" class="small fw-semibold text-truncate me-2">
                                 <fa-icon [fixedWidth]="true" [icon]="overviewIcon" />
                                 @if (!isCollapsed) {
-                                    {{ getOverviewString() }}
+                                    <span jhiTranslate="artemisApp.studentExamDetail.overview"></span>
                                 }
                             </span>
                             <span>

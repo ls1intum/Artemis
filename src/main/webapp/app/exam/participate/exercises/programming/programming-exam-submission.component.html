@@ -63,10 +63,14 @@
 <!-- ngIf Offline IDE clone button start -->
 @if (!exercise.allowOnlineEditor && exercise.allowOfflineIde) {
     <div>
-        <h4 class="mb-3">
-            <span class="exercise-title">{{ exercise?.exerciseGroup?.title ?? '-' }}</span>
-            <span>&nbsp;[{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}]</span>
-        </h4>
+        <h3 style="text-align: left; font-weight: normal">
+            <span>
+                {{ exercise.title }}
+            </span>
+            <span>({{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}) </span>
+        </h3>
+        <hr />
+
         <jhi-exercise-details-student-actions [exercise]="exercise" [courseId]="courseId" [examMode]="true" />
         <div class="d-flex gap-3 my-3 ms-1 align-items-center">
             <jhi-programming-submission-policy-status [exercise]="exercise" [submissionCount]="submissionCount" class="flex-grow-1" />

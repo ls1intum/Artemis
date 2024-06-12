@@ -766,6 +766,7 @@
             "studentExam": "Klausur ({{ examTitle }})",
             "testRun": "Testlauf ({{ examTitle }})",
             "exercises": "Aufgaben",
+            "overview": "Überblick",
             "downloadPDF": " PDF herunterladen",
             "student": "Student",
             "name": "Name: ",

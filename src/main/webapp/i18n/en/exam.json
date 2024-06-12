@@ -767,6 +767,7 @@
             "studentExam": "Student exam ({{ examTitle }})",
             "testRun": "Test Run ({{ examTitle }})",
             "exercises": "Exercises",
+            "overview": "Overview",
             "downloadPDF": " Download PDF",
             "student": "Student",
             "name": "Name: ",
