@@ -621,7 +621,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         // Initialize component and children
         fixture.detectChanges();
         // wait until data is loaded from CodeEditorTutorAssessmentContainer
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        await firstValueFrom(comp.onFeedbackLoaded);
         fixture.detectChanges();
 
         // Setup tree for file browser
