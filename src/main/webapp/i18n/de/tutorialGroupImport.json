@@ -7,7 +7,7 @@
             "dialogTitle": "Übungsgruppen importieren",
             "explanations": {
                 "description": "Dieses Dialogfeld ermöglicht es, Tutoriumsgruppen und Studierendenregistrierungen aus einer CSV-Datei zu importieren. Wenn eine Tutoriumsgruppe noch nicht existiert, wird sie erstellt. Wenn Studierende in der CSV-Datei aufgeführt sind, werden sie von ihrer aktuellen Tutoriumsgruppe in die neue, in der CSV-Datei angegebene, Gruppe verschoben.",
-                "requirements": "Die oberste Zeile der CSV-Datei muss die Spaltennamen angeben. Jede Zeile muss den Titel der Tutoriumsgruppe enthalten. Um Studenten zu registrieren, muss jede Zeile zusätzlich entweder eine Matrikelnummer oder einen Anmeldenamen enthalten. Vor- und Nachname sind optional."
+                "requirements": "Die oberste Zeile der CSV-Datei muss die Spaltennamen angeben. Jede Zeile muss den Titel der Tutoriumsgruppe enthalten. Um Studierende zu registrieren, muss jede Zeile zusätzlich entweder eine Matrikelnummer oder einen Anmeldenamen enthalten. Vor- und Nachname sind optional."
             },
             "supportedHeaderNames": {
                 "label": "Unterstützte Spaltennamen (Versionen mit Leerzeichen, Unterstrichen, Bindestrichen und Grossbuchstaben werden ebenfalls unterstützt): ",
@@ -42,7 +42,7 @@
             "fixedPlaceForm": {
                 "checkbox": {
                     "label": "Möchtest du nur bestimmte Zeilen auslesen? Gib einen Header und den gewünschten Wert für diesen Header an um die CSV nach diesen Zeilen zu filtern.",
-                    "explanation": "Nur Zeilen, die den angegebenen Wert in der angegebenen Header Spalte haben, werden aus der CSV-Datei ausgelesen. Zum Beispiel, um nur Studenten mit 'Fixplatz' als Zeilenwert im 'Platz' Header zu parsen, gib 'Fixplatz' als Wert an und 'Platz' als Spaltennamen an."
+                    "explanation": "Nur Zeilen, die den angegebenen Wert in der angegebenen Header Spalte haben, werden aus der CSV-Datei ausgelesen. Zum Beispiel, um nur Studierende mit 'Fixplatz' als Zeilenwert im 'Platz' Header zu parsen, gib 'Fixplatz' als Wert an und 'Platz' als Spaltennamen an."
                 },
                 "statusHeaderInput": {
                     "label": "Spaltenname für Registrierungsstatus",
@@ -57,8 +57,8 @@
             },
             "table": {
                 "example1": "Dieses Beispiel-CSV-Format zeigt die minimal erforderlichen Header zum Parsen einer CSV-Datei:",
-                "example2": "Dieses Beispiel-CSV-Format zeigt die Header, die erforderlich sind, um Studenten mit einer Matrikelnummer zu registrieren, wobei Vorname und Nachname optional sind:",
-                "example3": "Dieses Beispiel-CSV-Format zeigt die Header, die erforderlich sind, um Studenten mit einem Login zu registrieren, wobei Vorname und Nachname optional sind:",
+                "example2": "Dieses Beispiel-CSV-Format zeigt die Header, die erforderlich sind, um Studierende mit einer Matrikelnummer zu registrieren, wobei Vorname und Nachname optional sind:",
+                "example3": "Dieses Beispiel-CSV-Format zeigt die Header, die erforderlich sind, um Studierende mit einem Login zu registrieren, wobei Vorname und Nachname optional sind:",
                 "template": "Beispiel Herunterladen",
                 "showNotImportedButton": "Nicht importierte Registrierungen",
                 "showImportedButton": "Importierte Registrierungen",
