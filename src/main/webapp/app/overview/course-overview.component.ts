@@ -63,6 +63,8 @@ import { CourseLecturesComponent } from './course-lectures/course-lectures.compo
 import { facSidebar } from '../../content/icons/icons';
 import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-tutorial-groups.component';
 import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
+import { CoursesForDashboardDTO } from 'app/course/manage/courses-for-dashboard-dto';
+import { sortCourses } from 'app/shared/util/course.util';
 
 interface CourseActionItem {
     title: string;
@@ -95,7 +97,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     private courseId: number;
     private subscription: Subscription;
+    dashboardSubscription: Subscription;
     course?: Course;
+    courses?: Course[];
     refreshingCourse = false;
     private teamAssignmentUpdateListener: Subscription;
     private quizExercisesChannel: string;
@@ -111,9 +115,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     isNotManagementView: boolean;
     canUnenroll: boolean;
     isNavbarCollapsed = false;
-    isSidebarCollapsed = false;
     profileSubscription?: Subscription;
     showRefreshButton: boolean = false;
+    readonly MIN_DISPLAYED_COURSES: number = 6;
 
     // Properties to track hidden items for dropdown menu
     dropdownOpen: boolean = false;
@@ -163,11 +167,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     faGraduationCap = faGraduationCap;
     faSync = faSync;
     faCircleNotch = faCircleNotch;
-    faNetworkWired = faNetworkWired;
-    faChalkboardUser = faChalkboardUser;
     faChevronRight = faChevronRight;
-    faListCheck = faListCheck;
-    faDoorOpen = faDoorOpen;
     facSidebar = facSidebar;
     faEllipsis = faEllipsis;
 
@@ -204,9 +204,19 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         });
         this.getCollapseStateFromStorage();
         this.course = this.courseStorageService.getCourse(this.courseId);
+        this.updateRecentlyAccessedCourses();
         this.isNotManagementView = !this.router.url.startsWith('/course-management');
         // Notify the course access storage service that the course has been accessed
-        this.courseAccessStorageService.onCourseAccessed(this.courseId);
+        this.courseAccessStorageService.onCourseAccessed(
+            this.courseId,
+            CourseAccessStorageService.STORAGE_KEY,
+            CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_OVERVIEW,
+        );
+        this.courseAccessStorageService.onCourseAccessed(
+            this.courseId,
+            CourseAccessStorageService.STORAGE_KEY_DROPDOWN,
+            CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_DROPDOWN,
+        );
 
         await firstValueFrom(this.loadCourse());
         await this.initAfterCourseLoad();
@@ -276,6 +286,31 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         if (!this.dropdownOpen) {
             this.dropdownClickNumber = 0;
         }
+    }
+
+    /** initialize courses attribute by retrieving recently accessed courses from the server */
+    updateRecentlyAccessedCourses() {
+        this.dashboardSubscription = this.courseService.findAllForDashboard().subscribe({
+            next: (res: HttpResponse<CoursesForDashboardDTO>) => {
+                if (res.body) {
+                    const { courses: courseDtos } = res.body;
+                    const courses = courseDtos.map((courseDto) => courseDto.course);
+                    this.courses = sortCourses(courses);
+                    if (this.courses.length > this.MIN_DISPLAYED_COURSES) {
+                        const lastAccessedCourseIds = this.courseAccessStorageService.getLastAccessedCourses(CourseAccessStorageService.STORAGE_KEY_DROPDOWN);
+                        this.courses = this.courses.filter((course) => lastAccessedCourseIds.includes(course.id!));
+                    }
+                    this.courses = this.courses.filter((course) => course.id !== this.courseId);
+                }
+            },
+        });
+    }
+
+    /** Navigate to a new Course */
+    switchCourse(course: Course) {
+        this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
+            this.router.navigate(['courses', course.id]);
+        });
     }
 
     getCourseActionItems(): CourseActionItem[] {
@@ -714,6 +749,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.vcSubscription?.unsubscribe();
         this.subscription?.unsubscribe();
         this.profileSubscription?.unsubscribe();
+        this.dashboardSubscription?.unsubscribe();
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
     }
