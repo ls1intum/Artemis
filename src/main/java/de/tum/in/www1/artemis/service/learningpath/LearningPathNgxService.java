@@ -54,9 +54,7 @@ public class LearningPathNgxService {
         Set<NgxLearningPathDTO.Node> nodes = new HashSet<>();
         Set<NgxLearningPathDTO.Edge> edges = new HashSet<>();
 
-        // Save all learning objects that were already scheduled, so they are not scheduled again if they are linked in multiple competencies
-        Set<LearningObject> alreadyScheduledExercises = new HashSet<>();
-        learningPath.getCompetencies().forEach(competency -> generateNgxGraphRepresentationForCompetency(learningPath, competency, nodes, edges, alreadyScheduledExercises));
+        learningPath.getCompetencies().forEach(competency -> generateNgxGraphRepresentationForCompetency(learningPath, competency, nodes, edges));
 
         generateNgxGraphRepresentationForRelations(learningPath, nodes, edges);
         return new NgxLearningPathDTO(nodes, edges);
@@ -74,14 +72,13 @@ public class LearningPathNgxService {
      * <li>edges from each learning unit to end node</li>
      * </ul>
      *
-     * @param learningPath                    the learning path for which the representation should be created
-     * @param competency                      the competency for which the representation will be created
-     * @param nodes                           set of nodes to store the new nodes
-     * @param edges                           set of edges to store the new edges
-     * @param alreadyScheduledLearningObjects the exercises that have already been scheduled
+     * @param learningPath the learning path for which the representation should be created
+     * @param competency   the competency for which the representation will be created
+     * @param nodes        set of nodes to store the new nodes
+     * @param edges        set of edges to store the new edges
      */
     private void generateNgxGraphRepresentationForCompetency(LearningPath learningPath, Competency competency, Set<NgxLearningPathDTO.Node> nodes,
-            Set<NgxLearningPathDTO.Edge> edges, Set<LearningObject> alreadyScheduledLearningObjects) {
+            Set<NgxLearningPathDTO.Edge> edges) {
         Set<NgxLearningPathDTO.Node> currentCluster = new HashSet<>();
         // generates start and end node
         final var startNodeId = getCompetencyStartNodeId(competency.getId());
@@ -90,22 +87,20 @@ public class LearningPathNgxService {
         currentCluster.add(NgxLearningPathDTO.Node.of(endNodeId, NgxLearningPathDTO.NodeType.COMPETENCY_END, competency.getId()));
 
         // generate nodes and edges for lecture units
-        competency.getLectureUnits().stream().filter(lectureUnit -> !alreadyScheduledLearningObjects.contains(lectureUnit)).forEach(lectureUnit -> {
+        competency.getLectureUnits().forEach(lectureUnit -> {
             currentCluster.add(NgxLearningPathDTO.Node.of(getLectureUnitNodeId(competency.getId(), lectureUnit.getId()), NgxLearningPathDTO.NodeType.LECTURE_UNIT,
                     lectureUnit.getId(), lectureUnit.getLecture().getId(), lectureUnit.isCompletedFor(learningPath.getUser()), lectureUnit.getName()));
             edges.add(new NgxLearningPathDTO.Edge(getLectureUnitInEdgeId(competency.getId(), lectureUnit.getId()), startNodeId,
                     getLectureUnitNodeId(competency.getId(), lectureUnit.getId())));
             edges.add(new NgxLearningPathDTO.Edge(getLectureUnitOutEdgeId(competency.getId(), lectureUnit.getId()), getLectureUnitNodeId(competency.getId(), lectureUnit.getId()),
                     endNodeId));
-            alreadyScheduledLearningObjects.add(lectureUnit);
         });
         // generate nodes and edges for exercises
-        competency.getExercises().stream().filter(exercise -> !alreadyScheduledLearningObjects.contains(exercise)).forEach(exercise -> {
+        competency.getExercises().forEach(exercise -> {
             currentCluster.add(NgxLearningPathDTO.Node.of(getExerciseNodeId(competency.getId(), exercise.getId()), NgxLearningPathDTO.NodeType.EXERCISE, exercise.getId(),
                     exercise.isCompletedFor(learningPath.getUser()), exercise.getTitle()));
             edges.add(new NgxLearningPathDTO.Edge(getExerciseInEdgeId(competency.getId(), exercise.getId()), startNodeId, getExerciseNodeId(competency.getId(), exercise.getId())));
             edges.add(new NgxLearningPathDTO.Edge(getExerciseOutEdgeId(competency.getId(), exercise.getId()), getExerciseNodeId(competency.getId(), exercise.getId()), endNodeId));
-            alreadyScheduledLearningObjects.add(exercise);
         });
         // if no linked learning units exist directly link start to end
         if (currentCluster.size() == 2) {
