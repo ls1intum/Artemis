@@ -463,7 +463,7 @@ public class StudentExamResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         studentExamAccessService.checkCourseAccessForStudentElseThrow(courseId, user);
 
-        List<StudentExam> studentExamList = studentExamRepository.findStudentExamForTestExamsByUserIdAndCourseId(user.getId(), courseId);
+        List<StudentExam> studentExamList = studentExamRepository.findStudentExamsForTestExamsByUserIdAndCourseId(user.getId(), courseId);
 
         return ResponseEntity.ok(studentExamList);
     }

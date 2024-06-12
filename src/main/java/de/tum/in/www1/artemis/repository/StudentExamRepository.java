@@ -294,7 +294,17 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
                 AND se.exam.testExam = TRUE
                 AND se.testRun = FALSE
             """)
-    List<StudentExam> findStudentExamForTestExamsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
+    List<StudentExam> findStudentExamsForTestExamsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
+
+    @Query("""
+            SELECT DISTINCT se
+            FROM StudentExam se
+            WHERE se.user.id = :userId
+                AND se.exam.id = :examId
+                AND se.exam.testExam = TRUE
+                AND se.testRun = FALSE
+            """)
+    List<StudentExam> findStudentExamsForTestExamsByUserIdAndExamId(@Param("userId") Long userId, @Param("examId") Long examId);
 
     @Query("""
             SELECT DISTINCT se
