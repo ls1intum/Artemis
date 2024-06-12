@@ -50,7 +50,7 @@ export interface CompetencyGraphNodeDTO {
     softDueDate: Date;
     progress: number;
     confidence: number;
-    mastery: number;
+    masteryProgress: number;
     dimension?: NodeDimension;
 }
 

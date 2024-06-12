@@ -493,7 +493,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(response.nodes()).allMatch(nodeDTO -> {
             CompetencyProgress progress = competencyProgressRepository.findByCompetencyIdAndUserIdOrElseThrow(Long.parseLong(nodeDTO.id()), student.getId());
             return Objects.equals(nodeDTO.progress(), progress.getProgress()) && Objects.equals(nodeDTO.confidence(), progress.getConfidence())
-                    && nodeDTO.mastery() == CompetencyProgressService.getMastery(progress);
+                    && nodeDTO.masteryProgress() == CompetencyProgressService.getMasteryProgress(progress);
         });
 
         Set<CompetencyRelation> relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(course.getId());

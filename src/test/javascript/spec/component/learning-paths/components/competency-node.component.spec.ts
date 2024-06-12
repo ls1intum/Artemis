@@ -11,7 +11,7 @@ describe('CompetencyNodeComponent', () => {
         id: '1',
         label: 'Competency',
         confidence: 30,
-        mastery: 71.44,
+        masteryProgress: 71.44,
         progress: 80,
         softDueDate: new Date(),
     } as CompetencyGraphNodeDTO;
@@ -42,7 +42,7 @@ describe('CompetencyNodeComponent', () => {
     });
 
     it('should calculate rounded mastery', () => {
-        expect(component.mastery()).toBe(71);
+        expect(component.masteryProgress()).toBe(71);
     });
 
     it('should check if competency is mastered', () => {

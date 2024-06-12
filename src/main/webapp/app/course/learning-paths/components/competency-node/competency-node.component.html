@@ -1,7 +1,7 @@
 <div class="d-inline-block competency-node">
     <div class="progress-container d-inline-block" [ngClass]="{ 'green-competency': isMastered(), 'yellow-competency': isStarted(), 'gray-competency': isNotStarted() }">
         <small class="font-bold"
-            ><strong>{{ mastery() }} %</strong></small
+            ><strong>{{ masteryProgress() }} %</strong></small
         >
     </div>
     <span class="d-inline-block ms-1"
