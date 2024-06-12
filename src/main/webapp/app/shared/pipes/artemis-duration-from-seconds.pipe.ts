@@ -89,17 +89,17 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform {
     private static handleLongFormat(duration: Duration, isExam = false): string {
         const result = [];
 
-        const timeUnits = [
-            { value: duration.days, suffix: isExam ? ':' : 'd' },
-            { value: duration.hours, suffix: isExam ? ':' : 'h' },
-            { value: duration.minutes, suffix: isExam ? ':' : 'min' },
-            { value: duration.seconds, suffix: isExam ? '' : 's' },
-        ];
-
-        for (const unit of timeUnits) {
-            if (unit.value > 0 || (unit.suffix === (isExam ? ':' : 's') && result.length === 0)) {
-                result.push(`${unit.value}${unit.suffix}`);
-            }
+        if (duration.days > 0) {
+            result.push(isExam ? `${duration.days}:`.padStart(3, '0') : `${duration.days}d`);
+        }
+        if (duration.hours > 0) {
+            result.push(isExam ? `${duration.hours}:`.padStart(3, '0') : `${duration.hours}h`);
+        }
+        if (duration.minutes > 0) {
+            result.push(isExam ? `${duration.minutes}:`.padStart(3, '0') : `${duration.minutes}min`);
+        }
+        if (duration.seconds > 0 || result.length === 0) {
+            result.push(isExam ? `${duration.seconds}`.padStart(2, '0') : `${duration.seconds}s`);
         }
 
         return result.join(isExam ? '' : ' ');
