@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_SCHEDULING;
 
 import java.util.Set;
 
@@ -51,7 +52,7 @@ public class ProfileService {
      * @return true if the scheduling profile is active, false otherwise
      */
     public boolean isSchedulingActive() {
-        return isProfileActive("scheduling");
+        return isProfileActive(PROFILE_SCHEDULING);
     }
 
     // VC & CI profiles

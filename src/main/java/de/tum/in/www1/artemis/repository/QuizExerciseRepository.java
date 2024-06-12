@@ -51,6 +51,22 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
             """)
     List<QuizExercise> findAllPlannedToStartAfter(@Param("earliestReleaseDate") ZonedDateTime earliestReleaseDate);
 
+    /**
+     * Find all quiz exercises that are planned to start in the future
+     *
+     * @param now the current date
+     * @return the list of quiz exercises
+     */
+    @Query("""
+            SELECT DISTINCT qe
+            FROM QuizExercise qe
+                LEFT JOIN FETCH qe.quizBatches b
+            WHERE qe.releaseDate > :now
+                OR b.startTime > :now
+                OR qe.dueDate > :now
+            """)
+    List<QuizExercise> findAllToBeScheduled(@Param("now") ZonedDateTime now);
+
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "quizBatches" })
     Optional<QuizExercise> findWithEagerQuestionsAndStatisticsById(Long quizExerciseId);
 
@@ -71,6 +87,11 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
     @NotNull
     default QuizExercise findWithEagerQuestionsByIdOrElseThrow(Long quizExerciseId) {
         return findWithEagerQuestionsById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("QuizExercise", quizExerciseId));
+    }
+
+    @NotNull
+    default QuizExercise findWithEagerBatchesByIdOrElseThrow(Long quizExerciseId) {
+        return findWithEagerBatchesById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("QuizExercise", quizExerciseId));
     }
 
     /**
