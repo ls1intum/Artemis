@@ -39,4 +39,5 @@
                 referencedColumnNames="id"
                 referencedTableName="iris_sub_settings"/>
     </changeSet>
+
 </databaseChangeLog>
