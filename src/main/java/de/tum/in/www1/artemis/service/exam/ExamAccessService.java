@@ -79,7 +79,7 @@ public class ExamAccessService {
         StudentExam studentExam;
 
         if (exam.isTestExam()) {
-            List<StudentExam> unfinishedStudentExams = studentExamRepository.findStudentExamForTestExamsByUserIdAndCourseId(currentUser.getId(), courseId).stream()
+            List<StudentExam> unfinishedStudentExams = studentExamRepository.findStudentExamsForTestExamsByUserIdAndExamId(currentUser.getId(), examId).stream()
                     .filter(attempt -> !attempt.isFinished()).toList();
             if (unfinishedStudentExams.isEmpty()) {
                 studentExam = studentExamService.generateTestExam(exam, currentUser);
