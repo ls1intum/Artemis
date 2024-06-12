@@ -1,4 +1,14 @@
 <div style="padding-bottom: 60px">
+    <div class="d-flex justify-content-between align-items-center border-bottom mb-3">
+        <h3 id="build-queue-overview" jhiTranslate="artemisApp.buildAgents.runningBuildJobs"></h3>
+        <button class="btn" (click)="isCollapsed = !isCollapsed" [attr.aria-expanded]="!isCollapsed" [attr.aria-controls]="'collapseQuestion'">
+            <fa-icon size="2x" [icon]="isCollapsed ? faAngleRight : faAngleDown" />
+        </button>
+    </div>
+    <div [ngbCollapse]="isCollapsed"></div>
+</div>
+
+<div style="padding-bottom: 60px">
     <h3 id="build-queue-running-heading" jhiTranslate="artemisApp.buildAgents.runningBuildJobs"></h3>
     <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3"></div>
     @if (runningBuildJobs) {

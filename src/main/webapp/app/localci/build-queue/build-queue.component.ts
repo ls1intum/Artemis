@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { BuildJob, FinishedBuildJob } from 'app/entities/build-job.model';
-import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faSort, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faAngleRight, faCircleCheck, faExclamationCircle, faExclamationTriangle, faSort, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
 import { take } from 'rxjs/operators';
@@ -33,6 +33,8 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     readonly faExclamationCircle = faExclamationCircle;
     readonly faExclamationTriangle = faExclamationTriangle;
     readonly faSync = faSync;
+    readonly faAngleDown = faAngleDown;
+    readonly faAngleRight = faAngleRight;
 
     totalItems = 0;
     itemsPerPage = ITEMS_PER_PAGE;
@@ -40,6 +42,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     predicate = 'build_completion_date';
     ascending = false;
     interval: ReturnType<typeof setInterval>;
+    isCollapsed = false;
 
     constructor(
         private route: ActivatedRoute,
