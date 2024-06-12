@@ -180,17 +180,18 @@ describe('CourseOverviewService', () => {
         jest.spyOn(service, 'mapExerciseToSidebarCardElement');
         const groupedExercises = service.groupExercisesByDueDate(sortedExercises);
 
-        expect(groupedExercises['current'].entityData).toHaveLength(2);
+        expect(groupedExercises['current'].entityData).toHaveLength(1);
         expect(groupedExercises['dueSoon'].entityData).toHaveLength(1);
         expect(groupedExercises['past'].entityData).toHaveLength(1);
         expect(groupedExercises['future'].entityData).toHaveLength(2);
+        expect(groupedExercises['noDate'].entityData).toHaveLength(1);
         expect(service.mapExerciseToSidebarCardElement).toHaveBeenCalledTimes(6);
         expect(groupedExercises['current'].entityData[0].title).toBe('Current Exercise');
-        expect(groupedExercises['current'].entityData[1].title).toBe('Current Exercise No Due Date');
         expect(groupedExercises['dueSoon'].entityData[0].title).toBe('DueSoon Exercise');
         expect(groupedExercises['past'].entityData[0].title).toBe('Past Exercise');
         expect(groupedExercises['future'].entityData[0].title).toBe('Future Exercise');
         expect(groupedExercises['future'].entityData[1].title).toBe('Future Exercise 2');
+        expect(groupedExercises['noDate'].entityData[0].title).toBe('Current Exercise No Due Date');
     });
 
     describe.each([

@@ -18,6 +18,33 @@ const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     noDate: { entityData: [] },
 };
 
+type StartDateGroup = 'none' | 'past' | 'future';
+type EndDateGroup = StartDateGroup | 'soon';
+
+/**
+ * Decides which time category group an exercise should be put into based on its start and end dates.
+ */
+const GROUP_DECISION_MATRIX: Record<StartDateGroup, Record<EndDateGroup, TimeGroupCategory>> = {
+    none: {
+        none: 'noDate',
+        past: 'past',
+        soon: 'dueSoon',
+        future: 'current',
+    },
+    past: {
+        none: 'noDate',
+        past: 'past',
+        soon: 'dueSoon',
+        future: 'current',
+    },
+    future: {
+        none: 'future',
+        past: 'future',
+        soon: 'future',
+        future: 'future',
+    },
+};
+
 @Injectable({
     providedIn: 'root',
 })
@@ -49,31 +76,43 @@ export class CourseOverviewService {
     getCorrespondingExerciseGroupByDate(exercise: Exercise): TimeGroupCategory {
         const now = dayjs();
 
-        // any exercise without release/start dates is immediately available for participation
-        const start = exercise.startDate ?? exercise.releaseDate;
-        const startDate = start ? dayjs(start) : now;
+        const startGroup = this.getStartDateGroup(exercise, now);
+        const endGroup = this.getEndDateGroup(exercise, now);
 
-        if (now.isBefore(startDate)) {
-            return 'future';
+        return GROUP_DECISION_MATRIX[startGroup][endGroup];
+    }
+
+    private getStartDateGroup(exercise: Exercise, now: dayjs.Dayjs): StartDateGroup {
+        const start = exercise.startDate ?? exercise.releaseDate;
+
+        if (start === undefined) {
+            return 'none';
         }
 
-        const dueDate = dayjs(exercise.dueDate);
-        const dueDateIsInThePast = dueDate.isBefore(now);
-        if (exercise.dueDate && dueDateIsInThePast) {
+        if (now.isAfter(dayjs(start))) {
+            return 'past';
+        }
+
+        return 'future';
+    }
+
+    private getEndDateGroup(exercise: Exercise, now: dayjs.Dayjs): EndDateGroup {
+        const dueDate = exercise.dueDate ? dayjs(exercise.dueDate) : undefined;
+
+        if (dueDate === undefined) {
+            return 'none';
+        }
+
+        if (now.isAfter(dueDate)) {
             return 'past';
         }
 
         const dueDateIsSoon = dueDate.isBefore(now.add(3, 'days'));
-        if (exercise.dueDate && dueDateIsSoon) {
-            return 'dueSoon';
+        if (dueDateIsSoon) {
+            return 'soon';
         }
 
-        // last parameter indicates inclusive range for both start and end date
-        if (now.isBetween(startDate, dueDate, undefined, '[]')) {
-            return 'current';
-        }
-
-        return 'noDate';
+        return 'future';
     }
 
     getCorrespondingLectureGroupByDate(startDate: dayjs.Dayjs | undefined, endDate?: dayjs.Dayjs | undefined): TimeGroupCategory {
