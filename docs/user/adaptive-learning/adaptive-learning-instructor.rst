@@ -16,7 +16,7 @@ Manage Adaptive Learning (Instructor)
 
 Competencies
 ------------
-A competency is a overarching learning objective that ties together various lectures and exercises. It has a title, description and a `taxonomy <https://en.wikipedia.org/wiki/Bloom%27s_taxonomy>`_.
+A competency is an overarching learning objective that ties together various lectures and exercises. It has a title, description and a `taxonomy <https://en.wikipedia.org/wiki/Bloom%27s_taxonomy>`_.
 By completing lectures and exercises, students gain mastery of a competency (see also :ref:`Competencies for Students<competencies_student>`).
 
 A prerequisite is a competency that students are expected to have already mastered before the course. Instructors select competencies from previous courses they taught as a prerequisite, or create new ones.
@@ -32,6 +32,8 @@ Instructors can manage competencies and prerequisites of a course in the *Compet
 * :ref:`generate_competencies` using LLMs
 
 |instructor-competency-management|
+
+.. _create_competencies:
 
 Create/Edit Competencies
 ^^^^^^^^^^^^^^^^^^^^^^^^
