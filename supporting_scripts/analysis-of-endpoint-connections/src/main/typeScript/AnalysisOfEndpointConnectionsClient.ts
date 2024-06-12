@@ -18,7 +18,7 @@ const fileNames = process.argv.slice(2);
 fileNames.push("../../../../../src/main/webapp/app/course/tutorial-groups/services/tutorial-group-free-period.service.ts")
 
 let restCalls: Array<{method: string, url: string, line: number, filePath: string}> = [];
-let restCallFiles: Array<{path: string, restCall: {method: string, url: string, line: number, filePath: string}}> = [];
+let restCallFiles: Array<{path: string, restCalls: {method: string, url: string, line: number, filePath: string}[]}> = [];
 
 const HTTP_METHODS = ['get', 'post', 'put', 'delete'];
 let isFirstRestCall = true;
@@ -36,6 +36,7 @@ for (const fileName of fileNames.filter(fileName => fileName.endsWith('.ts')))  
     // Start traversing the AST from the root
     visit(sourceFile, classProperties, parameterTypes, sourceFile, fileName);
     isFirstRestCall = true;
+    restCallFiles.push({path: fileName, restCalls: restCalls});
 };
 
 // Write the restCalls array to a JSON file
