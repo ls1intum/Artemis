@@ -76,7 +76,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 LEFT JOIN p.team.students ts
             WHERE p.exercise.course.id = :courseId
                 AND (p.student.id = :studentId OR ts.id = :studentId)
-             """)
+            """)
     boolean existsByCourseIdAndStudentId(@Param("courseId") long courseId, @Param("studentId") long studentId);
 
     @Query("""
@@ -120,7 +120,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             FROM StudentParticipation p
             WHERE p.exercise.id = :exerciseId
                 AND p.student.login = :username
-                AND p.id = (SELECT MAX(p2.id) FROM StudentParticipation p2 WHERE p2.exercise.id = :exerciseId AND p2.student.login = :username)
+            ORDER BY p.id DESC
+            LIMIT 1
             """)
     Optional<StudentParticipation> findLatestByExerciseIdAndStudentLogin(@Param("exerciseId") long exerciseId, @Param("username") String username);
 
@@ -140,8 +141,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 LEFT JOIN FETCH p.submissions s
             WHERE p.exercise.id = :exerciseId
                 AND p.student.login = :username
-                AND p.id = (SELECT MAX(p2.id) FROM StudentParticipation p2 WHERE p2.exercise.id = :exerciseId AND p2.student.login = :username)
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
+            ORDER BY p.id DESC
+            LIMIT 1
             """)
     Optional<StudentParticipation> findLatestWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(@Param("exerciseId") long exerciseId, @Param("username") String username);
 
@@ -445,7 +447,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 LEFT JOIN FETCH p.submissions
             WHERE p.exercise.id = :exerciseId
                 AND p.student.id = :studentId
-             """)
+            """)
     List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
     @Query("""

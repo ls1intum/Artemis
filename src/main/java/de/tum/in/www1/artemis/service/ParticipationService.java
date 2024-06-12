@@ -647,7 +647,7 @@ public class ParticipationService {
             return optionalTeam.flatMap(team -> studentParticipationRepository.findWithEagerLegalSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), team.getId()));
         }
         // If exercise is a test exam exercise we load the last participation, since there are multiple participations
-        if (exercise.getExamViaExerciseGroupOrCourseMember().isTestExam()) {
+        if (exercise.isExamExercise() && exercise.getExamViaExerciseGroupOrCourseMember().isTestExam()) {
             return studentParticipationRepository.findLatestWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
         }
         return studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);

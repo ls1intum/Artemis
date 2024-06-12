@@ -97,7 +97,8 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             WHERE participation.exercise.id = :exerciseId
                 AND participation.student.login = :username
                 AND participation.testRun = :testRun
-                AND participation.id = (SELECT MAX(p2.id) FROM StudentParticipation p2 WHERE p2.exercise.id = :exerciseId AND p2.student.login = :username)
+            ORDER BY participation.id DESC
+            LIMIT 1
             """)
     Optional<ProgrammingExerciseStudentParticipation> findLatestByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") long exerciseId, @Param("username") String username,
             @Param("testRun") boolean testRun);
@@ -174,7 +175,8 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             WHERE participation.exercise.id = :exerciseId
                 AND participation.student.login = :username
                 AND participation.testRun = :testRun
-                AND participation.id = (SELECT MAX(p2.id) FROM StudentParticipation p2 WHERE p2.exercise.id = :exerciseId AND p2.student.login = :username)
+            ORDER BY participation.id DESC
+            LIMIT 1
             """)
     Optional<ProgrammingExerciseStudentParticipation> findLatestWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") long exerciseId,
             @Param("username") String username, @Param("testRun") boolean testRun);
