@@ -44,6 +44,9 @@ public class TimeUtil {
     }
 
     private static double toRelativeTime(@NotNull long originEpochSecond, @NotNull long unitEpochSecond, @NotNull long targetEpochSecond) {
+        if (originEpochSecond == unitEpochSecond) {
+            return 1;
+        }
         return 100.0 * (targetEpochSecond - originEpochSecond) / (unitEpochSecond - originEpochSecond);
     }
 

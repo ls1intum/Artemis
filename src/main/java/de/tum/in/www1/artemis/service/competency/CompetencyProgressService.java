@@ -2,9 +2,9 @@ package de.tum.in.www1.artemis.service.competency;
 
 import static de.tum.in.www1.artemis.config.Constants.MIN_SCORE_GREEN;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.service.util.TimeUtil.toRelativeTime;
 
 import java.time.Instant;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -39,7 +39,6 @@ import de.tum.in.www1.artemis.service.LearningObjectService;
 import de.tum.in.www1.artemis.service.ParticipantScoreService;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
-import de.tum.in.www1.artemis.service.util.TimeUtil;
 import de.tum.in.www1.artemis.web.rest.dto.CourseCompetencyProgressDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.CompetencyExerciseMasteryCalculationDTO;
 
@@ -255,25 +254,22 @@ public class CompetencyProgressService {
      * @return The recency confidence score
      */
     private double calculateRecencyConfidence(@NotNull Set<CompetencyExerciseMasteryCalculationDTO> exerciseInformations) {
-        if (exerciseInformations.size() < 3) {
+        Set<ParticipantScore> exerciseInformationsWithScores = exerciseInformations.stream().map(CompetencyExerciseMasteryCalculationDTO::participantScore)
+                .filter(score -> score != null && score.getLastScore() != null && score.getLastModifiedDate() != null).collect(Collectors.toSet());
+
+        if (exerciseInformationsWithScores.size() < 3) {
             return 0;
         }
 
-        Instant earliestScoreDate = exerciseInformations.stream().map(score -> score.participantScore().getLastModifiedDate()).filter(Objects::nonNull).min(Instant::compareTo)
-                .orElse(null);
-        Instant latestScoreDate = exerciseInformations.stream().map(score -> score.participantScore().getLastModifiedDate()).filter(Objects::nonNull).max(Instant::compareTo)
-                .orElse(null);
+        Instant earliestScoreDate = exerciseInformationsWithScores.stream().map(ParticipantScore::getLastModifiedDate).min(Instant::compareTo).get();
+        Instant latestScoreDate = exerciseInformationsWithScores.stream().map(ParticipantScore::getLastModifiedDate).max(Instant::compareTo).get();
 
-        double doubleWeightedScoreSum = exerciseInformations.stream().map(CompetencyExerciseMasteryCalculationDTO::participantScore)
-                .filter(score -> score != null && score.getLastScore() != null)
-                .mapToDouble(score -> score.getLastScore() * TimeUtil.toRelativeTime(earliestScoreDate, latestScoreDate, score.getLastModifiedDate())).sum();
-        double weightSum = exerciseInformations.stream().map(CompetencyExerciseMasteryCalculationDTO::participantScore)
-                .filter(score -> score != null && score.getLastScore() != null)
-                .mapToDouble(score -> TimeUtil.toRelativeTime(earliestScoreDate, latestScoreDate, score.getLastModifiedDate())).sum();
+        double doubleWeightedScoreSum = exerciseInformationsWithScores.stream()
+                .mapToDouble(score -> score.getLastScore() * toRelativeTime(earliestScoreDate, latestScoreDate, score.getLastModifiedDate())).sum();
+        double weightSum = exerciseInformationsWithScores.stream().mapToDouble(score -> toRelativeTime(earliestScoreDate, latestScoreDate, score.getLastModifiedDate())).sum();
         double weightedAverageScore = doubleWeightedScoreSum / weightSum;
 
-        double averageScore = exerciseInformations.stream().map(CompetencyExerciseMasteryCalculationDTO::participantScore)
-                .filter(score -> score != null && score.getLastScore() != null).mapToDouble(ParticipantScore::getLastScore).average().orElse(0.0);
+        double averageScore = exerciseInformationsWithScores.stream().mapToDouble(ParticipantScore::getLastScore).average().orElse(0.0);
 
         double recencyConfidence = weightedAverageScore - averageScore;
 
