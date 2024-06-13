@@ -365,8 +365,10 @@ describe('BuildQueueComponent', () => {
         // Mock BuildQueueService to return mock data
         mockBuildQueueService.getRunningBuildJobs.mockReturnValue(of(mockRunningJobs));
 
-        // Initialize the component
+        // Initialize the component and update the build job duration
         component.ngOnInit();
+        component.updateBuildJobDuration(); // This method is called in ngOnInit in interval callback, but we call it to add coverage
+
         // Expectations: The build job duration is calculated and set for each running build job
         for (const runningBuildJob of component.runningBuildJobs) {
             const { buildDuration, buildCompletionDate, buildStartDate } = runningBuildJob.jobTimingInfo!;
