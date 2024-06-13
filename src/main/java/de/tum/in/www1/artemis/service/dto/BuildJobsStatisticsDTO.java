@@ -4,6 +4,8 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.in.www1.artemis.domain.enumeration.BuildStatus;
+
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record BuildJobsStatisticsDTO(long totalBuilds, long successfulBuilds, long failedBuilds, long cancelledBuilds) {
 
@@ -18,11 +20,16 @@ public record BuildJobsStatisticsDTO(long totalBuilds, long successfulBuilds, lo
         long successfulBuilds = 0;
         long failedBuilds = 0;
         long cancelledBuilds = 0;
+        // Switch case would cause an error in the testDTOImplementations test
         for (BuildJobResultCountDTO resultCountDTO : resultCountDTOList) {
-            switch (resultCountDTO.status()) {
-                case SUCCESSFUL -> successfulBuilds += resultCountDTO.count();
-                case FAILED, ERROR -> failedBuilds += resultCountDTO.count();
-                case CANCELLED -> cancelledBuilds += resultCountDTO.count();
+            if (resultCountDTO.status() == BuildStatus.SUCCESSFUL) {
+                successfulBuilds += resultCountDTO.count();
+            }
+            else if (resultCountDTO.status() == BuildStatus.FAILED || resultCountDTO.status() == BuildStatus.ERROR) {
+                failedBuilds += resultCountDTO.count();
+            }
+            else if (resultCountDTO.status() == BuildStatus.CANCELLED) {
+                cancelledBuilds += resultCountDTO.count();
             }
         }
         totalBuilds = successfulBuilds + failedBuilds + cancelledBuilds;
