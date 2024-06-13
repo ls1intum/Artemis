@@ -1,12 +1,61 @@
-<div style="padding-bottom: 60px">
-    <div class="d-flex justify-content-between align-items-center border-bottom mb-3">
-        <h3 id="build-queue-overview" jhiTranslate="artemisApp.buildAgents.runningBuildJobs"></h3>
-        <button class="btn" (click)="isCollapsed = !isCollapsed" [attr.aria-expanded]="!isCollapsed" [attr.aria-controls]="'collapseQuestion'">
-            <fa-icon size="2x" [icon]="isCollapsed ? faAngleRight : faAngleDown" />
-        </button>
+@if (showOverview) {
+    <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-center border-bottom mb-3">
+            <div class="d-flex align-items-center">
+                <h3 id="build-queue-overview" jhiTranslate="artemisApp.buildQueue.statistics.title"></h3>
+                <jhi-help-icon class="ps-1" text="artemisApp.buildQueue.statistics.titleTooltip" />
+            </div>
+            <button class="btn" (click)="isCollapsed = !isCollapsed" [attr.aria-expanded]="!isCollapsed" [attr.aria-controls]="'collapseQuestion'">
+                <fa-icon size="2x" [icon]="isCollapsed ? faAngleRight : faAngleDown" />
+            </button>
+        </div>
+        <div [ngbCollapse]="isCollapsed">
+            <div class="d-flex gap-5">
+                <div class="d-flex gap-5">
+                    <div class="p-2 border border-primary-subtle border-1 rounded-3 result-card">
+                        <div class="d-flex flex-column justify-content-evenly w-100 h-100 align-items-center">
+                            <h2 class="m-0">{{ successfulBuildsPercentage }}</h2>
+                            <p class="m-0" jhiTranslate="artemisApp.buildQueue.statistics.successfulBuilds"></p>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-column gap-3 justify-content-around">
+                        <div>
+                            <span class="bold" jhiTranslate="artemisApp.buildQueue.statistics.totalBuilds"></span>
+                            <span>{{ buildJobStatistics.totalBuilds }}</span>
+                        </div>
+                        <div>
+                            <span class="bold" jhiTranslate="artemisApp.buildQueue.statistics.successfulBuildsWithColon"></span>
+                            <span>{{ buildJobStatistics.successfulBuilds }}</span>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-column gap-3 justify-content-around">
+                        <div>
+                            <span class="bold" jhiTranslate="artemisApp.buildQueue.statistics.failedBuildsPercentage"></span>
+                            <span>{{ failedBuildsPercentage }}</span>
+                        </div>
+                        <div>
+                            <span class="bold" jhiTranslate="artemisApp.buildQueue.statistics.failedBuilds"></span>
+                            <span>{{ buildJobStatistics.failedBuilds }}</span>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-column gap-3 justify-content-around">
+                        <div>
+                            <span class="bold" jhiTranslate="artemisApp.buildQueue.statistics.cancelledBuildsPercentage"></span>
+                            <span>{{ cancelledBuildsPercentage }}</span>
+                        </div>
+                        <div>
+                            <span class="bold" jhiTranslate="artemisApp.buildQueue.statistics.cancelledBuilds"></span>
+                            <span>{{ buildJobStatistics.cancelledBuilds }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <ngx-charts-pie-chart [view]="[100, 100]" [results]="ngxData" [scheme]="ngxColor" [doughnut]="true" />
+                </div>
+            </div>
+        </div>
     </div>
-    <div [ngbCollapse]="isCollapsed"></div>
-</div>
+}
 
 <div style="padding-bottom: 60px">
     <h3 id="build-queue-running-heading" jhiTranslate="artemisApp.buildAgents.runningBuildJobs"></h3>

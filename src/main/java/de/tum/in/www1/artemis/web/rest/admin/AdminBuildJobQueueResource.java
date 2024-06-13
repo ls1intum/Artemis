@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest.admin;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -25,6 +26,8 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.connectors.localci.SharedQueueManagementService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
+import de.tum.in.www1.artemis.service.dto.BuildJobResultCountDTO;
+import de.tum.in.www1.artemis.service.dto.BuildJobsStatisticsDTO;
 import de.tum.in.www1.artemis.service.dto.FinishedBuildJobDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
@@ -176,5 +179,19 @@ public class AdminBuildJobQueueResource {
         Page<FinishedBuildJobDTO> finishedBuildJobDTOs = FinishedBuildJobDTO.fromBuildJobsPage(page);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(finishedBuildJobDTOs.getContent(), headers, HttpStatus.OK);
+    }
+
+    /**
+     * Returns the build job statistics.
+     *
+     * @return the build job statistics
+     */
+    @GetMapping("build-job-statistics")
+    @EnforceAdmin
+    public ResponseEntity<BuildJobsStatisticsDTO> getBuildJobStatistics() {
+        log.debug("REST request to get the build job statistics");
+        List<BuildJobResultCountDTO> buildJobResultCountDtos = buildJobRepository.getBuildJobsResultsStatistics(ZonedDateTime.now().minusDays(7));
+        BuildJobsStatisticsDTO buildJobStatistics = BuildJobsStatisticsDTO.of(buildJobResultCountDtos);
+        return ResponseEntity.ok(buildJobStatistics);
     }
 }

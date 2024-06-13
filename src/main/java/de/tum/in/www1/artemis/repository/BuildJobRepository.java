@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -20,6 +21,7 @@ import de.tum.in.www1.artemis.domain.BuildJob;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.ResultBuildJob;
+import de.tum.in.www1.artemis.service.dto.BuildJobResultCountDTO;
 
 @Profile(PROFILE_CORE)
 @Repository
@@ -56,5 +58,16 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSp
              WHERE b.result.id IN :resultIds
             """)
     Set<ResultBuildJob> findBuildJobIdsForResultIds(@Param("resultIds") List<Long> resultIds);
+
+    @Query("""
+            SELECT new de.tum.in.www1.artemis.service.dto.BuildJobResultCountDTO(
+                b.buildStatus,
+                COUNT(b.buildStatus)
+            )
+            FROM BuildJob b
+            WHERE b.buildStartDate >= :fromDateTime
+            GROUP BY b.buildStatus
+            """)
+    List<BuildJobResultCountDTO> getBuildJobsResultsStatistics(@Param("fromDateTime") ZonedDateTime fromDateTime);
 
 }

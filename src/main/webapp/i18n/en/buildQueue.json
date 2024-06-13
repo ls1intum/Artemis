@@ -26,7 +26,19 @@
                 "status": "Status",
                 "buildLogs": "Build Logs"
             },
-            "cancelAll": "Cancel All"
+            "cancelAll": "Cancel All",
+            "statistics": {
+                "title": "Overview",
+                "titleTooltip": "Build statistics for the last 7 days. Data is updated every 5 minutes.",
+                "totalBuilds": "Number of Builds:",
+                "successfulBuildsWithColon": "Successful Builds:",
+                "successfulBuilds": "Successful Builds",
+                "successfulBuildsPercentage": "Successful Builds %:",
+                "failedBuilds": "Failed Builds:",
+                "failedBuildsPercentage": "Failed Builds %:",
+                "cancelledBuilds": "Cancelled Builds:",
+                "cancelledBuildsPercentage": "Cancelled Builds %:"
+            }
         }
     }
 }

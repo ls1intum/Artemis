@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
-import { BuildJob, FinishedBuildJob } from 'app/entities/build-job.model';
+import { BuildJob, BuildJobStatistics, FinishedBuildJob } from 'app/entities/build-job.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { HttpResponse } from '@angular/common/http';
 
@@ -147,6 +147,18 @@ export class BuildQueueService {
         return this.http.get<FinishedBuildJob[]>(`${this.resourceUrl}/courses/${courseId}/finished-jobs`, { params: options, observe: 'response' }).pipe(
             catchError((err) => {
                 return throwError(() => new Error(`Failed to get all finished build jobs in course ${courseId}\n${err.message}`));
+            }),
+        );
+    }
+
+    /**
+     * Get BuildJobStatistics
+     * @returns BuildJobStatistics
+     */
+    getBuildJobStatistics(): Observable<BuildJobStatistics> {
+        return this.http.get<BuildJobStatistics>(`${this.adminResourceUrl}/build-job-statistics`).pipe(
+            catchError((err) => {
+                return throwError(() => new Error(`Failed to get build job statistics\n${err.message}`));
             }),
         );
     }
