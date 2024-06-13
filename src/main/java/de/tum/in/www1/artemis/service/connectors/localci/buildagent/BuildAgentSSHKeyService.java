@@ -12,8 +12,12 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.exception.GitException;
@@ -21,6 +25,8 @@ import de.tum.in.www1.artemis.exception.GitException;
 @Service
 @Profile(PROFILE_BUILDAGENT)
 public class BuildAgentSSHKeyService {
+
+    private static final Logger log = LoggerFactory.getLogger(BuildAgentSSHKeyService.class);
 
     private KeyPair keyPair;
 
@@ -30,7 +36,11 @@ public class BuildAgentSSHKeyService {
     @Value("${artemis.version-control.build-agent-use-ssh:true}")
     private boolean useSSHForBuildAgent;
 
-    public BuildAgentSSHKeyService() {
+    @EventListener(ApplicationReadyEvent.class)
+    public void applicationReady() {
+        if (useSSHForBuildAgent) {
+            log.info("Using SSH for build agent authentication.");
+        }
         if (!useSSHForBuildAgent) {
             return;
         }
