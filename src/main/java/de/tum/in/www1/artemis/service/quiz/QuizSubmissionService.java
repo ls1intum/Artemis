@@ -207,7 +207,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         if (participation.getExercise() != null) {
             var quizExercise = (QuizExercise) participation.getExercise();
             // we do not need the course and lectures
-            quizExercise.setCourse(null);
+            // quizExercise.setCourse(null);
         }
         // submissions are part of results, so we do not need them twice
         participation.setSubmissions(null);
