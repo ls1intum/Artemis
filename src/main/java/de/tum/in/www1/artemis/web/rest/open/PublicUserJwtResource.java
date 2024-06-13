@@ -23,6 +23,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.saml2.provider.service.authentication.Saml2AuthenticatedPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -57,6 +58,15 @@ public class PublicUserJwtResource {
         this.jwtCookieService = jwtCookieService;
         this.authenticationManager = authenticationManager;
         this.saml2Service = saml2Service;
+    }
+
+    @GetMapping("origin")
+    public ResponseEntity<String> getOrigin(@RequestHeader HttpHeaders headers) {
+        String origin = headers.getOrigin();
+        if (origin == null) {
+            origin = "Origin header not present";
+        }
+        return ResponseEntity.ok("Request Origin: " + origin);
     }
 
     /**
