@@ -9,7 +9,7 @@ Test Server 1-3
 Deployment via Bamboo. Only for branches of the ``ls1intum/Artemis`` repository, no forks.
 Guide available in the Artemis Developer Confluence Space: `Deploying changes to test server`_.
 
-.. _`Deploying changes to test server`: https://confluence.ase.in.tum.de/display/Artemis/Deploying+changes+to+test+server
+.. _`Deploying changes to test server`: https://confluence.ase.in.tum.de/display/ArTEMiS/GitHub+Deployment
 
 Test Server 5
 -------------
