@@ -62,7 +62,7 @@
         <div class="messages" #messagesElement (scroll)="checkChatScroll()">
             @if (suggestions?.length) {
                 <div style="width: fit-content">
-                    <div class="suggestions-container">
+                    <div [@listAnimation]="suggestions?.length" class="suggestions-container">
                         @for (suggestion of suggestions; track suggestion) {
                             <button class="suggestion-button" (click)="onSuggestionClick(suggestion)" [innerHTML]="suggestion"></button>
                         }

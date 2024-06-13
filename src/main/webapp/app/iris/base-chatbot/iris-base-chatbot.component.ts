@@ -12,7 +12,7 @@ import { IrisRateLimitInformation } from 'app/entities/iris/iris-ratelimit-info.
 import { IrisStatusService } from 'app/iris/iris-status.service';
 import { IrisMessageContentType, IrisTextMessageContent } from 'app/entities/iris/iris-content-type.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { animate, group, style, transition, trigger } from '@angular/animations';
+import { animate, group, query, stagger, style, transition, trigger } from '@angular/animations';
 import { IrisChatService } from 'app/iris/iris-chat.service';
 
 @Component({
@@ -40,6 +40,18 @@ import { IrisChatService } from 'app/iris/iris-chat.service';
                         }),
                     ),
                 ]),
+            ]),
+        ]),
+        trigger('listAnimation', [
+            transition('* => *', [
+                query(
+                    ':enter',
+                    [
+                        style({ transform: 'translateY(100%)', opacity: 0 }),
+                        stagger('100ms', [animate('0.3s 0.3s cubic-bezier(.2,1.22,.64,1)', style({ transform: 'translateY(0)', opacity: 1 }))]),
+                    ],
+                    { optional: true },
+                ),
             ]),
         ]),
     ],
@@ -119,7 +131,6 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
                 this.scrollToBottom('auto');
             }
             this.messages = [...messages].reverse();
-            console.log(this.messages);
         });
         this.stagesSubscription = this.chatService.currentStages().subscribe((stages) => {
             this.stages = stages;
