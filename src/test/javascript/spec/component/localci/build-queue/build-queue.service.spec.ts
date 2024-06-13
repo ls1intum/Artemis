@@ -8,7 +8,7 @@ import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storag
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
-import { BuildJob } from 'app/entities/build-job.model';
+import { BuildJob, BuildJobStatistics } from 'app/entities/build-job.model';
 import dayjs from 'dayjs/esm';
 import { RepositoryInfo, TriggeredByPushTo } from 'app/entities/repository-info.model';
 import { JobTimingInfo } from 'app/entities/job-timing-info.model';
@@ -477,6 +477,40 @@ describe('BuildQueueService', () => {
         expect(req.request.method).toBe('GET');
         req.flush(expectedResponse);
     });
+
+    it('should return build job statistics', fakeAsync(() => {
+        const expectedResponse: BuildJobStatistics = { totalBuilds: 1, successfulBuilds: 1, failedBuilds: 0, cancelledBuilds: 0 };
+
+        service.getBuildJobStatistics().subscribe((data) => {
+            expect(data).toEqual(expectedResponse);
+        });
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/build-job-statistics`);
+        expect(req.request.method).toBe('GET');
+        req.flush(expectedResponse);
+    }));
+
+    it('should handle errors when getting build job statistics', fakeAsync(() => {
+        let errorOccurred = false;
+
+        service.getBuildJobStatistics().subscribe({
+            error: (err) => {
+                expect(err.message).toBe(
+                    'Failed to get build job statistics\nHttp failure response for ' + service.adminResourceUrl + '/build-job-statistics: 500 Internal Server Error',
+                );
+                errorOccurred = true;
+            },
+        });
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/build-job-statistics`);
+        expect(req.request.method).toBe('GET');
+
+        req.flush(null, { status: 500, statusText: 'Internal Server Error' });
+
+        tick();
+
+        expect(errorOccurred).toBeTrue();
+    }));
 
     it('should handle errors when getting all finished build jobs for a specific course', fakeAsync(() => {
         const courseId = 1;
