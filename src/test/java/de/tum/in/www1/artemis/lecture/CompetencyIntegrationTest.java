@@ -284,7 +284,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
         programmingExercise.setMaxPoints(i * 10.0);
         programmingExercise.setCompetencies(competencies);
-        programmingExercise.setDifficulty(i == 0 ? DifficultyLevel.EASY : i == 1 ? DifficultyLevel.MEDIUM : DifficultyLevel.HARD);
+        programmingExercise.setDifficulty(i == 1 ? DifficultyLevel.EASY : i == 2 ? DifficultyLevel.MEDIUM : DifficultyLevel.HARD);
 
         return programmingExerciseRepository.save(programmingExercise);
     }
@@ -700,13 +700,15 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
                     HttpStatus.OK, CompetencyProgress.class);
 
             assertThat(studentCompetencyProgress1.getProgress()).isEqualTo(22);
-            assertThat(studentCompetencyProgress1.getConfidence()).isEqualTo(1);
+            assertThat(studentCompetencyProgress1.getConfidence()).isEqualTo(0.75);
+
+            lectureUnitService.setLectureUnitCompletion(attachmentUnitRepository.findById(idOfAttachmentUnitOfLectureOne).orElseThrow(), student1, true);
 
             CompetencyProgress studentCompetencyProgress2 = request
                     .get("/api/courses/" + course.getId() + "/competencies/" + competency.getId() + "/student-progress?refresh=false", HttpStatus.OK, CompetencyProgress.class);
 
             assertThat(studentCompetencyProgress2.getProgress()).isEqualTo(22);
-            assertThat(studentCompetencyProgress2.getConfidence()).isEqualTo(1);
+            assertThat(studentCompetencyProgress2.getConfidence()).isEqualTo(0.75);
         }
 
         @Test
@@ -733,7 +735,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
             // No lecture units are completed and no participation in team exercise
             assertThat(studentCompetencyProgress.getProgress()).isEqualTo(54);
             // Slightly more points in an easy exercise but solved one programming exercise quickly
-            assertThat(studentCompetencyProgress.getConfidence()).isCloseTo(1.338, within(0.001));
+            assertThat(studentCompetencyProgress.getConfidence()).isCloseTo(1.328, within(0.001));
         }
     }
 
