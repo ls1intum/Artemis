@@ -21,6 +21,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { SortService } from 'app/shared/service/sort.service';
 import { StandardizedCompetencyService } from 'app/shared/standardized-competencies/standardized-competency.service';
 import { CompetencyService } from 'app/course/competencies/competency.service';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 interface StandardizedCompetencyForImport extends StandardizedCompetencyForTree {
     selected?: boolean;
@@ -49,6 +50,7 @@ export class CourseImportStandardizedCompetenciesComponent extends StandardizedC
     protected readonly getIcon = getIcon;
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
+    readonly documentationType: DocumentationType = 'StandardizedCompetencies';
     // icons
     protected readonly faBan = faBan;
     protected readonly faFileImport = faFileImport;
