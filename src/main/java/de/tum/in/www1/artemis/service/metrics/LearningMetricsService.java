@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service.metrics;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
-import static de.tum.in.www1.artemis.service.util.ZonedDateTimeUtil.toRelativeTime;
+import static de.tum.in.www1.artemis.service.util.TimeUtil.toRelativeTime;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.averagingDouble;
 import static java.util.stream.Collectors.groupingBy;

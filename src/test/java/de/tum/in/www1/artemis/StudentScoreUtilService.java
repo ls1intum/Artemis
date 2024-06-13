@@ -29,6 +29,7 @@ public class StudentScoreUtilService {
         studentScore.setExercise(exercise);
         studentScore.setUser(user);
         studentScore.setLastScore(score);
+        studentScore.setLastPoints(exercise.getMaxPoints() * score / 100);
         studentScoreRepository.save(studentScore);
     }
 }

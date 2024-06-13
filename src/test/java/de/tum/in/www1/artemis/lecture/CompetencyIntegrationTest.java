@@ -362,10 +362,10 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         void testShouldOnlySendUserSpecificData() throws Exception {
 
             User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-            competencyProgressUtilService.createCompetencyProgress(competency, student1, 0, 0);
+            competencyProgressUtilService.createCompetencyProgress(competency, student1, 0, 1);
 
             User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-            competencyProgressUtilService.createCompetencyProgress(competency, student2, 1, 1);
+            competencyProgressUtilService.createCompetencyProgress(competency, student2, 10, 1);
 
             final var textUnit = textUnitRepository.findById(idOfTextUnitOfLectureOne).get();
             lectureUtilService.completeLectureUnitForUser(textUnit, student2);
@@ -635,14 +635,14 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         CompetencyProgress studentCompetencyProgress1 = request.get("/api/courses/" + course.getId() + "/competencies/" + competency.getId() + "/student-progress?refresh=true",
                 HttpStatus.OK, CompetencyProgress.class);
 
-        assertThat(studentCompetencyProgress1.getProgress()).isEqualTo(66.7);
-        assertThat(studentCompetencyProgress1.getConfidence()).isEqualTo(85.0);
+        assertThat(studentCompetencyProgress1.getProgress()).isEqualTo(62);
+        assertThat(studentCompetencyProgress1.getConfidence()).isEqualTo(1);
 
         CompetencyProgress studentCompetencyProgress2 = request.get("/api/courses/" + course.getId() + "/competencies/" + competency.getId() + "/student-progress?refresh=false",
                 HttpStatus.OK, CompetencyProgress.class);
 
-        assertThat(studentCompetencyProgress2.getProgress()).isEqualTo(66.7);
-        assertThat(studentCompetencyProgress2.getConfidence()).isEqualTo(85.0);
+        assertThat(studentCompetencyProgress2.getProgress()).isEqualTo(62);
+        assertThat(studentCompetencyProgress2.getConfidence()).isEqualTo(1);
     }
 
     @Nested

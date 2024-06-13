@@ -90,11 +90,9 @@ public interface CompetencyProgressRepository extends JpaRepository<CompetencyPr
             SELECT COUNT(cp)
             FROM CompetencyProgress cp
             WHERE cp.competency.id = :competencyId
-                AND cp.progress >= :progress
-                AND cp.confidence >= :confidence
+                AND cp.progress * cp.confidence >= :masteryThreshold
             """)
-    Long countByCompetencyAndProgressAndConfidenceGreaterThanEqual(@Param("competencyId") long competencyId, @Param("progress") double progress,
-            @Param("confidence") double confidence);
+    Long countByCompetencyAndProgressAndConfidenceGreaterThanEqual(@Param("competencyId") long competencyId, @Param("masteryThreshold") double masteryThreshold);
 
     @Query("""
             SELECT cp
