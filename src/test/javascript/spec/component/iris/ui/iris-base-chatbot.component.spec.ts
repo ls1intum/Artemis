@@ -21,6 +21,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { FormsModule } from 'app/forms/forms.module';
 import {
+    mockClientMessage,
     mockServerMessage,
     mockServerSessionHttpResponse,
     mockServerSessionHttpResponseWithEmptyConversation,
@@ -28,7 +29,7 @@ import {
     mockUserMessageWithContent,
     mockWebsocketServerMessage,
 } from '../../../helpers/sample/iris-sample-data';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
@@ -61,7 +62,7 @@ describe('IrisBaseChatbotComponent', () => {
         } as any;
 
         await TestBed.configureTestingModule({
-            imports: [FormsModule, FontAwesomeModule, RouterModule, BrowserAnimationsModule],
+            imports: [FormsModule, FontAwesomeModule, RouterModule, NoopAnimationsModule],
             declarations: [
                 IrisBaseChatbotComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -408,6 +409,73 @@ describe('IrisBaseChatbotComponent', () => {
         const sendButton = fixture.debugElement.query(By.css('#irisSendButton')).componentInstance;
 
         expect(sendButton.disabled).toBeFalsy();
+    });
+
+    it('should set suggestions correctly', () => {
+        const expectedSuggestions = ['suggestion1', 'suggestion2', 'suggestion3'];
+        jest.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(expectedSuggestions));
+
+        component.ngOnInit();
+
+        expect(component.suggestions).toEqual(expectedSuggestions);
+    });
+
+    it('should handle suggestion click correctly', () => {
+        const suggestion = 'test suggestion';
+        jest.spyOn(component, 'onSend');
+        jest.spyOn(chatService, 'sendMessage');
+
+        component.onSuggestionClick(suggestion);
+
+        expect(chatService.sendMessage).toHaveBeenCalledWith(suggestion);
+        expect(component.onSend).toHaveBeenCalled();
+    });
+
+    it('should clear suggestions after clicking on a suggestion', () => {
+        const suggestion = 'test suggestion';
+        jest.spyOn(component, 'onSend');
+
+        component.onSuggestionClick(suggestion);
+
+        expect(component.suggestions).toEqual([]);
+    });
+
+    it('should render suggestions when suggestions array is not empty', () => {
+        // Arrange
+        const expectedSuggestions = ['suggestion1', 'suggestion2', 'suggestion3'];
+        const mockMessages = [mockClientMessage, mockServerMessage];
+
+        jest.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(expectedSuggestions));
+        jest.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+
+        // Act
+        component.ngOnInit();
+        fixture.detectChanges();
+
+        // Assert
+        const suggestionsElement: HTMLElement = fixture.nativeElement.querySelector('.suggestions-container');
+        const suggestionButtons = suggestionsElement.querySelectorAll('.suggestion-button');
+        expect(suggestionButtons).toHaveLength(expectedSuggestions.length);
+        suggestionButtons.forEach((button, index) => {
+            expect(button.textContent).toBe(expectedSuggestions[index]);
+        });
+    });
+
+    it('should not render suggestions when suggestions array is empty', () => {
+        // Arrange
+        const expectedSuggestions: string[] = [];
+        const mockMessages = [mockClientMessage, mockServerMessage];
+
+        jest.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(expectedSuggestions));
+        jest.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+
+        // Act
+        component.ngOnInit();
+        fixture.detectChanges();
+
+        // Assert
+        const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
+        expect(suggestionButtons).toHaveLength(0);
     });
 
     describe('clear chat session', () => {
