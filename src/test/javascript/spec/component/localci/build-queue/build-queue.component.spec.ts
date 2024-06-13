@@ -10,7 +10,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { ArtemisTestModule } from '../../../test.module';
-import { FinishedBuildJob } from 'app/entities/build-job.model';
+import { BuildJobStatistics, FinishedBuildJob } from 'app/entities/build-job.model';
 import { TriggeredByPushTo } from 'app/entities/repository-info.model';
 import { waitForAsync } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
@@ -34,6 +34,7 @@ describe('BuildQueueComponent', () => {
         cancelAllRunningBuildJobs: jest.fn(),
         getFinishedBuildJobsByCourseId: jest.fn(),
         getFinishedBuildJobs: jest.fn(),
+        getBuildJobStatistics: jest.fn(),
     };
 
     const accountServiceMock = { identity: jest.fn(), getAuthenticationState: jest.fn() };
@@ -224,6 +225,13 @@ describe('BuildQueueComponent', () => {
         },
     ];
 
+    const mockBuildJobStatistics: BuildJobStatistics = {
+        totalBuilds: 10,
+        successfulBuilds: 5,
+        failedBuilds: 3,
+        cancelledBuilds: 2,
+    };
+
     const mockFinishedJobsResponse: HttpResponse<FinishedBuildJob[]> = new HttpResponse({ body: mockFinishedJobs });
 
     const request = {
@@ -234,7 +242,7 @@ describe('BuildQueueComponent', () => {
     };
 
     beforeEach(waitForAsync(() => {
-        mockActivatedRoute = { params: of({ courseId: testCourseId }) };
+        mockActivatedRoute = { params: of({ courseId: testCourseId }), snapshot: { paramMap: new Map([]) } };
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgxDatatableModule],
@@ -273,6 +281,7 @@ describe('BuildQueueComponent', () => {
         mockBuildQueueService.getQueuedBuildJobs.mockReturnValue(of(mockQueuedJobs));
         mockBuildQueueService.getRunningBuildJobs.mockReturnValue(of(mockRunningJobs));
         mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(of(mockFinishedJobsResponse));
+        mockBuildQueueService.getBuildJobStatistics.mockReturnValue(of(mockBuildJobStatistics));
 
         // Initialize the component
         component.ngOnInit();
@@ -301,6 +310,7 @@ describe('BuildQueueComponent', () => {
         mockBuildQueueService.getQueuedBuildJobsByCourseId.mockReturnValue(of(mockQueuedJobs));
         mockBuildQueueService.getRunningBuildJobsByCourseId.mockReturnValue(of(mockRunningJobs));
         mockBuildQueueService.getFinishedBuildJobsByCourseId.mockReturnValue(of(mockFinishedJobsResponse));
+        mockBuildQueueService.getBuildJobStatistics.mockReturnValue(of(mockBuildJobStatistics));
 
         // Initialize the component
         component.ngOnInit();
@@ -314,6 +324,31 @@ describe('BuildQueueComponent', () => {
         expect(component.queuedBuildJobs).toEqual(mockQueuedJobs);
         expect(component.runningBuildJobs).toEqual(mockRunningJobs);
         expect(component.finishedBuildJobs).toEqual(mockFinishedJobs);
+    });
+
+    it('should get build job statistics', () => {
+        // Mock ActivatedRoute to return no course ID
+        mockActivatedRoute.paramMap = of(new Map([]));
+
+        mockBuildQueueService.getBuildJobStatistics.mockReturnValue(of(mockBuildJobStatistics));
+
+        component.ngOnInit();
+
+        expect(mockBuildQueueService.getBuildJobStatistics).toHaveBeenCalled();
+        expect(component.buildJobStatistics).toEqual(mockBuildJobStatistics);
+    });
+
+    it('should not get build job statistics if there is a course ID', () => {
+        // Mock ActivatedRoute to return a specific course ID
+        mockActivatedRoute.paramMap = of(new Map([['courseId', testCourseId.toString()]]));
+        mockActivatedRoute.snapshot.paramMap = new Map([['courseId', testCourseId.toString()]]);
+
+        mockBuildQueueService.getBuildJobStatistics.mockReturnValue(of(mockBuildJobStatistics));
+
+        component.ngOnInit();
+
+        expect(mockBuildQueueService.getBuildJobStatistics).not.toHaveBeenCalled();
+        expect(component.buildJobStatistics).toBeUndefined();
     });
 
     it('should refresh data', () => {
