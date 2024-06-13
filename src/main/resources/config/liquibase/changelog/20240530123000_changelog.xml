@@ -6,7 +6,7 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
 
-    <changeSet id="20240612123000" author="yassinsws">
+    <changeSet id="20240601123000" author="yassinsws">
         <!-- Add new column for enable_auto_update_lecture_ingestion settings -->
         <addColumn tableName="iris_settings">
             <column name="enable_auto_update_lecture_ingestion" type="boolean" defaultValueBoolean="false">
