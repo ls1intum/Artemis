@@ -42,7 +42,7 @@
         }
         @if (settingsType === COURSE) {
             <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="autoLectureIngestion" [(ngModel)]="autoLectureIngestion" />
+                <input class="form-check-input" type="checkbox" id="autoLectureIngestion" [disabled]="!isAdmin" [(ngModel)]="autoLectureIngestion" />
                 <label
                     class="form-check-label"
                     for="autoLectureIngestion"
