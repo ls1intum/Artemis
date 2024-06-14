@@ -46,3 +46,7 @@ DROP TABLE IF EXISTS short_answer_submitted_text;
 
 -- Drop the quiz_statistic_counter table
 DROP TABLE IF EXISTS quiz_statistic_counter;
+
+
+-- Drop the quiz_point_statistic_id column
+ALTER TABLE artemis.exercise DROP COLUMN quiz_point_statistic_id;
