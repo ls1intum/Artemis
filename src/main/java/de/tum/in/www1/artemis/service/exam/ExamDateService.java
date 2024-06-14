@@ -37,6 +37,16 @@ public class ExamDateService {
     }
 
     /**
+     * Returns if the exam is over by checking if the exam end date has passed.
+     *
+     * @param exam the exam
+     * @return true if the exam is over
+     */
+    public boolean isExamOver(Exam exam) {
+        return exam.getEndDate().isBefore(ZonedDateTime.now());
+    }
+
+    /**
      * Returns if the exam is over by checking if the latest individual exam end date plus grace period has passed.
      * See {@link ExamDateService#getLatestIndividualExamEndDate}
      * <p>
