@@ -266,7 +266,7 @@ public class LectureResource {
      * @return the ResponseEntity with status 200 (OK) and a message success or null if the operation failed
      */
     @PostMapping("courses/{courseId}/ingest")
-    public ResponseEntity<Boolean> IngestLectures(@PathVariable Long courseId) {
+    public ResponseEntity<Boolean> ingestLectures(@PathVariable Long courseId) {
         log.debug("REST request to ingest lectures of course : {}", courseId);
         Course course = courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courseId);
         return ResponseEntity.ok().body(lectureService.ingestLecturesInPyris(course.getLectures()));

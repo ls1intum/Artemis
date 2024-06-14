@@ -78,10 +78,12 @@
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.lecture.home.createLabel"></span>
                     </a>
-                    <button (click)="ingestLecturesInPyris()" class="btn btn-primary jh-create-entity mb-1" id="backend-trigger-button">
-                        <fa-icon [icon]="faFileExport" />
-                        <span jhiTranslate="artemisApp.lecture.home.ingestLecturesInPyrisLabel"></span>
-                    </button>
+                    @if (lectureIngestionEnabled) {
+                        <button (click)="ingestLecturesInPyris()" class="btn btn-primary jh-create-entity mb-1" id="backend-trigger-button">
+                            <fa-icon [icon]="faFileExport" />
+                            <span jhiTranslate="artemisApp.lecture.home.ingestLecturesInPyrisLabel"></span>
+                        </button>
+                    }
                 </div>
             </div>
         </div>
