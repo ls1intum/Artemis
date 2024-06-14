@@ -98,7 +98,8 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform {
         if (duration.minutes > 0) {
             result.push(isExam ? `${duration.minutes}:`.padStart(3, '0') : `${duration.minutes}min`);
         }
-        if (duration.seconds > 0 || result.length === 0) {
+        // if we are in the exam, we include zeros, otherwise we don't
+        if (result.length === 0 || (isExam && duration.seconds >= 0) || (!isExam && duration.seconds > 0)) {
             result.push(isExam ? `${duration.seconds}`.padStart(2, '0') : `${duration.seconds}s`);
         }
 
