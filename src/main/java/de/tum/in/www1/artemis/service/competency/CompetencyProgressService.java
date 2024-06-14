@@ -245,7 +245,7 @@ public class CompetencyProgressService {
 
         double recencyConfidenceHeuristic = calculateRecencyConfidenceHeuristic(participantScoreInfos);
         double difficultyConfidenceHeuristic = calculateDifficultyConfidenceHeuristic(participantScoreInfos, exerciseInfos);
-        double quickSolveConfidenceHeuristic = calculateQuickSolveConfidenceHeuristic(exerciseInfos);
+        double quickSolveConfidenceHeuristic = calculateQuickSolveConfidenceHeuristic(participantScoreInfos);
 
         double confidence = 1 + recencyConfidenceHeuristic + difficultyConfidenceHeuristic + quickSolveConfidenceHeuristic;
 
