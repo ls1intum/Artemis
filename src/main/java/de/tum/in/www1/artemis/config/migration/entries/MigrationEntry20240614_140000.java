@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 
 public class MigrationEntry20240614_140000 extends MigrationEntry {
 
-    private final Logger log = LoggerFactory.getLogger(MigrationEntry20240614_140000.class);
+    private static final Logger log = LoggerFactory.getLogger(MigrationEntry20240614_140000.class);
 
     private final CourseRepository courseRepository;
 
