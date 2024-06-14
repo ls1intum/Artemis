@@ -109,8 +109,11 @@ public class QuizStatisticService {
 
             ltiNewResultService.ifPresent(newResultService -> newResultService.onNewResult(participation));
         }
-
-        quizExerciseRepository.saveAndFlush(quizExercise);
+        QuizExercise quizExerciseExisting = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        if (quizExerciseExisting != null) {
+            quizExerciseExisting.setQuizPointStatistic(quizExercise.getQuizPointStatistic());
+            quizExerciseRepository.saveAndFlush(quizExerciseExisting);
+        }
         for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
             if (quizQuestion.getQuizQuestionStatistic() != null) {
                 quizQuestionRepository.saveAndFlush(quizQuestion);
