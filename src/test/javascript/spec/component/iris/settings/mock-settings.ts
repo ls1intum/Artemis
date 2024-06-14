@@ -36,6 +36,15 @@ export function mockSettings() {
     return irisSettings;
 }
 
+export function mockEmptySettings() {
+    const mockTemplate = new IrisTemplate();
+    mockTemplate.id = 1;
+    mockTemplate.content = 'Hello World';
+    const irisSettings = new IrisGlobalSettings();
+    irisSettings.id = 1;
+    return irisSettings;
+}
+
 export function mockModels() {
     return [
         {

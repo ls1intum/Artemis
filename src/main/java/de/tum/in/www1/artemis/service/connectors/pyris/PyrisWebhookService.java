@@ -50,14 +50,8 @@ public class PyrisWebhookService {
     }
 
     private boolean lectureIngestionEnabled(Course course) {
-        try {
-            Boolean enabled = irisSettingsService.getRawIrisSettingsFor(course).getIrisLectureIngestionSettings().isEnabled();
-            return Boolean.TRUE.equals(enabled);
-        }
-        catch (NullPointerException e) {
-            log.error("NullPointerException: " + e.getMessage());
-            return false;
-        }
+        return irisSettingsService.getRawIrisSettingsFor(course).getIrisLectureIngestionSettings() != null
+                && irisSettingsService.getRawIrisSettingsFor(course).getIrisLectureIngestionSettings().isEnabled();
     }
 
     private String attachmentToBase64(AttachmentUnit attachmentUnit) {
@@ -102,7 +96,7 @@ public class PyrisWebhookService {
     public boolean autoUpdateAttachmentUnitsInPyris(IrisSettingsRepository irisSettingsRepository, Long courseId, List<AttachmentUnit> newAttachmentUnits) {
         try {
             IrisCourseSettings courseSettings = irisSettingsRepository.findCourseSettings(courseId).orElseThrow(() -> new NoSuchElementException("Course settings not found"));
-            if (courseSettings.getIrisLectureIngestionSettings().isEnabled()
+            if (courseSettings.getIrisLectureIngestionSettings() != null && courseSettings.getIrisLectureIngestionSettings().isEnabled()
                     && Boolean.TRUE.equals(courseSettings.getIrisLectureIngestionSettings().getAutoIngestOnLectureAttachmentUpload())) {
                 return addLectureToPyrisDB(newAttachmentUnits) != null;
             }
