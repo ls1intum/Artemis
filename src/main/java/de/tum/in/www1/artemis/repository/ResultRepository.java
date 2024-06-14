@@ -92,7 +92,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     Optional<Result> findFirstByParticipationIdOrderByCompletionDateDesc(long participationId);
 
-    @Query("SELECT r FROM Result r JOIN FETCH r.feedbacks f JOIN FETCH f.testCase WHERE r.id = :id")
+    @Query("SELECT r FROM Result r LEFT JOIN FETCH r.feedbacks f LEFT JOIN FETCH f.testCase WHERE r.id = :id")
     Optional<Result> findResultByIdWithFeedbacksAndTestCases(@Param("id") long resultId);
 
     default Optional<Result> findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(long participationId) {
@@ -104,7 +104,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         return findResultByIdWithFeedbacksAndTestCases(id);
     }
 
-    @Query("SELECT r FROM Result r JOIN FETCH r.submission s JOIN FETCH r.feedbacks f JOIN FETCH f.testCase WHERE r.id = :id")
+    @Query("SELECT r FROM Result r LEFT JOIN FETCH r.submission s LEFT JOIN FETCH r.feedbacks f LEFT JOIN FETCH f.testCase WHERE r.id = :id")
     Optional<Result> findResultByIdWithSubmissionAndFeedbacksTestCases(@Param("id") long resultId);
 
     default Optional<Result> findFirstWithSubmissionAndFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(long participationId) {
@@ -116,7 +116,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         return findResultByIdWithSubmissionAndFeedbacksTestCases(id);
     }
 
-    @Query("SELECT r FROM Result r JOIN FETCH r.submission WHERE r.id = :id")
+    @Query("SELECT r FROM Result r LEFT JOIN FETCH r.submission WHERE r.id = :id")
     Optional<Result> findResultByIdWithSubmissions(@Param("id") long resultId);
 
     default Optional<Result> findFirstWithSubmissionsByParticipationIdOrderByCompletionDateDesc(long participationId) {
