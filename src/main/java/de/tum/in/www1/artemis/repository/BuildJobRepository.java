@@ -8,8 +8,8 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -29,45 +29,9 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSp
 
     Optional<BuildJob> findBuildJobByResult(Result result);
 
-    @Query(value = """
-            SELECT COUNT(b.id)
-            FROM BuildJob b
-            """, nativeQuery = true)
-    long countAllBuildJobs();
-
-    @Query(value = """
-            SELECT * FROM (
-                SELECT
-                    b.id AS build_job_id,
-                    b.*,
-                    r.*,
-                    p.*,
-                    e.*,
-                    s.*,
-                    ROW_NUMBER() OVER (ORDER BY b.id) AS rn
-                FROM BuildJob b
-                LEFT JOIN Result r ON b.result_id = r.id
-                LEFT JOIN Participation p ON r.participation_id = p.id
-                LEFT JOIN Exercise e ON p.exercise_id = e.id
-                LEFT JOIN Submission s ON r.submission_id = s.id
-            ) sub
-            WHERE sub.rn BETWEEN :from AND :to
-            """, nativeQuery = true)
-    List<BuildJob> findAllWithRowBounds(@Param("from") int from, @Param("to") int to);
-
-    default Page<BuildJob> findAll(Pageable pageable) {
-
-        int pageNumber = pageable.getPageNumber();
-        int pageSize = pageable.getPageSize();
-        int from = pageNumber * pageSize + 1;
-        int to = (pageNumber + 1) * pageSize;
-
-        List<BuildJob> buildJobs = findAllWithRowBounds(from, to);
-
-        long count = countAllBuildJobs();
-
-        return new PageImpl<>(buildJobs, pageable, count);
-    }
+    // TODO: rewrite this query, pageable does not work well with EntityGraph
+    @EntityGraph(attributePaths = { "result", "result.participation", "result.participation.exercise", "result.submission" })
+    Page<BuildJob> findAll(Pageable pageable);
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild(
@@ -79,47 +43,9 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSp
             """)
     Set<DockerImageBuild> findAllLastBuildDatesForDockerImages();
 
-    @Query(value = """
-            SELECT COUNT(b.id)
-            FROM BuildJob b
-            WHERE b.course_id = :courseId
-            """, nativeQuery = true)
-    long countAllByCourseId(@Param("courseId") long courseId);
-
-    @Query(value = """
-            SELECT * FROM (
-                SELECT
-                    b.id AS build_job_id,
-                    b.*,
-                    r.*,
-                    p.*,
-                    e.*,
-                    s.*,
-                    ROW_NUMBER() OVER (ORDER BY b.id) AS rn
-                FROM BuildJob b
-                LEFT JOIN Result r ON b.result_id = r.id
-                LEFT JOIN Participation p ON r.participation_id = p.id
-                LEFT JOIN Exercise e ON p.exercise_id = e.id
-                LEFT JOIN Submission s ON r.submission_id = s.id
-                WHERE b.course_id = :courseId
-            ) sub
-            WHERE sub.rn BETWEEN :from AND :to
-            """, nativeQuery = true)
-    List<BuildJob> findAllByCourseIdWithRowBounds(@Param("courseId") long courseId, @Param("from") int from, @Param("to") int to);
-
-    default Page<BuildJob> findAllByCourseId(long courseId, Pageable pageable) {
-
-        int pageNumber = pageable.getPageNumber();
-        int pageSize = pageable.getPageSize();
-        int from = pageNumber * pageSize + 1;
-        int to = (pageNumber + 1) * pageSize;
-
-        List<BuildJob> buildJobs = findAllByCourseIdWithRowBounds(courseId, from, to);
-
-        long count = countAllByCourseId(courseId);
-
-        return new PageImpl<>(buildJobs, pageable, count);
-    }
+    // TODO: rewrite this query, pageable does not work well with EntityGraph
+    @EntityGraph(attributePaths = { "result", "result.participation", "result.participation.exercise", "result.submission" })
+    Page<BuildJob> findAllByCourseId(long courseId, Pageable pageable);
 
     @Query("""
              SELECT new de.tum.in.www1.artemis.service.connectors.localci.dto.ResultBuildJob(
