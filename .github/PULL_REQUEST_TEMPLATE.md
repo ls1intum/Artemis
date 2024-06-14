@@ -81,6 +81,7 @@ Prerequisites:
 ![](https://byob.yarr.is/ls1intum/Artemis/artemis-test4)
 ![](https://byob.yarr.is/ls1intum/Artemis/artemis-test5)
 ![](https://byob.yarr.is/ls1intum/Artemis/artemis-test6)
+![](https://byob.yarr.is/ls1intum/Artemis/artemis-test9)
 
 ### Review Progress
 <!-- Each PR should be reviewed by at least two other developers. The code, the functionality (= manual test) and the exam mode need to be reviewed. -->
