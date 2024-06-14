@@ -76,6 +76,13 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
             this.isTestServer = profileInfo?.testServer ?? false;
         });
 
+        if (!this.examTimeLineView) {
+            this.subscriptionToLiveExamExerciseUpdates = this.examExerciseUpdateService.currentExerciseIdForNavigation.subscribe((exerciseIdToNavigateTo) => {
+                // another exercise will only be displayed if the student clicks on the corresponding pop-up notification
+                this.changeExerciseById(exerciseIdToNavigateTo);
+            });
+        }
+
         this.layoutService.subscribeToLayoutChanges().subscribe(() => {
             // You will have all matched breakpoints in observerResponse
             if (this.layoutService.isBreakpointActive(CustomBreakpointNames.extraLarge)) {
@@ -120,6 +127,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
         this.sidebarEventService.emitResetValue();
     }
 
+    // NOT NEEDED
     getExerciseButtonTooltip(exercise: Exercise): ButtonTooltipType {
         return this.examParticipationService.getExerciseButtonTooltip(exercise);
     }
@@ -157,14 +165,15 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
         this.changePage(false, foundIndex, true);
     }
 
+    // NOT NEEDED
     isProgrammingExercise() {
         return this.exercises[this.exerciseIndex].type === ExerciseType.PROGRAMMING;
     }
-
+    // NOT NEEDED
     isFileUploadExercise() {
         return this.exercises[this.exerciseIndex].type === ExerciseType.FILE_UPLOAD;
     }
-
+    // NOT NEEDED
     getOverviewStatus(): 'active' | '' {
         return this.overviewPageOpen ? 'active' : '';
     }
