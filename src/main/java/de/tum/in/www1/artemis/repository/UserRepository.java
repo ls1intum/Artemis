@@ -341,6 +341,16 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             """)
     long countUsersByLoginOrNameInGroupsNotUserId(@Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames, @Param("idOfUser") long idOfUser);
 
+    /**
+     * Searches for {@link User} entities by login or name within specified groups, excluding a specific user ID.
+     * The results are paginated.
+     *
+     * @param pageable    the pagination information.
+     * @param loginOrName the login or name to search for.
+     * @param groupNames  the set of group names to limit the search within.
+     * @param idOfUser    the ID of the user to exclude from the search results.
+     * @return a paginated list of {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
+     */
     default Page<User> searchAllByLoginOrNameInGroupsNotUserId(Pageable pageable, String loginOrName, Set<String> groupNames, long idOfUser) {
         List<Long> ids = findUserIdsByLoginOrNameInGroupsNotUserId(loginOrName, groupNames, idOfUser, pageable);
         if (ids.isEmpty()) {
@@ -423,6 +433,15 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             """)
     long countUsersByLoginOrNameInConversation(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId);
 
+    /**
+     * Searches for {@link User} entities by login or name within a specific conversation.
+     * The results are paginated.
+     *
+     * @param pageable       the pagination information.
+     * @param loginOrName    the login or name to search for.
+     * @param conversationId the ID of the conversation to limit the search within.
+     * @return a paginated list of {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
+     */
     default Page<User> searchAllByLoginOrNameInConversation(Pageable pageable, String loginOrName, long conversationId) {
         List<Long> ids = findUserIdsByLoginOrNameInConversation(loginOrName, conversationId, pageable);
         if (ids.isEmpty()) {
@@ -467,6 +486,16 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     long countUsersByLoginOrNameInConversationWithCourseGroups(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId,
             @Param("groupNames") Set<String> groupNames);
 
+    /**
+     * Searches for {@link User} entities by login or name within a specific conversation and course groups.
+     * The results are paginated.
+     *
+     * @param pageable       the pagination information.
+     * @param loginOrName    the login or name to search for.
+     * @param conversationId the ID of the conversation to limit the search within.
+     * @param groupNames     the set of course group names to limit the search within.
+     * @return a paginated list of {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
+     */
     default Page<User> searchAllByLoginOrNameInConversationWithCourseGroups(Pageable pageable, String loginOrName, long conversationId, Set<String> groupNames) {
         List<Long> ids = findUserIdsByLoginOrNameInConversationWithCourseGroups(loginOrName, conversationId, groupNames, pageable);
         if (ids.isEmpty()) {
@@ -517,6 +546,15 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             """)
     long countModeratorsByLoginOrNameInConversation(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId);
 
+    /**
+     * Searches for channel moderator {@link User} entities by login or name within a specific conversation.
+     * The results are paginated.
+     *
+     * @param pageable       the pagination information.
+     * @param loginOrName    the login or name to search for.
+     * @param conversationId the ID of the conversation to limit the search within.
+     * @return a paginated list of channel moderator {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
+     */
     default Page<User> searchChannelModeratorsByLoginOrNameInConversation(Pageable pageable, String loginOrName, long conversationId) {
         List<Long> ids = findModeratorIdsByLoginOrNameInConversation(loginOrName, conversationId, pageable);
         if (ids.isEmpty()) {
@@ -622,6 +660,13 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             """)
     long countUsersByIsDeletedIsFalse();
 
+    /**
+     * Retrieves a paginated list of {@link User} entities that are not marked as deleted,
+     * with their associated groups.
+     *
+     * @param pageable the pagination information.
+     * @return a paginated list of {@link User} entities that are not marked as deleted. If no entities are found, returns an empty page.
+     */
     default Page<User> findAllWithGroupsByIsDeletedIsFalse(Pageable pageable) {
         List<Long> ids = findUserIdsByIsDeletedIsFalse(pageable);
         if (ids.isEmpty()) {

@@ -48,6 +48,14 @@ public interface PersistenceAuditEventRepository extends JpaRepository<Persisten
             """)
     long countByAuditEventDateBetween(@Param("fromDate") Instant fromDate, @Param("toDate") Instant toDate);
 
+    /**
+     * Retrieves a paginated list of {@link PersistentAuditEvent} entities that have an audit event date between the specified fromDate and toDate.
+     *
+     * @param fromDate the start date of the audit event date range (inclusive).
+     * @param toDate   the end date of the audit event date range (inclusive).
+     * @param pageable the pagination information.
+     * @return a paginated list of {@link PersistentAuditEvent} entities within the specified date range. If no entities are found, returns an empty page.
+     */
     default Page<PersistentAuditEvent> findAllByAuditEventDateBetween(Instant fromDate, Instant toDate, Pageable pageable) {
         List<Long> ids = findIdsByAuditEventDateBetween(fromDate, toDate, pageable);
         if (ids.isEmpty()) {
@@ -69,6 +77,12 @@ public interface PersistenceAuditEventRepository extends JpaRepository<Persisten
             """)
     long countAll();
 
+    /**
+     * Retrieves a paginated list of {@link PersistentAuditEvent} entities.
+     *
+     * @param pageable the pagination information.
+     * @return a paginated list of {@link PersistentAuditEvent} entities. If no entities are found, returns an empty page.
+     */
     default Page<PersistentAuditEvent> findAll(@NotNull Pageable pageable) {
         List<Long> ids = findAllIds(pageable);
         if (ids.isEmpty()) {

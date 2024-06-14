@@ -46,6 +46,12 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSp
             """)
     List<BuildJob> findByIdsWithAssociations(@Param("ids") List<Long> ids);
 
+    /**
+     * Retrieves a paginated list of all {@link BuildJob} entities.
+     *
+     * @param pageable the pagination information.
+     * @return a paginated list of {@link BuildJob} entities. If no entities are found, returns an empty page.
+     */
     default Page<BuildJob> findAll(Pageable pageable) {
         List<Long> ids = findAllIds(pageable);
         if (ids.isEmpty()) {
@@ -85,6 +91,13 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSp
             """)
     long countBuildJobsByCourseId(@Param("courseId") long courseId);
 
+    /**
+     * Retrieves a paginated list of all {@link BuildJob} entities that have a given course id.
+     *
+     * @param courseId the course id.
+     * @param pageable the pagination information.
+     * @return a paginated list of {@link BuildJob} entities. If no entities are found, returns an empty page.
+     */
     default Page<BuildJob> findAllByCourseId(long courseId, Pageable pageable) {
         List<Long> ids = findIdsByCourseId(courseId, pageable);
         if (ids.isEmpty()) {

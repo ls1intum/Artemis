@@ -685,6 +685,16 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             """)
     long countByExerciseIdAndStudentName(@Param("exerciseId") long exerciseId, @Param("partialStudentName") String partialStudentName);
 
+    /**
+     * Retrieves a paginated list of {@link StudentParticipation} entities associated with a specific exercise,
+     * and optionally filtered by a partial student name. The entities are fetched with eager loading of submissions and results.
+     *
+     * @param exerciseId         the ID of the exercise.
+     * @param partialStudentName the partial name of the student to filter by (can be empty or null to include all students).
+     * @param pageable           the pagination information.
+     * @return a paginated list of {@link StudentParticipation} entities associated with the specified exercise and student name filter.
+     *         If no entities are found, returns an empty page.
+     */
     default Page<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsByExerciseId(long exerciseId, String partialStudentName, Pageable pageable) {
         List<Long> ids = findIdsByExerciseIdAndStudentName(exerciseId, partialStudentName, pageable);
         if (ids.isEmpty()) {
