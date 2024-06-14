@@ -74,14 +74,14 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSp
     @Query("""
             SELECT b.id
             FROM BuildJob b
-            WHERE b.course.id = :courseId
+            WHERE b.courseId = :courseId
             """)
     List<Long> findIdsByCourseId(@Param("courseId") long courseId, Pageable pageable);
 
     @Query("""
             SELECT COUNT(b)
             FROM BuildJob b
-            WHERE b.course.id = :courseId
+            WHERE b.courseId = :courseId
             """)
     long countBuildJobsByCourseId(@Param("courseId") long courseId);
 

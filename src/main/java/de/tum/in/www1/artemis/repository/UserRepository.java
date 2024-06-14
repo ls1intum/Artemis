@@ -459,7 +459,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                   :loginOrName = ''
                   OR user.login LIKE :#{#loginOrName}%
                   OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-              ) AND userGroup.name IN :groupNames
+              ) AND userGroup IN :groupNames
             """)
     long countUsersByLoginOrNameInConversationWithCourseGroups(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId,
             @Param("groupNames") Set<String> groupNames);
