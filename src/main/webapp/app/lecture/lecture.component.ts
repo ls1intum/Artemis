@@ -180,7 +180,7 @@ export class LectureComponent implements OnInit {
     }
 
     /**
-     * Trigger the IngestFix failing testion of all Lectures in the course.
+     * Trigger the Ingestion of all Lectures in the course.
      */
     ingestLecturesInPyris() {
         if (this.lectures.first()) {

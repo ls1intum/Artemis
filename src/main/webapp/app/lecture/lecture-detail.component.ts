@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { faFile, faPencilAlt, faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
+import { faFile, faFileExport, faPencilAlt, faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
 import { Lecture } from 'app/entities/lecture.model';
 import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-
+import { LectureService } from 'app/lecture/lecture.service';
 @Component({
     selector: 'jhi-lecture-detail',
     templateUrl: './lecture-detail.component.html',
@@ -16,12 +16,14 @@ export class LectureDetailComponent implements OnInit {
     faPencilAlt = faPencilAlt;
     faFile = faFile;
     faPuzzlePiece = faPuzzlePiece;
+    faFileExport = faFileExport;
 
     detailSections: DetailOverviewSection[];
 
     constructor(
         private activatedRoute: ActivatedRoute,
         private artemisMarkdown: ArtemisMarkdownService,
+        protected lectureService: LectureService,
     ) {}
 
     /**
@@ -64,5 +66,11 @@ export class LectureDetailComponent implements OnInit {
                 },
             ];
         }
+    }
+    /**
+     * Trigger the Ingeston of this Lecture in Iris.
+     */
+    ingestLectureInPyris() {
+        this.lectureService.ingestLecturesInPyris(this.lecture.course!.id!, this.lecture.id);
     }
 }

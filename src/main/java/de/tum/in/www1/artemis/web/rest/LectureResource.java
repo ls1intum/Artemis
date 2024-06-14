@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -266,9 +267,20 @@ public class LectureResource {
      * @return the ResponseEntity with status 200 (OK) and a message success or null if the operation failed
      */
     @PostMapping("courses/{courseId}/ingest")
-    public ResponseEntity<Boolean> IngestLectures(@PathVariable Long courseId) {
+    public ResponseEntity<Boolean> ingestLectures(@PathVariable Long courseId, @RequestParam(required = false) Optional<Long> lectureId) {
         log.debug("REST request to ingest lectures of course : {}", courseId);
         Course course = courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courseId);
+        if (lectureId.isPresent()) {
+            Optional<Lecture> lectureToIngest = course.getLectures().stream().filter(lecture -> lecture.getId().equals(lectureId.get())).findFirst();
+            if (lectureToIngest.isPresent()) {
+                Set<Lecture> lecturesToIngest = new HashSet<>();
+                lecturesToIngest.add(lectureToIngest.get());
+                return ResponseEntity.ok().body(lectureService.ingestLecturesInPyris(lecturesToIngest));
+            }
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createAlert(applicationName, "Could not send lecture to Iris, no lecture found with the provided id.", "idExists")).body(null);
+
+        }
         return ResponseEntity.ok().body(lectureService.ingestLecturesInPyris(course.getLectures()));
     }
 
