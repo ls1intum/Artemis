@@ -4,6 +4,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -46,6 +47,16 @@ public interface IrisMessageRepository extends JpaRepository<IrisMessage, Long> 
         return findById(messageId).orElseThrow(() -> new EntityNotFoundException("Iris Message", messageId));
     }
 
+    Optional<IrisMessage> findFirstBySessionIdAndSenderOrderBySentAtDesc(long sessionId, @NotNull IrisMessageSender sender);
+
     @EntityGraph(type = LOAD, attributePaths = { "content" })
-    IrisMessage findFirstWithContentBySessionIdAndSenderOrderBySentAtDesc(long sessionId, @NotNull IrisMessageSender sender);
+    IrisMessage findIrisMessageById(long irisMessageId);
+
+    default IrisMessage findFirstWithContentBySessionIdAndSenderOrderBySentAtDesc(long sessionId, @NotNull IrisMessageSender sender) {
+        var irisMessage = findFirstBySessionIdAndSenderOrderBySentAtDesc(sessionId, sender);
+        if (irisMessage.isEmpty()) {
+            return null;
+        }
+        return findIrisMessageById(irisMessage.get().getId());
+    }
 }

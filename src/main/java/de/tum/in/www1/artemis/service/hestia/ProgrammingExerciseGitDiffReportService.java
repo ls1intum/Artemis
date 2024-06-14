@@ -99,8 +99,8 @@ public class ProgrammingExerciseGitDiffReportService {
         var templateParticipation = templateParticipationOptional.get();
         var solutionParticipation = solutionParticipationOptional.get();
 
-        var templateSubmissionOptional = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(templateParticipation.getId());
-        var solutionSubmissionOptional = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(solutionParticipation.getId());
+        var templateSubmissionOptional = programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(templateParticipation.getId());
+        var solutionSubmissionOptional = programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(solutionParticipation.getId());
         if (templateSubmissionOptional.isEmpty() || solutionSubmissionOptional.isEmpty()) {
             return null;
         }

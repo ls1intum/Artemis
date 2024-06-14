@@ -23,12 +23,19 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
 @Repository
 public interface PlagiarismResultRepository extends JpaRepository<PlagiarismResult<?>, Long> {
 
-    @EntityGraph(type = LOAD, attributePaths = { "comparisons" })
     Optional<PlagiarismResult<?>> findFirstByExerciseIdOrderByLastModifiedDateDesc(long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = "comparisons")
+    PlagiarismResult<?> findPlagiarismResultById(long plagiarismResultId);
 
     @Nullable
     default PlagiarismResult<?> findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(long exerciseId) {
-        return findFirstByExerciseIdOrderByLastModifiedDateDesc(exerciseId).orElse(null);
+        var plagiarismResultIdOrEmpty = findFirstByExerciseIdOrderByLastModifiedDateDesc(exerciseId);
+        if (plagiarismResultIdOrEmpty.isEmpty()) {
+            return null;
+        }
+        var id = plagiarismResultIdOrEmpty.get().getId();
+        return findPlagiarismResultById(id);
     }
 
     /**
@@ -38,7 +45,7 @@ public interface PlagiarismResultRepository extends JpaRepository<PlagiarismResu
      * @return the saved result
      */
     default PlagiarismResult<?> savePlagiarismResultAndRemovePrevious(PlagiarismResult<?> result) {
-        Optional<PlagiarismResult<?>> optionalPreviousResult = findFirstByExerciseIdOrderByLastModifiedDateDesc(result.getExercise().getId());
+        Optional<PlagiarismResult<?>> optionalPreviousResult = Optional.ofNullable(findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(result.getExercise().getId()));
         result = save(result);
         optionalPreviousResult.ifPresent(this::delete);
         return result;

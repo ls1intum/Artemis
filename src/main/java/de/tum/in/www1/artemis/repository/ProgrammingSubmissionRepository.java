@@ -56,8 +56,19 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
         return findByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(participationId, commitHash).stream().findFirst().orElse(null);
     }
 
-    @EntityGraph(type = LOAD, attributePaths = "results")
     Optional<ProgrammingSubmission> findFirstByParticipationIdOrderBySubmissionDateDesc(long participationId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "results" })
+    Optional<ProgrammingSubmission> findProgrammingSubmissionById(long programmingSubmissionId);
+
+    default Optional<ProgrammingSubmission> findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(long programmingSubmissionId) {
+        var programmingSubmissionOptional = findFirstByParticipationIdOrderBySubmissionDateDesc(programmingSubmissionId);
+        if (programmingSubmissionOptional.isEmpty()) {
+            return Optional.empty();
+        }
+        var id = programmingSubmissionOptional.get().getId();
+        return findProgrammingSubmissionById(id);
+    }
 
     /**
      * Provide a list of graded submissions. To be graded a submission must:

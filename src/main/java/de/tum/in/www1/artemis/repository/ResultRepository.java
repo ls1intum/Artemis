@@ -90,17 +90,57 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             """)
     List<Result> findLatestAutomaticResultsWithEagerFeedbacksForExercise(@Param("exerciseId") long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "feedbacks.testCase" })
-    Optional<Result> findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(long participationId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks", "feedbacks.testCase" })
-    Optional<Result> findFirstWithSubmissionAndFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(long participationId);
-
-    @EntityGraph(type = LOAD, attributePaths = "submission")
     Optional<Result> findFirstByParticipationIdOrderByCompletionDateDesc(long participationId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "feedbacks.testCase" })
+    Optional<Result> findResultByIdWithFeedbacksAndTestCases(long resultId);
+
+    default Optional<Result> findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(long participationId) {
+        var resultOptional = findFirstByParticipationIdOrderByCompletionDateDesc(participationId);
+        if (resultOptional.isEmpty()) {
+            return Optional.empty();
+        }
+        var id = resultOptional.get().getId();
+        return findResultByIdWithFeedbacksAndTestCases(id);
+    }
+
+    @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks", "feedbacks.testCase" })
+    Optional<Result> findResultByIdWithSubmissionAndFeedbacksTestCases(long resultId);
+
+    default Optional<Result> findFirstWithSubmissionAndFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(long participationId) {
+        var resultOptional = findFirstByParticipationIdOrderByCompletionDateDesc(participationId);
+        if (resultOptional.isEmpty()) {
+            return Optional.empty();
+        }
+        var id = resultOptional.get().getId();
+        return findResultByIdWithSubmissionAndFeedbacksTestCases(id);
+    }
+
     @EntityGraph(type = LOAD, attributePaths = "submission")
+    Optional<Result> findResultByIdWithSubmissionsByParticipationId(long resultId);
+
+    default Optional<Result> findFirstWithSubmissionsByParticipationIdOrderByCompletionDateDesc(long participationId) {
+        var resultOptional = findFirstByParticipationIdOrderByCompletionDateDesc(participationId);
+        if (resultOptional.isEmpty()) {
+            return Optional.empty();
+        }
+        var id = resultOptional.get().getId();
+        return findResultByIdWithSubmissionsByParticipationId(id);
+    }
+
     Optional<Result> findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(long participationId, boolean rated);
+
+    @EntityGraph(type = LOAD, attributePaths = "submission")
+    Optional<Result> findResultByIdWithSubmission(long resultId);
+
+    default Optional<Result> findFirstByParticipationIdAndRatedWithSubmissionOrderByCompletionDateDesc(long participationId, boolean rated) {
+        var resultOptional = findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participationId, rated);
+        if (resultOptional.isEmpty()) {
+            return Optional.empty();
+        }
+        var id = resultOptional.get().getId();
+        return findResultByIdWithSubmission(id);
+    }
 
     Optional<Result> findDistinctBySubmissionId(long submissionId);
 
