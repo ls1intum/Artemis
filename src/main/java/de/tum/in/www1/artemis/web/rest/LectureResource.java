@@ -263,7 +263,8 @@ public class LectureResource {
     /**
      * POST /courses/{courseId}/ingest
      *
-     * @param courseId the ID of the course for which all lectures should be ingested in pyris
+     * @param courseId  the ID of the course for which all lectures should be ingested in pyris
+     * @param lectureId If this id is present then only ingest this one lecture of the respective course
      * @return the ResponseEntity with status 200 (OK) and a message success or null if the operation failed
      */
     @PostMapping("courses/{courseId}/ingest")
