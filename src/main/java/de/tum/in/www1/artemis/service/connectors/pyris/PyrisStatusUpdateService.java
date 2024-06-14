@@ -84,7 +84,7 @@ public class PyrisStatusUpdateService {
      * @param statusUpdate the status update
      */
     public void handleStatusUpdate(IngestionWebhookJob job, PyrisLectureIngestionStatusUpdateDTO statusUpdate) {
-        log.info("Ingestion job status updated with result: {}", statusUpdate.result());
+        statusUpdate.stages().forEach(stage -> log.info(stage.name() + ":" + stage.message()));
         boolean isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state)
                 .allMatch(state -> state == PyrisStageState.DONE || state == PyrisStageState.ERROR || state == PyrisStageState.SKIPPED);
         if (isDone) {
