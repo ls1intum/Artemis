@@ -9,6 +9,11 @@
 }
 .remaining-time {
     text-align: center;
+    min-width: 85px;
+
+    &.endViewTime {
+        min-width: 120px;
+    }
 }
 .critical {
     background: var(--exam-timer-critical-background);
