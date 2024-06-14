@@ -40,6 +40,7 @@ import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.ConversationNotificationRecipientSummary;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Organization;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
@@ -404,7 +405,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     }
 
     @Query("""
-            SELECT DISTINCT user.id
+            SELECT DISTINCT user
             FROM User user
             JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
             JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
@@ -416,7 +417,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                   OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
               )
             """)
-    List<Long> findUserIdsByLoginOrNameInConversation(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId, Pageable pageable);
+    List<User> findUsersByLoginOrNameInConversation(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId, Pageable pageable);
 
     @Query("""
             SELECT COUNT(DISTINCT user)
@@ -443,7 +444,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @return a paginated list of {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
      */
     default Page<User> searchAllByLoginOrNameInConversation(Pageable pageable, String loginOrName, long conversationId) {
-        List<Long> ids = findUserIdsByLoginOrNameInConversation(loginOrName, conversationId, pageable);
+        List<Long> ids = findUsersByLoginOrNameInConversation(loginOrName, conversationId, pageable).stream().map(DomainObject::getId).toList();
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }
@@ -453,7 +454,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     }
 
     @Query("""
-            SELECT DISTINCT user.id
+            SELECT DISTINCT user
             FROM User user
             JOIN user.groups userGroup
             JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
@@ -466,7 +467,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                   OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
               ) AND userGroup IN :groupNames
             """)
-    List<Long> findUserIdsByLoginOrNameInConversationWithCourseGroups(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId,
+    List<User> findUsersByLoginOrNameInConversationWithCourseGroups(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId,
             @Param("groupNames") Set<String> groupNames, Pageable pageable);
 
     @Query("""
@@ -497,7 +498,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @return a paginated list of {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
      */
     default Page<User> searchAllByLoginOrNameInConversationWithCourseGroups(Pageable pageable, String loginOrName, long conversationId, Set<String> groupNames) {
-        List<Long> ids = findUserIdsByLoginOrNameInConversationWithCourseGroups(loginOrName, conversationId, groupNames, pageable);
+        List<Long> ids = findUsersByLoginOrNameInConversationWithCourseGroups(loginOrName, conversationId, groupNames, pageable).stream().map(DomainObject::getId).toList();
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }
@@ -507,7 +508,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     }
 
     @Query("""
-            SELECT DISTINCT user.id
+            SELECT DISTINCT user
             FROM User user
             JOIN user.groups userGroup
             JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
@@ -520,7 +521,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                   OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
               ) AND conversationParticipant.isModerator = TRUE
             """)
-    List<Long> findModeratorIdsByLoginOrNameInConversation(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId, Pageable pageable);
+    List<User> findModeratorsByLoginOrNameInConversation(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId, Pageable pageable);
 
     @Query("""
             SELECT DISTINCT user
@@ -556,7 +557,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @return a paginated list of channel moderator {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
      */
     default Page<User> searchChannelModeratorsByLoginOrNameInConversation(Pageable pageable, String loginOrName, long conversationId) {
-        List<Long> ids = findModeratorIdsByLoginOrNameInConversation(loginOrName, conversationId, pageable);
+        List<Long> ids = findModeratorsByLoginOrNameInConversation(loginOrName, conversationId, pageable).stream().map(DomainObject::getId).toList();
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }

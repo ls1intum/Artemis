@@ -39,14 +39,34 @@ public interface ProgrammingSubmissionTestRepository extends JpaRepository<Progr
      * @return the latest legal submission for the participation
      */
     default Optional<ProgrammingSubmission> findFirstByParticipationIdWithResultsOrderByLegalSubmissionDateDesc(Long participationId) {
-        return findFirstByTypeNotAndTypeNotNullAndParticipationIdAndResultsNotNullOrderBySubmissionDateDesc(SubmissionType.ILLEGAL, participationId);
+        return findFirstWithResultsByTypeNotAndTypeNotNullAndParticipationIdAndResultsNotNullOrderBySubmissionDateDesc(SubmissionType.ILLEGAL, participationId);
     }
 
-    @EntityGraph(type = LOAD, attributePaths = "results")
     Optional<ProgrammingSubmission> findFirstByTypeNotAndTypeNotNullAndParticipationIdAndResultsNotNullOrderBySubmissionDateDesc(SubmissionType type, Long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = "results")
+    Optional<ProgrammingSubmission> findProgrammingSubmissionById(long programmingSubmissionId);
+
+    default Optional<ProgrammingSubmission> findFirstWithResultsByTypeNotAndTypeNotNullAndParticipationIdAndResultsNotNullOrderBySubmissionDateDesc(SubmissionType type,
+            Long participationId) {
+        var programmingSubmissionOptional = findFirstByTypeNotAndTypeNotNullAndParticipationIdAndResultsNotNullOrderBySubmissionDateDesc(type, participationId);
+        if (programmingSubmissionOptional.isEmpty()) {
+            return Optional.empty();
+        }
+        var id = programmingSubmissionOptional.get().getId();
+        return findProgrammingSubmissionById(id);
+    }
+
     Optional<ProgrammingSubmission> findFirstByParticipationIdOrderBySubmissionDateDesc(Long participationId);
+
+    default Optional<ProgrammingSubmission> findFirstWithResultsByParticipationIdOrderBySubmissionDateDesc(Long participationId) {
+        var programmingSubmissionOptional = findFirstByParticipationIdOrderBySubmissionDateDesc(participationId);
+        if (programmingSubmissionOptional.isEmpty()) {
+            return Optional.empty();
+        }
+        var id = programmingSubmissionOptional.get().getId();
+        return findProgrammingSubmissionById(id);
+    }
 
     @EntityGraph(type = LOAD, attributePaths = { "buildLogEntries" })
     Optional<ProgrammingSubmission> findWithEagerBuildLogEntriesById(Long submissionId);
