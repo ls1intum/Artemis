@@ -3,11 +3,9 @@ import { ArtemisSidebarModule } from 'app/shared/sidebar/sidebar.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { SidebarCardDirective } from 'app/shared/sidebar/sidebar-card.directive';
 import { Subscription } from 'rxjs';
-import { Params } from '@angular/router';
 import { SidebarEventService } from 'app/shared/sidebar/sidebar-event.service';
 import { SidebarData } from 'app/types/sidebar';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import dayjs from 'dayjs/esm';
 import { ExamSession } from 'app/entities/exam-session.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
@@ -34,23 +32,8 @@ import { faCheck, faChevronRight, faFileLines, faHourglassHalf, faTriangleExclam
 })
 export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     @Input() sidebarData: SidebarData;
-    @Input() courseId?: number;
-    @Input() itemSelected?: boolean;
-
-    isCollapsed: boolean = false;
-
-    exerciseId: string;
-
-    paramSubscription?: Subscription;
-    profileSubscription?: Subscription;
-    sidebarEventSubscription?: Subscription;
-    routeParams: Params;
-    isProduction = true;
-    isTestServer = false;
-
     @Input() exercises: Exercise[] = [];
     @Input() exerciseIndex = 0;
-    @Input() endDate: dayjs.Dayjs;
     @Input() overviewPageOpen: boolean;
     @Input() examSessions?: ExamSession[] = [];
     @Input() examTimeLineView = false;
@@ -60,25 +43,26 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
         forceSave: boolean;
         submission?: ProgrammingSubmission | SubmissionVersion | FileUploadSubmission;
     }>();
-    @Output() examAboutToEnd = new EventEmitter<void>();
-    @Output() onExamHandInEarly = new EventEmitter<void>();
 
     static itemsVisiblePerSideDefault = 4;
     itemsVisiblePerSide = ExamNavigationSidebarComponent.itemsVisiblePerSideDefault;
 
-    //criticalTime = dayjs.duration(5, 'minutes');
-
     subscriptionToLiveExamExerciseUpdates: Subscription;
 
+    // Icons
     icon: IconProp;
     overviewIcon: IconProp = faFileLines;
-
     faChevronRight = faChevronRight;
+
+    profileSubscription?: Subscription;
+    isProduction = true;
+    isTestServer = false;
+    isCollapsed: boolean = false;
+    exerciseId: string;
 
     constructor(
         private profileService: ProfileService,
         private sidebarEventService: SidebarEventService,
-
         private layoutService: LayoutService,
         private examParticipationService: ExamParticipationService,
         private examExerciseUpdateService: ExamExerciseUpdateService,
@@ -132,23 +116,12 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     }
 
     ngOnDestroy() {
-        this.paramSubscription?.unsubscribe();
         this.profileSubscription?.unsubscribe();
-        this.sidebarEventSubscription?.unsubscribe();
         this.sidebarEventService.emitResetValue();
     }
 
     getExerciseButtonTooltip(exercise: Exercise): ButtonTooltipType {
         return this.examParticipationService.getExerciseButtonTooltip(exercise);
-    }
-
-    triggerExamAboutToEnd() {
-        this.saveExercise(false);
-        this.examAboutToEnd.emit();
-    }
-
-    getOverviewString(): string {
-        return 'Overview';
     }
 
     /**
@@ -182,27 +155,6 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     changeExerciseById(exerciseId: number) {
         const foundIndex = this.exercises.findIndex((exercise) => exercise.id === exerciseId);
         this.changePage(false, foundIndex, true);
-    }
-
-    /**
-     * Save the currently active exercise and go to the next exercise.
-     * @param changeExercise whether to go to the next exercise {boolean}
-     */
-    saveExercise(changeExercise = true) {
-        const newIndex = this.exerciseIndex + 1;
-        const submission = ExamParticipationService.getSubmissionForExercise(this.exercises[this.exerciseIndex]);
-        // we do not submit programming exercises on a save
-        if (submission && this.exercises[this.exerciseIndex].type !== ExerciseType.PROGRAMMING) {
-            submission.submitted = true;
-        }
-        if (changeExercise) {
-            if (newIndex > this.exercises.length - 1) {
-                // we are in the last exercise, if out of range "change" active exercise to current in order to trigger a save
-                this.changePage(false, this.exerciseIndex, true);
-            } else {
-                this.changePage(false, newIndex, true);
-            }
-        }
     }
 
     isProgrammingExercise() {
@@ -265,13 +217,6 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
             return programmingExercise.allowOfflineIde === true && programmingExercise.allowOnlineEditor === false;
         }
         return false;
-    }
-
-    /**
-     * Notify parent component when user wants to hand in early
-     */
-    handInEarly() {
-        this.onExamHandInEarly.emit();
     }
 
     toggleCollapseState() {

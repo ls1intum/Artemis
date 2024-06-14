@@ -32,8 +32,7 @@ export class ExamBarComponent {
     criticalTime = dayjs.duration(5, 'minutes');
 
     /**
-     * Save the currently active exercise and go to the next exercise.
-     * @param changeExercise whether to go to the next exercise {boolean}
+     * Save the currently active exercise
      */
     saveExercise() {
         const submission = ExamParticipationService.getSubmissionForExercise(this.exercises[this.exerciseIndex]);
@@ -47,6 +46,7 @@ export class ExamBarComponent {
         this.saveExercise();
         this.examAboutToEnd.emit();
     }
+
     /**
      * Notify parent component when user wants to hand in early
      */

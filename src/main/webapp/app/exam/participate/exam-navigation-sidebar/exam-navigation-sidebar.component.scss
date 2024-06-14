@@ -15,6 +15,47 @@ $sidebar-width-closed: 100px;
     overflow-y: auto;
 }
 
+.sidebar {
+    background-color: var(--module-bg);
+    height: calc(100vh - var(--sidebar-footer-height-prod) - $breadcrumb-height);
+    width: $sidebar-width-open;
+    transition: width 0.2s ease-in-out !important;
+
+    &.collapsed {
+        width: $sidebar-width-closed !important;
+    }
+    &.sidebar-height-dev {
+        height: calc(100vh - var(--sidebar-footer-height-dev) - $breadcrumb-height);
+    }
+    @media (max-width: 768px) {
+        height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height)) !important;
+    }
+}
+
+.notSynced {
+    color: var(--warning);
+}
+
+.saved {
+    color: var(--success);
+}
+
+.bg-module {
+    background-color: var(--module-bg);
+}
+
+.border-module {
+    border-color: var(--module-bg) !important;
+}
+
+.bg-selected {
+    background-color: var(--sidebar-card-selected-bg);
+
+    &.border-module {
+        border-color: var(--sidebar-card-selected-bg) !important;
+    }
+}
+
 .double-arrow.menu-closed {
     transform: translate(35px) rotate(0deg);
 }
@@ -31,45 +72,4 @@ $sidebar-width-closed: 100px;
 
 .me-negative {
     margin-right: -5px;
-}
-
-.sidebar {
-    background-color: var(--module-bg);
-    height: calc(100vh - var(--sidebar-footer-height-dev) - $breadcrumb-height);
-    width: $sidebar-width-open;
-    transition: width 0.2s ease-in-out !important;
-
-    &.collapsed {
-        width: $sidebar-width-closed !important;
-    }
-    &.sidebar-height-dev {
-        height: calc(100vh - var(--sidebar-footer-height-dev) - $breadcrumb-height);
-    }
-    @media (max-width: 768px) {
-        height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height)) !important;
-    }
-}
-
-.bg-module {
-    background-color: var(--module-bg);
-}
-
-.notSynced {
-    color: var(--warning);
-}
-
-.saved {
-    color: var(--success);
-}
-
-.border-module {
-    border-color: var(--module-bg) !important;
-}
-
-.bg-selected {
-    background-color: var(--sidebar-card-selected-bg);
-
-    &.border-module {
-        border-color: var(--sidebar-card-selected-bg) !important;
-    }
 }

@@ -1,4 +1,7 @@
-<div class="d-flex sidebar h-100 justify-content-between flex-column rounded-3" [ngClass]="{ 'sidebar-height-dev': !isProduction || isTestServer, collapsed: isCollapsed }">
+<div
+    class="d-flex sidebar h-100 justify-content-between flex-column rounded-3"
+    [ngClass]="{ 'sidebar-height-dev content-height-dev': !isProduction || isTestServer, collapsed: isCollapsed }"
+>
     <div class="px-3 py-3">
         <div class="w-100 bg-module">
             <div class="sidebar-content" [ngClass]="{ collapsed: isCollapsed }">

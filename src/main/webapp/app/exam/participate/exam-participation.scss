@@ -1,70 +1,5 @@
 $breadcrumb-height: 38px;
 
-.exam-footer {
-    max-width: 100vw;
-    height: 50px;
-    position: sticky;
-    padding: 0 10px;
-    bottom: 0;
-    left: 0;
-    z-index: 10;
-    box-shadow: 0 0 3px var(--exam-participation-footer-box-shadow);
-    background: var(--exam-participation-footer-background);
-    margin-top: 1rem;
-
-    .container {
-        height: 100%;
-    }
-}
-.exam-footer-content {
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 14px;
-
-    .connection-status-exam-participation {
-        @media (max-width: 767.98px) {
-            font-size: 11px;
-        }
-    }
-}
-.connected {
-    background-color: var(--exam-participation-footer-connected-background);
-}
-
-.submissionSuccessfulHint {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-
-    .check {
-        color: var(--success);
-        font-size: 50px;
-    }
-}
-.exam-navigation-sticky {
-    position: sticky;
-    top: 0;
-    z-index: 1010;
-}
-
-.exam-background-wrapper {
-    background-color: var(--bs-body-bg);
-}
-
-.content-exam-height {
-    height: calc(100vh - var(--sidebar-footer-height-dev) - $breadcrumb-height);
-    overflow-y: auto;
-    &.content-height-dev {
-        height: calc(100vh - var(--sidebar-footer-height-dev) - $breadcrumb-height);
-    }
-    @media (max-width: 768px) {
-        height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height)) !important;
-    }
-}
-
 .update-footer {
     margin-top: 1rem;
     padding: 0.5rem 0 0.75rem 0;
@@ -81,5 +16,46 @@ $breadcrumb-height: 38px;
 
     &.disconnected {
         background-color: var(--exam-participation-footer-disconnected-background);
+    }
+}
+
+.exam-footer-content {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 14px;
+
+    .connection-status-exam-participation {
+        @media (max-width: 767.98px) {
+            font-size: 11px;
+        }
+    }
+}
+
+.submissionSuccessfulHint {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+
+    .check {
+        color: var(--success);
+        font-size: 50px;
+    }
+}
+
+.exam-background-wrapper {
+    background-color: var(--bs-body-bg);
+}
+
+.content-exam-height {
+    height: calc(100vh - var(--sidebar-footer-height-prod) - $breadcrumb-height);
+    overflow-y: auto;
+    &.content-exam-height-dev {
+        height: calc(100vh - var(--sidebar-footer-height-dev) - $breadcrumb-height);
+    }
+    @media (max-width: 768px) {
+        height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height)) !important;
     }
 }
