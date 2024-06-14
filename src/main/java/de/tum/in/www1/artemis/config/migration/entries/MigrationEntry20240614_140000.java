@@ -37,6 +37,7 @@ public class MigrationEntry20240614_140000 extends MigrationEntry {
 
         activeCourses.forEach(course -> {
             List<Competency> competencies = competencyRepository.findByCourseId(course.getId());
+            // Asynchronously update the progress for each competency
             competencies.forEach(competencyProgressService::updateProgressByCompetencyAsync);
         });
     }

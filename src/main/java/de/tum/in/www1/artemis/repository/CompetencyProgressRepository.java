@@ -73,18 +73,11 @@ public interface CompetencyProgressRepository extends JpaRepository<CompetencyPr
     Set<CompetencyProgress> findAllByCompetencyIdsAndUserId(@Param("competencyIds") Set<Long> competencyIds, @Param("userId") long userId);
 
     @Query("""
-            SELECT AVG(cp.confidence)
-            FROM CompetencyProgress cp
-            WHERE cp.competency.id = :competencyId
-            """)
-    Optional<Double> findAverageConfidenceByCompetencyId(@Param("competencyId") long competencyId);
-
-    @Query("""
             SELECT COUNT(cp)
             FROM CompetencyProgress cp
             WHERE cp.competency.id = :competencyId
             """)
-    Long countByCompetency(@Param("competencyId") long competencyId);
+    long countByCompetency(@Param("competencyId") long competencyId);
 
     @Query("""
             SELECT COUNT(cp)
@@ -92,7 +85,7 @@ public interface CompetencyProgressRepository extends JpaRepository<CompetencyPr
             WHERE cp.competency.id = :competencyId
                 AND cp.progress * cp.confidence >= :masteryThreshold
             """)
-    Long countByCompetencyAndProgressAndConfidenceGreaterThanEqual(@Param("competencyId") long competencyId, @Param("masteryThreshold") double masteryThreshold);
+    long countByCompetencyAndMastered(@Param("competencyId") long competencyId, @Param("masteryThreshold") double masteryThreshold);
 
     @Query("""
             SELECT cp
