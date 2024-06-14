@@ -23,7 +23,7 @@ import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.servic
 import { CommitState, DomainChange, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faCheck, faChevronRight, faFileLines, faHourglass, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faChevronRight, faFileLines, faHourglassHalf, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exam-navigation-sidebar',
@@ -237,7 +237,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
         // start with a yellow status (edit icon)
         // TODO: it's a bit weird, that it works that multiple icons (one per exercise) are hold in the same instance variable of the component
         //  we should definitely refactor this and e.g. use the same ExamExerciseOverviewItem as in exam-exercise-overview-page.component.ts !
-        this.icon = faHourglass;
+        this.icon = faHourglassHalf;
         const exercise = this.exercises[exerciseIndex];
         const submission = ExamParticipationService.getSubmissionForExercise(exercise);
         if (!submission) {
