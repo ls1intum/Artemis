@@ -87,7 +87,7 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long>, J
                 AND ex IS NOT NULL
             GROUP BY ex, sS, tS
             """)
-    Set<CompetencyExerciseMasteryCalculationDTO> findAllExerciseInformationByCompetencyId(@Param("competencyId") long competencyId);
+    Set<CompetencyExerciseMasteryCalculationDTO> findAllExerciseInfoByCompetencyId(@Param("competencyId") long competencyId);
 
     @Query("""
             SELECT c
