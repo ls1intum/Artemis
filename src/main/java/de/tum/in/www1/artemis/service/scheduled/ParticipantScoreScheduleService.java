@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_SCHEDULING;
 import static de.tum.in.www1.artemis.config.StartupDelayConfig.PARTICIPATION_SCORES_SCHEDULE_DELAY_SEC;
 
 import java.time.Instant;
@@ -11,6 +12,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
 import jakarta.annotation.PreDestroy;
 import jakarta.validation.constraints.NotNull;
@@ -58,7 +60,7 @@ import de.tum.in.www1.artemis.service.util.RoundingUtil;
  * @see de.tum.in.www1.artemis.service.listeners.ResultListener
  */
 @Service
-@Profile("scheduling")
+@Profile(PROFILE_SCHEDULING)
 public class ParticipantScoreScheduleService {
 
     public static int DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
@@ -267,7 +269,7 @@ public class ParticipantScoreScheduleService {
                     teamScoreRepository.deleteAllByTeamId(participantId);
                     return;
                 }
-                participantScore = teamScoreRepository.findByExercise_IdAndTeam_Id(exerciseId, participantId).map(score -> score);
+                participantScore = teamScoreRepository.findByExercise_IdAndTeam_Id(exerciseId, participantId).map(Function.identity());
             }
             else {
                 // Fetch the student and its score for the given exercise
@@ -278,7 +280,7 @@ public class ParticipantScoreScheduleService {
                     studentScoreRepository.deleteAllByUserId(participantId);
                     return;
                 }
-                participantScore = studentScoreRepository.findByExercise_IdAndUser_Id(exerciseId, participantId).map(score -> score);
+                participantScore = studentScoreRepository.findByExercise_IdAndUser_Id(exerciseId, participantId).map(Function.identity());
             }
 
             if (participantScore.isPresent()) {
