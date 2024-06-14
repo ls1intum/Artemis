@@ -74,7 +74,6 @@ export class LectureComponent implements OnInit {
                 this.lectureIngestionEnabled = settings.irisLectureIngestionSettings?.enabled || false;
             }
         });
-        console.log(this.lectureIngestionEnabled);
     }
 
     trackId(index: number, item: Lecture) {

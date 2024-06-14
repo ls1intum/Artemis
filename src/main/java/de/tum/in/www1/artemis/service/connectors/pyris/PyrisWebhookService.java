@@ -96,11 +96,9 @@ public class PyrisWebhookService {
     public boolean autoUpdateAttachmentUnitsInPyris(IrisSettingsRepository irisSettingsRepository, Long courseId, List<AttachmentUnit> newAttachmentUnits) {
         try {
             IrisCourseSettings courseSettings = irisSettingsRepository.findCourseSettings(courseId).orElseThrow(() -> new NoSuchElementException("Course settings not found"));
-            if (courseSettings.getIrisLectureIngestionSettings() != null) {
-                if (courseSettings.getIrisLectureIngestionSettings().isEnabled()
-                        && Boolean.TRUE.equals(courseSettings.getIrisLectureIngestionSettings().getAutoIngestOnLectureAttachmentUpload())) {
-                    return addLectureToPyrisDB(newAttachmentUnits) != null;
-                }
+            if (courseSettings.getIrisLectureIngestionSettings() != null && courseSettings.getIrisLectureIngestionSettings().isEnabled()
+                    && Boolean.TRUE.equals(courseSettings.getIrisLectureIngestionSettings().getAutoIngestOnLectureAttachmentUpload())) {
+                return addLectureToPyrisDB(newAttachmentUnits) != null;
             }
         }
         catch (NoSuchElementException e) {
