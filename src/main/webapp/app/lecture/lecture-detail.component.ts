@@ -5,12 +5,14 @@ import { Lecture } from 'app/entities/lecture.model';
 import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { LectureService } from 'app/lecture/lecture.service';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 @Component({
     selector: 'jhi-lecture-detail',
     templateUrl: './lecture-detail.component.html',
 })
 export class LectureDetailComponent implements OnInit {
     lecture: Lecture;
+    lectureIngestionEnabled = false;
 
     // Icons
     faPencilAlt = faPencilAlt;
@@ -24,6 +26,7 @@ export class LectureDetailComponent implements OnInit {
         private activatedRoute: ActivatedRoute,
         private artemisMarkdown: ArtemisMarkdownService,
         protected lectureService: LectureService,
+        private irisSettingsService: IrisSettingsService,
     ) {}
 
     /**
@@ -33,6 +36,13 @@ export class LectureDetailComponent implements OnInit {
         this.activatedRoute.data.subscribe(({ lecture }) => {
             this.lecture = lecture;
             this.getLectureDetailSections();
+            if (this.lecture.course?.id) {
+                this.irisSettingsService.getCombinedCourseSettings(this.lecture.course?.id).subscribe((settings) => {
+                    if (settings) {
+                        this.lectureIngestionEnabled = settings.irisLectureIngestionSettings?.enabled || false;
+                    }
+                });
+            }
         });
     }
 
