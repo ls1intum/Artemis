@@ -42,7 +42,7 @@
 }
 @if (!studentFailedToSubmit) {
     @if (startView) {
-        <div [ngClass]="{ 'content-height-dev': (!isProduction || isTestServer) && !testRunStartTime, 'scrollable-content-exam-cover': !testRunStartTime }">
+        <div class="px-3 pb-3" [ngClass]="{ 'content-height-dev': (!isProduction || isTestServer) && !testRunStartTime, 'scrollable-content-exam-cover': !testRunStartTime }">
             <div class="d-flex justify-content-between">
                 <h3 class="mt-3">{{ exam.title }}</h3>
                 <div class="mt-3">

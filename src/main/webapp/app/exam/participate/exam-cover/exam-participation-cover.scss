@@ -24,6 +24,7 @@
 
 .scrollable-content-exam-cover {
     height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height));
+    overflow-y: auto;
 
     &.content-height-dev {
         height: calc(100vh - var(--sidebar-footer-height-dev) - var(--header-height));

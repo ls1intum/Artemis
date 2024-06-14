@@ -3,17 +3,15 @@
 }
 @if (exam) {
     @if (isVisible() && !isGracePeriodOver() && !this.studentExam?.submitted && !examStartConfirmed) {
-        <div [ngClass]="{ 'px-3': !testRunId, 'content-height-dev': (!isProduction || isTestServer) && !testRunId }" [ngStyle]="{ 'overflow-y': 'auto' }">
-            <jhi-exam-participation-cover
-                [startView]="true"
-                [exam]="exam"
-                [studentExam]="studentExam"
-                [testRunStartTime]="testStartTime"
-                (onExamStarted)="examStarted($event)"
-                [isProduction]="isProduction"
-                [isTestServer]="isTestServer"
-            />
-        </div>
+        <jhi-exam-participation-cover
+            [startView]="true"
+            [exam]="exam"
+            [studentExam]="studentExam"
+            [testRunStartTime]="testStartTime"
+            (onExamStarted)="examStarted($event)"
+            [isProduction]="isProduction"
+            [isTestServer]="isTestServer"
+        />
     }
     @if (studentExam) {
         <!-- exam participation -->
