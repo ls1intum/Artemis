@@ -8,8 +8,8 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -29,9 +29,37 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSp
 
     Optional<BuildJob> findBuildJobByResult(Result result);
 
-    // TODO: rewrite this query, pageable does not work well with EntityGraph
-    @EntityGraph(attributePaths = { "result", "result.participation", "result.participation.exercise", "result.submission" })
-    Page<BuildJob> findAll(Pageable pageable);
+    @Query("""
+            SELECT b.id
+            FROM BuildJob b
+            """)
+    List<Long> findAllIds(Pageable pageable);
+
+    @Query("""
+            SELECT b
+            FROM BuildJob b
+            LEFT JOIN FETCH b.result r
+            LEFT JOIN FETCH r.participation p
+            LEFT JOIN FETCH p.exercise e
+            LEFT JOIN FETCH r.submission s
+            WHERE b.id IN :ids
+            """)
+    List<BuildJob> findByIdsWithAssociations(@Param("ids") List<Long> ids);
+
+    default Page<BuildJob> findAll(Pageable pageable) {
+        List<Long> ids = findAllIds(pageable);
+        if (ids.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        List<BuildJob> result = findByIdsWithAssociations(ids);
+        return new PageImpl<>(result, pageable, countAllBuildJobs());
+    }
+
+    @Query("""
+            SELECT COUNT(b)
+            FROM BuildJob b
+            """)
+    long countAllBuildJobs();
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild(
@@ -43,9 +71,28 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSp
             """)
     Set<DockerImageBuild> findAllLastBuildDatesForDockerImages();
 
-    // TODO: rewrite this query, pageable does not work well with EntityGraph
-    @EntityGraph(attributePaths = { "result", "result.participation", "result.participation.exercise", "result.submission" })
-    Page<BuildJob> findAllByCourseId(long courseId, Pageable pageable);
+    @Query("""
+            SELECT b.id
+            FROM BuildJob b
+            WHERE b.course.id = :courseId
+            """)
+    List<Long> findIdsByCourseId(@Param("courseId") long courseId, Pageable pageable);
+
+    @Query("""
+            SELECT COUNT(b)
+            FROM BuildJob b
+            WHERE b.course.id = :courseId
+            """)
+    long countBuildJobsByCourseId(@Param("courseId") long courseId);
+
+    default Page<BuildJob> findAllByCourseId(long courseId, Pageable pageable) {
+        List<Long> ids = findIdsByCourseId(courseId, pageable);
+        if (ids.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        List<BuildJob> result = findByIdsWithAssociations(ids);
+        return new PageImpl<>(result, pageable, countBuildJobsByCourseId(courseId));
+    }
 
     @Query("""
              SELECT new de.tum.in.www1.artemis.service.connectors.localci.dto.ResultBuildJob(

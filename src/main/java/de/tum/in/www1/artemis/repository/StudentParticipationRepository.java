@@ -20,6 +20,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -643,30 +644,55 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             """)
     List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
-    @Query(value = """
+    @Query("""
+            SELECT p.id
+            FROM StudentParticipation p
+            WHERE p.exercise.id = :exerciseId
+              AND (
+                  p.student.firstName LIKE %:partialStudentName%
+                  OR p.student.lastName LIKE %:partialStudentName%
+              ) AND EXISTS (
+                  SELECT 1
+                  FROM Result r
+                  WHERE r.participation.id = p.id
+                    AND r.completionDate IS NOT NULL
+              )
+            """)
+    List<Long> findIdsByExerciseIdAndStudentName(@Param("exerciseId") long exerciseId, @Param("partialStudentName") String partialStudentName, Pageable pageable);
+
+    @Query("""
             SELECT p
             FROM StudentParticipation p
-                LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH p.results r
-            WHERE p.exercise.id = :exerciseId
-                AND (
-                    p.student.firstName LIKE %:partialStudentName%
-                    OR p.student.lastName LIKE %:partialStudentName%
-                ) AND r.completionDate IS NOT NULL
-            """, countQuery = """
+            LEFT JOIN FETCH p.submissions s
+            LEFT JOIN FETCH p.results r
+            WHERE p.id IN :ids
+            """)
+    List<StudentParticipation> findByIdsWithAssociations(@Param("ids") List<Long> ids);
+
+    @Query("""
             SELECT COUNT(p)
             FROM StudentParticipation p
-                LEFT JOIN p.submissions s
-                LEFT JOIN p.results r
             WHERE p.exercise.id = :exerciseId
-                AND (
-                    p.student.firstName LIKE %:partialStudentName%
-                    OR p.student.lastName LIKE %:partialStudentName%
-                ) AND r.completionDate IS NOT NULL
+              AND (
+                  p.student.firstName LIKE %:partialStudentName%
+                  OR p.student.lastName LIKE %:partialStudentName%
+              ) AND EXISTS (
+                  SELECT 1
+                  FROM Result r
+                  WHERE r.participation.id = p.id
+                    AND r.completionDate IS NOT NULL
+              )
             """)
-    // TODO: rewrite this query, pageable does not work well with left join fetch, it needs to transfer all results and only page in java
-    Page<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsByExerciseId(@Param("exerciseId") long exerciseId, @Param("partialStudentName") String partialStudentName,
-            Pageable pageable);
+    long countByExerciseIdAndStudentName(@Param("exerciseId") long exerciseId, @Param("partialStudentName") String partialStudentName);
+
+    default Page<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsByExerciseId(long exerciseId, String partialStudentName, Pageable pageable) {
+        List<Long> ids = findIdsByExerciseIdAndStudentName(exerciseId, partialStudentName, pageable);
+        if (ids.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        List<StudentParticipation> result = findByIdsWithAssociations(ids);
+        return new PageImpl<>(result, pageable, countByExerciseIdAndStudentName(exerciseId, partialStudentName));
+    }
 
     @Query("""
             SELECT DISTINCT p
