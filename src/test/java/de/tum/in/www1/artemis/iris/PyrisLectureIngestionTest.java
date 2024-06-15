@@ -127,9 +127,9 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
-        String jobToken = pyrisWebhookService.addLectureToPyrisDB(List.of((AttachmentUnit) lecture1.getLectureUnits().getFirst()));
+        String jobToken = pyrisWebhookService.addLectureUnitsToPyrisDB(List.of((AttachmentUnit) lecture1.getLectureUnits().getFirst()));
         assertThat(jobToken).isNull();
-        jobToken = pyrisWebhookService.addLectureToPyrisDB(List.of((AttachmentUnit) lecture1.getLectureUnits().getLast()));
+        jobToken = pyrisWebhookService.addLectureUnitsToPyrisDB(List.of((AttachmentUnit) lecture1.getLectureUnits().getLast()));
         assertThat(jobToken).isNull();
     }
 
@@ -182,9 +182,9 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
-        String jobToken = pyrisWebhookService.addLectureToPyrisDB(List.of((AttachmentUnit) lecture1.getLectureUnits().getFirst()));
+        String jobToken = pyrisWebhookService.addLectureUnitsToPyrisDB(List.of((AttachmentUnit) lecture1.getLectureUnits().getFirst()));
         assertThat(jobToken).isNotNull();
-        jobToken = pyrisWebhookService.addLectureToPyrisDB(List.of((AttachmentUnit) lecture1.getLectureUnits().getLast()));
+        jobToken = pyrisWebhookService.addLectureUnitsToPyrisDB(List.of((AttachmentUnit) lecture1.getLectureUnits().getLast()));
         assertThat(jobToken).isNull();
     }
 
@@ -196,7 +196,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
         if (lecture1.getLectureUnits().getFirst() instanceof AttachmentUnit attachmentUnit) {
-            String jobToken = pyrisWebhookService.addLectureToPyrisDB(List.of(attachmentUnit));
+            String jobToken = pyrisWebhookService.addLectureUnitsToPyrisDB(List.of(attachmentUnit));
             PyrisStageDTO doneStage = new PyrisStageDTO("done", 1, PyrisStageState.DONE, "Stage completed successfully.");
             PyrisLectureIngestionStatusUpdateDTO statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("Success", List.of(doneStage));
             var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of("Authorization", List.of("Bearer " + jobToken))));
@@ -229,7 +229,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
         if (lecture1.getLectureUnits().getFirst() instanceof AttachmentUnit attachmentUnit) {
-            String jobToken = pyrisWebhookService.addLectureToPyrisDB(List.of(attachmentUnit));
+            String jobToken = pyrisWebhookService.addLectureUnitsToPyrisDB(List.of(attachmentUnit));
             PyrisStageDTO doneStage = new PyrisStageDTO("done", 1, PyrisStageState.DONE, "Stage completed successfully.");
             PyrisStageDTO inProgressStage = new PyrisStageDTO("inProgressStage", 1, PyrisStageState.IN_PROGRESS, "Stage completed successfully.");
             PyrisLectureIngestionStatusUpdateDTO statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("Success", List.of(doneStage, inProgressStage));
@@ -279,7 +279,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
         if (lecture1.getLectureUnits().getFirst() instanceof AttachmentUnit attachmentUnit) {
-            String jobToken = pyrisWebhookService.addLectureToPyrisDB(List.of(attachmentUnit));
+            String jobToken = pyrisWebhookService.addLectureUnitsToPyrisDB(List.of(attachmentUnit));
             PyrisStageDTO errorStage = new PyrisStageDTO("error", 1, PyrisStageState.ERROR, "Stage not broke due to error.");
             PyrisLectureIngestionStatusUpdateDTO statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("Success", List.of(errorStage));
             var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of("Authorization", List.of("Bearer " + jobToken))));

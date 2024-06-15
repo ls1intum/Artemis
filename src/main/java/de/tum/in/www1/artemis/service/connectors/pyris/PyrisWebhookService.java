@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,11 +65,11 @@ public class PyrisWebhookService {
     }
 
     private PyrisLectureUnitWebhookDTO processAttachmentForUpdate(AttachmentUnit attachmentUnit) {
-        int lectureUnitId = attachmentUnit.hashCode();
+        Long lectureUnitId = attachmentUnit.getId();
         String lectureUnitName = attachmentUnit.getName();
-        int lectureId = attachmentUnit.getLecture().hashCode();
+        Long lectureId = attachmentUnit.getLecture().getId();
         String lectureTitle = attachmentUnit.getLecture().getTitle();
-        int courseId = attachmentUnit.getLecture().getCourse().hashCode();
+        Long courseId = attachmentUnit.getLecture().getCourse().getId();
         String courseTitle = attachmentUnit.getLecture().getCourse().getTitle();
         String courseDescription = attachmentUnit.getLecture().getCourse().getDescription() == null ? "" : attachmentUnit.getLecture().getCourse().getDescription();
         String base64EncodedPdf = attachmentToBase64(attachmentUnit);
@@ -79,9 +78,9 @@ public class PyrisWebhookService {
     }
 
     private PyrisLectureUnitWebhookDTO processAttachmentForDeletion(AttachmentUnit attachmentUnit) {
-        int lectureUnitId = attachmentUnit.hashCode();
-        int lectureId = attachmentUnit.getLecture().hashCode();
-        int courseId = attachmentUnit.getLecture().getCourse().hashCode();
+        Long lectureUnitId = attachmentUnit.getId();
+        Long lectureId = attachmentUnit.getLecture().getId();
+        Long courseId = attachmentUnit.getLecture().getCourse().getId();
         return new PyrisLectureUnitWebhookDTO(false, artemisBaseUrl, "", lectureUnitId, "", lectureId, "", courseId, "", "");
     }
 
@@ -94,15 +93,10 @@ public class PyrisWebhookService {
      * @return true if the units were sent to pyris
      */
     public boolean autoUpdateAttachmentUnitsInPyris(IrisSettingsRepository irisSettingsRepository, Long courseId, List<AttachmentUnit> newAttachmentUnits) {
-        try {
-            IrisCourseSettings courseSettings = irisSettingsRepository.findCourseSettings(courseId).orElseThrow(() -> new NoSuchElementException("Course settings not found"));
-            if (courseSettings.getIrisLectureIngestionSettings() != null && courseSettings.getIrisLectureIngestionSettings().isEnabled()
-                    && Boolean.TRUE.equals(courseSettings.getIrisLectureIngestionSettings().getAutoIngestOnLectureAttachmentUpload())) {
-                return addLectureToPyrisDB(newAttachmentUnits) != null;
-            }
-        }
-        catch (NoSuchElementException e) {
-            log.debug("Course settings not found");
+        IrisCourseSettings courseSettings = irisSettingsRepository.findCourseSettings(courseId).isPresent() ? irisSettingsRepository.findCourseSettings(courseId).get() : null;
+        if (courseSettings != null && courseSettings.getIrisLectureIngestionSettings() != null && courseSettings.getIrisLectureIngestionSettings().isEnabled()
+                && Boolean.TRUE.equals(courseSettings.getIrisLectureIngestionSettings().getAutoIngestOnLectureAttachmentUpload())) {
+            return addLectureUnitsToPyrisDB(newAttachmentUnits) != null;
         }
         return false;
     }
@@ -136,17 +130,18 @@ public class PyrisWebhookService {
      * @param attachmentUnits The attachmentUnit that got Updated / erased
      * @return jobToken if the job was created
      */
-    public String addLectureToPyrisDB(List<AttachmentUnit> attachmentUnits) {
+    public String addLectureUnitsToPyrisDB(List<AttachmentUnit> attachmentUnits) {
+        if (!lectureIngestionEnabled(attachmentUnits.getFirst().getLecture().getCourse())) {
+            return null;
+        }
         try {
-            if (lectureIngestionEnabled(attachmentUnits.getFirst().getLecture().getCourse())) {
-                List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentUnits = new ArrayList<>();
-                attachmentUnits.stream().filter(unit -> unit.getAttachment().getAttachmentType() == AttachmentType.FILE && unit.getAttachment().getLink().endsWith(".pdf"))
-                        .forEach(unit -> {
-                            toUpdateAttachmentUnits.add(processAttachmentForUpdate(unit));
-                        });
-                if (!toUpdateAttachmentUnits.isEmpty()) {
-                    return executeLectureWebhook(toUpdateAttachmentUnits);
-                }
+            List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentUnits = new ArrayList<>();
+            attachmentUnits.stream().filter(unit -> unit.getAttachment().getAttachmentType() == AttachmentType.FILE && unit.getAttachment().getLink().endsWith(".pdf"))
+                    .forEach(unit -> {
+                        toUpdateAttachmentUnits.add(processAttachmentForUpdate(unit));
+                    });
+            if (!toUpdateAttachmentUnits.isEmpty()) {
+                return executeLectureWebhook(toUpdateAttachmentUnits);
             }
         }
         catch (Exception e) {

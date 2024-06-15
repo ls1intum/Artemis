@@ -70,9 +70,7 @@ export class LectureComponent implements OnInit {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.loadAll();
         this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
-            if (settings) {
-                this.lectureIngestionEnabled = settings.irisLectureIngestionSettings?.enabled || false;
-            }
+            this.lectureIngestionEnabled = settings?.irisLectureIngestionSettings?.enabled || false;
         });
     }
 
