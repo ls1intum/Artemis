@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
@@ -139,41 +140,37 @@ public class IrisSettingsService {
         }
     }
 
+    private static <T extends IrisSubSettings> T initializeSettings(T settings, Supplier<T> constructor) {
+        if (settings == null) {
+            settings = constructor.get();
+            settings.setEnabled(false);
+        }
+        return settings;
+    }
+
     private void initializeIrisChatSettings(IrisGlobalSettings settings) {
         var irisChatSettings = settings.getIrisChatSettings();
-        if (irisChatSettings == null) {
-            irisChatSettings = new IrisChatSubSettings();
-            irisChatSettings.setEnabled(false);
-        }
+        irisChatSettings = initializeSettings(irisChatSettings, IrisChatSubSettings::new);
         irisChatSettings.setTemplate(loadDefaultChatTemplate());
         settings.setIrisChatSettings(irisChatSettings);
     }
 
     private void initializeIrisLectureIngestionSettings(IrisGlobalSettings settings) {
         var irisLectureIngestionSettings = settings.getIrisLectureIngestionSettings();
-        if (irisLectureIngestionSettings == null) {
-            irisLectureIngestionSettings = new IrisLectureIngestionSubSettings();
-            irisLectureIngestionSettings.setEnabled(false);
-        }
+        irisLectureIngestionSettings = initializeSettings(irisLectureIngestionSettings, IrisLectureIngestionSubSettings::new);
         settings.setIrisLectureIngestionSettings(irisLectureIngestionSettings);
     }
 
     private void initializeIrisHestiaSettings(IrisGlobalSettings settings) {
         var irisHestiaSettings = settings.getIrisHestiaSettings();
-        if (irisHestiaSettings == null) {
-            irisHestiaSettings = new IrisHestiaSubSettings();
-            irisHestiaSettings.setEnabled(false);
-        }
+        irisHestiaSettings = initializeSettings(irisHestiaSettings, IrisHestiaSubSettings::new);
         irisHestiaSettings.setTemplate(loadDefaultHestiaTemplate());
         settings.setIrisHestiaSettings(irisHestiaSettings);
     }
 
     private void initializeIrisCompetencyGenerationSettings(IrisGlobalSettings settings) {
         var irisCompetencyGenerationSettings = settings.getIrisCompetencyGenerationSettings();
-        if (irisCompetencyGenerationSettings == null) {
-            irisCompetencyGenerationSettings = new IrisCompetencyGenerationSubSettings();
-            irisCompetencyGenerationSettings.setEnabled(false);
-        }
+        irisCompetencyGenerationSettings = initializeSettings(irisCompetencyGenerationSettings, IrisCompetencyGenerationSubSettings::new);
         irisCompetencyGenerationSettings.setTemplate(loadDefaultCompetencyGenerationTemplate());
         settings.setIrisCompetencyGenerationSettings(irisCompetencyGenerationSettings);
     }

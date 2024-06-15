@@ -14,6 +14,7 @@ import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { LectureService } from 'app/lecture/lecture.service';
 
 const mockLecture = {
     title: 'Test Lecture',
@@ -31,6 +32,7 @@ describe('LectureDetailComponent', () => {
     let component: LectureDetailComponent;
     let fixture: ComponentFixture<LectureDetailComponent>;
     let mockActivatedRoute: any;
+    let lectureService: LectureService;
 
     beforeEach(async () => {
         mockActivatedRoute = {
@@ -53,6 +55,7 @@ describe('LectureDetailComponent', () => {
     beforeEach(() => {
         fixture = TestBed.createComponent(LectureDetailComponent);
         component = fixture.componentInstance;
+        lectureService = TestBed.inject(LectureService);
         fixture.detectChanges();
     });
 
@@ -83,5 +86,12 @@ describe('LectureDetailComponent', () => {
                 expect(detail).toBeTruthy();
             }
         }
+    });
+    it('should call the service to ingest lectures when ingestLecturesInPyris is called', () => {
+        component.lecture = mockLecture;
+        const ingestSpy = jest.spyOn(lectureService, 'ingestLecturesInPyris').mockImplementation(() => of(null));
+        component.ingestLectureInPyris();
+        expect(ingestSpy).toHaveBeenCalledWith(mockLecture.course?.id, mockLecture.id);
+        expect(ingestSpy).toHaveBeenCalledOnce();
     });
 });

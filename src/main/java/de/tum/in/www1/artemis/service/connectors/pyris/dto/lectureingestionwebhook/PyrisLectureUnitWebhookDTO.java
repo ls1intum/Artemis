@@ -8,6 +8,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * providing necessary details such as lecture and course identifiers, names, and descriptions.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisLectureUnitWebhookDTO(Boolean toUpdate, String artemisBaseUrl, String pdfFile, int lectureUnitId, String lectureUnitName, int lectureId, String lectureName,
-        int courseId, String courseName, String courseDescription) {
+public record PyrisLectureUnitWebhookDTO(Boolean toUpdate, String artemisBaseUrl, String pdfFile, Long lectureUnitId, String lectureUnitName, Long lectureId, String lectureName,
+        Long courseId, String courseName, String courseDescription) {
 }

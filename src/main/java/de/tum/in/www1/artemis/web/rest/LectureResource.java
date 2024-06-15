@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -167,7 +168,7 @@ public class LectureResource {
      * @param courseId         the courseId of the course for which all lectures should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
      */
-    @GetMapping(value = "courses/{courseId}/lectures")
+    @GetMapping("courses/{courseId}/lectures")
     @EnforceAtLeastEditor
     public ResponseEntity<Set<Lecture>> getLecturesForCourse(@PathVariable Long courseId, @RequestParam(required = false, defaultValue = "false") boolean withLectureUnits) {
         log.debug("REST request to get all Lectures for the course with id : {}", courseId);
@@ -262,13 +263,25 @@ public class LectureResource {
     /**
      * POST /courses/{courseId}/ingest
      *
-     * @param courseId the ID of the course for which all lectures should be ingested in pyris
+     * @param courseId  the ID of the course for which all lectures should be ingested in pyris
+     * @param lectureId If this id is present then only ingest this one lecture of the respective course
      * @return the ResponseEntity with status 200 (OK) and a message success or null if the operation failed
      */
     @PostMapping("courses/{courseId}/ingest")
-    public ResponseEntity<Boolean> ingestLectures(@PathVariable Long courseId) {
+    public ResponseEntity<Boolean> ingestLectures(@PathVariable Long courseId, @RequestParam(required = false) Optional<Long> lectureId) {
         log.debug("REST request to ingest lectures of course : {}", courseId);
         Course course = courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courseId);
+        if (lectureId.isPresent()) {
+            Optional<Lecture> lectureToIngest = course.getLectures().stream().filter(lecture -> lecture.getId().equals(lectureId.get())).findFirst();
+            if (lectureToIngest.isPresent()) {
+                Set<Lecture> lecturesToIngest = new HashSet<>();
+                lecturesToIngest.add(lectureToIngest.get());
+                return ResponseEntity.ok().body(lectureService.ingestLecturesInPyris(lecturesToIngest));
+            }
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createAlert(applicationName, "Could not send lecture to Iris, no lecture found with the provided id.", "idExists")).body(null);
+
+        }
         return ResponseEntity.ok().body(lectureService.ingestLecturesInPyris(course.getLectures()));
     }
 

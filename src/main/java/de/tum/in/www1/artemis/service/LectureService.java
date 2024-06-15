@@ -35,6 +35,8 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 @Service
 public class LectureService {
 
+    private static final Logger log = LoggerFactory.getLogger(LoggingAspect.class);
+
     private final LectureRepository lectureRepository;
 
     private final AuthorizationCheckService authCheckService;
@@ -44,8 +46,6 @@ public class LectureService {
     private final ChannelService channelService;
 
     private final Optional<PyrisWebhookService> pyrisWebhookService;
-
-    private static final Logger log = LoggerFactory.getLogger(LoggingAspect.class);
 
     public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository, ChannelService channelService,
             Optional<PyrisWebhookService> pyrisWebhookService) {
@@ -146,8 +146,7 @@ public class LectureService {
     public void delete(Lecture lecture) {
         if (pyrisWebhookService.isPresent()) {
             Lecture lectureWithAttachmentUnits = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture.getId());
-            List<AttachmentUnit> attachmentUnitList = lectureWithAttachmentUnits.getLectureUnits().stream()
-                    .filter(lectureUnit -> lectureUnit instanceof AttachmentUnit && ((AttachmentUnit) lectureUnit).getAttachment().getLink().endsWith(".pdf"))
+            List<AttachmentUnit> attachmentUnitList = lectureWithAttachmentUnits.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit)
                     .map(lectureUnit -> (AttachmentUnit) lectureUnit).toList();
             if (!attachmentUnitList.isEmpty()) {
                 pyrisWebhookService.get().deleteLectureFromPyrisDB(attachmentUnitList);
@@ -170,7 +169,7 @@ public class LectureService {
                     .map(unit -> (AttachmentUnit) unit).toList();
             if (!attachmentUnitList.isEmpty()) {
                 log.info("Send Lectures To Iris executed successfully.");
-                return pyrisWebhookService.get().addLectureToPyrisDB(attachmentUnitList) != null;
+                return pyrisWebhookService.get().addLectureUnitsToPyrisDB(attachmentUnitList) != null;
             }
         }
         return false;

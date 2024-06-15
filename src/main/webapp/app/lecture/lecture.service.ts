@@ -111,9 +111,18 @@ export class LectureService {
                 tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
             );
     }
-
-    ingestLecturesInPyris(courseId: number) {
-        this.http.post(`api/courses/${courseId}/ingest`, { observe: 'response' }).subscribe({
+    /**
+     * triggers the ingestion of All the lectures inside the course specified or one lecture inside of the course
+     *
+     * @param courseId Course containing the lecture(s)
+     * @param lectureId The lecture to be ingested in pyris
+     */
+    ingestLecturesInPyris(courseId: number, lectureId?: number): void {
+        let params = new HttpParams();
+        if (lectureId) {
+            params = params.set('lectureId', lectureId.toString()); // Ensure the parameter name matches what the server expects
+        }
+        this.http.post(`api/courses/${courseId}/ingest`, { params: params, observe: 'response' }).subscribe({
             error: (error) => console.error(`Failed to send Ingestion request`, error),
         });
     }

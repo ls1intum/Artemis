@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain.iris.settings;
 
-import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
@@ -16,16 +15,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class IrisLectureIngestionSubSettings extends IrisSubSettings {
 
-    @Nullable
     @Column(name = "auto_ingest_on_lecture_attachment_upload")
-    private Boolean autoIngestOnLectureAttachmentUpload;
+    private boolean autoIngestOnLectureAttachmentUpload;
 
-    @Nullable
-    public Boolean getAutoIngestOnLectureAttachmentUpload() {
+    public boolean getAutoIngestOnLectureAttachmentUpload() {
         return autoIngestOnLectureAttachmentUpload;
     }
 
-    public void setAutoIngestOnLectureAttachmentUpload(@Nullable Boolean autoIngestOnLectureAttachmentUpload) {
+    public void setAutoIngestOnLectureAttachmentUpload(boolean autoIngestOnLectureAttachmentUpload) {
         this.autoIngestOnLectureAttachmentUpload = autoIngestOnLectureAttachmentUpload;
     }
 

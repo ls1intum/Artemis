@@ -264,7 +264,8 @@
             "discardChanges": "Änderungen verwerfen",
             "goBack": "Zurück",
             "search": "Suchen",
-            "select": "Auswählen"
+            "select": "Auswählen",
+            "sendToIris": "Zu Iris Schicken"
         },
         "detail": {
             "field": "Feld",
