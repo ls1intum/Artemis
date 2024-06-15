@@ -223,7 +223,7 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
     }
 
     private String migrateTestRepo(ProgrammingExercise programmingExercise) throws URISyntaxException {
-        return cloneRepositoryFromBitbucketAndMoveToLocalVCS(programmingExercise, programmingExercise.getTestRepositoryUri(), programmingExercise.getBranch());
+        return cloneRepositoryFromSourceVCSAndMoveToLocalVCS(programmingExercise, programmingExercise.getTestRepositoryUri(), programmingExercise.getBranch());
     }
 
     /**
@@ -240,7 +240,7 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
                     log.error("Repository URI is null for auxiliary repository with id {}, cant migrate", repo.getId());
                     continue;
                 }
-                var url = cloneRepositoryFromBitbucketAndMoveToLocalVCS(programmingExercise, repo.getRepositoryUri(), oldBranch);
+                var url = cloneRepositoryFromSourceVCSAndMoveToLocalVCS(programmingExercise, repo.getRepositoryUri(), oldBranch);
                 if (url == null) {
                     errorList.add(solutionParticipation);
                     log.error("Failed to migrate auxiliary repository for programming exercise with id {}, keeping the url in the database", programmingExercise.getId());
@@ -286,7 +286,7 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
                     continue;
                 }
                 var programmingExercise = solutionParticipation.getProgrammingExercise();
-                var url = cloneRepositoryFromBitbucketAndMoveToLocalVCS(solutionParticipation.getProgrammingExercise(), solutionParticipation.getRepositoryUri(),
+                var url = cloneRepositoryFromSourceVCSAndMoveToLocalVCS(solutionParticipation.getProgrammingExercise(), solutionParticipation.getRepositoryUri(),
                         programmingExercise.getBranch());
                 if (url == null) {
                     log.error("Failed to migrate solution repository for solution participation with id {}, keeping the url in the database", solutionParticipation.getId());
@@ -334,7 +334,7 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
                     errorList.add(templateParticipation);
                     continue;
                 }
-                var url = cloneRepositoryFromBitbucketAndMoveToLocalVCS(templateParticipation.getProgrammingExercise(), templateParticipation.getRepositoryUri(),
+                var url = cloneRepositoryFromSourceVCSAndMoveToLocalVCS(templateParticipation.getProgrammingExercise(), templateParticipation.getRepositoryUri(),
                         templateParticipation.getProgrammingExercise().getBranch());
                 if (url == null) {
                     log.error("Failed to migrate template repository for template participation with id {}, keeping the url in the database", templateParticipation.getId());
@@ -371,7 +371,7 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
                     errorList.add(participation);
                     continue;
                 }
-                var url = cloneRepositoryFromBitbucketAndMoveToLocalVCS(participation.getProgrammingExercise(), participation.getRepositoryUri(), participation.getBranch());
+                var url = cloneRepositoryFromSourceVCSAndMoveToLocalVCS(participation.getProgrammingExercise(), participation.getRepositoryUri(), participation.getBranch());
                 if (url == null) {
                     log.error("Failed to migrate student repository for student participation with id {}, keeping the url in the database", participation.getId());
                     errorList.add(participation);
@@ -394,8 +394,8 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
     }
 
     /**
-     * Clones the repository from Bitbucket and moves it to the local VCS.
-     * This is done by cloning the repository from Bitbucket and then creating a bare repository in the local VCS.
+     * Clones the repository from the source VCS and moves it to the local VCS.
+     * This is done by cloning the repository from the source VCS and then creating a bare repository in the local VCS.
      *
      * @param exercise      the programming exercise
      * @param repositoryUri the repository URI
@@ -403,17 +403,17 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
      * @return the URI of the repository in the local VCS
      * @throws URISyntaxException if the repository URL is invalid
      */
-    private String cloneRepositoryFromBitbucketAndMoveToLocalVCS(ProgrammingExercise exercise, String repositoryUri, String oldBranch) throws URISyntaxException {
+    private String cloneRepositoryFromSourceVCSAndMoveToLocalVCS(ProgrammingExercise exercise, String repositoryUri, String oldBranch) throws URISyntaxException {
         if (localVCService.isEmpty() || sourceVersionControlService.isEmpty() || localVCMigrationService.isEmpty()) {
-            log.error("Failed to clone repository from Bitbucket: {}", repositoryUri);
+            log.error("Failed to clone repository from source VCS: {}", repositoryUri);
             if (localVCService.isEmpty()) {
                 log.error("Local VC service is not available");
             }
             if (sourceVersionControlService.isEmpty()) {
-                log.error("Bitbucket service is not available");
+                log.error("The source VCS service is not available");
             }
             if (localVCMigrationService.isEmpty()) {
-                log.error("BitbucketLocalVCMigrationService is not available");
+                log.error("LocalVCMigrationService is not available");
             }
             return null;
         }
@@ -422,9 +422,9 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
             log.info("Repository {} is already in local VC", repositoryUri);
             return repositoryUri;
         }
-        // check if the repo exists in Bitbucket, if not -> return
+        // check if the repo exists in the source VCS, if not -> return
         if (!sourceVersionControlService.get().repositoryUriIsValid(new VcsRepositoryUri(repositoryUri))) {
-            log.info("Repository {} is not available in Bitbucket, removing the reference in the database", repositoryUri);
+            log.info("Repository {} is not available in the source VCS, removing the reference in the database", repositoryUri);
             return null;
         }
         try {
@@ -432,9 +432,9 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
             var projectKey = exercise.getProjectKey();
 
             localVCService.get().createProjectForExercise(exercise);
-            log.info("Cloning repository {} from Bitbucket and moving it to local VCS", repositoryUri);
+            log.info("Cloning repository {} from the source VCS and moving it to local VCS", repositoryUri);
             copyRepoToLocalVC(projectKey, repositoryName, repositoryUri, oldBranch);
-            log.info("Successfully cloned repository {} from Bitbucket and moved it to local VCS", repositoryUri);
+            log.info("Successfully cloned repository {} from the source VCS and moved it to local VCS", repositoryUri);
             var uri = new LocalVCRepositoryUri(projectKey, repositoryName, localVCMigrationService.get().getLocalVCBaseUrl());
             return uri.toString();
         }
@@ -442,7 +442,7 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
             /*
              * By returning null here, we indicate that the repository does not exist anymore
              */
-            log.error("Failed to clone repository from Bitbucket: {}, the repository is unavailable.", repositoryUri, e);
+            log.error("Failed to clone repository from the source VCS: {}, the repository is unavailable.", repositoryUri, e);
             return null;
         }
     }
