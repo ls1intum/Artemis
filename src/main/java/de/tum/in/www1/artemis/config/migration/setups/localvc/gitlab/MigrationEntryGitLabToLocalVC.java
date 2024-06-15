@@ -99,7 +99,6 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
         this.localVCMigrationService = localVCMigrationService;
     }
 
-    @Override
     public void execute() {
         List<String> activeProfiles = List.of(environment.getActiveProfiles());
         if (!new HashSet<>(activeProfiles).containsAll(MIGRATABLE_PROFILES)) {
@@ -488,15 +487,5 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
             log.error("Could not create local git repo {} at location {}", repositorySlug, repositoryPath, e);
             throw new LocalVCInternalException("Error while creating local git project.", e);
         }
-    }
-
-    @Override
-    public String author() {
-        return "reschandreas";
-    }
-
-    @Override
-    public String date() {
-        return "20240103_143700";
     }
 }

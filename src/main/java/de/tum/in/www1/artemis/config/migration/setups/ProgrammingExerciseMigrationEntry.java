@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.tum.in.www1.artemis.config.migration.MigrationEntry;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.participation.ParticipationInterface;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -19,7 +18,7 @@ import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExercisePa
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 
-public abstract class ProgrammingExerciseMigrationEntry extends MigrationEntry {
+public abstract class ProgrammingExerciseMigrationEntry {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseMigrationEntry.class);
 
@@ -69,9 +68,10 @@ public abstract class ProgrammingExerciseMigrationEntry extends MigrationEntry {
         log.error("Failed to migrate template build plan for exercises: {}", failedTemplateExercises);
         log.error("Failed to migrate solution build plan for exercises: {}", failedSolutionExercises);
         log.error("Failed to migrate students participations: {}", failedStudentParticipations);
+        // TODO Adjust this message to our situation here, how to restart the migration
         log.warn("Please check the logs for more information. If the issues are related to the external VCS/CI system, fix the issues and rerun the migration. or "
                 + "fix the build plans yourself and mark the migration as run. The migration can be rerun by deleting the migration entry in the database table containing "
-                + "the migration with author: {} and date_string: {} and then restarting Artemis.", author(), date());
+                + "the migration with author: {} and date_string: {} and then restarting Artemis.", "author()", "date()");
     }
 
     /**
