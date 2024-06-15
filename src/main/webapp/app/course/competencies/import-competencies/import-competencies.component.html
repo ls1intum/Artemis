@@ -1,7 +1,7 @@
 <div>
-    <h2 id="page-heading">{{ 'artemisApp.competency.import.title' | artemisTranslate }}</h2>
+    <h2 id="page-heading" jhiTranslate="artemisApp.competency.import.title"></h2>
     <jhi-competency-search [search]="filter" (searchChange)="filterChange($event)" />
-    <h3 class="mt-2">{{ 'artemisApp.competency.import.searchTableHeader' | artemisTranslate }}</h3>
+    <h3 class="mt-2" jhiTranslate="artemisApp.competency.import.searchTableHeader"></h3>
     @if (searchedCompetencies.resultsOnPage?.length) {
         <jhi-import-competencies-table [content]="searchedCompetencies" [search]="search" (searchChange)="searchChange($event)">
             <ng-template let-competency="competency">
@@ -9,9 +9,9 @@
             </ng-template>
         </jhi-import-competencies-table>
     } @else {
-        <span>{{ 'artemisApp.competency.import.searchTableEmpty' | artemisTranslate }}</span>
+        <span jhiTranslate="artemisApp.competency.import.searchTableEmpty"></span>
     }
-    <h3 class="mt-2">{{ 'artemisApp.competency.import.selectedTableHeader' | artemisTranslate }}</h3>
+    <h3 class="mt-2" jhiTranslate="artemisApp.competency.import.selectedTableHeader"></h3>
     @if (selectedCompetencies.resultsOnPage?.length) {
         <jhi-import-competencies-table [content]="selectedCompetencies" [search]="selectedCompetenciesSearch" (searchChange)="sortSelected($event)" [displayPagination]="false">
             <ng-template let-competency="competency">
@@ -19,11 +19,11 @@
             </ng-template>
         </jhi-import-competencies-table>
     } @else {
-        <span>{{ 'artemisApp.competency.import.selectedTableEmpty' | artemisTranslate }}</span>
+        <span jhiTranslate="artemisApp.competency.import.selectedTableEmpty"></span>
     }
     <div class="mt-4">
         <div class="mb-1 d-flex">
-            <span>{{ 'artemisApp.competency.import.importRelations' | artemisTranslate }}</span>
+            <span jhiTranslate="artemisApp.competency.import.importRelations"></span>
             <input type="checkbox" class="ms-2" [(ngModel)]="importRelations" name="importRelations" />
         </div>
         <div>
