@@ -109,7 +109,7 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
         }
 
         if (localVCMigrationService.isEmpty()) {
-            log.error("Migration will be skipped and marked run because the BitbucketLocalVCMigrationService is not available.");
+            log.error("Migration will be skipped and marked run because the localVCMigrationService is not available.");
             return;
         }
 
@@ -275,7 +275,7 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
      */
     private void migrateSolutions(List<SolutionProgrammingExerciseParticipation> solutionParticipations) {
         if (localVCMigrationService.isEmpty()) {
-            log.error("Failed to migrate solution participations because the Bitbucket migration service is not available.");
+            log.error("Failed to migrate solution participations because the LocalVC migration service is not available.");
             return;
         }
         for (var solutionParticipation : solutionParticipations) {
@@ -361,7 +361,7 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
      */
     private void migrateStudents(List<ProgrammingExerciseStudentParticipation> participations) {
         if (localVCMigrationService.isEmpty()) {
-            log.error("Failed to migrate student participations because the Bitbucket migration service is not available.");
+            log.error("Failed to migrate student participations because the LocalVC migration service is not available.");
             return;
         }
         for (var participation : participations) {
@@ -457,8 +457,8 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
      */
     private void copyRepoToLocalVC(String projectKey, String repositorySlug, String oldOrigin, String branch) {
         if (localVCMigrationService.isEmpty()) {
-            log.error("Failed to clone repository from Bitbucket: {}", repositorySlug);
-            log.error("BitbucketLocalVCMigrationService is not available");
+            log.error("Failed to clone repository from the source VCS: {}", repositorySlug);
+            log.error("localVCMigrationService is not available");
             return;
         }
         LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(projectKey, repositorySlug, localVCMigrationService.get().getLocalVCBaseUrl());
@@ -478,8 +478,8 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
                 }
             }
             catch (Exception e) {
-                log.error("Failed to clone repository from Bitbucket: {}", repositorySlug, e);
-                throw new LocalVCInternalException("Error while cloning repository from Bitbucket.", e);
+                log.error("Failed to clone repository from source VCS: {}", repositorySlug, e);
+                throw new LocalVCInternalException("Error while cloning repository from source VCS.", e);
             }
 
             log.debug("Created local git repository {} in directory {}", repositorySlug, repositoryPath);
