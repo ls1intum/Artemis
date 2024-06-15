@@ -7,6 +7,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.ExampleSubmission;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Feedback;
@@ -64,17 +66,11 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks" })
     List<Result> findWithEagerSubmissionAndFeedbackByParticipationExerciseId(long exerciseId);
 
-    /**
-     * Get the latest results for each programming exercise student participation in an exercise from the database together with the list of feedback items.
-     *
-     * @param exerciseId the id of the exercise to load from the database
-     * @return a list of results.
-     */
     @Query("""
             SELECT DISTINCT r
             FROM Result r
-                LEFT JOIN FETCH r.feedbacks f
-                LEFT JOIN FETCH f.testCase
+                LEFT JOIN r.feedbacks f
+                LEFT JOIN f.testCase
                 LEFT JOIN TREAT (r.participation AS ProgrammingExerciseStudentParticipation) sp
             WHERE r.completionDate = (
                     SELECT MAX(rr.completionDate)
@@ -88,8 +84,32 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 AND sp.student IS NOT NULL
             ORDER BY r.completionDate ASC
             """)
-    // todo rewrite
-    List<Result> findLatestAutomaticResultsWithEagerFeedbacksForExercise(@Param("exerciseId") long exerciseId);
+    List<Result> findLatestResultsForExercise(@Param("exerciseId") long exerciseId);
+
+    @Query("""
+            SELECT r
+            FROM Result r
+            LEFT JOIN FETCH r.feedbacks f
+            LEFT JOIN FETCH f.testCase
+            WHERE r.id IN :ids
+            """)
+    List<Result> findResultsWithFeedbacksByIds(@Param("ids") List<Long> ids);
+
+    /**
+     * Get the latest results for each programming exercise student participation in an exercise from the database together with the list of feedback items.
+     *
+     * @param exerciseId the id of the exercise to load from the database
+     * @return a list of results.
+     */
+    default List<Result> findLatestAutomaticResultsWithEagerFeedbacksForExercise(long exerciseId) {
+        List<Long> ids = findLatestResultsForExercise(exerciseId).stream().map(DomainObject::getId).toList();
+
+        if (ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return findResultsWithFeedbacksByIds(ids);
+    }
 
     Optional<Result> findFirstByParticipationIdOrderByCompletionDateDesc(long participationId);
 

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository.iris;
 
+import java.util.Collections;
 import java.util.List;
 
 import jakarta.validation.constraints.NotNull;
@@ -9,6 +10,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.iris.session.IrisExerciseChatSession;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -38,13 +40,29 @@ public interface IrisExerciseChatSessionRepository extends JpaRepository<IrisExe
     @Query("""
             SELECT s
             FROM IrisExerciseChatSession s
-            LEFT JOIN FETCH s.messages
             WHERE s.exercise.id = :exerciseId
-                AND s.user.id = :userId
+              AND s.user.id = :userId
             ORDER BY s.creationDate DESC
             """)
-    // todo rewrite
-    List<IrisExerciseChatSession> findLatestByExerciseIdAndUserIdWithMessages(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId, Pageable pageable);
+    List<IrisExerciseChatSession> findSessionsByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId, Pageable pageable);
+
+    @Query("""
+            SELECT s
+            FROM IrisExerciseChatSession s
+            LEFT JOIN FETCH s.messages
+            WHERE s.id IN :ids
+            """)
+    List<IrisExerciseChatSession> findSessionsWithMessagesByIds(@Param("ids") List<Long> ids);
+
+    default List<IrisExerciseChatSession> findLatestByExerciseIdAndUserIdWithMessages(Long exerciseId, Long userId, Pageable pageable) {
+        List<Long> ids = findSessionsByExerciseIdAndUserId(exerciseId, userId, pageable).stream().map(DomainObject::getId).toList();
+
+        if (ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return findSessionsWithMessagesByIds(ids);
+    }
 
     /**
      * Finds a list of chat sessions or throws an exception if none are found.
