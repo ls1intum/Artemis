@@ -79,14 +79,14 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
 
     private final Optional<AbstractVersionControlService> sourceVersionControlService;
 
-    private final Optional<LocalVCMigrationService> bitbucketLocalVCMigrationService;
+    private final Optional<LocalVCMigrationService> localVCMigrationService;
 
     public MigrationEntryGitLabToLocalVC(ProgrammingExerciseRepository programmingExerciseRepository, Environment environment,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<LocalVCService> localVCService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, Optional<AbstractVersionControlService> sourceVersionControlService, UriService uriService,
-            Optional<LocalVCMigrationService> bitbucketLocalVCMigrationService) {
+            Optional<LocalVCMigrationService> localVCMigrationService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.environment = environment;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
@@ -96,7 +96,7 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.sourceVersionControlService = sourceVersionControlService;
         this.uriService = uriService;
-        this.bitbucketLocalVCMigrationService = bitbucketLocalVCMigrationService;
+        this.localVCMigrationService = localVCMigrationService;
     }
 
     @Override
@@ -108,22 +108,22 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
             return;
         }
 
-        if (bitbucketLocalVCMigrationService.isEmpty()) {
+        if (localVCMigrationService.isEmpty()) {
             log.error("Migration will be skipped and marked run because the BitbucketLocalVCMigrationService is not available.");
             return;
         }
 
-        if (bitbucketLocalVCMigrationService.get().getLocalVCBasePath() == null) {
+        if (localVCMigrationService.get().getLocalVCBasePath() == null) {
             log.error("Migration will be skipped and marked run because the local VC base path is not configured.");
             return;
         }
 
-        if (bitbucketLocalVCMigrationService.get().getLocalVCBaseUrl() == null || bitbucketLocalVCMigrationService.get().getLocalVCBaseUrl().toString().equals("http://0.0.0.0")) {
+        if (localVCMigrationService.get().getLocalVCBaseUrl() == null || localVCMigrationService.get().getLocalVCBaseUrl().toString().equals("http://0.0.0.0")) {
             log.error("Migration will be skipped and marked run because the local VC base URL is not configured.");
             return;
         }
 
-        if (bitbucketLocalVCMigrationService.get().getDefaultBranch() == null) {
+        if (localVCMigrationService.get().getDefaultBranch() == null) {
             log.error("Migration will be skipped and marked run because the default branch is not configured.");
             return;
         }
@@ -274,7 +274,7 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
      * @param solutionParticipations the solution participations to migrate
      */
     private void migrateSolutions(List<SolutionProgrammingExerciseParticipation> solutionParticipations) {
-        if (bitbucketLocalVCMigrationService.isEmpty()) {
+        if (localVCMigrationService.isEmpty()) {
             log.error("Failed to migrate solution participations because the Bitbucket migration service is not available.");
             return;
         }
@@ -305,8 +305,8 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
                 }
                 else {
                     log.debug("Migrated test repository for solution participation with id {} to {}", solutionParticipation.getId(), url);
-                    if (!bitbucketLocalVCMigrationService.get().getDefaultBranch().equals(programmingExercise.getBranch())) {
-                        programmingExercise.setBranch(bitbucketLocalVCMigrationService.get().getDefaultBranch());
+                    if (!localVCMigrationService.get().getDefaultBranch().equals(programmingExercise.getBranch())) {
+                        programmingExercise.setBranch(localVCMigrationService.get().getDefaultBranch());
                         log.debug("Changed branch of programming exercise with id {} to {}", programmingExercise.getId(), programmingExercise.getBranch());
                     }
                 }
@@ -360,7 +360,7 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
      * @param participations list of student participations to migrate
      */
     private void migrateStudents(List<ProgrammingExerciseStudentParticipation> participations) {
-        if (bitbucketLocalVCMigrationService.isEmpty()) {
+        if (localVCMigrationService.isEmpty()) {
             log.error("Failed to migrate student participations because the Bitbucket migration service is not available.");
             return;
         }
@@ -379,7 +379,7 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
                 else {
                     log.debug("Migrated student participation with id {} to {}", participation.getId(), url);
                     if (participation.getBranch() != null) {
-                        participation.setBranch(bitbucketLocalVCMigrationService.get().getDefaultBranch());
+                        participation.setBranch(localVCMigrationService.get().getDefaultBranch());
                         log.debug("Changed branch of student participation with id {} to {}", participation.getId(), participation.getBranch());
                     }
                 }
@@ -404,7 +404,7 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
      * @throws URISyntaxException if the repository URL is invalid
      */
     private String cloneRepositoryFromBitbucketAndMoveToLocalVCS(ProgrammingExercise exercise, String repositoryUri, String oldBranch) throws URISyntaxException {
-        if (localVCService.isEmpty() || sourceVersionControlService.isEmpty() || bitbucketLocalVCMigrationService.isEmpty()) {
+        if (localVCService.isEmpty() || sourceVersionControlService.isEmpty() || localVCMigrationService.isEmpty()) {
             log.error("Failed to clone repository from Bitbucket: {}", repositoryUri);
             if (localVCService.isEmpty()) {
                 log.error("Local VC service is not available");
@@ -412,13 +412,13 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
             if (sourceVersionControlService.isEmpty()) {
                 log.error("Bitbucket service is not available");
             }
-            if (bitbucketLocalVCMigrationService.isEmpty()) {
+            if (localVCMigrationService.isEmpty()) {
                 log.error("BitbucketLocalVCMigrationService is not available");
             }
             return null;
         }
         // repo is already migrated -> return
-        if (repositoryUri.startsWith(bitbucketLocalVCMigrationService.get().getLocalVCBaseUrl().toString())) {
+        if (repositoryUri.startsWith(localVCMigrationService.get().getLocalVCBaseUrl().toString())) {
             log.info("Repository {} is already in local VC", repositoryUri);
             return repositoryUri;
         }
@@ -435,7 +435,7 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
             log.info("Cloning repository {} from Bitbucket and moving it to local VCS", repositoryUri);
             copyRepoToLocalVC(projectKey, repositoryName, repositoryUri, oldBranch);
             log.info("Successfully cloned repository {} from Bitbucket and moved it to local VCS", repositoryUri);
-            var uri = new LocalVCRepositoryUri(projectKey, repositoryName, bitbucketLocalVCMigrationService.get().getLocalVCBaseUrl());
+            var uri = new LocalVCRepositoryUri(projectKey, repositoryName, localVCMigrationService.get().getLocalVCBaseUrl());
             return uri.toString();
         }
         catch (LocalVCInternalException e) {
@@ -456,14 +456,14 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
      * @param oldOrigin      the old origin of the repository
      */
     private void copyRepoToLocalVC(String projectKey, String repositorySlug, String oldOrigin, String branch) {
-        if (bitbucketLocalVCMigrationService.isEmpty()) {
+        if (localVCMigrationService.isEmpty()) {
             log.error("Failed to clone repository from Bitbucket: {}", repositorySlug);
             log.error("BitbucketLocalVCMigrationService is not available");
             return;
         }
-        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(projectKey, repositorySlug, bitbucketLocalVCMigrationService.get().getLocalVCBaseUrl());
+        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(projectKey, repositorySlug, localVCMigrationService.get().getLocalVCBaseUrl());
 
-        Path repositoryPath = localVCRepositoryUri.getLocalRepositoryPath(bitbucketLocalVCMigrationService.get().getLocalVCBasePath());
+        Path repositoryPath = localVCRepositoryUri.getLocalRepositoryPath(localVCMigrationService.get().getLocalVCBasePath());
 
         try {
             Files.createDirectories(repositoryPath);
@@ -471,10 +471,10 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
 
             // Create a bare local repository with JGit.
             try (Git git = Git.cloneRepository().setBranch(branch).setDirectory(repositoryPath.toFile()).setBare(true).setURI(oldOrigin).call()) {
-                if (!git.getRepository().getBranch().equals(bitbucketLocalVCMigrationService.get().getDefaultBranch())) {
+                if (!git.getRepository().getBranch().equals(localVCMigrationService.get().getDefaultBranch())) {
                     // Rename the default branch to the configured default branch. Old exercises might have a different default branch.
-                    git.branchRename().setNewName(bitbucketLocalVCMigrationService.get().getDefaultBranch()).call();
-                    log.debug("Renamed default branch of local git repository {} to {}", repositorySlug, bitbucketLocalVCMigrationService.get().getDefaultBranch());
+                    git.branchRename().setNewName(localVCMigrationService.get().getDefaultBranch()).call();
+                    log.debug("Renamed default branch of local git repository {} to {}", repositorySlug, localVCMigrationService.get().getDefaultBranch());
                 }
             }
             catch (Exception e) {
