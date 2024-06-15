@@ -16,7 +16,7 @@
         <!-- Add new column for auto_ingest_on_lecture_attachment_upload -->
         <addColumn tableName="iris_sub_settings">
             <column name="auto_ingest_on_lecture_attachment_upload" type="boolean" defaultValueBoolean="false">
-                <constraints nullable="true"/>
+                <constraints nullable="false"/>
             </column>
         </addColumn>
         <!-- Add new column for iris_lecture_ingestion_settings_id -->

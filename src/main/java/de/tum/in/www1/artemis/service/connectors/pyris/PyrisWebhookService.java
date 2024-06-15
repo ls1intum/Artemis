@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.aop.logging.LoggingAspect;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisCourseSettings;
@@ -31,7 +30,7 @@ import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 @Profile("iris")
 public class PyrisWebhookService {
 
-    private static final Logger log = LoggerFactory.getLogger(LoggingAspect.class);
+    private static final Logger log = LoggerFactory.getLogger(PyrisWebhookService.class);
 
     private final PyrisConnectorService pyrisConnectorService;
 
@@ -95,7 +94,7 @@ public class PyrisWebhookService {
     public boolean autoUpdateAttachmentUnitsInPyris(IrisSettingsRepository irisSettingsRepository, Long courseId, List<AttachmentUnit> newAttachmentUnits) {
         IrisCourseSettings courseSettings = irisSettingsRepository.findCourseSettings(courseId).isPresent() ? irisSettingsRepository.findCourseSettings(courseId).get() : null;
         if (courseSettings != null && courseSettings.getIrisLectureIngestionSettings() != null && courseSettings.getIrisLectureIngestionSettings().isEnabled()
-                && Boolean.TRUE.equals(courseSettings.getIrisLectureIngestionSettings().getAutoIngestOnLectureAttachmentUpload())) {
+                && courseSettings.getIrisLectureIngestionSettings().getAutoIngestOnLectureAttachmentUpload()) {
             return addLectureUnitsToPyrisDB(newAttachmentUnits) != null;
         }
         return false;
