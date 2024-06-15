@@ -38,9 +38,9 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipation
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.UriService;
-import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCService;
+import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 @Profile(PROFILE_CORE)
@@ -77,7 +77,7 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
 
     private final Optional<LocalVCService> localVCService;
 
-    private final Optional<BitbucketService> bitbucketService;
+    private final Optional<AbstractVersionControlService> sourceVersionControlService;
 
     private final Optional<LocalVCMigrationService> bitbucketLocalVCMigrationService;
 
@@ -85,7 +85,7 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<LocalVCService> localVCService,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, Optional<BitbucketService> bitbucketService, UriService uriService,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, Optional<AbstractVersionControlService> sourceVersionControlService, UriService uriService,
             Optional<LocalVCMigrationService> bitbucketLocalVCMigrationService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.environment = environment;
@@ -94,7 +94,7 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.localVCService = localVCService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
-        this.bitbucketService = bitbucketService;
+        this.sourceVersionControlService = sourceVersionControlService;
         this.uriService = uriService;
         this.bitbucketLocalVCMigrationService = bitbucketLocalVCMigrationService;
     }
@@ -404,12 +404,12 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
      * @throws URISyntaxException if the repository URL is invalid
      */
     private String cloneRepositoryFromBitbucketAndMoveToLocalVCS(ProgrammingExercise exercise, String repositoryUri, String oldBranch) throws URISyntaxException {
-        if (localVCService.isEmpty() || bitbucketService.isEmpty() || bitbucketLocalVCMigrationService.isEmpty()) {
+        if (localVCService.isEmpty() || sourceVersionControlService.isEmpty() || bitbucketLocalVCMigrationService.isEmpty()) {
             log.error("Failed to clone repository from Bitbucket: {}", repositoryUri);
             if (localVCService.isEmpty()) {
                 log.error("Local VC service is not available");
             }
-            if (bitbucketService.isEmpty()) {
+            if (sourceVersionControlService.isEmpty()) {
                 log.error("Bitbucket service is not available");
             }
             if (bitbucketLocalVCMigrationService.isEmpty()) {
@@ -423,7 +423,7 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
             return repositoryUri;
         }
         // check if the repo exists in Bitbucket, if not -> return
-        if (!bitbucketService.get().repositoryUriIsValid(new VcsRepositoryUri(repositoryUri))) {
+        if (!sourceVersionControlService.get().repositoryUriIsValid(new VcsRepositoryUri(repositoryUri))) {
             log.info("Repository {} is not available in Bitbucket, removing the reference in the database", repositoryUri);
             return null;
         }
