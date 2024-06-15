@@ -47,7 +47,14 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     default ProgrammingExercise findOneByIdElseThrow(final Specification<ProgrammingExercise> specification, long exerciseId) {
         final Specification<ProgrammingExercise> hasIdSpec = (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get(DomainObject_.ID), exerciseId);
-        return findOne(specification.and(hasIdSpec)).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
+
+        Optional<ProgrammingExercise> exerciseOptional = findOne(hasIdSpec);
+
+        if (exerciseOptional.isEmpty()) {
+            throw new EntityNotFoundException("Programming Exercise", exerciseId);
+        }
+
+        return findAll(specification.and(hasIdSpec)).getFirst();
     }
 
     /**

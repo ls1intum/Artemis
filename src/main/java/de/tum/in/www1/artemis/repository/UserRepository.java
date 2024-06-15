@@ -13,6 +13,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.time.ZonedDateTime;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -606,46 +607,72 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             """)
     Page<User> searchAllByLoginOrName(Pageable page, @Param("loginOrName") String loginOrName);
 
-    /**
-     * Searches for users in a course by their login or full name.
-     *
-     * @param page        Pageable related info (e.g. for page size)
-     * @param loginOrName Either a login (e.g. ga12abc) or name (e.g. Max Mustermann) by which to search
-     * @param courseId    Id of the course the user has to be a member of
-     * @return list of found users that match the search criteria
-     */
-    @Query(value = """
+    @Query("""
+            SELECT DISTINCT user.id
+            FROM User user
+            JOIN user.groups userGroup
+            JOIN Course course ON course.id = :courseId
+            WHERE user.isDeleted = FALSE
+              AND (
+                  user.login LIKE :#{#loginOrName}%
+                  OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+              )
+              AND (course.studentGroupName = userGroup
+                   OR course.teachingAssistantGroupName = userGroup
+                   OR course.editorGroupName = userGroup
+                   OR course.instructorGroupName = userGroup
+              )
+            """)
+    List<Long> findUserIdsByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, Pageable pageable);
+
+    @Query("""
             SELECT DISTINCT user
             FROM User user
-                LEFT JOIN FETCH user.groups userGroup
-                JOIN Course course ON course.id = :courseId
-            WHERE user.isDeleted = FALSE
-                AND (
-                    user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-                )
-                AND (course.studentGroupName = userGroup
-                    OR course.teachingAssistantGroupName = userGroup
-                    OR course.editorGroupName = userGroup
-                    OR course.instructorGroupName = userGroup
-                )
-            """, countQuery = """
+            LEFT JOIN FETCH user.groups userGroup
+            WHERE user.id IN :ids
+            """)
+    List<User> findUsersWithGroupsByIds(@Param("ids") List<Long> ids);
+
+    @Query("""
             SELECT COUNT(DISTINCT user)
             FROM User user
-                LEFT JOIN user.groups userGroup
-                JOIN Course course ON course.id = :courseId
+            JOIN user.groups userGroup
+            JOIN Course course ON course.id = :courseId
             WHERE user.isDeleted = FALSE
-                AND (
-                    user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-                )
-                AND (course.studentGroupName = userGroup
-                    OR course.teachingAssistantGroupName = userGroup
-                    OR course.editorGroupName = userGroup
-                    OR course.instructorGroupName = userGroup
-                )
+              AND (
+                  user.login LIKE :#{#loginOrName}%
+                  OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+              )
+              AND (course.studentGroupName = userGroup
+                   OR course.teachingAssistantGroupName = userGroup
+                   OR course.editorGroupName = userGroup
+                   OR course.instructorGroupName = userGroup
+              )
             """)
-    Page<User> searchAllByLoginOrNameInCourse(Pageable page, @Param("loginOrName") String loginOrName, @Param("courseId") long courseId);
+    long countUsersByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId);
+
+    default List<User> searchAllByLoginOrNameInCourseAndReturnList(Pageable pageable, String loginOrName, long courseId) {
+        List<Long> userIds = findUserIdsByLoginOrNameInCourse(loginOrName, courseId, pageable);
+
+        if (userIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return findUsersWithGroupsByIds(userIds);
+    }
+
+    default Page<User> searchAllByLoginOrNameInCourseAndReturnPage(Pageable pageable, String loginOrName, long courseId) {
+        List<Long> userIds = findUserIdsByLoginOrNameInCourse(loginOrName, courseId, pageable);
+
+        if (userIds.isEmpty()) {
+            return new PageImpl<>(Collections.emptyList(), pageable, 0);
+        }
+
+        List<User> users = findUsersWithGroupsByIds(userIds);
+        long total = countUsersByLoginOrNameInCourse(loginOrName, courseId);
+
+        return new PageImpl<>(users, pageable, total);
+    }
 
     @Query("""
             SELECT user.id

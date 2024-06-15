@@ -374,7 +374,7 @@ public class ConversationService {
             Optional<ConversationMemberSearchFilters> filter) {
         if (filter.isEmpty()) {
             if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
-                return userRepository.searchAllByLoginOrNameInCourse(pageable, searchTerm, course.getId());
+                return userRepository.searchAllByLoginOrNameInCourseAndReturnPage(pageable, searchTerm, course.getId());
             }
             return userRepository.searchAllByLoginOrNameInConversation(pageable, searchTerm, conversation.getId());
         }
