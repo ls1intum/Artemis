@@ -33,6 +33,7 @@ public interface DynamicSpecificationRepository<T> {
      *
      * @param specification the specification to apply
      * @param id            the id of the entity to find
+     * @param entityName    the name of the entity to find
      * @return the entity with the given id
      */
     default T findOneByIdElseThrow(Specification<T> specification, long id, String entityName) {
