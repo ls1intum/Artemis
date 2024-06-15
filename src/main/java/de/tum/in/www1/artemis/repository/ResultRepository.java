@@ -88,6 +88,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 AND sp.student IS NOT NULL
             ORDER BY r.completionDate ASC
             """)
+    // todo rewrite
     List<Result> findLatestAutomaticResultsWithEagerFeedbacksForExercise(@Param("exerciseId") long exerciseId);
 
     Optional<Result> findFirstByParticipationIdOrderByCompletionDateDesc(long participationId);

@@ -41,6 +41,7 @@ public interface IrisCourseChatSessionRepository extends JpaRepository<IrisCours
                     AND s.user.id = :userId
                 ORDER BY s.creationDate DESC
             """)
+    // todo rewrite
     List<IrisCourseChatSession> findLatestByCourseIdAndUserIdWithMessages(@Param("courseId") long courseId, @Param("userId") long userId, Pageable pageable);
 
     /**

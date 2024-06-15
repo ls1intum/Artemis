@@ -43,6 +43,7 @@ public interface IrisExerciseChatSessionRepository extends JpaRepository<IrisExe
                 AND s.user.id = :userId
             ORDER BY s.creationDate DESC
             """)
+    // todo rewrite
     List<IrisExerciseChatSession> findLatestByExerciseIdAndUserIdWithMessages(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId, Pageable pageable);
 
     /**
