@@ -22,4 +22,16 @@ export class ExternalCloningService {
         }
         return `jetbrains://idea/checkout/git?idea.required.plugins.id=Git4Idea&checkout.repo=${encodeURIComponent(cloneUrl)}`;
     }
+
+    /**
+     * Builds an url to clone a Repository in VSCode
+     * Structure: vscode://vscode.git/clone?url=:RepoUrl
+     * @param cloneUrl the url of the repository to clone
+     */
+    buildVSCodeUrl(cloneUrl: string | undefined): string | undefined {
+        if (!cloneUrl) {
+            return undefined;
+        }
+        return `vscode://vscode.git/clone?url=${encodeURIComponent(cloneUrl)}`;
+    }
 }

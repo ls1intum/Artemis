@@ -198,6 +198,10 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
         return this.externalCloningService.buildJetbrainsUrl(this.getHttpOrSshRepositoryUri(false));
     }
 
+    buildVSCodeUrl(): string | undefined {
+        return this.externalCloningService.buildVSCodeUrl(this.getHttpOrSshRepositoryUri(false));
+    }
+
     switchPracticeMode() {
         this.isPracticeMode = !this.isPracticeMode;
         this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations!, this.isPracticeMode)!;
