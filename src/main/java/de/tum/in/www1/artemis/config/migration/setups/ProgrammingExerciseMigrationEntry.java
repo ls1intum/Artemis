@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.config.migration.setups;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -22,6 +24,28 @@ public abstract class ProgrammingExerciseMigrationEntry extends MigrationEntry {
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseMigrationEntry.class);
 
     protected final CopyOnWriteArrayList<ProgrammingExerciseParticipation> errorList = new CopyOnWriteArrayList<>();
+
+    protected static void shutdown(ExecutorService executorService, int timeoutInHours, String errorMessage) {
+        // Wait for all threads to finish
+        executorService.shutdown();
+
+        try {
+            boolean finished = executorService.awaitTermination(timeoutInHours, TimeUnit.HOURS);
+            if (!finished) {
+                log.error(errorMessage);
+                if (executorService.awaitTermination(1, TimeUnit.MINUTES)) {
+                    log.error("Failed to cancel all migration threads. Some threads are still running.");
+                }
+                throw new RuntimeException(errorMessage);
+            }
+        }
+        catch (InterruptedException e) {
+            log.error(errorMessage);
+            executorService.shutdownNow();
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        }
+    }
 
     /**
      * Evaluates the error map and prints the errors to the log.
