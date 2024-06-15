@@ -47,3 +47,9 @@ export class BuildJobStatistics {
     public failedBuilds: number = 0;
     public cancelledBuilds: number = 0;
 }
+
+export enum SpanType {
+    DAY = 1,
+    WEEK = 7,
+    MONTH = 30,
+}

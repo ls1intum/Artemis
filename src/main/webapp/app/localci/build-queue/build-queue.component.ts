@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { BuildJob, BuildJobStatistics, FinishedBuildJob } from 'app/entities/build-job.model';
+import { BuildJob, BuildJobStatistics, FinishedBuildJob, SpanType } from 'app/entities/build-job.model';
 import { faAngleDown, faAngleRight, faCircleCheck, faExclamationCircle, faExclamationTriangle, faSort, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
@@ -29,16 +29,6 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     finishedBuildJobs: FinishedBuildJob[] = [];
     courseChannels: string[] = [];
     buildJobStatistics: BuildJobStatistics;
-    showOverview = false;
-
-    ngxData: NgxChartsSingleSeriesDataEntry[] = [];
-
-    ngxColor = {
-        name: 'vivid',
-        selectable: true,
-        group: ScaleType.Ordinal,
-        domain: [GraphColors.GREEN, GraphColors.RED, GraphColors.YELLOW],
-    } as Color;
 
     //icons
     readonly faTimes = faTimes;
@@ -49,6 +39,8 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     readonly faSync = faSync;
     readonly faAngleDown = faAngleDown;
     readonly faAngleRight = faAngleRight;
+
+    protected readonly SpanType = SpanType;
 
     totalItems = 0;
     itemsPerPage = ITEMS_PER_PAGE;
@@ -61,6 +53,17 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     successfulBuildsPercentage: string;
     failedBuildsPercentage: string;
     cancelledBuildsPercentage: string;
+    showOverview = false;
+    currentSpan: SpanType = SpanType.WEEK;
+
+    ngxData: NgxChartsSingleSeriesDataEntry[] = [];
+
+    ngxColor = {
+        name: 'vivid',
+        selectable: true,
+        group: ScaleType.Ordinal,
+        domain: [GraphColors.GREEN, GraphColors.RED, GraphColors.YELLOW],
+    } as Color;
 
     constructor(
         private route: ActivatedRoute,
@@ -74,15 +77,12 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
         this.buildDurationInterval = setInterval(() => {
             this.updateBuildJobDuration();
         }, 1000); // 1 second
-        this.showOverview = !this.route.snapshot.paramMap.get('courseId'); // Should only show the overview in admin view
-        if (this.showOverview) {
-            this.getBuildJobStatistics();
-            this.buildStatisticsInterval = setInterval(() => {
-                this.getBuildJobStatistics();
-            }, 300000); // 5 minutes
-        }
         this.loadFinishedBuildJobs();
         this.initWebsocketSubscription();
+        this.showOverview = !this.route.snapshot.paramMap.get('courseId'); // Should only show the overview in admin view
+        if (this.showOverview) {
+            this.getBuildJobStatistics(this.currentSpan);
+        }
     }
 
     /**
@@ -316,22 +316,41 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     /**
      * Get Build Job Result statistics. Should be called in admin view only.
      */
-    getBuildJobStatistics() {
-        this.buildQueueService.getBuildJobStatistics().subscribe({
+    getBuildJobStatistics(span: SpanType = SpanType.WEEK) {
+        this.buildQueueService.getBuildJobStatistics(span).subscribe({
             next: (res: BuildJobStatistics) => {
-                this.buildJobStatistics = res;
-                this.successfulBuildsPercentage = ((this.buildJobStatistics.successfulBuilds / this.buildJobStatistics.totalBuilds) * 100).toFixed(2) + '%';
-                this.failedBuildsPercentage = ((this.buildJobStatistics.failedBuilds / this.buildJobStatistics.totalBuilds) * 100).toFixed(2) + '%';
-                this.cancelledBuildsPercentage = ((this.buildJobStatistics.cancelledBuilds / this.buildJobStatistics.totalBuilds) * 100).toFixed(2) + '%';
-                this.ngxData = [
-                    { name: 'Successful', value: this.buildJobStatistics.successfulBuilds },
-                    { name: 'Failed', value: this.buildJobStatistics.failedBuilds },
-                    { name: 'Cancelled', value: this.buildJobStatistics.cancelledBuilds },
-                ];
+                this.updateDisplayedBuildJobStatistics(res);
             },
             error: (res: HttpErrorResponse) => {
                 onError(this.alertService, res);
             },
         });
+    }
+
+    /**
+     * Update the displayed build job statistics
+     * @param stats The new build job statistics
+     */
+    updateDisplayedBuildJobStatistics(stats: BuildJobStatistics) {
+        this.buildJobStatistics = stats;
+        this.successfulBuildsPercentage = ((stats.successfulBuilds / stats.totalBuilds) * 100).toFixed(2) + '%';
+        this.failedBuildsPercentage = ((stats.failedBuilds / stats.totalBuilds) * 100).toFixed(2) + '%';
+        this.cancelledBuildsPercentage = ((stats.cancelledBuilds / stats.totalBuilds) * 100).toFixed(2) + '%';
+        this.ngxData = [
+            { name: 'Successful', value: stats.successfulBuilds },
+            { name: 'Failed', value: stats.failedBuilds },
+            { name: 'Cancelled', value: stats.cancelledBuilds },
+        ];
+    }
+
+    /**
+     * Callback function when the tab is changed
+     * @param span The new span
+     */
+    onTabChange(span: SpanType): void {
+        if (this.currentSpan !== span) {
+            this.currentSpan = span;
+            this.getBuildJobStatistics(span);
+        }
     }
 }

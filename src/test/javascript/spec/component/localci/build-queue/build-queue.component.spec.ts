@@ -10,7 +10,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { ArtemisTestModule } from '../../../test.module';
-import { BuildJobStatistics, FinishedBuildJob } from 'app/entities/build-job.model';
+import { BuildJobStatistics, FinishedBuildJob, SpanType } from 'app/entities/build-job.model';
 import { TriggeredByPushTo } from 'app/entities/repository-info.model';
 import { waitForAsync } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
@@ -349,6 +349,32 @@ describe('BuildQueueComponent', () => {
 
         expect(mockBuildQueueService.getBuildJobStatistics).not.toHaveBeenCalled();
         expect(component.buildJobStatistics).toBeUndefined();
+    });
+
+    it('should get build job statistics when changing the span', () => {
+        // Mock ActivatedRoute to return no course ID
+        mockActivatedRoute.paramMap = of(new Map([]));
+
+        mockBuildQueueService.getBuildJobStatistics.mockReturnValue(of(mockBuildJobStatistics));
+
+        component.ngOnInit();
+        component.onTabChange(SpanType.DAY);
+
+        expect(mockBuildQueueService.getBuildJobStatistics).toHaveBeenCalledTimes(2);
+        expect(component.buildJobStatistics).toEqual(mockBuildJobStatistics);
+    });
+
+    it('should not get build job statistics when span is the same', () => {
+        // Mock ActivatedRoute to return no course ID
+        mockActivatedRoute.paramMap = of(new Map([]));
+
+        mockBuildQueueService.getBuildJobStatistics.mockReturnValue(of(mockBuildJobStatistics));
+
+        component.ngOnInit();
+        component.onTabChange(SpanType.WEEK);
+
+        expect(mockBuildQueueService.getBuildJobStatistics).toHaveBeenCalledOnce();
+        expect(component.buildJobStatistics).toEqual(mockBuildJobStatistics);
     });
 
     it('should refresh data', () => {

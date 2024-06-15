@@ -1,9 +1,23 @@
 @if (showOverview) {
     <div class="mb-4">
         <div class="d-flex justify-content-between align-items-center border-bottom mb-3">
-            <div class="d-flex align-items-center">
+            <div class="d-flex align-items-center gap-2">
                 <h3 id="build-queue-overview" jhiTranslate="artemisApp.buildQueue.statistics.title"></h3>
                 <jhi-help-icon class="ps-1" text="artemisApp.buildQueue.statistics.titleTooltip" />
+                <div class="col-md-9 btn-group btn-group-toggle" data-toggle="buttons" [hidden]="isCollapsed">
+                    <label class="btn btn-secondary" [class.active]="currentSpan === SpanType.DAY">
+                        <input type="radio" name="options" id="option1" (click)="onTabChange(SpanType.DAY)" />
+                        <span jhiTranslate="statistics.span.day"></span>
+                    </label>
+                    <label class="btn btn-secondary" [class.active]="currentSpan === SpanType.WEEK">
+                        <input type="radio" name="options" id="option2" checked (click)="onTabChange(SpanType.WEEK)" />
+                        <span jhiTranslate="statistics.span.week"></span>
+                    </label>
+                    <label class="btn btn-secondary" [class.active]="currentSpan === SpanType.MONTH">
+                        <input type="radio" name="options" id="option3" (click)="onTabChange(SpanType.MONTH)" />
+                        <span jhiTranslate="statistics.span.month"></span>
+                    </label>
+                </div>
             </div>
             <button class="btn" (click)="isCollapsed = !isCollapsed" [attr.aria-expanded]="!isCollapsed" [attr.aria-controls]="'collapseQuestion'">
                 <fa-icon size="2x" [icon]="isCollapsed ? faAngleRight : faAngleDown" />
