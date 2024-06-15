@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { faFile, faPencilAlt, faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { LectureDetailComponent } from 'app/lecture/lecture-detail.component';
 import { Lecture } from 'app/entities/lecture.model';
 import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
@@ -16,6 +16,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { LectureService } from 'app/lecture/lecture.service';
 import { HttpResponse } from '@angular/common/http';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { PROFILE_IRIS } from 'app/app.constants';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { IrisCourseSettings } from 'app/entities/iris/settings/iris-settings.model';
 
 const mockLecture = {
     title: 'Test Lecture',
@@ -34,6 +39,9 @@ describe('LectureDetailComponent', () => {
     let fixture: ComponentFixture<LectureDetailComponent>;
     let mockActivatedRoute: any;
     let lectureService: LectureService;
+    let consoleSpy: jest.SpyInstance;
+    let profileService: ProfileService;
+    let irisSettingsService: IrisSettingsService;
 
     beforeEach(async () => {
         mockActivatedRoute = {
@@ -58,6 +66,7 @@ describe('LectureDetailComponent', () => {
         component = fixture.componentInstance;
         lectureService = TestBed.inject(LectureService);
         fixture.detectChanges();
+        consoleSpy = jest.spyOn(console, 'error').mockImplementation();
     });
 
     it('should initialize lecture when ngOnInit is called', () => {
@@ -94,5 +103,30 @@ describe('LectureDetailComponent', () => {
         component.ingestLectureInPyris();
         expect(ingestSpy).toHaveBeenCalledWith(mockLecture.course?.id, mockLecture.id);
         expect(ingestSpy).toHaveBeenCalledOnce();
+    });
+    it('should log error when error occurs', () => {
+        component.lecture = mockLecture;
+        jest.spyOn(lectureService, 'ingestLecturesInPyris').mockReturnValue(throwError(() => new Error('Error while ingesting')));
+        component.ingestLectureInPyris();
+        expect(consoleSpy).toHaveBeenCalledWith('Failed to send Ingestion request', expect.any(Error));
+    });
+    it('should set lectureIngestionEnabled based on service response', () => {
+        component.lecture = mockLecture;
+        irisSettingsService = TestBed.inject(IrisSettingsService);
+        profileService = TestBed.inject(ProfileService);
+        const profileInfoResponse = {
+            activeProfiles: [PROFILE_IRIS],
+        } as ProfileInfo;
+        const irisSettingsResponse = {
+            irisLectureIngestionSettings: {
+                enabled: true,
+            },
+        } as IrisCourseSettings;
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfoResponse));
+        jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockImplementation(() => of(irisSettingsResponse));
+        mockActivatedRoute.data = of({ lecture: mockLecture }); // Update the ActivatedRoute mock data
+        component.ngOnInit();
+        expect(irisSettingsService.getCombinedCourseSettings).toHaveBeenCalledWith(component.lecture.course?.id);
+        expect(component.lectureIngestionEnabled).toBeTrue();
     });
 });
