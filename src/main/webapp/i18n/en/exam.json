@@ -57,6 +57,7 @@
                     "closed": "Test Exam Closed",
                     "notSubmitted": "You have not submitted your Test Exam on time!",
                     "reviewAttempt": "Attempt #{{attempt}}",
+                    "resume": "Resume Attempt",
                     "resumeAttempt": "Resume Attempt #{{attempt}}",
                     "workingTimeLeft": "Working time left: ",
                     "workingTimeCalculated": "Used working time: ",
