@@ -29,7 +29,7 @@
             "cancelAll": "Cancel All",
             "statistics": {
                 "title": "Overview",
-                "titleTooltip": "Build statistics for the last 7 days. Data is updated every 5 minutes.",
+                "titleTooltip": "Data is fetched for the last period defined by the time span.",
                 "totalBuilds": "Number of Builds:",
                 "successfulBuildsWithColon": "Successful Builds:",
                 "successfulBuilds": "Successful Builds",
@@ -37,7 +37,10 @@
                 "failedBuilds": "Failed Builds:",
                 "failedBuildsPercentage": "Failed Builds %:",
                 "cancelledBuilds": "Cancelled Builds:",
-                "cancelledBuildsPercentage": "Cancelled Builds %:"
+                "cancelledBuildsPercentage": "Cancelled Builds %:",
+                "daySpan": "1 day",
+                "weekSpan": "7 days",
+                "monthSpan": "30 days"
             }
         }
     }

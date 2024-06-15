@@ -184,6 +184,7 @@ public class AdminBuildJobQueueResource {
     /**
      * Returns the build job statistics.
      *
+     * @param span the time span in days. The statistics will be calculated for the last span days. Default is 7 days.
      * @return the build job statistics
      */
     @GetMapping("build-job-statistics")
