@@ -62,7 +62,6 @@ import { CourseExercisesComponent } from './course-exercises/course-exercises.co
 import { CourseLecturesComponent } from './course-lectures/course-lectures.component';
 import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-tutorial-groups.component';
 import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
-import { CoursesForDashboardDTO } from 'app/course/manage/courses-for-dashboard-dto';
 import { sortCourses } from 'app/shared/util/course.util';
 import { CourseUnenrollmentModalComponent } from './course-unenrollment-modal.component';
 
