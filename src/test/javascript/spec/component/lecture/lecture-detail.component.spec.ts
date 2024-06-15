@@ -15,6 +15,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { LectureService } from 'app/lecture/lecture.service';
+import { HttpResponse } from '@angular/common/http';
 
 const mockLecture = {
     title: 'Test Lecture',
@@ -89,7 +90,7 @@ describe('LectureDetailComponent', () => {
     });
     it('should call the service to ingest lectures when ingestLecturesInPyris is called', () => {
         component.lecture = mockLecture;
-        const ingestSpy = jest.spyOn(lectureService, 'ingestLecturesInPyris').mockImplementation(() => of(null));
+        const ingestSpy = jest.spyOn(lectureService, 'ingestLecturesInPyris').mockImplementation(() => of(new HttpResponse<boolean>({ status: 200, body: true })));
         component.ingestLectureInPyris();
         expect(ingestSpy).toHaveBeenCalledWith(mockLecture.course?.id, mockLecture.id);
         expect(ingestSpy).toHaveBeenCalledOnce();

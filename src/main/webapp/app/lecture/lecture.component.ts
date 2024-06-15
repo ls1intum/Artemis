@@ -190,7 +190,9 @@ export class LectureComponent implements OnInit {
      */
     ingestLecturesInPyris() {
         if (this.lectures.first()) {
-            this.lectureService.ingestLecturesInPyris(this.lectures.first()!.course!.id!);
+            this.lectureService.ingestLecturesInPyris(this.lectures.first()!.course!.id!).subscribe({
+                error: (error) => console.error(`Failed to send Ingestion request`, error),
+            });
         }
     }
 }

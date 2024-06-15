@@ -248,7 +248,7 @@ describe('Lecture', () => {
 
     it('should call the service to ingest lectures when ingestLecturesInPyris is called', () => {
         lectureComponent.lectures = [lectureToIngest];
-        const ingestSpy = jest.spyOn(lectureService, 'ingestLecturesInPyris').mockImplementation(() => of(null));
+        const ingestSpy = jest.spyOn(lectureService, 'ingestLecturesInPyris').mockImplementation(() => of(new HttpResponse<boolean>({ status: 200, body: true })));
         lectureComponent.ingestLecturesInPyris();
         expect(ingestSpy).toHaveBeenCalledWith(lectureToIngest.course?.id);
         expect(ingestSpy).toHaveBeenCalledOnce();
@@ -256,7 +256,7 @@ describe('Lecture', () => {
 
     it('should not call the service if the first lecture does not exist', () => {
         lectureComponent.lectures = [];
-        const ingestSpy = jest.spyOn(lectureService, 'ingestLecturesInPyris').mockImplementation(() => of(null));
+        const ingestSpy = jest.spyOn(lectureService, 'ingestLecturesInPyris').mockImplementation(() => of(new HttpResponse<boolean>({ status: 200, body: true })));
         lectureComponent.ingestLecturesInPyris();
         expect(ingestSpy).not.toHaveBeenCalled();
     });

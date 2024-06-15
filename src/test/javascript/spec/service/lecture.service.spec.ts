@@ -215,11 +215,11 @@ describe('Lecture Service', () => {
             const courseId = 123;
             const lectureId = 456;
             const expectedUrl = `api/courses/${courseId}/ingest`;
+            const expectedStatus = 200;
 
-            service
-                .ingestLecturesInPyris(courseId, lectureId)
-                .pipe(take(1))
-                .subscribe((resp) => (expectedResult = resp));
+            service.ingestLecturesInPyris(courseId, lectureId).subscribe((response) => {
+                expect(response.status).toBe(expectedStatus);
+            });
 
             const req = httpMock.expectOne({
                 url: expectedUrl,

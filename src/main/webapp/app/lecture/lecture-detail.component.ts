@@ -79,6 +79,8 @@ export class LectureDetailComponent implements OnInit {
      * Trigger the Ingeston of this Lecture in Iris.
      */
     ingestLectureInPyris() {
-        this.lectureService.ingestLecturesInPyris(this.lecture.course!.id!, this.lecture.id);
+        this.lectureService.ingestLecturesInPyris(this.lecture.course!.id!, this.lecture.id).subscribe({
+            error: (error) => console.error(`Failed to send Ingestion request`, error),
+        });
     }
 }
