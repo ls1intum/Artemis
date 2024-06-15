@@ -218,7 +218,12 @@ public class SharedQueueProcessingService {
                 if (buildJob == null) {
                     return null;
                 }
-                buildJobItemMap.put(buildJobReference.participationId(), buildJobItems);
+                if (buildJobItems.isEmpty()) {
+                    buildJobItemMap.delete(buildJobReference.participationId());
+                }
+                else {
+                    buildJobItemMap.put(buildJobReference.participationId(), buildJobItems);
+                }
             }
             finally {
                 buildJobItemMap.unlock(buildJobReference.participationId());
