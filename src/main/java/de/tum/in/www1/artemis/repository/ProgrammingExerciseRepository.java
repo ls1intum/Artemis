@@ -655,7 +655,7 @@ public interface ProgrammingExerciseRepository
     @NotNull
     default ProgrammingExercise findByIdWithDynamicFetchElseThrow(long exerciseId, Collection<ProgrammingExerciseFetchOptions> fetchOptions) throws EntityNotFoundException {
         var specification = getDynamicSpecification(fetchOptions);
-        return findOneByIdElseThrow(specification, exerciseId);
+        return findOneByIdElseThrow(specification, exerciseId, "Programming Exercise");
     }
 
     /**

@@ -1,13 +1,16 @@
 package de.tum.in.www1.artemis.repository;
 
 import java.util.Collection;
+import java.util.Optional;
 
 import jakarta.persistence.criteria.JoinType;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.domain.Specification;
 
+import de.tum.in.www1.artemis.domain.DomainObject_;
 import de.tum.in.www1.artemis.repository.fetchOptions.FetchOptions;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * A repository that provides methods for fetching entities dynamically using {@link FetchOptions}.
@@ -17,14 +20,25 @@ import de.tum.in.www1.artemis.repository.fetchOptions.FetchOptions;
 public interface DynamicSpecificationRepository<T> {
 
     /**
+     * Find an entity by applying the given specification.
+     * Provided by the concrete repository implementation. Do not override.
+     *
+     * @param spec the specification to apply
+     * @return the entity that matches the specification
+     */
+    Optional<T> findOne(Specification<T> spec);
+
+    /**
      * Find an entity by its id or throw an EntityNotFoundException if it does not exist.
-     * See {@link RepositoryImpl#findOneByIdElseThrow(Specification, long)} for the implementation.
      *
      * @param specification the specification to apply
      * @param id            the id of the entity to find
      * @return the entity with the given id
      */
-    T findOneByIdElseThrow(Specification<T> specification, long id);
+    default T findOneByIdElseThrow(Specification<T> specification, long id, String entityName) {
+        final Specification<T> hasIdSpec = (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get(DomainObject_.ID), id);
+        return findOne(specification.and(hasIdSpec)).orElseThrow(() -> new EntityNotFoundException(entityName, id));
+    }
 
     /**
      * Create a Specification for dynamic fetching based on the provided fetch options.
