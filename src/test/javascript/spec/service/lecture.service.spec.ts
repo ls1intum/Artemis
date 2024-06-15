@@ -214,7 +214,7 @@ describe('Lecture Service', () => {
         it('should send a POST request to ingest lectures and return an OK response', () => {
             const courseId = 123;
             const lectureId = 456;
-            const expectedUrl = `api/courses/${courseId}/ingest`;
+            const expectedUrl = `api/courses/123/ingest?lectureId=456`;
             const expectedStatus = 200;
 
             service.ingestLecturesInPyris(courseId, lectureId).subscribe((response) => {
