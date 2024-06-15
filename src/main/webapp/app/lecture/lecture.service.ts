@@ -119,10 +119,14 @@ export class LectureService {
      */
     ingestLecturesInPyris(courseId: number, lectureId?: number): Observable<HttpResponse<boolean>> {
         let params = new HttpParams();
-        if (lectureId) {
-            params = params.set('lectureId', lectureId);
+        if (lectureId !== undefined) {
+            params = params.set('lectureId', lectureId.toString());
         }
-        return this.http.post<HttpResponse<boolean>>(`api/courses/${courseId}/ingest`, { params: params, observe: 'response' });
+
+        return this.http.post<boolean>(`api/courses/${courseId}/ingest`, null, {
+            params: params,
+            observe: 'response',
+        });
     }
     /**
      * Clones and imports the lecture to the course
