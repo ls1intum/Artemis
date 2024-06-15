@@ -142,6 +142,20 @@ class TestResultXmlParserTest {
         TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
         assertThat(failedTests).isEmpty();
         assertThat(successfulTests).isNotEmpty().hasSize(12);
+    }
 
+    @Test
+    void testSkippedTest() throws IOException {
+        String input = """
+                <testsuite>
+                    <testcase name="testBubbleSort()" classname="testpackage.SortingExampleBehaviorTest" time="0.000306">
+                        <skipped message="This test was skipped."/>
+                    </testcase>
+                </testsuite>
+                """;
+
+        TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
+        assertThat(failedTests).isEmpty();
+        assertThat(successfulTests).isEmpty();
     }
 }
