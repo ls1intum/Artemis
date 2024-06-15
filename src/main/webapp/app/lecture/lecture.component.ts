@@ -51,7 +51,7 @@ export class LectureComponent implements OnInit {
     faPuzzlePiece = faPuzzlePiece;
     faFilter = faFilter;
     faSort = faSort;
-    protected lectureIngestionEnabled = false;
+    lectureIngestionEnabled = false;
 
     constructor(
         protected lectureService: LectureService,

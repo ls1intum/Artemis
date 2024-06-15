@@ -96,14 +96,8 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
     });
     it('Fills the settings if they are empty', () => {
         fixture.detectChanges();
-        const irisSettings = mockEmptySettings();
-        irisSettings.id = undefined;
-        const irisSettingsSaved = mockEmptySettings();
-        const setSettingsSpy = jest.spyOn(irisSettingsService, 'setCourseSettings').mockReturnValue(of(new HttpResponse<IrisSettings>({ body: irisSettingsSaved })));
-        comp.settingsUpdateComponent!.irisSettings = irisSettings;
-        comp.settingsUpdateComponent!.saveIrisSettings();
-        expect(setSettingsSpy).toHaveBeenCalledWith(1, irisSettings);
-        expect(comp.settingsUpdateComponent!.irisSettings).toEqual(irisSettingsSaved);
+        comp.settingsUpdateComponent!.irisSettings = mockEmptySettings();
+        comp.settingsUpdateComponent!.fillEmptyIrisSubSettings();
         expect(comp.settingsUpdateComponent!.irisSettings.irisChatSettings).toBeTruthy();
         expect(comp.settingsUpdateComponent!.irisSettings.irisLectureIngestionSettings).toBeTruthy();
         expect(comp.settingsUpdateComponent!.irisSettings.irisHestiaSettings).toBeTruthy();

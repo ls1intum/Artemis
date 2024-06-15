@@ -38,9 +38,7 @@ export class LectureDetailComponent implements OnInit {
             this.getLectureDetailSections();
             if (this.lecture.course?.id) {
                 this.irisSettingsService.getCombinedCourseSettings(this.lecture.course?.id).subscribe((settings) => {
-                    if (settings) {
-                        this.lectureIngestionEnabled = settings.irisLectureIngestionSettings?.enabled || false;
-                    }
+                    this.lectureIngestionEnabled = settings?.irisLectureIngestionSettings?.enabled || false;
                 });
             }
         });

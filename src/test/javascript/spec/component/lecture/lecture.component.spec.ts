@@ -22,12 +22,15 @@ import { LectureImportComponent } from 'app/lecture/lecture-import.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { Course } from 'app/entities/course.model';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { mockSettings } from '../iris/settings/mock-settings';
 
 describe('Lecture', () => {
     let lectureComponentFixture: ComponentFixture<LectureComponent>;
     let lectureComponent: LectureComponent;
     let lectureService: LectureService;
     let modalService: NgbModal;
+    let irisService: IrisSettingsService;
 
     let pastLecture: Lecture;
     let pastLecture2: Lecture;
@@ -147,6 +150,7 @@ describe('Lecture', () => {
                 lectureComponent = lectureComponentFixture.componentInstance;
                 lectureService = TestBed.inject(LectureService);
                 modalService = TestBed.inject(NgbModal);
+                irisService = TestBed.inject(IrisSettingsService);
             });
     });
 
@@ -259,5 +263,12 @@ describe('Lecture', () => {
         const ingestSpy = jest.spyOn(lectureService, 'ingestLecturesInPyris').mockImplementation(() => of(null));
         lectureComponent.ingestLecturesInPyris();
         expect(ingestSpy).not.toHaveBeenCalled();
+    });
+
+    it('should set lectureIngestionEnabled based on settings', () => {
+        lectureComponent.courseId = 1;
+        irisService.setCourseSettings(lectureComponent.courseId, mockSettings());
+        lectureComponentFixture.detectChanges();
+        expect(lectureComponent.lectureIngestionEnabled).toBeTrue();
     });
 });
