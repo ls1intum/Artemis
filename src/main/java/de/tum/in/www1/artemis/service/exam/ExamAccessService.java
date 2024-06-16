@@ -93,7 +93,6 @@ public class ExamAccessService {
 
         if (exam.isTestExam()) {
             return handleTestExam(exam, course, currentUser);
-
         }
         else {
             return handleExam(examId, currentUser.getId());
@@ -101,6 +100,15 @@ public class ExamAccessService {
         // NOTE: the check examRepository.isUserRegisteredForExam is not necessary because we already checked before that there is a student exam in this case for the current user
     }
 
+    /**
+     * Fetches an unfinished StudentExam for a test exam if one exists. If no unfinished StudentExam exists, generates a new one.
+     *
+     * @param exam   The exam which StudentExam belongs to
+     * @param course The course which the exam belongs to
+     * @return the StudentExam
+     * @throws BadRequestAlertException If the exam had already ended
+     * @throws IllegalStateException    If the user has more than one unfinished student exam
+     */
     private StudentExam handleTestExam(Exam exam, Course course, User currentUser) {
         StudentExam studentExam;
 
@@ -128,6 +136,13 @@ public class ExamAccessService {
         return studentExam;
     }
 
+    /**
+     * Fetches a real exam for the given examId and userId.
+     *
+     * @param examId the id of the Exam
+     * @param userId the id of the User
+     * @return the StudentExam
+     */
     private StudentExam handleExam(Long examId, Long userId) {
         // Check that the student exam exists
         Optional<StudentExam> optionalStudentExam = studentExamRepository.findByExamIdAndUserId(examId, userId);
@@ -137,7 +152,6 @@ public class ExamAccessService {
         }
         else {
             // We skip the alert since this can happen when a tutor sees the exam card or the user did not participate yet is registered for the exam
-            // TODO Michal Kawka I think we can throw entity not found there
             throw new BadRequestAlertException("The requested Exam is no test exam and thus no student exam can be created", ENTITY_NAME, "StudentExamGenerationOnlyForTestExams",
                     true);
         }

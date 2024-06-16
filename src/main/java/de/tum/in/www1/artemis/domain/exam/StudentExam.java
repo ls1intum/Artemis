@@ -246,6 +246,12 @@ public class StudentExam extends AbstractAuditingEntity {
         return ZonedDateTime.now().isAfter(getIndividualEndDate());
     }
 
+    /**
+     * Check if the individual student exam is finished
+     * A student exam is finished if it's started and either submitted or the time has passed
+     *
+     * @return true if the exam is finished, otherwise false
+     */
     public boolean isFinished() {
         return Boolean.TRUE.equals(this.isStarted()) && (Boolean.TRUE.equals(this.isEnded()) || Boolean.TRUE.equals(this.isSubmitted()));
     }

@@ -86,7 +86,7 @@ export class CourseExamAttemptReviewDetailComponent implements OnInit, OnDestroy
 
     /**
      * do nothing if student didn't submit on time
-     * navigate to /courses/:courseId/exams/:examId/test-exam/:studentExamId if the attempt submitted
+     * navigate to /courses/:courseId/exams/:examId/test-exam/:studentExamId if the attempt was submitted
      * navigate to /courses/:courseId/exams/:examId/test-exam/start if the attempt can be continued
      * Used to open the corresponding studentExam
      */
@@ -96,11 +96,11 @@ export class CourseExamAttemptReviewDetailComponent implements OnInit, OnDestroy
             return;
         }
         // If exam is submitted navigate to the exam overview
-        else if (this.studentExam.submitted) {
+        if (this.studentExam.submitted) {
             this.router.navigate(['courses', this.courseId, 'exams', this.exam.id, 'test-exam', this.studentExam.id]); ///
         }
         // If exam is not submitted and within working time, resume attempt
-        else if (this.withinWorkingTime) {
+        if (this.withinWorkingTime) {
             this.router.navigate(['courses', this.courseId, 'exams', this.exam.id, 'test-exam', 'start']);
         }
     }

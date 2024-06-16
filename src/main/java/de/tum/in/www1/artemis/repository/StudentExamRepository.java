@@ -230,6 +230,27 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     Optional<StudentExam> findLatestByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
 
     /**
+     * Return the StudentExam for the given examId and userId, if possible. For test exams, the latest Student Exam is returned.
+     *
+     * @param examId   id of the exam
+     * @param userId   id of the user
+     * @param testExam boolean indicating if the exam is a test exam
+     * @return the student exam
+     * @throws EntityNotFoundException if no student exams could be found
+     */
+    default StudentExam findOneByExamIdAndUserId(long examId, long userId, boolean testExam) {
+        Optional<StudentExam> studentExam;
+        if (testExam) {
+            studentExam = this.findLatestByExamIdAndUserId(examId, userId);
+        }
+        else {
+            studentExam = this.findByExamIdAndUserId(examId, userId);
+        }
+
+        return studentExam.orElseThrow(() -> new EntityNotFoundException("StudentExam for exam " + examId + " and user " + userId + " does not exist"));
+    }
+
+    /**
      * Checks if any StudentExam exists for the given user (student) id in the given course.
      *
      * @param courseId the id of the course which should have the exam.

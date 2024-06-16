@@ -28,7 +28,7 @@
                     <jhi-course-exam-detail
                         [exam]="exam"
                         [course]="course!"
-                        [maxAttemptsReached]="getStudentExamForExamIdOrderedByIdReverse(exam!.id!).length === 255"
+                        [maxAttemptsReached]="getStudentExamForExamIdOrderedByIdReverse(exam!.id!).length >= 255"
                         id="exam-{{ exam.id }}"
                     />
                 </div>

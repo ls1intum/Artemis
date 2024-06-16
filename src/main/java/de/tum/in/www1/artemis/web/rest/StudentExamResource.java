@@ -563,15 +563,8 @@ public class StudentExamResource {
         log.debug("REST request to get the exam live events for exam {} by user {}", examId, currentUser.getLogin());
 
         boolean testExam = examRepository.isTestExam(examId);
-        StudentExam studentExam;
-        if (testExam) {
-            studentExam = studentExamRepository.findLatestByExamIdAndUserId(examId, currentUser.getId())
-                    .orElseThrow(() -> new EntityNotFoundException("StudentExam for exam " + examId + " and user " + currentUser.getId() + " does not exist"));
-        }
-        else {
-            studentExam = studentExamRepository.findByExamIdAndUserId(examId, currentUser.getId())
-                    .orElseThrow(() -> new EntityNotFoundException("StudentExam for exam " + examId + " and user " + currentUser.getId() + " does not exist"));
-        }
+
+        StudentExam studentExam = studentExamRepository.findOneByExamIdAndUserId(examId, currentUser.getId(), testExam);
 
         if (studentExam.isTestRun()) {
             throw new BadRequestAlertException("Test runs do not have live events", ENTITY_NAME, "testRunNoLiveEvents");
