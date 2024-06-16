@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository.SolutionParticipationFetchOptions;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.Collection;
@@ -16,9 +17,12 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.DomainObject_;
+import de.tum.in.www1.artemis.domain.Submission_;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation_;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation_;
-import de.tum.in.www1.artemis.repository.fetchOptions.SolutionParticipationFetchOptions;
+import de.tum.in.www1.artemis.repository.base.DynamicSpecificationRepository;
+import de.tum.in.www1.artemis.repository.base.FetchOptions;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -80,5 +84,27 @@ public interface SolutionProgrammingExerciseParticipationRepository
     default SolutionProgrammingExerciseParticipation findByProgrammingExerciseIdElseThrow(long programmingExerciseId) {
         var optional = findByProgrammingExerciseId(programmingExerciseId);
         return optional.orElseThrow(() -> new EntityNotFoundException("Solution Programming Exercise Participation", programmingExerciseId));
+    }
+
+    /**
+     * Fetch options for the {@link SolutionProgrammingExerciseParticipation} entity.
+     * Each option specifies an entity or a collection of entities to fetch eagerly when using a dynamic fetching query.
+     */
+    enum SolutionParticipationFetchOptions implements FetchOptions {
+
+        // @formatter:off
+        Submissions(SolutionProgrammingExerciseParticipation_.SUBMISSIONS),
+        SubmissionsAndResults(SolutionProgrammingExerciseParticipation_.SUBMISSIONS, Submission_.RESULTS);
+        // @formatter:on
+
+        private final String fetchPath;
+
+        SolutionParticipationFetchOptions(String... fetchPath) {
+            this.fetchPath = String.join(".", fetchPath);
+        }
+
+        public String getFetchPath() {
+            return fetchPath;
+        }
     }
 }

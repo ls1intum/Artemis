@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.repository;
+package de.tum.in.www1.artemis.repository.base;
 
 import java.util.Collection;
 
@@ -11,7 +11,6 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.repository.NoRepositoryBean;
 
 import de.tum.in.www1.artemis.domain.DomainObject_;
-import de.tum.in.www1.artemis.repository.fetchOptions.FetchOptions;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**

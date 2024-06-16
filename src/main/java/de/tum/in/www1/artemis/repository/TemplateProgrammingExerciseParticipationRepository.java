@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository.TemplateParticipationFetchOptions;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.Collection;
@@ -16,9 +17,11 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.DomainObject_;
+import de.tum.in.www1.artemis.domain.Submission_;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation_;
-import de.tum.in.www1.artemis.repository.fetchOptions.TemplateParticipationFetchOptions;
+import de.tum.in.www1.artemis.repository.base.DynamicSpecificationRepository;
+import de.tum.in.www1.artemis.repository.base.FetchOptions;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -79,5 +82,27 @@ public interface TemplateProgrammingExerciseParticipationRepository
     default TemplateProgrammingExerciseParticipation findByProgrammingExerciseIdElseThrow(long programmingExerciseId) {
         var optional = findByProgrammingExerciseId(programmingExerciseId);
         return optional.orElseThrow(() -> new EntityNotFoundException("Template Programming Exercise Participation", programmingExerciseId));
+    }
+
+    /**
+     * Fetch options for the {@link TemplateProgrammingExerciseParticipation} entity.
+     * Each option specifies an entity or a collection of entities to fetch eagerly when using a dynamic fetching query.
+     */
+    enum TemplateParticipationFetchOptions implements FetchOptions {
+
+        // @formatter:off
+        Submissions(TemplateProgrammingExerciseParticipation_.SUBMISSIONS),
+        SubmissionsAndResults(TemplateProgrammingExerciseParticipation_.SUBMISSIONS, Submission_.RESULTS);
+        // @formatter:on
+
+        private final String fetchPath;
+
+        TemplateParticipationFetchOptions(String... fetchPath) {
+            this.fetchPath = String.join(".", fetchPath);
+        }
+
+        public String getFetchPath() {
+            return fetchPath;
+        }
     }
 }
