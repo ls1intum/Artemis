@@ -14,10 +14,10 @@
                             <tr>
                                 <th><span>ID</span></th>
                                 <th>
-                                    <span>{{ 'artemisApp.lecture.wizardMode.competencyTitle' | artemisTranslate }}</span>
+                                    <span jhiTranslate="artemisApp.lecture.wizardMode.competencyTitle"></span>
                                 </th>
                                 <th>
-                                    <span>{{ 'artemisApp.lecture.wizardMode.competencyConnectedUnits' | artemisTranslate }}</span>
+                                    <span jhiTranslate="artemisApp.lecture.wizardMode.competencyConnectedUnits"></span>
                                 </th>
                                 <th></th>
                             </tr>
@@ -28,9 +28,7 @@
                                     <td>
                                         {{ competency.id }}
                                         @if (currentlyProcessedCompetency?.id === competency?.id) {
-                                            <div class="edit-overlay">
-                                                {{ 'artemisApp.lecture.attachments.isBeingEdited' | artemisTranslate }}
-                                            </div>
+                                            <div class="edit-overlay" jhiTranslate="artemisApp.lecture.attachments.isBeingEdited"></div>
                                         }
                                     </td>
                                     <td>{{ competency.title }}</td>
@@ -74,7 +72,7 @@
     @if (!isEditingCompetency) {
         <div class="form-group">
             <button id="addCompetencyButton" class="btn btn-primary" type="button" [disabled]="isAddingCompetency" (click)="showCreateCompetency()">
-                <span>{{ 'artemisApp.competency.createCompetency.title' | artemisTranslate }}</span>
+                <span jhiTranslate="artemisApp.competency.createCompetency.title"></span>
             </button>
         </div>
     }

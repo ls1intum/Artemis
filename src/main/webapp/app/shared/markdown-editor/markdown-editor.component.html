@@ -32,7 +32,7 @@
                         />
                         <label [for]="'file-upload ' + uniqueMarkdownEditorId" class="markdown-editor__file-label d-inline">
                             <div class="row mx-0 align-items-baseline">
-                                <span class="col upload-subtitle">{{ 'artemisApp.markdownEditor.fileUpload' | artemisTranslate }}</span>
+                                <span class="col upload-subtitle" jhiTranslate="artemisApp.markdownEditor.fileUpload"></span>
                                 <a class="col-auto" href="http://demo.showdownjs.com">
                                     <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.markdownEditor.guide' | artemisTranslate" />
                                 </a>
@@ -81,9 +81,13 @@
                         <!--style command -->
                         @if (headerCommands.length > 0) {
                             <div class="btn-group" ngbDropdown role="group" aria-label="Button group with nested dropdown">
-                                <button class="btn btn-sm px-2 py-0" type="button" id="dropdownBasic1" ngbDropdownToggle>
-                                    {{ 'artemisApp.multipleChoiceQuestion.editor.style' | artemisTranslate }}
-                                </button>
+                                <button
+                                    class="btn btn-sm px-2 py-0"
+                                    type="button"
+                                    id="dropdownBasic1"
+                                    ngbDropdownToggle
+                                    jhiTranslate="artemisApp.multipleChoiceQuestion.editor.style"
+                                ></button>
                                 <div class="dropdown-menu" ngbDropdownMenu>
                                     @for (command of headerCommands; track command) {
                                         <button class="dropdown-item" (click)="command.execute()" type="button">
@@ -171,7 +175,7 @@
                         <!--color picker command -->
                         @if (colorCommands.length > 0) {
                             <div class="btn-group col-xs-6">
-                                <div class="color-preview btn btn-sm px-2 py-0" (click)="openColorSelector($event)">{{ 'artemisApp.markdownEditor.color' | artemisTranslate }}</div>
+                                <div class="color-preview btn btn-sm px-2 py-0" (click)="openColorSelector($event)" jhiTranslate="artemisApp.markdownEditor.color"></div>
                                 <jhi-color-selector [tagColors]="markdownColors" (selectedColor)="onSelectedColor($event)" />
                             </div>
                         }

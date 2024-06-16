@@ -2,7 +2,7 @@
     <div>
         <div class="modal-header">
             <h4 class="modal-title">
-                <span> {{ 'artemisApp.dialogs.createGroupChat.title' | artemisTranslate }} </span>
+                <span jhiTranslate="artemisApp.dialogs.createGroupChat.title"></span>
             </h4>
             <button type="button" class="btn-close dismiss" (click)="clear()"></button>
         </div>
@@ -16,9 +16,7 @@
                 @if (selectedUsersControl?.invalid && (selectedUsersControl?.dirty || selectedUsersControl?.touched)) {
                     <div class="alert alert-danger">
                         @if (selectedUsersControl?.errors?.required) {
-                            <div>
-                                {{ 'artemisApp.dialogs.createGroupChat.requiredError' | artemisTranslate }}
-                            </div>
+                            <div jhiTranslate="artemisApp.dialogs.createGroupChat.requiredError"></div>
                         }
                         @if (selectedUsersControl?.errors?.maxlength) {
                             <div>
@@ -30,7 +28,7 @@
                 <div class="row">
                     <div class="col-12 text-end">
                         <button type="submit" id="submitButton" [disabled]="!isSubmitPossible" class="btn btn-primary">
-                            <span>{{ 'artemisApp.dialogs.createGroupChat.confirmButton' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.dialogs.createGroupChat.confirmButton"></span>
                         </button>
                     </div>
                 </div>

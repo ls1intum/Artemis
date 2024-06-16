@@ -10,10 +10,10 @@
         <span style="color: red" jhiTranslate="artemisApp.quizQuestion.invalidText"></span>
     }
     @if (!isSingleChoice) {
-        <h6>{{ 'artemisApp.quizQuestion.allOptions' | artemisTranslate }}</h6>
+        <h6 jhiTranslate="artemisApp.quizQuestion.allOptions"></h6>
     }
     @if (isSingleChoice) {
-        <h6>{{ 'artemisApp.quizQuestion.singleOption' | artemisTranslate }}</h6>
+        <h6 jhiTranslate="artemisApp.quizQuestion.singleOption"></h6>
     }
     @if (question.hint || (question.explanation && showResult)) {
         <div class="hint">
@@ -98,13 +98,13 @@
     @if (showResult) {
         <table class="answer-options-result">
             <tr>
-                <th class="content">{{ 'artemisApp.multipleChoiceQuestion.answer' | artemisTranslate }}</th>
-                <th class="solution">{{ 'artemisApp.multipleChoiceQuestion.solution' | artemisTranslate }}</th>
+                <th class="content" jhiTranslate="artemisApp.multipleChoiceQuestion.answer"></th>
+                <th class="solution" jhiTranslate="artemisApp.multipleChoiceQuestion.solution"></th>
                 @if (!forceSampleSolution) {
                     <th class="result-symbol"></th>
                 }
                 @if (!forceSampleSolution) {
-                    <th class="selection">{{ 'artemisApp.multipleChoiceQuestion.you' | artemisTranslate }}</th>
+                    <th class="selection" jhiTranslate="artemisApp.multipleChoiceQuestion.you"></th>
                 }
             </tr>
             @for (answerOption of question.answerOptions; track answerOption; let i = $index) {
@@ -134,10 +134,10 @@
                     </td>
                     <td class="solution">
                         @if (!answerOption.invalid && !question.invalid && answerOption.isCorrect) {
-                            <span id="answer-option-{{ i }}-correct" class="correct">{{ 'artemisApp.multipleChoiceQuestion.correct' | artemisTranslate }}</span>
+                            <span id="answer-option-{{ i }}-correct" class="correct" jhiTranslate="artemisApp.multipleChoiceQuestion.correct"></span>
                         }
                         @if (!answerOption.invalid && !question.invalid && !answerOption.isCorrect) {
-                            <span id="answer-option-{{ i }}-wrong" class="wrong">{{ 'artemisApp.multipleChoiceQuestion.wrong' | artemisTranslate }}</span>
+                            <span id="answer-option-{{ i }}-wrong" class="wrong" jhiTranslate="artemisApp.multipleChoiceQuestion.wrong"></span>
                         }
                         @if (answerOption.invalid || question.invalid) {
                             <span id="answer-option-{{ i }}-invalid" class="wrong" jhiTranslate="artemisApp.quizQuestion.invalid"></span>
