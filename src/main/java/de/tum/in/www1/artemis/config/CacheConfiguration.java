@@ -243,8 +243,6 @@ public class CacheConfiguration {
         config.getMapConfigs().put("files", initializeFilesMapConfig(jHipsterProperties));
         config.getMapConfigs().put("de.tum.in.www1.artemis.domain.*", initializeDomainMapConfig(jHipsterProperties));
 
-        config.addMapConfig(initializeDefaultMapConfig(jHipsterProperties));
-
         // Configure split brain protection if the cluster was split at some point
         var splitBrainProtectionConfig = new SplitBrainProtectionConfig();
         splitBrainProtectionConfig.setName("artemis-split-brain-protection");
