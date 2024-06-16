@@ -29,7 +29,7 @@
             "cancelAll": "Alle abbrechen",
             "statistics": {
                 "title": "Übersicht",
-                "titleTooltip": "Daten werden für den letzten Zeitraum abgerufen, der durch die Zeitspanne definiert ist.",
+                "titleTooltip": "Daten für den definierten Zeitraum werden abgerufen.",
                 "totalBuilds": "Anzahl der Builds:",
                 "successfulBuildsWithColon": "Erfolgreiche Builds:",
                 "successfulBuilds": "Erfolgreiche Builds",

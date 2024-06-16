@@ -29,7 +29,7 @@
             "cancelAll": "Cancel All",
             "statistics": {
                 "title": "Overview",
-                "titleTooltip": "Data is fetched for the last period defined by the time span.",
+                "titleTooltip": "Data for the specified time span is fetched.",
                 "totalBuilds": "Number of Builds:",
                 "successfulBuildsWithColon": "Successful Builds:",
                 "successfulBuilds": "Successful Builds",
