@@ -34,7 +34,7 @@ public enum ProgrammingExerciseFetchOptions implements FetchOptions {
 
     private final String fetchPath;
 
-    private ProgrammingExerciseFetchOptions(String fetchPath) {
+    ProgrammingExerciseFetchOptions(String fetchPath) {
         this.fetchPath = fetchPath;
     }
 

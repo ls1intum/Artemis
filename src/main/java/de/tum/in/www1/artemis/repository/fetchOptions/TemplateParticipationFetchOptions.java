@@ -16,7 +16,7 @@ public enum TemplateParticipationFetchOptions implements FetchOptions {
 
     private final String fetchPath;
 
-    private TemplateParticipationFetchOptions(String... fetchPath) {
+    TemplateParticipationFetchOptions(String... fetchPath) {
         this.fetchPath = String.join(".", fetchPath);
     }
 
