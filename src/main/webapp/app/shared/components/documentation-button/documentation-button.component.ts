@@ -17,6 +17,8 @@ const DocumentationLinks = {
     FileUpload: 'exercises/file-upload/',
     Notifications: 'notifications/',
     Competencies: 'adaptive-learning/',
+    StandardizedCompetencies: 'adaptive-learning/adaptive-learning-admin',
+    GenerateCompetencies: 'adaptive-learning/adaptive-learning-instructor#generate-competencies',
     Communications: 'communication/',
     Exams: 'exam_mode/',
     PlagiarismChecks: 'plagiarism-check/',
