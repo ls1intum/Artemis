@@ -50,10 +50,10 @@
                     }
                     @if (!isTestExam) {
                         <li class="d-flex align-items-center">
-                            <span>{{ 'artemisApp.examStatus.preparation.generateStudentExams' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.examStatus.preparation.generateStudentExams"></span>
                             <!-- If no students are registered yet, we do not want to display "0 of 0" -->
                             @if (!registeredStudents) {
-                                <span>{{ 'artemisApp.examStatus.preparation.notRegistered' | artemisTranslate }}</span>
+                                <span jhiTranslate="artemisApp.examStatus.preparation.notRegistered"></span>
                             }
                             @if (registeredStudents) {
                                 <span>
@@ -77,7 +77,7 @@
                     }
                     @if (!isTestExam) {
                         <li class="d-flex align-items-center">
-                            <span>{{ 'artemisApp.examStatus.preparation.prepareExerciseStart' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.examStatus.preparation.prepareExerciseStart"></span>
                             @if (preparedExerciseStart) {
                                 <fa-icon [icon]="faCheckCircle" class="check" />
                             }
@@ -179,7 +179,7 @@
                 }
             </div>
             <div class="status-step-content">
-                <h6 class="text-center">{{ 'artemisApp.examStatus.correction.examCorrection' | artemisTranslate }}</h6>
+                <h6 class="text-center" jhiTranslate="artemisApp.examStatus.correction.examCorrection"></h6>
                 @if (examChecklist) {
                     <ol>
                         @if (examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound !== null && numberOfSubmitted !== 0) {
@@ -215,9 +215,7 @@
                                 </b>
                             }
                             @if (!exam.publishResultsDate) {
-                                <b class="unset">
-                                    {{ 'artemisApp.examStatus.correction.notSet' | artemisTranslate }}
-                                </b>
+                                <b class="unset" jhiTranslate="artemisApp.examStatus.correction.notSet"></b>
                             }
                             <br />
                         </li>

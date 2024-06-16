@@ -4,15 +4,15 @@
             @if (!exam.id) {
                 <div class="d-flex align-items-center">
                     @if (!isImport) {
-                        <h4>{{ 'artemisApp.examManagement.createExam' | artemisTranslate }}</h4>
+                        <h4 jhiTranslate="artemisApp.examManagement.createExam"></h4>
                     }
                     @if (isImport) {
-                        <h4>{{ 'artemisApp.examManagement.importExam' | artemisTranslate }}</h4>
+                        <h4 jhiTranslate="artemisApp.examManagement.importExam"></h4>
                     }
                     <jhi-documentation-button [type]="documentationType" />
                 </div>
             } @else {
-                <h4>{{ 'artemisApp.examManagement.editExam' | artemisTranslate }}</h4>
+                <h4 jhiTranslate="artemisApp.examManagement.editExam"></h4>
             }
             <!-- Section exam configuration -->
             <div>
@@ -231,7 +231,7 @@
                                 id="examStudentReviewEnd"
                             />
                             @if (!isValidExamStudentReviewEnd) {
-                                <span class="invalid-feedback"> {{ 'artemisApp.examManagement.reviewDatesInvalidWarning' | artemisTranslate }}</span>
+                                <span class="invalid-feedback" jhiTranslate="artemisApp.examManagement.reviewDatesInvalidWarning"></span>
                             }
                         </div>
                     </div>
@@ -278,7 +278,7 @@
                     <fa-icon [icon]="faSave" />&nbsp;{{ 'entity.action.' + (isImport ? 'import' : 'save') | artemisTranslate }}
                 </button>
                 <ng-template #renderedWarning>
-                    <div>{{ 'artemisApp.examManagement.reviewDatesInvalidExplanation' | artemisTranslate }}</div>
+                    <div jhiTranslate="artemisApp.examManagement.reviewDatesInvalidExplanation"></div>
                 </ng-template>
                 @if (!isValidExamStudentReviewEnd) {
                     <span class="badge bg-warning" [ngbTooltip]="renderedWarning" placement="right auto">

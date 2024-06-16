@@ -11,9 +11,7 @@
             </div>
         }
         @if (overviewPageOpen) {
-            <div class="h3 m-0 text-overflow d-block col">
-                {{ 'artemisApp.examParticipation.examOverview' | artemisTranslate }}
-            </div>
+            <div class="h3 m-0 text-overflow d-block col" jhiTranslate="artemisApp.examParticipation.examOverview"></div>
         }
         <div class="mt-2">
             <jhi-exam-live-events-button />
@@ -83,9 +81,7 @@
                             {{ 'artemisApp.examParticipation.' + (exerciseIndex >= exercises.length - 1 ? 'submitLastExercise' : 'submitOtherExercise') | artemisTranslate }}
                         </button>
                     }
-                    <button id="hand-in-early" class="btn btn-danger ms-2" (click)="handInEarly()">
-                        {{ 'artemisApp.examParticipation.handInEarly' | artemisTranslate }}
-                    </button>
+                    <button id="hand-in-early" class="btn btn-danger ms-2" (click)="handInEarly()" jhiTranslate="artemisApp.examParticipation.handInEarly"></button>
                 </div>
                 <div class="ms-3 mb-2">
                     <jhi-exam-timer class="d-flex justify-content-end mx-0" [criticalTime]="criticalTime" [endDate]="endDate" (timerAboutToEnd)="triggerExamAboutToEnd()" />

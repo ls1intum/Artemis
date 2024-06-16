@@ -45,9 +45,7 @@
     }
     <div><span style="display: table; margin-left: auto; margin-right: auto" [innerHTML]="formattedGeneralInformation"></span></div>
     @if (studentFailedToSubmit) {
-        <div class="mb-2 font-weight-bold text-danger">
-            {{ 'artemisApp.studentExam.submissionNotInTime' | artemisTranslate }}
-        </div>
+        <div class="mb-2 font-weight-bold text-danger" jhiTranslate="artemisApp.studentExam.submissionNotInTime"></div>
     }
     @if (!studentFailedToSubmit) {
         <div class="form-check mt-1 ps-0">
@@ -112,7 +110,7 @@
             @if (startView) {
                 <ng-container #startButton>
                     @if (!startButtonEnabled) {
-                        <div>{{ 'artemisApp.exam.startExamToolTip' | artemisTranslate }}</div>
+                        <div jhiTranslate="artemisApp.exam.startExamToolTip"></div>
                     }
                     <button id="start-exam" [disabled]="!startButtonEnabled || waitingForExamStart" type="submit" (click)="startExam()" class="btn btn-primary">
                         <span jhiTranslate="artemisApp.exam.startExam"></span>
@@ -147,9 +145,7 @@
             }
             @if (handInEarly) {
                 <div class="mt-5">
-                    <div class="mb-2 font-weight-bold">
-                        {{ 'artemisApp.examParticipation.continueAfterHandInEarlyDescription' | artemisTranslate }}
-                    </div>
+                    <div class="mb-2 font-weight-bold" jhiTranslate="artemisApp.examParticipation.continueAfterHandInEarlyDescription"></div>
                     <button [disabled]="submitInProgress" id="continue" class="btn btn-secondary mt-2" (click)="continueAfterHandInEarly()">
                         <fa-icon [icon]="faArrowLeft" />
                         {{ 'artemisApp.examParticipation.continueAfterHandInEarly' | artemisTranslate }}
