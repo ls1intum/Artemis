@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.repository.base;
 
 import java.util.Collection;
+import java.util.Optional;
 
 import jakarta.persistence.criteria.JoinType;
 import jakarta.validation.constraints.NotNull;
@@ -22,7 +23,19 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface DynamicSpecificationRepository<T, ID, F extends FetchOptions> extends JpaRepository<T, ID>, JpaSpecificationExecutor<T> {
 
     /**
-     * Find an entity by its id or throw an EntityNotFoundException if it does not exist.
+     * Find an entity by its id and given specification.
+     *
+     * @param specification the specification to apply
+     * @param id            the id of the entity to find
+     * @return the entity with the given id
+     */
+    default Optional<T> findOneById(Specification<T> specification, long id) {
+        final Specification<T> hasIdSpec = (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get(DomainObject_.ID), id);
+        return findOne(specification.and(hasIdSpec));
+    }
+
+    /**
+     * Find an entity by its id and given specification or throw an EntityNotFoundException if it does not exist.
      *
      * @param specification the specification to apply
      * @param id            the id of the entity to find
@@ -30,8 +43,7 @@ public interface DynamicSpecificationRepository<T, ID, F extends FetchOptions> e
      * @return the entity with the given id
      */
     default T findOneByIdElseThrow(Specification<T> specification, long id, String entityName) {
-        final Specification<T> hasIdSpec = (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get(DomainObject_.ID), id);
-        return findOne(specification.and(hasIdSpec)).orElseThrow(() -> new EntityNotFoundException(entityName, id));
+        return findOneById(specification, id).orElseThrow(() -> new EntityNotFoundException(entityName, id));
     }
 
     /**
