@@ -147,7 +147,7 @@ Not used in Artemis yet.
 In Artemis, we use dynamic fetching to load the relationships of an entity on demand. As we do not want to load all relationships of an entity every time we fetch it from the database, we use as described above ``FetchType.LAZY``.
 In order to load the relationships of an entity on demand, we then use one of 3 methods:
 
-1. **EntityGraph**: The ``@EntityGraph`` annotation is the simples way to specify a graph of relationships to fetch. It should be used when a query is auto-constructed by Spring Data JPA and does not have a custom ``@Query`` annotation. Example:
+1. **EntityGraph**: The ``@EntityGraph`` annotation is the simplest way to specify a graph of relationships to fetch. It should be used when a query is auto-constructed by Spring Data JPA and does not have a custom ``@Query`` annotation. Example:
 
  .. code-block:: java
 
