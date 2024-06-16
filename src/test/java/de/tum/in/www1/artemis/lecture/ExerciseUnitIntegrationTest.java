@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.lecture;
 
+import static de.tum.in.www1.artemis.util.RequestUtilService.deleteProgrammingExerciseParamsFalse;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.HashSet;
@@ -192,7 +193,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentTe
         request.delete("/api/modeling-exercises/" + modelingExercise.getId(), HttpStatus.OK);
         request.delete("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK);
         request.delete("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK);
-        request.delete("/api/programming-exercises/" + programmingExercise.getId(), HttpStatus.OK);
+        request.delete("/api/programming-exercises/" + programmingExercise.getId(), HttpStatus.OK, deleteProgrammingExerciseParamsFalse());
 
         List<ExerciseUnit> exerciseUnitsOfLecture = request.getList("/api/lectures/" + lecture1.getId() + "/exercise-units", HttpStatus.OK, ExerciseUnit.class);
         assertThat(exerciseUnitsOfLecture).isEmpty();

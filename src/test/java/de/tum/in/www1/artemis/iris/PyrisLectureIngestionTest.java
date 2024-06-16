@@ -95,8 +95,10 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
-        assertThat(pyrisWebhookService.autoUpdateAttachmentUnitsInPyris(lecture1.getCourse().getId(), List.of((AttachmentUnit) lecture1.getLectureUnits().getFirst()))).isTrue();
-        assertThat(pyrisWebhookService.autoUpdateAttachmentUnitsInPyris(lecture1.getCourse().getId(), List.of((AttachmentUnit) lecture1.getLectureUnits().getLast()))).isFalse();
+        assertThat(pyrisWebhookService.autoUpdateAttachmentUnitsInPyris(irisSettingsRepository, lecture1.getCourse().getId(),
+                List.of((AttachmentUnit) lecture1.getLectureUnits().getFirst()))).isTrue();
+        assertThat(pyrisWebhookService.autoUpdateAttachmentUnitsInPyris(irisSettingsRepository, lecture1.getCourse().getId(),
+                List.of((AttachmentUnit) lecture1.getLectureUnits().getLast()))).isFalse();
     }
 
     @Test
@@ -109,8 +111,10 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
-        assertThat(pyrisWebhookService.autoUpdateAttachmentUnitsInPyris(lecture1.getCourse().getId(), List.of((AttachmentUnit) lecture1.getLectureUnits().getFirst()))).isFalse();
-        assertThat(pyrisWebhookService.autoUpdateAttachmentUnitsInPyris(lecture1.getCourse().getId(), List.of((AttachmentUnit) lecture1.getLectureUnits().getLast()))).isFalse();
+        assertThat(pyrisWebhookService.autoUpdateAttachmentUnitsInPyris(irisSettingsRepository, lecture1.getCourse().getId(),
+                List.of((AttachmentUnit) lecture1.getLectureUnits().getFirst()))).isFalse();
+        assertThat(pyrisWebhookService.autoUpdateAttachmentUnitsInPyris(irisSettingsRepository, lecture1.getCourse().getId(),
+                List.of((AttachmentUnit) lecture1.getLectureUnits().getLast()))).isFalse();
     }
 
     @Test
@@ -152,7 +156,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
-        Boolean reponse = request.postWithResponseBody("/api/courses/" + lecture1.getCourse().getId() + "/ingest", Optional.empty(), boolean.class, HttpStatus.OK);
+        Boolean response = request.postWithResponseBody("/api/courses/" + lecture1.getCourse().getId() + "/ingest", Optional.empty(), boolean.class, HttpStatus.OK);
         assertThat(response).isTrue();
     }
 
