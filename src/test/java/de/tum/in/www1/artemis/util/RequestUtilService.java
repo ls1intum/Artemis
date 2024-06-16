@@ -18,6 +18,7 @@ import java.util.function.Function;
 
 import jakarta.annotation.Nullable;
 import jakarta.servlet.ServletException;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -259,6 +260,23 @@ public class RequestUtilService {
         return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructCollectionType(List.class, listElementType));
     }
 
+    public <T, R> Set<R> postSetWithResponseBody(String path, T body, Class<R> setElementType, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
+            @Nullable Map<String, String> expectedResponseHeaders) throws Exception {
+        String jsonBody = mapper.writeValueAsString(body);
+        var request = MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody);
+        if (httpHeaders != null) {
+            request = request.headers(httpHeaders);
+        }
+        MvcResult res = performMvcRequest(request).andExpect(status().is(expectedStatus.value())).andReturn();
+        restoreSecurityContext();
+        if (!expectedStatus.is2xxSuccessful()) {
+            assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
+            return null;
+        }
+        verifyExpectedResponseHeaders(expectedResponseHeaders, res);
+        return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructCollectionType(Set.class, setElementType));
+    }
+
     public <T, R> R postWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
             @Nullable Map<String, String> expectedResponseHeaders, @Nullable LinkedMultiValueMap<String, String> params) throws Exception {
         return postWithResponseBody(path, body, false, responseType, expectedStatus, httpHeaders, expectedResponseHeaders, params);
@@ -365,6 +383,10 @@ public class RequestUtilService {
 
     public <T, R> List<R> postListWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
         return postListWithResponseBody(path, body, responseType, expectedStatus, null, null);
+    }
+
+    public <T, R> Set<R> postSetWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
+        return postSetWithResponseBody(path, body, responseType, expectedStatus, null, null);
     }
 
     public <T, R> R postWithResponseBody(String path, T body, Class<R> responseType, @Nullable LinkedMultiValueMap<String, String> params, HttpStatus expectedStatus)
@@ -787,5 +809,16 @@ public class RequestUtilService {
                 assertThat(res.getResponse().getHeaderValues(responseHeader.getKey()).getFirst()).isEqualTo(responseHeader.getValue());
             }
         }
+    }
+
+    /**
+     * Creates the delete params with both deleteStudentReposBuildPlans and deleteBaseReposBuildPlans set to false.
+     */
+    @NotNull
+    public static LinkedMultiValueMap<String, String> deleteProgrammingExerciseParamsFalse() {
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("deleteStudentReposBuildPlans", "false");
+        params.add("deleteBaseReposBuildPlans", "false");
+        return params;
     }
 }

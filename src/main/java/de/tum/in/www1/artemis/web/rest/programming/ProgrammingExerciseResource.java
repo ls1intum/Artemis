@@ -81,6 +81,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseRepositoryS
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
+import de.tum.in.www1.artemis.web.rest.dto.CheckoutDirectoriesDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -532,15 +533,17 @@ public class ProgrammingExerciseResource {
      * DELETE /programming-exercises/:id : delete the "id" programmingExercise.
      *
      * @param exerciseId                   the id of the programmingExercise to delete
-     * @param deleteStudentReposBuildPlans boolean which states whether the corresponding build plan should be deleted as well
-     * @param deleteBaseReposBuildPlans    the ResponseEntity with status 200 (OK)
+     * @param deleteStudentReposBuildPlans boolean which states whether the student repos and build plans should be deleted as well, this is true by default because for LocalVC
+     *                                         and LocalCI, it does not make sense to keep these artifacts
+     * @param deleteBaseReposBuildPlans    boolean which states whether the base repos and build plans should be deleted as well, this is true by default because for LocalVC and
+     *                                         LocalCI, it does not make sense to keep these artifacts
      * @return the ResponseEntity with status 200 (OK) when programming exercise has been successfully deleted or with status 404 (Not Found)
      */
     @DeleteMapping("programming-exercises/{exerciseId}")
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable long exerciseId, @RequestParam(defaultValue = "false") boolean deleteStudentReposBuildPlans,
-            @RequestParam(defaultValue = "false") boolean deleteBaseReposBuildPlans) {
+    public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable long exerciseId, @RequestParam(defaultValue = "true") boolean deleteStudentReposBuildPlans,
+            @RequestParam(defaultValue = "true") boolean deleteBaseReposBuildPlans) {
         log.info("REST request to delete ProgrammingExercise : {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -878,4 +881,23 @@ public class ProgrammingExerciseResource {
         return ResponseEntity.ok(buildLogStatistics);
     }
 
+    /**
+     * GET programming-exercises/repository-checkout-directories
+     *
+     * @param programmingLanguage for which the checkout directories should be retrieved
+     * @param checkoutSolution    whether the checkout solution repository shall be checked out during the template and submission build plan,
+     *                                if not supplied set to true as default
+     * @return a DTO containing the checkout directories for the exercise, solution, and tests repository
+     *         for the requested programming language for the submission and solution build.
+     */
+    @GetMapping("programming-exercises/repository-checkout-directories")
+    @EnforceAtLeastEditor
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<CheckoutDirectoriesDTO> getRepositoryCheckoutDirectories(@RequestParam(value = "programmingLanguage") ProgrammingLanguage programmingLanguage,
+            @RequestParam(value = "checkoutSolution", defaultValue = "true") boolean checkoutSolution) {
+        log.debug("REST request to get checkout directories for programming language: {}", programmingLanguage);
+
+        CheckoutDirectoriesDTO repositoriesCheckoutDirectoryDTO = continuousIntegrationService.orElseThrow().getCheckoutDirectories(programmingLanguage, checkoutSolution);
+        return ResponseEntity.ok(repositoriesCheckoutDirectoryDTO);
+    }
 }

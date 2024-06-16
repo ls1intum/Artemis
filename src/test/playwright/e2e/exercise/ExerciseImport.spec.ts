@@ -30,7 +30,7 @@ test.describe('Import exercises', () => {
         course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
         await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
         textExercise = await exerciseAPIRequests.createTextExercise({ course });
-        quizExercise = await exerciseAPIRequests.createQuizExercise({ course }, [multipleChoiceQuizTemplate]);
+        quizExercise = await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [multipleChoiceQuizTemplate] });
         modelingExercise = await exerciseAPIRequests.createModelingExercise({ course });
         programmingExercise = await exerciseAPIRequests.createProgrammingExercise({ course });
         secondCourse = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
@@ -53,7 +53,7 @@ test.describe('Import exercises', () => {
 
             const importResponse = await textExerciseCreation.import();
             const exercise = await importResponse.json();
-            await login(studentOne, `/courses/${secondCourse.id}`);
+            await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
             await courseOverview.startExercise(exercise.id!);
             await courseOverview.openRunningExercise(exercise.id!);
             const submissionText = await Fixtures.get('loremIpsum-short.txt');
@@ -77,15 +77,12 @@ test.describe('Import exercises', () => {
             await expect(page.locator('#field_title')).toHaveValue(quizExercise.title!);
             await expect(page.locator('#quiz-duration-minutes')).toHaveValue(`${quizExercise.duration! / 60}`);
 
-            // Timeout commented to check if it is necessary
-            // page.waitForTimeout(500);
-
             await quizExerciseCreation.setVisibleFrom(dayjs());
 
             const importResponse = await quizExerciseCreation.import();
             const exercise: QuizExercise = await importResponse.json();
             await courseManagementExercises.startQuiz(exercise.id!);
-            await login(studentOne, `/courses/${secondCourse.id}`);
+            await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
             await courseOverview.startExercise(exercise.id!);
             await quizExerciseMultipleChoice.tickAnswerOption(exercise.id!, 0);
             await quizExerciseMultipleChoice.tickAnswerOption(exercise.id!, 2);
@@ -110,7 +107,7 @@ test.describe('Import exercises', () => {
 
             const importResponse = await modelingExerciseCreation.import();
             const exercise: ModelingExercise = await importResponse.json();
-            await login(studentOne, `/courses/${secondCourse.id}`);
+            await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
             await courseOverview.startExercise(exercise.id!);
             await courseOverview.openRunningExercise(exercise.id!);
             await modelingExerciseEditor.addComponentToModel(exercise.id!, 1);
@@ -135,7 +132,7 @@ test.describe('Import exercises', () => {
 
             const importResponse = await programmingExerciseCreation.import();
             const exercise: ProgrammingExercise = await importResponse.json();
-            await login(studentOne, `/courses/${secondCourse.id}`);
+            await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
             await courseOverview.startExercise(exercise.id!);
             await courseOverview.openRunningExercise(exercise.id!);
             await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, javaPartiallySuccessfulSubmission, async () => {
