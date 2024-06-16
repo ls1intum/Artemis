@@ -23,25 +23,17 @@
                         </button>
                         <owl-date-time [firstDayOfWeek]="1" [pickerType]="'calendar'" #period />
                     </div>
-                    <div class="form-text">
-                        {{ 'artemisApp.forms.configurationForm.periodInput.explanation' | artemisTranslate }}
-                    </div>
+                    <div class="form-text" jhiTranslate="artemisApp.forms.configurationForm.periodInput.explanation"></div>
                     @if (periodControl?.invalid && (periodControl?.dirty || periodControl?.touched)) {
                         <div class="alert alert-danger">
                             @if (periodControl?.errors?.owlRequiredDateTimeRange || periodControl?.errors?.required) {
-                                <div>
-                                    {{ 'artemisApp.forms.configurationForm.periodInput.requiredValidationError' | artemisTranslate }}
-                                </div>
+                                <div jhiTranslate="artemisApp.forms.configurationForm.periodInput.requiredValidationError"></div>
                             }
                             @if (periodControl?.errors?.owlDateTimeParse) {
-                                <div>
-                                    {{ 'artemisApp.forms.configurationForm.periodInput.parseError' | artemisTranslate }}
-                                </div>
+                                <div jhiTranslate="artemisApp.forms.configurationForm.periodInput.parseError"></div>
                             }
                             @if (periodControl?.errors?.owlDateTimeRange) {
-                                <div>
-                                    {{ 'artemisApp.forms.configurationForm.periodInput.invalidRangeError' | artemisTranslate }}
-                                </div>
+                                <div jhiTranslate="artemisApp.forms.configurationForm.periodInput.invalidRangeError"></div>
                             }
                         </div>
                     }
@@ -49,16 +41,21 @@
                     <div [hidden]="!isMessagingEnabled(course)">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" formControlName="useTutorialGroupChannels" id="useTutorialGroupChannels" />
-                            <label class="form-check-label" for="useTutorialGroupChannels">
-                                {{ 'artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.label' | artemisTranslate }}
-                            </label>
+                            <label
+                                class="form-check-label"
+                                for="useTutorialGroupChannels"
+                                jhiTranslate="artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.label"
+                            ></label>
                             <small id="channelHelp" class="form-text text-body-secondary d-block">{{
                                 'artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.explanation' | artemisTranslate
                             }}</small>
                             @if (showChannelDeletionWarning) {
-                                <div class="alert alert-danger" role="alert" id="channelDeletionWarning">
-                                    {{ 'artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.channelDeletionWarning' | artemisTranslate }}
-                                </div>
+                                <div
+                                    class="alert alert-danger"
+                                    role="alert"
+                                    id="channelDeletionWarning"
+                                    jhiTranslate="artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.channelDeletionWarning"
+                                ></div>
                             }
                         </div>
                         <!--Public Channel / Private Channel -->

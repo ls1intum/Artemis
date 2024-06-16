@@ -1,4 +1,4 @@
-<h5 class="mb-3">{{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.title' | artemisTranslate }}</h5>
+<h5 class="mb-3" jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.title"></h5>
 @for (suspiciousSessionsSet of suspiciousSessions; track suspiciousSessionsSet; let i = $index) {
     <p class="mb-0">
         {{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.case' | artemisTranslate }}
@@ -18,12 +18,12 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th scope="col">{{ 'artemisApp.examSession.id' | artemisTranslate }}</th>
-                    <th scope="col">{{ 'artemisApp.examSession.browserFingerprintHash' | artemisTranslate }}</th>
-                    <th scope="col">{{ 'artemisApp.examSession.ipAddress' | artemisTranslate }}</th>
-                    <th scope="col">{{ 'artemisApp.examSession.createdDate' | artemisTranslate }}</th>
-                    <th scope="col">{{ 'artemisApp.examSession.studentExamId' | artemisTranslate }}</th>
-                    <th scope="col">{{ 'artemisApp.examSession.userLogin' | artemisTranslate }}</th>
+                    <th scope="col" jhiTranslate="artemisApp.examSession.id"></th>
+                    <th scope="col" jhiTranslate="artemisApp.examSession.browserFingerprintHash"></th>
+                    <th scope="col" jhiTranslate="artemisApp.examSession.ipAddress"></th>
+                    <th scope="col" jhiTranslate="artemisApp.examSession.createdDate"></th>
+                    <th scope="col" jhiTranslate="artemisApp.examSession.studentExamId"></th>
+                    <th scope="col" jhiTranslate="artemisApp.examSession.userLogin"></th>
                 </tr>
             </thead>
             <tbody jhi-suspicious-sessions [suspiciousSessions]="suspiciousSessionsSet"></tbody>

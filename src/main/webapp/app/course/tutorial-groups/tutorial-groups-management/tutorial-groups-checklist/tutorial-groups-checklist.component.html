@@ -3,18 +3,14 @@
         <div class="row">
             <div class="col-12">
                 <h1 jhiTranslate="artemisApp.pages.checklist.title"></h1>
-                <p>
-                    {{ 'artemisApp.pages.checklist.explanation' | artemisTranslate }}
-                </p>
+                <p jhiTranslate="artemisApp.pages.checklist.explanation"></p>
             </div>
             <hr />
             <div class="col-12">
                 <p jhiTranslate="artemisApp.pages.checklist.timeZoneExplanation"></p>
                 <div>
                     <jhi-checklist-check id="timeZone" [checkAttribute]="isTimeZoneConfigured" />
-                    <label class="form-check-label pe-4" for="timeZone">
-                        {{ 'artemisApp.pages.checklist.timeZone' | artemisTranslate }}
-                    </label>
+                    <label class="form-check-label pe-4" for="timeZone" jhiTranslate="artemisApp.pages.checklist.timeZone"></label>
                     <a [routerLink]="['/course-management', course.id!, 'edit']" class="btn btn-warning btn-md my-2">
                         <fa-icon [icon]="faWrench" />&nbsp;<span jhiTranslate="artemisApp.pages.checklist.editCourse"></span>
                     </a>
@@ -25,9 +21,7 @@
                 <p jhiTranslate="artemisApp.pages.checklist.configurationExplanation"></p>
                 <table>
                     <jhi-checklist-check id="configuration" [checkAttribute]="isTutorialGroupConfigurationCreated" />
-                    <label class="form-check-label pe-4" for="configuration">
-                        {{ 'artemisApp.pages.checklist.configuration' | artemisTranslate }}
-                    </label>
+                    <label class="form-check-label pe-4" for="configuration" jhiTranslate="artemisApp.pages.checklist.configuration"></label>
                     @if (isTutorialGroupConfigurationCreated) {
                         <a
                             [routerLink]="['/course-management', course.id!, 'tutorial-groups', 'configuration', course.tutorialGroupsConfiguration!.id!, 'edit']"

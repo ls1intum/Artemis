@@ -14,10 +14,10 @@
     ></button>
     <ng-template #popContent>
         <div class="start-practice-popover">
-            <h5>{{ 'artemisApp.exerciseActions.practiceMode.title' | artemisTranslate }}</h5>
-            <p>{{ 'artemisApp.exerciseActions.practiceMode.explanation' | artemisTranslate }}</p>
+            <h5 jhiTranslate="artemisApp.exerciseActions.practiceMode.title"></h5>
+            <p jhiTranslate="artemisApp.exerciseActions.practiceMode.explanation"></p>
             @if (gradedStudentParticipation) {
-                <p>{{ 'artemisApp.exerciseActions.practiceMode.repositoryChoice' | artemisTranslate }}</p>
+                <p jhiTranslate="artemisApp.exerciseActions.practiceMode.repositoryChoice"></p>
             }
             <div class="button-footer">
                 <button

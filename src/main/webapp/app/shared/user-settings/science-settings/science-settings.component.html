@@ -6,16 +6,12 @@
         </h1>
         <div class="d-flex userSettings-info">
             <fa-icon class="ng-fa-icon" [icon]="faInfoCircle" />
-            <span class="ps-1">
-                {{ 'artemisApp.userSettings.scienceSettingsInfo' | artemisTranslate }}
-            </span>
+            <span class="ps-1" jhiTranslate="artemisApp.userSettings.scienceSettingsInfo"></span>
         </div>
         @if (!featureToggleActive) {
             <div class="d-flex mt-2 userSettings-info">
                 <fa-icon class="ng-fa-icon" [icon]="faInfoCircle" />
-                <span class="ps-1">
-                    {{ 'artemisApp.userSettings.scienceSettingsFeatureDisabled' | artemisTranslate }}
-                </span>
+                <span class="ps-1" jhiTranslate="artemisApp.userSettings.scienceSettingsFeatureDisabled"></span>
             </div>
         }
     </div>

@@ -22,11 +22,14 @@ enum ScaChartBarTitle {
         <div>
             <div>
                 <div class="d-flex justify-content-between">
-                    <h4>{{ 'artemisApp.programmingExercise.configureGrading.charts.categoryDistribution.title' | artemisTranslate }}</h4>
+                    <h4 jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.categoryDistribution.title"></h4>
                     @if (tableFiltered) {
-                        <button type="button" class="btn btn-info" (click)="resetTableFilter()">
-                            {{ 'artemisApp.programmingExercise.configureGrading.charts.resetFilter' | artemisTranslate }}
-                        </button>
+                        <button
+                            type="button"
+                            class="btn btn-info"
+                            (click)="resetTableFilter()"
+                            jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.resetFilter"
+                        ></button>
                     }
                 </div>
                 <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.categoryDistribution.description' | artemisTranslate"></p>

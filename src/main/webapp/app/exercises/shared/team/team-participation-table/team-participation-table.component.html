@@ -67,9 +67,7 @@
                 <ngx-datatable-column prop="participation" [minWidth]="150" [width]="150" [maxWidth]="150">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('id')">
-                            <span class="datatable-header-cell-label bold sortable">
-                                {{ 'artemisApp.team.detail.participationsTable.columns.participationId.label' | artemisTranslate }}
-                            </span>
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.team.detail.participationsTable.columns.participationId.label"></span>
                             <fa-icon [icon]="controls.iconForSortPropField('id')" />
                         </span>
                     </ng-template>

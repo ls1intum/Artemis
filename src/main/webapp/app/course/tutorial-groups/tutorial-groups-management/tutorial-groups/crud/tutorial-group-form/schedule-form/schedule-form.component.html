@@ -23,9 +23,7 @@
                         </div>
                     }
                     @if (repetitionFrequencyControl?.errors?.required) {
-                        <div>
-                            {{ 'artemisApp.forms.scheduleForm.repetitionFrequencyInput.requiredValidationError' | artemisTranslate }}
-                        </div>
+                        <div jhiTranslate="artemisApp.forms.scheduleForm.repetitionFrequencyInput.requiredValidationError"></div>
                     }
                 </div>
             }
@@ -58,27 +56,21 @@
                 @if (startTimeControl?.invalid && (startTimeControl?.dirty || startTimeControl?.touched)) {
                     <div class="alert alert-danger">
                         @if (startTimeControl?.errors?.required) {
-                            <div>
-                                {{ 'artemisApp.forms.scheduleForm.timeInput.invalidTimeRange' | artemisTranslate }}
-                            </div>
+                            <div jhiTranslate="artemisApp.forms.scheduleForm.timeInput.invalidTimeRange"></div>
                         }
                     </div>
                 }
                 @if (endTimeControl?.invalid && (endTimeControl?.dirty || endTimeControl?.touched)) {
                     <div class="alert alert-danger">
                         @if (endTimeControl?.errors?.required) {
-                            <div>
-                                {{ 'artemisApp.forms.scheduleForm.timeInput.invalidTimeRange' | artemisTranslate }}
-                            </div>
+                            <div jhiTranslate="artemisApp.forms.scheduleForm.timeInput.invalidTimeRange"></div>
                         }
                     </div>
                 }
                 @if (formGroup?.invalid && (formGroup?.dirty || formGroup?.touched)) {
                     <div>
                         @if (formGroup?.errors?.invalidTimeRange) {
-                            <div class="alert alert-danger">
-                                {{ 'artemisApp.forms.scheduleForm.timeInput.invalidTimeRange' | artemisTranslate }}
-                            </div>
+                            <div class="alert alert-danger" jhiTranslate="artemisApp.forms.scheduleForm.timeInput.invalidTimeRange"></div>
                         }
                     </div>
                 }
@@ -112,9 +104,7 @@
                         </div>
                     }
                     @if (locationControl?.errors?.required) {
-                        <div>
-                            {{ 'artemisApp.forms.scheduleForm.locationInput.requiredValidationError' | artemisTranslate }}
-                        </div>
+                        <div jhiTranslate="artemisApp.forms.scheduleForm.locationInput.requiredValidationError"></div>
                     }
                 </div>
             }
@@ -122,9 +112,7 @@
         <!-- Period -->
         <div>
             @if (defaultPeriodChanged) {
-                <div class="alert alert-warning" role="alert">
-                    {{ 'artemisApp.forms.scheduleForm.periodInput.periodWarning' | artemisTranslate }}
-                </div>
+                <div class="alert alert-warning" role="alert" jhiTranslate="artemisApp.forms.scheduleForm.periodInput.periodWarning"></div>
             }
             <label class="form-label" for="period" jhiTranslate="artemisApp.forms.scheduleForm.periodInput.label"></label>
             <div class="input-group">
@@ -146,14 +134,10 @@
             @if (periodControl?.invalid && (periodControl?.dirty || periodControl?.touched)) {
                 <div class="alert alert-danger">
                     @if (periodControl?.errors?.owlRequiredDateTimeRange || periodControl?.errors?.required) {
-                        <div>
-                            {{ 'artemisApp.createConfiguration.periodInput.requiredValidationError' | artemisTranslate }}
-                        </div>
+                        <div jhiTranslate="artemisApp.createConfiguration.periodInput.requiredValidationError"></div>
                     }
                     @if (periodControl?.errors?.owlDateTimeRange) {
-                        <div>
-                            {{ 'artemisApp.forms.scheduleForm.periodInput.invalidRangeError' | artemisTranslate }}
-                        </div>
+                        <div jhiTranslate="artemisApp.forms.scheduleForm.periodInput.invalidRangeError"></div>
                     }
                 </div>
             }

@@ -23,9 +23,7 @@
                             <span class="d-none d-md-inline" jhiTranslate="artemisApp.pages.tutorialGroupsManagement.creatTutorialGroupButton"></span>
                         </a>
                         <div ngbDropdown class="d-inline-block">
-                            <button type="button" class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>
-                                {{ 'artemisApp.generic.more' | artemisTranslate }}
-                            </button>
+                            <button type="button" class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle jhiTranslate="artemisApp.generic.more"></button>
                             <div ngbDropdownMenu>
                                 @if (course?.tutorialGroupsConfiguration) {
                                     <a

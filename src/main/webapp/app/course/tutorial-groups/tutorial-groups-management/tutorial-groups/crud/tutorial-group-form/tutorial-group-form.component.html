@@ -15,9 +15,7 @@
                     @if (titleControl?.invalid && (titleControl?.dirty || titleControl?.touched)) {
                         <div class="alert alert-danger">
                             @if (titleControl?.errors?.required) {
-                                <div>
-                                    {{ 'artemisApp.forms.tutorialGroupForm.titleInput.requiredValidationError' | artemisTranslate }}
-                                </div>
+                                <div jhiTranslate="artemisApp.forms.tutorialGroupForm.titleInput.requiredValidationError"></div>
                             }
                             @if (titleControl?.errors?.maxlength) {
                                 <div>
@@ -25,9 +23,7 @@
                                 </div>
                             }
                             @if (!titleControl?.errors?.required && !titleControl?.errors?.maxlength && titleControl?.errors?.pattern) {
-                                <div>
-                                    {{ 'artemisApp.forms.tutorialGroupForm.titleInput.regexValidationError' | artemisTranslate }}
-                                </div>
+                                <div jhiTranslate="artemisApp.forms.tutorialGroupForm.titleInput.regexValidationError"></div>
                             }
                         </div>
                     }
@@ -35,9 +31,11 @@
                 @if (updateTutorialGroupChannelNameControl) {
                     <div class="form-check" [hidden]="!showUpdateChannelNameCheckbox">
                         <input class="form-check-input" type="checkbox" formControlName="updateTutorialGroupChannelName" id="updateTutorialGroupChannelNameControl" />
-                        <label class="form-check-label" for="updateTutorialGroupChannelNameControl">
-                            {{ 'artemisApp.forms.tutorialGroupForm.updateChannelNameInput.label' | artemisTranslate }}
-                        </label>
+                        <label
+                            class="form-check-label"
+                            for="updateTutorialGroupChannelNameControl"
+                            jhiTranslate="artemisApp.forms.tutorialGroupForm.updateChannelNameInput.label"
+                        ></label>
                         <small id="updateChannelNameHelp" class="form-text text-body-secondary d-block">{{
                             'artemisApp.forms.tutorialGroupForm.updateChannelNameInput.explanation' | artemisTranslate
                         }}</small>
@@ -74,9 +72,7 @@
                     @if (teachingAssistantControl?.invalid && (teachingAssistantControl?.dirty || teachingAssistantControl?.touched)) {
                         <div class="alert alert-danger">
                             @if (teachingAssistantControl?.errors?.required) {
-                                <div>
-                                    {{ 'artemisApp.forms.tutorialGroupForm.teachingAssistantInput.requiredValidationError' | artemisTranslate }}
-                                </div>
+                                <div jhiTranslate="artemisApp.forms.tutorialGroupForm.teachingAssistantInput.requiredValidationError"></div>
                             }
                         </div>
                     }
@@ -143,9 +139,7 @@
                     @if (capacityControl?.invalid && (capacityControl?.dirty || capacityControl?.touched)) {
                         <div class="alert alert-danger">
                             @if (capacityControl?.errors?.min) {
-                                <div>
-                                    {{ 'artemisApp.forms.tutorialGroupForm.capacityInput.minValidationError' | artemisTranslate }}
-                                </div>
+                                <div jhiTranslate="artemisApp.forms.tutorialGroupForm.capacityInput.minValidationError"></div>
                             }
                         </div>
                     }
@@ -157,9 +151,7 @@
                                 </div>
                             }
                             @if (languageControl?.errors?.required) {
-                                <div>
-                                    {{ 'artemisApp.forms.tutorialGroupForm.languageInput.requiredValidationError' | artemisTranslate }}
-                                </div>
+                                <div jhiTranslate="artemisApp.forms.tutorialGroupForm.languageInput.requiredValidationError"></div>
                             }
                         </div>
                     }
@@ -176,14 +168,10 @@
                 <hr />
                 <div class="form-check">
                     <input class="form-check-input" type="checkbox" [(ngModel)]="configureSchedule" id="configureSchedule" [ngModelOptions]="{ standalone: true }" />
-                    <label class="form-check-label" for="configureSchedule">
-                        {{ 'artemisApp.forms.scheduleForm.configureRecurringSchedule' | artemisTranslate }}
-                    </label>
+                    <label class="form-check-label" for="configureSchedule" jhiTranslate="artemisApp.forms.scheduleForm.configureRecurringSchedule"></label>
                 </div>
                 @if (showScheduledChangedWarning) {
-                    <div class="alert alert-danger" role="alert">
-                        {{ 'artemisApp.forms.scheduleForm.scheduleChangeWarning' | artemisTranslate }}
-                    </div>
+                    <div class="alert alert-danger" role="alert" jhiTranslate="artemisApp.forms.scheduleForm.scheduleChangeWarning"></div>
                 }
                 <hr />
                 <jhi-schedule-form [hidden]="!configureSchedule" #scheduleForm [parentFormGroup]="form" [course]="course" />
