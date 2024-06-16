@@ -14,9 +14,7 @@
         @if (courseDescriptionControl.invalid && (courseDescriptionControl.dirty || courseDescriptionControl.touched)) {
             <div class="alert alert-danger mb-0">
                 @if (courseDescriptionControl.errors?.required) {
-                    <div>
-                        {{ 'artemisApp.competency.generate.courseDescription.requiredValidationError' | artemisTranslate }}
-                    </div>
+                    <div jhiTranslate="artemisApp.competency.generate.courseDescription.requiredValidationError"></div>
                 }
                 @if (courseDescriptionControl.errors?.minlength) {
                     <div>

@@ -98,9 +98,7 @@
                             [ngModel]="hideFinishedExercises"
                             (ngModelChange)="triggerFinishedExercises()"
                         />
-                        <label class="form-check-label" for="field_hideFinishedExercise">
-                            {{ 'artemisApp.assessmentDashboard.hideFinishedExercises' | artemisTranslate }}
-                        </label>
+                        <label class="form-check-label" for="field_hideFinishedExercise" jhiTranslate="artemisApp.assessmentDashboard.hideFinishedExercises"></label>
                     </div>
                     <div class="form-check form-check-inline">
                         <input
@@ -111,9 +109,7 @@
                             [ngModel]="hideOptional"
                             (ngModelChange)="triggerOptionalExercises()"
                         />
-                        <label class="form-check-label" for="field_hideOptional">
-                            {{ 'artemisApp.assessmentDashboard.hideOptional' | artemisTranslate }}
-                        </label>
+                        <label class="form-check-label" for="field_hideOptional" jhiTranslate="artemisApp.assessmentDashboard.hideOptional"></label>
                     </div>
                 </div>
             }

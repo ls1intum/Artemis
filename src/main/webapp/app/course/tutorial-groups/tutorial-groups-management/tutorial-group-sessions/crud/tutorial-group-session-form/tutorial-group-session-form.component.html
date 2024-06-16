@@ -29,14 +29,10 @@
                     @if (dateControl?.invalid && (dateControl?.dirty || dateControl?.touched)) {
                         <div class="alert alert-danger">
                             @if (dateControl?.errors?.required) {
-                                <div>
-                                    {{ 'artemisApp.forms.sessionForm.dateInput.requiredDateError' | artemisTranslate }}
-                                </div>
+                                <div jhiTranslate="artemisApp.forms.sessionForm.dateInput.requiredDateError"></div>
                             }
                             @if (dateControl?.errors?.owlDateTimeParse) {
-                                <div>
-                                    {{ 'artemisApp.forms.sessionForm.dateInput.parseError' | artemisTranslate }}
-                                </div>
+                                <div jhiTranslate="artemisApp.forms.sessionForm.dateInput.parseError"></div>
                             }
                         </div>
                     }
@@ -60,27 +56,21 @@
                     @if (startTimeControl?.invalid && (startTimeControl?.dirty || startTimeControl?.touched)) {
                         <div class="alert alert-danger">
                             @if (startTimeControl?.errors?.required) {
-                                <div>
-                                    {{ 'artemisApp.forms.sessionForm.timeInput.invalidTimeRange' | artemisTranslate }}
-                                </div>
+                                <div jhiTranslate="artemisApp.forms.sessionForm.timeInput.invalidTimeRange"></div>
                             }
                         </div>
                     }
                     @if (endTimeControl?.invalid && (endTimeControl?.dirty || endTimeControl?.touched)) {
                         <div class="alert alert-danger">
                             @if (endTimeControl?.errors?.required) {
-                                <div>
-                                    {{ 'artemisApp.forms.sessionForm.timeInput.invalidTimeRange' | artemisTranslate }}
-                                </div>
+                                <div jhiTranslate="artemisApp.forms.sessionForm.timeInput.invalidTimeRange"></div>
                             }
                         </div>
                     }
                     @if (form?.invalid && (form?.dirty || form?.touched)) {
                         <div>
                             @if (form?.errors?.invalidTimeRange) {
-                                <div class="alert alert-danger">
-                                    {{ 'artemisApp.forms.sessionForm.timeInput.invalidTimeRange' | artemisTranslate }}
-                                </div>
+                                <div class="alert alert-danger" jhiTranslate="artemisApp.forms.sessionForm.timeInput.invalidTimeRange"></div>
                             }
                         </div>
                     }
@@ -103,9 +93,7 @@
                                 </div>
                             }
                             @if (locationControl?.errors?.required) {
-                                <div>
-                                    {{ 'artemisApp.forms.sessionForm.locationInput.requiredValidationError' | artemisTranslate }}
-                                </div>
+                                <div jhiTranslate="artemisApp.forms.sessionForm.locationInput.requiredValidationError"></div>
                             }
                         </div>
                     }

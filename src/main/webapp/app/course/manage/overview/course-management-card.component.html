@@ -40,9 +40,7 @@
                             </a>
                         }
                         @if (courseWithUsers.numberOfStudents === undefined) {
-                            <a [routerLink]="['/course-management', course.id, 'groups', 'students']">
-                                {{ 'artemisApp.course.students' | artemisTranslate }}
-                            </a>
+                            <a [routerLink]="['/course-management', course.id, 'groups', 'students']" jhiTranslate="artemisApp.course.students"></a>
                         }
                     </div>
                     <div>
@@ -57,9 +55,7 @@
                             </a>
                         }
                         @if (courseWithUsers.numberOfTeachingAssistants === undefined) {
-                            <a [routerLink]="['/course-management', course.id, 'groups', 'tutors']">
-                                {{ 'artemisApp.course.tutors' | artemisTranslate }}
-                            </a>
+                            <a [routerLink]="['/course-management', course.id, 'groups', 'tutors']" jhiTranslate="artemisApp.course.tutors"></a>
                         }
                     </div>
                 </div>
@@ -76,9 +72,7 @@
                             </a>
                         }
                         @if (courseWithUsers.numberOfEditors === undefined) {
-                            <a [routerLink]="['/course-management', course.id, 'groups', 'editors']">
-                                {{ 'artemisApp.course.editors' | artemisTranslate }}
-                            </a>
+                            <a [routerLink]="['/course-management', course.id, 'groups', 'editors']" jhiTranslate="artemisApp.course.editors"></a>
                         }
                     </div>
                     <div>
@@ -93,9 +87,7 @@
                             </a>
                         }
                         @if (courseWithUsers.numberOfInstructors === undefined) {
-                            <a [routerLink]="['/course-management', course.id, 'groups', 'instructors']">
-                                {{ 'artemisApp.course.instructors' | artemisTranslate }}
-                            </a>
+                            <a [routerLink]="['/course-management', course.id, 'groups', 'instructors']" jhiTranslate="artemisApp.course.instructors"></a>
                         }
                     </div>
                 </div>

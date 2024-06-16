@@ -53,9 +53,7 @@
             @if (titleControl.invalid && (titleControl.dirty || titleControl.touched)) {
                 <div class="alert alert-danger">
                     @if (titleControl.errors?.required) {
-                        <div>
-                            {{ 'artemisApp.competency.createCompetency.titleRequiredValidationError' | artemisTranslate }}
-                        </div>
+                        <div jhiTranslate="artemisApp.competency.createCompetency.titleRequiredValidationError"></div>
                     }
                     @if (titleControl.errors?.maxlength) {
                         <div>

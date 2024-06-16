@@ -70,9 +70,7 @@
                                 <div class="col-3 text-center" jhiTranslate="artemisApp.plagiarism.plagiarismCases.notNotified"></div>
                             }
                             @if (hasStudentAnswer(plagiarismCase)) {
-                                <div class="col-3 text-center">
-                                    {{ 'artemisApp.plagiarism.plagiarismCases.respondedByStudent' | artemisTranslate }}
-                                </div>
+                                <div class="col-3 text-center" jhiTranslate="artemisApp.plagiarism.plagiarismCases.respondedByStudent"></div>
                             }
                             @if (!hasStudentAnswer(plagiarismCase)) {
                                 <div class="col-3 text-center" jhiTranslate="artemisApp.plagiarism.plagiarismCases.notResponded"></div>

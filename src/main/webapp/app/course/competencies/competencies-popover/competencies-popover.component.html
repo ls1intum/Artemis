@@ -2,9 +2,7 @@
 <ng-template #popContent>
     @if (competencies && competencies.length > 0) {
         <div>
-            <small>
-                {{ 'artemisApp.competency.competencyPopover.explanation' | artemisTranslate }}
-            </small>
+            <small jhiTranslate="artemisApp.competency.competencyPopover.explanation"></small>
             <ul class="list-group">
                 @for (competency of competencies; track competency) {
                     <a class="list-group-item" [routerLink]="navigationArray">{{ competency.title }}</a>

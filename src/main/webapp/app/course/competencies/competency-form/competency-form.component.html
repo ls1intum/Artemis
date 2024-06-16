@@ -15,9 +15,7 @@
                         @if (titleControl?.invalid && (titleControl?.dirty || titleControl?.touched)) {
                             <div class="alert alert-danger">
                                 @if (titleControl?.errors?.required) {
-                                    <div>
-                                        {{ 'artemisApp.competency.createCompetency.titleRequiredValidationError' | artemisTranslate }}
-                                    </div>
+                                    <div jhiTranslate="artemisApp.competency.createCompetency.titleRequiredValidationError"></div>
                                 }
                                 @if (titleControl?.errors?.maxlength) {
                                     <div>
@@ -25,9 +23,7 @@
                                     </div>
                                 }
                                 @if (titleControl?.errors?.titleUnique) {
-                                    <div>
-                                        {{ 'artemisApp.competency.createCompetency.titleUniqueValidationError' | artemisTranslate }}
-                                    </div>
+                                    <div jhiTranslate="artemisApp.competency.createCompetency.titleUniqueValidationError"></div>
                                 }
                             </div>
                         }
@@ -112,14 +108,10 @@
                             </div>
                         </div>
                     } @else {
-                        <div class="alert alert-info">
-                            {{ 'artemisApp.competency.createCompetency.noLectures' | artemisTranslate }}
-                        </div>
+                        <div class="alert alert-info" jhiTranslate="artemisApp.competency.createCompetency.noLectures"></div>
                     }
                     <ng-template #noLectures>
-                        <div class="alert alert-info">
-                            {{ 'artemisApp.competency.createCompetency.noLectures' | artemisTranslate }}
-                        </div>
+                        <div class="alert alert-info" jhiTranslate="artemisApp.competency.createCompetency.noLectures"></div>
                     </ng-template>
                     @if (selectedLectureInDropdown) {
                         <div class="table-responsive">
@@ -127,15 +119,9 @@
                                 <thead class="thead-dark">
                                     <tr>
                                         <th>id</th>
-                                        <th>
-                                            {{ 'artemisApp.competency.createCompetency.lectureUnitTable.type' | artemisTranslate }}
-                                        </th>
-                                        <th>
-                                            {{ 'artemisApp.competency.createCompetency.lectureUnitTable.name' | artemisTranslate }}
-                                        </th>
-                                        <th>
-                                            {{ 'artemisApp.competency.createCompetency.lectureUnitTable.releaseDate' | artemisTranslate }}
-                                        </th>
+                                        <th jhiTranslate="artemisApp.competency.createCompetency.lectureUnitTable.type"></th>
+                                        <th jhiTranslate="artemisApp.competency.createCompetency.lectureUnitTable.name"></th>
+                                        <th jhiTranslate="artemisApp.competency.createCompetency.lectureUnitTable.releaseDate"></th>
                                     </tr>
                                 </thead>
                                 <tbody>

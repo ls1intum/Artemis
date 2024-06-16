@@ -70,9 +70,7 @@
                         <owl-date-time [firstDayOfWeek]="1" datePickerInput [pickerType]="'calendar'" #startDatePicker [pickerMode]="'dialog'" />
                     </div>
                     @if (form.controls.startDate?.invalid && (form.controls.startDate?.dirty || form.controls.startDate?.touched) && form.controls.startDate?.errors?.required) {
-                        <div class="alert alert-danger">
-                            {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.requiredDateError' | artemisTranslate }}
-                        </div>
+                        <div class="alert alert-danger" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.dateInput.requiredDateError"></div>
                     }
                 </div>
 
@@ -95,18 +93,14 @@
                         <owl-date-time [firstDayOfWeek]="1" datePickerInput [pickerType]="'calendar'" #endDatePicker [pickerMode]="'dialog'" />
                     </div>
                     @if (form.controls.endDate?.invalid && (form.controls.endDate?.dirty || form.controls.endDate?.touched) && form.controls.endDate?.errors?.required) {
-                        <div class="alert alert-danger">
-                            {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.requiredEndDateError' | artemisTranslate }}
-                        </div>
+                        <div class="alert alert-danger" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.dateInput.requiredEndDateError"></div>
                     } @else if (
                         form.controls.endDate?.touched &&
                         form.controls.startDate?.touched &&
                         (form.controls.endDate?.value | artemisDate: 'short-date' : false : timeZone) <=
                             (form.controls.startDate?.value | artemisDate: 'short-date' : false : timeZone)
                     ) {
-                        <div class="alert alert-danger">
-                            {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError' | artemisTranslate }}
-                        </div>
+                        <div class="alert alert-danger" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError"></div>
                     }
                 } @else if (timeFrame === TimeFrame.PeriodWithinDay) {
                     <label class="form-label" for="startTime" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStartTime"></label>
@@ -148,9 +142,7 @@
                         form.controls.startTime &&
                         (form.controls.endTime?.value | artemisDate: 'time' : false : timeZone) <= (form.controls.startTime?.value | artemisDate: 'time' : false : timeZone)
                     ) {
-                        <div class="alert alert-danger">
-                            {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError' | artemisTranslate }}
-                        </div>
+                        <div class="alert alert-danger" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError"></div>
                     }
                 }
                 <!-- Reason -->
