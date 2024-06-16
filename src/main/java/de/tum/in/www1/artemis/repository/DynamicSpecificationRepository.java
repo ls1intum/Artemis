@@ -1,12 +1,14 @@
 package de.tum.in.www1.artemis.repository;
 
 import java.util.Collection;
-import java.util.Optional;
 
 import jakarta.persistence.criteria.JoinType;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.repository.NoRepositoryBean;
 
 import de.tum.in.www1.artemis.domain.DomainObject_;
 import de.tum.in.www1.artemis.repository.fetchOptions.FetchOptions;
@@ -17,16 +19,8 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  *
  * @param <T> the type of the entity
  */
-public interface DynamicSpecificationRepository<T> {
-
-    /**
-     * Find an entity by applying the given specification.
-     * Provided by the concrete repository implementation. Do not override.
-     *
-     * @param spec the specification to apply
-     * @return the entity that matches the specification
-     */
-    Optional<T> findOne(Specification<T> spec);
+@NoRepositoryBean
+public interface DynamicSpecificationRepository<T, ID, F extends FetchOptions> extends JpaRepository<T, ID>, JpaSpecificationExecutor<T> {
 
     /**
      * Find an entity by its id or throw an EntityNotFoundException if it does not exist.
@@ -48,7 +42,7 @@ public interface DynamicSpecificationRepository<T> {
      * @return a specification for dynamic fetching based on the provided fetch options
      */
     @NotNull
-    default Specification<T> getDynamicSpecification(Collection<? extends FetchOptions> fetchOptions) {
+    default Specification<T> getDynamicSpecification(Collection<F> fetchOptions) {
         return (root, query, criteriaBuilder) -> {
             for (var option : fetchOptions) {
                 var fetchPath = option.getFetchPath().split("\\.");
