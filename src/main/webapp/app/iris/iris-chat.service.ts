@@ -173,6 +173,8 @@ export class IrisChatService implements OnDestroy {
             next: (r: IrisSession) => {
                 this.sessionId = r.id;
                 this.messages.next(r.messages || []);
+                const suggestions = r.latestSuggestions ? r.latestSuggestions.split('||') : [];
+                this.suggestions.next(suggestions);
                 this.ws.subscribeToSession(this.sessionId).subscribe((m) => this.handleWebsocketMessage(m));
             },
             error: (e: IrisErrorMessageKey) => {

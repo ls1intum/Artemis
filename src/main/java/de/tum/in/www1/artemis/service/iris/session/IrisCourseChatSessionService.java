@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.iris.session;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
@@ -121,6 +122,18 @@ public class IrisCourseChatSessionService implements IrisChatBasedFeatureInterfa
     }
 
     /**
+     * Updates the latest suggestions of the session.
+     *
+     * @param session           The session to update
+     * @param latestSuggestions The latest suggestions to set
+     */
+    private void updateLatestSuggestions(IrisCourseChatSession session, List<String> latestSuggestions) {
+        var suggestions = String.join("||", latestSuggestions);
+        session.setLatestSuggestions(suggestions);
+        irisCourseChatSessionRepository.save(session);
+    }
+
+    /**
      * Handles the status update of a CourseChatJob by sending the result to the student via the Websocket.
      *
      * @param job          The job that was executed
@@ -130,13 +143,15 @@ public class IrisCourseChatSessionService implements IrisChatBasedFeatureInterfa
         var session = (IrisCourseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId());
         if (statusUpdate.result() != null) {
             var message = new IrisMessage();
-
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));
             var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
             irisChatWebsocketService.sendMessage(savedMessage, statusUpdate.stages(), statusUpdate.suggestions());
         }
         else {
             irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages());
+        }
+        if (statusUpdate.suggestions() != null) {
+            updateLatestSuggestions(session, statusUpdate.suggestions());
         }
     }
 

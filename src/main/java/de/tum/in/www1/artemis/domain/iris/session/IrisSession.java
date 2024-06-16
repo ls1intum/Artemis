@@ -54,6 +54,9 @@ public abstract class IrisSession extends DomainObject {
     @Column(name = "creation_date")
     private ZonedDateTime creationDate = ZonedDateTime.now();
 
+    @Column(name = "latest_suggestions")
+    private String latestSuggestions;
+
     // TODO: This is only used in the tests -> Remove
     public IrisMessage newMessage() {
         var message = new IrisMessage();
@@ -75,6 +78,10 @@ public abstract class IrisSession extends DomainObject {
 
     public void setMessages(List<IrisMessage> messages) {
         this.messages = messages;
+    }
+
+    public void setLatestSuggestions(String latestSuggestions) {
+        this.latestSuggestions = latestSuggestions;
     }
 
 }
