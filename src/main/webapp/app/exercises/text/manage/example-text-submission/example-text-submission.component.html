@@ -3,7 +3,7 @@
         <div class="col-6">
             <h2>
                 @if (isNewSubmission) {
-                    <span>{{ 'artemisApp.exampleSubmission.createNew' | artemisTranslate }} </span>
+                    <span jhiTranslate="artemisApp.exampleSubmission.createNew"></span>
                 }
                 {{ 'artemisApp.exampleSubmission.pageHeader' | artemisTranslate }}
                 {{ exercise?.title }}
@@ -11,7 +11,7 @@
             @if (state.ui === UIStates.ASSESSMENT && toComplete && referencedBlocksInExampleSubmission && referencedBlocksInExampleSubmission.length > 0) {
                 <div class="col">
                     <div class="my-2 text-center hint">
-                        <span>{{ 'artemisApp.exampleSubmission.textHint' | artemisTranslate }}</span>
+                        <span jhiTranslate="artemisApp.exampleSubmission.textHint"></span>
                     </div>
                 </div>
             }
@@ -20,7 +20,7 @@
             <div class="col-4 text-end d-flex align-items-center gap-2 justify-content-end">
                 <div>
                     <div class="text-start">
-                        <span>{{ 'artemisApp.exampleSubmission.assessmentTraining' | artemisTranslate }}</span>
+                        <span jhiTranslate="artemisApp.exampleSubmission.assessmentTraining"></span>
                         <jhi-help-icon [text]="'artemisApp.exampleSubmission.selectModelExplanation'" />
                     </div>
                     <div class="btn-group" role="group">
@@ -35,7 +35,7 @@
                             [ngModel]="selectedMode"
                             (ngModelChange)="onModeChange($event)"
                         />
-                        <label class="btn btn-outline-secondary" for="read-and-confirm-button">{{ 'artemisApp.exampleSubmission.readAndConfirm' | artemisTranslate }}</label>
+                        <label class="btn btn-outline-secondary" for="read-and-confirm-button" jhiTranslate="artemisApp.exampleSubmission.readAndConfirm"></label>
                         <input
                             [disabled]="state.submissionEditButton === 3"
                             type="radio"
@@ -47,7 +47,7 @@
                             [ngModel]="selectedMode"
                             (ngModelChange)="onModeChange($event)"
                         />
-                        <label class="btn btn-outline-secondary" for="only-not-imported">{{ 'artemisApp.exampleSubmission.assessCorrectly' | artemisTranslate }}</label>
+                        <label class="btn btn-outline-secondary" for="only-not-imported" jhiTranslate="artemisApp.exampleSubmission.assessCorrectly"></label>
                     </div>
                 </div>
                 @switch (state.submissionEditButton) {
@@ -102,7 +102,7 @@
     </div>
 </div>
 @if (toComplete) {
-    <h5 class="fw-light mt-3">{{ 'artemisApp.exampleSubmission.home.assessmentTraining' | artemisTranslate }}</h5>
+    <h5 class="fw-light mt-3" jhiTranslate="artemisApp.exampleSubmission.home.assessmentTraining"></h5>
 }
 <jhi-resizeable-container class="col-12 mt-3">
     <!--region Left Panel-->
@@ -163,9 +163,13 @@
 }
 @if (toComplete) {
     <div class="col-12 text-end pt-2">
-        <button class="btn btn-primary col-3 guided-tour-check-assessment" (click)="checkAssessment()" [disabled]="!assessmentsAreValid" id="checkAssessment">
-            {{ 'artemisApp.exampleSubmission.submitAssessment' | artemisTranslate }}
-        </button>
+        <button
+            class="btn btn-primary col-3 guided-tour-check-assessment"
+            (click)="checkAssessment()"
+            [disabled]="!assessmentsAreValid"
+            id="checkAssessment"
+            jhiTranslate="artemisApp.exampleSubmission.submitAssessment"
+        ></button>
     </div>
 }
 @if (readOnly) {

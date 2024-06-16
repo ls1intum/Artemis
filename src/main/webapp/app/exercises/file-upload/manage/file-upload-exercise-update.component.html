@@ -83,9 +83,7 @@
                     (valueChange)="validateDate()"
                 />
                 @if (fileUploadExercise.exampleSolutionPublicationDateError) {
-                    <span class="invalid-feedback">
-                        {{ 'artemisApp.exercise.exampleSolutionPublicationDateError' | artemisTranslate }}
-                    </span>
+                    <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.exampleSolutionPublicationDateError"></span>
                 }
             </div>
         }
@@ -119,7 +117,7 @@
                         [(ngModel)]="fileUploadExercise.startDate"
                     />
                     @if (fileUploadExercise.startDateError) {
-                        <span class="invalid-feedback">{{ 'artemisApp.exercise.startDateError' | artemisTranslate }}</span>
+                        <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.startDateError"></span>
                     }
                 </div>
             </div>
@@ -140,7 +138,7 @@
                         [(ngModel)]="fileUploadExercise.dueDate"
                     />
                     @if (fileUploadExercise.dueDateError) {
-                        <span class="invalid-feedback">{{ 'artemisApp.exercise.dueDateError' | artemisTranslate }}</span>
+                        <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.dueDateError"></span>
                     }
                 </div>
                 <div class="form-group flex-grow-1 ms-3">
@@ -157,7 +155,7 @@
                         [(ngModel)]="fileUploadExercise.assessmentDueDate"
                     />
                     @if (fileUploadExercise.assessmentDueDateError) {
-                        <span class="invalid-feedback">{{ 'artemisApp.exercise.assessmentDueDateError' | artemisTranslate }}</span>
+                        <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.assessmentDueDateError"></span>
                     }
                 </div>
             </div>
@@ -190,9 +188,7 @@
                         #points="ngModel"
                     />
                     @if (points?.invalid && (points?.dirty || points?.touched) && points?.errors) {
-                        <div class="alert alert-danger">
-                            {{ 'artemisApp.exercise.pointsError' | artemisTranslate }}
-                        </div>
+                        <div class="alert alert-danger" jhiTranslate="artemisApp.exercise.pointsError"></div>
                     }
                 </div>
             </div>
@@ -211,9 +207,11 @@
                         #bonusPoints="ngModel"
                     />
                     @if (bonusPoints?.invalid && (bonusPoints?.dirty || bonusPoints?.touched) && bonusPoints?.errors) {
-                        <div class="alert alert-danger" [hidden]="fileUploadExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY">
-                            {{ 'artemisApp.exercise.bonusPointsError' | artemisTranslate }}
-                        </div>
+                        <div
+                            class="alert alert-danger"
+                            [hidden]="fileUploadExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
+                            jhiTranslate="artemisApp.exercise.bonusPointsError"
+                        ></div>
                     }
                 </div>
             </div>

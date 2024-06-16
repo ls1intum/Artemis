@@ -70,9 +70,7 @@
                         [panelDescriptionHeader]="'artemisApp.exerciseAssessmentDashboard.totalYours' | artemisTranslate"
                     >
                         <div class="row g-0 mb-1">
-                            <div class="col-7">
-                                {{ 'artemisApp.assessmentDashboard.submissions' | artemisTranslate }}
-                            </div>
+                            <div class="col-7" jhiTranslate="artemisApp.assessmentDashboard.submissions"></div>
                             <div class="col-5">
                                 <span class="text-success">{{ numberOfSubmissions.inTime }}</span>
                                 @if (numberOfSubmissions.late > 0) {
@@ -115,9 +113,7 @@
 
                         @if (feedbackRequestEnabled) {
                             <div class="row g-0 mb-1">
-                                <div class="col-7">
-                                    {{ 'artemisApp.assessmentDashboard.moreFeedbackRequests' | artemisTranslate }}
-                                </div>
+                                <div class="col-7" jhiTranslate="artemisApp.assessmentDashboard.moreFeedbackRequests"></div>
                                 <div class="col-5">
                                     @if (exercise.isAtLeastInstructor) {
                                         <div>
@@ -245,15 +241,11 @@
 
                 <button id="participate-in-assessment" class="btn btn-primary guided-tour-instructions-button p-1" (click)="readInstruction()" [disabled]="isLoading">
                     @if (exercise.gradingInstructions && exercise.gradingInstructions.length > 0) {
-                        <span>
-                            {{ 'artemisApp.exerciseAssessmentDashboard.readAndUnderstood' | artemisTranslate }}
-                        </span>
+                        <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.readAndUnderstood"></span>
                     }
 
                     @if (!exercise.gradingInstructions || exercise.gradingInstructions.length === 0) {
-                        <span>
-                            {{ 'artemisApp.exerciseAssessmentDashboard.startYourParticipation' | artemisTranslate }}
-                        </span>
+                        <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.startYourParticipation"></span>
                     }
                 </button>
             </div>
@@ -290,9 +282,7 @@
                                             (click)="openExampleSubmission(nextExampleSubmissionId, true, false)"
                                         >
                                             @if (stats.toReview.done <= 0) {
-                                                <span>
-                                                    {{ 'artemisApp.exerciseAssessmentDashboard.start' | artemisTranslate }}
-                                                </span>
+                                                <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.start"></span>
                                             } @else {
                                                 {{ 'artemisApp.exerciseAssessmentDashboard.continue' | artemisTranslate }}
                                             }
@@ -335,9 +325,7 @@
                                             (click)="openExampleSubmission(nextExampleSubmissionId, false, true)"
                                         >
                                             @if (stats.toAssess.done <= 0) {
-                                                <span>
-                                                    {{ 'artemisApp.exerciseAssessmentDashboard.start' | artemisTranslate }}
-                                                </span>
+                                                <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.start"></span>
                                             } @else {
                                                 {{ 'artemisApp.exerciseAssessmentDashboard.continue' | artemisTranslate }}
                                             }
@@ -369,17 +357,13 @@
                         </div>
                     }
                     @if (submissionLockLimitReached && tutorParticipationStatus !== REVIEWED_INSTRUCTIONS) {
-                        <div class="alert alert-danger">
-                            {{ 'artemisApp.submission.lockedSubmissionsLimitReached' | artemisTranslate }}
-                        </div>
+                        <div class="alert alert-danger" jhiTranslate="artemisApp.submission.lockedSubmissionsLimitReached"></div>
                     }
                     @for (roundState of numberOfAssessmentsOfCorrectionRounds; track roundState; let correctionRound = $index) {
                         <div>
                             @if ((tutorParticipationStatus === TRAINED || exercise.isAtLeastInstructor || tutorParticipationStatus === COMPLETED) && !isTestRun) {
                                 @if (!isExamMode) {
-                                    <h4 class="d-inline-block">
-                                        {{ 'artemisApp.exerciseAssessmentDashboard.studentsSubmissions' | artemisTranslate }}
-                                    </h4>
+                                    <h4 class="d-inline-block" jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissions"></h4>
                                 }
                                 @if (isExamMode) {
                                     <h4 class="d-inline-block">
@@ -396,9 +380,7 @@
                             }
                             @if (numberOfCorrectionRoundsEnabled > correctionRound) {
                                 @if (isTestRun) {
-                                    <h4>
-                                        {{ 'artemisApp.exerciseAssessmentDashboard.testRunSubmissions' | artemisTranslate }}
-                                    </h4>
+                                    <h4 jhiTranslate="artemisApp.exerciseAssessmentDashboard.testRunSubmissions"></h4>
                                 }
                                 @if (tutorParticipationStatus === TRAINED || exercise.isAtLeastInstructor || tutorParticipationStatus === COMPLETED || isTestRun) {
                                     <div class="table-responsive">
@@ -532,13 +514,9 @@
                                         } @else {
                                             <jhi-assessment-warning [exercise]="exercise" />
                                             @if (!exercise.teamMode) {
-                                                <div class="alert alert-info">
-                                                    {{ 'artemisApp.exerciseAssessmentDashboard.noSubmissions' | artemisTranslate }}
-                                                </div>
+                                                <div class="alert alert-info" jhiTranslate="artemisApp.exerciseAssessmentDashboard.noSubmissions"></div>
                                             } @else {
-                                                <div class="alert alert-warning">
-                                                    {{ 'artemisApp.exerciseAssessmentDashboard.startAssessmentFromTeamPages' | artemisTranslate }}
-                                                </div>
+                                                <div class="alert alert-warning" jhiTranslate="artemisApp.exerciseAssessmentDashboard.startAssessmentFromTeamPages"></div>
                                             }
                                         }
                                         @if (
@@ -566,17 +544,13 @@
                                 }
                             }
                             @if (numberOfCorrectionRoundsEnabled <= correctionRound) {
-                                <div class="alert alert-info">
-                                    {{ 'artemisApp.exerciseAssessmentDashboard.correctionRoundNotYetEnabled' | artemisTranslate }}
-                                </div>
+                                <div class="alert alert-info" jhiTranslate="artemisApp.exerciseAssessmentDashboard.correctionRoundNotYetEnabled"></div>
                             }
                         </div>
                     }
                     <!-- Complaints -->
                     @if (tutorParticipationStatus === TRAINED || exercise.isAtLeastInstructor || tutorParticipationStatus === COMPLETED || isTestRun) {
-                        <h4 class="d-inline-block">
-                            {{ 'artemisApp.exerciseAssessmentDashboard.complaints' | artemisTranslate }}
-                        </h4>
+                        <h4 class="d-inline-block" jhiTranslate="artemisApp.exerciseAssessmentDashboard.complaints"></h4>
                         <fa-icon class="text-secondary" [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.exerciseAssessmentDashboard.complaintHint' | artemisTranslate" />
                         <div class="table-responsive">
                             @if (submissionsWithComplaints && submissionsWithComplaints!.length > 0) {
@@ -630,19 +604,13 @@
                                                 </td>
                                                 <td>
                                                     @if (submissionWithComplaint.complaint.accepted === undefined) {
-                                                        <span class="text-warning">
-                                                            {{ 'artemisApp.complaint.listOfComplaints.noReply' | artemisTranslate }}
-                                                        </span>
+                                                        <span class="text-warning" jhiTranslate="artemisApp.complaint.listOfComplaints.noReply"></span>
                                                     }
                                                     @if (submissionWithComplaint.complaint.accepted === true) {
-                                                        <span class="text-success">
-                                                            {{ 'artemisApp.complaint.listOfComplaints.accepted' | artemisTranslate }}
-                                                        </span>
+                                                        <span class="text-success" jhiTranslate="artemisApp.complaint.listOfComplaints.accepted"></span>
                                                     }
                                                     @if (submissionWithComplaint.complaint.accepted === false) {
-                                                        <span class="text-danger">
-                                                            {{ 'artemisApp.complaint.listOfComplaints.rejected' | artemisTranslate }}
-                                                        </span>
+                                                        <span class="text-danger" jhiTranslate="artemisApp.complaint.listOfComplaints.rejected"></span>
                                                     }
                                                 </td>
                                                 <td>
@@ -686,14 +654,10 @@
                                 </table>
                             } @else {
                                 @if (complaintsDashboardInfo.total === 0) {
-                                    <div class="alert alert-info">
-                                        {{ 'artemisApp.exerciseAssessmentDashboard.noComplaints' | artemisTranslate }}
-                                    </div>
+                                    <div class="alert alert-info" jhiTranslate="artemisApp.exerciseAssessmentDashboard.noComplaints"></div>
                                 }
                                 @if (complaintsDashboardInfo.total !== 0) {
-                                    <div class="alert alert-info">
-                                        {{ 'artemisApp.exerciseAssessmentDashboard.noComplaintsDisplayed' | artemisTranslate }}
-                                    </div>
+                                    <div class="alert alert-info" jhiTranslate="artemisApp.exerciseAssessmentDashboard.noComplaintsDisplayed"></div>
                                 }
                             }
                         </div>
@@ -701,9 +665,7 @@
 
                     <!-- More Feedback Requests -->
                     @if ((tutorParticipationStatus === TRAINED || exercise.isAtLeastInstructor || tutorParticipationStatus === COMPLETED) && !isExamMode) {
-                        <h4 class="d-inline-block">
-                            {{ 'artemisApp.exerciseAssessmentDashboard.moreFeedback' | artemisTranslate }}
-                        </h4>
+                        <h4 class="d-inline-block" jhiTranslate="artemisApp.exerciseAssessmentDashboard.moreFeedback"></h4>
                         <fa-icon
                             class="text-secondary"
                             [icon]="faQuestionCircle"
@@ -757,14 +719,10 @@
                                                 </td>
                                                 <td>
                                                     @if (moreFeedbackRequest.complaint.accepted === undefined) {
-                                                        <span class="text-warning">
-                                                            {{ 'artemisApp.complaint.listOfComplaints.noReply' | artemisTranslate }}
-                                                        </span>
+                                                        <span class="text-warning" jhiTranslate="artemisApp.complaint.listOfComplaints.noReply"></span>
                                                     }
                                                     @if (moreFeedbackRequest.complaint.accepted === true) {
-                                                        <span class="text-success">
-                                                            {{ 'artemisApp.moreFeedback.accepted' | artemisTranslate }}
-                                                        </span>
+                                                        <span class="text-success" jhiTranslate="artemisApp.moreFeedback.accepted"></span>
                                                     }
                                                 </td>
                                                 <td>
@@ -809,14 +767,10 @@
                                 </table>
                             } @else {
                                 @if (moreFeedbackRequestsDashboardInfo.total === 0) {
-                                    <div class="alert alert-info">
-                                        {{ 'artemisApp.exerciseAssessmentDashboard.noMoreFeedbackRequests' | artemisTranslate }}
-                                    </div>
+                                    <div class="alert alert-info" jhiTranslate="artemisApp.exerciseAssessmentDashboard.noMoreFeedbackRequests"></div>
                                 }
                                 @if (moreFeedbackRequestsDashboardInfo.total !== 0) {
-                                    <div class="alert alert-info">
-                                        {{ 'artemisApp.exerciseAssessmentDashboard.noMoreFeedbackRequestsDisplayed' | artemisTranslate }}
-                                    </div>
+                                    <div class="alert alert-info" jhiTranslate="artemisApp.exerciseAssessmentDashboard.noMoreFeedbackRequestsDisplayed"></div>
                                 }
                             }
                         </div>

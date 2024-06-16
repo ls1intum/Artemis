@@ -78,10 +78,10 @@
             </div>
         } @else {
             @if (searchTermEntered) {
-                <p>{{ 'artemisApp.assessment.dashboard.empty' | artemisTranslate }}</p>
+                <p jhiTranslate="artemisApp.assessment.dashboard.empty"></p>
             }
             @if (!searchTermEntered) {
-                <p>{{ 'artemisApp.assessment.dashboard.emptySearch' | artemisTranslate }}</p>
+                <p jhiTranslate="artemisApp.assessment.dashboard.emptySearch"></p>
             }
         }
         <div class="d-flex justify-content-between p-2">

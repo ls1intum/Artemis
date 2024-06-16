@@ -40,9 +40,7 @@
                         <div class="d-flex justify-content-between align-items-start">
                             <h4>
                                 @if (result.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
-                                    <span>
-                                        {{ 'artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip' | artemisTranslate }}
-                                    </span>
+                                    <span jhiTranslate="artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip"></span>
                                 } @else {
                                     @if (!exercise?.maxPoints) {
                                         <span>
