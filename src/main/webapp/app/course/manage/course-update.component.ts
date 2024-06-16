@@ -297,9 +297,8 @@ export class CourseUpdateComponent implements OnInit {
             course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
         } else if (this.communicationEnabled && !this.messagingEnabled) {
             course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
-        } else if (!this.communicationEnabled && this.messagingEnabled) {
-            course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.MESSAGING_ONLY;
         } else {
+            this.communicationEnabled = false;
             course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.DISABLED;
         }
 

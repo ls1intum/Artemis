@@ -302,7 +302,7 @@ describe('CourseOverviewService', () => {
 
         jest.spyOn(service, 'getCorrespondingChannelSubType');
         jest.spyOn(service, 'mapConversationToSidebarCardElement');
-        const groupedConversations = service.groupConversationsByChannelType(conversations);
+        const groupedConversations = service.groupConversationsByChannelType(conversations, true);
 
         expect(groupedConversations['generalChannels'].entityData).toHaveLength(1);
         expect(groupedConversations['examChannels'].entityData).toHaveLength(1);
@@ -318,7 +318,7 @@ describe('CourseOverviewService', () => {
 
         jest.spyOn(service, 'getCorrespondingChannelSubType');
         jest.spyOn(service, 'mapConversationToSidebarCardElement');
-        const groupedConversations = service.groupConversationsByChannelType(conversations);
+        const groupedConversations = service.groupConversationsByChannelType(conversations, true);
 
         expect(groupedConversations['generalChannels'].entityData).toHaveLength(2);
         expect(service.mapConversationToSidebarCardElement).toHaveBeenCalledTimes(2);
@@ -333,7 +333,7 @@ describe('CourseOverviewService', () => {
         jest.spyOn(service, 'mapConversationToSidebarCardElement');
         jest.spyOn(service, 'getConversationGroup');
         jest.spyOn(service, 'getCorrespondingChannelSubType');
-        const groupedConversations = service.groupConversationsByChannelType(conversations);
+        const groupedConversations = service.groupConversationsByChannelType(conversations, true);
 
         expect(groupedConversations['generalChannels'].entityData).toHaveLength(2);
         expect(groupedConversations['examChannels'].entityData).toHaveLength(1);

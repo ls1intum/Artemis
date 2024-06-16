@@ -8,7 +8,7 @@ import { catchError } from 'rxjs/operators';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { Course } from 'app/entities/course.model';
+import { Course, isMessagingEnabled } from 'app/entities/course.model';
 import { PageType, SortDirection } from 'app/shared/metis/metis.util';
 import { faBan, faComment, faComments, faFile, faGraduationCap, faHeart, faList, faMessage } from '@fortawesome/free-solid-svg-icons';
 import { faFilter, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -22,7 +22,7 @@ import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { OneToOneChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
 import { ChannelsOverviewDialogComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 
-const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
+const CHANNEL_GROUPS_MESSAGING_ENABLED: AccordionGroups = {
     favoriteChannels: { entityData: [] },
     generalChannels: { entityData: [] },
     exerciseChannels: { entityData: [] },
@@ -30,6 +30,15 @@ const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     examChannels: { entityData: [] },
     groupChats: { entityData: [] },
     directMessages: { entityData: [] },
+    hiddenChannels: { entityData: [] },
+};
+
+const CHANNEL_GROUPS_MESSAGING_DISABLED: AccordionGroups = {
+    favoriteChannels: { entityData: [] },
+    generalChannels: { entityData: [] },
+    exerciseChannels: { entityData: [] },
+    lectureChannels: { entityData: [] },
+    examChannels: { entityData: [] },
     hiddenChannels: { entityData: [] },
 };
 
@@ -78,13 +87,14 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     course?: Course;
     isLoading = false;
     isServiceSetUp = false;
+    messagingEnabled = false;
     postInThread?: Post;
     activeConversation?: ConversationDTO = undefined;
     conversationsOfUser: ConversationDTO[] = [];
 
     conversationSelected = true;
     sidebarData: SidebarData;
-    accordionConversationGroups: AccordionGroups = DEFAULT_CHANNEL_GROUPS;
+    accordionConversationGroups: AccordionGroups;
     sidebarConversations: SidebarCardElement[] = [];
     isCollapsed = false;
 
@@ -141,6 +151,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             if (isServiceSetUp) {
                 this.course = this.metisConversationService.course;
                 this.initializeCourseWideSearchConfig();
+                this.initializeSidebarAccordions();
                 this.setupMetis();
                 this.subscribeToMetis();
                 this.subscribeToQueryParameter();
@@ -232,6 +243,11 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.courseWideSearchConfig.sortingOrder = SortDirection.ASCENDING;
     }
 
+    initializeSidebarAccordions() {
+        this.messagingEnabled = isMessagingEnabled(this.course);
+        this.accordionConversationGroups = this.messagingEnabled ? CHANNEL_GROUPS_MESSAGING_ENABLED : CHANNEL_GROUPS_MESSAGING_DISABLED;
+    }
+
     onSearch() {
         this.activeConversation = undefined;
         this.updateQueryParameters();
@@ -241,7 +257,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     prepareSidebarData() {
         this.sidebarConversations = this.courseOverviewService.mapConversationsToSidebarCardElements(this.conversationsOfUser);
-        this.accordionConversationGroups = this.courseOverviewService.groupConversationsByChannelType(this.conversationsOfUser);
+        this.accordionConversationGroups = this.courseOverviewService.groupConversationsByChannelType(this.conversationsOfUser, this.messagingEnabled);
         this.updateSidebarData();
     }
 

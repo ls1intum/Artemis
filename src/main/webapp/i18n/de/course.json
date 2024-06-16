@@ -100,11 +100,11 @@
             "courseCommunicationSetting": {
                 "communicationEnabled": {
                     "label": "Kommunikation aktiviert",
-                    "tooltip": "Ermöglicht die Kommunikation zwischen Studierenden, Tutor:innen und Lehrenden durch ein Frage- und Antwortsystem. Die Studierenden können mit anderen Studierenden interagieren und Fragen stellen, während Moderator:innen Kursinformationen bereitstellen und inhaltliche Fragen beantworten können. Die Kommunikation kann direkt auf der Seite der jeweiligen Übung oder Vorlesung oder im speziellen Kommunikationsbereich des Kurses erfolgen."
+                    "tooltip": "Ermöglicht die Kommunikation zwischen Nutzer:innen in privaten oder öffentlichen Kanälen, die nur von Lehrenden und Tutor:innen erstellt werden können. Die Studierenden können mit anderen Studierenden interagieren und Fragen stellen, während Moderator:innen Kursinformationen bereitstellen und inhaltliche Fragen beantworten können. Die Kommunikation kann direkt auf der Seite der jeweiligen Übung oder Vorlesung oder im speziellen Kommunikationsbereich des Kurses erfolgen."
                 },
                 "messagingEnabled": {
                     "label": "Nachrichten aktiviert",
-                    "tooltip": "Ermöglicht den Nachrichtenaustausch zwischen Nutzer:innen in privaten oder öffentlichen Kanälen, Gruppenchats oder Direktnachrichten. Kanäle können nur von Lehrenden und Tutor:innen erstellt werden. Nutzer:innen können selbst öffentlichen Kanälen beitreten und müssen zu privaten Kanälen hinzugefügt werden. Alle Nutzer:innen können einen privaten Gruppenchat starten und andere Nutzer:innen hinzufügen. Ein Gruppenchat ist auf zehn Mitglieder:innen begrenzt. Alle Nutzer:innen können Direktnachrichten an andere Nutzer:innen senden. Die Chats finden im Nachrichtenbereich des Kurses statt.",
+                    "tooltip": "Ermöglicht den Nachrichtenaustausch in Gruppenchats oder Direktnachrichten. Alle Nutzer:innen können Direktnachrichten oder einen privaten Gruppenchat starten und andere Nutzer:innen hinzufügen. Ein Gruppenchat ist auf zehn Mitglieder:innen begrenzt. Die Chats finden im Kommunikationbereich des Kurses statt.",
                     "codeOfConduct": "Nachrichten: Code of Conduct"
                 }
             },

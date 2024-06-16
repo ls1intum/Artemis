@@ -389,7 +389,7 @@ describe('Metis Service', () => {
     it('should determine context information for a conversation message', () => {
         metisService.setCourse(course);
         const contextInformation = metisService.getContextInformation(metisPostInChannel);
-        expect(contextInformation.routerLinkComponents).toEqual(['/courses', metisCourse.id, 'messages']);
+        expect(contextInformation.routerLinkComponents).toEqual(['/courses', metisCourse.id, 'communication']);
         expect(contextInformation.displayName).not.toBeEmpty();
     });
 

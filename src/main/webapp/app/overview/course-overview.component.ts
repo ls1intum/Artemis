@@ -21,7 +21,6 @@ import {
     faChevronRight,
     faCircleNotch,
     faClipboard,
-    faComment,
     faComments,
     faDoorOpen,
     faEllipsis,
@@ -106,7 +105,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     private quizExercisesChannel: string;
     hasUnreadMessages: boolean;
     messagesRouteLoaded: boolean;
-    communicationRouteLoaded: boolean;
     isProduction = true;
     isTestServer = false;
     pageTitle: string;
@@ -332,14 +330,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             const examsItem: SidebarItem = this.getExamsItems();
             sidebarItems.unshift(examsItem);
         }
-        if (isCommunicationEnabled(this.course)) {
-            const communicationItem: SidebarItem = this.getCommunicationItems();
-            sidebarItems.push(communicationItem);
-        }
-
         if (isMessagingEnabled(this.course) || isCommunicationEnabled(this.course)) {
-            const messagesItem: SidebarItem = this.getMessagesItems();
-            sidebarItems.push(messagesItem);
+            const communicationsItem: SidebarItem = this.getCommunicationsItems();
+            sidebarItems.push(communicationsItem);
         }
 
         if (this.hasTutorialGroups()) {
@@ -395,30 +388,17 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         return examsItem;
     }
 
-    getCommunicationItems() {
-        const communicationItem: SidebarItem = {
-            routerLink: 'discussion',
-            icon: faComment,
+    getCommunicationsItems() {
+        const communicationsItem: SidebarItem = {
+            routerLink: 'communication',
+            icon: faComments,
             title: 'Communication',
             translation: 'artemisApp.courseOverview.menu.communication',
             hasInOrionProperty: true,
             showInOrionWindow: false,
             hidden: false,
         };
-        return communicationItem;
-    }
-
-    getMessagesItems() {
-        const messagesItem: SidebarItem = {
-            routerLink: 'messages',
-            icon: faComments,
-            title: 'Messages',
-            translation: 'artemisApp.courseOverview.menu.messages',
-            hasInOrionProperty: true,
-            showInOrionWindow: false,
-            hidden: false,
-        };
-        return messagesItem;
+        return communicationsItem;
     }
 
     getTutorialGroupsItems() {
@@ -514,7 +494,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             return;
         }
 
-        if (!this.conversationServiceInstantiated && (this.messagesRouteLoaded || this.communicationRouteLoaded)) {
+        if (!this.conversationServiceInstantiated && this.messagesRouteLoaded) {
             this.metisConversationService
                 .setUpConversationService(this.course!)
                 .pipe(takeUntil(this.ngUnsubscribe))
@@ -570,8 +550,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     onSubRouteActivate(componentRef: any) {
         this.getPageTitle();
         this.getShowRefreshButton();
-        this.messagesRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'messages';
-        this.communicationRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'discussion';
+        this.messagesRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'communication';
 
         this.setUpConversationService();
 

@@ -300,7 +300,7 @@ describe('CourseOverviewComponent', () => {
 
         expect(metisConversationServiceStub).toHaveBeenCalledTimes(0);
 
-        const tabs = ['messages', 'exercises', 'messages'];
+        const tabs = ['communication', 'exercises', 'communication'];
         tabs.forEach((tab) => {
             route.snapshot.firstChild!.routeConfig!.path = tab;
             component.onSubRouteActivate({ controlConfiguration: undefined });
@@ -321,7 +321,7 @@ describe('CourseOverviewComponent', () => {
 
         expect(component.hasUnreadMessages).toBe(hasNewMessages);
 
-        const tabs = ['messages', 'exercises', 'messages'];
+        const tabs = ['communication', 'exercises', 'communication'];
         tabs.forEach((tab) => {
             route.snapshot.firstChild!.routeConfig!.path = tab;
             component.onSubRouteActivate({ controlConfiguration: undefined });
@@ -336,7 +336,7 @@ describe('CourseOverviewComponent', () => {
 
         component.course = { courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED };
 
-        const tabs = ['exercises', 'messages', 'exercises', 'messages'];
+        const tabs = ['exercises', 'communication', 'exercises', 'communication'];
         tabs.forEach((tab) => {
             route.snapshot.firstChild!.routeConfig!.path = tab;
             component.onSubRouteActivate({ controlConfiguration: undefined });

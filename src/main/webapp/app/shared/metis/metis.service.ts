@@ -529,7 +529,7 @@ export class MetisService implements OnDestroy {
         let displayName = '';
         if (post.conversation) {
             displayName = getAsChannelDTO(post.conversation)?.name ?? '';
-            routerLinkComponents = ['/courses', this.courseId, 'messages'];
+            routerLinkComponents = ['/courses', this.courseId, 'communication'];
             queryParams = { conversationId: post.conversation.id! };
         }
         return { routerLinkComponents, displayName, queryParams };
