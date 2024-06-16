@@ -156,7 +156,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
-        Boolean reponse = request.postWithResponseBody("/api/courses/" + lecture1.getCourse().getId() + "/ingest", Optional.empty(), boolean.class, HttpStatus.OK);
+        Boolean response = request.postWithResponseBody("/api/courses/" + lecture1.getCourse().getId() + "/ingest", Optional.empty(), boolean.class, HttpStatus.OK);
         assertThat(reponse).isTrue();
     }
 
