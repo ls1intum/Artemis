@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -17,7 +16,6 @@ import org.eclipse.jgit.api.Git;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -57,8 +55,6 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
 
     private static final String ERROR_MESSAGE = "Failed to migrate programming exercises within " + TIMEOUT_IN_HOURS + " hours. Aborting migration.";
 
-    private static final List<String> MIGRATABLE_PROFILES = List.of("bitbucket", "localvc");
-
     private final static Logger log = LoggerFactory.getLogger(MigrationEntryGitLabToLocalVC.class);
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
@@ -73,22 +69,19 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
 
     private final UriService uriService;
 
-    private final Environment environment;
-
     private final Optional<LocalVCService> localVCService;
 
     private final Optional<AbstractVersionControlService> sourceVersionControlService;
 
     private final Optional<LocalVCMigrationService> localVCMigrationService;
 
-    public MigrationEntryGitLabToLocalVC(ProgrammingExerciseRepository programmingExerciseRepository, Environment environment,
+    public MigrationEntryGitLabToLocalVC(ProgrammingExerciseRepository programmingExerciseRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<LocalVCService> localVCService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, Optional<AbstractVersionControlService> sourceVersionControlService, UriService uriService,
             Optional<LocalVCMigrationService> localVCMigrationService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.environment = environment;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -100,13 +93,6 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
     }
 
     public void execute() {
-        List<String> activeProfiles = List.of(environment.getActiveProfiles());
-        if (!new HashSet<>(activeProfiles).containsAll(MIGRATABLE_PROFILES)) {
-            log.info("Migration will be skipped and marked run because the system does not support a tech-stack that requires this migration: {}",
-                    List.of(environment.getActiveProfiles()));
-            return;
-        }
-
         if (localVCMigrationService.isEmpty()) {
             log.error("Migration will be skipped and marked run because the localVCMigrationService is not available.");
             return;
