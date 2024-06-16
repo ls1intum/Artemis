@@ -1,5 +1,5 @@
 <div>
-    <h3>{{ 'artemisApp.studentDashboard.enroll.title' | artemisTranslate }}</h3>
+    <h3 jhiTranslate="artemisApp.studentDashboard.enroll.title"></h3>
     <div class="col-12 mb-3">
         <input type="text" class="form-control" [(ngModel)]="searchTermString" (input)="applySearch()" [placeholder]="'artemisApp.course.searchForCourse' | artemisTranslate" />
     </div>
@@ -46,14 +46,12 @@
         </div>
     }
     @if (!loading && !coursesToSelect) {
-        <div class="col-12 col-sm-auto">
-            {{ 'artemisApp.studentDashboard.enroll.noCourse' | artemisTranslate }}
-        </div>
+        <div class="col-12 col-sm-auto" jhiTranslate="artemisApp.studentDashboard.enroll.noCourse"></div>
     }
     @if (loading && !coursesToSelect) {
         <div class="col-12 col-sm-auto d-flex justify-content-center">
             <div class="spinner-border" role="status">
-                <span class="sr-only">{{ 'artemisApp.studentDashboard.enroll.coursesLoading' | artemisTranslate }}</span>
+                <span class="sr-only" jhiTranslate="artemisApp.studentDashboard.enroll.coursesLoading"></span>
             </div>
         </div>
     }

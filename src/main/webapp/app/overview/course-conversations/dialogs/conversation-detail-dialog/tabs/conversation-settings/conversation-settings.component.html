@@ -4,24 +4,33 @@
             <div class="row settings-container">
                 <div class="col-12 settings-section text-center">
                     @if (canLeaveConversation) {
-                        <button type="button" class="btn btn-danger leave-conversation" (click)="leaveConversation($event)">
-                            {{ 'artemisApp.dialogs.conversationSettings.actions.leave' | artemisTranslate }}
-                        </button>
+                        <button
+                            type="button"
+                            class="btn btn-danger leave-conversation"
+                            (click)="leaveConversation($event)"
+                            jhiTranslate="artemisApp.dialogs.conversationSettings.actions.leave"
+                        ></button>
                     }
                 </div>
                 @if (conversationAsChannel; as channel) {
                     @if (!channel.isArchived && canChangeChannelArchivalState) {
                         <div class="col-12 settings-section text-center">
-                            <button type="button" class="btn btn-danger archive" (click)="openArchivalModal($event)">
-                                {{ 'artemisApp.dialogs.conversationSettings.actions.archiveChannel' | artemisTranslate }}
-                            </button>
+                            <button
+                                type="button"
+                                class="btn btn-danger archive"
+                                (click)="openArchivalModal($event)"
+                                jhiTranslate="artemisApp.dialogs.conversationSettings.actions.archiveChannel"
+                            ></button>
                         </div>
                     }
                     @if (channel.isArchived && canChangeChannelArchivalState) {
                         <div class="col-12 settings-section text-center">
-                            <button type="button" class="btn btn-danger unarchive" (click)="openUnArchivalModal($event)">
-                                {{ 'artemisApp.dialogs.conversationSettings.actions.unarchiveChannel' | artemisTranslate }}
-                            </button>
+                            <button
+                                type="button"
+                                class="btn btn-danger unarchive"
+                                (click)="openUnArchivalModal($event)"
+                                jhiTranslate="artemisApp.dialogs.conversationSettings.actions.unarchiveChannel"
+                            ></button>
                         </div>
                     }
                     @if (canDeleteChannel) {

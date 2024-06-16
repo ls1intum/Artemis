@@ -7,19 +7,19 @@
             </button>
             <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
                 <li class="mb-1">
-                    <b class="ms-2">{{ 'artemisApp.courseOverview.statistics.includeStandardCategories' | artemisTranslate }}</b>
+                    <b class="ms-2" jhiTranslate="artemisApp.courseOverview.statistics.includeStandardCategories"></b>
                 </li>
                 <li>
                     <input class="ms-2 form-check-input" (change)="toggleNotIncludedInScoreExercises()" [checked]="currentlyHidingNotIncludedInScoreExercises" type="checkbox" />
                     <span class="ms-2" jhiTranslate="artemisApp.courseOverview.statistics.hideNotIncludedInScoreExercises"></span>
                 </li>
                 <li class="mt-1 mb-1">
-                    <b class="ms-2">{{ 'artemisApp.courseOverview.statistics.includeIndividualCategories' | artemisTranslate }}</b>
+                    <b class="ms-2" jhiTranslate="artemisApp.courseOverview.statistics.includeIndividualCategories"></b>
                 </li>
                 <li>
                     <label class="mb-1">
                         <input class="ms-2 form-check-input" (change)="toggleAllCategories()" [checked]="categoryFilter.allCategoriesSelected" type="checkbox" />
-                        <b class="ms-2">{{ 'artemisApp.courseOverview.statistics.includeAllCategories' | artemisTranslate }}</b>
+                        <b class="ms-2" jhiTranslate="artemisApp.courseOverview.statistics.includeAllCategories"></b>
                     </label>
                 </li>
                 @if (categoryFilter.exercisesWithoutCategoriesPresent) {
@@ -31,7 +31,7 @@
                                 [checked]="categoryFilter.includeExercisesWithNoCategory"
                                 type="checkbox"
                             />
-                            <span class="ms-2">{{ 'artemisApp.courseOverview.statistics.exercisesWithNoCategories' | artemisTranslate }}</span>
+                            <span class="ms-2" jhiTranslate="artemisApp.courseOverview.statistics.exercisesWithNoCategories"></span>
                         </label>
                     </li>
                 }
@@ -53,7 +53,7 @@
             <div class="row">
                 <div class="statistic-summary">
                     <div class="d-flex align-items-center">
-                        <h2>{{ 'artemisApp.courseOverview.statistics.totalScore' | artemisTranslate }}</h2>
+                        <h2 jhiTranslate="artemisApp.courseOverview.statistics.totalScore"></h2>
                         <jhi-documentation-button [type]="documentationType" />
                     </div>
                     <div class="row d-flex justify-content-center align-items-start">
@@ -175,7 +175,7 @@
                 <jhi-exercise-scores-chart class="col-12" [filteredExerciseIDs]="filteredExerciseIDs" />
                 <hr />
                 <div class="col-12 mb-3">
-                    <h2>{{ 'artemisApp.courseOverview.statistics.pointsPerExercise' | artemisTranslate }}</h2>
+                    <h2 jhiTranslate="artemisApp.courseOverview.statistics.pointsPerExercise"></h2>
                     @for (exerciseGroup of ngxExerciseGroups | keyvalue; track exerciseGroup) {
                         @if (exerciseGroup.value[0]) {
                             <div class="row mt-3 d-flex justify-content-end" id="{{ exerciseGroup.value[0]?.type }}-wrapper">
@@ -343,9 +343,7 @@
             </div>
         } @else {
             <div class="row">
-                <div class="col mt-3">
-                    {{ 'artemisApp.courseOverview.statistics.noStatistics' | artemisTranslate }}
-                </div>
+                <div class="col mt-3" jhiTranslate="artemisApp.courseOverview.statistics.noStatistics"></div>
             </div>
         }
     </div>

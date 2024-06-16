@@ -10,7 +10,7 @@
                 >
                     <h3 class="card-title">
                         <fa-icon [icon]="faConversation" />
-                        <span class="ms-2">{{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.header' | artemisTranslate }}</span>
+                        <span class="ms-2" jhiTranslate="artemisApp.conversationsLayout.conversationSelectionSideBar.header"></span>
                     </h3>
                     <div class="col-auto">
                         <fa-icon [icon]="faChevronLeft" />
@@ -67,13 +67,19 @@
                                             <fa-icon [icon]="faPlus" size="sm" />
                                         </button>
                                         <div ngbDropdownMenu>
-                                            <button id="channelOverview" ngbDropdownItem (click)="openChannelOverviewDialog($event, channelSubType.GENERAL)">
-                                                {{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.browseChannels' | artemisTranslate }}
-                                            </button>
+                                            <button
+                                                id="channelOverview"
+                                                ngbDropdownItem
+                                                (click)="openChannelOverviewDialog($event, channelSubType.GENERAL)"
+                                                jhiTranslate="artemisApp.conversationsLayout.conversationSelectionSideBar.browseChannels"
+                                            ></button>
                                             @if (canCreateChannel(course)) {
-                                                <button id="createChannel" ngbDropdownItem (click)="openCreateChannelDialog($event)">
-                                                    {{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.createChannel' | artemisTranslate }}
-                                                </button>
+                                                <button
+                                                    id="createChannel"
+                                                    ngbDropdownItem
+                                                    (click)="openCreateChannelDialog($event)"
+                                                    jhiTranslate="artemisApp.conversationsLayout.conversationSelectionSideBar.createChannel"
+                                                ></button>
                                             }
                                         </div>
                                     </div>
@@ -101,9 +107,12 @@
                                             <fa-icon [icon]="faPlus" size="sm" />
                                         </button>
                                         <div ngbDropdownMenu>
-                                            <button id="exerciseChannelOverview" ngbDropdownItem (click)="openChannelOverviewDialog($event, channelSubType.EXERCISE)">
-                                                {{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.browseChannels' | artemisTranslate }}
-                                            </button>
+                                            <button
+                                                id="exerciseChannelOverview"
+                                                ngbDropdownItem
+                                                (click)="openChannelOverviewDialog($event, channelSubType.EXERCISE)"
+                                                jhiTranslate="artemisApp.conversationsLayout.conversationSelectionSideBar.browseChannels"
+                                            ></button>
                                         </div>
                                     </div>
                                 }
@@ -130,9 +139,12 @@
                                             <fa-icon [icon]="faPlus" size="sm" />
                                         </button>
                                         <div ngbDropdownMenu>
-                                            <button id="lectureChannelOverview" ngbDropdownItem (click)="openChannelOverviewDialog($event, channelSubType.LECTURE)">
-                                                {{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.browseChannels' | artemisTranslate }}
-                                            </button>
+                                            <button
+                                                id="lectureChannelOverview"
+                                                ngbDropdownItem
+                                                (click)="openChannelOverviewDialog($event, channelSubType.LECTURE)"
+                                                jhiTranslate="artemisApp.conversationsLayout.conversationSelectionSideBar.browseChannels"
+                                            ></button>
                                         </div>
                                     </div>
                                 }
@@ -159,9 +171,12 @@
                                             <fa-icon [icon]="faPlus" size="sm" />
                                         </button>
                                         <div ngbDropdownMenu>
-                                            <button id="examChannelOverview" ngbDropdownItem (click)="openChannelOverviewDialog($event, channelSubType.EXAM)">
-                                                {{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.browseChannels' | artemisTranslate }}
-                                            </button>
+                                            <button
+                                                id="examChannelOverview"
+                                                ngbDropdownItem
+                                                (click)="openChannelOverviewDialog($event, channelSubType.EXAM)"
+                                                jhiTranslate="artemisApp.conversationsLayout.conversationSelectionSideBar.browseChannels"
+                                            ></button>
                                         </div>
                                     </div>
                                 }
@@ -231,9 +246,7 @@
                 </div>
                 <!-- footer -->
                 @if (course.courseInformationSharingMessagingCodeOfConduct) {
-                    <button class="btn btn-primary" type="button" (click)="openCodeOfConduct()">
-                        {{ 'artemisApp.codeOfConduct.title' | artemisTranslate }}
-                    </button>
+                    <button class="btn btn-primary" type="button" (click)="openCodeOfConduct()" jhiTranslate="artemisApp.codeOfConduct.title"></button>
                 }
             </div>
             <div class="draggable-right">

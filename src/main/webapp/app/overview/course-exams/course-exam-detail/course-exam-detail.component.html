@@ -77,8 +77,8 @@
                         }
                         @case ('TIMEEXTENSION') {
                             <div>
-                                <h5 class="text-center">{{ 'artemisApp.exam.overview.timeExtension' | artemisTranslate }}</h5>
-                                <div class="text-center">{{ 'artemisApp.exam.overview.timeExtensionExplanation' | artemisTranslate }}</div>
+                                <h5 class="text-center" jhiTranslate="artemisApp.exam.overview.timeExtension"></h5>
+                                <div class="text-center" jhiTranslate="artemisApp.exam.overview.timeExtensionExplanation"></div>
                             </div>
                         }
                         @case ('CLOSED') {
@@ -88,14 +88,14 @@
                         }
                         @case ('STUDENTREVIEW') {
                             <div>
-                                <h5 class="text-center">{{ 'artemisApp.exam.overview.review' | artemisTranslate }}</h5>
+                                <h5 class="text-center" jhiTranslate="artemisApp.exam.overview.review"></h5>
                                 <div class="text-center">{{ 'artemisApp.exam.overview.reviewExplanation' | artemisTranslate }} {{ exam.examStudentReviewEnd | artemisDate }}</div>
                             </div>
                         }
                         @case ('NO_MORE_ATTEMPTS') {
                             <div>
-                                <h5 class="text-center">{{ 'artemisApp.exam.overview.testExam.noMoreAttempts' | artemisTranslate }}</h5>
-                                <div class="text-center">{{ 'artemisApp.exam.overview.testExam.noMoreAttemptsExplanation' | artemisTranslate }}</div>
+                                <h5 class="text-center" jhiTranslate="artemisApp.exam.overview.testExam.noMoreAttempts"></h5>
+                                <div class="text-center" jhiTranslate="artemisApp.exam.overview.testExam.noMoreAttemptsExplanation"></div>
                             </div>
                         }
                     }

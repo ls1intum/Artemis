@@ -14,14 +14,16 @@
                             value="{{ channelOrGroupChat.name ?? ('artemisApp.dialogs.conversationDetail.infoTab.noName' | artemisTranslate) }}"
                         >
                         </textarea>
-                        <label for="name">{{ 'artemisApp.dialogs.conversationDetail.infoTab.name' | artemisTranslate }}</label>
+                        <label for="name" jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.name"></label>
                         @if (
                             (isChannel(channelOrGroupChat) && canChangeChannelProperties(channelOrGroupChat)) ||
                             (isGroupChat(channelOrGroupChat) && canChangeGroupChatProperties(channelOrGroupChat))
                         ) {
-                            <button class="action-button right btn btn-link btn-sm" (click)="openEditNameModal($event)">
-                                {{ 'artemisApp.dialogs.conversationDetail.infoTab.editName' | artemisTranslate }}
-                            </button>
+                            <button
+                                class="action-button right btn btn-link btn-sm"
+                                (click)="openEditNameModal($event)"
+                                jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.editName"
+                            ></button>
                         }
                     </div>
                 </div>
@@ -39,11 +41,13 @@
                             value="{{ channel.topic ?? ('artemisApp.dialogs.conversationDetail.infoTab.noTopic' | artemisTranslate) }}"
                         >
                         </textarea>
-                        <label for="topic">{{ 'artemisApp.dialogs.conversationDetail.infoTab.topic' | artemisTranslate }}</label>
+                        <label for="topic" jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.topic"></label>
                         @if (canChangeChannelProperties(channel)) {
-                            <button class="action-button right btn btn-link btn-sm" (click)="openEditTopicModal($event)">
-                                {{ 'artemisApp.dialogs.conversationDetail.infoTab.editTopic' | artemisTranslate }}
-                            </button>
+                            <button
+                                class="action-button right btn btn-link btn-sm"
+                                (click)="openEditTopicModal($event)"
+                                jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.editTopic"
+                            ></button>
                         }
                     </div>
                 </div>
@@ -61,11 +65,13 @@
                             value="{{ channel.description ?? ('artemisApp.dialogs.conversationDetail.infoTab.noDescription' | artemisTranslate) }}"
                         >
                         </textarea>
-                        <label for="description">{{ 'artemisApp.dialogs.conversationDetail.infoTab.description' | artemisTranslate }}</label>
+                        <label for="description" jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.description"></label>
                         @if (canChangeChannelProperties(channel)) {
-                            <button class="action-button right btn btn-link btn-sm" (click)="openDescriptionTopicModal($event)">
-                                {{ 'artemisApp.dialogs.conversationDetail.infoTab.editDescription' | artemisTranslate }}
-                            </button>
+                            <button
+                                class="action-button right btn btn-link btn-sm"
+                                (click)="openDescriptionTopicModal($event)"
+                                jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.editDescription"
+                            ></button>
                         }
                     </div>
                 </div>
@@ -73,7 +79,7 @@
             <!-- More Info -->
             <div id="moreinfo-section" class="col-12 info-section">
                 <div>
-                    <h6>{{ 'artemisApp.dialogs.conversationDetail.infoTab.moreInfo' | artemisTranslate }}</h6>
+                    <h6 jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.moreInfo"></h6>
                 </div>
                 <ul>
                     @if (activeConversation.creator) {

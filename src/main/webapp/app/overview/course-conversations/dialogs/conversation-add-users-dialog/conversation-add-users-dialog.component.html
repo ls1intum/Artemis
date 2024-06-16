@@ -10,9 +10,7 @@
                     </span>
                 }
                 @if (getAsGroupChat(activeConversation)) {
-                    <span>
-                        {{ 'artemisApp.dialogs.addUsers.addUsersToGroupChat' | artemisTranslate }}
-                    </span>
+                    <span jhiTranslate="artemisApp.dialogs.addUsers.addUsersToGroupChat"></span>
                 }
             </h4>
             <button type="button" class="btn-close" (click)="dismiss()"></button>

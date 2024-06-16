@@ -51,14 +51,14 @@
                         @if (i === 4 && !expandAttemptsMap.get(exam!.id!)) {
                             <div class="control-label" (click)="changeExpandAttemptList(exam!.id!)">
                                 <fa-icon class="pe-3" [icon]="faAngleDown" />
-                                <span class="pe-2">{{ 'artemisApp.exam.overview.testExam.showMoreAttempts' | artemisTranslate }}</span>
+                                <span class="pe-2" jhiTranslate="artemisApp.exam.overview.testExam.showMoreAttempts"></span>
                                 <hr />
                             </div>
                         }
                         @if (i === cnt - 1 && cnt > 4 && expandAttemptsMap.get(exam!.id!)) {
                             <div class="control-label" (click)="changeExpandAttemptList(exam.id!)">
                                 <fa-icon class="pe-3" [icon]="faAngleUp" />
-                                <span class="pe-2"> {{ 'artemisApp.exam.overview.testExam.showLessAttempts' | artemisTranslate }}</span>
+                                <span class="pe-2" jhiTranslate="artemisApp.exam.overview.testExam.showLessAttempts"></span>
                                 <hr />
                             </div>
                         }

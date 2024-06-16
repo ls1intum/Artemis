@@ -28,7 +28,7 @@
 
     @if (regularCourses.length) {
         <div class="col-sm-auto d-flex">
-            <a class="btn btn-primary" [routerLink]="['/courses/enroll']">{{ 'artemisApp.studentDashboard.enroll.title' | artemisTranslate }}</a>
+            <a class="btn btn-primary" [routerLink]="['/courses/enroll']" jhiTranslate="artemisApp.studentDashboard.enroll.title"></a>
         </div>
     }
 </div>
@@ -51,7 +51,7 @@
     <div class="mt-5 mb-5 d-flex flex-column gap-3">
         <h4 class="text-secondary text-center" jhiTranslate="artemisApp.studentDashboard.noCourses"></h4>
         <div class="col-sm-auto d-flex justify-content-center">
-            <a class="btn btn-primary" [routerLink]="['/courses/enroll']">{{ 'artemisApp.studentDashboard.enroll.title' | artemisTranslate }}</a>
+            <a class="btn btn-primary" [routerLink]="['/courses/enroll']" jhiTranslate="artemisApp.studentDashboard.enroll.title"></a>
         </div>
     </div>
 } @else {

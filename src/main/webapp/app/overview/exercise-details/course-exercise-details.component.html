@@ -108,7 +108,7 @@
                     <div class="row">
                         <div class="row mb-2 mt-2 align-items-baseline d-none d-md-flex">
                             <div class="col-auto">
-                                <h3>{{ 'artemisApp.courseOverview.exerciseDetails.recentResults' | artemisTranslate }}</h3>
+                                <h3 jhiTranslate="artemisApp.courseOverview.exerciseDetails.recentResults"></h3>
                             </div>
                         </div>
                         <div class="row">
@@ -125,7 +125,7 @@
                         @if (showMoreResults) {
                             <div class="row mb-2 mt-2 align-items-baseline">
                                 <div class="col-auto">
-                                    <h3>{{ 'artemisApp.courseOverview.exerciseDetails.allResults' | artemisTranslate }}</h3>
+                                    <h3 jhiTranslate="artemisApp.courseOverview.exerciseDetails.allResults"></h3>
                                 </div>
                             </div>
                             <div class="row">
@@ -148,9 +148,7 @@
                                         </div>
                                     }
                                     @if (!sortedHistoryResults) {
-                                        <div class="no-results">
-                                            {{ 'artemisApp.courseOverview.exerciseDetails.noResults' | artemisTranslate }}
-                                        </div>
+                                        <div class="no-results" jhiTranslate="artemisApp.courseOverview.exerciseDetails.noResults"></div>
                                     }
                                 </div>
                             </div>
@@ -165,7 +163,7 @@
                 @if (exampleSolutionInfo?.exampleSolutionPublished) {
                     <div class="row mb-2 mt-2 align-items-baseline">
                         <div class="control-label" (click)="changeExampleSolution()">
-                            <span class="h3 pe-2">{{ 'artemisApp.exercise.exampleSolution' | artemisTranslate }}</span>
+                            <span class="h3 pe-2" jhiTranslate="artemisApp.exercise.exampleSolution"></span>
                             <fa-icon class="pe-3" [icon]="exampleSolutionCollapsed ? faAngleDown : faAngleUp" />
                         </div>
                     </div>

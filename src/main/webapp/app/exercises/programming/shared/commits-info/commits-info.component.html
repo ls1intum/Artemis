@@ -1,18 +1,18 @@
 @if (isRepositoryView) {
-    <h3>{{ 'artemisApp.programmingExercise.commitInfo.history' | artemisTranslate }}</h3>
+    <h3 jhiTranslate="artemisApp.programmingExercise.commitInfo.history"></h3>
 } @else {
-    <h5>{{ 'artemisApp.programmingExercise.commitInfo.title' | artemisTranslate }}</h5>
+    <h5 jhiTranslate="artemisApp.programmingExercise.commitInfo.title"></h5>
 }
 <div style="overflow-x: auto">
     <table class="table table-responsive">
         <thead>
             <tr>
                 <th scope="col">#</th>
-                <th scope="col">{{ 'artemisApp.programmingExercise.commitInfo.commitHash' | artemisTranslate }}</th>
-                <th scope="col">{{ 'artemisApp.programmingExercise.commitInfo.author' | artemisTranslate }}</th>
-                <th scope="col">{{ 'artemisApp.programmingExercise.commitInfo.date' | artemisTranslate }}</th>
-                <th scope="col">{{ 'artemisApp.programmingExercise.commitInfo.result' | artemisTranslate }}</th>
-                <th scope="col">{{ 'artemisApp.programmingExercise.commitInfo.message' | artemisTranslate }}</th>
+                <th scope="col" jhiTranslate="artemisApp.programmingExercise.commitInfo.commitHash"></th>
+                <th scope="col" jhiTranslate="artemisApp.programmingExercise.commitInfo.author"></th>
+                <th scope="col" jhiTranslate="artemisApp.programmingExercise.commitInfo.date"></th>
+                <th scope="col" jhiTranslate="artemisApp.programmingExercise.commitInfo.result"></th>
+                <th scope="col" jhiTranslate="artemisApp.programmingExercise.commitInfo.message"></th>
             </tr>
         </thead>
         <tbody>
@@ -49,7 +49,7 @@
                             } @else {
                                 <span class="text-body-secondary">
                                     <fa-icon [icon]="faCircle" size="lg" />&nbsp;
-                                    <span> {{ 'artemisApp.result.noResult' | artemisTranslate }}</span>
+                                    <span jhiTranslate="artemisApp.result.noResult"></span>
                                 </span>
                             }
                         </td>
@@ -57,15 +57,13 @@
                     <td>
                         {{ commit.message }}
                         @if (currentSubmissionHash === commit.hash) {
-                            <span class="badge bg-info">
-                                {{ 'artemisApp.programmingExercise.commitInfo.currentSubmission' | artemisTranslate }}
-                            </span>
+                            <span class="badge bg-info" jhiTranslate="artemisApp.programmingExercise.commitInfo.currentSubmission"></span>
                         }
                         @if (previousSubmissionHash === commit.hash) {
-                            <span class="badge bg-info"> {{ 'artemisApp.programmingExercise.commitInfo.previousSubmission' | artemisTranslate }} </span>
+                            <span class="badge bg-info" jhiTranslate="artemisApp.programmingExercise.commitInfo.previousSubmission"></span>
                         }
                         @if (!previousSubmissionHash && i === commits?.length! - 1) {
-                            <span class="badge bg-info"> {{ 'artemisApp.programmingExercise.commitInfo.template' | artemisTranslate }} </span>
+                            <span class="badge bg-info" jhiTranslate="artemisApp.programmingExercise.commitInfo.template"></span>
                         }
                     </td>
                 </tr>

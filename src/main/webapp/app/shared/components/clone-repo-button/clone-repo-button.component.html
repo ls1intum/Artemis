@@ -20,9 +20,7 @@
         @if (participations && participations.length > 1) {
             <div class="form-check form-switch">
                 <input mdbCheckbox id="switch-practice" class="form-check-input" type="checkbox" [checked]="isPracticeMode" (click)="switchPracticeMode()" />
-                <label class="form-check-label" for="switch-practice">
-                    {{ 'artemisApp.exerciseActions.practiceMode.title' | artemisTranslate }}
-                </label>
+                <label class="form-check-label" for="switch-practice" jhiTranslate="artemisApp.exerciseActions.practiceMode.title"></label>
             </div>
         }
         <h5>{{ cloneHeadline | artemisTranslate }}</h5>
@@ -80,9 +78,7 @@
         >
             {{ wasCopied ? ('artemisApp.exerciseActions.copiedUrl' | artemisTranslate) : ('artemisApp.exerciseActions.copyUrl' | artemisTranslate) }}
         </button>
-        <a class="btn btn-primary btn-sm" target="hidden-iframe" [href]="buildSourceTreeUrl() | safeUrl"
-            >{{ 'artemisApp.exerciseActions.cloneSourceTree.button' | artemisTranslate }}
-        </a>
+        <a class="btn btn-primary btn-sm" target="hidden-iframe" [href]="buildSourceTreeUrl() | safeUrl" jhiTranslate="artemisApp.exerciseActions.cloneSourceTree.button"></a>
         <iframe name="hidden-iframe" style="visibility: hidden; position: absolute"></iframe>
         <jhi-help-icon placement="right auto" text="artemisApp.exerciseActions.cloneSourceTree.helpIcon" />
     </ng-template>
