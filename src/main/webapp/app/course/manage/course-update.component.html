@@ -114,7 +114,7 @@
                             [error]="!isValidDate"
                         />
                         @if (!isValidDate) {
-                            <span class="invalid-feedback"> {{ 'artemisApp.course.form.startDate.invalid' | artemisTranslate }}</span>
+                            <span class="invalid-feedback" jhiTranslate="artemisApp.course.form.startDate.invalid"></span>
                         }
                     </div>
                     <div class="form-group flex-grow-1 ms-3">
@@ -126,7 +126,7 @@
                             [error]="!isValidDate"
                         />
                         @if (!isValidDate) {
-                            <span class="invalid-feedback"> {{ 'artemisApp.course.form.endDate.invalid' | artemisTranslate }}</span>
+                            <span class="invalid-feedback" jhiTranslate="artemisApp.course.form.endDate.invalid"></span>
                         }
                     </div>
                 </div>
@@ -438,7 +438,7 @@
                                 [error]="!isValidEnrollmentPeriod"
                             />
                             @if (!isValidEnrollmentPeriod) {
-                                <span class="invalid-feedback"> {{ 'artemisApp.course.form.enrollmentStartDate.invalid' | artemisTranslate }}</span>
+                                <span class="invalid-feedback" jhiTranslate="artemisApp.course.form.enrollmentStartDate.invalid"></span>
                             }
                         </div>
                         <div class="form-group flex-grow-1 ms-3">
@@ -450,7 +450,7 @@
                                 [error]="!isValidEnrollmentPeriod"
                             />
                             @if (!isValidEnrollmentPeriod) {
-                                <span class="invalid-feedback"> {{ 'artemisApp.course.form.enrollmentEndDate.invalid' | artemisTranslate }}</span>
+                                <span class="invalid-feedback" jhiTranslate="artemisApp.course.form.enrollmentEndDate.invalid"></span>
                             }
                         </div>
                     </div>
@@ -492,7 +492,7 @@
                             [error]="!isValidUnenrollmentEndDate"
                         />
                         @if (!isValidUnenrollmentEndDate) {
-                            <span class="invalid-feedback"> {{ 'artemisApp.course.form.unenrollmentEndDate.invalid' | artemisTranslate }}</span>
+                            <span class="invalid-feedback" jhiTranslate="artemisApp.course.form.unenrollmentEndDate.invalid"></span>
                         }
                     </div>
                 }
@@ -501,13 +501,13 @@
             @if (tutorialGroupsFeatureActivated) {
                 <div class="col-auto border border-warning p-3">
                     <span class="badge rounded-pill text-bg-warning ms-1">BETA</span>
-                    <label class="form-label" for="timeZone">{{ 'artemisApp.forms.configurationForm.timeZoneInput.label' | artemisTranslate }}</label>
+                    <label class="form-label" for="timeZone" jhiTranslate="artemisApp.forms.configurationForm.timeZoneInput.label"></label>
                     @if (timeZoneChanged) {
                         <div class="alert alert-danger" role="alert">
                             {{ 'artemisApp.forms.configurationForm.timeZoneInput.changeWarning' | artemisTranslate }}
                         </div>
                     }
-                    <div>{{ 'artemisApp.forms.configurationForm.timeZoneInput.beta' | artemisTranslate }}</div>
+                    <div jhiTranslate="artemisApp.forms.configurationForm.timeZoneInput.beta"></div>
                     <input
                         id="timeZone"
                         type="text"

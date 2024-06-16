@@ -7,7 +7,7 @@
 } @else {
     <div class="container">
         <div class="d-flex align-items-center">
-            <h3>{{ 'artemisApp.competency.createCompetency.title' | artemisTranslate }}</h3>
+            <h3 jhiTranslate="artemisApp.competency.createCompetency.title"></h3>
             <jhi-documentation-button [type]="documentationType" />
         </div>
         <jhi-competency-form [isEditMode]="false" (formSubmitted)="createCompetency($event)" [courseId]="courseId" [lecturesOfCourseWithLectureUnits]="lecturesWithLectureUnits" />

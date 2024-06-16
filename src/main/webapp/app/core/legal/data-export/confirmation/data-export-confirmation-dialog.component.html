@@ -20,7 +20,7 @@
                                 (change)="onRequestDataExportForOtherUserChanged($event)"
                                 [(ngModel)]="requestForAnotherUser"
                             />
-                            <label for="request-for-other-user" class="form-check-label">{{ 'artemisApp.dataExport.requestForAnotherUser' | artemisTranslate }}</label>
+                            <label for="request-for-other-user" class="form-check-label" jhiTranslate="artemisApp.dataExport.requestForAnotherUser"></label>
                         </div>
                         @if (requestForAnotherUser) {
                             <jhi-type-ahead-user-search-field [(loginOrName)]="expectedLogin" />

@@ -32,19 +32,19 @@
     <div class="mt-3 d-flex-column align-content-center">
         @if (dataExport?.createdDate && state !== DataExportState.FAILED) {
             <p>
-                <span> {{ 'artemisApp.dataExport.lastRequestDate' | artemisTranslate }}</span>
+                <span jhiTranslate="artemisApp.dataExport.lastRequestDate"></span>
                 <span class="bold">{{ dataExport?.createdDate | artemisDate: 'long-date' }}</span>
             </p>
         }
         @if (dataExport?.nextRequestDate && (state === DataExportState.DELETED || state === DataExportState.DOWNLOADED_DELETED) && !canRequestDataExport) {
             <p>
-                <span> {{ 'artemisApp.dataExport.nextRequestDate' | artemisTranslate }}</span>
+                <span jhiTranslate="artemisApp.dataExport.nextRequestDate"></span>
                 <span class="bold">{{ dataExport?.nextRequestDate | artemisDate: 'long-date' }}</span>
             </p>
         }
         @if (state === DataExportState.REQUESTED || state === DataExportState.IN_CREATION) {
             <p>
-                <span> {{ 'artemisApp.dataExport.isBeingCreated' | artemisTranslate }}</span>
+                <span jhiTranslate="artemisApp.dataExport.isBeingCreated"></span>
             </p>
         }
     </div>

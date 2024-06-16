@@ -10,7 +10,7 @@
             <div class="spinner-border" role="status">
                 <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
             </div>
-            <span class="">{{ 'artemisApp.competency.generate.loading' | artemisTranslate }}</span>
+            <span class="" jhiTranslate="artemisApp.competency.generate.loading"></span>
         </div>
     }
     <form [formGroup]="form" (ngSubmit)="onSubmit()">

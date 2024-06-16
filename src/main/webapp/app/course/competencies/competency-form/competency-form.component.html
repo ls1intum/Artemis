@@ -35,7 +35,7 @@
                 }
                 @if (!isInConnectMode) {
                     <div class="form-group">
-                        <label for="description">{{ 'artemisApp.competency.description' | artemisTranslate }}</label>
+                        <label for="description" jhiTranslate="artemisApp.competency.description"></label>
                         <jhi-markdown-editor
                             [markdown]="descriptionControl?.value"
                             (markdownChange)="updateDescriptionControl($event)"
@@ -93,7 +93,7 @@
                     <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.competency.optionalDescription' | artemisTranslate }}" />
                 </div>
                 <div>
-                    <label>{{ 'artemisApp.competency.createCompetency.connectWithLectureUnits' | artemisTranslate }}</label>
+                    <label jhiTranslate="artemisApp.competency.createCompetency.connectWithLectureUnits"></label>
                     @if (lecturesOfCourseWithLectureUnits && lecturesOfCourseWithLectureUnits.length > 0) {
                         <div [hidden]="isInSingleLectureMode" ngbDropdown class="mb-2">
                             <button class="btn btn-outline-primary" ngbDropdownToggle type="button">
