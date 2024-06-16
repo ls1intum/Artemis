@@ -153,7 +153,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
         Boolean reponse = request.postWithResponseBody("/api/courses/" + lecture1.getCourse().getId() + "/ingest", Optional.empty(), boolean.class, HttpStatus.OK);
-        assertThat(reponse).isTrue();
+        assertThat(response).isTrue();
     }
 
     @Test
