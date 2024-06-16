@@ -21,12 +21,12 @@
     <ng-template #popContent>
         <form style="max-width: 660px" #resetForm="ngForm">
             <h5>{{ 'artemisApp.exerciseActions.resetRepository.title' + (practiceParticipation ? 'Practice' : 'Graded') | artemisTranslate }}</h5>
-            <p>{{ 'artemisApp.exerciseActions.resetRepository.explanation' | artemisTranslate }}</p>
+            <p jhiTranslate="artemisApp.exerciseActions.resetRepository.explanation"></p>
             @if (exercise.allowOfflineIde) {
-                <p>{{ 'artemisApp.exerciseActions.resetRepository.offlineIDEExplanation' | artemisTranslate }}</p>
+                <p jhiTranslate="artemisApp.exerciseActions.resetRepository.offlineIDEExplanation"></p>
             }
             @if (gradedParticipation && practiceParticipation) {
-                <p>{{ 'artemisApp.exerciseActions.resetRepository.repositoryChoice' | artemisTranslate }}</p>
+                <p jhiTranslate="artemisApp.exerciseActions.resetRepository.repositoryChoice"></p>
             }
             <p
                 [jhiTranslate]="'artemisApp.exerciseActions.resetRepository.question' + (practiceParticipation ? 'Practice' : 'Graded')"

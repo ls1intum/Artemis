@@ -3,7 +3,7 @@
         <div class="row gx-5">
             <div class="col-md-4">
                 <div class="mb-4">
-                    <h5>{{ 'artemisApp.exam.examSummary.yourSubmission' | artemisTranslate }}</h5>
+                    <h5 jhiTranslate="artemisApp.exam.examSummary.yourSubmission"></h5>
                     <jhi-clone-repo-button [smallButtons]="true" [repositoryUri]="participation?.userIndependentRepositoryUri || ''" />
                     @if (localVCEnabled) {
                         <a
@@ -30,7 +30,7 @@
                     </span>
                 </div>
                 @if (isAfterResultsArePublished) {
-                    <h5>{{ 'artemisApp.exam.examSummary.assessment' | artemisTranslate }}</h5>
+                    <h5 jhiTranslate="artemisApp.exam.examSummary.assessment"></h5>
                     @if (feedbackComponentParameters && feedbackComponentParameters.result) {
                         <jhi-result-detail
                             [exercise]="feedbackComponentParameters.exercise"
@@ -47,7 +47,7 @@
                 }
             </div>
             <div class="col-md-8">
-                <h5>{{ 'artemisApp.exam.examSummary.problemStatement' | artemisTranslate }}</h5>
+                <h5 jhiTranslate="artemisApp.exam.examSummary.problemStatement"></h5>
                 @if (exercise.problemStatement) {
                     <jhi-programming-exercise-instructions [exercise]="exercise" [participation]="participation" />
                 }

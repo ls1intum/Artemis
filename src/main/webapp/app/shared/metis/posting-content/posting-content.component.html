@@ -18,7 +18,7 @@
                         />
                     }
                     @if (isEdited) {
-                        <span class="edited-text">{{ 'artemisApp.metis.edited' | artemisTranslate }}</span>
+                        <span class="edited-text" jhiTranslate="artemisApp.metis.edited"></span>
                     }
                 </div>
             }
@@ -35,7 +35,7 @@
                 />
             }
             @if (isEdited) {
-                <span class="edited-text">{{ 'artemisApp.metis.edited' | artemisTranslate }}</span>
+                <span class="edited-text" jhiTranslate="artemisApp.metis.edited"></span>
             }
             <jhi-link-preview-container [data]="content" [author]="author" [posting]="posting" [isEdited]="isEdited" [isReply]="isReply" />
         </div>

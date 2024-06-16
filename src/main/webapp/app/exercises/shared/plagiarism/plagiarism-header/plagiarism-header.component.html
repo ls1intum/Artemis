@@ -12,18 +12,16 @@
             class="btn btn-success btn-sm"
             (click)="confirmPlagiarism()"
             data-qa="confirm-plagiarism-button"
-        >
-            {{ 'artemisApp.plagiarism.confirm' | artemisTranslate }}
-        </button>
+            jhiTranslate="artemisApp.plagiarism.confirm"
+        ></button>
 
         <button
             [disabled]="comparison.status === plagiarismStatus.DENIED || isLoading || exercise.teamMode"
             class="btn btn-danger btn-sm"
             (click)="denyPlagiarism()"
             data-qa="deny-plagiarism-button"
-        >
-            {{ 'artemisApp.plagiarism.deny' | artemisTranslate }}
-        </button>
+            jhiTranslate="artemisApp.plagiarism.deny"
+        ></button>
 
         <div class="vertical-divider"></div>
 
