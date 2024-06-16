@@ -50,6 +50,8 @@ services:
         restart: always
         group_add:
             - ${DOCKER_GROUP_ID:-0}
+        ports:
+            - 8080:8080 # This is need to clone the repository from IDE
         env_file:
             - ${ARTEMIS_ENV_FILE:-./artemis/config/prod-multinode.env}
             - ${ARTEMIS_NODE_2_ENV_FILE:-./artemis/config/node2.env}
