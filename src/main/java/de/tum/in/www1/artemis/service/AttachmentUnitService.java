@@ -81,7 +81,7 @@ public class AttachmentUnitService {
         savedAttachmentUnit.setAttachment(savedAttachment);
         evictCache(file, savedAttachmentUnit);
         if (pyrisWebhookService.isPresent() && irisSettingsRepository.isPresent()) {
-            pyrisWebhookService.get().autoUpdateAttachmentUnitsInPyris(irisSettingsRepository.get(), lecture.getCourse().getId(), List.of(savedAttachmentUnit));
+            pyrisWebhookService.get().autoUpdateAttachmentUnitsInPyris(lecture.getCourse().getId(), List.of(savedAttachmentUnit));
         }
         return savedAttachmentUnit;
     }
@@ -131,8 +131,7 @@ public class AttachmentUnitService {
                 slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
             }
             if (pyrisWebhookService.isPresent() && irisSettingsRepository.isPresent()) {
-                pyrisWebhookService.get().autoUpdateAttachmentUnitsInPyris(irisSettingsRepository.get(), savedAttachmentUnit.getLecture().getCourse().getId(),
-                        List.of(savedAttachmentUnit));
+                pyrisWebhookService.get().autoUpdateAttachmentUnitsInPyris(savedAttachmentUnit.getLecture().getCourse().getId(), List.of(savedAttachmentUnit));
             }
         }
         return savedAttachmentUnit;

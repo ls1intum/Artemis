@@ -60,7 +60,7 @@ public class IrisSubSettingsService {
             IrisSettingsType settingsType) {
         if (newSettings == null) {
             if (parentSettings == null) {
-                throw new IllegalArgumentException("Deletion of global Lecture Ingestion settings is not allowed without specifying new settings.");
+                throw new IllegalArgumentException("Cannot delete the chat settings");
             }
             return null;
         }

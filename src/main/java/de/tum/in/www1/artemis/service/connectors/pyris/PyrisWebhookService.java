@@ -38,13 +38,17 @@ public class PyrisWebhookService {
 
     private final IrisSettingsService irisSettingsService;
 
+    private final IrisSettingsRepository irisSettingsRepository;
+
     @Value("${server.url}")
     private String artemisBaseUrl;
 
-    public PyrisWebhookService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, IrisSettingsService irisSettingsService) {
+    public PyrisWebhookService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, IrisSettingsService irisSettingsService,
+            IrisSettingsRepository irisSettingsRepository) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.irisSettingsService = irisSettingsService;
+        this.irisSettingsRepository = irisSettingsRepository;
     }
 
     private boolean lectureIngestionEnabled(Course course) {
@@ -86,12 +90,11 @@ public class PyrisWebhookService {
     /**
      * send the updated / created attachment to Pyris for ingestion if autoLecturesUpdate is enabled
      *
-     * @param courseId               Id of the course where the attachment is added
-     * @param newAttachmentUnits     the new attachment Units to be sent to pyris for ingestion
-     * @param irisSettingsRepository the repository to get the course settings from
+     * @param courseId           Id of the course where the attachment is added
+     * @param newAttachmentUnits the new attachment Units to be sent to pyris for ingestion
      * @return true if the units were sent to pyris
      */
-    public boolean autoUpdateAttachmentUnitsInPyris(IrisSettingsRepository irisSettingsRepository, Long courseId, List<AttachmentUnit> newAttachmentUnits) {
+    public boolean autoUpdateAttachmentUnitsInPyris(Long courseId, List<AttachmentUnit> newAttachmentUnits) {
         IrisCourseSettings courseSettings = irisSettingsRepository.findCourseSettings(courseId).isPresent() ? irisSettingsRepository.findCourseSettings(courseId).get() : null;
         if (courseSettings != null && courseSettings.getIrisLectureIngestionSettings() != null && courseSettings.getIrisLectureIngestionSettings().isEnabled()
                 && courseSettings.getIrisLectureIngestionSettings().getAutoIngestOnLectureAttachmentUpload()) {

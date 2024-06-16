@@ -262,6 +262,7 @@ public class LectureResource {
 
     /**
      * POST /courses/{courseId}/ingest
+     * This endpooint is for starting the ingestion of all lectures or only one lecture when triggered in Artemis.
      *
      * @param courseId  the ID of the course for which all lectures should be ingested in pyris
      * @param lectureId If this id is present then only ingest this one lecture of the respective course

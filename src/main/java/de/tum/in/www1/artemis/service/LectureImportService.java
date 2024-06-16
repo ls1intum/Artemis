@@ -104,7 +104,7 @@ public class LectureImportService {
         attachmentRepository.saveAll(attachments);
         // Send lectures to pyris
         if (pyrisWebhookService.isPresent() && irisSettingsRepository.isPresent()) {
-            pyrisWebhookService.get().autoUpdateAttachmentUnitsInPyris(irisSettingsRepository.get(), lecture.getCourse().getId(),
+            pyrisWebhookService.get().autoUpdateAttachmentUnitsInPyris(lecture.getCourse().getId(),
                     lectureUnits.stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit).map(lectureUnit -> (AttachmentUnit) lectureUnit).toList());
         }
         // Save again to establish the ordered list relationship

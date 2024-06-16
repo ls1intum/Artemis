@@ -9,13 +9,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.aop.logging.LoggingAspect;
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Lecture;
@@ -34,8 +31,6 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 @Profile(PROFILE_CORE)
 @Service
 public class LectureService {
-
-    private static final Logger log = LoggerFactory.getLogger(LoggingAspect.class);
 
     private final LectureRepository lectureRepository;
 
@@ -168,7 +163,6 @@ public class LectureService {
             List<AttachmentUnit> attachmentUnitList = lectures.stream().flatMap(lec -> lec.getLectureUnits().stream()).filter(unit -> unit instanceof AttachmentUnit)
                     .map(unit -> (AttachmentUnit) unit).toList();
             if (!attachmentUnitList.isEmpty()) {
-                log.info("Send Lectures To Iris executed successfully.");
                 return pyrisWebhookService.get().addLectureUnitsToPyrisDB(attachmentUnitList) != null;
             }
         }
