@@ -5,9 +5,12 @@ import { map } from 'rxjs/operators';
 import { QuizBatch, QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
+import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
+import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { downloadFile } from 'app/shared/util/download.util';
 import { objectToJsonBlob } from 'app/utils/blob-util';
+import { FileService } from 'app/shared/http/file.service';
+import JSZip from 'jszip';
 
 export type EntityResponseType = HttpResponse<QuizExercise>;
 export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;
@@ -233,6 +236,10 @@ export class QuizExerciseService {
                 question.quizQuestionStatistic = undefined;
                 question.exercise = undefined;
                 questions.push(question);
+                // download a zip file of the image assets
+                if (question.type === QuizQuestionType.DRAG_AND_DROP) {
+                    this.exportDragAndDropAssets(question, fileName ?? 'quiz');
+                }
             }
         });
         if (questions.length === 0) {
@@ -244,6 +251,43 @@ export class QuizExerciseService {
         downloadFile(blob, (fileName ?? 'quiz') + '.json');
     }
 
+    exportDragAndDropAssets(question: QuizQuestion, zipFileName: string) {
+        const zip: JSZip = new JSZip();
+        const filePromises: any[] = [];
+        const fileService = new FileService(this.http);
+        filePromises.push(
+            fileService.getFile(<string>(<DragAndDropQuestion>question).backgroundFilePath).then((fileResult) => {
+                zip.file('background.png', fileResult);
+            }),
+        );
+
+        if ((<DragAndDropQuestion>question).dragItems) {
+            let counter: number = 0;
+            (<DragAndDropQuestion>question).dragItems!.forEach((dragItem) => {
+                if (dragItem.pictureFilePath) {
+                    filePromises.push(
+                        fileService.getFile(<string>dragItem.pictureFilePath).then((fileResult) => {
+                            counter += 1;
+                            zip.file('dragItem-' + counter + '.png', fileResult);
+                        }),
+                    );
+                }
+            });
+        }
+        Promise.all(filePromises)
+            .then(() => {
+                zip.generateAsync({ type: 'blob' })
+                    .then((zipBlob) => {
+                        downloadFile(zipBlob, zipFileName + '.zip');
+                    })
+                    .catch((error) => {
+                        console.error('Error generating ZIP:', error);
+                    });
+            })
+            .catch((error) => {
+                console.error('Error fetching files:', error);
+            });
+    }
     /**
      * Evaluates the QuizStatus for a given quiz
      *
