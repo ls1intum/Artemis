@@ -15,7 +15,7 @@
                 "switchToGuidedModeLabel": "Switch to guided mode",
                 "switchToTraditionalModeLabel": "Switch to normal mode",
                 "nextStepLabel": "Next",
-                "ingestLecturesInPyrisLabel": "Send Lectures To Iris"
+                "ingestLecturesInPyrisLabel": "Send Lectures to Iris"
             },
             "created": "Created new lecture with identifier {{ param }}",
             "updated": "Updated lecture with identifier {{ param }}",

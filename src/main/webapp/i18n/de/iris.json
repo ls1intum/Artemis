@@ -22,7 +22,7 @@
                 "subSettings": {
                     "chatSettings": "Chat Einstellungen",
                     "lectureIngestionSettings": {
-                        "title": "Vorlesungerfassungseinstellungen",
+                        "title": "Vorlesungen Erfassung Einstellungen",
                         "autoIngestOnAttachmentUpload": "Vorlesungen automatisch an Pyris senden"
                     },
                     "hestiaSettings": "Hestia Einstellungen",
