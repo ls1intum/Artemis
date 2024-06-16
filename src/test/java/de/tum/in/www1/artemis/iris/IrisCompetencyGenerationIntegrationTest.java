@@ -4,8 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -28,8 +26,6 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
 
     private Course course;
 
-    private AtomicBoolean pipelineDone;
-
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
@@ -37,7 +33,6 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
         course = courseUtilService.createCourse();
         activateIrisGlobally();
         activateIrisFor(course);
-        pipelineDone = new AtomicBoolean(false);
     }
 
     @Test
@@ -49,11 +44,11 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
         expected.setTitle("title");
         expected.setDescription("description");
         expected.setTaxonomy(CompetencyTaxonomy.ANALYZE);
-        var competencyMap1 = Map.of("title", expected.getTitle(), "description", expected.getDescription(), "taxonomy", expected.getTaxonomy());
-        // empty or malformed competencies are ignored
-        var competencyMap2 = Map.of("title", "!done");
-        var competencyMap3 = Map.of("malformed", "any content");
-        var responseMap = Map.of("competencies", List.of(competencyMap1, competencyMap2, competencyMap3));
+        // var competencyMap1 = Map.of("title", expected.getTitle(), "description", expected.getDescription(), "taxonomy", expected.getTaxonomy());
+        // // empty or malformed competencies are ignored
+        // var competencyMap2 = Map.of("title", "!done");
+        // var competencyMap3 = Map.of("malformed", "any content");
+        // var responseMap = Map.of("competencies", List.of(competencyMap1, competencyMap2, competencyMap3));
 
         /*
          * irisRequestMockProvider.mockRunResponse(dto -> {
@@ -65,7 +60,7 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
 
         List<Competency> competencies = request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/generate-from-description", courseDescription,
                 Competency.class, HttpStatus.OK);
-        Competency actualCompetency = competencies.get(0);
+        Competency actualCompetency = competencies.getFirst();
 
         assertThat(competencies.size()).isEqualTo(1);
         assertThat(actualCompetency).usingRecursiveComparison().comparingOnlyFields("title", "description", "taxonomy").isEqualTo(expected);
