@@ -17,7 +17,7 @@
                         [checked]="timeFrame === TimeFrame.Period"
                         (click)="setTimeFrame(TimeFrame.Period)"
                     />
-                    <label class="btn btn-outline-primary" for="FreePeriod">{{ 'artemisApp.forms.tutorialFreePeriodForm.timeFrame.period' | artemisTranslate }}</label>
+                    <label class="btn btn-outline-primary" for="FreePeriod" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.timeFrame.period"></label>
 
                     <input
                         type="radio"
@@ -28,7 +28,7 @@
                         [checked]="timeFrame === TimeFrame.Day"
                         (click)="setTimeFrame(TimeFrame.Day)"
                     />
-                    <label class="btn btn-outline-primary" for="FreeDay">{{ 'artemisApp.forms.tutorialFreePeriodForm.timeFrame.day' | artemisTranslate }}</label>
+                    <label class="btn btn-outline-primary" for="FreeDay" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.timeFrame.day"></label>
 
                     <input
                         type="radio"
@@ -77,7 +77,7 @@
                 </div>
 
                 @if (timeFrame === TimeFrame.Period) {
-                    <label class="form-label" for="endDate">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEnd' | artemisTranslate }}</label>
+                    <label class="form-label" for="endDate" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEnd"></label>
                     <div class="input-group">
                         <input
                             name="endDate"
@@ -109,7 +109,7 @@
                         </div>
                     }
                 } @else if (timeFrame === TimeFrame.PeriodWithinDay) {
-                    <label class="form-label" for="startTime">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStartTime' | artemisTranslate }}</label>
+                    <label class="form-label" for="startTime" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStartTime"></label>
                     <div class="input-group">
                         <input
                             name="startTime"
@@ -126,7 +126,7 @@
                         <owl-date-time timePickerInput [pickerType]="'timer'" #startTimePicker [pickerMode]="'dialog'" />
                     </div>
 
-                    <label class="form-label" for="endTime">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEndTime' | artemisTranslate }}</label>
+                    <label class="form-label" for="endTime" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEndTime"></label>
                     <div class="input-group">
                         <input
                             name="endTime"
@@ -155,7 +155,7 @@
                 }
                 <!-- Reason -->
                 <div class="form-group">
-                    <label for="reason">{{ 'artemisApp.forms.tutorialFreePeriodForm.reasonInput.label' | artemisTranslate }}</label>
+                    <label for="reason" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.reasonInput.label"></label>
                     <textarea
                         class="form-control"
                         id="reason"

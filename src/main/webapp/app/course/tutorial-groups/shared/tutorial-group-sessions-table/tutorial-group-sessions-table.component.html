@@ -10,16 +10,16 @@
                 @if (showIdColumn) {
                     <th>{{ 'global.field.id' | artemisTranslate }}</th>
                 }
-                <th>{{ 'artemisApp.entities.tutorialGroupSession.date' | artemisTranslate }}</th>
+                <th jhiTranslate="artemisApp.entities.tutorialGroupSession.date"></th>
                 <th>
                     <span>{{
                         (tutorialGroup.isOnline ? 'artemisApp.forms.scheduleForm.locationInput.labelOnline' : 'artemisApp.forms.scheduleForm.locationInput.labelOffline')
                             | artemisTranslate
                     }}</span>
                 </th>
-                <th class="attendance-column" id="attendanceHeader">{{ 'artemisApp.entities.tutorialGroupSession.attendance' | artemisTranslate }}</th>
+                <th class="attendance-column" id="attendanceHeader" jhiTranslate="artemisApp.entities.tutorialGroupSession.attendance"></th>
                 @if (tutorialGroup.tutorialGroupSchedule) {
-                    <th>{{ 'artemisApp.pages.tutorialGroupSessionManagement.columns.notes' | artemisTranslate }}</th>
+                    <th jhiTranslate="artemisApp.pages.tutorialGroupSessionManagement.columns.notes"></th>
                 }
                 @if (extraColumn) {
                     <th></th>

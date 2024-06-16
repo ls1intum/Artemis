@@ -9,7 +9,7 @@
             <form class="row" [formGroup]="form" (ngSubmit)="submitForm()">
                 <!-- Date -->
                 <div>
-                    <label class="form-label" for="date">{{ 'artemisApp.forms.sessionForm.dateInput.label' | artemisTranslate }}</label>
+                    <label class="form-label" for="date" jhiTranslate="artemisApp.forms.sessionForm.dateInput.label"></label>
                     <div class="input-group">
                         <input formControlName="date" [owlDateTime]="date" class="d-none" />
                         <input
@@ -45,13 +45,13 @@
                 <div>
                     <div class="row">
                         <div class="col-auto my-auto">
-                            <span>{{ 'artemisApp.forms.sessionForm.timeInput.from' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.forms.sessionForm.timeInput.from"></span>
                         </div>
                         <div class="col-auto">
                             <ngb-timepicker formControlName="startTime" [hourStep]="1" [minuteStep]="15" />
                         </div>
                         <div class="col-auto my-auto">
-                            <span>{{ 'artemisApp.forms.sessionForm.timeInput.to' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.forms.sessionForm.timeInput.to"></span>
                         </div>
                         <div class="col-auto my-auto">
                             <ngb-timepicker formControlName="endTime" [hourStep]="1" [minuteStep]="15" />
@@ -87,7 +87,7 @@
                 </div>
                 <!-- Location -->
                 <div class="form-group">
-                    <label for="location">{{ 'artemisApp.forms.sessionForm.locationInput.labelOnline' | artemisTranslate }}</label>
+                    <label for="location" jhiTranslate="artemisApp.forms.sessionForm.locationInput.labelOnline"></label>
                     <textarea
                         class="form-control"
                         id="location"

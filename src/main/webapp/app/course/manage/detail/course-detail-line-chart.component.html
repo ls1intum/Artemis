@@ -1,7 +1,7 @@
 <div class="course-detail-parent-container col">
     <div class="d-flex flex-nowrap justify-content-center gap-2 mt-3">
         <a [routerLink]="['/course-management', course.id, 'course-statistics']" class="text-center">
-            <h5>{{ 'artemisApp.courseStatistics.activeStudents' | artemisTranslate }}</h5>
+            <h5 jhiTranslate="artemisApp.courseStatistics.activeStudents"></h5>
         </a>
         <jhi-help-icon class="chart-explanation-tooltip" placement="right auto" text="artemisApp.courseStatistics.activeStudentsExplanation" />
     </div>
@@ -85,7 +85,7 @@
         </ng-container>
     } @else {
         <ng-container>
-            <h4 class="text-center mt-3">{{ 'artemisApp.course.notStartedYet' | artemisTranslate }}</h4>
+            <h4 class="text-center mt-3" jhiTranslate="artemisApp.course.notStartedYet"></h4>
             <h3 class="text-center">{{ course.startDate | artemisDate }}</h3>
         </ng-container>
     }

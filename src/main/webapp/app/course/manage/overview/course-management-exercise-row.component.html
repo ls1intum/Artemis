@@ -25,7 +25,7 @@
                 <div class="row-flex exercise-date-container">
                     <div [ngClass]="!!details.releaseDate ? 'exercise-date' : 'exercise-date exercise-no-date'">
                         <div class="exercise-date-timeline"></div>
-                        <span>{{ 'artemisApp.course.releaseDate' | artemisTranslate }}</span>
+                        <span jhiTranslate="artemisApp.course.releaseDate"></span>
                         @if (!details.releaseDate) {
                             <div>
                                 <div class="calender-icon-container">
@@ -51,7 +51,7 @@
                     </div>
                     <div [ngClass]="!!details.dueDate ? 'exercise-date' : 'exercise-date exercise-no-date'">
                         <div class="exercise-date-timeline"></div>
-                        <span>{{ 'artemisApp.course.dueDate' | artemisTranslate }}</span>
+                        <span jhiTranslate="artemisApp.course.dueDate"></span>
                         @if (!details.dueDate) {
                             <div>
                                 <div class="calender-icon-container">
@@ -77,7 +77,7 @@
                     </div>
                     <div [ngClass]="!!details.assessmentDueDate ? 'exercise-date' : 'exercise-date exercise-no-date'">
                         <div class="exercise-date-timeline"></div>
-                        <span>{{ 'artemisApp.course.assessmentDueDate' | artemisTranslate }}</span>
+                        <span jhiTranslate="artemisApp.course.assessmentDueDate"></span>
                         @if (!details.assessmentDueDate) {
                             <div>
                                 <div class="calender-icon-container">
@@ -105,7 +105,7 @@
                 <div class="row-flex exercise-score-container">
                     @if (statistic && rowType === exerciseRowType.CURRENT) {
                         <div class="exercise-score">
-                            <span>{{ 'artemisApp.course.participations' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.course.participations"></span>
                             <jhi-progress-bar
                                 [tooltip]="'artemisApp.course.participations' | artemisTranslate"
                                 [percentage]="statistic.participationRateInPercent || 0"
@@ -116,7 +116,7 @@
                     }
                     @if (statistic && rowType === exerciseRowType.ASSESSING) {
                         <div class="exercise-score">
-                            <span>{{ 'artemisApp.course.assessmentProgress' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.course.assessmentProgress"></span>
                             <jhi-progress-bar
                                 [tooltip]="'artemisApp.course.assessmentProgress' | artemisTranslate"
                                 [percentage]="statistic.noOfAssessmentsDoneInPercent || 0"
@@ -127,7 +127,7 @@
                     }
                     @if (statistic && rowType === exerciseRowType.PAST) {
                         <div class="exercise-score">
-                            <span>{{ 'artemisApp.course.averageScore' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.course.averageScore"></span>
                             <jhi-progress-bar
                                 [tooltip]="'artemisApp.course.averageScore' | artemisTranslate"
                                 [percentage]="statistic.averageScoreInPercent || 0"
