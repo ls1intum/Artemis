@@ -19,7 +19,7 @@ public final class Constants {
 
     public static final int PASSWORD_MIN_LENGTH = 8;
 
-    public static final int PASSWORD_MAX_LENGTH = 50;
+    public static final int PASSWORD_MAX_LENGTH = 100;
 
     public static int COMPLAINT_LOCK_DURATION_IN_MINUTES = 24 * 60; // 24h; Same as in artemisApp.locks.acquired
 
@@ -304,6 +304,8 @@ public final class Constants {
      * The name of the Spring profile used for activating LTI in Artemis, see {@link de.tum.in.www1.artemis.web.rest.LtiResource}.
      */
     public static final String PROFILE_LTI = "lti";
+
+    public static final String PROFILE_SCHEDULING = "scheduling";
 
     /**
      * Size of an unsigned tinyInt in SQL, that is used in the database

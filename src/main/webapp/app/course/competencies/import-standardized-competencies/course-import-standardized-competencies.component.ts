@@ -1,11 +1,18 @@
 import { getIcon } from 'app/entities/competency.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { KnowledgeAreaDTO, KnowledgeAreaForTree, StandardizedCompetencyDTO, StandardizedCompetencyForTree } from 'app/entities/competency/standardized-competency.model';
+import {
+    KnowledgeAreaDTO,
+    KnowledgeAreaForTree,
+    Source,
+    StandardizedCompetencyDTO,
+    StandardizedCompetencyForTree,
+    sourceToString,
+} from 'app/entities/competency/standardized-competency.model';
 import { faBan, faDownLeftAndUpRightToCenter, faFileImport, faSort, faTrash, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Component, HostListener, OnInit } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
-import { map } from 'rxjs';
+import { forkJoin, map } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { StandardizedCompetencyFilterPageComponent } from 'app/shared/standardized-competencies/standardized-competency-filter-page.component';
@@ -14,6 +21,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { SortService } from 'app/shared/service/sort.service';
 import { StandardizedCompetencyService } from 'app/shared/standardized-competencies/standardized-competency.service';
 import { CompetencyService } from 'app/course/competencies/competency.service';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 interface StandardizedCompetencyForImport extends StandardizedCompetencyForTree {
     selected?: boolean;
@@ -32,7 +40,9 @@ interface KnowledgeAreaForImport extends KnowledgeAreaForTree {
 export class CourseImportStandardizedCompetenciesComponent extends StandardizedCompetencyFilterPageComponent implements OnInit, ComponentCanDeactivate {
     protected selectedCompetencies: StandardizedCompetencyForImport[] = [];
     protected selectedCompetency?: StandardizedCompetencyForImport;
+    protected sourceString = '';
     private courseId: number;
+    private sources: Source[] = [];
     protected isLoading = false;
     protected isSubmitted = false;
 
@@ -40,6 +50,7 @@ export class CourseImportStandardizedCompetenciesComponent extends StandardizedC
     protected readonly getIcon = getIcon;
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
+    readonly documentationType: DocumentationType = 'StandardizedCompetencies';
     // icons
     protected readonly faBan = faBan;
     protected readonly faFileImport = faFileImport;
@@ -62,30 +73,36 @@ export class CourseImportStandardizedCompetenciesComponent extends StandardizedC
 
     ngOnInit(): void {
         this.isLoading = true;
-        this.standardizedCompetencyService
-            .getAllForTreeView()
-            .pipe(map((response) => response.body!))
-            .subscribe({
-                next: (knowledgeAreas) => {
-                    const knowledgeAreasForImport = knowledgeAreas.map((knowledgeArea) => this.convertToKnowledgeAreaForImport(knowledgeArea));
-                    this.dataSource.data = knowledgeAreasForImport;
-                    this.treeControl.dataNodes = knowledgeAreasForImport;
-                    knowledgeAreasForImport.forEach((knowledgeArea) => {
-                        this.addSelfAndDescendantsToMap(knowledgeArea);
-                        this.addSelfAndDescendantsToSelectArray(knowledgeArea);
-                    });
-                    this.isLoading = false;
-                },
-                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            });
+        const getKnowledgeAreasObservable = this.standardizedCompetencyService.getAllForTreeView();
+        const getSourcesObservable = this.standardizedCompetencyService.getSources();
+        forkJoin([getKnowledgeAreasObservable, getSourcesObservable]).subscribe({
+            next: ([knowledgeAreasResponse, sourcesResponse]) => {
+                const knowledgeAreas = knowledgeAreasResponse.body!;
+                const knowledgeAreasForImport = knowledgeAreas.map((knowledgeArea) => this.convertToKnowledgeAreaForImport(knowledgeArea));
+                this.dataSource.data = knowledgeAreasForImport;
+                this.treeControl.dataNodes = knowledgeAreasForImport;
+                knowledgeAreasForImport.forEach((knowledgeArea) => {
+                    this.addSelfAndDescendantsToMap(knowledgeArea);
+                    this.addSelfAndDescendantsToSelectArray(knowledgeArea);
+                });
+
+                this.sources = sourcesResponse.body!;
+
+                this.isLoading = false;
+            },
+            error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+        });
         this.courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
     }
 
     protected openCompetencyDetails(competency: StandardizedCompetencyForImport) {
+        const source = this.sources.find((source) => source.id === competency.sourceId);
+        this.sourceString = source ? sourceToString(source) : '';
         this.selectedCompetency = competency;
     }
 
     protected closeCompetencyDetails() {
+        this.sourceString = '';
         this.selectedCompetency = undefined;
     }
 

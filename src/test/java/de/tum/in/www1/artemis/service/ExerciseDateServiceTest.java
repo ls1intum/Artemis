@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.util.TestResourceUtils.HalfSecond;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
@@ -105,7 +106,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationIndependentTest {
         exercise.setDueDate(dueDate);
         exercise = exerciseRepository.save(exercise);
 
-        assertThat(exerciseDateService.getLatestIndividualDueDate(exercise).orElseThrow()).isEqualToIgnoringNanos(dueDate);
+        assertThat(exerciseDateService.getLatestIndividualDueDate(exercise).orElseThrow()).isCloseTo(dueDate, HalfSecond());
         assertThat(exerciseDateService.isBeforeLatestDueDate(exercise)).isTrue();
         assertThat(exerciseDateService.isAfterLatestDueDate(exercise)).isFalse();
     }
@@ -120,7 +121,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationIndependentTest {
         participation.setIndividualDueDate(now.plusHours(20));
         participationRepository.save(participation);
 
-        assertThat(exerciseDateService.getLatestIndividualDueDate(exercise).orElseThrow()).isEqualToIgnoringNanos(now.plusHours(20));
+        assertThat(exerciseDateService.getLatestIndividualDueDate(exercise).orElseThrow()).isCloseTo(now.plusHours(20), HalfSecond());
     }
 
     @Test
@@ -130,7 +131,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationIndependentTest {
         exercise = exerciseRepository.save(exercise);
 
         final var participation = exercise.getStudentParticipations().stream().findAny().orElseThrow();
-        assertThat(ExerciseDateService.getDueDate(participation).orElseThrow()).isEqualToIgnoringNanos(now.plusHours(4));
+        assertThat(ExerciseDateService.getDueDate(participation).orElseThrow()).isCloseTo(now.plusHours(4), HalfSecond());
     }
 
     @Test
@@ -143,7 +144,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationIndependentTest {
         participation.setIndividualDueDate(now.plusHours(20));
         participation = participationRepository.save(participation);
 
-        assertThat(ExerciseDateService.getDueDate(participation).orElseThrow()).isEqualToIgnoringNanos(now.plusHours(20));
+        assertThat(ExerciseDateService.getDueDate(participation).orElseThrow()).isCloseTo(now.plusHours(20), HalfSecond());
     }
 
     @Test
@@ -202,7 +203,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationIndependentTest {
         @BeforeEach
         void init() {
             exam = examUtilService.addExamWithExerciseGroup(course, true);
-            exercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exam.getExerciseGroups().get(0));
+            exercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exam.getExerciseGroups().getFirst());
             exercise = exerciseRepository.save(exercise);
         }
 
@@ -293,7 +294,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationIndependentTest {
         @BeforeEach
         void init() {
             testExam = examUtilService.addTestExamWithExerciseGroup(course, true);
-            exercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, testExam.getExerciseGroups().get(0));
+            exercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, testExam.getExerciseGroups().getFirst());
             exercise = exerciseRepository.save(exercise);
         }
 

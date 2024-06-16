@@ -1,55 +1,80 @@
 <div class="sidebar-wrapper">
     <div class="vw-100 bg-body">
         <mat-sidenav-container class="vw-100" [ngClass]="{ 'sidenav-height-dev': !isProduction || isTestServer, 'container-closed': isNavbarCollapsed }">
-            <mat-sidenav
-                #sidenav
-                disableClose
-                [ngClass]="{ 'sidenav-height-dev': !isProduction || isTestServer }"
-                class="module-bg rounded-end rounded-3"
-                opened="true"
-                mode="side"
-            >
+            <mat-sidenav disableClose [ngClass]="{ 'sidenav-height-dev': !isProduction || isTestServer }" class="module-bg rounded-end rounded-3" opened="true" mode="side">
                 <div class="sidebar-container d-flex h-100 justify-content-between flex-column" [ngClass]="{ collapsed: isNavbarCollapsed }">
                     <!-- NavItems -->
                     <div>
-                        <div class="d-flex p-3 align-items-center text-decoration-none" [title]="course?.title">
-                            @if (course && course.courseIcon) {
-                                <div>
-                                    <jhi-secured-image [src]="course.courseIcon" />
+                        <div id="container" class="d-flex p-3 align-items-center text-decoration-none" [title]="course?.title">
+                            <div ngbDropdown container="body" class="d-flex">
+                                @if (course && course.courseIcon) {
+                                    @if (courses?.length) {
+                                        <div ngbDropdownToggle class="d-flex align-items-center justify-content-center pointer">
+                                            <jhi-secured-image [src]="course.courseIcon" />
+                                        </div>
+                                    } @else {
+                                        <div class="d-flex align-items-center justify-content-center">
+                                            <jhi-secured-image [src]="course.courseIcon" />
+                                        </div>
+                                    }
+                                } @else {
+                                    @if (courses?.length) {
+                                        <div ngbDropdownToggle class="course-circle d-flex align-items-center justify-content-center pointer">
+                                            <span class="fs-4">{{ course?.title | slice: 0 : 1 }}</span>
+                                        </div>
+                                    } @else {
+                                        <div class="course-circle d-flex align-items-center justify-content-center">
+                                            <span class="fs-4">{{ course?.title | slice: 0 : 1 }}</span>
+                                        </div>
+                                    }
+                                }
+                                <div ngbDropdownMenu class="dropdown-menu py-1 ms-n2">
+                                    @for (course of courses; track course) {
+                                        <button ngbDropdownItem (click)="switchCourse(course)" class="d-flex align-items-center py-1 px-2">
+                                            @if (course.courseIcon) {
+                                                <span class="d-flex align-items-center justify-content-center">
+                                                    <jhi-secured-image [src]="course.courseIcon" />
+                                                </span>
+                                            } @else {
+                                                <div class="course-circle d-flex align-items-center justify-content-center">
+                                                    <span class="fs-4">{{ course?.title | slice: 0 : 1 }}</span>
+                                                </div>
+                                            }
+                                            <div class="h6 fw-normal mb-0 course-title text-wrap">{{ course?.title }}</div>
+                                        </button>
+                                    }
                                 </div>
-                            } @else {
-                                <div class="course-circle d-flex align-items-center justify-content-center">
-                                    <span class="fs-4">{{ course?.title | slice: 0 : 1 }}</span>
-                                </div>
-                            }
+                            </div>
                             @if (!isNavbarCollapsed) {
-                                <div id="test-course-title" class="h6 mb-0 fw-bold text-body auto-collapse">{{ course?.title }}</div>
+                                <div id="test-course-title" class="course-title h6 mb-0 fw-bold text-body auto-collapse">{{ course?.title }}</div>
                             }
                         </div>
-                        <hr class="mt-0" />
-                        <ul class="navbar-nav justify-content-end flex-grow-1 text-decoration-none">
-                            @for (sidebarItem of sidebarItems; track sidebarItem) {
-                                <li class="nav-item" [hidden]="sidebarItem.hidden">
-                                    @if (sidebarItem.hasInOrionProperty && sidebarItem.showInOrionWindow !== undefined) {
-                                        <ng-template
-                                            *ngTemplateOutlet="navItemOrionFilter; context: { $implicit: sidebarItem, iconTextTemplate: navIconAndText, extraPadding: false }"
-                                        />
-                                    } @else {
-                                        <ng-template *ngTemplateOutlet="navItem; context: { $implicit: sidebarItem, iconTextTemplate: navIconAndText, extraPadding: false }" />
-                                    }
+                        <div>
+                            <hr class="mt-0" />
+                            <ul class="navbar-nav justify-content-end flex-grow-1 text-decoration-none">
+                                @for (sidebarItem of sidebarItems; track sidebarItem) {
+                                    <li class="nav-item" [hidden]="sidebarItem.hidden">
+                                        @if (sidebarItem.hasInOrionProperty && sidebarItem.showInOrionWindow !== undefined) {
+                                            <ng-template
+                                                *ngTemplateOutlet="navItemOrionFilter; context: { $implicit: sidebarItem, iconTextTemplate: navIconAndText, extraPadding: false }"
+                                            />
+                                        } @else {
+                                            <ng-template *ngTemplateOutlet="navItem; context: { $implicit: sidebarItem, iconTextTemplate: navIconAndText, extraPadding: false }" />
+                                        }
+                                    </li>
+                                }
+                                <li class="nav-item">
+                                    <div [hidden]="!anyItemHidden" class="three-dots nav-link px-3" (click)="toggleDropdown()">
+                                        <fa-icon [fixedWidth]="true" [icon]="faEllipsis" class="ms-2 me-3" />
+                                        <span
+                                            class="more"
+                                            [ngClass]="{ 'auto-collapse': !isNavbarCollapsed, 'sidebar-collapsed': isNavbarCollapsed }"
+                                            [jhiTranslate]="'artemisApp.courseOverview.menu.more'"
+                                        ></span>
+                                    </div>
                                 </li>
-                            }
-                            <li class="nav-item">
-                                <div [hidden]="!anyItemHidden" class="three-dots nav-link px-3" (click)="toggleDropdown()">
-                                    <fa-icon [fixedWidth]="true" [icon]="faEllipsis" class="ms-2 me-3" />
-                                    <span
-                                        class="more"
-                                        [ngClass]="{ 'auto-collapse': !isNavbarCollapsed, 'sidebar-collapsed': isNavbarCollapsed }"
-                                        [jhiTranslate]="'artemisApp.courseOverview.menu.more'"
-                                    ></span>
-                                </div>
-                            </li>
-                        </ul>
+                            </ul>
+                        </div>
                     </div>
                     <!-- Course Action Items  -->
                     <div>
@@ -130,16 +155,18 @@
                         </div>
                         <div class="d-flex">
                             @if (isNotManagementView && course.isAtLeastTutor) {
-                                <div id="manage-button" clasS="me-3">
+                                <div id="manage-button">
                                     <a class="btn btn-secondary" [routerLink]="['/course-management', course.id]">
                                         {{ 'artemisApp.courseOverview.manage' | artemisTranslate }}
                                     </a>
                                 </div>
                             }
-                            <button class="btn btn-primary btn-md" (click)="loadCourse(true)" [disabled]="refreshingCourse">
-                                <fa-icon [icon]="faSync" [spin]="refreshingCourse" />
-                                <span class="d-none d-sm-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
-                            </button>
+                            @if (showRefreshButton) {
+                                <button class="btn btn-primary btn-md ms-3" (click)="loadCourse(true)" [disabled]="refreshingCourse">
+                                    <fa-icon [icon]="faSync" [spin]="refreshingCourse" />
+                                    <span class="d-none d-sm-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
+                                </button>
+                            }
                         </div>
                     </div>
                     <div

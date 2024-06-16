@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_SCHEDULING;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.util.Set;
@@ -25,13 +26,15 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.LtiPlatformConfigurationRepository;
 import de.tum.in.www1.artemis.security.OAuth2JWKSService;
+import de.tum.in.www1.artemis.service.exam.ExamLiveEventsService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 
 /**
  * This SpringBootTest is used for tests that only require a minimal set of Active Spring Profiles.
  */
 @ResourceLock("AbstractSpringIntegrationIndependentTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "scheduling", "athena", "apollon", "lti", "aeolus", PROFILE_CORE })
+@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", PROFILE_SCHEDULING, "athena", "apollon", "lti", "aeolus", PROFILE_CORE })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false" })
 public abstract class AbstractSpringIntegrationIndependentTest extends AbstractArtemisIntegrationTest {
 
@@ -42,6 +45,12 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
 
     @SpyBean
     protected LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
+
+    @SpyBean
+    protected ExamLiveEventsService examLiveEventsService;
+
+    @SpyBean
+    protected GroupNotificationScheduleService groupNotificationScheduleService;
 
     @AfterEach
     protected void resetSpyBeans() {

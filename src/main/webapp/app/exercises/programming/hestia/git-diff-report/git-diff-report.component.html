@@ -64,18 +64,16 @@
     </div>
 </div>
 <div [hidden]="!allDiffsReady">
-    @for (filePath of filePaths; track filePath) {
+    @for (diffInformation of diffInformationForPaths; track diffInformation) {
         <div class="mt-2">
-            @if (entriesByPath.get(filePath)?.length) {
-                <jhi-git-diff-file-panel
-                    [allowSplitView]="allowSplitView"
-                    [diffForTemplateAndSolution]="diffForTemplateAndSolution"
-                    [diffEntries]="entriesByPath.get(filePath) ?? []"
-                    [templateFileContent]="templateFileContentByPath.get(filePath)"
-                    [solutionFileContent]="solutionFileContentByPath.get(filePath)"
-                    (onDiffReady)="onDiffReady(filePath, $event)"
-                />
-            }
+            <jhi-git-diff-file-panel
+                [allowSplitView]="allowSplitView"
+                [diffForTemplateAndSolution]="diffForTemplateAndSolution"
+                [diffEntries]="diffInformation.entries"
+                [templateFileContent]="diffInformation.templateFileContent"
+                [solutionFileContent]="diffInformation.solutionFileContent"
+                (onDiffReady)="onDiffReady(diffInformation.path, $event)"
+            />
         </div>
     }
 </div>

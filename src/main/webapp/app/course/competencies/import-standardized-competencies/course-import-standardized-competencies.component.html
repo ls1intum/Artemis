@@ -1,5 +1,8 @@
 <div class="container">
-    <h2 jhiTranslate="artemisApp.standardizedCompetency.courseImport.title"></h2>
+    <div class="d-flex align-items-center">
+        <h2 jhiTranslate="artemisApp.standardizedCompetency.courseImport.title"></h2>
+        <jhi-documentation-button [type]="documentationType" />
+    </div>
     <jhi-standardized-competency-filter
         [knowledgeAreasForSelect]="knowledgeAreasForSelect"
         [knowledgeAreaFilter]="knowledgeAreaFilter"
@@ -38,6 +41,7 @@
                 <div style="background-color: var(--overview-light-background-color)" class="card d-flex flex-grow-1 w-100 h-100 p-3 ms-1">
                     <jhi-standardized-competency-detail
                         [competency]="selectedCompetency"
+                        [sourceString]="sourceString"
                         [knowledgeAreaTitle]="selectedCompetency.knowledgeAreaTitle ?? ''"
                         (onClose)="closeCompetencyDetails()"
                     />

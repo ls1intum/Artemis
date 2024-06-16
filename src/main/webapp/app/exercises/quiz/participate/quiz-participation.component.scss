@@ -17,19 +17,6 @@
     .container {
         height: 100%;
     }
-
-    .draganddropcolor-question {
-        background-color: var(--quiz-participation-footer-dnd-background) !important;
-    }
-    .multiplechoicecolor-question {
-        background-color: var(--quiz-participation-footer-mc-background) !important;
-    }
-    .shortanswercolor-question {
-        background-color: var(--quiz-participation-footer-sa-background) !important;
-    }
-    .changed-question {
-        background-color: var(--quiz-participation-footer-changed-background) !important;
-    }
 }
 
 .quiz-content,
@@ -137,7 +124,7 @@
     text-align: center;
     font-weight: bold;
     border-color: var(--quiz-participation-quiz-is-over-border-color);
-    z-index: 8;
+    z-index: 31;
 }
 
 .in-parentheses:before {
@@ -158,43 +145,38 @@
         display: none;
     }
 }
+
 .show-mobile {
     @media (min-width: 700px) {
         display: none;
     }
 }
 
-.quiz-icons {
-    max-width: 40%;
+.autosave-text {
+    max-width: 30%;
+    text-align: center;
+}
+
+.draganddropcolor-question {
+    background-color: var(--quiz-participation-footer-dnd-background) !important;
+}
+
+.multiplechoicecolor-question {
+    background-color: var(--quiz-participation-footer-mc-background) !important;
+}
+
+.shortanswercolor-question {
+    background-color: var(--quiz-participation-footer-sa-background) !important;
+}
+
+.changed-question {
+    background-color: var(--quiz-participation-footer-changed-background) !important;
 }
 
 .stepwizardquiz {
-    display: flex;
-    flex-wrap: wrap;
-    max-height: 60px;
-    overflow: hidden;
-    position: relative;
-
-    @media (max-width: 767.98px) {
-        max-height: 45px;
-    }
-
-    @media (max-width: 450px) {
-        max-width: 100px;
-    }
-
     &__step {
-        display: inline-block;
-        text-align: center;
-        position: relative;
-
-        .fa {
-            vertical-align: initial;
-        }
-
         .btn {
-            cursor: pointer;
-            opacity: 1 !important;
+            cursor: help;
         }
     }
 }
@@ -224,6 +206,7 @@
         pointer-events: none;
         transition: 0.2s ease-in opacity;
     }
+
     .ng-fa-icon {
         position: fixed;
         top: 50%;
@@ -241,6 +224,7 @@
     border-radius: 15px;
     border-spacing: 5px;
     padding: 6px 0;
+
     &.btn-light {
         border-color: var(--quiz-participation-btn-circle-light-border-color);
     }
@@ -275,6 +259,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
+
         .fa {
             font-size: 10px;
         }

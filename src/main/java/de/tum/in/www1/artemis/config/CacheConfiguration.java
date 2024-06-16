@@ -52,7 +52,6 @@ import com.hazelcast.spring.context.SpringManagedContext;
 
 import de.tum.in.www1.artemis.service.HazelcastPathSerializer;
 import de.tum.in.www1.artemis.service.connectors.localci.LocalCIPriorityQueueComparator;
-import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import tech.jhipster.config.JHipsterProperties;
 import tech.jhipster.config.cache.PrefixedKeyGenerator;
 
@@ -191,7 +190,7 @@ public class CacheConfiguration {
         config.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
 
         if (registration == null) {
-            log.info("No discovery service is set up, Hazelcast cannot create a cluster.");
+            log.info("No discovery service is set up, Hazelcast cannot create a multi-node cluster.");
             hazelcastBindOnlyOnInterface("127.0.0.1", config);
         }
         else {
@@ -267,7 +266,6 @@ public class CacheConfiguration {
             config.setLiteMember(true);
         }
 
-        QuizScheduleService.configureHazelcast(config);
         return Hazelcast.newHazelcastInstance(config);
     }
 

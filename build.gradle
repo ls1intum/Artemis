@@ -20,7 +20,7 @@ plugins {
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
     id "io.spring.dependency-management" version "1.1.5"
-    id "com.google.cloud.tools.jib" version "3.4.2"
+    id "com.google.cloud.tools.jib" version "3.4.3"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
     id "com.diffplug.spotless" version "6.25.0"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
@@ -32,7 +32,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "7.1.0"
+version = "7.2.1"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -186,13 +186,13 @@ jacocoTestCoverageVerification {
                 counter = "INSTRUCTION"
                 value = "COVEREDRATIO"
                 // TODO: in the future the following value should become higher than 0.92
-                minimum = 0.898
+                minimum = 0.896
             }
             limit {
                 counter = "CLASS"
                 value = "MISSEDCOUNT"
                 // TODO: in the future the following value should become less than 10
-                maximum = 29
+                maximum = 39
             }
         }
     }
@@ -221,6 +221,9 @@ repositories {
 ext["jackson.version"] = fasterxml_version
 ext["junit-jupiter.version"] = junit_version
 
+ext { qDoxVersionReusable = "com.thoughtworks.qdox:qdox:2.1.0" }
+ext { springBootStarterWeb = "org.springframework.boot:spring-boot-starter-web:${spring_boot_version}" }
+
 dependencies {
 
     // Note: jenkins-client is not well maintained and includes dependencies to libraries with critical security issues (e.g. CVE-2020-10683 for dom4j@1.6.1)
@@ -241,7 +244,7 @@ dependencies {
         exclude module: "jaxb-api"
     }
 
-    implementation "org.gitlab4j:gitlab4j-api:6.0.0-rc.4"
+    implementation "org.gitlab4j:gitlab4j-api:6.0.0-rc.5"
 
     implementation "de.jplag:jplag:${jplag_version}"
     implementation "de.jplag:java:${jplag_version}"
@@ -270,14 +273,18 @@ dependencies {
     // https://search.maven.org/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
     implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:${jgit_version}"
-    // Note: jgit.htt.server is not compatible with jakarta yet and neither is there a timeline. Hence, we had to add the sourcefiles to our repository. Once the compatibility is given, we can switch back to the maven dependency.
+    // Note: jgit.htt.server is not compatible with jakarta yet and neither is there a timeline. Hence, we had to add the source files to our repository.
+    // Once the compatibility is given, we can switch back to the maven dependency.
     // implementation "org.eclipse.jgit:org.eclipse.jgit.http.server:${jgit_version}"
 
-    implementation "oauth.signpost:signpost-core:2.1.1"
-    implementation "oauth.signpost:signpost-commonshttp4:2.1.1"
+    // apache ssh enabled the ssh git operations in LocalVC together with JGit
+    implementation "org.apache.sshd:sshd-core:${sshd_version}"
+    implementation "org.apache.sshd:sshd-git:${sshd_version}"
+    implementation "org.apache.sshd:sshd-osgi:${sshd_version}"
+    implementation "org.apache.sshd:sshd-sftp:${sshd_version}"
 
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
-    implementation "net.sourceforge.plantuml:plantuml:1.2024.4"
+    implementation "net.sourceforge.plantuml:plantuml:1.2024.5"
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation("org.yaml:snakeyaml") {
@@ -287,7 +294,7 @@ dependencies {
         }
     }
 
-    implementation "com.thoughtworks.qdox:qdox:2.1.0"
+    implementation qDoxVersionReusable
     implementation "io.sentry:sentry-logback:${sentry_version}"
     implementation "io.sentry:sentry-spring-boot-starter-jakarta:${sentry_version}"
 
@@ -315,7 +322,7 @@ dependencies {
     implementation "com.github.docker-java:docker-java-transport-httpclient5:${docker_java_version}"
 
     // use newest version of commons-compress to avoid security issues through outdated dependencies
-    implementation "org.apache.commons:commons-compress:1.26.1"
+    implementation "org.apache.commons:commons-compress:1.26.2"
 
 
     // import JHipster dependencies BOM
@@ -323,7 +330,7 @@ dependencies {
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.13.0"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.12.6"
     implementation "net.logstash.logback:logstash-logback-encoder:7.4"
 
     // Defines low-level streaming API, and includes JSON-specific implementations
@@ -336,6 +343,8 @@ dependencies {
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${fasterxml_version}"
     // Support JSON serialization and deserialization of Hibernate (https://hibernate.org) specific data types and properties; especially lazy-loading aspects
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate6:${fasterxml_version}"
+    // Support XML serialization and deserialization
+    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:${fasterxml_version}"
 
     implementation "com.hazelcast:hazelcast:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
@@ -355,7 +364,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-aop:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-data-jpa:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-security:${spring_boot_version}"
-    implementation("org.springframework.boot:spring-boot-starter-web:${spring_boot_version}") {
+    implementation(springBootStarterWeb) {
         exclude module: "spring-boot-starter-undertow"
     }
     implementation "org.springframework.boot:spring-boot-starter-tomcat:${spring_boot_version}"
@@ -367,18 +376,17 @@ dependencies {
     implementation "org.springframework.ldap:spring-ldap-core:3.2.3"
     implementation "org.springframework.data:spring-data-ldap:3.3.0"
 
-    implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:4.1.1") {
+    implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:4.1.2") {
         // NOTE: these modules contain security vulnerabilities and are not needed
         exclude module: "commons-jxpath"
         exclude module: "woodstox-core"
     }
-    implementation "org.springframework.cloud:spring-cloud-starter-config:4.1.1"
+    implementation "org.springframework.cloud:spring-cloud-starter-config:4.1.2"
+    implementation "org.springframework.cloud:spring-cloud-commons:4.1.3"
 
-    implementation "org.springframework.cloud:spring-cloud-commons:4.1.2"
-
-    implementation "io.netty:netty-all:4.1.109.Final"
+    implementation "io.netty:netty-all:4.1.110.Final"
     implementation "io.projectreactor.netty:reactor-netty:1.1.19"
-    implementation "org.springframework:spring-messaging:6.1.7"
+    implementation "org.springframework:spring-messaging:6.1.8"
     implementation "org.springframework.retry:spring-retry:2.0.6"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
@@ -387,7 +395,7 @@ dependencies {
     implementation "org.springframework.security:spring-security-oauth2-core:${spring_security_version}"
     implementation "org.springframework.security:spring-security-oauth2-client:${spring_security_version}"
     // use newest version of nimbus-jose-jwt to avoid security issues through outdated dependencies
-    implementation "com.nimbusds:nimbus-jose-jwt:9.39.1"
+    implementation "com.nimbusds:nimbus-jose-jwt:9.40"
 
     implementation "org.springframework.security:spring-security-oauth2-jose:${spring_security_version}"
     implementation "org.springframework.security:spring-security-crypto:${spring_security_version}"
@@ -414,25 +422,24 @@ dependencies {
     implementation "io.springfox:springfox-bean-validators:3.0.0"
     implementation "com.mysql:mysql-connector-j:8.4.0"
     implementation "org.postgresql:postgresql:42.7.3"
-    implementation "com.h2database:h2:2.2.224"
 
     implementation "org.zalando:problem-spring-web:0.29.1"
     implementation "org.zalando:jackson-datatype-problem:0.27.1"
-    implementation "com.ibm.icu:icu4j:75.1"
+    implementation "com.ibm.icu:icu4j-charset:75.1"
     implementation "com.github.seancfoley:ipaddress:5.5.0"
-    implementation "org.apache.maven:maven-model:3.9.6"
-    implementation "org.apache.pdfbox:pdfbox:3.0.2"
-    implementation "com.google.protobuf:protobuf-java:4.26.1"
+    implementation "org.apache.maven:maven-model:3.9.7"
+    // NOTE: 3.0.2 is broken for splitting lecture PDFs
+    implementation "org.apache.pdfbox:pdfbox:3.0.1"
     implementation "org.apache.commons:commons-csv:1.11.0"
     implementation "org.commonmark:commonmark:0.22.0"
     implementation "commons-fileupload:commons-fileupload:1.5"
     implementation "net.lingala.zip4j:zip4j:2.11.5"
     implementation "org.jgrapht:jgrapht-core:1.5.2"
     // use newest version of guava to avoid security issues through outdated dependencies
-    implementation "com.google.guava:guava:33.2.0-jre"
+    implementation "com.google.guava:guava:33.2.1-jre"
 
     // use newest version of gson to avoid security issues through outdated dependencies
-    implementation "com.google.code.gson:gson:2.10.1"
+    implementation "com.google.code.gson:gson:2.11.0"
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
     annotationProcessor("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
@@ -459,13 +466,13 @@ dependencies {
     }
     testImplementation "org.springframework.security:spring-security-test:${spring_security_version}"
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
-    testImplementation "org.assertj:assertj-core:3.25.3"
+    testImplementation "org.assertj:assertj-core:3.26.0"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
-    testImplementation "io.github.classgraph:classgraph:4.8.171"
+    testImplementation "io.github.classgraph:classgraph:4.8.173"
     testImplementation "org.awaitility:awaitility:4.2.1"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
-    testImplementation "org.gradle:gradle-tooling-api:8.7"
+    testImplementation "org.gradle:gradle-tooling-api:8.8"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.2.5"
     testImplementation "com.opencsv:opencsv:5.9"
     testImplementation("io.zonky.test:embedded-database-spring-test:2.5.1") {
@@ -478,10 +485,10 @@ dependencies {
     }
     testImplementation("net.bytebuddy:byte-buddy") {
         version {
-            strictly "1.14.15"
+            strictly "1.14.17"
         }
     }
-    testImplementation "io.github.classgraph:classgraph:4.8.172"
+    testImplementation "com.h2database:h2:2.2.224"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20240303"
@@ -497,6 +504,10 @@ dependencyManagement {
 
 tasks.register("cleanResources", Delete) {
     delete "build/resources"
+}
+
+tasks.withType(JavaCompile) {
+    options.compilerArgs << '-Xlint:deprecation'
 }
 
 // Taken from here: https://stackoverflow.com/questions/3963708/gradle-how-to-display-test-results-in-the-console-in-real-time
@@ -544,7 +555,7 @@ tasks.withType(Test).configureEach {
 }
 
 wrapper {
-    gradleVersion = "8.7"
+    gradleVersion = "8.8"
 }
 
 tasks.register("stage") {

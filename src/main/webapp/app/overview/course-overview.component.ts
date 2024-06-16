@@ -62,6 +62,8 @@ import { CourseExercisesComponent } from './course-exercises/course-exercises.co
 import { CourseLecturesComponent } from './course-lectures/course-lectures.component';
 import { facSidebar } from '../../content/icons/icons';
 import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-tutorial-groups.component';
+import { CoursesForDashboardDTO } from 'app/course/manage/courses-for-dashboard-dto';
+import { sortCourses } from 'app/shared/util/course.util';
 
 interface CourseActionItem {
     title: string;
@@ -69,6 +71,7 @@ interface CourseActionItem {
     translation: string;
     action?: (item?: CourseActionItem) => void;
 }
+
 interface SidebarItem {
     routerLink: string;
     icon?: IconDefinition;
@@ -93,7 +96,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     private courseId: number;
     private subscription: Subscription;
+    dashboardSubscription: Subscription;
     course?: Course;
+    courses?: Course[];
     refreshingCourse = false;
     private teamAssignmentUpdateListener: Subscription;
     private quizExercisesChannel: string;
@@ -109,8 +114,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     isNotManagementView: boolean;
     canUnenroll: boolean;
     isNavbarCollapsed = false;
-    isSidebarCollapsed = false;
     profileSubscription?: Subscription;
+    showRefreshButton: boolean = false;
+    readonly MIN_DISPLAYED_COURSES: number = 6;
 
     // Properties to track hidden items for dropdown menu
     dropdownOpen: boolean = false;
@@ -160,11 +166,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     faGraduationCap = faGraduationCap;
     faSync = faSync;
     faCircleNotch = faCircleNotch;
-    faNetworkWired = faNetworkWired;
-    faChalkboardUser = faChalkboardUser;
     faChevronRight = faChevronRight;
-    faListCheck = faListCheck;
-    faDoorOpen = faDoorOpen;
     facSidebar = facSidebar;
     faEllipsis = faEllipsis;
 
@@ -193,7 +195,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     async ngOnInit() {
         this.subscription = this.route.params.subscribe((params) => {
-            this.courseId = parseInt(params.courseId, 10);
+            this.courseId = Number(params.courseId);
         });
         this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
             this.isProduction = profileInfo?.inProduction;
@@ -201,9 +203,19 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         });
         this.getCollapseStateFromStorage();
         this.course = this.courseStorageService.getCourse(this.courseId);
+        this.updateRecentlyAccessedCourses();
         this.isNotManagementView = !this.router.url.startsWith('/course-management');
         // Notify the course access storage service that the course has been accessed
-        this.courseAccessStorageService.onCourseAccessed(this.courseId);
+        this.courseAccessStorageService.onCourseAccessed(
+            this.courseId,
+            CourseAccessStorageService.STORAGE_KEY,
+            CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_OVERVIEW,
+        );
+        this.courseAccessStorageService.onCourseAccessed(
+            this.courseId,
+            CourseAccessStorageService.STORAGE_KEY_DROPDOWN,
+            CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_DROPDOWN,
+        );
 
         await firstValueFrom(this.loadCourse());
         await this.initAfterCourseLoad();
@@ -275,6 +287,31 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
     }
 
+    /** initialize courses attribute by retrieving recently accessed courses from the server */
+    updateRecentlyAccessedCourses() {
+        this.dashboardSubscription = this.courseService.findAllForDashboard().subscribe({
+            next: (res: HttpResponse<CoursesForDashboardDTO>) => {
+                if (res.body) {
+                    const { courses: courseDtos } = res.body;
+                    const courses = courseDtos.map((courseDto) => courseDto.course);
+                    this.courses = sortCourses(courses);
+                    if (this.courses.length > this.MIN_DISPLAYED_COURSES) {
+                        const lastAccessedCourseIds = this.courseAccessStorageService.getLastAccessedCourses(CourseAccessStorageService.STORAGE_KEY_DROPDOWN);
+                        this.courses = this.courses.filter((course) => lastAccessedCourseIds.includes(course.id!));
+                    }
+                    this.courses = this.courses.filter((course) => course.id !== this.courseId);
+                }
+            },
+        });
+    }
+
+    /** Navigate to a new Course */
+    switchCourse(course: Course) {
+        this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
+            this.router.navigate(['courses', course.id]);
+        });
+    }
+
     getCourseActionItems(): CourseActionItem[] {
         const courseActionItems = [];
         this.canUnenroll = this.canStudentUnenroll() && !this.course?.isAtLeastTutor;
@@ -284,6 +321,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
         return courseActionItems;
     }
+
     getSidebarItems(): SidebarItem[] {
         const sidebarItems = this.getDefaultItems();
         if (this.course?.lectures) {
@@ -317,7 +355,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                 sidebarItems.push(learningPathItem);
             }
         }
-
         return sidebarItems;
     }
 
@@ -330,6 +367,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         };
         return unenrollItem;
     }
+
     getLecturesItems() {
         const lecturesItem: SidebarItem = {
             routerLink: 'lectures',
@@ -342,6 +380,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         };
         return lecturesItem;
     }
+
     getExamsItems() {
         const examsItem: SidebarItem = {
             routerLink: 'exams',
@@ -355,6 +394,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         };
         return examsItem;
     }
+
     getCommunicationItems() {
         const communicationItem: SidebarItem = {
             routerLink: 'discussion',
@@ -367,6 +407,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         };
         return communicationItem;
     }
+
     getMessagesItems() {
         const messagesItem: SidebarItem = {
             routerLink: 'messages',
@@ -379,6 +420,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         };
         return messagesItem;
     }
+
     getTutorialGroupsItems() {
         const tutorialGroupsItem: SidebarItem = {
             routerLink: 'tutorial-groups',
@@ -392,6 +434,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         };
         return tutorialGroupsItem;
     }
+
     getCompetenciesItems() {
         const competenciesItem: SidebarItem = {
             routerLink: 'competencies',
@@ -404,6 +447,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         };
         return competenciesItem;
     }
+
     getLearningPathItems() {
         const learningPathItem: SidebarItem = {
             routerLink: 'learning-path',
@@ -418,7 +462,26 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         return learningPathItem;
     }
 
+    getDashboardItems() {
+        const dashboardItem: SidebarItem = {
+            routerLink: 'dashboard',
+            icon: faChartBar,
+            title: 'Dashboard',
+            translation: 'artemisApp.courseOverview.menu.dashboard',
+            hasInOrionProperty: false,
+            showInOrionWindow: false,
+            featureToggle: FeatureToggle.StudentCourseAnalyticsDashboard,
+            hidden: false,
+        };
+        return dashboardItem;
+    }
+
     getDefaultItems() {
+        const items = [];
+        if (this.course?.studentCourseAnalyticsDashboardEnabled) {
+            const dashboardItem: SidebarItem = this.getDashboardItems();
+            items.push(dashboardItem);
+        }
         const exercisesItem: SidebarItem = {
             routerLink: 'exercises',
             icon: faListCheck,
@@ -438,7 +501,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             hidden: false,
         };
 
-        return [exercisesItem, statisticsItem];
+        return items.concat([exercisesItem, statisticsItem]);
     }
 
     async initAfterCourseLoad() {
@@ -506,6 +569,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
      */
     onSubRouteActivate(componentRef: any) {
         this.getPageTitle();
+        this.getShowRefreshButton();
         this.messagesRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'messages';
         this.communicationRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'discussion';
 
@@ -545,14 +609,21 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         event.preventDefault();
         this.toggleSidebar();
     }
+
     getPageTitle(): void {
         const routePageTitle: string = this.route.snapshot.firstChild?.data?.pageTitle;
         this.pageTitle = routePageTitle?.substring(routePageTitle.indexOf('.') + 1);
     }
 
+    getShowRefreshButton(): void {
+        const routeShowRefreshButton: boolean = this.route.snapshot.firstChild?.data?.showRefreshButton ?? false;
+        this.showRefreshButton = routeShowRefreshButton;
+    }
+
     getHasSidebar(): boolean {
         return this.route.snapshot.firstChild?.data?.hasSidebar;
     }
+
     /**
      * Removes the controls component from the DOM and cancels the listener for controls changes.
      * Called by the router outlet as soon as the currently mounted component is removed
@@ -672,6 +743,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.vcSubscription?.unsubscribe();
         this.subscription?.unsubscribe();
         this.profileSubscription?.unsubscribe();
+        this.dashboardSubscription?.unsubscribe();
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
     }

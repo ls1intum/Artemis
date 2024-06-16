@@ -23,7 +23,6 @@ const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     styleUrls: ['../course-overview.scss'],
 })
 export class CourseExercisesComponent implements OnInit, OnDestroy {
-    private paramSubscription: Subscription;
     private parentParamSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
 
@@ -50,7 +49,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.isCollapsed = this.courseOverviewService.getSidebarCollapseStateFromStorage('exercise');
         this.parentParamSubscription = this.route.parent!.params.subscribe((params) => {
-            this.courseId = parseInt(params.courseId, 10);
+            this.courseId = Number(params.courseId);
         });
 
         this.course = this.courseStorageService.getCourse(this.courseId);
@@ -64,19 +63,32 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         });
 
         this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, courseExerciseOverviewTour, true);
+
+        // If no exercise is selected navigate to the lastSelected or upcoming exercise
+        this.navigateToExercise();
+    }
+
+    navigateToExercise() {
         const upcomingExercise = this.courseOverviewService.getUpcomingExercise(this.course?.exercises);
         const lastSelectedExercise = this.getLastSelectedExercise();
-        this.paramSubscription = this.route.params.subscribe((params) => {
-            const exerciseId = parseInt(params.exerciseId, 10);
-            // If no exercise is selected navigate to the lastSelected or upcoming exercise
-            if (!exerciseId && lastSelectedExercise) {
-                this.router.navigate([lastSelectedExercise], { relativeTo: this.route, replaceUrl: true });
-            } else if (!exerciseId && upcomingExercise) {
-                this.router.navigate([upcomingExercise.id], { relativeTo: this.route, replaceUrl: true });
-            } else {
-                this.exerciseSelected = exerciseId ? true : false;
+        let exerciseId = this.route.firstChild?.snapshot?.params.exerciseId;
+        if (!exerciseId) {
+            // Get the exerciseId from the URL
+            const url = this.router.url;
+            const urlParts = url.split('/');
+            const indexOfExercise = urlParts.indexOf('exercises');
+            if (indexOfExercise !== -1 && urlParts.length === indexOfExercise + 2) {
+                exerciseId = urlParts[indexOfExercise + 1];
             }
-        });
+        }
+
+        if (!exerciseId && lastSelectedExercise) {
+            this.router.navigate([lastSelectedExercise], { relativeTo: this.route, replaceUrl: true });
+        } else if (!exerciseId && upcomingExercise) {
+            this.router.navigate([upcomingExercise.id], { relativeTo: this.route, replaceUrl: true });
+        } else {
+            this.exerciseSelected = exerciseId ? true : false;
+        }
     }
 
     toggleSidebar() {
@@ -111,10 +123,15 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     private onCourseLoad() {
         this.programmingSubmissionService.initializeCacheForStudent(this.course?.exercises, true);
     }
+    onSubRouteDeactivate() {
+        if (this.route.firstChild) {
+            return;
+        }
+        this.navigateToExercise();
+    }
 
     ngOnDestroy(): void {
         this.courseUpdatesSubscription?.unsubscribe();
-        this.paramSubscription?.unsubscribe();
         this.parentParamSubscription?.unsubscribe();
     }
 }
