@@ -243,6 +243,8 @@ public class CacheConfiguration {
         config.getMapConfigs().put("files", initializeFilesMapConfig(jHipsterProperties));
         config.getMapConfigs().put("de.tum.in.www1.artemis.domain.*", initializeDomainMapConfig(jHipsterProperties));
 
+        config.addMapConfig(initializeDefaultMapConfig(jHipsterProperties));
+
         // Configure split brain protection if the cluster was split at some point
         var splitBrainProtectionConfig = new SplitBrainProtectionConfig();
         splitBrainProtectionConfig.setName("artemis-split-brain-protection");
@@ -310,14 +312,14 @@ public class CacheConfiguration {
 
     // config for files in the files system
     private MapConfig initializeFilesMapConfig(JHipsterProperties jHipsterProperties) {
-        return new MapConfig().setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount())
+        return new MapConfig("files").setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount())
                 .setEvictionConfig(new EvictionConfig().setEvictionPolicy(EvictionPolicy.LRU).setMaxSizePolicy(MaxSizePolicy.PER_NODE))
                 .setTimeToLiveSeconds(jHipsterProperties.getCache().getHazelcast().getTimeToLiveSeconds());
     }
 
     // default config, if nothing specific is defined
     private MapConfig initializeDefaultMapConfig(JHipsterProperties jHipsterProperties) {
-        return new MapConfig()
+        return new MapConfig("default")
                 // Number of backups. If 1 is set as the backup-count e.g., then all entries of the map will be copied to another JVM for fail-safety. Valid numbers are 0 (no
                 // backup), 1, 2, 3. While we store most of the data in the database, we might use the backup for live quiz exercises and their corresponding hazelcast hash maps
                 .setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount())
@@ -326,6 +328,6 @@ public class CacheConfiguration {
 
     // config for all domain object, i.e. entities such as Course, Exercise, etc.
     private MapConfig initializeDomainMapConfig(JHipsterProperties jHipsterProperties) {
-        return new MapConfig().setTimeToLiveSeconds(jHipsterProperties.getCache().getHazelcast().getTimeToLiveSeconds());
+        return new MapConfig("de.tum.in.www1.artemis.domain.*").setTimeToLiveSeconds(jHipsterProperties.getCache().getHazelcast().getTimeToLiveSeconds());
     }
 }
