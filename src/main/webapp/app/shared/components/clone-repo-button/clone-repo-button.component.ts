@@ -80,9 +80,10 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
             this.versionControlAccessTokenRequired = profileInfo.versionControlAccessToken;
             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
             this.gitlabVCEnabled = profileInfo.activeProfiles.includes(PROFILE_GITLAB);
-
             if (this.localVCEnabled) {
                 this.setupSshKeysUrl = `${window.location.origin}/user-settings/sshSettings`;
+            } else {
+                this.setupSshKeysUrl = profileInfo.sshKeysURL;
             }
         });
 

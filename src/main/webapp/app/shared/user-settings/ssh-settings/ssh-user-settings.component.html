@@ -1,56 +1,58 @@
-<h1>
-    <!--Account Information-->
-    {{ 'artemisApp.userSettings.sshSettings' | artemisTranslate }}
+<h1 jhiTranslate="artemisApp.userSettings.sshSettings">
+    <!--SSH Settings-->
 </h1>
 @if (currentUser) {
     <div class="list-group d-block">
         <div class="list-group-item">
             <dt>
-                {{ 'artemisApp.userSettings.sshSettingsPage.sshSettingsInfoText' | artemisTranslate }}
+                <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.sshSettingsInfoText"> </span>
                 <jhi-documentation-button [type]="documentationType" />
             </dt>
         </div>
         @if (storedSshKey === '' && !editSshKey) {
             <div class="list-group-item">
-                <button class="btn btn-sm btn-info" (click)="editSshKey = !editSshKey">
-                    <fa-icon [icon]="faEdit" />
-                    {{ 'artemisApp.userSettings.sshSettingsPage.addNewSshKey' | artemisTranslate }}
-                </button>
+                <jhi-button
+                    [btnType]="ButtonType.PRIMARY"
+                    [btnSize]="ButtonSize.SMALL"
+                    [title]="'artemisApp.userSettings.sshSettingsPage.addNewSshKey'"
+                    (onClick)="editSshKey = !editSshKey"
+                />
             </div>
         }
         @if (storedSshKey !== '' && !editSshKey) {
-            <dt class="list-group-item">
-                {{ 'artemisApp.userSettings.sshSettingsPage.sshKeyDisplayedInformation' | artemisTranslate }}
-            </dt>
+            <dt class="list-group-item" jhiTranslate="artemisApp.userSettings.sshSettingsPage.sshKeyDisplayedInformation"></dt>
             <div class="list-group-item">
                 {{ sshKey }}
             </div>
             <div class="list-group-item">
-                <button class="btn btn-sm btn-info" (click)="editSshKey = !editSshKey">
-                    <fa-icon [icon]="faEdit" />
-                    {{ 'artemisApp.userSettings.sshSettingsPage.editExistingSshKey' | artemisTranslate }}
-                </button>
-                <button
-                    type="button"
-                    class="btn btn-sm btn-danger"
-                    jhiDeleteButton
-                    [renderButtonStyle]="false"
-                    [renderButtonText]="false"
-                    [disabled]="editSshKey"
-                    (delete)="deleteSshKey()"
-                    deleteQuestion="artemisApp.userSettings.sshSettingsPage.deleteSshKeyQuestion"
-                    [dialogError]="dialogError$"
-                >
-                    <fa-icon [icon]="faTrash" />
-                    {{ 'artemisApp.userSettings.sshSettingsPage.deleteSshKey' | artemisTranslate }}
-                </button>
+                <div class="btn-group" role="group" aria-label="Actions">
+                    <jhi-button
+                        class="d-flex"
+                        [btnType]="ButtonType.PRIMARY"
+                        [btnSize]="ButtonSize.SMALL"
+                        [icon]="faEdit"
+                        [title]="'artemisApp.userSettings.sshSettingsPage.editExistingSshKey'"
+                        (onClick)="editSshKey = !editSshKey"
+                    />
+                </div>
+                <div class="btn-group" role="group" aria-label="Actions">
+                    <button
+                        class="btn btn-md flex-grow-1 d-flex align-items-center"
+                        jhiDeleteButton
+                        [renderButtonText]="false"
+                        (delete)="deleteSshKey()"
+                        deleteQuestion="artemisApp.userSettings.sshSettingsPage.deleteSshKeyQuestion"
+                        [dialogError]="dialogError$"
+                    >
+                        <fa-icon [icon]="faTrash" />
+                        <div jhiTranslate="artemisApp.userSettings.sshSettingsPage.deleteSshKey" class="ms-2">Delete</div>
+                    </button>
+                </div>
             </div>
         }
         @if (editSshKey) {
             <div class="list-group-item">
-                <dt>
-                    {{ 'artemisApp.userSettings.sshSettingsPage.key' | artemisTranslate }}
-                </dt>
+                <div jhiTranslate="artemisApp.userSettings.sshSettingsPage.key"></div>
             </div>
             <div class="list-group-item">
                 <dd>
@@ -58,19 +60,21 @@
                 </dd>
                 <div class="col col-auto text-right">
                     <div class="btn-group" role="group" aria-label="Actions">
-                        <button class="btn btn-sm btn-info" (click)="saveSshKey()">
-                            <div>
-                                <fa-icon [icon]="faSave" />
-                                {{ 'artemisApp.userSettings.sshSettingsPage.saveSshKey' | artemisTranslate }}
-                            </div>
-                        </button>
+                        <jhi-button
+                            [btnType]="ButtonType.PRIMARY"
+                            [btnSize]="ButtonSize.SMALL"
+                            [icon]="faSave"
+                            [title]="'artemisApp.userSettings.sshSettingsPage.saveSshKey'"
+                            (onClick)="saveSshKey()"
+                        />
                     </div>
                     <div class="btn-group" role="group" aria-label="Actions">
-                        <button class="btn btn-sm btn-info" (click)="cancelEditingSshKey()">
-                            <div>
-                                {{ 'artemisApp.userSettings.sshSettingsPage.cancelSavingSshKey' | artemisTranslate }}
-                            </div>
-                        </button>
+                        <jhi-button
+                            [btnType]="ButtonType.PRIMARY"
+                            [btnSize]="ButtonSize.SMALL"
+                            [title]="'artemisApp.userSettings.sshSettingsPage.cancelSavingSshKey'"
+                            (onClick)="cancelEditingSshKey()"
+                        />
                     </div>
                 </div>
             </div>

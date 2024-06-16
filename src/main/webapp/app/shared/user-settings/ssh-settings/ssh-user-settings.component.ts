@@ -6,6 +6,8 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { faEdit, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-account-information',
@@ -31,6 +33,7 @@ export class SshUserSettingsComponent implements OnInit {
     constructor(
         private accountService: AccountService,
         private profileService: ProfileService,
+        private alertService: AlertService,
     ) {}
 
     ngOnInit() {
@@ -52,16 +55,30 @@ export class SshUserSettingsComponent implements OnInit {
     }
 
     saveSshKey() {
-        this.editSshKey = false;
-        this.accountService.addSshPublicKey(this.sshKey).subscribe();
-        this.storedSshKey = this.sshKey;
+        this.accountService.addSshPublicKey(this.sshKey).subscribe({
+            next: () => {
+                this.alertService.success('artemisApp.userSettings.sshSettingsPage.saveSuccess');
+                this.editSshKey = false;
+                this.storedSshKey = this.sshKey;
+            },
+            error: () => {
+                this.alertService.error('artemisApp.userSettings.sshSettingsPage.saveFailure');
+            },
+        });
     }
 
     deleteSshKey() {
         this.editSshKey = false;
-        this.accountService.deleteSshPublicKey().subscribe();
-        this.sshKey = '';
-        this.storedSshKey = '';
+        this.accountService.deleteSshPublicKey().subscribe({
+            next: () => {
+                this.alertService.success('artemisApp.userSettings.sshSettingsPage.deleteSuccess');
+                this.sshKey = '';
+                this.storedSshKey = '';
+            },
+            error: () => {
+                this.alertService.error('artemisApp.userSettings.sshSettingsPage.deleteFailure');
+            },
+        });
         this.dialogErrorSource.next('');
     }
 
@@ -69,4 +86,7 @@ export class SshUserSettingsComponent implements OnInit {
         this.editSshKey = !this.editSshKey;
         this.sshKey = this.storedSshKey;
     }
+
+    protected readonly ButtonType = ButtonType;
+    protected readonly ButtonSize = ButtonSize;
 }
