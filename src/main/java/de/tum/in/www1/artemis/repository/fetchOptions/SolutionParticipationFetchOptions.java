@@ -16,7 +16,7 @@ public enum SolutionParticipationFetchOptions implements FetchOptions {
 
     private final String fetchPath;
 
-    SolutionParticipationFetchOptions(String... fetchPath) {
+    private SolutionParticipationFetchOptions(String... fetchPath) {
         this.fetchPath = String.join(".", fetchPath);
     }
 
