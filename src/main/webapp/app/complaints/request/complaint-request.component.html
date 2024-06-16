@@ -16,9 +16,7 @@
             </span>
         }
         @if (complaint.accepted === false) {
-            <span class="badge bg-danger">
-                {{ 'artemisApp.complaint.rejectedLong' | artemisTranslate }}
-            </span>
+            <span class="badge bg-danger" jhiTranslate="artemisApp.complaint.rejectedLong"></span>
         }
     </p>
     <textarea

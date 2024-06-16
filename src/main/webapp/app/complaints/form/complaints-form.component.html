@@ -34,9 +34,7 @@
                     }
                 </p>
                 @if (!examId) {
-                    <p>
-                        {{ 'artemisApp.complaint.exclusivityDisclaimer' | artemisTranslate }}
-                    </p>
+                    <p jhiTranslate="artemisApp.complaint.exclusivityDisclaimer"></p>
                 }
                 <div class="d-flex flex-column">
                     <textarea id="complainTextArea" class="col-12 px-1" rows="4" [maxLength]="this.maxComplaintTextLimit" [(ngModel)]="complaintText"> </textarea>

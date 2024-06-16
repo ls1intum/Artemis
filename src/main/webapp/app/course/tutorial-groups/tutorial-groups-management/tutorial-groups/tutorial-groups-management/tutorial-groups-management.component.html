@@ -15,12 +15,12 @@
                                 [routerLink]="['/course-management', courseId, 'tutorial-groups', 'configuration', course!.tutorialGroupsConfiguration!.id, 'tutorial-free-days']"
                             >
                                 <fa-icon [icon]="faUmbrellaBeach" />
-                                <span class="d-none d-md-inline">{{ 'artemisApp.pages.tutorialGroupsManagement.freePeriodsButtons' | artemisTranslate }}</span>
+                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.pages.tutorialGroupsManagement.freePeriodsButtons"></span>
                             </a>
                         }
                         <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'tutorial-groups', 'create']">
                             <fa-icon [icon]="faPlus" />
-                            <span class="d-none d-md-inline">{{ 'artemisApp.pages.tutorialGroupsManagement.creatTutorialGroupButton' | artemisTranslate }}</span>
+                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.pages.tutorialGroupsManagement.creatTutorialGroupButton"></span>
                         </a>
                         <div ngbDropdown class="d-inline-block">
                             <button type="button" class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>
@@ -33,7 +33,7 @@
                                         class="btn"
                                         [routerLink]="['/course-management', courseId, 'tutorial-groups', 'configuration', course!.tutorialGroupsConfiguration!.id, 'edit']"
                                     >
-                                        <span class="d-none d-md-inline">{{ 'artemisApp.pages.tutorialGroupsManagement.editConfigurationButton' | artemisTranslate }}</span>
+                                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.pages.tutorialGroupsManagement.editConfigurationButton"></span>
                                     </a>
                                 }
                                 <jhi-tutorial-groups-import-button

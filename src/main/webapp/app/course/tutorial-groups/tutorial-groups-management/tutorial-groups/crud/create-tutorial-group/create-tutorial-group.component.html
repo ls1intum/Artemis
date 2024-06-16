@@ -1,5 +1,5 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
-    <h3>{{ 'artemisApp.pages.createTutorialGroup.title' | artemisTranslate }}</h3>
+    <h3 jhiTranslate="artemisApp.pages.createTutorialGroup.title"></h3>
     @if (course) {
         <jhi-tutorial-group-form [isEditMode]="false" [course]="course" (formSubmitted)="createTutorialGroup($event)" />
     }

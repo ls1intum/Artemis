@@ -261,9 +261,7 @@
                                     (click)="selectAllRoles()"
                                     [checked]="this.filters.authorityFilter.size === this.authorityFilters.length && !this.filters.noAuthority"
                                 />
-                                <label for="authorityFilter" class="form-check-label ps-1">
-                                    {{ 'artemisApp.userManagement.filter.all' | artemisTranslate }}
-                                </label>
+                                <label for="authorityFilter" class="form-check-label ps-1" jhiTranslate="artemisApp.userManagement.filter.all"></label>
                             </div>
                             <div class="form-check col-6 d-flex justify-content-center">
                                 <input
@@ -273,9 +271,7 @@
                                     (click)="selectEmptyRoles()"
                                     [checked]="this.filters.authorityFilter.size === 0 && this.filters.noAuthority"
                                 />
-                                <label for="emptyRoles" class="form-check-label ps-1">
-                                    {{ 'artemisApp.userManagement.filter.authority.without' | artemisTranslate }}
-                                </label>
+                                <label for="emptyRoles" class="form-check-label ps-1" jhiTranslate="artemisApp.userManagement.filter.authority.without"></label>
                                 <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.authority.withoutTooltip" />
                             </div>
                             <div class="form-check col-3 d-flex justify-content-center">
@@ -286,9 +282,7 @@
                                     (click)="deselectAllRoles()"
                                     [checked]="this.filters.authorityFilter.size === 0 && !this.filters.noAuthority"
                                 />
-                                <label for="deselectAll" class="form-check-label ps-1">
-                                    {{ 'artemisApp.userManagement.filter.none' | artemisTranslate }}
-                                </label>
+                                <label for="deselectAll" class="form-check-label ps-1" jhiTranslate="artemisApp.userManagement.filter.none"></label>
                             </div>
                         </div>
                     </div>
@@ -332,9 +326,7 @@
                         }
                         <li class="col-3">
                             <input class="form-check-input" type="radio" (click)="this.toggleOriginFilter()" [checked]="this.filters.originFilter.size === 0" />
-                            <label class="form-check-label ps-1">
-                                {{ 'artemisApp.userManagement.filter.none' | artemisTranslate }}
-                            </label>
+                            <label class="form-check-label ps-1" jhiTranslate="artemisApp.userManagement.filter.none"></label>
                         </li>
                     </ul>
                 </div>
@@ -371,9 +363,7 @@
                                 (click)="this.toggleRegistrationNumberFilter()"
                                 [checked]="this.filters.registrationNumberFilter.size === 0"
                             />
-                            <label for="toggleRegistrationNumberFilter" class="form-check-label ps-1">
-                                {{ 'artemisApp.userManagement.filter.none' | artemisTranslate }}
-                            </label>
+                            <label for="toggleRegistrationNumberFilter" class="form-check-label ps-1" jhiTranslate="artemisApp.userManagement.filter.none"></label>
                         </li>
                     </ul>
                 </div>
@@ -397,9 +387,7 @@
                         }
                         <li class="col-3">
                             <input class="form-check-input" type="radio" (click)="this.toggleStatusFilter()" [checked]="this.filters.statusFilter.size === 0" />
-                            <label class="form-check-label ps-1">
-                                {{ 'artemisApp.userManagement.filter.none' | artemisTranslate }}
-                            </label>
+                            <label class="form-check-label ps-1" jhiTranslate="artemisApp.userManagement.filter.none"></label>
                         </li>
                     </ul>
                 </div>
@@ -407,9 +395,7 @@
         </div>
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="modal.close()">
-            {{ 'artemisApp.userManagement.filter.modal.close' | artemisTranslate }}
-        </button>
+        <button type="button" class="btn btn-secondary" (click)="modal.close()" jhiTranslate="artemisApp.userManagement.filter.modal.close"></button>
         <button class="btn btn-primary" (click)="applyFilter()">
             <span jhiTranslate="artemisApp.userManagement.filter.apply"></span>
         </button>

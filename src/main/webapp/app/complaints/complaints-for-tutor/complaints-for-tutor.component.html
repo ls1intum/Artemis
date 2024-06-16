@@ -35,9 +35,7 @@
                 </div>
             }
             @if (lockedByCurrentUser) {
-                <button id="lockButton" class="btn btn-secondary" (click)="removeLock()">
-                    {{ 'artemisApp.locks.removeButton' | artemisTranslate }}
-                </button>
+                <button id="lockButton" class="btn btn-secondary" (click)="removeLock()" jhiTranslate="artemisApp.locks.removeButton"></button>
             }
         </div>
         <div class="row">

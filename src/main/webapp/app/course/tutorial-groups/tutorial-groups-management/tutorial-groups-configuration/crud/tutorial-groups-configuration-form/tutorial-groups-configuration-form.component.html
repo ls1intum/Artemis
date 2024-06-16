@@ -4,7 +4,7 @@
             <form class="row" [formGroup]="form" (ngSubmit)="submitForm()">
                 <!-- Period -->
                 <div class="col-auto">
-                    <label class="form-label" for="period">{{ 'artemisApp.forms.configurationForm.periodInput.label' | artemisTranslate }}</label>
+                    <label class="form-label" for="period" jhiTranslate="artemisApp.forms.configurationForm.periodInput.label"></label>
                     <div class="input-group">
                         <input
                             name="period"
@@ -63,7 +63,7 @@
                         </div>
                         <!--Public Channel / Private Channel -->
                         <div class="form-group" [hidden]="!useTutorialGroupChannelsControl?.value">
-                            <label class="d-block">{{ 'artemisApp.dialogs.createChannel.channelForm.isPublicInput.label' | artemisTranslate }}</label>
+                            <label class="d-block" jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isPublicInput.label"></label>
                             <div class="btn-group" role="group">
                                 <input formControlName="usePublicTutorialGroupChannels" type="radio" class="btn-check" id="public" autocomplete="off" checked [value]="true" />
                                 <label class="btn btn-outline-secondary" for="public">{{

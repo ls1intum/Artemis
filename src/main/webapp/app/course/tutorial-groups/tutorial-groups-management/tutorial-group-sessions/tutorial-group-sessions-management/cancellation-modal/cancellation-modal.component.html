@@ -21,7 +21,7 @@
     @if (tutorialGroupSession.status === tutorialGroupSessionStatus.ACTIVE) {
         <form [formGroup]="form">
             <div class="form-group">
-                <label for="reason">{{ 'artemisApp.pages.tutorialGroupSessionManagement.cancelActivateModal.cancelSession.explanation' | artemisTranslate }}</label>
+                <label for="reason" jhiTranslate="artemisApp.pages.tutorialGroupSessionManagement.cancelActivateModal.cancelSession.explanation"></label>
                 <textarea class="form-control" id="reason" rows="2" formControlName="reason"></textarea>
                 @if (reasonControl?.invalid && (reasonControl?.dirty || reasonControl?.touched)) {
                     <div class="alert alert-danger">
