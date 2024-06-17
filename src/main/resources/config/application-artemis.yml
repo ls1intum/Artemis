@@ -103,7 +103,7 @@ artemis:
 
   scheduling: # these values are cron expressions. To generate one, you can use e.g. https://www.freeformatter.com/cron-expression-generator-quartz.html
     programming-exercises-cleanup-time: 0 0 3 * * * # every day at 3am
-    data-export-creation-time: 0 0 4 * * * # every day at 4am
+    data-export-creation-time: 0 * * ? * * # every minute
     continuous-plagiarism-control-trigger-time: 0 0 5 * * * # every day at 5am
 
   data-export:
