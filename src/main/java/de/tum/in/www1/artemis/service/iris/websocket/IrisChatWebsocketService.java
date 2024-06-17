@@ -36,6 +36,7 @@ public class IrisChatWebsocketService extends IrisWebsocketService {
      *
      * @param irisMessage that should be sent over the websocket
      * @param stages      that should be sent over the websocket
+     * @param suggestions that should be sent over the websocket
      */
     public void sendMessage(IrisMessage irisMessage, List<PyrisStageDTO> stages, List<String> suggestions) {
         var session = irisMessage.getSession();
