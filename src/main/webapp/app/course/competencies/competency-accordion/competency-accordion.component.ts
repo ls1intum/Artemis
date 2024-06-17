@@ -33,7 +33,7 @@ export class CompetencyAccordionComponent implements OnChanges {
     nextLectureUnits: LectureUnitInformation[] = [];
     exercisesProgress?: number;
     lectureUnitsProgress?: number;
-    confidence: number = 0;
+    confidence: number = 1;
     mastery: number = 0;
     progress: number = 0;
     jolRating?: number;
@@ -66,7 +66,7 @@ export class CompetencyAccordionComponent implements OnChanges {
                     userProgress: [
                         {
                             progress: this.metrics.competencyMetrics?.progress?.[competency.id] ?? 0,
-                            confidence: this.metrics.competencyMetrics?.confidence?.[competency.id] ?? 0,
+                            confidence: this.metrics.competencyMetrics?.confidence?.[competency.id] ?? 1,
                         },
                     ],
                 } satisfies Competency;
@@ -127,11 +127,11 @@ export class CompetencyAccordionComponent implements OnChanges {
         const userProgress = this.getUserProgress();
         if (this.jolRating !== undefined) {
             this.progress = this.getProgress(userProgress);
-            this.confidence = this.getConfidence(userProgress, this.competency.masteryThreshold!);
-            this.mastery = this.getMastery(userProgress, this.competency.masteryThreshold!);
+            this.confidence = this.getConfidence(userProgress);
+            this.mastery = this.getMastery(userProgress);
         } else {
             this.progress = 0;
-            this.confidence = 0;
+            this.confidence = 1;
             this.mastery = 0;
         }
     }
@@ -169,7 +169,7 @@ export class CompetencyAccordionComponent implements OnChanges {
 
     getUserProgress(): CompetencyProgress {
         const progress = this.metrics.competencyMetrics?.progress?.[this.competency.id] ?? 0;
-        const confidence = this.metrics.competencyMetrics?.confidence?.[this.competency.id] ?? 0;
+        const confidence = this.metrics.competencyMetrics?.confidence?.[this.competency.id] ?? 1;
         return { progress, confidence };
     }
 

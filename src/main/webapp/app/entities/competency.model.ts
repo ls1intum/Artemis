@@ -108,6 +108,7 @@ export interface CompetencyImportResponseDTO extends BaseEntity {
 }
 
 export enum ConfidenceReason {
+    NO_REASON = 'NO_REASON',
     RECENT_SCORES_LOWER = 'RECENT_SCORES_LOWER',
     RECENT_SCORES_HIGHER = 'RECENT_SCORES_HIGHER',
     MORE_EASY_POINTS = 'MORE_EASY_POINTS',

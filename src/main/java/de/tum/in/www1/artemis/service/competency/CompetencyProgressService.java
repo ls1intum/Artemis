@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.util.TimeUtil.toRelativeTime;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -26,6 +27,7 @@ import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 import de.tum.in.www1.artemis.domain.enumeration.CompetencyProgressConfidenceReason;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
+import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
@@ -158,14 +160,15 @@ public class CompetencyProgressService {
      * @return The updated competency progress, which is also persisted to the database
      */
     public CompetencyProgress updateCompetencyProgress(Long competencyId, User user) {
-        Competency competency = competencyRepository.findByIdWithLectureUnitsWithoutExerciseUnits(competencyId);
+        Optional<Competency> optionalCompetency = competencyRepository.findByIdWithLectureUnits(competencyId);
 
-        if (user == null || competency == null) {
+        if (user == null || optionalCompetency.isEmpty()) {
             log.debug("User or competency no longer exist, skipping.");
             return null;
         }
 
-        Set<LectureUnit> lectureUnits = competency.getLectureUnits();
+        Competency competency = optionalCompetency.get();
+        Set<LectureUnit> lectureUnits = competency.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).collect(Collectors.toSet());
         Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos = competencyRepository.findAllExerciseInfoByCompetencyId(competencyId);
         int numberOfCompletedLectureUnits = lectureUnitCompletionRepository
                 .countByLectureUnitIds(competency.getLectureUnits().stream().map(LectureUnit::getId).collect(Collectors.toSet()));

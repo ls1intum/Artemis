@@ -15,13 +15,19 @@
             "course": "Kurs",
             "progress": "Fortschritt",
             "progressDescription": "Der Prozentsatz an abgeschlossenen Vorlesungseinheiten und Übungen, die mit dieser Kompetenz verknüpft sind.",
-            "confidence": "Konfidenz",
-            "confidenceDescription": "Die durchschnittliche Bewertung in allen verknüpften Übungen im Verhältnis zu dem vom Lehrenden festgelegten Schwellenwert für die Beherrschung der Kompetenz.",
             "mastery": "Kompetenzbeherrschung",
             "masteryDescription": "Ein gewichteter Leistungsindex aus Fortschritt und Konfidenz, der Deine Entwicklung auf dem Weg zur Beherrschung der Kompetenz veranschaulicht.",
             "masteredStudents": "Studierende mit Kompetenz",
             "mastered": "Abgeschlossen",
             "competencies": "Kompetenzen",
+            "confidenceReasons": {
+                "NO_REASON": "Die Kompetenzbeherrschung ist etwa der Fortschritt",
+                "RECENT_SCORES_LOWER": "Da die letzten Bewertungen niedriger waren als dein Durchschnitt in dieser Kompetenz, ist die Kompetenzbeherrschung niedriger als der Fortschritt",
+                "RECENT_SCORES_HIGHER": "Da die letzten Bewertungen höher waren als dein Durchschnitt in dieser Kompetenz, ist die Kompetenzbeherrschung höher als der Fortschritt",
+                "MORE_EASY_POINTS": "Da ein größerer Anteil deiner Punkte aus einfachen Aufgaben kommt, ist die Kompetenzbeherrschung niedriger als der Fortschritt",
+                "MORE_HARD_POINTS": "Da ein größerer Anteil deiner Punkte aus schwierigen Aufgaben kommt, ist die Kompetenzbeherrschung höher als der Fortschritt",
+                "QUICKLY_SOLVED_EXERCISES": "Da du Aufgaben schnell gelöst hast, ist die Kompetenzbeherrschung höher als der Fortschritt"
+            },
             "taxonomies": {
                 "REMEMBER": "Erinnern",
                 "UNDERSTAND": "Verstehen",

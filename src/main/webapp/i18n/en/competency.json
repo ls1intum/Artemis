@@ -15,13 +15,19 @@
             "course": "Course",
             "progress": "Progress",
             "progressDescription": "The percentage of completed lecture units and exercises linked to this competency.",
-            "confidence": "Confidence",
-            "confidenceDescription": "The average score in all linked exercises in relation to the threshold required for mastering the competency defined by the instructor.",
             "mastery": "Mastery",
             "masteryDescription": "A weighted metric of your progress and confidence, which shows your overall advancement towards competency mastery.",
             "masteredStudents": "Mastered students",
             "mastered": "Mastered",
             "competencies": "Competencies",
+            "confidenceReasons": {
+                "NO_REASON": "The confidence is roughly the same as the mastery",
+                "RECENT_SCORES_LOWER": "Since your recent scores are lower than your average in the competency, the mastery is lower than the progress",
+                "RECENT_SCORES_HIGHER": "Since your recent scores are higher than your average in the competency, the mastery is higher than the progress",
+                "MORE_EASY_POINTS": "Since your points come mostly from easy exercises, the mastery is lower than the progress",
+                "MORE_HARD_POINTS": "Since your points come mostly from hard exercises, the mastery is higher than the progress",
+                "QUICKLY_SOLVED_EXERCISES": "Since you solved some exercises quickly, the mastery is higher than the progress"
+            },
             "taxonomies": {
                 "REMEMBER": "Remember",
                 "UNDERSTAND": "Understand",

@@ -62,24 +62,6 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long>, J
     Optional<Competency> findByIdWithLectureUnitsAndCompletions(@Param("competencyId") long competencyId);
 
     @Query("""
-            SELECT c
-            FROM Competency c
-                LEFT JOIN FETCH c.lectureUnits lu
-                LEFT JOIN FETCH lu.completedUsers
-            WHERE c.id = :competencyId
-            """)
-    Competency findByIdWithLectureUnitsAndCompletedUsers(@Param("competencyId") long competencyId);
-
-    @Query("""
-            SELECT c
-            FROM Competency c
-                LEFT JOIN FETCH c.lectureUnits lu
-            WHERE c.id = :competencyId
-                AND type(lu) <> ExerciseUnit
-            """)
-    Competency findByIdWithLectureUnitsWithoutExerciseUnits(@Param("competencyId") long competencyId);
-
-    @Query("""
             SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.CompetencyExerciseMasteryCalculationDTO(
                 ex,
                 sS,
