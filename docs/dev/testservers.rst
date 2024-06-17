@@ -3,48 +3,57 @@
 Test Servers
 ============
 
-Test Server 1-3
----------------
++--------------------------------------------+-----------------------------+----------------+---------------------+----------------+
+|                  Testserver                |    Connected Systems        | Deployment via |        Access       | Admin-Accounts |
++============================================+=============================+================+=====================+================+
+| artemis-staging-localci.artemis.cit.tum.de | - Integrated Code Lifecycle |     Bamboo     | - TUMonline account |    On Demand   |
+|                                            | - LDAP                      |                | - Test accounts     |                |
+|                                            | - LTI                       |                |                     |                |
+|                                            | - Apollon                   |                |                     |                |
+|                                            | - Iris                      |                |                     |                |
+|                                            | - MySQL                     |                |                     |                |
++--------------------------------------------+-----------------------------+----------------+---------------------+----------------+
+| https://artemis-test0.artemis.in.tum.de/   | - ICL (migrated)            |     Bamboo     | - TUMonline account |                |
+|                                            | - LDAP                      |                |                     |                |
+|                                            | - Sending E-Mails possible  |                |                     |                |
+|                                            | - MySQL                     |                |                     |                |
++--------------------------------------------+-----------------------------+----------------+---------------------+----------------+
+| artemis-test1.artemis.cit.tum.de           | - Integrated Code Lifecycle |     GitHub     | - TUMonline account |    On Demand   |
+|                                            | - MySQL                     |                | - Test accounts     |                |
+|                                            | - 3 Nodes                   |                |                     |                |
+|                                            | - Iris                      |                |                     |                |
+|                                            | - LTI                       |                |                     |                |
++--------------------------------------------+-----------------------------+----------------+---------------------+----------------+
+| artemis-test2.artemis.cit.tum.de           | - Integrated Code Lifecycle |     GitHub     | - TUMonline account |    On Demand   |
+|                                            | - MySQL                     |                | - Test accounts     |                |
+|                                            | - 1 Node                    |                |                     |                |
+|                                            | - LTI                       |                |                     |                |
++--------------------------------------------+-----------------------------+----------------+---------------------+----------------+
+| artemis-test3.artemis.cit.tum.de           | - Integrated Code Lifecycle |     GitHub     | - TUMonline account |    On Demand   |
+|                                            | - Postgres                  |                | - Test accounts     |                |
+|                                            | - 3 Nodes                   |                |                     |                |
+|                                            | - Iris                      |                |                     |                |
+|                                            | - LTI                       |                |                     |                |
++--------------------------------------------+-----------------------------+----------------+---------------------+----------------+
+| artemis-test4.artemis.cit.tum.de           | - Integrated Code Lifecycle |     GitHub     | - TUMonline account |    On Demand   |
+|                                            | - LDAP                      |                | - Test accounts     |                |
+|                                            | - LTI                       |                |                     |                |
+|                                            | - Apollon                   |                |                     |                |
+|                                            | - Iris                      |                |                     |                |
+|                                            | - MySQL                     |                |                     |                |
++--------------------------------------------+-----------------------------+----------------+---------------------+----------------+
+| artemis-test5.artemis.cit.tum.de           | - Integrated Code Lifecycle |     GitHub     | - TUMonline account |    On Demand   |
+|                                            | - Postgres                  |                | - Test accounts     |                |
+|                                            | - 1 Node                    |                |                     |                |
+|                                            | - Iris                      |                |                     |                |
+|                                            | - LTI                       |                |                     |                |
++--------------------------------------------+-----------------------------+----------------+---------------------+----------------+
+| artemis-test6.artemis.cit.tum.de           | - GitlabCI                  |     GitHub     | - TUMonline account |    On Demand   |
+|                                            | - Postgres                  |                | - Test accounts     |                |
+|                                            | - 1 Node                    |                |                     |                |
+|                                            | - LTI                       |                |                     |                |
++--------------------------------------------+-----------------------------+----------------+---------------------+----------------+
 
-Deployment with Github Actions. Only for branches of the ``ls1intum/Artemis`` repository, no forks.
-Guide available in the Artemis Developer Confluence Space: `Deploying changes to test server`_.
+Test Accounts can be seen on the `Artemis Test Server Confluence Page`_.
 
-.. _`Deploying changes to test server`: https://confluence.ase.in.tum.de/display/ArTEMiS/GitHub+Deployment
-
-Test Server 5
--------------
-
-
-Pull requests on GitHub can be deployed to TS5_, including forks.
-To invoke a deployment, you need to be part of the `@ls1intum/artemis-developers` GitHub team.
-
-#. Waiting for build to finish
-
-    .. figure:: testservers/actions-deploy-wait-for-build.png
-        :alt: GitHub Actions UI: Waiting for build to finish
-
-#. Deployment waiting for approval
-
-    .. figure:: testservers/actions-deploy-wait-for-approval.png
-        :alt: GitHub Actions UI: Deployment waiting for approval
-
-#. Review Deployment
-
-    .. figure:: testservers/actions-deploy-review-deployment.png
-        :alt: GitHub Actions UI: Review Deployment
-
-#. Deployment done
-
-    .. figure:: testservers/actions-deploy-done.png
-        :alt: GitHub Actions UI: Deployment done
-
-Start the deployment by reviewing the `Build & Deploy` action.
-(Refer to the `GitHub documentation "Reviewing deployments"`_.)
-TS5 is locked to a pull request using the `lock:artemis-test5`_ label.
-The workflow applies the lock label automatically on deployment.
-Remove the label from the PR once the test server is free to use by other developers.
-
-
-.. _TS5: https://artemis-test5.artemis.cit.tum.de/
-.. _`GitHub documentation "Reviewing deployments"`: https://docs.github.com/en/actions/managing-workflow-runs/reviewing-deployments
-.. _`lock:artemis-test5`: https://github.com/ls1intum/Artemis/pulls?q=is%3Aopen+is%3Apr+label%3Alock%3Aartemis-test5
+..  _`Artemis Test Server Confluence Page`: https://confluence.ase.in.tum.de/x/lVGBAQ
