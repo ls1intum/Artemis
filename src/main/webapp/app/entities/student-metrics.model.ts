@@ -52,6 +52,7 @@ export class LectureUnitStudentMetricsDTO {
 export class LectureUnitInformation {
     public id: number;
     public lectureId: number;
+    public lectureTitle: string;
     public name: string;
     public releaseDate?: dayjs.Dayjs;
     public type: LectureUnitType;

@@ -81,6 +81,8 @@
                     <a class="stretched-link" [routerLink]="['/courses', course.id, 'lectures', lectureUnit.lectureId]"></a>
                     <div class="m-0 fs-5 fw-medium px-2">
                         <fa-icon class="me-2" [icon]="lectureUnitIcons[lectureUnit.type]" [ngbTooltip]="lectureUnitTooltips[lectureUnit.type] | artemisTranslate" />
+                        {{ lectureUnit.lectureTitle }}
+                        -
                         {{ lectureUnit.name }}
                     </div>
                 </div>
