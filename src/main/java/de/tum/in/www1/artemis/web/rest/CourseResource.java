@@ -54,6 +54,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -627,6 +629,26 @@ public class CourseResource {
         CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, gradingScale, user.getId());
         logDuration(List.of(course), user, timeNanoStart, "courses/" + courseId + "/for-dashboard (single course)");
         return ResponseEntity.ok(courseForDashboardDTO);
+    }
+
+    /**
+     * GET /courses/for-dropdown
+     *
+     * @return contains all courses the user has access to with id, title and icon
+     */
+    @GetMapping("courses/for-dropdown")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Set<CourseDropdownDTO>> getCoursesForDropdown() {
+        long start = System.nanoTime();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        final var courses = courseService.findAllActiveForUser(user);
+        final var response = courses.stream().map(course -> new CourseDropdownDTO(course.getId(), course.getTitle(), course.getCourseIcon())).collect(Collectors.toSet());
+        log.info("GET /courses/for-dropdown took {} for {} courses for user {}", TimeLogUtil.formatDurationFrom(start), courses.size(), user.getLogin());
+        return ResponseEntity.ok(response);
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record CourseDropdownDTO(Long id, String title, String courseIcon) {
     }
 
     /**
