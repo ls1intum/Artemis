@@ -59,6 +59,8 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     isTestServer = false;
     isCollapsed: boolean = false;
     exerciseId: string;
+    numberOfSavedExercises: number = 0;
+    isExerciseSaved: boolean[] = new Array(this.exercises.length).fill(false);
 
     constructor(
         private profileService: ProfileService,
@@ -120,6 +122,8 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
                         }
                     });
             });
+
+        this.refreshExerciseSaveCount();
     }
 
     ngOnDestroy() {
@@ -178,6 +182,16 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
         return this.overviewPageOpen ? 'active' : '';
     }
 
+    refreshExerciseSaveCount() {
+        this.numberOfSavedExercises = 0;
+        this.exercises.forEach((exercise) => {
+            const submission = ExamParticipationService.getSubmissionForExercise(exercise);
+            if (submission && submission.submitted) {
+                this.numberOfSavedExercises++;
+            }
+        });
+    }
+
     /**
      * calculate the exercise status (also see exam-exercise-overview-page.component.ts --> make sure the logic is consistent)
      * also determines the used icon and its color
@@ -208,6 +222,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
         }
         if (submission.submitted && submission.isSynced) {
             this.icon = faCheck;
+            this.refreshExerciseSaveCount();
             return 'synced saved';
         }
         if (submission.isSynced || this.isOnlyOfflineIDE(exercise)) {
