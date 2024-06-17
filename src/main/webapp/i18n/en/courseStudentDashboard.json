@@ -25,6 +25,7 @@
             },
             "judgementOfLearning": {
                 "title": "How would you rate your mastery?",
+                "info": "Mastery indicates how well you understand and can apply this specific competency.",
                 "artemisRating": "Artemis rates your mastery as",
                 "error": "An error occurred while saving your rating.",
                 "redirectButton": "Rate mastery on dashboard"

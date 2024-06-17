@@ -24,7 +24,8 @@
                 "yAxisLabel": "Relative Fristnähe (%)"
             },
             "judgementOfLearning": {
-                "title": "Wie würdest du dein Verständnis bewerten?",
+                "title": "Wie würdest du deine Kompetenzbeherrschung bewerten?",
+                "info": "Beherrschung gibt an, wie gut du diese spezifische Kompetenz verstehst und anwenden kannst.",
                 "artemisRating": "Artemis bewertet dein Verständnis als",
                 "error": "Beim Speichern deiner Bewertung ist ein Fehler aufgetreten.",
                 "redirectButton": "Bewerte Verständnis auf der Übersichtsseite"
