@@ -308,6 +308,12 @@ public final class Constants {
     public static final String PROFILE_SCHEDULING = "scheduling";
 
     /**
+     * The name of the Spring profile used to run a migration of a setup
+     * with GitLab and Jenkins to local VC system and Jenkins.
+     */
+    public static final String PROFILE_MIGRATE_GITLAB_JENKINS_TO_LOCALVC = "migrate-gitlab-jenkins-to-localvc";
+
+    /**
      * Size of an unsigned tinyInt in SQL, that is used in the database
      */
     public static final int SIZE_OF_UNSIGNED_TINYINT = 255;
