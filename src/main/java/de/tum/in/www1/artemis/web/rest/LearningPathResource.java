@@ -187,7 +187,7 @@ public class LearningPathResource {
 
         checkLearningPathAccessElseThrow(learningPath.getCourse(), learningPath, user);
 
-        return ResponseEntity.ok(learningPathService.generateLearningPathCompetencyGraph(learningPath));
+        return ResponseEntity.ok(learningPathService.generateLearningPathCompetencyGraph(learningPath, user));
     }
 
     /**
