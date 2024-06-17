@@ -343,6 +343,7 @@
             "attendanceNotVerifiedWarningFirstSentence": "Your attendance has not been checked yet.",
             "attendanceNotVerifiedWarningSecondSentence": "Please wait for your attendance to be checked or contact your instructors if you believe this is a mistake.",
             "namePlaceholder": "Enter your full name here",
+            "numberOfSavedExercises": "Number of submitted exercises",
             "submissionSuccessful": {
                 "title": "Your exam has been submitted successfully!",
                 "noActionRequired": "Artemis does not require any further action and this window can be closed.",
