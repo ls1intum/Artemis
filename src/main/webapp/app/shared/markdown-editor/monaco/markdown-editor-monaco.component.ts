@@ -21,6 +21,7 @@ import { MonacoEditorActionGroup } from 'app/shared/monaco-editor/model/actions/
 import { MonacoHeadingAction } from 'app/shared/monaco-editor/model/actions/monaco-heading.action';
 import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/monaco-formula.action';
 import { MonacoFullscreenAction } from 'app/shared/monaco-editor/model/actions/monaco-fullscreen.action';
+import { MonacoColorAction } from 'app/shared/monaco-editor/model/actions/monaco-color.action';
 
 // TODO: Once the old markdown editor is gone, remove the style url.
 @Component({
@@ -75,6 +76,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     );
 
     @Input()
+    colorAction?: MonacoColorAction = new MonacoColorAction();
+
+    @Input()
     domainActions: MonacoEditorAction[] = [];
 
     @Output()
@@ -112,7 +116,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         if (this.fileUploadFooter?.nativeElement) {
             this.resizeObserver.observe(this.fileUploadFooter.nativeElement);
         }
-        [this.defaultActions, this.headerActions.actions, this.domainActions].flat().forEach((action) => {
+        [this.defaultActions, this.headerActions.actions, this.domainActions, ...(this.colorAction ? [this.colorAction] : [])].flat().forEach((action) => {
             if (action.id === MonacoFullscreenAction.ID) {
                 (<MonacoFullscreenAction>action).element = this.wrapper.nativeElement;
             }
