@@ -311,6 +311,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     registerAction(action: MonacoEditorAction): void {
-        this._editor.addAction(action);
+        action.register(this._editor);
     }
 }

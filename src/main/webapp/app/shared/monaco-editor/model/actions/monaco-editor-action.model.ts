@@ -10,6 +10,11 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
 
     icon?: IconDefinition;
 
+    /**
+     * The disposable action that is returned by `editor.addAction`. This is required to unregister the action from the editor.
+     */
+    disposableAction?: monaco.IDisposable;
+
     constructor(id: string, label: string, translationKey: string, icon?: IconDefinition, keybindings?: number[]) {
         this.id = id;
         this.label = label;
@@ -24,6 +29,25 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
     }
 
     abstract run(editor: monaco.editor.ICodeEditor, args?: unknown): void;
+
+    /**
+     * Dispose the action if it has been registered with an editor.
+     */
+    dispose(): void {
+        this.disposableAction?.dispose();
+    }
+
+    /**
+     * Register this action with the given editor. This is required to make the action available in the editor. Note that the action can only be registered with one editor at a time.
+     * @param editor The editor to register this action with. Note that its type has to be `monaco.editor.IStandaloneCodeEditor` to ensure it supports the `addAction` method.
+     * @throws error if the action has already been registered with an editor.
+     */
+    register(editor: monaco.editor.IStandaloneCodeEditor) {
+        if (this.disposableAction) {
+            throw new Error(`Action (id ${this.id}) already belongs to an editor. Dispose it first before registering it with another editor.`);
+        }
+        this.disposableAction = editor.addAction(this);
+    }
 
     replaceTextAtCurrentSelection(editor: monaco.editor.ICodeEditor, text: string): void {
         const selection = editor.getSelection();
