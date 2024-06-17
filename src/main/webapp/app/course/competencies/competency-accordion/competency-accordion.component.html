@@ -9,7 +9,7 @@
             <fa-icon
                 [icon]="getIcon(competency.taxonomy)"
                 [fixedWidth]="true"
-                [ngbTooltip]="'artemisApp.competency.taxonomies.' + competency.taxonomy | artemisTranslate"
+                [ngbTooltip]="'artemisApp.competency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
                 container="body"
             />
             {{ competency.title }}
