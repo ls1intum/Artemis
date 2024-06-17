@@ -21,6 +21,7 @@ import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CompetencyRecommendationDetailComponent } from 'app/course/competencies/generate-competencies/competency-recommendation-detail.component';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 
 describe('GenerateCompetenciesComponent', () => {
     let generateCompetenciesComponentFixture: ComponentFixture<GenerateCompetenciesComponent>;
@@ -37,6 +38,7 @@ describe('GenerateCompetenciesComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(FeatureToggleDirective),
                 MockDirective(TranslateDirective),
+                MockComponent(DocumentationButtonComponent),
             ],
             providers: [
                 {

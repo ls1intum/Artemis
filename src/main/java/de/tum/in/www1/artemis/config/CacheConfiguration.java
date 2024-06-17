@@ -52,7 +52,6 @@ import com.hazelcast.spring.context.SpringManagedContext;
 
 import de.tum.in.www1.artemis.service.HazelcastPathSerializer;
 import de.tum.in.www1.artemis.service.connectors.localci.LocalCIPriorityQueueComparator;
-import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import tech.jhipster.config.JHipsterProperties;
 import tech.jhipster.config.cache.PrefixedKeyGenerator;
 
@@ -267,7 +266,6 @@ public class CacheConfiguration {
             config.setLiteMember(true);
         }
 
-        QuizScheduleService.configureHazelcast(config);
         return Hazelcast.newHazelcastInstance(config);
     }
 

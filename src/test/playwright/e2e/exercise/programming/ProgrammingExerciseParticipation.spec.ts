@@ -15,7 +15,7 @@ import { Fixtures } from '../../../fixtures/fixtures';
 import { createFileWithContent } from '../../../support/utils';
 import { ProgrammingExerciseSubmission } from '../../../support/pageobjects/exercises/programming/OnlineEditorPage';
 import cAllSuccessful from '../../../fixtures/exercise/programming/c/all_successful/submission.json';
-import { UserCredentials, admin, instructor, studentFour, studentOne, studentThree, studentTwo, tutor } from '../../../support/users';
+import { UserCredentials, admin, instructor, studentFour, studentOne, studentTwo, tutor } from '../../../support/users';
 import { Team } from 'app/entities/team.model';
 import { ProgrammingExerciseOverviewPage } from '../../../support/pageobjects/exercises/programming/ProgrammingExerciseOverviewPage';
 import { Participation } from 'app/entities/participation/participation.model';
@@ -27,6 +27,7 @@ test.describe('Programming exercise participation', () => {
         await login(admin, '/');
         course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
         await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
+        await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
     });
 
     const testCases = [
@@ -90,7 +91,6 @@ test.describe('Programming exercise participation', () => {
         const submissions = [
             { student: studentOne, submission: javaBuildErrorSubmission, commitMessage: 'Initial commit' },
             { student: studentTwo, submission: javaPartiallySuccessfulSubmission, commitMessage: 'Initial implementation' },
-            { student: studentThree, submission: javaAllSuccessfulSubmission, commitMessage: 'Implemented all tasks' },
         ];
 
         test.beforeEach('Create team programming exercise', async ({ login, exerciseAPIRequests }) => {
@@ -107,7 +107,7 @@ test.describe('Programming exercise participation', () => {
         test.beforeEach('Create an exercise team', async ({ login, userManagementAPIRequests, exerciseAPIRequests }) => {
             await login(admin);
             const students = await Promise.all(
-                [studentOne, studentTwo, studentThree].map(async (student) => {
+                [studentOne, studentTwo].map(async (student) => {
                     const response = await userManagementAPIRequests.getUser(student.username);
                     return response.json();
                 }),
@@ -182,7 +182,7 @@ test.describe('Programming exercise participation', () => {
         });
 
         test.describe('Check team participation', () => {
-            test.beforeEach('Each team member makes a submission', async ({ login, exerciseAPIRequests }) => {
+            test.beforeEach('Each team member makes a submission', async ({ login, waitForExerciseBuildToFinish, exerciseAPIRequests }) => {
                 for (const { student, submission } of submissions) {
                     await login(student);
                     const response = await exerciseAPIRequests.startExerciseParticipation(exercise.id!);
@@ -192,6 +192,7 @@ test.describe('Programming exercise participation', () => {
                         await exerciseAPIRequests.createProgrammingExerciseFile(participation.id!, filename);
                     }
                     await exerciseAPIRequests.makeProgrammingExerciseSubmission(participation.id!, submission);
+                    await waitForExerciseBuildToFinish(exercise.id!);
                 }
             });
 
@@ -203,8 +204,6 @@ test.describe('Programming exercise participation', () => {
                 programmingExerciseRepository,
                 programmingExerciseParticipations,
             }) => {
-                // Marked test as slow as there are 3 builds being awaited
-                test.slow();
                 await login(instructor);
                 await navigationBar.openCourseManagement();
                 await courseManagement.openExercisesOfCourse(course.id!);

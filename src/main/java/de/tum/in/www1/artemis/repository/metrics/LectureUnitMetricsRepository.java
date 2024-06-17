@@ -27,8 +27,9 @@ public interface LectureUnitMetricsRepository extends JpaRepository<LectureUnit,
      * @return the lecture unit information for all lecture units in the course
      */
     @Query("""
-            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.LectureUnitInformationDTO(lu.id, lu.lecture.id, lu.name, lu.releaseDate, TYPE(lu))
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.LectureUnitInformationDTO(lu.id, lu.lecture.id, COALESCE(lu.name, a.name), lu.releaseDate, TYPE(lu))
             FROM LectureUnit lu
+                LEFT JOIN Attachment a ON a.attachmentUnit.id = lu.id
             WHERE lu.lecture.course.id = :courseId
             """)
     Set<LectureUnitInformationDTO> findAllLectureUnitInformationByCourseId(@Param("courseId") long courseId);
