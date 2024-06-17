@@ -199,7 +199,8 @@ public class UserResource {
             keyEntry = AuthorizedKeyEntry.parseAuthorizedKeyEntry(sshPublicKey);
         }
         catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "sshUserSettings", "saveSshKeyError", e.getMessage())).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "sshUserSettings", "saveSshKeyError", "Invalid SSH key format"))
+                    .body(null);
         }
         // Extract the PublicKey object
         PublicKey publicKey = keyEntry.resolvePublicKey(null, null, null);

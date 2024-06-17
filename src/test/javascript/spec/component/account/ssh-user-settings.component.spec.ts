@@ -1,3 +1,4 @@
+import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -67,7 +68,7 @@ describe('SshUserSettingsComponent', () => {
     });
 
     it('should save SSH key and disable edit mode', () => {
-        accountServiceMock.addSshPublicKey.mockReturnValue(of());
+        accountServiceMock.addSshPublicKey.mockReturnValue(of(new HttpResponse({ status: 200 })));
         comp.ngOnInit();
         comp.sshKey = 'new-key';
         comp.editSshKey = true;
