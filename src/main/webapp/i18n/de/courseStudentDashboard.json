@@ -7,7 +7,7 @@
             },
             "exercisePerformance": {
                 "title": "Übungsleistungen",
-                "info": "Leistung wird als Prozentsatz der Punkte gemessen, die du in einer Aufgabe erreicht hast.",
+                "info": "Dies zeigt, wie gut du in jeder Aufgabe im Vergleich zu den maximal möglichen Punkten abgeschnitten hast. Du kannst auch das Durchschnittsergebnis aller Studierenden sehen, um deine Leistung mit deinen Kommilitonen zu vergleichen.",
                 "noData": "Es sind noch keine Ergebnisse für dich in diesem Kurs verfügbar.",
                 "yourScoreLabel": "Dein Ergebnis",
                 "averageScoreLabel": "Durchschnittsergebnis",
@@ -16,7 +16,7 @@
             },
             "exerciseLateness": {
                 "title": "Übungsverspätungen",
-                "info": "Relative Verspätung bezieht sich auf den Prozentsatz der Arbeitszeit, die vergangen ist.",
+                "info": "Dies zeigt, wie viel Zeit du genutzt hast, um jede Aufgabe zu bearbeiten und einzureichen, als Prozentsatz der insgesamt erlaubten Zeit. Vergleiche deine Einreichungszeiten mit dem Durchschnitt, um zu sehen, ob du früher oder später als die meisten Studierenden einreichst.",
                 "noData": "Du hast noch keine Aufgaben in diesem Kurs eingereicht.",
                 "yourLatenessLabel": "Deine Verspätung",
                 "averageLatenessLabel": "Durchschnittliche Verspätung",
@@ -25,7 +25,7 @@
             },
             "judgementOfLearning": {
                 "title": "Wie würdest du deine Kompetenzbeherrschung bewerten?",
-                "info": "Beherrschung gibt an, wie gut du diese spezifische Kompetenz verstehst und anwenden kannst.",
+                "info": "Bewerte, wie gut du die Fertigkeiten aus dieser Kompetenz verstehst und anwenden kannst. Artemis bietet dir auch eine Bewertung basierend auf deiner Leistung, damit du siehst, wo du stehst.",
                 "artemisRating": "Artemis bewertet dein Verständnis als",
                 "error": "Beim Speichern deiner Bewertung ist ein Fehler aufgetreten.",
                 "redirectButton": "Bewerte Verständnis auf der Übersichtsseite"
