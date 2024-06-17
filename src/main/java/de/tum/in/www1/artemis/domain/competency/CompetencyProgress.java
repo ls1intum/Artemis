@@ -62,7 +62,7 @@ public class CompetencyProgress implements Serializable {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "confidence_reason", columnDefinition = "varchar(30) default 'NO_REASON'")
-    private CompetencyProgressConfidenceReason confidenceReason;
+    private CompetencyProgressConfidenceReason confidenceReason = CompetencyProgressConfidenceReason.NO_REASON;
 
     @LastModifiedDate
     @Column(name = "last_modified_date")
