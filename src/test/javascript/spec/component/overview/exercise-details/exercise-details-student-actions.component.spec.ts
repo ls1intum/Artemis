@@ -581,6 +581,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         }
 
         comp.exercise = {
+            allowedSelfLearningFeedbackAttempts: 20,
             type: ExerciseType.PROGRAMMING,
             dueDate: dayjs().add(5, 'minutes'),
             studentParticipations: [
