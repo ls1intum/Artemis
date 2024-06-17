@@ -8,6 +8,7 @@ import { MonacoEditorBuildAnnotation, MonacoEditorBuildAnnotationType } from 'ap
 import { MonacoEditorGlyphMarginHoverButton } from 'app/shared/monaco-editor/model/monaco-editor-glyph-margin-hover-button.model';
 import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { TranslateService } from '@ngx-translate/core';
 
 type EditorPosition = { row: number; column: number };
 @Component({
@@ -28,9 +29,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     glyphMarginHoverButton?: MonacoEditorGlyphMarginHoverButton;
 
     constructor(
-        private themeService: ThemeService,
+        private readonly themeService: ThemeService,
         elementRef: ElementRef,
-        private renderer: Renderer2,
+        private readonly renderer: Renderer2,
+        private readonly translateService: TranslateService,
     ) {
         /*
          * The constructor injects the editor along with its container into the empty template of this component.
@@ -320,7 +322,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     registerAction(action: MonacoEditorAction): void {
-        action.register(this._editor);
+        action.register(this._editor, this.translateService);
         this.actions.push(action);
     }
 }

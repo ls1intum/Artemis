@@ -1,4 +1,5 @@
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { TranslateService } from '@ngx-translate/core';
 import * as monaco from 'monaco-editor';
 
 export abstract class MonacoEditorAction implements monaco.editor.IActionDescriptor, monaco.IDisposable {
@@ -15,9 +16,8 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      */
     disposableAction?: monaco.IDisposable;
 
-    constructor(id: string, label: string, translationKey: string, icon?: IconDefinition, keybindings?: number[]) {
+    constructor(id: string, translationKey: string, icon?: IconDefinition, keybindings?: number[]) {
         this.id = id;
-        this.label = label;
         this.translationKey = translationKey;
         this.icon = icon;
         this.keybindings = keybindings;
@@ -40,12 +40,14 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
     /**
      * Register this action with the given editor. This is required to make the action available in the editor. Note that the action can only be registered with one editor at a time.
      * @param editor The editor to register this action with. Note that its type has to be `monaco.editor.IStandaloneCodeEditor` to ensure it supports the `addAction` method.
+     * @param translateService The translation service to use for translating the action label.
      * @throws error if the action has already been registered with an editor.
      */
-    register(editor: monaco.editor.IStandaloneCodeEditor) {
+    register(editor: monaco.editor.IStandaloneCodeEditor, translateService: TranslateService): void {
         if (this.disposableAction) {
             throw new Error(`Action (id ${this.id}) already belongs to an editor. Dispose it first before registering it with another editor.`);
         }
+        this.label = translateService.instant(this.translationKey);
         this.disposableAction = editor.addAction(this);
     }
 

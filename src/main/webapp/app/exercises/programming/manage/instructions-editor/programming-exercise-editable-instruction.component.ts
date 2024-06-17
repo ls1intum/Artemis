@@ -41,10 +41,10 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     testCaseCommand = new TestCaseCommand();
     katexCommand = new KatexCommand();
     domainCommands: DomainCommand[] = [this.katexCommand, this.taskCommand, this.testCaseCommand];
-    testCaseAction = new MonacoTestCaseAction('Test case', 'artemisApp.programmingExercise.problemStatement.testCaseCommand');
+    testCaseAction = new MonacoTestCaseAction('artemisApp.programmingExercise.problemStatement.testCaseCommand');
     domainActions: MonacoEditorAction[] = [
-        new MonacoFormulaAction('Formula', 'artemisApp.markdownEditor.commands.formula'),
-        new MonacoTaskAction('Task', 'artemisApp.markdownEditor.commands.task'),
+        new MonacoFormulaAction('artemisApp.markdownEditor.commands.formula'),
+        new MonacoTaskAction('artemisApp.markdownEditor.commands.task'),
         this.testCaseAction,
     ];
 

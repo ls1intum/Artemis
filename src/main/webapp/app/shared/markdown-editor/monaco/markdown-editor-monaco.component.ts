@@ -53,24 +53,24 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     @Input()
     defaultActions: MonacoEditorAction[] = [
-        new MonacoBoldAction('Bold', 'todo'),
-        new MonacoItalicAction('Italic', 'todo'),
-        new MonacoUnderlineAction('Underline', 'todo'),
-        new MonacoQuoteAction('Quote', 'todo'),
-        new MonacoCodeAction('Code', 'todo'),
-        new MonacoCodeBlockAction('Code block', 'todo'),
-        new MonacoUrlAction('URL', 'todo'),
-        new MonacoAttachmentAction('Attachment', 'todo'),
-        new MonacoOrderedListAction('Ordered list', 'todo'),
-        new MonacoUnorderedListAction('Unordered list', 'todo'),
-        new MonacoFormulaAction('Formula', 'artemisApp.markdownEditor.commands.katex'),
-        new MonacoFullscreenAction('Fullscreen', 'todo'),
+        new MonacoBoldAction('todo'),
+        new MonacoItalicAction('todo'),
+        new MonacoUnderlineAction('todo'),
+        new MonacoQuoteAction('todo'),
+        new MonacoCodeAction('todo'),
+        new MonacoCodeBlockAction('todo'),
+        new MonacoUrlAction('todo'),
+        new MonacoAttachmentAction('todo'),
+        new MonacoOrderedListAction('todo'),
+        new MonacoUnorderedListAction('todo'),
+        new MonacoFormulaAction('artemisApp.markdownEditor.commands.katex'),
+        new MonacoFullscreenAction('todo'),
     ];
 
     @Input()
     headerActions: MonacoEditorActionGroup<MonacoHeadingAction> = new MonacoEditorActionGroup<MonacoHeadingAction>(
         'artemisApp.multipleChoiceQuestion.editor.style',
-        [1, 2, 3].map((level) => new MonacoHeadingAction(`Heading ${level}`, `todo`, level)),
+        [1, 2, 3].map((level) => new MonacoHeadingAction(`todo`, level)),
         undefined,
     );
 

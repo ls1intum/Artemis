@@ -5,8 +5,8 @@ import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 export abstract class MonacoEditorInsertAction extends MonacoEditorAction {
     textToInsert: string;
 
-    constructor(id: string, label: string, translationKey: string, icon: IconDefinition | undefined, keybindings: number[] | undefined, textToInsert: string) {
-        super(id, label, translationKey, icon, keybindings);
+    constructor(id: string, translationKey: string, icon: IconDefinition | undefined, keybindings: number[] | undefined, textToInsert: string) {
+        super(id, translationKey, icon, keybindings);
         this.textToInsert = textToInsert;
     }
 

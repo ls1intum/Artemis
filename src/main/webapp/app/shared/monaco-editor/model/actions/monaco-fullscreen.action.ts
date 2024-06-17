@@ -9,8 +9,8 @@ export class MonacoFullscreenAction extends MonacoEditorAction {
 
     element?: HTMLElement;
 
-    constructor(label: string, translationKey: string) {
-        super(MonacoFullscreenAction.ID, label, translationKey, faCompress);
+    constructor(translationKey: string) {
+        super(MonacoFullscreenAction.ID, translationKey, faCompress);
     }
 
     run(editor: monaco.editor.ICodeEditor): void {

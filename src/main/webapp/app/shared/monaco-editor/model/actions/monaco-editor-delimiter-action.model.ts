@@ -7,16 +7,8 @@ export abstract class MonacoEditorDelimiterAction extends MonacoEditorAction {
     openDelimiter: string;
     closeDelimiter: string;
 
-    protected constructor(
-        id: string,
-        label: string,
-        translationKey: string,
-        icon: IconDefinition | undefined,
-        keybindings: number[] | undefined,
-        openDelimiter: string,
-        closeDelimiter: string,
-    ) {
-        super(id, label, translationKey, icon, keybindings);
+    protected constructor(id: string, translationKey: string, icon: IconDefinition | undefined, keybindings: number[] | undefined, openDelimiter: string, closeDelimiter: string) {
+        super(id, translationKey, icon, keybindings);
         this.openDelimiter = openDelimiter;
         this.closeDelimiter = closeDelimiter;
     }

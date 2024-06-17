@@ -1,3 +1,4 @@
+import { TranslateService } from '@ngx-translate/core';
 import { MonacoEditorInsertAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-insert-action.model';
 import * as monaco from 'monaco-editor';
 
@@ -12,8 +13,8 @@ export class MonacoTestCaseAction extends MonacoEditorInsertAction {
 
     static readonly ID = 'monaco-test-case.action';
 
-    constructor(label: string, translationKey: string) {
-        super(MonacoTestCaseAction.ID, label, translationKey, undefined, undefined, INSERT_TEST_CASE_TEXT);
+    constructor(translationKey: string) {
+        super(MonacoTestCaseAction.ID, translationKey, undefined, undefined, INSERT_TEST_CASE_TEXT);
     }
 
     /**
@@ -21,8 +22,8 @@ export class MonacoTestCaseAction extends MonacoEditorInsertAction {
      * @param editor The editor to register the action in.
      * @throws error If the action is already registered with an editor or no model is attached to the editor.
      */
-    register(editor: monaco.editor.IStandaloneCodeEditor) {
-        super.register(editor);
+    register(editor: monaco.editor.IStandaloneCodeEditor, translateService: TranslateService) {
+        super.register(editor, translateService);
         const model = editor.getModel();
         if (model) {
             const languageId = model.getLanguageId();

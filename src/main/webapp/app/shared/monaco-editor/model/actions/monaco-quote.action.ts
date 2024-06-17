@@ -5,7 +5,7 @@ import { MonacoEditorInsertAction } from 'app/shared/monaco-editor/model/actions
 const INSERT_QUOTE_TEXT = '> Quote';
 export class MonacoQuoteAction extends MonacoEditorInsertAction {
     static readonly ID = 'monaco-quote.action';
-    constructor(label: string, translationKey: string) {
-        super(MonacoQuoteAction.ID, label, translationKey, faQuoteLeft, undefined, INSERT_QUOTE_TEXT);
+    constructor(translationKey: string) {
+        super(MonacoQuoteAction.ID, translationKey, faQuoteLeft, undefined, INSERT_QUOTE_TEXT);
     }
 }

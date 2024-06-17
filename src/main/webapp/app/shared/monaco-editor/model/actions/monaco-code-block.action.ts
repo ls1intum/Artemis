@@ -5,7 +5,7 @@ const CODE_BLOCK_OPEN_DELIMITER = '```java\n';
 const CODE_BLOCK_CLOSE_DELIMITER = '\n```';
 export class MonacoCodeBlockAction extends MonacoEditorDelimiterAction {
     static readonly ID = 'monaco-code-block.action';
-    constructor(label: string, translationKey: string) {
-        super(MonacoCodeBlockAction.ID, label, translationKey, faFileCode, undefined, CODE_BLOCK_OPEN_DELIMITER, CODE_BLOCK_CLOSE_DELIMITER);
+    constructor(translationKey: string) {
+        super(MonacoCodeBlockAction.ID, translationKey, faFileCode, undefined, CODE_BLOCK_OPEN_DELIMITER, CODE_BLOCK_CLOSE_DELIMITER);
     }
 }
