@@ -15,6 +15,7 @@ import java.util.Collection;
 import org.apache.commons.lang3.ClassUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
+import org.springframework.core.annotation.MergedAnnotations;
 
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaAnnotation;
@@ -195,28 +196,8 @@ public abstract class AbstractArchitectureTest {
      */
     protected <T extends Annotation> T getAnnotation(Class<T> clazz, JavaMethod javaMethod) {
         final var method = javaMethod.reflect();
-        T annotation = method.getAnnotation(clazz);
-        if (annotation != null) {
-            return annotation;
-        }
-        for (Annotation a : method.getDeclaredAnnotations()) {
-            annotation = a.annotationType().getAnnotation(clazz);
-            if (annotation != null) {
-                return annotation;
-            }
-        }
-
-        annotation = method.getDeclaringClass().getAnnotation(clazz);
-        if (annotation != null) {
-            return annotation;
-        }
-        for (Annotation a : method.getDeclaringClass().getDeclaredAnnotations()) {
-            annotation = a.annotationType().getAnnotation(clazz);
-            if (annotation != null) {
-                return annotation;
-            }
-        }
-
-        return null;
+        var mergedAnnotations = MergedAnnotations.from(method);
+        var mergedAnnotation = mergedAnnotations.get(clazz);
+        return mergedAnnotation.isPresent() ? mergedAnnotation.synthesize() : null;
     }
 }
