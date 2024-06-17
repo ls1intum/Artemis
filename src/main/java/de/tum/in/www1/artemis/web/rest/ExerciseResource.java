@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -92,6 +93,10 @@ public class ExerciseResource {
     private final ParticipationRepository participationRepository;
 
     private final ExamAccessService examAccessService;
+
+    // default value is 3 if the placeholder cannot be resolved
+    @Value("${artemis.athena.allowed-self-learning-feedback-attempts:3}")
+    private Integer allowedSelfLearningFeedbackAttempts;
 
     public ExerciseResource(ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ParticipationService participationService,
             UserRepository userRepository, ExamDateService examDateService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
@@ -325,6 +330,8 @@ public class ExerciseResource {
             // TODO: instead fetch the policy without programming exercise, should be faster
             SubmissionPolicy policy = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(programmingExercise.getId()).getSubmissionPolicy();
             programmingExercise.setSubmissionPolicy(policy);
+
+            programmingExercise.setAllowedSelfLearningFeedbackAttempts(this.allowedSelfLearningFeedbackAttempts);
         }
         // TODO: we should also check that the submissions do not contain sensitive data
 
