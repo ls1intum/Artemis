@@ -188,15 +188,15 @@ export function getIcon(competencyTaxonomy?: CompetencyTaxonomy): IconProp {
     return icons[competencyTaxonomy] as IconProp;
 }
 
-export function getProgress(competencyProgress: CompetencyProgress) {
+export function getProgress(competencyProgress: CompetencyProgress | undefined): number {
     return Math.round(competencyProgress?.progress ?? 0);
 }
 
-export function getConfidence(competencyProgress: CompetencyProgress, masteryThreshold: number): number {
-    return Math.min(Math.round(((competencyProgress?.confidence ?? 0) / (masteryThreshold ?? 100)) * 100), 100);
+export function getConfidence(competencyProgress: CompetencyProgress | undefined): number {
+    return competencyProgress?.confidence ?? 1;
 }
 
-export function getMastery(competencyProgress: CompetencyProgress, masteryThreshold: number): number {
-    const weight = 2 / 3;
-    return Math.round((1 - weight) * getProgress(competencyProgress) + weight * getConfidence(competencyProgress, masteryThreshold));
+export function getMastery(competencyProgress: CompetencyProgress | undefined): number {
+    // clamp the value between 0 and 100
+    return Math.min(100, Math.max(0, getProgress(competencyProgress) * getConfidence(competencyProgress)));
 }

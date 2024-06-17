@@ -4,9 +4,7 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <changeSet id="20240614140000" author="stoehrj">
         <addColumn tableName="competency_user">
-            <column name="confidence_reason" type="tinyint(3) UNSIGNED">
-                <constraints nullable="true"/>
-            </column>
+            <column name="confidence_reason" type="varchar(30)"/>
         </addColumn>
     </changeSet>
 </databaseChangeLog>

@@ -37,4 +37,10 @@ public interface LectureUnitCompletionRepository extends JpaRepository<LectureUn
             """)
     Set<LectureUnitCompletion> findByLectureUnitsAndUserId(@Param("lectureUnits") Collection<? extends LectureUnit> lectureUnits, @Param("userId") Long userId);
 
+    @Query("""
+            SELECT COUNT(lectureUnitCompletion)
+            FROM LectureUnitCompletion lectureUnitCompletion
+            WHERE lectureUnitCompletion.lectureUnit.id IN :lectureUnitIds
+            """)
+    int countByLectureUnitIds(@Param("lectureUnitIds") Collection<Long> lectureUnitIds);
 }

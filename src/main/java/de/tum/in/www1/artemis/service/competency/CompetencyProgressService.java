@@ -26,17 +26,16 @@ import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 import de.tum.in.www1.artemis.domain.enumeration.CompetencyProgressConfidenceReason;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
-import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.repository.CompetencyProgressRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.LearningObjectService;
 import de.tum.in.www1.artemis.service.ParticipantScoreService;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
@@ -64,21 +63,21 @@ public class CompetencyProgressService {
 
     private final LearningPathService learningPathService;
 
-    private final LearningObjectService learningObjectService;
-
     private final ParticipantScoreService participantScoreService;
 
+    private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
+
     public CompetencyProgressService(CompetencyRepository competencyRepository, CompetencyProgressRepository competencyProgressRepository, ExerciseRepository exerciseRepository,
-            LectureUnitRepository lectureUnitRepository, UserRepository userRepository, LearningPathService learningPathService, LearningObjectService learningObjectService,
-            ParticipantScoreService participantScoreService) {
+            LectureUnitRepository lectureUnitRepository, UserRepository userRepository, LearningPathService learningPathService, ParticipantScoreService participantScoreService,
+            LectureUnitCompletionRepository lectureUnitCompletionRepository) {
         this.competencyRepository = competencyRepository;
         this.competencyProgressRepository = competencyProgressRepository;
         this.exerciseRepository = exerciseRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.userRepository = userRepository;
         this.learningPathService = learningPathService;
-        this.learningObjectService = learningObjectService;
         this.participantScoreService = participantScoreService;
+        this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
     }
 
     /**
@@ -159,15 +158,17 @@ public class CompetencyProgressService {
      * @return The updated competency progress, which is also persisted to the database
      */
     public CompetencyProgress updateCompetencyProgress(Long competencyId, User user) {
-        Competency competency = competencyRepository.findByIdWithLectureUnitsAndCompletedUsers(competencyId);
+        Competency competency = competencyRepository.findByIdWithLectureUnitsWithoutExerciseUnits(competencyId);
 
         if (user == null || competency == null) {
             log.debug("User or competency no longer exist, skipping.");
             return null;
         }
 
-        Set<LectureUnit> lectureUnits = competency.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).collect(Collectors.toSet());
+        Set<LectureUnit> lectureUnits = competency.getLectureUnits();
         Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos = competencyRepository.findAllExerciseInfoByCompetencyId(competencyId);
+        int numberOfCompletedLectureUnits = lectureUnitCompletionRepository
+                .countByLectureUnitIds(competency.getLectureUnits().stream().map(LectureUnit::getId).collect(Collectors.toSet()));
 
         var competencyProgress = competencyProgressRepository.findEagerByCompetencyIdAndUserId(competencyId, user.getId());
 
@@ -181,7 +182,7 @@ public class CompetencyProgressService {
 
         var studentProgress = competencyProgress.orElse(new CompetencyProgress());
 
-        calculateProgress(lectureUnits, exerciseInfos, user, studentProgress);
+        calculateProgress(lectureUnits, exerciseInfos, numberOfCompletedLectureUnits, user, studentProgress);
         calculateConfidence(exerciseInfos, studentProgress);
 
         studentProgress.setCompetency(competency);
@@ -207,12 +208,14 @@ public class CompetencyProgressService {
      * The progress for lecture units is the percentage of lecture units completed by the user.
      * The final progress is a weighted average of the progress in exercises and lecture units.
      *
-     * @param lectureUnits       The lecture units linked to the competency
-     * @param exerciseInfos      The information about the exercises linked to the competency
-     * @param user               The user for which the progress should be calculated
-     * @param competencyProgress The progress entity to update
+     * @param lectureUnits                  The lecture units linked to the competency
+     * @param exerciseInfos                 The information about the exercises linked to the competency
+     * @param numberOfCompletedLectureUnits The number of lecture units completed by the user
+     * @param user                          The user for which the progress should be calculated
+     * @param competencyProgress            The progress entity to update
      */
-    private void calculateProgress(Set<LectureUnit> lectureUnits, Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos, User user, CompetencyProgress competencyProgress) {
+    private void calculateProgress(Set<LectureUnit> lectureUnits, Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos, int numberOfCompletedLectureUnits, User user,
+            CompetencyProgress competencyProgress) {
         double numberOfLearningObjects = lectureUnits.size() + exerciseInfos.size();
         if (numberOfLearningObjects == 0) {
             // If nothing is linked to the competency, the competency is considered completed
@@ -224,7 +227,7 @@ public class CompetencyProgressService {
         double maxPoints = exerciseInfos.stream().mapToDouble(exerciseInfo -> exerciseInfo.exercise().getMaxPoints()).sum();
         double exerciseProgress = maxPoints > 0 ? achievedPoints / maxPoints * 100 : 0;
 
-        double lectureProgress = lectureUnits.stream().mapToDouble(lectureUnit -> learningObjectService.isCompletedByUser(lectureUnit, user) ? 100 : 0).average().orElse(0.0);
+        double lectureProgress = 100.0 * numberOfCompletedLectureUnits / lectureUnits.size();
 
         double progress = exerciseInfos.size() / numberOfLearningObjects * exerciseProgress + lectureUnits.size() / numberOfLearningObjects * lectureProgress;
         // Bonus points can lead to a progress > 100%
