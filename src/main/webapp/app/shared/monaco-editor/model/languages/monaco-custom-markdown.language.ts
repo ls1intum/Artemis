@@ -59,8 +59,8 @@ const language: languages.IMonarchLanguage = {
             [/^\s*>+/, 'comment'],
             // list (starting with * or number)
             [/^\s*([*\-+:]|\d+\.)\s/, 'keyword'],
-            // code block (4 spaces indent). Disabled to prevent conflicts with the list syntax.
-            // [/^(\t|[ ]{4})[^ ].*$/, 'string'],
+            // code block (4 spaces indent).
+            [/^(\t|[ ]{4})[^ ].*$/, 'string'],
             // code block (3 tilde)
             [/^\s*~~~\s*((?:\w|[/\-#])+)?\s*$/, { token: 'string', next: '@codeblock' }],
             // github style code blocks (with backticks and language)
