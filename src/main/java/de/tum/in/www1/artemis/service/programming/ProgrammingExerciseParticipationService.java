@@ -170,7 +170,7 @@ public class ProgrammingExerciseParticipationService {
 
         Optional<ProgrammingExerciseStudentParticipation> participationOptional;
 
-        if (exercise.isExamExercise() && exercise.getExerciseGroup().getExam().isTestExam()) {
+        if (exercise.isTestExamExercise()) {
             if (withSubmissions) {
                 participationOptional = studentParticipationRepository.findLatestWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, isTestRun);
             }
