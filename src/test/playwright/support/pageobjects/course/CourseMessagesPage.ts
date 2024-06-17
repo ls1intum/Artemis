@@ -18,7 +18,7 @@ export class CourseMessagesPage {
      * Clicks the button to initiate channel creation.
      */
     async createChannelButton() {
-        await this.page.locator('#generalChannelsPlusButton').click();
+        await this.page.locator('#plusButton-generalChannels').click();
         await this.page.locator('.modal-content #createChannel').click();
     }
 
@@ -26,28 +26,28 @@ export class CourseMessagesPage {
      * Navigates to the channel overview section.
      */
     async browseChannelsButton(channelGroup: string) {
-        await this.page.locator('#' + channelGroup + 'PlusButton').click();
+        await this.page.locator(`#plusButton-${channelGroup}`).click();
     }
 
     /**
      * Navigates to the exercise channel overview section.
      */
     async browseExerciseChannelsButton() {
-        await this.page.locator('#exerciseChannelsPlusButton').click();
+        await this.page.locator('#plusButton-exerciseChannels').click();
     }
 
     /**
      * Navigates to the lecture channel overview section.
      */
     async browseLectureChannelsButton() {
-        await this.page.locator('#lectureChannelsPlusButton').click();
+        await this.page.locator('#plusButton-lectureChannels').click();
     }
 
     /**
      * Navigates to the exam channel overview section.
      */
     async browseExamChannelsButton() {
-        await this.page.locator('#examChannelsPlusButton').click();
+        await this.page.locator('#plusButton-examChannels').click();
     }
 
     /**
@@ -309,7 +309,7 @@ export class CourseMessagesPage {
      * Clicks the button to initiate group chat creation.
      */
     async createGroupChatButton() {
-        await this.page.locator('#groupChatsPlusButton').click();
+        await this.page.locator('#plusButton-groupChats').click();
     }
 
     /**
@@ -395,7 +395,7 @@ export class CourseMessagesPage {
     }
 
     async toggleSidebarAccordion(sidebarTitle: string) {
-        await this.page.locator('#test-accordion-item-header-' + sidebarTitle).click();
+        await this.page.locator(`#test-accordion-item-header-${sidebarTitle}`).click();
     }
 
     /**
