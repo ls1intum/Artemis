@@ -86,7 +86,11 @@
                     <jhi-side-panel class="d-block mt-3" [panelHeader]="'artemisApp.competency.table.panelHeader' | artemisTranslate">
                         <div class="row mb-1 g-0">
                             <div class="col-7">{{ 'artemisApp.competency.mastery' | artemisTranslate }} <jhi-help-icon text="artemisApp.competency.masteryDescription" /></div>
-                            <div class="col-5">{{ mastery }} %</div>
+                            <div class="col-5">
+                                <span> {{ mastery }} %</span>
+                                <!-- TODO: Add hint text regarding confidence reason -->
+                                <jhi-help-icon text="artemisApp.competency.progressDescription" />
+                            </div>
                         </div>
                         <div class="row mb-1 g-0">
                             <div class="col-7">{{ 'artemisApp.competency.progress' | artemisTranslate }} <jhi-help-icon text="artemisApp.competency.progressDescription" /></div>
