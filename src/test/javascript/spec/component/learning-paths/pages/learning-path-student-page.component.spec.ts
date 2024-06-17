@@ -12,6 +12,7 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
+import { EntityNotFoundError } from 'app/course/learning-paths/exceptions/entity-not-found.error';
 
 describe('LearningPathStudentPageComponent', () => {
     let component: LearningPathStudentPageComponent;
@@ -101,8 +102,38 @@ describe('LearningPathStudentPageComponent', () => {
         expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
     });
 
-    it('should set isLoading correctly during load', async () => {
+    it('should set isLoading correctly during learning path load', async () => {
         jest.spyOn(learningPathApiService, 'getLearningPathId').mockResolvedValue(learningPathId);
+        const loadingSpy = jest.spyOn(component.isLoading, 'set');
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(loadingSpy).toHaveBeenCalledWith(true);
+        expect(loadingSpy).toHaveBeenCalledWith(false);
+    });
+
+    it('should generate learning path on click', async () => {
+        jest.spyOn(learningPathApiService, 'getLearningPathId').mockRejectedValue(new EntityNotFoundError());
+        const generateLearningPathSpy = jest.spyOn(learningPathApiService, 'generateLearningPath').mockResolvedValue(learningPathId);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const generateLearningPathButton = fixture.debugElement.query(By.css('#generate-learning-path-button'));
+        generateLearningPathButton.nativeElement.click();
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.learningPathId()).toEqual(learningPathId);
+        expect(generateLearningPathSpy).toHaveBeenCalledWith(courseId);
+    });
+
+    it('should set isLoading correctly during learning path generation', async () => {
+        jest.spyOn(learningPathApiService, 'getLearningPathId').mockRejectedValue(new EntityNotFoundError());
+        jest.spyOn(learningPathApiService, 'generateLearningPath').mockResolvedValue(learningPathId);
         const loadingSpy = jest.spyOn(component.isLoading, 'set');
 
         fixture.detectChanges();

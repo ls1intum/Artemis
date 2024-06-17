@@ -1,12 +1,31 @@
 <div class="col learning-path-student-page">
-    @if (learningPathId()) {
+    @if (isLoading()) {
+        <div class="row justify-content-center align-items-center h-100">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+        </div>
+    } @else if (learningPathId()) {
         <jhi-learning-path-student-nav [learningPathId]="learningPathId()!" />
+        <div class="learning-path-student-content">
+            @if (currentLearningObject()?.type === LearningObjectType.LECTURE) {
+                <jhi-learning-path-lecture-unit [lectureUnitId]="currentLearningObject()!.id" />
+            } @else if (currentLearningObject()?.type === LearningObjectType.EXERCISE) {
+                <jhi-learning-path-exercise [courseId]="courseId()" [exerciseId]="currentLearningObject()!.id" />
+            }
+        </div>
+    } @else {
+        <div class="row align-items-center justify-content-center h-100">
+            <div class="learning-path-generation-container">
+                <h3 class="mb-3">Welcome to learning paths</h3>
+                <div>
+                    Welcome to your Learning Path! This feature lets you learn at your own pace with a personalized journey tailored to your performance. It adapts dynamically,
+                    ensuring you always have the most relevant content and challenges. Start now and experience a customized path to success!
+                </div>
+                <button (click)="generateLearningPath(this.courseId())" type="button" class="mt-4 btn btn-primary" id="generate-learning-path-button">
+                    Generate learning path
+                </button>
+            </div>
+        </div>
     }
-    <div class="learning-path-student-content">
-        @if (currentLearningObject()?.type === LearningObjectType.LECTURE) {
-            <jhi-learning-path-lecture-unit [lectureUnitId]="currentLearningObject()!.id" />
-        } @else if (currentLearningObject()?.type === LearningObjectType.EXERCISE) {
-            <jhi-learning-path-exercise [courseId]="courseId()" [exerciseId]="currentLearningObject()!.id" />
-        }
-    </div>
 </div>
