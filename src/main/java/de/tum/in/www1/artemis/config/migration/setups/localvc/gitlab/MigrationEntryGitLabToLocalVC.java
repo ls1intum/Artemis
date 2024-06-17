@@ -1,9 +1,10 @@
 package de.tum.in.www1.artemis.config.migration.setups.localvc.gitlab;
 
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.eclipse.jgit.api.Git;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,7 +24,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.config.migration.setups.ProgrammingExerciseMigrationEntry;
-import de.tum.in.www1.artemis.config.migration.setups.localvc.LocalVCMigrationService;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
@@ -41,7 +42,7 @@ import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCService;
 import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
-@Profile(PROFILE_CORE)
+@Profile("gitlab & " + PROFILE_LOCALVC)
 @Component
 public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationEntry {
 
@@ -52,6 +53,15 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
     private static final int TIMEOUT_IN_HOURS = 48;
 
     private static final long ESTIMATED_TIME_PER_REPOSITORY = 2; // 2s per repository
+
+    @Value("${artemis.version-control.default-branch:main}")
+    private String defaultBranch;
+
+    @Value("${migration.base-url:http://0.0.0.0}")
+    private URL localVCBaseUrl;
+
+    @Value("${migration.local-vcs-repo-path:null}")
+    private String localVCBasePath;
 
     private static final String ERROR_MESSAGE = "Failed to migrate programming exercises within " + TIMEOUT_IN_HOURS + " hours. Aborting migration.";
 
@@ -73,14 +83,11 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
 
     private final Optional<AbstractVersionControlService> sourceVersionControlService;
 
-    private final Optional<LocalVCMigrationService> localVCMigrationService;
-
     public MigrationEntryGitLabToLocalVC(ProgrammingExerciseRepository programmingExerciseRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<LocalVCService> localVCService,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, Optional<AbstractVersionControlService> sourceVersionControlService, UriService uriService,
-            Optional<LocalVCMigrationService> localVCMigrationService) {
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, Optional<AbstractVersionControlService> sourceVersionControlService, UriService uriService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -89,26 +96,20 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.sourceVersionControlService = sourceVersionControlService;
         this.uriService = uriService;
-        this.localVCMigrationService = localVCMigrationService;
     }
 
     public void execute() {
-        if (localVCMigrationService.isEmpty()) {
-            log.error("Migration will be skipped and marked run because the localVCMigrationService is not available.");
-            return;
-        }
-
-        if (localVCMigrationService.get().getLocalVCBasePath() == null) {
+        if (localVCBasePath == null) {
             log.error("Migration will be skipped and marked run because the local VC base path is not configured.");
             return;
         }
 
-        if (localVCMigrationService.get().getLocalVCBaseUrl() == null || localVCMigrationService.get().getLocalVCBaseUrl().toString().equals("http://0.0.0.0")) {
+        if (localVCBaseUrl == null || localVCBaseUrl.toString().equals("http://0.0.0.0")) {
             log.error("Migration will be skipped and marked run because the local VC base URL is not configured.");
             return;
         }
 
-        if (localVCMigrationService.get().getDefaultBranch() == null) {
+        if (defaultBranch == null) {
             log.error("Migration will be skipped and marked run because the default branch is not configured.");
             return;
         }
@@ -259,10 +260,6 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
      * @param solutionParticipations the solution participations to migrate
      */
     private void migrateSolutions(List<SolutionProgrammingExerciseParticipation> solutionParticipations) {
-        if (localVCMigrationService.isEmpty()) {
-            log.error("Failed to migrate solution participations because the LocalVC migration service is not available.");
-            return;
-        }
         for (var solutionParticipation : solutionParticipations) {
             try {
                 if (solutionParticipation.getRepositoryUri() == null) {
@@ -290,8 +287,8 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
                 }
                 else {
                     log.debug("Migrated test repository for solution participation with id {} to {}", solutionParticipation.getId(), url);
-                    if (!localVCMigrationService.get().getDefaultBranch().equals(programmingExercise.getBranch())) {
-                        programmingExercise.setBranch(localVCMigrationService.get().getDefaultBranch());
+                    if (!defaultBranch.equals(programmingExercise.getBranch())) {
+                        programmingExercise.setBranch(defaultBranch);
                         log.debug("Changed branch of programming exercise with id {} to {}", programmingExercise.getId(), programmingExercise.getBranch());
                     }
                 }
@@ -345,10 +342,6 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
      * @param participations list of student participations to migrate
      */
     private void migrateStudents(List<ProgrammingExerciseStudentParticipation> participations) {
-        if (localVCMigrationService.isEmpty()) {
-            log.error("Failed to migrate student participations because the LocalVC migration service is not available.");
-            return;
-        }
         for (var participation : participations) {
             try {
                 if (participation.getRepositoryUri() == null) {
@@ -364,7 +357,7 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
                 else {
                     log.debug("Migrated student participation with id {} to {}", participation.getId(), url);
                     if (participation.getBranch() != null) {
-                        participation.setBranch(localVCMigrationService.get().getDefaultBranch());
+                        participation.setBranch(defaultBranch);
                         log.debug("Changed branch of student participation with id {} to {}", participation.getId(), participation.getBranch());
                     }
                 }
@@ -389,7 +382,7 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
      * @throws URISyntaxException if the repository URL is invalid
      */
     private String cloneRepositoryFromSourceVCSAndMoveToLocalVC(ProgrammingExercise exercise, String repositoryUri, String oldBranch) throws URISyntaxException {
-        if (localVCService.isEmpty() || sourceVersionControlService.isEmpty() || localVCMigrationService.isEmpty()) {
+        if (localVCService.isEmpty() || sourceVersionControlService.isEmpty()) {
             log.error("Failed to clone repository from source VCS: {}", repositoryUri);
             if (localVCService.isEmpty()) {
                 log.error("Local VC service is not available");
@@ -397,13 +390,10 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
             if (sourceVersionControlService.isEmpty()) {
                 log.error("The source VCS service is not available");
             }
-            if (localVCMigrationService.isEmpty()) {
-                log.error("LocalVCMigrationService is not available");
-            }
             return null;
         }
         // repo is already migrated -> return
-        if (repositoryUri.startsWith(localVCMigrationService.get().getLocalVCBaseUrl().toString())) {
+        if (repositoryUri.startsWith(localVCBaseUrl.toString())) {
             log.info("Repository {} is already in local VC", repositoryUri);
             return repositoryUri;
         }
@@ -420,7 +410,7 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
             log.info("Cloning repository {} from the source VCS and moving it to local VC", repositoryUri);
             copyRepoToLocalVC(projectKey, repositoryName, repositoryUri, oldBranch);
             log.info("Successfully cloned repository {} from the source VCS and moved it to local VC", repositoryUri);
-            var uri = new LocalVCRepositoryUri(projectKey, repositoryName, localVCMigrationService.get().getLocalVCBaseUrl());
+            var uri = new LocalVCRepositoryUri(projectKey, repositoryName, localVCBaseUrl);
             return uri.toString();
         }
         catch (LocalVCInternalException e) {
@@ -441,14 +431,9 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
      * @param oldOrigin      the old origin of the repository
      */
     private void copyRepoToLocalVC(String projectKey, String repositorySlug, String oldOrigin, String branch) {
-        if (localVCMigrationService.isEmpty()) {
-            log.error("Failed to clone repository from the source VCS: {}", repositorySlug);
-            log.error("localVCMigrationService is not available");
-            return;
-        }
-        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(projectKey, repositorySlug, localVCMigrationService.get().getLocalVCBaseUrl());
+        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(projectKey, repositorySlug, localVCBaseUrl);
 
-        Path repositoryPath = localVCRepositoryUri.getLocalRepositoryPath(localVCMigrationService.get().getLocalVCBasePath());
+        Path repositoryPath = localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath);
 
         try {
             Files.createDirectories(repositoryPath);
@@ -456,10 +441,10 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
 
             // Create a bare local repository with JGit.
             try (Git git = Git.cloneRepository().setBranch(branch).setDirectory(repositoryPath.toFile()).setBare(true).setURI(oldOrigin).call()) {
-                if (!git.getRepository().getBranch().equals(localVCMigrationService.get().getDefaultBranch())) {
+                if (!git.getRepository().getBranch().equals(defaultBranch)) {
                     // Rename the default branch to the configured default branch. Old exercises might have a different default branch.
-                    git.branchRename().setNewName(localVCMigrationService.get().getDefaultBranch()).call();
-                    log.debug("Renamed default branch of local git repository {} to {}", repositorySlug, localVCMigrationService.get().getDefaultBranch());
+                    git.branchRename().setNewName(defaultBranch).call();
+                    log.debug("Renamed default branch of local git repository {} to {}", repositorySlug, defaultBranch);
                 }
             }
             catch (Exception e) {
