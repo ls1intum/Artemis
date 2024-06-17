@@ -19,6 +19,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Source } from 'app/entities/competency/standardized-competency.model';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 
 describe('CourseImportStandardizedCompetenciesComponent', () => {
     let componentFixture: ComponentFixture<CourseImportStandardizedCompetenciesComponent>;
@@ -39,6 +40,7 @@ describe('CourseImportStandardizedCompetenciesComponent', () => {
                 MockComponent(ButtonComponent),
                 MockDirective(SortDirective),
                 MockPipe(HtmlForMarkdownPipe),
+                MockComponent(DocumentationButtonComponent),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },

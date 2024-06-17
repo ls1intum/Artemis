@@ -2,6 +2,7 @@
     <div class="d-flex flex-wrap">
         <div class="d-flex align-items-center">
             <h2 jhiTranslate="artemisApp.standardizedCompetency.manage.title"></h2>
+            <jhi-documentation-button [type]="documentationType" />
         </div>
         <div class="ms-auto justify-content-end">
             <a class="btn btn-primary" [routerLink]="['/admin', 'standardized-competencies', 'import']">
