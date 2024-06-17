@@ -3,7 +3,7 @@ import { MonacoEditorDelimiterAction } from 'app/shared/monaco-editor/model/acti
 const FORMULA_DELIMITER = '$$';
 export class MonacoFormulaAction extends MonacoEditorDelimiterAction {
     static readonly ID = 'monaco-formula.action';
-    constructor(translationKey: string) {
-        super(MonacoFormulaAction.ID, translationKey, undefined, undefined, FORMULA_DELIMITER, FORMULA_DELIMITER);
+    constructor() {
+        super(MonacoFormulaAction.ID, 'artemisApp.markdownEditor.commands.katex', undefined, undefined, FORMULA_DELIMITER, FORMULA_DELIMITER);
     }
 }

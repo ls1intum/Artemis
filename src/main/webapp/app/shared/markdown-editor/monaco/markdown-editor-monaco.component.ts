@@ -53,24 +53,24 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     @Input()
     defaultActions: MonacoEditorAction[] = [
-        new MonacoBoldAction('todo'),
-        new MonacoItalicAction('todo'),
-        new MonacoUnderlineAction('todo'),
-        new MonacoQuoteAction('todo'),
-        new MonacoCodeAction('todo'),
-        new MonacoCodeBlockAction('todo'),
-        new MonacoUrlAction('todo'),
-        new MonacoAttachmentAction('todo'),
-        new MonacoOrderedListAction('todo'),
-        new MonacoUnorderedListAction('todo'),
-        new MonacoFormulaAction('artemisApp.markdownEditor.commands.katex'),
-        new MonacoFullscreenAction('todo'),
+        new MonacoBoldAction(),
+        new MonacoItalicAction(),
+        new MonacoUnderlineAction(),
+        new MonacoQuoteAction(),
+        new MonacoCodeAction(),
+        new MonacoCodeBlockAction(),
+        new MonacoUrlAction(),
+        new MonacoAttachmentAction(),
+        new MonacoOrderedListAction(),
+        new MonacoUnorderedListAction(),
+        new MonacoFormulaAction(),
+        new MonacoFullscreenAction(),
     ];
 
     @Input()
     headerActions: MonacoEditorActionGroup<MonacoHeadingAction> = new MonacoEditorActionGroup<MonacoHeadingAction>(
         'artemisApp.multipleChoiceQuestion.editor.style',
-        [1, 2, 3].map((level) => new MonacoHeadingAction(`todo`, level)),
+        [1, 2, 3].map((level) => new MonacoHeadingAction(level)),
         undefined,
     );
 

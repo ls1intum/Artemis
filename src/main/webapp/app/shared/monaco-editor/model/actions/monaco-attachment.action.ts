@@ -5,8 +5,8 @@ import * as monaco from 'monaco-editor';
 const INSERT_ATTACHMENT_TEXT = '![](https://)';
 export class MonacoAttachmentAction extends MonacoEditorInsertAction {
     static readonly ID = 'monaco-attachment.action';
-    constructor(translationKey: string) {
-        super(MonacoAttachmentAction.ID, translationKey, faImage, undefined, INSERT_ATTACHMENT_TEXT);
+    constructor() {
+        super(MonacoAttachmentAction.ID, 'artemisApp.multipleChoiceQuestion.editor.imageUpload', faImage, undefined, INSERT_ATTACHMENT_TEXT);
     }
 
     run(editor: monaco.editor.ICodeEditor, args?: { text: string; url: string }): void {

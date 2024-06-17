@@ -5,7 +5,14 @@ import { faItalic } from '@fortawesome/free-solid-svg-icons';
 const ITALIC_DELIMITER = '*';
 export class MonacoItalicAction extends MonacoEditorDelimiterAction {
     static readonly ID = 'monaco-italic.action';
-    constructor(translationKey: string) {
-        super(MonacoItalicAction.ID, translationKey, faItalic, [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI], ITALIC_DELIMITER, ITALIC_DELIMITER);
+    constructor() {
+        super(
+            MonacoItalicAction.ID,
+            'artemisApp.multipleChoiceQuestion.editor.italic',
+            faItalic,
+            [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI],
+            ITALIC_DELIMITER,
+            ITALIC_DELIMITER,
+        );
     }
 }

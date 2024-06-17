@@ -5,8 +5,8 @@ import { faListUl } from '@fortawesome/free-solid-svg-icons';
 const LIST_BULLET = '- ';
 export class MonacoUnorderedListAction extends MonacoEditorAction {
     static readonly ID = 'monaco-unordered-list.action';
-    constructor(translationKey: string) {
-        super(MonacoUnorderedListAction.ID, translationKey, faListUl, undefined);
+    constructor() {
+        super(MonacoUnorderedListAction.ID, 'artemisApp.multipleChoiceQuestion.editor.unorderedList', faListUl, undefined);
     }
 
     run(editor: monaco.editor.ICodeEditor): void {

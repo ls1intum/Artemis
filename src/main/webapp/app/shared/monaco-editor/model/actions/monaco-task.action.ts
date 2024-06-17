@@ -4,7 +4,7 @@ import { MonacoEditorInsertAction } from 'app/shared/monaco-editor/model/actions
 const INSERT_TASK_TEXT = '[task][Task Short Description](testCaseName)\n';
 export class MonacoTaskAction extends MonacoEditorInsertAction {
     static readonly ID = 'monaco-task.action';
-    constructor(translationKey: string) {
-        super(MonacoTaskAction.ID, translationKey, undefined, undefined, INSERT_TASK_TEXT);
+    constructor() {
+        super(MonacoTaskAction.ID, 'artemisApp.programmingExercise.problemStatement.taskCommand', undefined, undefined, INSERT_TASK_TEXT);
     }
 }

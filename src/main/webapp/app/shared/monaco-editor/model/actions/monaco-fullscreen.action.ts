@@ -9,8 +9,8 @@ export class MonacoFullscreenAction extends MonacoEditorAction {
 
     element?: HTMLElement;
 
-    constructor(translationKey: string) {
-        super(MonacoFullscreenAction.ID, translationKey, faCompress);
+    constructor() {
+        super(MonacoFullscreenAction.ID, 'artemisApp.markdownEditor.commands.fullscreen', faCompress);
     }
 
     run(editor: monaco.editor.ICodeEditor): void {

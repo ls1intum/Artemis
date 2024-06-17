@@ -6,7 +6,14 @@ const UNDERLINE_OPEN_DELIMITER = '<ins>';
 const UNDERLINE_CLOSE_DELIMITER = '</ins>';
 export class MonacoUnderlineAction extends MonacoEditorDelimiterAction {
     static readonly ID = 'monaco-underline.action';
-    constructor(translationKey: string) {
-        super(MonacoUnderlineAction.ID, translationKey, faUnderline, [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyU], UNDERLINE_OPEN_DELIMITER, UNDERLINE_CLOSE_DELIMITER);
+    constructor() {
+        super(
+            MonacoUnderlineAction.ID,
+            'artemisApp.multipleChoiceQuestion.editor.underline',
+            faUnderline,
+            [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyU],
+            UNDERLINE_OPEN_DELIMITER,
+            UNDERLINE_CLOSE_DELIMITER,
+        );
     }
 }

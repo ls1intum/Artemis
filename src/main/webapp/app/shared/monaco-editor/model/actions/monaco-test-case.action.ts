@@ -13,8 +13,8 @@ export class MonacoTestCaseAction extends MonacoEditorInsertAction {
 
     static readonly ID = 'monaco-test-case.action';
 
-    constructor(translationKey: string) {
-        super(MonacoTestCaseAction.ID, translationKey, undefined, undefined, INSERT_TEST_CASE_TEXT);
+    constructor() {
+        super(MonacoTestCaseAction.ID, 'artemisApp.programmingExercise.problemStatement.testCaseCommand', undefined, undefined, INSERT_TEST_CASE_TEXT);
     }
 
     /**

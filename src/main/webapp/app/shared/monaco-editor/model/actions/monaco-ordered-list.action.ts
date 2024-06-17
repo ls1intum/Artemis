@@ -5,8 +5,8 @@ import { faListOl } from '@fortawesome/free-solid-svg-icons';
 const NUMBER_REGEX = /^\d+\.\s.*/;
 export class MonacoOrderedListAction extends MonacoEditorAction {
     static readonly ID = 'monaco-ordered-list.action';
-    constructor(translationKey: string) {
-        super(MonacoOrderedListAction.ID, translationKey, faListOl, undefined);
+    constructor() {
+        super(MonacoOrderedListAction.ID, 'artemisApp.multipleChoiceQuestion.editor.orderedList', faListOl, undefined);
     }
 
     run(editor: monaco.editor.ICodeEditor): void {

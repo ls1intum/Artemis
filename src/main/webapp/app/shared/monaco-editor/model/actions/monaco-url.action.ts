@@ -5,8 +5,8 @@ import * as monaco from 'monaco-editor';
 const INSERT_URL_TEXT = '[](https://)';
 export class MonacoUrlAction extends MonacoEditorInsertAction {
     static readonly ID = 'monaco-url.action';
-    constructor(translationKey: string) {
-        super(MonacoUrlAction.ID, translationKey, faLink, undefined, INSERT_URL_TEXT);
+    constructor() {
+        super(MonacoUrlAction.ID, 'artemisApp.multipleChoiceQuestion.editor.link', faLink, undefined, INSERT_URL_TEXT);
     }
 
     run(editor: monaco.editor.ICodeEditor, args?: { text: string; url: string }): void {
