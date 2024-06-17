@@ -208,37 +208,66 @@ public class AnalysisOfEndpointConnections {
                 new TypeReference<List<RestCallFileInformation>>() {
                 });
 
+            List<EndpointAnalysis> endpointsAndMatchingRestCalls = new ArrayList<>();
+
             for (EndpointClassInformation endpointClass : endpointClasses) {
                 for (EndpointInformation endpoint : endpointClass.getEndpoints()) {
-                    boolean matchingRestCallFound = false;
+                    List<RestCallInformation> matchingRestCalls = new ArrayList<>();
+
                     System.out.println("=============================================");
                     System.out.println("Endpoint URI: " + endpoint.buildCompleteEndpointURI());
                     System.out.println("HTTP method: " + endpoint.getHttpMethodAnnotation());
                     System.out.println("File path: " + endpointClass.getFilePath());
                     System.out.println("Line: " + endpoint.getLine());
                     System.out.println("=============================================");
+
                     for (RestCallFileInformation restCallFile : restCalls) {
                         for (RestCallInformation restCall : restCallFile.getRestCalls()) {
                             String endpointURI = endpoint.buildComparableEndpointUri();
                             String restCallURI = restCall.buildComparableRestCallUri();
                             if (endpointURI.equals(restCallURI) && endpoint.getHttpMethod().equals(restCall.getMethod())) {
-                                matchingRestCallFound = true;
                                 System.out.println("Matching REST call found.\nURI: " + endpoint.getURI() + "\nHTTP method: " + restCall.getMethod());
                                 System.out.println("---------------------------------------------");
+                                matchingRestCalls.add(restCall);
                             }
                         }
                     }
-                    if (!matchingRestCallFound) {
+
+                    if (matchingRestCalls.size() == 0) {
                         System.out.println("No matching REST call found for endpoint: " + endpoint.buildCompleteEndpointURI());
                         System.out.println("---------------------------------------------");
                     }
                     System.out.println();
+
+                    endpointsAndMatchingRestCalls.add(new EndpointAnalysis(endpoint, matchingRestCalls, endpointClass.getFilePath()));
                 }
             }
+
+            mapper.writeValue(new File("supporting_scripts/analysis-of-endpoint-connections/endpointsAndMatchingRestCalls.json"), endpointsAndMatchingRestCalls);
         }
         catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static void printEndpointAnalysisResult() {
+        ObjectMapper mapper = new ObjectMapper();
+        List<EndpointAnalysis> endpointsAndMatchingRestCalls = new ArrayList<>();
+        try {
+            endpointsAndMatchingRestCalls = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/endpointsAndMatchingRestCalls.json"),
+                new TypeReference<List<EndpointAnalysis>>() {
+                });
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        endpointsAndMatchingRestCalls.stream().filter(endpoint -> endpoint.getMatchingRestCalls().isEmpty()).forEach(endpoint -> {
+            System.out.println("=============================================");
+            System.out.println("Endpoint URI: " + endpoint.getEndpointInformation().buildCompleteEndpointURI());
+            System.out.println("HTTP method: " + endpoint.getEndpointInformation().getHttpMethodAnnotation());
+            System.out.println("File path: " + endpoint.getFilePath());
+            System.out.println("Line: " + endpoint.getEndpointInformation().getLine());
+            System.out.println("=============================================");
+        });
     }
 
     private static void analyzeRestCalls() {
