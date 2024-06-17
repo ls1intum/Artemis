@@ -173,14 +173,31 @@ export class IrisChatService implements OnDestroy {
             next: (r: IrisSession) => {
                 this.sessionId = r.id;
                 this.messages.next(r.messages || []);
-                const suggestions = r.latestSuggestions ? r.latestSuggestions.split('||') : [];
-                this.suggestions.next(suggestions);
+                this.parseLatestSuggestions(r.latestSuggestions);
                 this.ws.subscribeToSession(this.sessionId).subscribe((m) => this.handleWebsocketMessage(m));
             },
             error: (e: IrisErrorMessageKey) => {
                 this.error.next(e as IrisErrorMessageKey);
             },
         };
+    }
+
+    /**
+     * Parses the latest suggestions string and updates the suggestions subject.
+     * @param s: The latest suggestions string
+     * @private
+     */
+    private parseLatestSuggestions(s?: string) {
+        if (!s) {
+            this.suggestions.next([]);
+            return;
+        }
+        // Split on "||" but use a regex to match only non-escaped "||"
+        const splitRegex = /(?<!\\)\|\|/;
+
+        // Replace the escaped "||" back to "||" in each part
+        const suggestions = s.split(splitRegex).map((s) => s.replace(/\\\|\|/g, '||'));
+        this.suggestions.next(suggestions);
     }
 
     public clearChat(): void {

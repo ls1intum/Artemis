@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service.iris.session;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
@@ -36,7 +35,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
  */
 @Service
 @Profile("iris")
-public class IrisCourseChatSessionService implements IrisChatBasedFeatureInterface<IrisCourseChatSession>, IrisRateLimitedFeatureInterface {
+public class IrisCourseChatSessionService extends AbstractIrisChatSessionService<IrisCourseChatSession> implements IrisRateLimitedFeatureInterface {
 
     private final IrisMessageService irisMessageService;
 
@@ -57,6 +56,7 @@ public class IrisCourseChatSessionService implements IrisChatBasedFeatureInterfa
     public IrisCourseChatSessionService(IrisMessageService irisMessageService, IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService,
             AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository, IrisRateLimitService rateLimitService,
             IrisCourseChatSessionRepository irisCourseChatSessionRepository, PyrisPipelineService pyrisPipelineService) {
+        super(irisSessionRepository);
         this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
         this.irisChatWebsocketService = irisChatWebsocketService;
@@ -119,18 +119,6 @@ public class IrisCourseChatSessionService implements IrisChatBasedFeatureInterfa
         var chatSession = (IrisCourseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
 
         pyrisPipelineService.executeCourseChatPipeline(variant, chatSession, competencyJol);
-    }
-
-    /**
-     * Updates the latest suggestions of the session.
-     *
-     * @param session           The session to update
-     * @param latestSuggestions The latest suggestions to set
-     */
-    private void updateLatestSuggestions(IrisCourseChatSession session, List<String> latestSuggestions) {
-        var suggestions = String.join("||", latestSuggestions);
-        session.setLatestSuggestions(suggestions);
-        irisCourseChatSessionRepository.save(session);
     }
 
     /**

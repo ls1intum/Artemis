@@ -54,6 +54,10 @@ public abstract class IrisSession extends DomainObject {
     @Column(name = "creation_date")
     private ZonedDateTime creationDate = ZonedDateTime.now();
 
+    /**
+     * The latest suggestions that were sent to the user.
+     * This column holds the list of latest suggestions as a concatenated string delimited by a double pipe (||).
+     */
     @Column(name = "latest_suggestions")
     private String latestSuggestions;
 
@@ -78,6 +82,10 @@ public abstract class IrisSession extends DomainObject {
 
     public void setMessages(List<IrisMessage> messages) {
         this.messages = messages;
+    }
+
+    public String getLatestSuggestions() {
+        return latestSuggestions;
     }
 
     public void setLatestSuggestions(String latestSuggestions) {

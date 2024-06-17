@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.iris.session;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -39,7 +38,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
  */
 @Service
 @Profile("iris")
-public class IrisExerciseChatSessionService implements IrisChatBasedFeatureInterface<IrisExerciseChatSession>, IrisRateLimitedFeatureInterface {
+public class IrisExerciseChatSessionService extends AbstractIrisChatSessionService<IrisExerciseChatSession> implements IrisRateLimitedFeatureInterface {
 
     private static final Logger log = LoggerFactory.getLogger(IrisExerciseChatSessionService.class);
 
@@ -67,6 +66,7 @@ public class IrisExerciseChatSessionService implements IrisChatBasedFeatureInter
             AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             IrisRateLimitService rateLimitService, PyrisPipelineService pyrisPipelineService, ProgrammingExerciseRepository programmingExerciseRepository) {
+        super(irisSessionRepository);
         this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
         this.irisChatWebsocketService = irisChatWebsocketService;
@@ -180,17 +180,5 @@ public class IrisExerciseChatSessionService implements IrisChatBasedFeatureInter
         if (statusUpdate.suggestions() != null) {
             updateLatestSuggestions(session, statusUpdate.suggestions());
         }
-    }
-
-    /**
-     * Updates the latest suggestions of the session.
-     *
-     * @param session           The session to update
-     * @param latestSuggestions The latest suggestions to set
-     */
-    private void updateLatestSuggestions(IrisExerciseChatSession session, List<String> latestSuggestions) {
-        var suggestions = String.join("||", latestSuggestions);
-        session.setLatestSuggestions(suggestions);
-        irisSessionRepository.save(session);
     }
 }
