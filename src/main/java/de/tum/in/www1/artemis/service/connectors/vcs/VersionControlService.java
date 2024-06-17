@@ -125,6 +125,7 @@ public interface VersionControlService {
      * @param sourceBranch         The default branch of the source repository
      * @param targetProjectKey     The key of the target project to which to copy the new repository to
      * @param targetRepositoryName The desired name of the target repository
+     * @param numberOfAttempts     The attempt number
      * @return The URL for cloning the repository
      * @throws VersionControlException if the repository could not be copied on the VCS server (e.g. because the source repo does not exist)
      */
