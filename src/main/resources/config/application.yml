@@ -278,12 +278,12 @@ jhipster:
         name: 'artemisApp'
     # By default CORS is disabled. Uncomment to enable.
     cors:
-        allowed-origin-patterns: "*"
         allowed-methods: "*"
         allowed-headers: "*"
         exposed-headers: "Authorization,Link,X-Total-Count"
         allow-credentials: true
         max-age: 1800
+        allowed-origins: "vscode-file://vscode-app"
     mail:
         from: artemis@localhost
     registry:
