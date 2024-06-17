@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
-import { faChevronRight, faFilter, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
+import { faChevronRight, faFilter } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Subscription, distinctUntilChanged } from 'rxjs';
 import { ProfileService } from '../layouts/profiles/profile.service';
@@ -29,10 +29,8 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     isProduction = true;
     isTestServer = false;
 
-    // icons
-    faMagnifyingGlass = faMagnifyingGlass;
-    faChevronRight = faChevronRight;
-    faFilter = faFilter;
+    readonly faChevronRight = faChevronRight;
+    readonly faFilter = faFilter;
 
     constructor(
         private route: ActivatedRoute,
