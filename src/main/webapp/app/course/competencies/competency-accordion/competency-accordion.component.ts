@@ -94,7 +94,8 @@ export class CompetencyAccordionComponent implements OnChanges {
             .filter((exerciseId) => !submittedExercises.includes(exerciseId))
             .flatMap((exerciseId) => this.metrics.exerciseMetrics?.exerciseInformation?.[exerciseId] ?? [])
             .filter((exercise) => exercise.startDate.isBefore(dayjs()) && (!exercise.dueDate || exercise.dueDate.isAfter(dayjs())))
-            .sort((a, b) => (a.dueDate ?? a.startDate).diff(b.dueDate));
+            .sort((a, b) => (a.dueDate ?? a.startDate).diff(b.dueDate))
+            .slice(0, 5);
 
         // Workaround to convert ExerciseInformation to Exercise
         this.nextExercises = nextExerciseInformations.map(
@@ -117,7 +118,8 @@ export class CompetencyAccordionComponent implements OnChanges {
             .filter((lectureUnitId) => !completedLectureUnits.includes(lectureUnitId))
             .flatMap((lectureUnitId) => this.metrics.lectureUnitStudentMetricsDTO?.lectureUnitInformation?.[lectureUnitId] ?? [])
             .filter((lectureUnit) => lectureUnit.releaseDate?.isBefore(dayjs()))
-            .sort((a, b) => (a.releaseDate?.isBefore(b?.releaseDate) ? -1 : 1));
+            .sort((a, b) => (a.releaseDate?.isBefore(b?.releaseDate) ? -1 : 1))
+            .slice(0, Math.max(0, 5 - this.nextExercises.length));
     }
 
     calculateProgressValues() {
