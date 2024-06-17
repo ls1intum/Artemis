@@ -107,9 +107,18 @@ export interface CompetencyImportResponseDTO extends BaseEntity {
     linkedStandardizedCompetencyId?: number;
 }
 
+export enum ConfidenceReason {
+    RECENT_SCORES_LOWER = 'RECENT_SCORES_LOWER',
+    RECENT_SCORES_HIGHER = 'RECENT_SCORES_HIGHER',
+    MORE_EASY_POINTS = 'MORE_EASY_POINTS',
+    MORE_HARD_POINTS = 'MORE_HARD_POINTS',
+    QUICKLY_SOLVED_EXERCISES = 'QUICKLY_SOLVED_EXERCISES',
+}
+
 export class CompetencyProgress {
     public progress?: number;
     public confidence?: number;
+    public confidenceReason?: ConfidenceReason;
 
     constructor() {}
 }
