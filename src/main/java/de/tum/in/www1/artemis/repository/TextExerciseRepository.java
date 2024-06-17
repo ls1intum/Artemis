@@ -10,13 +10,13 @@ import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface TextExerciseRepository extends JpaRepository<TextExercise, Long>, JpaSpecificationExecutor<TextExercise> {
+public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercise, Long>, JpaSpecificationExecutor<TextExercise> {
 
     @Query("""
             SELECT DISTINCT e
@@ -56,11 +56,6 @@ public interface TextExerciseRepository extends JpaRepository<TextExercise, Long
 
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results" })
     Optional<TextExercise> findWithStudentParticipationsAndSubmissionsById(long exerciseId);
-
-    @NotNull
-    default TextExercise findByIdElseThrow(long exerciseId) {
-        return findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Text Exercise", exerciseId));
-    }
 
     @EntityGraph(type = LOAD, attributePaths = { "gradingCriteria" })
     Optional<TextExercise> findWithGradingCriteriaById(long exerciseId);

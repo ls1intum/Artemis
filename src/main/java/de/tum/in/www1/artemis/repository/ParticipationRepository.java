@@ -12,18 +12,18 @@ import java.util.Set;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Profile(PROFILE_CORE)
 @Repository
-public interface ParticipationRepository extends JpaRepository<Participation, Long> {
+public interface ParticipationRepository extends ArtemisJpaRepository<Participation, Long> {
 
     @Query("""
             SELECT DISTINCT p
@@ -85,11 +85,6 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
     @NotNull
     default Participation findWithEagerSubmissionsByIdWithTeamStudentsElseThrow(long participationId) {
         return findWithEagerSubmissionsByIdWithTeamStudents(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
-    }
-
-    @NotNull
-    default Participation findByIdElseThrow(long participationId) {
-        return findById(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
     }
 
     @Query("""
