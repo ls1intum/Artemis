@@ -32,7 +32,7 @@ test.describe('Course messages', () => {
         test.describe('Create channel', () => {
             test('Check for pre-created channels', async ({ login, courseMessages }) => {
                 await login(instructor, `/courses/${course.id}/messages`);
-                await courseMessages.browseChannelsButton();
+                await courseMessages.browseChannelsButton('generalChannels');
                 await courseMessages.checkChannelsExists('tech-support');
                 await courseMessages.checkChannelsExists('organization');
                 await courseMessages.checkChannelsExists('random');
@@ -163,7 +163,7 @@ test.describe('Course messages', () => {
 
             test('Student should be joined into pre-created channels automatically', async ({ login, courseMessages }) => {
                 await login(studentOne, `/courses/${course.id}/messages`);
-                await courseMessages.browseChannelsButton();
+                await courseMessages.browseChannelsButton('generalChannels');
                 const techSupportChannelId = Number(await courseMessages.getChannelIdByName('tech-support'));
                 const techSupportJoinedBadge = courseMessages.getJoinedBadge(techSupportChannelId);
                 await expect(techSupportJoinedBadge).toBeVisible();
@@ -187,7 +187,7 @@ test.describe('Course messages', () => {
 
             test('Student should be able to join a public channel', async ({ login, courseMessages }) => {
                 await login(studentOne, `/courses/${course.id}/messages`);
-                await courseMessages.browseChannelsButton();
+                await courseMessages.browseChannelsButton('generalChannels');
                 await courseMessages.joinChannel(channel.id!);
                 const joinedBadge = courseMessages.getJoinedBadge(channel.id!);
                 await expect(joinedBadge).toBeVisible();
@@ -197,7 +197,7 @@ test.describe('Course messages', () => {
             test('Student should be able to leave a public channel', async ({ login, courseMessages, communicationAPIRequests }) => {
                 await login(studentOne, `/courses/${course.id}/messages`);
                 await communicationAPIRequests.joinUserIntoChannel(course, channel.id!, studentOne);
-                await courseMessages.browseChannelsButton();
+                await courseMessages.browseChannelsButton('generalChannels');
                 await courseMessages.leaveChannel(channel.id!);
                 await expect(courseMessages.getJoinedBadge(channel.id!)).toBeHidden();
             });
@@ -340,6 +340,7 @@ test.describe('Course messages', () => {
 
             test('Tutors should be able to leave a group chat', async ({ login, courseMessages, page }) => {
                 await login(tutor, `/courses/${course.id}/messages?conversationId=${groupChat.id}`);
+                await courseMessages.toggleSidebarAccordion('groupChats');
                 await courseMessages.checkGroupChatExists(groupChatName, true);
                 await courseMessages.listMembersButton(course.id!, groupChat.id!);
                 await courseMessages.openSettingsTab();
@@ -351,6 +352,7 @@ test.describe('Course messages', () => {
 
             test('Students should be able to leave a group chat', async ({ login, courseMessages, page }) => {
                 await login(studentOne, `/courses/${course.id}/messages?conversationId=${groupChat.id}`);
+                await courseMessages.toggleSidebarAccordion('groupChats');
                 await courseMessages.checkGroupChatExists(groupChatName, true);
                 await courseMessages.listMembersButton(course.id!, groupChat.id!);
                 await courseMessages.openSettingsTab();

@@ -36,7 +36,7 @@ describe('AccordionAddOptionsComponent', () => {
         fixture.detectChanges();
         const emitSidebarAccordionPlusClickedEventSpy = jest.spyOn(sidebarEventService, 'emitSidebarAccordionPlusClickedEvent');
 
-        const dialogOpenButton = fixture.debugElement.nativeElement.querySelector('#plusButton');
+        const dialogOpenButton = fixture.debugElement.nativeElement.querySelector('#plusButton-test');
         dialogOpenButton.click();
         tick(301);
 
