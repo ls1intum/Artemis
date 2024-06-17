@@ -4,7 +4,7 @@
             "competencyAccordion": {
                 "title": "Competencies",
                 "noData": "No competencies available for this course.",
-                "nextObjectives": "Next objectives",
+                "nextActivities": "Next activities to master this competency",
                 "exercises": "Exercises",
                 "lectures": "Lectures",
                 "progress": "Progress: {{ progress }}%",

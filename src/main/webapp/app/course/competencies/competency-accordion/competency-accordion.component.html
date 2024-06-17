@@ -56,8 +56,24 @@
         </div>
     </button>
     <div [class.competency-accordion-body-open]="open" [class.competency-accordion-body-closed]="!open" class="competency-accordion-body">
+        @if (promptForRating) {
+            <div [class.pb-1]="course && (nextExercises.length > 0 || nextLectureUnits.length > 0)">
+                <jhi-judgement-of-learning-rating
+                    [competencyId]="competency.id"
+                    [courseId]="course?.id"
+                    [mastery]="mastery"
+                    [rating]="jolRating"
+                    (ratingChange)="onRatingChange($event)"
+                />
+            </div>
+        }
         @if (course && (nextLectureUnits.length > 0 || nextExercises.length > 0)) {
-            <h5 class="fw-medium fs-4 mt-1" jhiTranslate="artemisApp.studentAnalyticsDashboard.competencyAccordion.nextObjectives"></h5>
+            <h5 class="fw-medium fs-5 mt-1" jhiTranslate="artemisApp.studentAnalyticsDashboard.competencyAccordion.nextActivities"></h5>
+        }
+        @if (course && nextExercises.length > 0) {
+            @for (exercise of nextExercises; track exercise) {
+                <jhi-course-exercise-row [course]="course" [exercise]="exercise" />
+            }
         }
         @if (course && nextLectureUnits.length > 0) {
             @for (lectureUnit of nextLectureUnits; track lectureUnit) {
@@ -69,22 +85,6 @@
                     </div>
                 </div>
             }
-        }
-        @if (course && nextExercises.length > 0) {
-            @for (exercise of nextExercises; track exercise) {
-                <jhi-course-exercise-row [course]="course" [exercise]="exercise" />
-            }
-        }
-        @if (promptForRating) {
-            <div [class.pt-3]="course && (nextExercises.length > 0 || nextLectureUnits.length > 0)">
-                <jhi-judgement-of-learning-rating
-                    [competencyId]="competency.id"
-                    [courseId]="course?.id"
-                    [mastery]="mastery"
-                    [rating]="jolRating"
-                    (ratingChange)="onRatingChange($event)"
-                />
-            </div>
         }
         <button
             (click)="navigateToCompetencyDetailPage($event)"
