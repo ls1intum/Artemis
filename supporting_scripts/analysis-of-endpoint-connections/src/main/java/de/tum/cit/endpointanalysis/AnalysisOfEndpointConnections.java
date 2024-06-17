@@ -214,13 +214,6 @@ public class AnalysisOfEndpointConnections {
                 for (EndpointInformation endpoint : endpointClass.getEndpoints()) {
                     List<RestCallInformation> matchingRestCalls = new ArrayList<>();
 
-                    System.out.println("=============================================");
-                    System.out.println("Endpoint URI: " + endpoint.buildCompleteEndpointURI());
-                    System.out.println("HTTP method: " + endpoint.getHttpMethodAnnotation());
-                    System.out.println("File path: " + endpointClass.getFilePath());
-                    System.out.println("Line: " + endpoint.getLine());
-                    System.out.println("=============================================");
-
                     for (RestCallFileInformation restCallFile : restCalls) {
                         for (RestCallInformation restCall : restCallFile.getRestCalls()) {
                             String endpointURI = endpoint.buildComparableEndpointUri();
@@ -233,11 +226,6 @@ public class AnalysisOfEndpointConnections {
                         }
                     }
 
-                    if (matchingRestCalls.size() == 0) {
-                        System.out.println("No matching REST call found for endpoint: " + endpoint.buildCompleteEndpointURI());
-                        System.out.println("---------------------------------------------");
-                    }
-                    System.out.println();
 
                     endpointsAndMatchingRestCalls.add(new EndpointAnalysis(endpoint, matchingRestCalls, endpointClass.getFilePath()));
                 }
@@ -267,6 +255,9 @@ public class AnalysisOfEndpointConnections {
             System.out.println("File path: " + endpoint.getFilePath());
             System.out.println("Line: " + endpoint.getEndpointInformation().getLine());
             System.out.println("=============================================");
+            System.out.println("No matching REST call found for endpoint: " + endpoint.getEndpointInformation().buildCompleteEndpointURI());
+            System.out.println("---------------------------------------------");
+            System.out.println();
         });
     }
 
