@@ -16,8 +16,7 @@ import { Competency } from 'app/entities/competency.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ExerciseInfo } from 'app/exam/exam-scores/exam-score-dtos.model';
-import { faCheckDouble, faDiagramProject, faFileArrowUp, faFileUpload, faFont, faKeyboard, faLightbulb, faProjectDiagram, faQuestion } from '@fortawesome/free-solid-svg-icons';
-//import { faLightbulb, faFileArrowUp, faKeyboard, faFont, , faPen, faDiagramProject  } from '@fortawesome/free-solid-svg-icons';
+import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram, faQuestion } from '@fortawesome/free-solid-svg-icons';
 
 import { CourseScores } from 'app/course/course-scores/course-scores';
 
@@ -190,26 +189,6 @@ export function getIcon(exerciseType?: ExerciseType): IconProp {
         [ExerciseType.QUIZ]: faCheckDouble,
         [ExerciseType.TEXT]: faFont,
         [ExerciseType.FILE_UPLOAD]: faFileUpload,
-    };
-
-    return icons[exerciseType] as IconProp;
-}
-
-/**
- * Get an icon for the type of the given exercise.
- * @param exerciseType {ExerciseType}
- */
-export function getIcoForExamSidebar(exerciseType?: ExerciseType): IconProp {
-    if (!exerciseType) {
-        return faQuestion as IconProp;
-    }
-
-    const icons = {
-        [ExerciseType.PROGRAMMING]: faKeyboard,
-        [ExerciseType.MODELING]: faDiagramProject,
-        [ExerciseType.QUIZ]: faLightbulb,
-        [ExerciseType.TEXT]: faFont,
-        [ExerciseType.FILE_UPLOAD]: faFileArrowUp,
     };
 
     return icons[exerciseType] as IconProp;

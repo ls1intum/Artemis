@@ -33,11 +33,15 @@ $sidebar-width-closed: 100px;
 }
 
 .notSynced {
-    color: var(--warning);
+    --fa-secondary-color: var(--bs-body-color);
+    --fa-secondary-opacity: 1;
+    --fa-primary-color: var(--warning);
 }
 
 .saved {
-    color: var(--success);
+    --fa-secondary-color: var(--bs-body-color);
+    --fa-secondary-opacity: 1;
+    --fa-primary-color: var(--success);
 }
 
 .bg-module {

@@ -10,7 +10,7 @@ import { Exam } from 'app/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { Submission, getLatestSubmissionResult } from 'app/entities/submission.model';
 import { cloneDeep } from 'lodash-es';
-import { Exercise, ExerciseType, getIcoForExamSidebar } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { captureException } from '@sentry/angular-ivy';
@@ -361,7 +361,7 @@ export class ExamParticipationService {
         const exerciseCardItem: SidebarCardElement = {
             title: exercise.title ?? '',
             id: exercise.id ?? '',
-            icon: getIcoForExamSidebar(exercise.type),
+            icon: getIcon(exercise.type),
             rightIcon: faLightbulb,
             size: 'M',
         };

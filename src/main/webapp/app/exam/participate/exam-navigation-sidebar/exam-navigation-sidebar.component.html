@@ -35,13 +35,20 @@
                                 <div class="d-flex justify-content-between mb-1 align-items-baseline">
                                     <span id="test-sidebar-card-title" class="small fw-semibold text-truncate me-2" [title]="sidebarItem.title">
                                         @if (sidebarItem.icon) {
-                                            <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" />
+                                            <fa-icon
+                                                [ngbTooltip]="!examTimeLineView ? (getExerciseIconTooltip(exercises[i]) | artemisTranslate) : ''"
+                                                [fixedWidth]="true"
+                                                [icon]="sidebarItem.icon"
+                                            />
                                         }
                                         @if (!isCollapsed) {
                                             {{ sidebarItem.title }}
                                         }
                                     </span>
-                                    <span [ngClass]="setExerciseButtonStatus(i)">
+                                    <span
+                                        [ngClass]="setExerciseButtonStatus(i)"
+                                        [ngbTooltip]="!examTimeLineView ? ('artemisApp.examParticipation.' + getExerciseButtonTooltip(exercises[i]) | artemisTranslate) : ''"
+                                    >
                                         @if (sidebarItem.rightIcon) {
                                             <fa-icon [fixedWidth]="true" [icon]="icon" />
                                         }

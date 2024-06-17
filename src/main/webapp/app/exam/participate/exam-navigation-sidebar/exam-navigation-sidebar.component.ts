@@ -21,7 +21,9 @@ import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.servic
 import { CommitState, DomainChange, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faCheck, faChevronRight, faFileLines, faHourglassHalf, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faChevronRight, faFileLines, faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
+import { facSaveSuccess, facSaveWarning } from '../../../../content/icons/icons';
+import { getIconTooltip } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-exam-navigation-sidebar',
@@ -136,6 +138,10 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
         return this.examParticipationService.getExerciseButtonTooltip(exercise);
     }
 
+    getExerciseIconTooltip(exercise: Exercise): string {
+        return getIconTooltip(exercise.type);
+    }
+
     /**
      * @param overviewPage: user wants to switch to the overview page
      * @param exerciseIndex: index of the exercise to switch to, if it should not be used, you can pass -1
@@ -202,7 +208,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
      * @return the sync status of the exercise (whether the corresponding submission is saved on the server or not)
      */
     setExerciseButtonStatus(exerciseIndex: number): 'synced' | 'synced saved' | 'notSynced' {
-        this.icon = faCheck;
+        this.icon = facSaveSuccess;
         // If we are in the exam timeline we do not use not synced as not synced shows
         // that the current submission is not saved which doesn't make sense in the timeline.
         if (this.examTimeLineView) {
@@ -221,7 +227,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
             return 'synced';
         }
         if (submission.submitted && submission.isSynced) {
-            this.icon = faCheck;
+            this.icon = facSaveSuccess;
             this.refreshExerciseSaveCount();
             return 'synced saved';
         }
@@ -230,7 +236,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
             return 'synced';
         } else {
             // make button yellow except for programming exercises with only offline IDE
-            this.icon = faTriangleExclamation;
+            this.icon = facSaveWarning;
             return 'notSynced';
         }
     }
