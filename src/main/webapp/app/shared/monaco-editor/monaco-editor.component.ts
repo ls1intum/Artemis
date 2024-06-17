@@ -24,6 +24,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     lineWidgets: MonacoEditorLineWidget[] = [];
     editorBuildAnnotations: MonacoEditorBuildAnnotation[] = [];
     lineHighlights: MonacoEditorLineHighlight[] = [];
+    actions: MonacoEditorAction[] = [];
     glyphMarginHoverButton?: MonacoEditorGlyphMarginHoverButton;
 
     constructor(
@@ -204,6 +205,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.disposeAnnotations();
         this.disposeWidgets();
         this.disposeLineHighlights();
+        this.disposeActions();
         this.glyphMarginHoverButton?.dispose();
     }
 
@@ -226,6 +228,13 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             o.dispose();
         });
         this.lineHighlights = [];
+    }
+
+    disposeActions(): void {
+        this.actions.forEach((a) => {
+            a.dispose();
+        });
+        this.actions = [];
     }
 
     changeTheme(artemisTheme: Theme): void {
@@ -312,5 +321,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     registerAction(action: MonacoEditorAction): void {
         action.register(this._editor);
+        this.actions.push(action);
     }
 }

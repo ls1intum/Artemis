@@ -41,6 +41,7 @@ export class MonacoTestCaseAction extends MonacoEditorInsertAction {
                         endColumn: wordUntilPosition.endColumn,
                     };
 
+                    // We can simply map all possible values here. The Monaco editor filters the items based on the user input.
                     return {
                         suggestions: this.possibleValues.map((value) => ({
                             label: value.value,

@@ -1,7 +1,7 @@
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import * as monaco from 'monaco-editor';
 
-export abstract class MonacoEditorAction implements monaco.editor.IActionDescriptor {
+export abstract class MonacoEditorAction implements monaco.editor.IActionDescriptor, monaco.IDisposable {
     // IActionDescriptor
     id: string;
     label: string;
