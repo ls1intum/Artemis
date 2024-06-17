@@ -58,13 +58,13 @@ public class LearningPathNavigationService {
      * @return the navigation
      */
     public LearningPathNavigationDTO getNavigation(LearningPath learningPath) {
-        var recommendationState = learningPathRecommendationService.getRecommendedOrderOfCompetencies(learningPath);
+        var recommendationState = learningPathRecommendationService.getRecommendedOrderOfNotMasteredCompetencies(learningPath);
 
-        var currentLearningObject = learningPathRecommendationService.getCurrentUncompletedLearningObject(learningPath, recommendationState);
+        var currentLearningObject = learningPathRecommendationService.getCurrentUncompletedLearningObject(learningPath.getUser(), recommendationState);
 
         var predecessorLearningObject = learningObjectService
                 .getCompletedPredecessorOfLearningObjectRelatedToDate(learningPath.getUser(), Optional.empty(), learningPath.getCompetencies()).orElse(null);
-        var successorLearningObject = learningPathRecommendationService.getUncompletedSuccessorOfLearningObject(learningPath, recommendationState, currentLearningObject);
+        var successorLearningObject = learningPathRecommendationService.getUncompletedSuccessorOfLearningObject(learningPath.getUser(), recommendationState, currentLearningObject);
         return mapLearningObjectsToNavigationDto(learningPath.getUser(), learningPath.getProgress(), predecessorLearningObject, currentLearningObject, successorLearningObject);
     }
 
@@ -78,7 +78,7 @@ public class LearningPathNavigationService {
      */
     public LearningPathNavigationDTO getNavigationRelativeToLearningObject(LearningPath learningPath, Long learningObjectId, LearningObjectType learningObjectType) {
         var currentLearningObject = learningObjectService.getLearningObjectByIdAndType(learningObjectId, learningObjectType);
-        var recommendationState = learningPathRecommendationService.getRecommendedOrderOfCompetencies(learningPath);
+        var recommendationState = learningPathRecommendationService.getRecommendedOrderOfNotMasteredCompetencies(learningPath);
         if (currentLearningObject.isCompletedFor(learningPath.getUser())) {
             return getNavigationRelativeToCompletedLearningObject(learningPath, currentLearningObject, recommendationState);
         }
@@ -102,7 +102,7 @@ public class LearningPathNavigationService {
         var predecessorLearningObject = learningObjectService.getCompletedPredecessorOfLearningObjectRelatedToDate(learningPathUser, completionDateOptional, competencies)
                 .orElse(null);
         var successorLearningObject = learningObjectService.getCompletedSuccessorOfLearningObjectRelatedToDate(learningPathUser, completionDateOptional, competencies)
-                .orElseGet(() -> learningPathRecommendationService.getCurrentUncompletedLearningObject(learningPath, recommendationState));
+                .orElseGet(() -> learningPathRecommendationService.getCurrentUncompletedLearningObject(learningPath.getUser(), recommendationState));
 
         return mapLearningObjectsToNavigationDto(learningPathUser, learningPath.getProgress(), predecessorLearningObject, relativeLearningObject, successorLearningObject);
     }
@@ -117,10 +117,11 @@ public class LearningPathNavigationService {
      */
     private LearningPathNavigationDTO getNavigationRelativeToUncompletedLearningObject(LearningPath learningPath, LearningObject relativeLearningObject,
             RecommendationState recommendationState) {
-        var predecessorLearningObject = learningPathRecommendationService.getUncompletedPredecessorOfLearningObject(relativeLearningObject, learningPath, recommendationState)
-                .orElse(learningObjectService.getCompletedPredecessorOfLearningObjectRelatedToDate(learningPath.getUser(), Optional.empty(), learningPath.getCompetencies())
-                        .orElse(null));
-        var successorLearningObject = learningPathRecommendationService.getUncompletedSuccessorOfLearningObject(learningPath, recommendationState, relativeLearningObject);
+        var predecessorLearningObject = learningPathRecommendationService
+                .getUncompletedPredecessorOfLearningObject(relativeLearningObject, learningPath.getUser(), recommendationState).orElse(learningObjectService
+                        .getCompletedPredecessorOfLearningObjectRelatedToDate(learningPath.getUser(), Optional.empty(), learningPath.getCompetencies()).orElse(null));
+        var successorLearningObject = learningPathRecommendationService.getUncompletedSuccessorOfLearningObject(learningPath.getUser(), recommendationState,
+                relativeLearningObject);
 
         return mapLearningObjectsToNavigationDto(learningPath.getUser(), learningPath.getProgress(), predecessorLearningObject, relativeLearningObject, successorLearningObject);
     }

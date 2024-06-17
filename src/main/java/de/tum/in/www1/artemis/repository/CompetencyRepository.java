@@ -220,6 +220,10 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long>, J
         return findByIdWithLectureUnits(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
     }
 
+    default Competency findByIdWithExercisesAndLectureUnitsAndCompletionsElseThrow(long competencyId) {
+        return findByIdWithExercisesAndLectureUnitsAndCompletions(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
+    }
+
     long countByCourse(Course course);
 
     List<Competency> findByCourseId(long courseId);

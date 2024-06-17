@@ -28,11 +28,14 @@ import de.tum.in.www1.artemis.domain.LearningObject;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.domain.competency.RelationType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.repository.CompetencyProgressRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
+import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.service.LearningObjectService;
 import de.tum.in.www1.artemis.service.ParticipantScoreService;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
@@ -49,6 +52,8 @@ public class LearningPathRecommendationService {
     private final LearningObjectService learningObjectService;
 
     private final ParticipantScoreService participantScoreService;
+
+    private final CompetencyProgressRepository competencyProgressRepository;
 
     /**
      * Base utility that is used to calculate a competencies' utility with respect to the earliest due date of the competency.
@@ -89,11 +94,15 @@ public class LearningPathRecommendationService {
     private static final double[][] EXERCISE_DIFFICULTY_DISTRIBUTION_LUT = new double[][] { { 0.87, 0.12, 0.01 }, { 0.80, 0.18, 0.02 }, { 0.72, 0.25, 0.03 }, { 0.61, 0.33, 0.06 },
             { 0.50, 0.40, 0.10 }, { 0.39, 0.45, 0.16 }, { 0.28, 0.48, 0.24 }, { 0.20, 0.47, 0.33 }, { 0.13, 0.43, 0.44 }, { 0.08, 0.37, 0.55 }, { 0.04, 0.29, 0.67 }, };
 
+    private final CompetencyRepository competencyRepository;
+
     protected LearningPathRecommendationService(CompetencyRelationRepository competencyRelationRepository, LearningObjectService learningObjectService,
-            ParticipantScoreService participantScoreService) {
+            ParticipantScoreService participantScoreService, CompetencyProgressRepository competencyProgressRepository, CompetencyRepository competencyRepository) {
         this.competencyRelationRepository = competencyRelationRepository;
         this.learningObjectService = learningObjectService;
         this.participantScoreService = participantScoreService;
+        this.competencyProgressRepository = competencyProgressRepository;
+        this.competencyRepository = competencyRepository;
     }
 
     /**
@@ -102,27 +111,33 @@ public class LearningPathRecommendationService {
      * @param learningPath the learning path that should be analyzed
      * @return the state of the simulation including the recommended ordering of competencies
      */
-    public RecommendationState getRecommendedOrderOfCompetencies(LearningPath learningPath) {
+    public RecommendationState getRecommendedOrderOfNotMasteredCompetencies(LearningPath learningPath) {
         RecommendationState state = generateInitialRecommendationState(learningPath);
         var pendingCompetencies = getPendingCompetencies(learningPath.getCompetencies(), state);
         simulateProgression(pendingCompetencies, state);
         return state;
     }
 
+    public List<Competency> getRecommendedOrderOfAllCompetencies(LearningPath learningPath) {
+        RecommendationState state = generateInitialRecommendationState(learningPath);
+        simulateProgression(learningPath.getCompetencies(), state);
+        return state.recommendedOrderOfCompetencies().stream().map(state.competencyIdMap::get).toList();
+    }
+
     /**
      * Gets the next due learning object of a learning path
      *
-     * @param learningPath        the learning path that should be analyzed
+     * @param user                the user that should be analyzed
      * @param recommendationState the current state of the learning path recommendation
      * @return the next due learning object of learning path
      */
-    public LearningObject getCurrentUncompletedLearningObject(LearningPath learningPath, RecommendationState recommendationState) {
+    public LearningObject getCurrentUncompletedLearningObject(User user, RecommendationState recommendationState) {
         var recommendedOrderOfCompetencies = recommendationState.recommendedOrderOfCompetencies;
         if (recommendedOrderOfCompetencies.isEmpty()) {
             return null;
         }
         var currentCompetency = recommendationState.competencyIdMap.get(recommendedOrderOfCompetencies.getFirst());
-        var recommendedOrderOfLearningObjects = getRecommendedOrderOfLearningObjects(learningPath, currentCompetency, recommendationState);
+        var recommendedOrderOfLearningObjects = getRecommendedOrderOfLearningObjects(user, currentCompetency, recommendationState);
         if (recommendedOrderOfLearningObjects.isEmpty()) {
             return null;
         }
@@ -133,18 +148,17 @@ public class LearningPathRecommendationService {
      * Gets the successor learning object relative to the given learning object
      *
      * @param currentLearningObject the learning object for which to get the successor
-     * @param learningPath          the learning path that should be analyzed
+     * @param user                  the user that should be analyzed
      * @param recommendationState   the current state of the learning path recommendation
      * @return the successor learning object of the given learning object
      */
-    public Optional<LearningObject> getUncompletedPredecessorOfLearningObject(LearningObject currentLearningObject, LearningPath learningPath,
-            RecommendationState recommendationState) {
+    public Optional<LearningObject> getUncompletedPredecessorOfLearningObject(LearningObject currentLearningObject, User user, RecommendationState recommendationState) {
         var orderOfCompetencies = recommendationState.recommendedOrderOfCompetencies;
-        var currentCompetency = getCompetencyOfUncompletedLearningObjectOnLearningPath(learningPath, currentLearningObject, recommendationState);
+        var currentCompetency = getCompetencyOfUncompletedLearningObjectOnLearningPath(user, currentLearningObject, recommendationState);
         if (currentCompetency == null) {
             return Optional.empty();
         }
-        var orderOfLearningObjects = getRecommendedOrderOfLearningObjects(learningPath, currentCompetency, recommendationState);
+        var orderOfLearningObjects = getRecommendedOrderOfLearningObjects(user, currentCompetency, recommendationState);
         var currentLearningObjectIndex = orderOfLearningObjects.indexOf(currentLearningObject);
         if (currentLearningObjectIndex > 0) {
             return Optional.of(orderOfLearningObjects.get(currentLearningObjectIndex - 1));
@@ -152,7 +166,7 @@ public class LearningPathRecommendationService {
         var currentCompetencyIndex = orderOfCompetencies.indexOf(currentCompetency.getId());
         if (currentLearningObjectIndex == 0 && currentCompetencyIndex > 0) {
             var predecessorCompetency = recommendationState.competencyIdMap.get(orderOfCompetencies.get(currentCompetencyIndex - 1));
-            var predecessorOrderOfLearningObjects = getRecommendedOrderOfLearningObjects(learningPath, predecessorCompetency, recommendationState);
+            var predecessorOrderOfLearningObjects = getRecommendedOrderOfLearningObjects(user, predecessorCompetency, recommendationState);
             return Optional.ofNullable(predecessorOrderOfLearningObjects.isEmpty() ? null : predecessorOrderOfLearningObjects.getLast());
         }
         return Optional.empty();
@@ -161,20 +175,20 @@ public class LearningPathRecommendationService {
     /**
      * Gets the predecessor learning object relative to the given learning object
      *
-     * @param learningPath          the learning path that should be analyzed
+     * @param user                  the user that should be analyzed
      * @param recommendationState   the current state of the learning path recommendation
      * @param currentLearningObject the learning object for which to get the predecessor
      * @return the predecessor learning object of the given learning object
      */
-    public LearningObject getUncompletedSuccessorOfLearningObject(LearningPath learningPath, RecommendationState recommendationState, LearningObject currentLearningObject) {
+    public LearningObject getUncompletedSuccessorOfLearningObject(User user, RecommendationState recommendationState, LearningObject currentLearningObject) {
         var orderOfCompetencies = recommendationState.recommendedOrderOfCompetencies;
-        var currentCompetency = getCompetencyOfUncompletedLearningObjectOnLearningPath(learningPath, currentLearningObject, recommendationState);
+        var currentCompetency = getCompetencyOfUncompletedLearningObjectOnLearningPath(user, currentLearningObject, recommendationState);
 
         if (currentCompetency == null) {
             return null;
         }
 
-        var orderOfLearningObjects = getRecommendedOrderOfLearningObjects(learningPath, currentCompetency, recommendationState);
+        var orderOfLearningObjects = getRecommendedOrderOfLearningObjects(user, currentCompetency, recommendationState);
         var currentLearningObjectIndex = orderOfLearningObjects.indexOf(currentLearningObject);
         if (currentLearningObjectIndex < orderOfLearningObjects.size() - 1) {
             return orderOfLearningObjects.get(currentLearningObjectIndex + 1);
@@ -182,7 +196,7 @@ public class LearningPathRecommendationService {
         var currentCompetencyIndex = orderOfCompetencies.indexOf(currentCompetency.getId());
         if (currentLearningObjectIndex == orderOfLearningObjects.size() - 1 && currentCompetencyIndex < orderOfCompetencies.size() - 1) {
             var successorCompetency = recommendationState.competencyIdMap.get(orderOfCompetencies.get(currentCompetencyIndex + 1));
-            var successorOrderOfLearningObjects = getRecommendedOrderOfLearningObjects(learningPath, successorCompetency, recommendationState);
+            var successorOrderOfLearningObjects = getRecommendedOrderOfLearningObjects(user, successorCompetency, recommendationState);
             return successorOrderOfLearningObjects.isEmpty() ? null : successorOrderOfLearningObjects.getFirst();
         }
         return null;
@@ -195,22 +209,22 @@ public class LearningPathRecommendationService {
      * @return the uncompleted learning objects of the learning path
      */
     public Stream<LearningObject> getUncompletedLearningObjects(LearningPath learningPath) {
-        var recommendationState = getRecommendedOrderOfCompetencies(learningPath);
+        var recommendationState = getRecommendedOrderOfNotMasteredCompetencies(learningPath);
         return recommendationState.recommendedOrderOfCompetencies.stream().map(recommendationState.competencyIdMap::get)
-                .flatMap(competency -> getRecommendedOrderOfLearningObjects(learningPath, competency, recommendationState).stream());
+                .flatMap(competency -> getRecommendedOrderOfLearningObjects(learningPath.getUser(), competency, recommendationState).stream());
     }
 
     /**
      * Gets the competency of an uncompleted learning object on a learning path
      *
-     * @param learningPath        the learning path that should be analyzed
+     * @param user                the user that should be analyzed
      * @param learningObject      the learning object for which to get the competency
      * @param recommendationState the current state of the learning path recommendation
      * @return the competency of the given learning object
      */
-    private Competency getCompetencyOfUncompletedLearningObjectOnLearningPath(LearningPath learningPath, LearningObject learningObject, RecommendationState recommendationState) {
+    private Competency getCompetencyOfUncompletedLearningObjectOnLearningPath(User user, LearningObject learningObject, RecommendationState recommendationState) {
         return recommendationState.recommendedOrderOfCompetencies.stream().map(recommendationState.competencyIdMap::get)
-                .filter(competency -> getRecommendedOrderOfLearningObjects(learningPath, competency, recommendationState).contains(learningObject)).findFirst().orElse(null);
+                .filter(competency -> getRecommendedOrderOfLearningObjects(user, competency, recommendationState).contains(learningObject)).findFirst().orElse(null);
     }
 
     /**
@@ -489,13 +503,26 @@ public class LearningPathRecommendationService {
     /**
      * Analyzes the current progress within the learning path and generates a recommended ordering of learning objects in a competency.
      *
-     * @param learningPath the learning path that should be analyzed
-     * @param competency   the competency
-     * @param state        the current state of the recommendation
+     * @param user       the user that should be analyzed
+     * @param competency the competency
+     * @param state      the current state of the recommendation
      * @return the recommended ordering of learning objects
      */
-    public List<LearningObject> getRecommendedOrderOfLearningObjects(LearningPath learningPath, Competency competency, RecommendationState state) {
-        var pendingLectureUnits = competency.getLectureUnits().stream().filter(lectureUnit -> !lectureUnit.isCompletedFor(learningPath.getUser())).toList();
+    public List<LearningObject> getRecommendedOrderOfLearningObjects(User user, Competency competency, RecommendationState state) {
+        final var combinedPriorConfidence = computeCombinedPriorConfidence(competency, state);
+        return getRecommendedOrderOfLearningObjects(user, competency, combinedPriorConfidence);
+    }
+
+    /**
+     * Analyzes the current progress within the learning path and generates a recommended ordering of learning objects in a competency.
+     *
+     * @param user                    the user that should be analyzed
+     * @param competency              the competency
+     * @param combinedPriorConfidence the combined confidence of the user for the prior competencies
+     * @return the recommended ordering of learning objects
+     */
+    public List<LearningObject> getRecommendedOrderOfLearningObjects(User user, Competency competency, double combinedPriorConfidence) {
+        var pendingLectureUnits = competency.getLectureUnits().stream().filter(lectureUnit -> !lectureUnit.isCompletedFor(user)).toList();
         List<LearningObject> recommendedOrder = new ArrayList<>(pendingLectureUnits);
 
         // early return if competency can be trivially mastered
@@ -503,10 +530,8 @@ public class LearningPathRecommendationService {
             return recommendedOrder;
         }
 
-        final var combinedPriorConfidence = computeCombinedPriorConfidence(competency, state);
-        final var pendingExercises = competency.getExercises().stream().filter(exercise -> !learningObjectService.isCompletedByUser(exercise, learningPath.getUser()))
-                .collect(Collectors.toSet());
-        final var numberOfExercisesRequiredToMaster = predictNumberOfExercisesRequiredToMaster(learningPath, competency, combinedPriorConfidence, pendingExercises.size());
+        final var pendingExercises = competency.getExercises().stream().filter(exercise -> !learningObjectService.isCompletedByUser(exercise, user)).collect(Collectors.toSet());
+        final var numberOfExercisesRequiredToMaster = predictNumberOfExercisesRequiredToMaster(user, competency, combinedPriorConfidence, pendingExercises.size());
         Map<DifficultyLevel, Set<Exercise>> difficultyLevelMap = generateDifficultyLevelMap(competency.getExercises());
         if (numberOfExercisesRequiredToMaster >= competency.getExercises().size()) {
             scheduleAllExercises(recommendedOrder, difficultyLevelMap);
@@ -520,7 +545,7 @@ public class LearningPathRecommendationService {
             return recommendedOrder;
         }
 
-        scheduleExercisesByDistribution(recommendedOrder, recommendedExerciseDistribution, learningPath, competency);
+        scheduleExercisesByDistribution(recommendedOrder, recommendedExerciseDistribution, user, competency);
         return recommendedOrder;
     }
 
@@ -541,12 +566,11 @@ public class LearningPathRecommendationService {
      *
      * @param recommendedOrder                 the list storing the recommended order of learning objects
      * @param recommendedExercisesDistribution an array containing the number of exercises that should be scheduled per difficulty (easy to hard)
-     * @param learningPath                     the learning path for which the recommendation should be performed
+     * @param user                             the user for which the recommendation should be performed
      * @param competency                       the competency from which the exercises should be chosen
      */
-    private void scheduleExercisesByDistribution(List<LearningObject> recommendedOrder, int[] recommendedExercisesDistribution, LearningPath learningPath, Competency competency) {
-        var exerciseCandidates = competency.getExercises().stream().filter(exercise -> !hasScoredAtLeast(exercise, learningPath.getUser(), SCORE_THRESHOLD))
-                .collect(Collectors.toSet());
+    private void scheduleExercisesByDistribution(List<LearningObject> recommendedOrder, int[] recommendedExercisesDistribution, User user, Competency competency) {
+        var exerciseCandidates = competency.getExercises().stream().filter(exercise -> !hasScoredAtLeast(exercise, user, SCORE_THRESHOLD)).collect(Collectors.toSet());
         final var difficultyMap = generateDifficultyLevelMap(exerciseCandidates);
         final var easyExercises = new HashSet<Exercise>();
         final var mediumExercises = new HashSet<Exercise>();
@@ -629,16 +653,16 @@ public class LearningPathRecommendationService {
      * </ul>
      * The formulas are substituted and solved for #ExercisesRequiredToMaster.
      *
-     * @param learningPath             the learning path for which the prediction should be computed
+     * @param user                     the user for which the prediction should be computed
      * @param competency               the competency for which the prediction should be computed
      * @param priorConfidence          the average confidence of all prior competencies
      * @param numberOfPendingExercises the number of exercises that have not been completed by the user
      * @return the predicted number of exercises required to master the given competency
      */
-    private int predictNumberOfExercisesRequiredToMaster(LearningPath learningPath, Competency competency, double priorConfidence, int numberOfPendingExercises) {
+    private int predictNumberOfExercisesRequiredToMaster(User user, Competency competency, double priorConfidence, int numberOfPendingExercises) {
         // we assume that the student may perform slightly worse that previously and dampen the prior confidence for the prediction process
         priorConfidence *= 0.75;
-        final var scores = participantScoreService.getStudentAndTeamParticipationScoresAsDoubleStream(learningPath.getUser(), competency.getExercises()).summaryStatistics();
+        final var scores = participantScoreService.getStudentAndTeamParticipationScoresAsDoubleStream(user, competency.getExercises()).summaryStatistics();
         double lectureUnits = competency.getLectureUnits().size();
         double exercises = competency.getExercises().size();
         double learningObjects = lectureUnits + exercises;
@@ -725,5 +749,36 @@ public class LearningPathRecommendationService {
             return false;
         }
         return score.getAsDouble() >= minScore;
+    }
+
+    public List<LearningObject> getOrderOfLearningObjectsForCompetency(long competencyId, User user) {
+        Competency competency = competencyRepository.findByIdWithExercisesAndLectureUnitsAndCompletionsElseThrow(competencyId);
+
+        Set<CompetencyProgress> priorCompetencyProgresses = competencyProgressRepository.findAllPriorByCompetencyId(competency, user);
+        Optional<CompetencyProgress> currentCompetencyProgress = competencyProgressRepository.findByCompetencyIdAndUserId(competency.getId(), user.getId());
+        double combinedPriorConfidence = priorCompetencyProgresses.stream().mapToDouble(CompetencyProgress::getConfidence).average().orElse(0);
+        double weightedConfidence = computeWeightedConfidence(combinedPriorConfidence, currentCompetencyProgress);
+        Stream<LectureUnit> completedLectureUnits = competency.getLectureUnits().stream().filter(lectureUnit -> lectureUnit.isCompletedFor(user));
+        Stream<Exercise> completedExercises = competency.getExercises().stream().filter(exercise -> learningObjectService.isCompletedByUser(exercise, user));
+        Stream<LearningObject> pendingLearningObjects = getRecommendedOrderOfLearningObjects(user, competency, weightedConfidence).stream();
+
+        return Stream.concat(completedLectureUnits, Stream.concat(completedExercises, pendingLearningObjects)).toList();
+    }
+
+    /**
+     * Computes the weighted confidence of a competency based on the progress of the user and the confidence of the prior competencies.
+     *
+     * @param combinedPriorConfidence    the average confidence of all prior competencies
+     * @param optionalCompetencyProgress the progress of the user within the competency
+     * @return the weighted confidence of the competency
+     */
+    private double computeWeightedConfidence(double combinedPriorConfidence, Optional<CompetencyProgress> optionalCompetencyProgress) {
+        if (optionalCompetencyProgress.isPresent()) {
+            final var competencyProgress = optionalCompetencyProgress.get();
+            return (competencyProgress.getProgress() * competencyProgress.getConfidence()) + (1 - competencyProgress.getProgress()) * combinedPriorConfidence;
+        }
+        else {
+            return combinedPriorConfidence;
+        }
     }
 }

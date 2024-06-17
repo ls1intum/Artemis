@@ -15,6 +15,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -95,4 +96,16 @@ public interface CompetencyProgressRepository extends JpaRepository<CompetencyPr
             """)
     Long countByCompetencyAndProgressAndConfidenceGreaterThanEqual(@Param("competencyId") long competencyId, @Param("progress") double progress,
             @Param("confidence") double confidence);
+
+    @Query("""
+            SELECT cp
+            FROM Competency c
+                LEFT JOIN CompetencyRelation cr ON cr.tailCompetency = c
+                LEFT JOIN Competency priorC ON priorC = cr.headCompetency
+                LEFT JOIN FETCH CompetencyProgress cp ON cp.competency = priorC
+            WHERE cr.type <> de.tum.in.www1.artemis.domain.competency.RelationType.MATCHES
+                AND cp.user = :userId
+                AND c = :competencyId
+            """)
+    Set<CompetencyProgress> findAllPriorByCompetencyId(@Param("competency") Competency competency, @Param("user") User userId);
 }
