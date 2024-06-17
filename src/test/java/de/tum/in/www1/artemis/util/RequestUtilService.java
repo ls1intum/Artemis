@@ -18,6 +18,7 @@ import java.util.function.Function;
 
 import jakarta.annotation.Nullable;
 import jakarta.servlet.ServletException;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -808,5 +809,16 @@ public class RequestUtilService {
                 assertThat(res.getResponse().getHeaderValues(responseHeader.getKey()).getFirst()).isEqualTo(responseHeader.getValue());
             }
         }
+    }
+
+    /**
+     * Creates the delete params with both deleteStudentReposBuildPlans and deleteBaseReposBuildPlans set to false.
+     */
+    @NotNull
+    public static LinkedMultiValueMap<String, String> deleteProgrammingExerciseParamsFalse() {
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("deleteStudentReposBuildPlans", "false");
+        params.add("deleteBaseReposBuildPlans", "false");
+        return params;
     }
 }
