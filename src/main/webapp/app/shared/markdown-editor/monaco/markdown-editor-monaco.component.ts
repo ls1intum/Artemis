@@ -132,13 +132,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     getEditorHeight(targetHeight?: number): number {
         const wrapperHeight = this.wrapper.nativeElement.clientHeight;
         const fileUploadFooterHeight = this.fileUploadFooter?.nativeElement?.clientHeight ?? 0;
-        if (!this.fileUploadFooter?.nativeElement) {
-            console.error('no file upload footer: ' + this.fileUploadFooter + ' ' + this.fileUploadFooter?.nativeElement);
-        } else {
-            console.error('file upload footer: ' + this.fileUploadFooter.nativeElement.clientHeight);
-        }
         const actionPaletteHeight = this.actionPalette?.nativeElement?.clientHeight ?? 0;
-        console.log('Height: ' + wrapperHeight + '( target: ' + targetHeight + ') - ' + fileUploadFooterHeight + ' - ' + actionPaletteHeight);
         return (targetHeight ?? wrapperHeight) - fileUploadFooterHeight - actionPaletteHeight;
     }
 
