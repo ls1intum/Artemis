@@ -88,7 +88,7 @@ artemis:
                 ocaml:
                     default: "ls1tum/artemis-ocaml-docker:v1"
                 rust:
-                    default: "ghcr.io/magaupp/nextest-docker:v0.9.70"
+                    default: "ghcr.io/ls1intum/artemis-rust-docker:v0.9.70"
 
 management:
     endpoints:
