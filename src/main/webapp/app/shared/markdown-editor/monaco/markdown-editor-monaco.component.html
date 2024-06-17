@@ -1,4 +1,10 @@
-<div #wrapper [style.overflow]="inPreviewMode ? 'auto' : 'hidden'" [style.height.px]="targetWrapperHeight" [style.height.%]="targetWrapperHeight ? undefined : 100">
+<div
+    #wrapper
+    class="markdown-editor-wrapper"
+    [style.overflow]="inPreviewMode ? 'auto' : 'hidden'"
+    [style.height.px]="targetWrapperHeight"
+    [style.height.%]="targetWrapperHeight ? undefined : 100"
+>
     <nav ngbNav #actionPalette #nav="ngbNav" class="nav-tabs" [destroyOnHide]="false" (navChange)="onNavChanged($event)">
         <!-- TODO if show edit -->
         <ng-container ngbNavItem="editor_edit">
