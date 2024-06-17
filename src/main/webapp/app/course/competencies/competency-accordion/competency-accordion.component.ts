@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
-import { faFilePdf, faList } from '@fortawesome/free-solid-svg-icons';
+import { faFile, faFilePdf, faList } from '@fortawesome/free-solid-svg-icons';
 import { Competency, CompetencyJol, CompetencyProgress, getConfidence, getIcon, getMastery, getProgress } from 'app/entities/competency.model';
 import { Course } from 'app/entities/course.model';
 import { Router } from '@angular/router';
@@ -7,7 +7,7 @@ import { CompetencyInformation, LectureUnitInformation, StudentMetrics } from 'a
 import { round } from 'app/shared/util/utils';
 import { Exercise } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
-import { lectureUnitIcons, lectureUnitTooltips } from 'app/entities/lecture-unit/lectureUnit.model';
+import { LectureUnitType, lectureUnitIcons, lectureUnitTooltips } from 'app/entities/lecture-unit/lectureUnit.model';
 
 export interface CompetencyAccordionToggleEvent {
     opened: boolean;
@@ -40,6 +40,7 @@ export class CompetencyAccordionComponent implements OnChanges {
     promptForRating = false;
 
     protected readonly faList = faList;
+    protected readonly faFilePdf = faFile;
     protected readonly faPdf = faFilePdf;
     protected readonly lectureUnitIcons = lectureUnitIcons;
     protected readonly lectureUnitTooltips = lectureUnitTooltips;
@@ -198,4 +199,7 @@ export class CompetencyAccordionComponent implements OnChanges {
         event.stopPropagation();
         this.router.navigate(['/courses', this.course!.id, 'competencies', this.competency.id]);
     }
+
+    protected readonly LectureUnitType = LectureUnitType;
+    protected readonly faFile = faFile;
 }
