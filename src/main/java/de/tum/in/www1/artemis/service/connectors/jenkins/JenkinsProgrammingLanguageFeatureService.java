@@ -6,7 +6,6 @@ import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.HASK
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.JAVA;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.KOTLIN;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.PYTHON;
-import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.RUST;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.SWIFT;
 import static de.tum.in.www1.artemis.domain.enumeration.ProjectType.FACT;
 import static de.tum.in.www1.artemis.domain.enumeration.ProjectType.GCC;
