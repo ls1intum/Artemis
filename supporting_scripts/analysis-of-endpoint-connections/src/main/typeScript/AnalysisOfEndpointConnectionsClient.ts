@@ -15,7 +15,7 @@ import { readFileSync } from 'node:fs';
 
 // Get the file names from the command line arguments
 const fileNames = process.argv.slice(2);
-const HTTP_METHODS = ['get', 'post', 'put', 'delete'];
+const HTTP_METHODS = ['get', 'post', 'put', 'delete', 'patch'];
 let isFirstRestCall = true;
 
 for (const fileName of fileNames.filter(fileName => fileName.endsWith('.ts')))  {
