@@ -4,7 +4,13 @@
             "navigation": {
                 "nextButton": "Next",
                 "previousButton": "Previous",
-                "overviewTitle": "Learning objects"
+                "overview": {
+                    "title": "Learning path competencies",
+                    "showCompetenciesGraphButton": "Competency graph"
+                }
+            },
+            "competencyGraphModal": {
+                "title": "Learning path competency relations"
             }
         }
     }

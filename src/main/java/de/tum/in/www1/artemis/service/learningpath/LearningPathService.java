@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -38,14 +39,14 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
-import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyProgressDTO;
-import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyRelationDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyGraphEdgeDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyGraphNodeDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathCompetencyGraphDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationObjectDTO.LearningObjectType;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDto;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -298,14 +299,20 @@ public class LearningPathService {
      * Generates the graph of competencies with the student's progress for the given learning path.
      *
      * @param learningPath the learning path for which the graph should be generated
+     * @param user         the user for which the progress should be loaded
      * @return dto containing the competencies and relations of the learning path
      */
-    public LearningPathCompetencyGraphDTO generateLearningPathCompetencyGraph(@NotNull LearningPath learningPath) {
-        Set<CompetencyProgress> progresses = competencyProgressRepository.findAllByUserIdAndLearningPathId(learningPath.getUser().getId(), learningPath.getId());
-        Set<CompetencyProgressDTO> progressDTOs = progresses.stream().map(CompetencyProgressDTO::of).collect(Collectors.toSet());
+    public LearningPathCompetencyGraphDTO generateLearningPathCompetencyGraph(@NotNull LearningPath learningPath, @NotNull User user) {
+        Set<Competency> competencies = competencyRepository.findAllByLearningPath(learningPath);
+        Set<Long> competencyIds = competencies.stream().map(Competency::getId).collect(Collectors.toSet());
+        Map<Long, CompetencyProgress> competencyProgresses = competencyProgressRepository.findAllByCompetencyIdsAndUserId(competencyIds, user.getId()).stream()
+                .collect(Collectors.toMap(progress -> progress.getCompetency().getId(), cp -> cp));
+
+        Set<CompetencyGraphNodeDTO> progressDTOs = competencies.stream()
+                .map(competency -> CompetencyGraphNodeDTO.of(competency, Optional.ofNullable(competencyProgresses.get(competency.getId())))).collect(Collectors.toSet());
 
         Set<CompetencyRelation> relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(learningPath.getCourse().getId());
-        Set<CompetencyRelationDTO> relationDTOs = relations.stream().map(CompetencyRelationDTO::of).collect(Collectors.toSet());
+        Set<CompetencyGraphEdgeDTO> relationDTOs = relations.stream().map(CompetencyGraphEdgeDTO::of).collect(Collectors.toSet());
         return new LearningPathCompetencyGraphDTO(progressDTOs, relationDTOs);
     }
 
@@ -356,7 +363,7 @@ public class LearningPathService {
      * @param learningPathId the id of the learning path
      * @return the navigation overview
      */
-    public LearningPathNavigationOverviewDto getLearningPathNavigationOverview(long learningPathId) {
+    public LearningPathNavigationOverviewDTO getLearningPathNavigationOverview(long learningPathId) {
         var learningPath = findWithCompetenciesAndLearningObjectsAndCompletedUsersById(learningPathId);
         if (!userRepository.getUser().equals(learningPath.getUser())) {
             throw new AccessForbiddenException("You are not allowed to access this learning path");

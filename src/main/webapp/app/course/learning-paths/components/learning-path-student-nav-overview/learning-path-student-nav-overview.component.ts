@@ -1,13 +1,14 @@
 import { Component, InputSignal, OnInit, computed, inject, input, output, signal } from '@angular/core';
-import { NgbAccordionModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAccordionModule, NgbDropdownModule, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { IconDefinition, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/core/util/alert.service';
-import { LearningObjectType, LearningPathNavigationObjectDto, LearningPathNavigationOverviewDto } from 'app/entities/competency/learning-path.model';
+import { LearningObjectType, LearningPathNavigationObjectDTO, LearningPathNavigationOverviewDTO } from 'app/entities/competency/learning-path.model';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { LearningPathNavigationService } from 'app/course/learning-paths/services/learning-path-navigation.service';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
+import { CompetencyGraphModalComponent } from 'app/course/learning-paths/components/competency-graph-modal/competency-graph-modal.component';
 
 @Component({
     selector: 'jhi-learning-path-student-nav-overview',
@@ -19,6 +20,7 @@ export class LearningPathStudentNavOverviewComponent implements OnInit {
     protected readonly faCheckCircle: IconDefinition = faCheckCircle;
 
     private readonly alertService: AlertService = inject(AlertService);
+    private readonly modalService: NgbModal = inject(NgbModal);
     private readonly learningPathApiService: LearningPathApiService = inject(LearningPathApiService);
     private readonly learningPathNavigationService = inject(LearningPathNavigationService);
 
@@ -26,12 +28,12 @@ export class LearningPathStudentNavOverviewComponent implements OnInit {
 
     readonly onLearningObjectSelected = output<void>();
     readonly isLoading = signal(false);
-    private readonly navigationOverview = signal<LearningPathNavigationOverviewDto | undefined>(undefined);
+    private readonly navigationOverview = signal<LearningPathNavigationOverviewDTO | undefined>(undefined);
     readonly learningObjects = computed(() => this.navigationOverview()?.learningObjects ?? []);
     readonly currentLearningObject = this.learningPathNavigationService.currentLearningObject;
 
-    async ngOnInit(): Promise<void> {
-        await this.loadNavigationOverview(this.learningPathId());
+    ngOnInit(): void {
+        this.loadNavigationOverview(this.learningPathId());
     }
 
     private async loadNavigationOverview(learningPathId: number): Promise<void> {
@@ -45,7 +47,7 @@ export class LearningPathStudentNavOverviewComponent implements OnInit {
         this.isLoading.set(false);
     }
 
-    selectLearningObject(learningObject: LearningPathNavigationObjectDto): void {
+    selectLearningObject(learningObject: LearningPathNavigationObjectDTO): void {
         if (this.isLearningObjectSelectable(learningObject)) {
             this.learningPathNavigationService.loadRelativeLearningPathNavigation(this.learningPathId(), learningObject);
             this.onLearningObjectSelected.emit();
@@ -56,8 +58,17 @@ export class LearningPathStudentNavOverviewComponent implements OnInit {
         return this.currentLearningObject()?.id === id && this.currentLearningObject()?.type === type;
     }
 
-    isLearningObjectSelectable(learningObject: LearningPathNavigationObjectDto): boolean {
+    isLearningObjectSelectable(learningObject: LearningPathNavigationObjectDTO): boolean {
         const indexOfLearningObject = this.learningObjects().indexOf(learningObject);
         return indexOfLearningObject > 0 ? this.learningObjects()[indexOfLearningObject - 1].completed : true;
+    }
+
+    openCompetencyGraph() {
+        const modalRef = this.modalService.open(CompetencyGraphModalComponent, {
+            size: 'xl',
+            backdrop: 'static',
+            windowClass: 'competency-graph-modal',
+        });
+        modalRef.componentInstance.learningPathId = this.learningPathId;
     }
 }

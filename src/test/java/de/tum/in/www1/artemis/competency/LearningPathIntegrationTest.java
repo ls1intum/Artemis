@@ -50,14 +50,14 @@ import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.LearningPathResource;
-import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyProgressDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyGraphNodeDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathCompetencyGraphDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationObjectDTO;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDto;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 
 class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -162,7 +162,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         Set<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(textExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
         participationUtilService.addAssessmentWithFeedbackWithGradingInstructionsForExercise(textExercise, STUDENT_OF_COURSE);
-        competencyUtilService.linkExerciseToCompetency(competencies[1], textExercise);
+        competencyUtilService.linkExerciseToCompetency(competencies[0], textExercise);
 
         Lecture lecture = new Lecture();
         lecture.setDescription("Test Lecture");
@@ -171,7 +171,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         textUnit = lectureUtilService.createTextUnit();
         lectureUtilService.addLectureUnitsToLecture(lecture, List.of(textUnit));
-        competencyUtilService.linkLectureUnitToCompetency(competencies[2], textUnit);
+        competencyUtilService.linkLectureUnitToCompetency(competencies[1], textUnit);
 
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         lectureUnitService.setLectureUnitCompletion(textUnit, student, true);
@@ -488,18 +488,18 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 LearningPathCompetencyGraphDTO.class);
 
         assertThat(response).isNotNull();
-        assertThat(response.competencies().stream().map(CompetencyProgressDTO::id))
-                .containsExactlyInAnyOrderElementsOf(Arrays.stream(competencies).map(Competency::getId).toList());
-        assertThat(response.competencies()).allMatch(progressDTO -> {
-            CompetencyProgress progress = competencyProgressRepository.findByCompetencyIdAndUserIdOrElseThrow(progressDTO.id(), student.getId());
-            return Objects.equals(progressDTO.progress(), progress.getProgress()) && Objects.equals(progressDTO.confidence(), progress.getConfidence())
-                    && progressDTO.mastery() == CompetencyProgressService.getMastery(progress);
+        assertThat(response.nodes().stream().map(CompetencyGraphNodeDTO::id))
+                .containsExactlyInAnyOrderElementsOf(Arrays.stream(competencies).map(Competency::getId).map(Object::toString).toList());
+        assertThat(response.nodes()).allMatch(nodeDTO -> {
+            CompetencyProgress progress = competencyProgressRepository.findByCompetencyIdAndUserIdOrElseThrow(Long.parseLong(nodeDTO.id()), student.getId());
+            return Objects.equals(nodeDTO.progress(), progress.getProgress()) && Objects.equals(nodeDTO.confidence(), progress.getConfidence())
+                    && nodeDTO.masteryProgress() == CompetencyProgressService.getMasteryProgress(progress);
         });
 
         Set<CompetencyRelation> relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(course.getId());
-        assertThat(response.competencyRelations()).hasSameSizeAs(relations);
-        assertThat(response.competencyRelations()).allMatch(relationDTO -> relations.stream().anyMatch(relation -> relation.getId() == relationDTO.id()
-                && relation.getTailCompetency().getId() == relationDTO.tailCompetencyId() && relation.getHeadCompetency().getId() == relationDTO.headCompetencyId()));
+        assertThat(response.edges()).hasSameSizeAs(relations);
+        assertThat(response.edges()).allMatch(relationDTO -> relations.stream().anyMatch(relation -> relation.getId() == Long.parseLong(relationDTO.id())
+                && relation.getTailCompetency().getId() == Long.parseLong(relationDTO.target()) && relation.getHeadCompetency().getId() == Long.parseLong(relationDTO.source())));
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -725,7 +725,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
-        final var result = request.get("/api/learning-path/" + learningPath.getId() + "/navigation-overview", HttpStatus.OK, LearningPathNavigationOverviewDto.class);
+        final var result = request.get("/api/learning-path/" + learningPath.getId() + "/navigation-overview", HttpStatus.OK, LearningPathNavigationOverviewDTO.class);
 
         // TODO: currently learning objects connected to more than one competency are provided twice in the learning path
         // TODO: this is not a problem for the navigation overview as the duplicates are filtered out
@@ -740,7 +740,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
-        request.get("/api/learning-path/" + learningPath.getId() + "/navigation-overview", HttpStatus.FORBIDDEN, LearningPathNavigationOverviewDto.class);
+        request.get("/api/learning-path/" + learningPath.getId() + "/navigation-overview", HttpStatus.FORBIDDEN, LearningPathNavigationOverviewDTO.class);
     }
 
     void testGetCompetencyProgressForLearningPath() throws Exception {

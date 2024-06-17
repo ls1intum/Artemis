@@ -5,7 +5,7 @@ import { LearningPathHealthDTO } from 'app/entities/competency/learning-path-hea
 import {
     CompetencyProgressForLearningPathDTO,
     LearningPathInformationDTO,
-    LearningPathNavigationOverviewDto,
+    LearningPathNavigationOverviewDTO,
     NgxLearningPathDTO,
 } from 'app/entities/competency/learning-path.model';
 import { map, tap } from 'rxjs/operators';
@@ -36,8 +36,8 @@ export class LearningPathService {
         return this.httpClient.get<LearningPathInformationDTO>(`${this.resourceURL}/learning-path/${learningPathId}`, { observe: 'response' });
     }
 
-    getLearningPathNavigationOverview(learningPathId: number): Observable<HttpResponse<LearningPathNavigationOverviewDto>> {
-        return this.httpClient.get<LearningPathNavigationOverviewDto>(`${this.resourceURL}/learning-path/${learningPathId}/navigation-overview`, { observe: 'response' });
+    getLearningPathNavigationOverview(learningPathId: number): Observable<HttpResponse<LearningPathNavigationOverviewDTO>> {
+        return this.httpClient.get<LearningPathNavigationOverviewDTO>(`${this.resourceURL}/learning-path/${learningPathId}/navigation-overview`, { observe: 'response' });
     }
 
     getLearningPathNgxGraph(learningPathId: number): Observable<HttpResponse<NgxLearningPathDTO>> {

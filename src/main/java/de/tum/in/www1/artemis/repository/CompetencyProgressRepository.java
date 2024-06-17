@@ -95,13 +95,4 @@ public interface CompetencyProgressRepository extends JpaRepository<CompetencyPr
             """)
     Long countByCompetencyAndProgressAndConfidenceGreaterThanEqual(@Param("competencyId") long competencyId, @Param("progress") double progress,
             @Param("confidence") double confidence);
-
-    @Query("""
-            SELECT cp
-            FROM CompetencyProgress cp
-                   LEFT JOIN cp.competency.learningPaths lPs
-            WHERE cp.user.id = :userId
-                AND :learningPathId = lPs.id
-            """)
-    Set<CompetencyProgress> findAllByUserIdAndLearningPathId(@Param("userId") long userId, @Param("learningPathId") long learningPathId);
 }

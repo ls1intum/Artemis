@@ -1,5 +1,5 @@
 import { Component, InputSignal, OnInit, WritableSignal, computed, inject, input, signal } from '@angular/core';
-import { LearningPathNavigationObjectDto } from 'app/entities/competency/learning-path.model';
+import { LearningPathNavigationObjectDTO } from 'app/entities/competency/learning-path.model';
 import { CommonModule } from '@angular/common';
 import { NgbAccordionModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -38,7 +38,7 @@ export class LearningPathStudentNavComponent implements OnInit {
         this.learningPathNavigationService.loadInitialLearningPathNavigation(this.learningPathId());
     }
 
-    selectLearningObject(selectedLearningObject: LearningPathNavigationObjectDto): void {
+    selectLearningObject(selectedLearningObject: LearningPathNavigationObjectDTO): void {
         this.learningPathNavigationService.loadRelativeLearningPathNavigation(this.learningPathId(), selectedLearningObject);
     }
 
