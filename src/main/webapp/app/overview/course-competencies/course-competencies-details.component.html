@@ -88,7 +88,6 @@
                             <div class="col-7">{{ 'artemisApp.competency.mastery' | artemisTranslate }} <jhi-help-icon text="artemisApp.competency.masteryDescription" /></div>
                             <div class="col-5">
                                 <span> {{ mastery }} %</span>
-                                <!-- TODO: Add hint text regarding confidence reason -->
                                 @if (competencyProgress?.confidenceReason && competencyProgress.confidenceReason !== ConfidenceReason.NO_REASON) {
                                     <jhi-help-icon text=" {{ 'artemisApp.competency.confidenceReasons.' + competencyProgress.confidenceReason }}" />
                                 }
