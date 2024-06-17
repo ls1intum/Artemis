@@ -229,6 +229,15 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             """)
     Optional<StudentExam> findLatestByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
 
+    @Query("""
+            SELECT se
+            FROM StudentExam se
+            JOIN se.studentParticipations p
+            WHERE se.exam.id = :examId
+                AND p.id = :participationId
+            """)
+    Optional<StudentExam> findByExamIdAndParticipationId(@Param("examId") long examId, @Param("participationId") long participationId);
+
     /**
      * Return the StudentExam for the given examId and userId, if possible. For test exams, the latest Student Exam is returned.
      *
