@@ -389,7 +389,7 @@ public class CompetencyProgressService {
             }
         }
         else {
-            competencyProgress.setConfidenceReason(null);
+            competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.NO_REASON);
         }
     }
 
