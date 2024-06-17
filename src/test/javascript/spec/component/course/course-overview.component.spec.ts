@@ -57,8 +57,6 @@ import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
-import { CoursesForDashboardDTO } from 'app/course/manage/courses-for-dashboard-dto';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -114,11 +112,8 @@ const course2: Course = {
     numberOfPrerequisites: 1,
     numberOfTutorialGroups: 1,
 };
-const course1Dashboard = { course: course1 } as CourseForDashboardDTO;
-const course2Dashboard = { course: course2 } as CourseForDashboardDTO;
-const coursesInDashboard: CourseForDashboardDTO[] = [course1Dashboard, course2Dashboard];
+const coursesDropdown: Course[] = [course1, course2];
 const courses: Course[] = [course2];
-const coursesDashboard = { courses: coursesInDashboard } as CoursesForDashboardDTO;
 
 @Component({
     template: '<ng-template #controls><button id="test-button">TestButton</button></ng-template>',
@@ -151,7 +146,7 @@ describe('CourseOverviewComponent', () => {
     let findOneForDashboardStub: jest.SpyInstance;
     let route: ActivatedRoute;
     let findOneForRegistrationStub: jest.SpyInstance;
-    let findAllForDashboardSpy: jest.SpyInstance;
+    let findAllForDropdownSpy: jest.SpyInstance;
 
     let metisConversationService: MetisConversationService;
 
@@ -238,9 +233,9 @@ describe('CourseOverviewComponent', () => {
                     .spyOn(courseService, 'findOneForRegistration')
                     .mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
                 jest.spyOn(metisConversationService, 'course', 'get').mockReturnValue(course);
-                findAllForDashboardSpy = jest
-                    .spyOn(courseService, 'findAllForDashboard')
-                    .mockReturnValue(of(new HttpResponse({ body: coursesDashboard, headers: new HttpHeaders() })));
+                findAllForDropdownSpy = jest
+                    .spyOn(courseService, 'findAllForDropdown')
+                    .mockReturnValue(of(new HttpResponse({ body: coursesDropdown, headers: new HttpHeaders() })));
             });
     }));
 
@@ -721,22 +716,22 @@ describe('CourseOverviewComponent', () => {
         expect(displayStyle2).toBe('flex');
     });
 
-    it('should initialize courses attribute when page is loaded', () => {
-        component.ngOnInit();
+    it('should initialize courses attribute when page is loaded', async () => {
+        await component.ngOnInit();
 
         expect(component.courses).toEqual(courses);
         expect(component.courses?.length).toBe(1);
     });
 
-    it('should not initialize courses attribute when page has error while loading', () => {
-        findAllForDashboardSpy.mockReturnValue(throwError(() => new HttpResponse({ status: 404 })));
+    it('should not initialize courses attribute when page has error while loading', async () => {
+        findAllForDropdownSpy.mockReturnValue(throwError(() => new HttpResponse({ status: 404 })));
 
-        component.ngOnInit();
+        await component.ngOnInit();
         expect(component.courses?.length).toBeUndefined();
     });
 
-    it('should not display current course in dropdown', () => {
-        component.ngOnInit();
+    it('should not display current course in dropdown', async () => {
+        await component.ngOnInit();
 
         expect(component.courses).toEqual(courses);
         expect(component.courses?.pop()).toBe(course2);
@@ -747,7 +742,7 @@ describe('CourseOverviewComponent', () => {
         fixture.detectChanges();
         component.ngOnDestroy();
 
-        expect(courseService.findAllForDashboard).toHaveBeenCalled();
+        expect(courseService.findAllForDropdown).toHaveBeenCalled();
         expect(component.dashboardSubscription.closed).toBeTrue();
     });
 });
