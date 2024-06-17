@@ -46,13 +46,20 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 @Component
 public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationEntry {
 
-    private static final int BATCH_SIZE = 100;
+    @Value("${migration.batch-size:100}")
+    private int batchSize;
 
-    private static final int MAX_THREAD_COUNT = 32;
+    @Value("${migration.max-thread-count:32}")
+    private int maxThreadCount;
 
-    private static final int TIMEOUT_IN_HOURS = 48;
+    @Value("${migration.timeout-in-hours:48}")
+    private int timeoutInHours;
 
-    private static final long ESTIMATED_TIME_PER_REPOSITORY = 2; // 2s per repository
+    /**
+     * Value in seconds
+     */
+    @Value("${migration.estimated-time-per-repository:2}")
+    private int estimatedTimePerRepository;
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
@@ -63,7 +70,7 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
     @Value("${migration.local-vcs-repo-path:null}")
     private String localVCBasePath;
 
-    private static final String ERROR_MESSAGE = "Failed to migrate programming exercises within " + TIMEOUT_IN_HOURS + " hours. Aborting migration.";
+    private static final String ERROR_MESSAGE = "Failed to migrate programming exercises within %d hours. Aborting migration.";
 
     private final static Logger log = LoggerFactory.getLogger(MigrationEntryGitLabToLocalVC.class);
 
@@ -124,13 +131,13 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
 
         log.info("Will migrate {} programming exercises and {} student repositories now. This might take a while", programmingExerciseCount, studentCount);
 
-        final long totalFullBatchCount = programmingExerciseCount / BATCH_SIZE;
-        final long threadCount = Math.max(1, Math.min(totalFullBatchCount, MAX_THREAD_COUNT));
+        final long totalFullBatchCount = programmingExerciseCount / batchSize;
+        final long threadCount = Math.max(1, Math.min(totalFullBatchCount, maxThreadCount));
         final long estimatedTimeExercise = getRestDurationInSeconds(0, programmingExerciseCount, 3, threadCount);
         final long estimatedTimeStudents = getRestDurationInSeconds(0, studentCount, 1, threadCount);
 
         final long estimatedTime = (estimatedTimeExercise + estimatedTimeStudents);
-        log.info("Using {} threads for migration, and assuming {}s per repository, the migration should take around {}", threadCount, ESTIMATED_TIME_PER_REPOSITORY,
+        log.info("Using {} threads for migration, and assuming {}s per repository, the migration should take around {}", threadCount, estimatedTimePerRepository,
                 TimeLogUtil.formatDuration(estimatedTime));
 
         // Use fixed thread pool to prevent loading too many exercises into memory at once
@@ -142,8 +149,8 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
         AtomicInteger solutionCounter = new AtomicInteger(0);
         final var totalNumberOfSolutions = solutionProgrammingExerciseParticipationRepository.count();
         log.info("Found {} solution participations to migrate.", totalNumberOfSolutions);
-        for (int currentPageStart = 0; currentPageStart < totalNumberOfSolutions; currentPageStart += BATCH_SIZE) {
-            Pageable pageable = PageRequest.of(currentPageStart / BATCH_SIZE, BATCH_SIZE);
+        for (int currentPageStart = 0; currentPageStart < totalNumberOfSolutions; currentPageStart += batchSize) {
+            Pageable pageable = PageRequest.of(currentPageStart / batchSize, batchSize);
             var solutionParticipationPage = solutionProgrammingExerciseParticipationRepository.findAll(pageable);
             log.info("Will migrate {} solution participations in batch.", solutionParticipationPage.getNumberOfElements());
             executorService.submit(() -> {
@@ -160,8 +167,8 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
         AtomicInteger templateCounter = new AtomicInteger(0);
         var templateCount = templateProgrammingExerciseParticipationRepository.count();
         log.info("Found {} template participations to migrate", templateCount);
-        for (int currentPageStart = 0; currentPageStart < templateCount; currentPageStart += BATCH_SIZE) {
-            Pageable pageable = PageRequest.of(currentPageStart / BATCH_SIZE, BATCH_SIZE);
+        for (int currentPageStart = 0; currentPageStart < templateCount; currentPageStart += batchSize) {
+            Pageable pageable = PageRequest.of(currentPageStart / batchSize, batchSize);
             var templateParticipationPage = templateProgrammingExerciseParticipationRepository.findAll(pageable);
             log.info("Will migrate {} template programming exercises in batch.", templateParticipationPage.getNumberOfElements());
             executorService.submit(() -> {
@@ -177,8 +184,8 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
          */
         AtomicInteger studentCounter = new AtomicInteger(0);
         log.info("Found {} student programming exercise participations with build plans to migrate.", studentCount);
-        for (int currentPageStart = 0; currentPageStart < studentCount; currentPageStart += BATCH_SIZE) {
-            Pageable pageable = PageRequest.of(currentPageStart / BATCH_SIZE, BATCH_SIZE);
+        for (int currentPageStart = 0; currentPageStart < studentCount; currentPageStart += batchSize) {
+            Pageable pageable = PageRequest.of(currentPageStart / batchSize, batchSize);
             Page<ProgrammingExerciseStudentParticipation> studentParticipationPage = programmingExerciseStudentParticipationRepository.findAllWithRepositoryUri(pageable);
             log.info("Will migrate {} student programming exercise participations in batch.", studentParticipationPage.getNumberOfElements());
             executorService.submit(() -> {
@@ -190,7 +197,7 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
 
         log.info("Submitted all student participations to thread pool for migration.");
 
-        shutdown(executorService, TIMEOUT_IN_HOURS, ERROR_MESSAGE);
+        shutdown(executorService, timeoutInHours, ERROR_MESSAGE.formatted(timeoutInHours));
         log.info("Finished migrating programming exercises and student participations");
         evaluateErrorList(programmingExerciseRepository);
     }
@@ -204,7 +211,7 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
 
     private long getRestDurationInSeconds(final long done, final long total, final long reposPerEntry, final long threads) {
         final long stillTodo = total - done;
-        final long timePerEntry = ESTIMATED_TIME_PER_REPOSITORY * reposPerEntry;
+        final long timePerEntry = estimatedTimePerRepository * reposPerEntry;
         return (stillTodo * timePerEntry) / threads;
     }
 
