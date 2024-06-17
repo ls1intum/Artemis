@@ -46,28 +46,28 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 @Component
 public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationEntry {
 
-    @Value("${migration.batch-size:100}")
+    @Value("${migration.scaling.batch-size:100}")
     private int batchSize;
 
-    @Value("${migration.max-thread-count:32}")
+    @Value("${migration.scaling.max-thread-count:32}")
     private int maxThreadCount;
 
-    @Value("${migration.timeout-in-hours:48}")
+    @Value("${migration.scaling.timeout-in-hours:48}")
     private int timeoutInHours;
 
     /**
      * Value in seconds
      */
-    @Value("${migration.estimated-time-per-repository:2}")
+    @Value("${migration.scaling.estimated-time-per-repository:2}")
     private int estimatedTimePerRepository;
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
-    @Value("${migration.base-url:http://0.0.0.0}")
+    @Value("${migration.local-vc.base-url:http://0.0.0.0}")
     private URL localVCBaseUrl;
 
-    @Value("${migration.local-vcs-repo-path:null}")
+    @Value("${migration.local-vc.repo-path:null}")
     private String localVCBasePath;
 
     private static final String ERROR_MESSAGE = "Failed to migrate programming exercises within %d hours. Aborting migration.";
