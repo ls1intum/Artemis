@@ -45,7 +45,7 @@ export class MonacoTestCaseAction extends MonacoEditorInsertAction {
                     return {
                         suggestions: this.possibleValues.map((value) => ({
                             label: value.value,
-                            kind: monaco.languages.CompletionItemKind.Text,
+                            kind: monaco.languages.CompletionItemKind.Constant,
                             insertText: value.value,
                             range,
                             detail: 'Test',
