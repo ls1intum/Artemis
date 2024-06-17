@@ -515,10 +515,9 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     Set<Exam> findActiveExams(@Param("courseIds") Set<Long> courseIds, @Param("userId") long userId, @Param("visible") ZonedDateTime visible, @Param("end") ZonedDateTime end);
 
     @Query("""
-            SELECT COUNT(e) > 0
+            SELECT e.testExam
             FROM Exam e
             WHERE e.id = :examId
-                AND e.testExam
             """)
     boolean isTestExam(@Param("examId") long examId);
 }
