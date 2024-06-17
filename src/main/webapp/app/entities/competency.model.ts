@@ -70,7 +70,7 @@ export class CompetencyJol {
         const competencyProgress = progress?.progress ?? 0;
 
         // Precondition: Student has at least some progress on the competency
-        if (competencyProgress > 0) {
+        if (competencyProgress === undefined || competencyProgress === 0) {
             return false;
         }
 
