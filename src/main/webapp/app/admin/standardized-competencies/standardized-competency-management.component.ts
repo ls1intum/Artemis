@@ -21,6 +21,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { StandardizedCompetencyFilterPageComponent } from 'app/shared/standardized-competencies/standardized-competency-filter-page.component';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { StandardizedCompetencyService } from 'app/shared/standardized-competencies/standardized-competency.service';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-standardized-competency-management',
@@ -54,6 +55,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
     protected readonly getIcon = getIcon;
+    readonly documentationType: DocumentationType = 'StandardizedCompetencies';
 
     constructor(
         private adminStandardizedCompetencyService: AdminStandardizedCompetencyService,

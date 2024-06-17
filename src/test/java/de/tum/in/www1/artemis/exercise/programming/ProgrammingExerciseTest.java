@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.exercise.programming;
 
+import static de.tum.in.www1.artemis.util.RequestUtilService.deleteProgrammingExerciseParamsFalse;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -287,7 +288,7 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationJenkinsGitlabTest
         Exercise programmingExercise = course.getExercises().stream().findFirst().orElseThrow();
         Channel exerciseChannel = exerciseUtilService.addChannelToExercise(programmingExercise);
 
-        request.delete("/api/programming-exercises/" + programmingExercise.getId(), HttpStatus.OK);
+        request.delete("/api/programming-exercises/" + programmingExercise.getId(), HttpStatus.OK, deleteProgrammingExerciseParamsFalse());
 
         Optional<Channel> exerciseChannelAfterDelete = channelRepository.findById(exerciseChannel.getId());
         assertThat(exerciseChannelAfterDelete).isEmpty();
