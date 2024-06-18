@@ -49,6 +49,9 @@ class TestResultXmlParser {
 
     private static void processTestSuite(TestSuite testSuite, List<BuildResult.LocalCITestJobDTO> failedTests, List<BuildResult.LocalCITestJobDTO> successfulTests) {
         for (TestCase testCase : testSuite.testCases()) {
+            if (testCase.isSkipped()) {
+                continue;
+            }
             Failure failure = testCase.extractFailure();
             if (failure != null) {
                 failedTests.add(new BuildResult.LocalCITestJobDTO(testCase.name(), List.of(failure.extractMessage())));
@@ -73,11 +76,20 @@ class TestResultXmlParser {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     record TestCase(@JacksonXmlProperty(isAttribute = true, localName = "name") String name, @JacksonXmlProperty(localName = "failure") Failure failure,
-            @JacksonXmlProperty(localName = "error") Failure error) {
+            @JacksonXmlProperty(localName = "error") Failure error, @JacksonXmlProperty(localName = "skipped") Skip skipped) {
+
+        private boolean isSkipped() {
+            return skipped != null;
+        }
 
         private Failure extractFailure() {
             return failure != null ? failure : error;
         }
+    }
+
+    // Intentionally empty record to represent the skipped tag (<skipped/>)
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record Skip() {
     }
 
     // Due to issues with Jackson this currently cannot be a record.

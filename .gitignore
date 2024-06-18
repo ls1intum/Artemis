@@ -226,3 +226,4 @@ data-exports/
 # Supporting scripts config
 ##############################
 /supporting_scripts/**/*.ini
+/supporting_scripts/analysis-of-endpoint-connections/build/**/*
