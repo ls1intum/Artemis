@@ -22,4 +22,8 @@ export class CommitsInfoGroupComponent {
     protected toggleExpand() {
         this.isExpanded = !this.isExpanded;
     }
+
+    public getIsExpanded(): boolean {
+        return this.isExpanded;
+    }
 }

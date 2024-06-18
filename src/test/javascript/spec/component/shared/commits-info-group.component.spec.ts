@@ -39,7 +39,7 @@ describe('CommitsInfoGroupComponent', () => {
         component.previousSubmissionHash = '123';
         component.exerciseProjectKey = 'exerciseProjectKey';
         component.isRepositoryView = false;
-        component.user = { name: 'testUser', email: 'test@example.com' };
+        component.user = { name: 'testUser', email: 'test@example.com', internal: true, guidedTourSettings: [] };
         component.groupCount = 1;
         component.groupIndex = 0;
         component.pushNumber = 0;
@@ -59,16 +59,16 @@ describe('CommitsInfoGroupComponent', () => {
         const compiled = fixture.nativeElement;
         let expandButton = compiled.querySelector('button');
 
-        expect(component.isExpanded).toBeFalse();
+        expect(component.getIsExpanded()).toBeFalse();
 
         expandButton.click();
         fixture.detectChanges();
-        expect(component.isExpanded).toBeTrue();
+        expect(component.getIsExpanded()).toBeTrue();
 
         expandButton = compiled.querySelector('button');
 
         expandButton.click();
         fixture.detectChanges();
-        expect(component.isExpanded).toBeFalse();
+        expect(component.getIsExpanded()).toBeFalse();
     });
 });
