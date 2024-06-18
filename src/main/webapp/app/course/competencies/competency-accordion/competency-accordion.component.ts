@@ -40,10 +40,11 @@ export class CompetencyAccordionComponent implements OnChanges {
     promptForRating = false;
 
     protected readonly faList = faList;
-    protected readonly faFilePdf = faFile;
-    protected readonly faPdf = faFilePdf;
+    protected readonly faFile = faFile;
+    protected readonly faFilePdf = faFilePdf;
     protected readonly lectureUnitIcons = lectureUnitIcons;
     protected readonly lectureUnitTooltips = lectureUnitTooltips;
+    protected readonly LectureUnitType = LectureUnitType;
     protected readonly getIcon = getIcon;
     protected readonly getProgress = getProgress;
     protected readonly getConfidence = getConfidence;
@@ -201,7 +202,4 @@ export class CompetencyAccordionComponent implements OnChanges {
         event.stopPropagation();
         this.router.navigate(['/courses', this.course!.id, 'competencies', this.competency.id]);
     }
-
-    protected readonly LectureUnitType = LectureUnitType;
-    protected readonly faFile = faFile;
 }
