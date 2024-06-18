@@ -26,11 +26,9 @@ import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 import de.tum.in.www1.artemis.domain.enumeration.CompetencyProgressConfidenceReason;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
-import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.participation.Participant;
-import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.repository.CompetencyProgressRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
@@ -185,7 +183,7 @@ public class CompetencyProgressService {
 
         var studentProgress = competencyProgress.orElse(new CompetencyProgress());
 
-        calculateProgress(lectureUnits, exerciseInfos, numberOfCompletedLectureUnits, user, studentProgress);
+        calculateProgress(lectureUnits, exerciseInfos, numberOfCompletedLectureUnits, studentProgress);
         calculateConfidence(exerciseInfos, studentProgress);
 
         studentProgress.setCompetency(competency);
@@ -214,10 +212,9 @@ public class CompetencyProgressService {
      * @param lectureUnits                  The lecture units linked to the competency
      * @param exerciseInfos                 The information about the exercises linked to the competency
      * @param numberOfCompletedLectureUnits The number of lecture units completed by the user
-     * @param user                          The user for which the progress should be calculated
      * @param competencyProgress            The progress entity to update
      */
-    private void calculateProgress(Set<LectureUnit> lectureUnits, Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos, int numberOfCompletedLectureUnits, User user,
+    private void calculateProgress(Set<LectureUnit> lectureUnits, Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos, int numberOfCompletedLectureUnits,
             CompetencyProgress competencyProgress) {
         double numberOfLearningObjects = lectureUnits.size() + exerciseInfos.size();
         if (numberOfLearningObjects == 0) {
@@ -225,9 +222,8 @@ public class CompetencyProgressService {
             competencyProgress.setProgress(100.0);
         }
 
-        double achievedPoints = exerciseInfos.stream().map(CompetencyExerciseMasteryCalculationDTO::participantScore)
-                .mapToDouble(score -> score != null && score.getLastPoints() != null ? score.getLastPoints() : 0).sum();
-        double maxPoints = exerciseInfos.stream().mapToDouble(exerciseInfo -> exerciseInfo.exercise().getMaxPoints()).sum();
+        double achievedPoints = exerciseInfos.stream().mapToDouble(info -> info.lastPoints() != null ? info.lastPoints() : 0).sum();
+        double maxPoints = exerciseInfos.stream().mapToDouble(CompetencyExerciseMasteryCalculationDTO::maxPoints).sum();
         double exerciseProgress = maxPoints > 0 ? achievedPoints / maxPoints * 100 : 0;
 
         double lectureProgress = 100.0 * numberOfCompletedLectureUnits / lectureUnits.size();
@@ -245,9 +241,8 @@ public class CompetencyProgressService {
      * @param competencyProgress The progress entity to update
      */
     private void calculateConfidence(Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos, CompetencyProgress competencyProgress) {
-        Set<CompetencyExerciseMasteryCalculationDTO> participantScoreInfos = exerciseInfos.stream().filter(info -> info.participantScore() != null
-                && info.participantScore().getLastScore() != null && info.participantScore().getLastPoints() != null && info.participantScore().getLastModifiedDate() != null)
-                .collect(Collectors.toSet());
+        Set<CompetencyExerciseMasteryCalculationDTO> participantScoreInfos = exerciseInfos.stream()
+                .filter(info -> info.lastScore() != null && info.lastPoints() != null && info.lastModifiedDate() != null).collect(Collectors.toSet());
 
         double recencyConfidenceHeuristic = calculateRecencyConfidenceHeuristic(participantScoreInfos);
         double difficultyConfidenceHeuristic = calculateDifficultyConfidenceHeuristic(participantScoreInfos, exerciseInfos);
@@ -271,16 +266,15 @@ public class CompetencyProgressService {
             return 0;
         }
 
-        Instant earliestScoreDate = participantScores.stream().map(info -> info.participantScore().getLastModifiedDate()).min(Instant::compareTo).get();
-        Instant latestScoreDate = participantScores.stream().map(info -> info.participantScore().getLastModifiedDate()).max(Instant::compareTo).get();
+        Instant earliestScoreDate = participantScores.stream().map(CompetencyExerciseMasteryCalculationDTO::lastModifiedDate).min(Instant::compareTo).get();
+        Instant latestScoreDate = participantScores.stream().map(CompetencyExerciseMasteryCalculationDTO::lastModifiedDate).max(Instant::compareTo).get();
 
         double doubleWeightedScoreSum = participantScores.stream()
-                .mapToDouble(info -> info.participantScore().getLastScore() * toRelativeTime(earliestScoreDate, latestScoreDate, info.participantScore().getLastModifiedDate()))
-                .sum();
-        double weightSum = participantScores.stream().mapToDouble(info -> toRelativeTime(earliestScoreDate, latestScoreDate, info.participantScore().getLastModifiedDate())).sum();
+                .mapToDouble(info -> info.lastScore() * toRelativeTime(earliestScoreDate, latestScoreDate, info.lastModifiedDate())).sum();
+        double weightSum = participantScores.stream().mapToDouble(info -> toRelativeTime(earliestScoreDate, latestScoreDate, info.lastModifiedDate())).sum();
         double weightedAverageScore = doubleWeightedScoreSum / weightSum;
 
-        double averageScore = participantScores.stream().mapToDouble(info -> info.participantScore().getLastScore()).average().orElse(0.0);
+        double averageScore = participantScores.stream().mapToDouble(CompetencyExerciseMasteryCalculationDTO::lastScore).average().orElse(0.0);
 
         double recencyConfidence = weightedAverageScore - averageScore;
 
@@ -302,8 +296,8 @@ public class CompetencyProgressService {
             return 0;
         }
 
-        double achievedPoints = participantScores.stream().map(CompetencyExerciseMasteryCalculationDTO::participantScore).mapToDouble(ParticipantScore::getLastPoints).sum();
-        double pointsInCompetency = exerciseInfos.stream().mapToDouble(exerciseInfo -> exerciseInfo.exercise().getMaxPoints()).sum();
+        double achievedPoints = participantScores.stream().mapToDouble(CompetencyExerciseMasteryCalculationDTO::lastPoints).sum();
+        double pointsInCompetency = exerciseInfos.stream().mapToDouble(CompetencyExerciseMasteryCalculationDTO::maxPoints).sum();
 
         if (achievedPoints == 0 || pointsInCompetency == 0) {
             return 0;
@@ -331,10 +325,10 @@ public class CompetencyProgressService {
     private double calculateDifficultyConfidenceHeuristicForDifficulty(@NotNull Set<CompetencyExerciseMasteryCalculationDTO> participantScores,
             @NotNull Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos, double achievedPoints, double pointsInCompetency, DifficultyLevel difficultyLevel) {
 
-        double achievedPointsInDifficulty = participantScores.stream().filter(exerciseInfo -> exerciseInfo.exercise().getDifficulty() == difficultyLevel)
-                .mapToDouble(exerciseInfo -> exerciseInfo.participantScore().getLastPoints()).sum();
-        double pointsInCompetencyInDifficulty = exerciseInfos.stream().filter(exerciseInfo -> exerciseInfo.exercise().getDifficulty() == difficultyLevel)
-                .mapToDouble(exerciseInfo -> exerciseInfo.exercise().getMaxPoints()).sum();
+        double achievedPointsInDifficulty = participantScores.stream().filter(info -> info.difficulty() == difficultyLevel)
+                .mapToDouble(CompetencyExerciseMasteryCalculationDTO::lastPoints).sum();
+        double pointsInCompetencyInDifficulty = exerciseInfos.stream().filter(info -> info.difficulty() == difficultyLevel)
+                .mapToDouble(CompetencyExerciseMasteryCalculationDTO::maxPoints).sum();
 
         double proportionOfAchievedPointsInDifficulty = achievedPointsInDifficulty / achievedPoints;
         double proportionOfPointsInCompetencyInDifficulty = pointsInCompetencyInDifficulty / pointsInCompetency;
@@ -351,14 +345,14 @@ public class CompetencyProgressService {
      */
     private double calculateQuickSolveConfidenceHeuristic(@NotNull Set<CompetencyExerciseMasteryCalculationDTO> participantScores) {
         Set<CompetencyExerciseMasteryCalculationDTO> programmingParticipationScores = participantScores.stream()
-                .filter(info -> info.exercise().getExerciseType() == ExerciseType.PROGRAMMING).collect(Collectors.toSet());
+                .filter(CompetencyExerciseMasteryCalculationDTO::isProgrammingExercise).collect(Collectors.toSet());
 
         if (programmingParticipationScores.isEmpty()) {
             return 0;
         }
 
         double numberOfQuicklySolvedProgrammingExercises = programmingParticipationScores.stream()
-                .filter(info -> info.participantScore().getLastScore() >= MIN_SCORE_GREEN && info.submissionCount() <= 3).count();
+                .filter(info -> info.lastScore() >= MIN_SCORE_GREEN && info.submissionCount() <= 3).count();
 
         double quickSolveConfidence = numberOfQuicklySolvedProgrammingExercises / programmingParticipationScores.size();
 

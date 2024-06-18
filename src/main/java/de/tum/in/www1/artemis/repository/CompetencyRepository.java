@@ -63,9 +63,12 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long>, J
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.CompetencyExerciseMasteryCalculationDTO(
-                ex,
-                sS,
-                tS,
+                ex.maxPoints,
+                ex.difficulty,
+                CASE WHEN TYPE(ex) = ProgrammingExercise THEN TRUE ELSE FALSE END,
+                COALESCE(sS.lastScore, tS.lastScore),
+                COALESCE(sS.lastPoints, tS.lastPoints),
+                COALESCE(sS.lastModifiedDate, tS.lastModifiedDate),
                 COUNT(s)
             )
             FROM Competency c
@@ -76,7 +79,7 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long>, J
                 LEFT JOIN TeamScore tS ON tS.exercise = ex
             WHERE c.id = :competencyId
                 AND ex IS NOT NULL
-            GROUP BY ex, sS, tS
+            GROUP BY ex.maxPoints, ex.difficulty, TYPE(ex), sS.lastScore, tS.lastScore, sS.lastPoints, tS.lastPoints, sS.lastModifiedDate, tS.lastModifiedDate
             """)
     Set<CompetencyExerciseMasteryCalculationDTO> findAllExerciseInfoByCompetencyId(@Param("competencyId") long competencyId);
 
