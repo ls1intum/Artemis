@@ -5,7 +5,7 @@ import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NgModel } from '@angular/forms';
 import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { BehaviorSubject, Subject, of } from 'rxjs';
+import { BehaviorSubject, Subject, firstValueFrom, of } from 'rxjs';
 import * as ace from 'brace';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -367,7 +367,7 @@ describe('CodeEditorContainerIntegration', () => {
         containerFixture.detectChanges();
         container.aceEditor?.onFileTextChanged(newFileContent);
         containerFixture.detectChanges();
-        await containerFixture.whenStable();
+        await firstValueFrom(container.onFileChanged);
 
         expect(getFileStub).toHaveBeenCalledOnce();
         expect(getFileStub).toHaveBeenCalledWith(selectedFile);
