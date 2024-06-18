@@ -65,13 +65,13 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
 
     private ProgrammingExercise programmingExercise;
 
-    LocalRepository templateRepository;
+    private LocalRepository templateRepository;
 
-    LocalRepository solutionRepository;
+    private LocalRepository solutionRepository;
 
-    LocalRepository testsRepository;
+    private LocalRepository testsRepository;
 
-    LocalRepository assignmentRepository;
+    private LocalRepository assignmentRepository;
 
     @Value("${artemis.user-management.internal-admin.username}")
     private String localVCUsername;
