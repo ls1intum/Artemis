@@ -226,6 +226,7 @@ You can set up the Hazelcast Management Center by following these steps:
 - Access the Hazelcast Management Center at ``http://localhost:8099``
 - You can use Dev Mode for quick setup and testing.
 - Click on "Add" and the Cluster Name ``dev`` and the address of the Hazelcast members.
- - If you are running Artemis on a docker container, use the address of the container with port 5701. Note that the port might be different. The port should be either 5701 or 13781 depending on your setup.
- - If you are running Artemis on your local machine, use ``host.docker.internal`` with port 5701. Note that the port might be different. The port should be either 5701 or 13781 depending on your setup.
+
+    - If you are running Artemis on a docker container, use the address of the container with port 5701. Note that the port might be different. The port should be either 5701 or 13781 depending on your setup.
+    - If you are running Artemis on your local machine, use ``host.docker.internal`` with port 5701. Note that the port might be different. The port should be either 5701 or 13781 depending on your setup.
 - Click on "Save" and you should see the cluster in the list. Click on the cluster to see the details.
