@@ -16,7 +16,7 @@
             },
             "exerciseLateness": {
                 "title": "Exercise Lateness",
-                "info": "This shows how much time you used to complete and submit each exercise as a percentage of the total time allowed. Compare your submission times with the average to see if you're earlier or later than most students.",
+                "info": "This shows how much time you used to complete and submit each exercise as a percentage of the total time available. Compare your submission times with the average to see if you're earlier or later than most students.",
                 "noData": "You have not submitted any exercises in this course yet.",
                 "yourLatenessLabel": "Your lateness",
                 "averageLatenessLabel": "Average lateness",
