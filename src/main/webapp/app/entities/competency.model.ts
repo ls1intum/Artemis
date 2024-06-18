@@ -138,8 +138,6 @@ export class CompetencyRelation implements BaseEntity {
     public tailCompetency?: Competency;
     public headCompetency?: Competency;
     public type?: CompetencyRelationType;
-
-    constructor() {}
 }
 
 export class CompetencyRelationDTO implements BaseEntity {
@@ -147,8 +145,6 @@ export class CompetencyRelationDTO implements BaseEntity {
     tailCompetencyId?: number;
     headCompetencyId?: number;
     relationType?: CompetencyRelationType;
-
-    constructor() {}
 }
 
 /**
