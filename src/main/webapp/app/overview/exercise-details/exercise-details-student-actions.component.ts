@@ -113,9 +113,9 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         }
 
         if (this.gradedParticipation) {
-            this.beforeDueDate = this.beforeDueDate || !hasExerciseDueDatePassed(this.exercise, this.gradedParticipation);
+            this.beforeDueDate = !this.exercise.dueDate || !hasExerciseDueDatePassed(this.exercise, this.gradedParticipation);
         } else if (this.practiceParticipation) {
-            this.beforeDueDate = this.beforeDueDate || !hasExerciseDueDatePassed(this.exercise, this.practiceParticipation);
+            this.beforeDueDate = !this.exercise.dueDate || !hasExerciseDueDatePassed(this.exercise, this.practiceParticipation);
         } else {
             this.beforeDueDate = !this.exercise.dueDate;
         }
