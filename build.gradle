@@ -32,7 +32,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "7.2.1"
+version = "7.2.2"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -498,7 +498,7 @@ ext["junit-jupiter.version"] = junit_version
 
 dependencyManagement {
     imports {
-        mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:16.1.0"
+        mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:16.2.0"
     }
 }
 
