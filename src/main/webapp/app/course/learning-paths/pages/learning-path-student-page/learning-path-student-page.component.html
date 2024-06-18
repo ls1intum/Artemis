@@ -17,14 +17,15 @@
     } @else {
         <div class="row align-items-center justify-content-center h-100">
             <div class="learning-path-generation-container">
-                <h3 class="mb-3">Welcome to learning paths</h3>
-                <div>
-                    Welcome to your Learning Path! This feature lets you learn at your own pace with a personalized journey tailored to your performance. It adapts dynamically,
-                    ensuring you always have the most relevant content and challenges. Start now and experience a customized path to success!
-                </div>
-                <button (click)="generateLearningPath(this.courseId())" type="button" class="mt-4 btn btn-primary" id="generate-learning-path-button">
-                    Generate learning path
-                </button>
+                <h3 class="mb-3" jhiTranslate="artemisApp.learningPath.generation.title"></h3>
+                <div jhiTranslate="artemisApp.learningPath.generation.description"></div>
+                <button
+                    (click)="generateLearningPath(this.courseId())"
+                    type="button"
+                    class="mt-4 btn btn-primary"
+                    id="generate-learning-path-button"
+                    jhiTranslate="artemisApp.learningPath.generation.generateButton"
+                ></button>
             </div>
         </div>
     }

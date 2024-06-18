@@ -12,13 +12,22 @@ import { LearningPathExerciseComponent } from 'app/course/learning-paths/compone
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 import { LearningPathNavigationService } from 'app/course/learning-paths/services/learning-path-navigation.service';
 import { EntityNotFoundError } from 'app/course/learning-paths/exceptions/entity-not-found.error';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @Component({
     selector: 'jhi-learning-path-student-page',
     templateUrl: './learning-path-student-page.component.html',
     styleUrl: './learning-path-student-page.component.scss',
     standalone: true,
-    imports: [CommonModule, RouterModule, LearningPathStudentNavComponent, CourseExerciseDetailsModule, LearningPathLectureUnitComponent, LearningPathExerciseComponent],
+    imports: [
+        CommonModule,
+        RouterModule,
+        LearningPathStudentNavComponent,
+        CourseExerciseDetailsModule,
+        LearningPathLectureUnitComponent,
+        LearningPathExerciseComponent,
+        ArtemisSharedModule,
+    ],
 })
 export class LearningPathStudentPageComponent implements OnInit {
     protected readonly LearningObjectType = LearningObjectType;
