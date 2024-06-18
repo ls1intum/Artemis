@@ -81,6 +81,7 @@ describe('CommitsInfoComponent', () => {
     afterEach(() => {
         jest.restoreAllMocks();
     });
+
     it('should call participation service to retrieve commits onInit if no commits are passed as input, group commits by push, and sort the grouped commits descending by timestamp', () => {
         component.participationId = 1;
         component.ngOnInit();

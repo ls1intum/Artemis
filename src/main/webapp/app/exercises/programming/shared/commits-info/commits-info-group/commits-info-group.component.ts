@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import type { CommitInfo, ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import type { CommitInfo } from 'app/entities/programming-submission.model';
 import type { User } from 'app/core/user/user.model';
 
 @Component({
@@ -10,16 +10,14 @@ export class CommitsInfoGroupComponent {
     @Input() commits: CommitInfo[];
     @Input() currentSubmissionHash?: string;
     @Input() previousSubmissionHash?: string;
-    @Input() submissions?: ProgrammingSubmission[];
     @Input() exerciseProjectKey?: string;
     @Input() isRepositoryView = false;
     @Input() user?: User;
     @Input() groupIndex: number;
     @Input() groupCount: number;
-    @Input() groupedCommits: { key: string; commits: CommitInfo[]; date: string }[] = [];
     @Input() pushNumber: number;
 
-    protected isExpanded: boolean;
+    protected isExpanded: boolean = false;
 
     protected toggleExpand() {
         this.isExpanded = !this.isExpanded;
