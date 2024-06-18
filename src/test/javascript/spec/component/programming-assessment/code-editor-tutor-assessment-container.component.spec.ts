@@ -263,6 +263,59 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         result.hasComplaint = true;
     });
 
+    it('should highlight lines that were changed', async () => {
+        // Stub
+        const getFilesWithContentStub = jest.spyOn(repositoryFileService, 'getFilesWithContent');
+        getFilesWithContentStub.mockReturnValue(of(templateFileSessionReturn));
+        // Stub for ace editor
+        const getFileStub = jest.spyOn(repositoryFileService, 'getFile');
+        const fileSubject = new BehaviorSubject({ fileContent: 'new file text' });
+        getFileStub.mockReturnValue(fileSubject);
+
+        // Data for file browser
+        const treeItems = [
+            new TreeviewItem({
+                internalDisabled: false,
+                internalChecked: false,
+                internalCollapsed: false,
+                text: 'folder/file1',
+                value: 'file1',
+            } as any),
+        ];
+
+        const repositoryFiles = {
+            folder: FileType.FOLDER,
+            'folder/file1': FileType.FILE,
+        };
+
+        // Initialize component and children
+        fixture.detectChanges();
+        // wait until data is loaded from CodeEditorTutorAssessmentContainer
+        await firstValueFrom(comp.onFeedbackLoaded);
+        fixture.detectChanges();
+
+        // Setup tree for file browser
+        const codeEditorFileBrowserComp = fixture.debugElement.query(By.directive(CodeEditorFileBrowserComponent)).componentInstance;
+        codeEditorFileBrowserComp.filesTreeViewItem = treeItems;
+        codeEditorFileBrowserComp.repositoryFiles = repositoryFiles;
+        codeEditorFileBrowserComp.selectedFile = 'folder/file1';
+        fixture.detectChanges();
+        codeEditorFileBrowserComp.isLoadingFiles = false;
+        fixture.detectChanges();
+        const browserComponent = fixture.debugElement.query(By.directive(CodeEditorFileBrowserComponent)).componentInstance;
+        expect(browserComponent).toBeDefined();
+        expect(browserComponent.filesTreeViewItem).toHaveLength(1);
+
+        const codeEditorMonacoComp: CodeEditorMonacoComponent = fixture.debugElement.query(By.directive(CodeEditorMonacoComponent)).componentInstance;
+        codeEditorMonacoComp.isLoading = false;
+        const highlightedLines: MonacoEditorLineHighlight[] = await firstValueFrom(codeEditorMonacoComp.onHighlightLines);
+        expect(highlightedLines).toHaveLength(1);
+
+        getFilesWithContentStub.mockRestore();
+        getFileStub.mockRestore();
+        fixture.destroy();
+    });
+
     it('should use jhi-assessment-layout', () => {
         const assessmentLayout = fixture.debugElement.query(By.directive(AssessmentLayoutComponent));
         expect(assessmentLayout).toBeDefined();
@@ -591,59 +644,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).toHaveBeenCalledOnce();
         expect(comp.submission).toBeUndefined();
-    });
-
-    it('should highlight lines that were changed', async () => {
-        // Stub
-        const getFilesWithContentStub = jest.spyOn(repositoryFileService, 'getFilesWithContent');
-        getFilesWithContentStub.mockReturnValue(of(templateFileSessionReturn));
-        // Stub for ace editor
-        const getFileStub = jest.spyOn(repositoryFileService, 'getFile');
-        const fileSubject = new BehaviorSubject({ fileContent: 'new file text' });
-        getFileStub.mockReturnValue(fileSubject);
-
-        // Data for file browser
-        const treeItems = [
-            new TreeviewItem({
-                internalDisabled: false,
-                internalChecked: false,
-                internalCollapsed: false,
-                text: 'folder/file1',
-                value: 'file1',
-            } as any),
-        ];
-
-        const repositoryFiles = {
-            folder: FileType.FOLDER,
-            'folder/file1': FileType.FILE,
-        };
-
-        // Initialize component and children
-        fixture.detectChanges();
-        // wait until data is loaded from CodeEditorTutorAssessmentContainer
-        await firstValueFrom(comp.onFeedbackLoaded);
-        fixture.detectChanges();
-
-        // Setup tree for file browser
-        const codeEditorFileBrowserComp = fixture.debugElement.query(By.directive(CodeEditorFileBrowserComponent)).componentInstance;
-        codeEditorFileBrowserComp.filesTreeViewItem = treeItems;
-        codeEditorFileBrowserComp.repositoryFiles = repositoryFiles;
-        codeEditorFileBrowserComp.selectedFile = 'folder/file1';
-        fixture.detectChanges();
-        codeEditorFileBrowserComp.isLoadingFiles = false;
-        fixture.detectChanges();
-        const browserComponent = fixture.debugElement.query(By.directive(CodeEditorFileBrowserComponent)).componentInstance;
-        expect(browserComponent).toBeDefined();
-        expect(browserComponent.filesTreeViewItem).toHaveLength(1);
-
-        const codeEditorMonacoComp: CodeEditorMonacoComponent = fixture.debugElement.query(By.directive(CodeEditorMonacoComponent)).componentInstance;
-        codeEditorMonacoComp.isLoading = false;
-        const highlightedLines: MonacoEditorLineHighlight[] = await firstValueFrom(codeEditorMonacoComp.onHighlightLines);
-        expect(highlightedLines).toHaveLength(1);
-
-        getFilesWithContentStub.mockRestore();
-        getFileStub.mockRestore();
-        fixture.destroy();
     });
 
     it.each([undefined, 'genericErrorKey', 'complaintLock'])(
