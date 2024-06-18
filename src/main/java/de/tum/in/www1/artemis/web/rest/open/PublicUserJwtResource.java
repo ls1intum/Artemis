@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest.open;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 import jakarta.servlet.ServletException;
@@ -60,7 +61,7 @@ public class PublicUserJwtResource {
     }
 
     /**
-     * Authorizes a User
+     * Authorizes a User and sets the token in cookie
      *
      * @param loginVM   user credentials View Mode
      * @param userAgent User Agent
@@ -69,21 +70,9 @@ public class PublicUserJwtResource {
      */
     @PostMapping("authenticate")
     @EnforceNothing
-    public ResponseEntity<Void> authorize(@Valid @RequestBody LoginVM loginVM, @RequestHeader("User-Agent") String userAgent, HttpServletResponse response) {
-
-        var username = loginVM.getUsername();
-        var password = loginVM.getPassword();
-        SecurityUtils.checkUsernameAndPasswordValidity(username, password);
-
-        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
-
+    public ResponseEntity<Void> authorizeToCookie(@Valid @RequestBody LoginVM loginVM, @RequestHeader("User-Agent") String userAgent, HttpServletResponse response) {
         try {
-            authenticationToken.setDetails(Pair.of("userAgent", userAgent));
-            Authentication authentication = authenticationManager.authenticate(authenticationToken);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-            boolean rememberMe = loginVM.isRememberMe() != null && loginVM.isRememberMe();
-
-            ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe);
+            var responseCookie = authorize(loginVM, userAgent);
             response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
 
             return ResponseEntity.ok().build();
@@ -92,6 +81,55 @@ public class PublicUserJwtResource {
             log.warn("Wrong credentials during login for user {}", loginVM.getUsername());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+    }
+
+    private ResponseCookie authorize(LoginVM loginVM, String userAgent) throws BadCredentialsException {
+        var username = loginVM.getUsername();
+        var password = loginVM.getPassword();
+        SecurityUtils.checkUsernameAndPasswordValidity(username, password);
+
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
+
+        authenticationToken.setDetails(Pair.of("userAgent", userAgent));
+        Authentication authentication = authenticationManager.authenticate(authenticationToken);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        boolean rememberMe = loginVM.isRememberMe() != null && loginVM.isRememberMe();
+
+        ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe);
+        return responseCookie;
+    }
+
+    /**
+     * Authorizes a User and returns the token in body
+     *
+     * @param loginVM   user credentials View Mode
+     * @param userAgent User Agent
+     * @param response  HTTP response
+     * @return the ResponseEntity with status 200 (ok), 401 (unauthorized) or 403 (Captcha required)
+     */
+    @PostMapping("authenticate/token")
+    @EnforceNothing
+    public ResponseEntity<String> authorizeToBody(@Valid @RequestBody LoginVM loginVM, @RequestHeader("User-Agent") String userAgent, HttpServletResponse response) {
+        try {
+            var responseCookie = authorize(loginVM, userAgent);
+            return ResponseEntity.ok(responseCookie.getValue());
+        }
+        catch (BadCredentialsException ex) {
+            log.warn("Wrong credentials during login for user {}", loginVM.getUsername());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+    }
+
+    @PostMapping("re-key")
+    @EnforceNothing
+    public ResponseEntity<String> reKey(HttpServletRequest request, HttpServletResponse response) {
+        var cookies = request.getCookies();
+        var JWTToken = Arrays.stream(cookies).filter(c -> c.getName().equals("jwt")).findAny().orElseThrow();
+
+        return ResponseEntity.badRequest().body("NOT IMPLEMENTED");
+        // UsernamePasswordAuthenticationToken authenticationToken = new JwtAuthenticationToken();
+
+        // return ResponseEntity.ok(JWTToken.getValue());
     }
 
     /**
