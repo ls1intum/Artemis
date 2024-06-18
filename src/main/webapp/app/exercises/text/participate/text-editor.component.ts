@@ -181,7 +181,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             this.textExercise.dueDate && this.participation.initializationDate && dayjs(this.participation.initializationDate).isAfter(this.textExercise.dueDate);
         const isAlwaysActive = !this.result && (!this.textExercise.dueDate || isInitializationAfterDueDate);
 
-        this.isAllowedToSubmitAfterDueDate = !!isInitializationAfterDueDate;
+        this.isAllowedToSubmitAfterDueDate = !!isInitializationAfterDueDate && hasExerciseDueDatePassed(this.textExercise, this.participation);
         this.isAlwaysActive = !!isAlwaysActive;
     }
 
@@ -192,10 +192,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         const isActive =
             !this.examMode &&
             !this.result &&
-            (this.isAlwaysActive ||
-                (this.textExercise &&
-                    this.textExercise.dueDate &&
-                    (!hasExerciseDueDatePassed(this.textExercise, this.participation) || dayjs().isBefore(this.participation?.individualDueDate))));
+            (this.isAlwaysActive || (this.textExercise && this.textExercise.dueDate && !hasExerciseDueDatePassed(this.textExercise, this.participation)));
         return !!isActive;
     }
 
