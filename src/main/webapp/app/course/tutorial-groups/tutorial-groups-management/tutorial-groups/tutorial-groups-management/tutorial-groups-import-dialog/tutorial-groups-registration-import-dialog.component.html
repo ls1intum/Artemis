@@ -11,6 +11,7 @@
             <p jhiTranslate="artemisApp.tutorialGroupImportDialog.explanations.description"></p>
             <p jhiTranslate="artemisApp.tutorialGroupImportDialog.explanations.requirements"></p>
             <p jhiTranslate="artemisApp.tutorialGroupImportDialog.supportedHeaderNames.label"></p>
+            <p jhiTranslate="artemisApp.tutorialGroupImportDialog.supportedHeaderNames.format"></p>
             <ul>
                 <li jhiTranslate="artemisApp.tutorialGroupImportDialog.supportedHeaderNames.alwaysRequired"></li>
                 <ul>
@@ -39,7 +40,12 @@
                 <label class="font-weight-bold">
                     <span jhiTranslate="artemisApp.tutorialGroupImportDialog.table.example1"></span>
                 </label>
-                <button type="button" class="btn btn-outline-secondary ms-2" (click)="generateCSV(1)" jhiTranslate="artemisApp.tutorialGroupImportDialog.table.template"></button>
+                <button
+                    type="button"
+                    class="btn btn-outline-secondary ms-2"
+                    (click)="generateCSV(CsvExample.Example1)"
+                    jhiTranslate="artemisApp.tutorialGroupImportDialog.table.template"
+                ></button>
             </div>
             <table class="table table-striped table-bordered table-sm mt-2">
                 <thead>
@@ -62,7 +68,12 @@
                 <label class="font-weight-bold">
                     <span jhiTranslate="artemisApp.tutorialGroupImportDialog.table.example2"></span>
                 </label>
-                <button type="button" class="btn btn-outline-secondary ms-2" (click)="generateCSV(2)" jhiTranslate="artemisApp.tutorialGroupImportDialog.table.template"></button>
+                <button
+                    type="button"
+                    class="btn btn-outline-secondary ms-2"
+                    (click)="generateCSV(CsvExample.Example2)"
+                    jhiTranslate="artemisApp.tutorialGroupImportDialog.table.template"
+                ></button>
             </div>
             <table class="table table-striped table-bordered table-sm mt-2">
                 <thead>
@@ -100,7 +111,12 @@
                 <label class="font-weight-bold">
                     <span jhiTranslate="artemisApp.tutorialGroupImportDialog.table.example3"></span>
                 </label>
-                <button type="button" class="btn btn-outline-secondary ms-2" (click)="generateCSV(3)" jhiTranslate="artemisApp.tutorialGroupImportDialog.table.template"></button>
+                <button
+                    type="button"
+                    class="btn btn-outline-secondary ms-2"
+                    (click)="generateCSV(CsvExample.Example3)"
+                    jhiTranslate="artemisApp.tutorialGroupImportDialog.table.template"
+                ></button>
             </div>
             <table class="table table-striped table-bordered table-sm mt-2">
                 <thead>
@@ -138,7 +154,12 @@
                 <label class="font-weight-bold">
                     <span jhiTranslate="artemisApp.tutorialGroupImportDialog.table.example4"></span>
                 </label>
-                <button type="button" class="btn btn-outline-secondary ms-2" (click)="generateCSV(4)" jhiTranslate="artemisApp.tutorialGroupImportDialog.table.template"></button>
+                <button
+                    type="button"
+                    class="btn btn-outline-secondary ms-2"
+                    (click)="generateCSV(CsvExample.Example4)"
+                    jhiTranslate="artemisApp.tutorialGroupImportDialog.table.template"
+                ></button>
             </div>
             <div class="table-wrapper-scroll-y scrollbar">
                 <table class="table table-striped table-bordered table-sm table-responsive mt-2">

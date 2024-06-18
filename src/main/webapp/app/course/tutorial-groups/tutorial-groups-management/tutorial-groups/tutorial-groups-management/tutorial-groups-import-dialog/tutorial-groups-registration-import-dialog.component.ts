@@ -13,6 +13,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { titleRegex } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
 import { takeUntil } from 'rxjs/operators';
+import { CsvDownloadService } from 'app/shared/util/CsvDownloadService';
 
 /**
  * Each row is a object with the structure
@@ -56,6 +57,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
     importedRegistrations: TutorialGroupRegistrationImportDTO[] = [];
 
     isCSVParsing = false;
+    protected readonly CsvExample = CsvExample;
     validationErrors: string[] = [];
     isImporting = false;
     isImportDone = false;
@@ -96,6 +98,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
         private activeModal: NgbActiveModal,
         private alertService: AlertService,
         private tutorialGroupService: TutorialGroupsService,
+        private csvDownloadService: CsvDownloadService,
     ) {}
 
     ngOnDestroy(): void {
@@ -211,8 +214,8 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
             return [];
         }
         // get the used headers from the first csv row object returned by the parser
-        let parsedHeaders = Object.keys(csvRows[0] || []);
-        parsedHeaders = parsedHeaders.map(this.removeSpacesFromHeaderName);
+        let parsedHeaders = Object.keys(csvRows.first() || []);
+        parsedHeaders = parsedHeaders.map(this.removeWhitespacesAndUnderscoresFromHeaderName);
 
         // we find out which of the possible values is used in the csv file for the respective properties
         const usedTitleHeader = parsedHeaders.find((value) => POSSIBLE_TUTORIAL_GROUP_TITLE_HEADERS.includes(value)) || '';
@@ -244,7 +247,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
                     lastName: csvRow[usedLastNameHeader]?.trim() || '',
                 } as StudentDTO;
                 registration.campus = csvRow[usedCampusHeader]?.trim() || '';
-                registration.capacity = csvRow[usedCapacityHeader] ? parseInt(csvRow[usedCapacityHeader], 10) : undefined;
+                registration.capacity = csvRow[usedCapacityHeader] ? Number(csvRow[usedCapacityHeader]) : undefined;
                 registration.language = csvRow[usedLanguageHeader]?.trim() || '';
                 registration.additionalInformation = csvRow[usedAdditionalInfoHeader]?.trim() || '';
                 registration.isOnline = csvRow[usedIsOnlineHeader]?.trim().toLowerCase() || '';
@@ -262,8 +265,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
         }
     }
 
-    // Function to remove all spaces in header names
-    removeSpacesFromHeaderName(header: string) {
+    removeWhitespacesAndUnderscoresFromHeaderName(header: string) {
         return header.trim().toLowerCase().replace(/_/g, '-').replace(/\s+/g, '');
     }
 
@@ -280,31 +282,25 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
         });
     }
 
-    generateCSV(example: number) {
+    generateCSV(example: CsvExample) {
         let csvContent: string;
         switch (example) {
-            case 1:
+            case CsvExample.Example1:
                 csvContent = 'data:text/csv;charset=utf-8,Title\n';
                 break;
-            case 2:
+            case CsvExample.Example2:
                 csvContent = 'data:text/csv;charset=utf-8,Title,Matriculation Number,First Name,Last Name\n';
                 break;
-            case 3:
+            case CsvExample.Example3:
                 csvContent = 'data:text/csv;charset=utf-8,Title,Login,First Name,Last Name\n';
                 break;
-            case 4:
+            case CsvExample.Example4:
                 csvContent = 'data:text/csv;charset=utf-8,Title,Registration Number,First Name,Last Name,Campus,Language,Additional Information,Capacity,Is Online\n';
                 break;
             default:
                 csvContent = '';
         }
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement('a');
-        link.setAttribute('href', encodedUri);
-        link.setAttribute('download', `example${example}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        this.csvDownloadService.downloadCSV(csvContent, `example${example}.csv`);
     }
 
     /**
@@ -478,6 +474,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
     async parseCSVFile(csvFile: File): Promise<ParseResult<unknown>> {
         return new Promise((resolve, reject) => {
             parse(csvFile, {
+                delimiter: ',',
                 header: true,
                 transformHeader: (header: string) => cleanString(header),
                 skipEmptyLines: true,
@@ -507,4 +504,11 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
                 this.registrationsDisplayedInTable = this.notImportedRegistrations;
         }
     }
+}
+
+enum CsvExample {
+    Example1 = 1,
+    Example2 = 2,
+    Example3 = 3,
+    Example4 = 5,
 }

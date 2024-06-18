@@ -435,8 +435,8 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         const headerWithUnderscores = 'Header_Name';
         const headerWithMixed = ' Header_Name With  Spaces ';
 
-        expect(component.removeSpacesFromHeaderName(headerWithSpaces)).toBe('headername');
-        expect(component.removeSpacesFromHeaderName(headerWithUnderscores)).toBe('header-name');
-        expect(component.removeSpacesFromHeaderName(headerWithMixed)).toBe('header-namewithspaces');
+        expect(component.removeWhitespacesAndUnderscoresFromHeaderName(headerWithSpaces)).toBe('headername');
+        expect(component.removeWhitespacesAndUnderscoresFromHeaderName(headerWithUnderscores)).toBe('header-name');
+        expect(component.removeWhitespacesAndUnderscoresFromHeaderName(headerWithMixed)).toBe('header-namewithspaces');
     });
 });

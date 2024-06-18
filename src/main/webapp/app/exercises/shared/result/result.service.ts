@@ -26,6 +26,7 @@ import {
     isAIResultAndTimedOut,
     isStudentParticipation,
 } from 'app/exercises/shared/result/result.utils';
+import { CsvDownloadService } from 'app/shared/util/CsvDownloadService';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
@@ -56,6 +57,7 @@ export class ResultService implements IResultService {
     constructor(
         private http: HttpClient,
         private translateService: TranslateService,
+        private csvDownloadService: CsvDownloadService,
     ) {}
 
     find(resultId: number): Observable<EntityResponseType> {
@@ -300,13 +302,8 @@ export class ResultService implements IResultService {
      * Utility function used to trigger the download of a CSV file
      */
     public triggerDownloadCSV(rows: string[], csvFileName: string) {
-        const csvContent = rows.join('\n');
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement('a');
-        link.setAttribute('href', encodedUri);
-        link.setAttribute('download', `${csvFileName}`);
-        document.body.appendChild(link); // Required for FF
-        link.click();
+        const csvContent = 'data:text/csv;charset=utf-8,' + rows.join('\n');
+        this.csvDownloadService.downloadCSV(csvContent, csvFileName);
     }
 
     public static evaluateBadge(participation: Participation, result: Result): Badge {
