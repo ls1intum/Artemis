@@ -17,6 +17,17 @@ services:
         extends:
             file: ./artemis-prod-mysql.yml
             service: nginx
+    keycloak:
+      image: quay.io/keycloak/keycloak:25.0
+      container_name: keycloak
+      environment:
+        - KEYCLOAK_ADMIN
+        - KEYCLOAK_ADMIN_PASSWORD
+      entrypoint: /opt/keycloak/bin/kc.sh start-dev
+      ports:
+        - "8081:8080"
+      volumes:
+        - ./auth/realm-export.json:/opt/keycloak/data/import/realm-export.json
 
 networks:
     artemis:

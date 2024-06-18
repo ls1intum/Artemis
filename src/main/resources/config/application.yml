@@ -149,6 +149,20 @@ spring:
         jpa:
             repositories:
                 bootstrap-mode: deferred
+    security:
+      oauth2:
+        resourceserver:
+          jwt:
+            issuer-uri: http://localhost:8081/realms/master
+        client:
+          provider:
+            oidc:
+              issuer-uri: http://localhost:8081/realms/master
+          registration:
+            oidc:
+              client-id: artemis
+              authorization-grant-type: authorization_code
+              scope: openid
     jpa:
         open-in-view: false
         show-sql: false
@@ -295,6 +309,9 @@ jhipster:
         hazelcast: # Hazelcast distributed cache
             time-to-live-seconds: 3600
             backup-count: 1
+    security:
+      oauth2:
+        audience: http://localhost:8081/api/v2/
 
 # Eureka configuration
 eureka:
