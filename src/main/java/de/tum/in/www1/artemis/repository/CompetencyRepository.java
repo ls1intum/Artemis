@@ -61,6 +61,13 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long>, J
             """)
     Optional<Competency> findByIdWithLectureUnitsAndCompletions(@Param("competencyId") long competencyId);
 
+    /**
+     * Fetches all information related to the calculation of the mastery for exercises in a competency.
+     * The complex grouping by is necessary for postgres
+     *
+     * @param competencyId the id of the competency for which to fetch the exercise information
+     * @return the exercise information for the calculation of the mastery in the competency
+     */
     @Query("""
             SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.CompetencyExerciseMasteryCalculationDTO(
                 ex.maxPoints,

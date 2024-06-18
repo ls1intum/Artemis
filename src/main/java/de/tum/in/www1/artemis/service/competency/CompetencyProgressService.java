@@ -428,6 +428,10 @@ public class CompetencyProgressService {
     public static boolean canBeMasteredWithoutExercises(@NotNull Competency competency) {
         double numberOfLectureUnits = competency.getLectureUnits().size();
         double numberOfLearningObjects = numberOfLectureUnits + competency.getExercises().size();
+        if (numberOfLearningObjects == 0) {
+            return true;
+        }
+
         double achievableProgressScore = numberOfLectureUnits / numberOfLearningObjects * 100;
         // Without exercises, the confidence score is 1 and the mastery is equal to the progress
         return achievableProgressScore >= competency.getMasteryThreshold();
