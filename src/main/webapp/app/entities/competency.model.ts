@@ -189,15 +189,27 @@ export function getIcon(competencyTaxonomy?: CompetencyTaxonomy): IconProp {
     return icons[competencyTaxonomy] as IconProp;
 }
 
+/**
+ * The progress depends on the amount of completed lecture units and the achieved scores in the exercises.
+ * @param competencyProgress The progress in the competency
+ */
 export function getProgress(competencyProgress: CompetencyProgress | undefined): number {
     return Math.round(competencyProgress?.progress ?? 0);
 }
 
+/**
+ * The confidence is a factor for the progress, normally near 1. It depends on different heuristics and determines if the mastery is lower/higher than the progress.
+ * @param competencyProgress The progress in the competency
+ */
 export function getConfidence(competencyProgress: CompetencyProgress | undefined): number {
     return competencyProgress?.confidence ?? 1;
 }
 
+/**
+ * The mastery is the final value that is shown to the user. It is the product of the progress and the confidence.
+ * @param competencyProgress The progress in the competency
+ */
 export function getMastery(competencyProgress: CompetencyProgress | undefined): number {
     // clamp the value between 0 and 100
-    return Math.min(100, Math.max(0, getProgress(competencyProgress) * getConfidence(competencyProgress)));
+    return Math.min(100, Math.max(0, Math.round(getProgress(competencyProgress) * getConfidence(competencyProgress))));
 }

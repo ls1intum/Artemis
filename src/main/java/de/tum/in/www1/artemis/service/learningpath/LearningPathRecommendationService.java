@@ -529,7 +529,7 @@ public class LearningPathRecommendationService {
      * @return the predicted number of exercise points required to master the given competency
      */
     private double calculateNumberOfExercisePointsRequiredToMaster(LearningPath learningPath, Competency competency, double weightedConfidence) {
-        // we assume that the student may perform slightly worse that previously and dampen the confidence for the prediction process
+        // we assume that the student may perform slightly worse than previously and dampen the confidence for the prediction process
         weightedConfidence *= 0.9;
         double currentPoints = participantScoreService.getStudentAndTeamParticipationPointsAsDoubleStream(learningPath.getUser(), competency.getExercises()).sum();
         double maxPoints = competency.getExercises().stream().mapToDouble(Exercise::getMaxPoints).sum();
