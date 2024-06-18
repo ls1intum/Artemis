@@ -14,21 +14,22 @@
                 <span class="sr-only">Loading...</span>
             </div>
         </div>
-    } @else {
-        @for (learningObject of learningObjects(); track learningObject; let i = $index) {
-            <div
-                (click)="selectLearningObject(learningObject)"
-                class="row px-3 py-3 m-0"
-                [ngClass]="{ 'bg-light': isEqualToCurrentLearningObject(learningObject.id, learningObject.type), clickable: isLearningObjectSelectable(learningObject) }"
-            >
-                <span class="col-md-auto p-0" [ngClass]="{ 'text-secondary': !isLearningObjectSelectable(learningObject) }">{{ learningObject.name }}</span>
-                @if (learningObject.completed) {
-                    <fa-icon [icon]="faCheckCircle" class="col-md-auto text-success" />
-                }
-            </div>
-            @if (!$last) {
-                <hr class="m-0" />
+    } @else if (competencies()) {
+        <div ngbAccordion class="nav-overview-competencies accordion-flush">
+            @for (competency of competencies(); track competency.id) {
+                <div ngbAccordionItem (shown)="loadLearningObjectsOfCompetencyId(competency.id)">
+                    <h2 ngbAccordionHeader>
+                        <button ngbAccordionButton class="px-3">{{ competency.title }}</button>
+                    </h2>
+                    <div ngbAccordionCollapse>
+                        <div ngbAccordionBody class="p-0">
+                            <ng-template>
+                                <jhi-learning-path-nav-overview-item [learningPathId]="learningPathId()" [competencyId]="competency.id" />
+                            </ng-template>
+                        </div>
+                    </div>
+                </div>
             }
-        }
+        </div>
     }
 </div>

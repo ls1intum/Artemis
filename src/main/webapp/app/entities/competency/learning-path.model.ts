@@ -26,6 +26,12 @@ export enum LearningObjectType {
     EXERCISE = 'EXERCISE',
 }
 
+export interface LearningPathCompetencyDTO {
+    id: number;
+    title: string;
+    masteryProgress: number;
+}
+
 export interface LearningPathNavigationObjectDTO {
     id: number;
     completed: boolean;

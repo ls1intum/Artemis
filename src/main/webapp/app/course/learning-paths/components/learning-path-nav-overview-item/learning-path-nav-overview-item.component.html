@@ -1,0 +1,22 @@
+<div>
+    @if (learningObjects()) {
+        @for (learningObject of learningObjects(); track learningObject; let i = $index) {
+            <div
+                (click)="selectLearningObject(learningObject)"
+                class="row px-3 py-2 m-0"
+                [ngClass]="{ 'bg-light': isEqualToCurrentLearningObject(learningObject.id, learningObject.type), clickable: isLearningObjectSelectable(learningObject) }"
+            >
+                <span class="col-md-auto p-0" [ngClass]="{ 'text-secondary': !isLearningObjectSelectable(learningObject) }">{{ learningObject.name }}</span>
+                @if (learningObject.completed) {
+                    <fa-icon [icon]="faCheckCircle" class="col-md-auto text-success" />
+                }
+            </div>
+        }
+    } @else {
+        <div class="row justify-content-center m-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+        </div>
+    }
+</div>

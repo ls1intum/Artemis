@@ -1,20 +1,21 @@
-import { Component, InputSignal, OnInit, computed, inject, input, output, signal } from '@angular/core';
+import { Component, InputSignal, OnInit, inject, input, output, signal, viewChildren } from '@angular/core';
 import { NgbAccordionModule, NgbDropdownModule, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { IconDefinition, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/core/util/alert.service';
-import { LearningObjectType, LearningPathNavigationObjectDTO, LearningPathNavigationOverviewDTO } from 'app/entities/competency/learning-path.model';
+import { LearningPathCompetencyDTO } from 'app/entities/competency/learning-path.model';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { LearningPathNavigationService } from 'app/course/learning-paths/services/learning-path-navigation.service';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 import { CompetencyGraphModalComponent } from 'app/course/learning-paths/components/competency-graph-modal/competency-graph-modal.component';
+import { LearningPathNavOverviewItemComponent } from 'app/course/learning-paths/components/learning-path-nav-overview-item/learning-path-nav-overview-item.component';
 
 @Component({
     selector: 'jhi-learning-path-student-nav-overview',
     standalone: true,
-    imports: [FontAwesomeModule, CommonModule, NgbDropdownModule, NgbAccordionModule, ArtemisSharedModule],
+    imports: [FontAwesomeModule, CommonModule, NgbDropdownModule, NgbAccordionModule, ArtemisSharedModule, LearningPathNavOverviewItemComponent],
     templateUrl: './learning-path-student-nav-overview.component.html',
+    styleUrl: './learning-path-student-nav-overview.component.scss',
 })
 export class LearningPathStudentNavOverviewComponent implements OnInit {
     protected readonly faCheckCircle: IconDefinition = faCheckCircle;
@@ -22,45 +23,40 @@ export class LearningPathStudentNavOverviewComponent implements OnInit {
     private readonly alertService: AlertService = inject(AlertService);
     private readonly modalService: NgbModal = inject(NgbModal);
     private readonly learningPathApiService: LearningPathApiService = inject(LearningPathApiService);
-    private readonly learningPathNavigationService = inject(LearningPathNavigationService);
 
     readonly learningPathId: InputSignal<number> = input.required();
 
     readonly onLearningObjectSelected = output<void>();
     readonly isLoading = signal(false);
-    private readonly navigationOverview = signal<LearningPathNavigationOverviewDTO | undefined>(undefined);
-    readonly learningObjects = computed(() => this.navigationOverview()?.learningObjects ?? []);
-    readonly currentLearningObject = this.learningPathNavigationService.currentLearningObject;
+    readonly competencies = signal<LearningPathCompetencyDTO[] | undefined>(undefined);
+
+    private readonly competencyDropdowns = viewChildren(LearningPathNavOverviewItemComponent);
 
     ngOnInit(): void {
-        this.loadNavigationOverview(this.learningPathId());
+        this.loadCompetencies(this.learningPathId());
     }
 
-    private async loadNavigationOverview(learningPathId: number): Promise<void> {
-        this.isLoading.set(true);
+    private async loadCompetencies(learningPathId: number): Promise<void> {
+        if (this.competencies()) {
+            return;
+        }
         try {
-            const navigationOverview = await this.learningPathApiService.getLearningPathNavigationOverview(learningPathId);
-            this.navigationOverview.set(navigationOverview);
+            this.isLoading.set(true);
+            const competencies = await this.learningPathApiService.getLearningPathCompetencies(learningPathId);
+            this.competencies.set(competencies);
         } catch (error) {
             this.alertService.error(error);
-        }
-        this.isLoading.set(false);
-    }
-
-    selectLearningObject(learningObject: LearningPathNavigationObjectDTO): void {
-        if (this.isLearningObjectSelectable(learningObject)) {
-            this.learningPathNavigationService.loadRelativeLearningPathNavigation(this.learningPathId(), learningObject);
-            this.onLearningObjectSelected.emit();
+        } finally {
+            this.isLoading.set(false);
         }
     }
 
-    isEqualToCurrentLearningObject(id: number, type: LearningObjectType): boolean {
-        return this.currentLearningObject()?.id === id && this.currentLearningObject()?.type === type;
-    }
-
-    isLearningObjectSelectable(learningObject: LearningPathNavigationObjectDTO): boolean {
-        const indexOfLearningObject = this.learningObjects().indexOf(learningObject);
-        return indexOfLearningObject > 0 ? this.learningObjects()[indexOfLearningObject - 1].completed : true;
+    loadLearningObjectsOfCompetencyId(competencyId: number): void {
+        this.competencyDropdowns().forEach((dropdown) => {
+            if (dropdown.competencyId() === competencyId) {
+                dropdown.loadLearningObjects();
+            }
+        });
     }
 
     openCompetencyGraph() {
