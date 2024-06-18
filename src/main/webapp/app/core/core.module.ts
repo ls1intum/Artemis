@@ -21,8 +21,6 @@ import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { TraceService } from '@sentry/angular-ivy';
 import { Router } from '@angular/router';
 
-// provideNgxWebstorage(withNgxWebstorageConfig({ prefix: 'jhi', separator: '-' }), withLocalStorage(), withSessionStorage());
-
 @NgModule({
     imports: [
         TranslateModule.forRoot({
