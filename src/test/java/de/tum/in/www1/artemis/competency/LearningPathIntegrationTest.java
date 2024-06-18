@@ -751,7 +751,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(result).containsExactlyElementsOf(Arrays.stream(competencies).map(CompetencyNameDTO::of).toList());
     }
 
-    // TODO: Fix once #8791 is merged
+    // TODO: Fix once #8791 is merged and merge conflicts are resolved
     @Test
     @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
     void testGetLearningObjectsForCompetency() throws Exception {
