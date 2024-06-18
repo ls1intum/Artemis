@@ -104,8 +104,8 @@ public interface CompetencyProgressRepository extends JpaRepository<CompetencyPr
                 LEFT JOIN Competency priorC ON priorC = cr.headCompetency
                 LEFT JOIN FETCH CompetencyProgress cp ON cp.competency = priorC
             WHERE cr.type <> de.tum.in.www1.artemis.domain.competency.RelationType.MATCHES
-                AND cp.user = :userId
-                AND c = :competencyId
+                AND cp.user = :user
+                AND c = :competency
             """)
     Set<CompetencyProgress> findAllPriorByCompetencyId(@Param("competency") Competency competency, @Param("user") User userId);
 }

@@ -341,7 +341,8 @@ public class LearningPathResource {
     @EnforceAtLeastStudent
     public ResponseEntity<List<CompetencyNameDTO>> getCompetencyOrderForLearningPath(@PathVariable long learningPathId) {
         log.debug("REST request to get competency order for learning path: {}", learningPathId);
-        final var learningPath = learningPathRepository.findWithEagerCourseAndCompetenciesByIdElseThrow(learningPathId);
+        final var learningPath = learningPathService.findWithCompetenciesAndLearningObjectsAndCompletedUsersById(learningPathId);
+        ;
         final var user = userRepository.getUserWithGroupsAndAuthorities();
 
         checkLearningPathAccessElseThrow(learningPath.getCourse(), learningPath, user);
