@@ -7,7 +7,7 @@
             },
             "exercisePerformance": {
                 "title": "Übungsleistungen",
-                "info": "Dies zeigt, wie gut du in jeder Aufgabe im Vergleich zu den maximal möglichen Punkten abgeschnitten hast. Du kannst auch das Durchschnittsergebnis aller Studierenden sehen, um deine Leistung mit deinen Kommilitoninnen und Kommilitonen zu vergleichen.",
+                "info": "Dies zeigt, wie gut du in jeder Aufgabe im Vergleich zu den maximal möglichen Punkten abgeschnitten hast. Du kannst auch das Durchschnittsergebnis aller Studierenden sehen, um deine Leistung mit anderen Studierenden zu vergleichen.",
                 "noData": "Es sind noch keine Ergebnisse für dich in diesem Kurs verfügbar.",
                 "yourScoreLabel": "Dein Ergebnis",
                 "averageScoreLabel": "Durchschnittsergebnis",
