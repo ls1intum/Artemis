@@ -25,29 +25,8 @@ export class CourseMessagesPage {
     /**
      * Navigates to the channel overview section.
      */
-    async browseChannelsButton(channelGroup: string) {
-        await this.page.locator(`#plusButton-${channelGroup}`).click();
-    }
-
-    /**
-     * Navigates to the exercise channel overview section.
-     */
-    async browseExerciseChannelsButton() {
-        await this.page.locator('#plusButton-exerciseChannels').click();
-    }
-
-    /**
-     * Navigates to the lecture channel overview section.
-     */
-    async browseLectureChannelsButton() {
-        await this.page.locator('#plusButton-lectureChannels').click();
-    }
-
-    /**
-     * Navigates to the exam channel overview section.
-     */
-    async browseExamChannelsButton() {
-        await this.page.locator('#plusButton-examChannels').click();
+    browseChannelsButton(channelGroup: string) {
+        return this.page.locator(`#plusButton-${channelGroup}`);
     }
 
     /**
@@ -394,8 +373,8 @@ export class CourseMessagesPage {
         }
     }
 
-    async toggleSidebarAccordion(sidebarTitle: string) {
-        await this.page.locator(`#test-accordion-item-header-${sidebarTitle}`).click();
+    toggleSidebarAccordion(sidebarTitle: string) {
+        return this.page.locator(`#test-accordion-item-header-${sidebarTitle}`);
     }
 
     /**
