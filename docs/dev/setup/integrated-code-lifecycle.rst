@@ -222,11 +222,12 @@ Hazelcast Management Center
 
 We use `Hazelcast <https://docs.hazelcast.com/hazelcast/latest/>`_ as a distributed cache in Artemis. `Hazelcast Management Center <https://hazelcast.com/products/management-center/>`_ is a web application that allows you to monitor and manage your Hazelcast cluster.
 You can set up the Hazelcast Management Center by following these steps:
-- Run ``docker compose -f docker/hazelcast-management-center.yml up``
-- Access the Hazelcast Management Center at ``http://localhost:8099``
-- You can use Dev Mode for quick setup and testing.
-- Click on "Add" and the Cluster Name ``dev`` and the address of the Hazelcast members.
 
-    - If you are running Artemis on a docker container, use the address of the container with port 5701. Note that the port might be different. The port should be either 5701 or 13781 depending on your setup.
-    - If you are running Artemis on your local machine, use ``host.docker.internal`` with port 5701. Note that the port might be different. The port should be either 5701 or 13781 depending on your setup.
-- Click on "Save" and you should see the cluster in the list. Click on the cluster to see the details.
+* Run ``docker compose -f docker/hazelcast-management-center.yml up``
+* Access the Hazelcast Management Center at ``http://localhost:8099``
+* You can use Dev Mode for quick setup and testing.
+* Click on "Add" and the Cluster Name ``dev`` and the address of the Hazelcast members.
+
+    * If you are running Artemis on a docker container, use the address of the container with port 5701. Note that the port might be different. The port should be either 5701 or 13781 depending on your setup.
+    * If you are running Artemis on your local machine, use ``host.docker.internal`` with port 5701. Note that the port might be different. The port should be either 5701 or 13781 depending on your setup.
+* Click on "Save" and you should see the cluster in the list. Click on the cluster to see the details.
