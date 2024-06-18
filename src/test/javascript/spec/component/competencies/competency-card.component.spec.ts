@@ -55,7 +55,7 @@ describe('CompetencyCardComponent', () => {
         competencyCardComponentFixture.detectChanges();
 
         expect(competencyCardComponent.progress).toBe(45);
-        expect(competencyCardComponent.mastery).toBe(45 * 1.1);
+        expect(competencyCardComponent.mastery).toBe(Math.round(45 * 1.1));
         expect(competencyCardComponent.isMastered).toBeFalse();
     });
 
