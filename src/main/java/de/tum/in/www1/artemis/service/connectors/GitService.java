@@ -158,6 +158,7 @@ public class GitService extends AbstractGitService {
     }
 
     @PreDestroy
+    @Override
     public void cleanup() {
         super.cleanup();
     }
@@ -1144,6 +1145,7 @@ public class GitService extends AbstractGitService {
      * @param repository Local Repository Object.
      * @throws IOException if the deletion of the repository failed.
      */
+    @Override
     public void deleteLocalRepository(Repository repository) throws IOException {
         cachedRepositories.remove(repository.getLocalPath());
         super.deleteLocalRepository(repository);

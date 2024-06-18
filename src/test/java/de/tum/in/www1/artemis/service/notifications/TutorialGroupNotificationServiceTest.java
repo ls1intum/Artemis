@@ -95,6 +95,7 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationInde
         notificationSettingRepository.deleteAll();
     }
 
+    @Override
     @AfterEach
     protected void resetSpyBeans() {
         super.resetSpyBeans();
