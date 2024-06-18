@@ -142,7 +142,7 @@ public class ConversationMessageResource {
             long answerPosts = posts.stream().mapToLong(post -> post.getAnswers().size()).sum();
             long reactions = posts.stream().mapToLong(post -> post.getReactions().size()).sum();
             long answerReactions = posts.stream().flatMap(post -> post.getAnswers().stream()).mapToLong(answerPost -> answerPost.getReactions().size()).sum();
-            log.info("/courses/{courseId}/messages finished in {} for {} posts with {} answer posts, {} reactions, and {} answer post reactions for user {}",
+            log.debug("/courses/{courseId}/messages finished in {} for {} posts with {} answer posts, {} reactions, and {} answer post reactions for user {}",
                     TimeLogUtil.formatDurationFrom(timeNanoStart), posts.size(), answerPosts, reactions, answerReactions, principal.getName());
         }
     }
