@@ -9,15 +9,15 @@
         <form>
             <p [jhiTranslate]="'artemisApp.tutorialGroupExportDialog.description'"></p>
             <div>
-                <div class="form-check" style="margin-bottom: 1rem">
-                    <input class="form-check-input" type="checkbox" (change)="toggleSelectAll()" [checked]="selectAll" />
+                <div class="form-check mb-3">
+                    <input id="selectAllId" class="form-check-input" type="checkbox" (change)="toggleSelectAll()" [checked]="selectAll" />
                     <label class="form-check-label" [jhiTranslate]="'artemisApp.tutorialGroupExportDialog.selectAll'"></label>
                 </div>
             </div>
             @for (field of availableFields; track field) {
                 <div>
-                    <div class="form-check" style="margin-bottom: 0.5rem">
-                        <input class="form-check-input" type="checkbox" [value]="field.value" [checked]="field.selected" (change)="onFieldSelectionChange(field)" />
+                    <div class="form-check mb-2">
+                        <input id="fieldId" class="form-check-input" type="checkbox" [value]="field.value" [checked]="field.selected" (change)="onFieldSelectionChange(field)" />
                         <label class="form-check-label">{{ field.value }}</label>
                     </div>
                 </div>

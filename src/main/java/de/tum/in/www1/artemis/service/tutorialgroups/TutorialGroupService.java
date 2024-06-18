@@ -801,9 +801,10 @@ public class TutorialGroupService {
      * Converts a numeric representation of a day of the week to its corresponding String name.
      * This method is used primarily for CSV export purposes.
      *
-     * @param dayOfWeek the numeric representation of the day of the week, where Monday = 1 and Sunday = 7.
+     * @param dayOfWeek the numeric representation of the day of the week, where Monday = 1 and Sunday = 7. 8 is a default value which will be applied if a tutorial group schedule
+     *                      is not created yet.
      * @return a String representing the name of the corresponding day of the week.
-     * @throws IllegalArgumentException if the provided dayOfWeek is not within the range 1 to 7.
+     * @throws IllegalArgumentException if the provided dayOfWeek is not within the range 1 to 8.
      */
     public String getDayOfWeekString(int dayOfWeek) {
         if (dayOfWeek < 1 || dayOfWeek > 8) {

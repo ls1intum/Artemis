@@ -7,7 +7,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { Directive, Input } from '@angular/core';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 @Directive({
     selector: '[jhiTranslate]',
@@ -21,6 +21,7 @@ describe('TutorialGroupsExportButtonComponent', () => {
     const exampleCourseId = 1;
 
     let mockTutorialGroupsService: TutorialGroupsService;
+    let mockAlertService: AlertService;
 
     beforeEach(async () => {
         // Create the mock service with the necessary methods
@@ -32,13 +33,17 @@ describe('TutorialGroupsExportButtonComponent', () => {
             exportToJson: jest.fn().mockReturnValue(of(new Blob(['{"key": "value"}'], { type: 'application/json' }))),
         } as any;
 
+        mockAlertService = {
+            error: jest.fn(),
+        } as any;
+
         // Provide the mock service to the testing module
         await TestBed.configureTestingModule({
             declarations: [TutorialGroupsExportButtonComponent, MockComponent(FaIconComponent), MockTranslateDirective],
             providers: [
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: TutorialGroupsService, useValue: mockTutorialGroupsService },
-                { provide: AlertService, useValue: {} },
+                { provide: AlertService, useValue: mockAlertService },
             ],
         }).compileComponents();
 
@@ -109,6 +114,21 @@ describe('TutorialGroupsExportButtonComponent', () => {
         expect(mockTutorialGroupsService.exportTutorialGroupsToCSV).toHaveBeenCalledWith(exampleCourseId, component.selectedFields);
     }));
 
+    it('should handle CSV export error', fakeAsync(() => {
+        jest.spyOn(mockTutorialGroupsService, 'exportTutorialGroupsToCSV').mockReturnValue(throwError(() => new Error('CSV export failed')));
+
+        const modalService = TestBed.inject(NgbModal);
+        const mockModalRef = { close: jest.fn(), dismiss: jest.fn() };
+        jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
+
+        component.exportCSV(mockModalRef as unknown as NgbModalRef);
+
+        tick();
+        expect(mockTutorialGroupsService.exportTutorialGroupsToCSV).toHaveBeenCalledWith(exampleCourseId, component.selectedFields);
+        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.tutorialGroupExportDialog.failedCSV');
+        expect(mockModalRef.dismiss).toHaveBeenCalledWith('error');
+    }));
+
     it('should export JSON successfully', fakeAsync(() => {
         const response = new Blob(['{"key": "value"}'], { type: 'application/json' }).type;
         jest.spyOn(mockTutorialGroupsService, 'exportToJson').mockReturnValue(of(response));
@@ -121,5 +141,20 @@ describe('TutorialGroupsExportButtonComponent', () => {
 
         tick();
         expect(mockTutorialGroupsService.exportToJson).toHaveBeenCalledWith(exampleCourseId, component.selectedFields);
+    }));
+
+    it('should handle JSON export error', fakeAsync(() => {
+        jest.spyOn(mockTutorialGroupsService, 'exportToJson').mockReturnValue(throwError(() => new Error('JSON export failed')));
+
+        const modalService = TestBed.inject(NgbModal);
+        const mockModalRef = { close: jest.fn(), dismiss: jest.fn() };
+        jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
+
+        component.exportJSON(mockModalRef as unknown as NgbModalRef);
+
+        tick();
+        expect(mockTutorialGroupsService.exportToJson).toHaveBeenCalledWith(exampleCourseId, component.selectedFields);
+        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.tutorialGroupExportDialog.failedJSON');
+        expect(mockModalRef.dismiss).toHaveBeenCalledWith('error');
     }));
 });
