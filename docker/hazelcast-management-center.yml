@@ -1,0 +1,22 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# Hazelcast Management Center
+# ----------------------------------------------------------------------------------------------------------------------
+# This setup is for development purposes only and should not be used in production
+# ----------------------------------------------------------------------------------------------------------------------
+
+services:
+  hazelcast-management-center:
+    image: hazelcast/management-center:5.4.1
+    # This is needed to connect to Artemis running on the host machine
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    container_name: artemis-hazelcast-management-center
+    ports:
+      - "8099:8080"
+    networks:
+      - artemis
+
+networks:
+  artemis:
+    driver: "bridge"
+    name: artemis
