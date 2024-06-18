@@ -32,13 +32,17 @@ public class MigrationServiceGitLabJenkinsToLocalVC {
 
     @PostConstruct
     public void execute() {
+        log.info("Migration GitLab-Jenkins to LocalVC-Jenkins starting");
         List<String> activeProfiles = List.of(environment.getActiveProfiles());
         if (!new HashSet<>(activeProfiles).containsAll(List.of("gitlab", "jenkins", "localvc"))) {
             log.error("Migration not possible, because the system does not support GitLab, Jenkins and LocalVC: {}", activeProfiles);
             return;
         }
+        log.info("Migration startes with the Jenkins build plans");
         // TODO Add call to migration entry for Jenkins
+        log.info("Migration follow ups with copy the repositories and adjusting the urls in the database");
         migrationEntryGitLabToLocalVC.execute();
+        log.info("Migration GitLab-Jenkins to LocalVC-Jenkins finished");
     }
 
 }

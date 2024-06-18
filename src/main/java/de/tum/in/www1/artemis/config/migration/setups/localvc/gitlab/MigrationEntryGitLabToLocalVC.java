@@ -107,17 +107,17 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
 
     public void execute() {
         if (localVCBasePath == null) {
-            log.error("Migration will be skipped and marked run because the local VC base path is not configured.");
+            log.error("Migration failed because the local VC base path is not configured.");
             return;
         }
 
         if (localVCBaseUrl == null || localVCBaseUrl.toString().equals("http://0.0.0.0")) {
-            log.error("Migration will be skipped and marked run because the local VC base URL is not configured.");
+            log.error("Migration failed because the local VC base URL is not configured.");
             return;
         }
 
         if (defaultBranch == null) {
-            log.error("Migration will be skipped and marked run because the default branch is not configured.");
+            log.error("Migration failed because the default branch is not configured.");
             return;
         }
 
