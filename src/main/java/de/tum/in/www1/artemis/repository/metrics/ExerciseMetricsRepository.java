@@ -107,6 +107,7 @@ public interface ExerciseMetricsRepository extends JpaRepository<Exercise, Long>
             WHERE e.id IN :exerciseIds
                 AND s.submitted = TRUE
                 AND (p.student.id = :userId OR u.id = :userId)
+                AND p.testRun = FALSE
             GROUP BY e.id
             """)
     Set<ResourceTimestampDTO> findLatestSubmissionDatesForUser(@Param("exerciseIds") Set<Long> exerciseIds, @Param("userId") long userId);
@@ -127,6 +128,7 @@ public interface ExerciseMetricsRepository extends JpaRepository<Exercise, Long>
                 LEFT JOIN p.exercise e
             WHERE e.id IN :exerciseIds
                 AND s.submitted = TRUE
+                AND p.testRun = FALSE
             GROUP BY e.id, p.id
             """)
     Set<ResourceTimestampDTO> findLatestSubmissionDates(@Param("exerciseIds") Set<Long> exerciseIds);
