@@ -138,9 +138,7 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
         else {
             irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages());
         }
-        if (statusUpdate.suggestions() != null) {
-            updateLatestSuggestions(session, statusUpdate.suggestions());
-        }
+        updateLatestSuggestions(session, statusUpdate.suggestions());
     }
 
     /**

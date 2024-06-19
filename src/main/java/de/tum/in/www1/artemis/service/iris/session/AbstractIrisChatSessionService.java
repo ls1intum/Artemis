@@ -24,9 +24,10 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
      * @param latestSuggestions The latest suggestions to set
      */
     protected void updateLatestSuggestions(S session, List<String> latestSuggestions) {
-
+        if (latestSuggestions == null || latestSuggestions.isEmpty()) {
+            return;
+        }
         var suggestions = latestSuggestions.stream().map(s -> s.replace("||", "\\||")).collect(Collectors.joining("||"));
-
         session.setLatestSuggestions(suggestions);
         irisSessionRepository.save(session);
     }

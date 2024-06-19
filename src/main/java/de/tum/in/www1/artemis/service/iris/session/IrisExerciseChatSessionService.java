@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.service.iris.session;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -39,8 +37,6 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 @Service
 @Profile("iris")
 public class IrisExerciseChatSessionService extends AbstractIrisChatSessionService<IrisExerciseChatSession> implements IrisRateLimitedFeatureInterface {
-
-    private static final Logger log = LoggerFactory.getLogger(IrisExerciseChatSessionService.class);
 
     private final IrisMessageService irisMessageService;
 
@@ -177,8 +173,6 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
             irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages());
         }
 
-        if (statusUpdate.suggestions() != null) {
-            updateLatestSuggestions(session, statusUpdate.suggestions());
-        }
+        updateLatestSuggestions(session, statusUpdate.suggestions());
     }
 }
