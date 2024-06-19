@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest.open;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.util.Arrays;
 import java.util.Optional;
 
 import jakarta.servlet.ServletException;
@@ -118,18 +117,6 @@ public class PublicUserJwtResource {
             log.warn("Wrong credentials during login for user {}", loginVM.getUsername());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-    }
-
-    @PostMapping("re-key")
-    @EnforceNothing
-    public ResponseEntity<String> reKey(HttpServletRequest request, HttpServletResponse response) {
-        var cookies = request.getCookies();
-        var JWTToken = Arrays.stream(cookies).filter(c -> c.getName().equals("jwt")).findAny().orElseThrow();
-
-        return ResponseEntity.badRequest().body("NOT IMPLEMENTED");
-        // UsernamePasswordAuthenticationToken authenticationToken = new JwtAuthenticationToken();
-
-        // return ResponseEntity.ok(JWTToken.getValue());
     }
 
     /**

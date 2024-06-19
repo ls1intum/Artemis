@@ -32,25 +32,40 @@ public class JWTFilter extends GenericFilterBean {
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
         HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
         Cookie jwtCookie = WebUtils.getCookie(httpServletRequest, JWT_COOKIE_NAME);
-        if (isJwtCookieValid(this.tokenProvider, jwtCookie)) {
-            Authentication authentication = this.tokenProvider.getAuthentication(jwtCookie.getValue());
+
+        String jwtToken;
+        if (isJwtValid(this.tokenProvider, jwtToken = getJwtFromCookie(jwtCookie))
+                || isJwtValid(this.tokenProvider, jwtToken = getJwtFromBearer(httpServletRequest.getHeader("Authorization")))) {
+            Authentication authentication = this.tokenProvider.getAuthentication(jwtToken);
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
+
         filterChain.doFilter(servletRequest, servletResponse);
     }
 
+    public static String getJwtFromCookie(Cookie jwtCookie) {
+        if (jwtCookie == null) {
+            return null;
+        }
+        return jwtCookie.getValue();
+    }
+
+    private static String getJwtFromBearer(String jwtBearer) {
+        if (!StringUtils.hasText(jwtBearer) || !jwtBearer.startsWith("Bearer ")) {
+            return null;
+        }
+
+        return jwtBearer.split("Bearer ")[1];
+    }
+
     /**
-     * Checks if the cookie containing the jwt is valid
+     * Checks if the jwt token is valid
      *
      * @param tokenProvider the artemis token provider used to generate and validate jwt's
-     * @param jwtCookie     the cookie containing the jwt
+     * @param jwtToken      the jwt token
      * @return true if the jwt is valid, false if missing or invalid
      */
-    public static boolean isJwtCookieValid(TokenProvider tokenProvider, Cookie jwtCookie) {
-        if (jwtCookie == null) {
-            return false;
-        }
-        String jwt = jwtCookie.getValue();
-        return StringUtils.hasText(jwt) && tokenProvider.validateTokenForAuthority(jwt);
+    public static boolean isJwtValid(TokenProvider tokenProvider, String jwtToken) {
+        return StringUtils.hasText(jwtToken) && tokenProvider.validateTokenForAuthority(jwtToken);
     }
 }
