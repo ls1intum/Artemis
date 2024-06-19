@@ -4,13 +4,13 @@
         <button type="button" class="btn-close" (click)="closeModal()"></button>
     </div>
     <div class="modal-body">
-        Categories<br />
+        <span jhiTranslate="artemisApp.exercise.categories"></span>
         <div class="form-group">
-            <label for="exercise-type-filter-selection" class="form-control-label" jhiTranslate="Exercise Type"></label>
+            <label for="exercise-type-filter-selection" class="form-control-label" jhiTranslate="artemisApp.courseStatistics.exerciseType"></label>
             <div id="exercise-type-filter-selection">
                 @for (typeFilter of typeFilters; track typeFilter) {
                     <input type="checkbox" [(ngModel)]="typeFilter.checked" [name]="typeFilter.value" />
-                    <label>{{ typeFilter.name }}</label>
+                    <label>{{ typeFilter.name | artemisTranslate }}</label>
                 }
             </div>
         </div>
@@ -20,11 +20,11 @@
         </div>
 
         <div class="form-group">
-            <label for="difficulty-filter-selection" class="form-control-label" jhiTranslate="Difficulty"></label>
+            <label for="difficulty-filter-selection" class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty"></label>
             <div id="difficulty-filter-selection">
                 @for (difficultyFilter of difficultyFilters; track difficultyFilter) {
                     <input type="checkbox" [(ngModel)]="difficultyFilter.checked" [name]="difficultyFilter.value" />
-                    <label>{{ difficultyFilter.name }}</label>
+                    <label>{{ difficultyFilter.name | artemisTranslate }}</label>
                 }
             </div>
         </div>

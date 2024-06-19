@@ -15,17 +15,17 @@ export type DifficultyFilterOptions = { name: string; value: DifficultyLevel; ch
 
 // TODO allow to filter for no difficulty?
 const DEFAULT_DIFFICULTIES_FILTER: DifficultyFilterOptions = [
-    { name: 'Easy', value: DifficultyLevel.EASY, checked: false },
-    { name: 'Medium', value: DifficultyLevel.MEDIUM, checked: false },
-    { name: 'Hard', value: DifficultyLevel.HARD, checked: false },
+    { name: 'artemisApp.exercise.easy', value: DifficultyLevel.EASY, checked: false },
+    { name: 'artemisApp.exercise.medium', value: DifficultyLevel.MEDIUM, checked: false },
+    { name: 'artemisApp.exercise.hard', value: DifficultyLevel.HARD, checked: false },
 ];
 
 const DEFAULT_EXERCISE_TYPES_FILTER: ExerciseTypeFilterOptions = [
-    { name: 'Programming', value: ExerciseType.PROGRAMMING, checked: false },
-    { name: 'Quiz', value: ExerciseType.QUIZ, checked: false },
-    { name: 'Modeling', value: ExerciseType.MODELING, checked: false },
-    { name: 'Text', value: ExerciseType.TEXT, checked: false },
-    { name: 'File Upload', value: ExerciseType.FILE_UPLOAD, checked: false },
+    { name: 'artemisApp.courseStatistics.programming', value: ExerciseType.PROGRAMMING, checked: false },
+    { name: 'artemisApp.courseStatistics.quiz', value: ExerciseType.QUIZ, checked: false },
+    { name: 'artemisApp.courseStatistics.modeling', value: ExerciseType.MODELING, checked: false },
+    { name: 'artemisApp.courseStatistics.text', value: ExerciseType.TEXT, checked: false },
+    { name: 'artemisApp.courseStatistics.file-upload', value: ExerciseType.FILE_UPLOAD, checked: false },
 ];
 
 @Component({
