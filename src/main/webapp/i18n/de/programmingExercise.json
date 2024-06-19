@@ -370,7 +370,8 @@
                 "successMessageRepo": "Das Repository wurde erfolgreich exportiert. Die generierte zip-Datei wird jetzt heruntergeladen.",
                 "successMessageRepos": "Die Repositories wurden erfolgreich exportiert. Die generierte zip-Datei wird jetzt heruntergeladen.",
                 "successMessageExercise": "Die Programmierübung wurde erfolgreich exportiert. Die generierte zip-Datei wird jetzt heruntergeladen.",
-                "notFoundMessageRepos": "Keine Repositories heruntergeladen für Aufgabe {{exerciseId}}: Es sind noch keine Abgaben der angegebenen Studenten vorhanden."
+                "notFoundMessageRepos": "Keine Repositories heruntergeladen für Aufgabe {{exerciseId}}: Es sind noch keine Abgaben der angegebenen Studenten vorhanden.",
+                "errorMessageRepo": "Das Repository konnte nicht exportiert werden. Die angefragte Datei existiert nicht."
             },
             "resubmitOnFailedSubmission": "Die letzte Abgabe konnte nicht bewertet werden. Klicke den Button, um die Abgabe erneut bewerten zu lassen. Diese Aktion führt einen neuen Build aus, der die Abgabe testet.",
             "resubmit": "Die letzte Abgabe erneut bewerten. Diese Aktion führt einen Build auf dem Repository der Teilnahme aus ohne einen Commit zu machen.",

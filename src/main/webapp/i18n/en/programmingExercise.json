@@ -372,7 +372,8 @@
                 "successMessageRepo": "Export of repo was successful. The exported zip file is currently being downloaded.",
                 "successMessageRepos": "Export of repos was successful. The exported zip file with all repositories is currently being downloaded.",
                 "successMessageExercise": "Export of exercise was successful. The exported zip file with all exercise material is currently being downloaded.",
-                "notFoundMessageRepos": "No repos exported for exercise {{exerciseId}}: There are no submissions from the given students."
+                "notFoundMessageRepos": "No repos exported for exercise {{exerciseId}}: There are no submissions from the given students.",
+                "errorMessageRepo": "Export of repo failed. The requested repository does not exist."
             },
             "resubmitOnFailedSubmission": "An automatic assessment for this participant's last submission could not be generated. Click the button to submit again. This will trigger a new build run that tests the last submission.",
             "resubmit": "Resubmit the last submission. This will execute a build run on the participant's repository without making a commit.",
