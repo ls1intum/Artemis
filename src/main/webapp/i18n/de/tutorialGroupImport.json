@@ -15,7 +15,7 @@
                 "alwaysRequired": "Eins von den folgenden ist als Spaltennamen immer erforderlich um die Übungsgruppe zu identifizieren: ",
                 "requiredIfStudentRegistration": "Eins von den folgenden ist als Spaltennamen erforderlich, wenn Studierende identifiziert und registriert werden sollen: ",
                 "alwaysOptional": "Folgende Spaltennamen sind optional (nur für Anzeigzwecke): ",
-                "tutorialGroupTitle": "gruppe, titel, group, title -> Übungsgruppe",
+                "tutorialGroupTitle": "gruppe, titel, group, title, tutorial group -> Übungsgruppe",
                 "registrationNumber": "registrationnumber, matriculationnumber, matrikelnummer, number -> Matrikelnummer",
                 "login": "login, user, username, benutzer, benutzername -> Anmeldename",
                 "firstName": "firstname, firstnameofstudent, givenname, forename, vorname -> Vorname",

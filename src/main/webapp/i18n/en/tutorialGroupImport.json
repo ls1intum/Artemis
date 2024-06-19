@@ -15,7 +15,7 @@
                 "alwaysRequired": "One of these Header is always required to identify the tutorial group: ",
                 "requiredIfStudentRegistration": "One of these is required as Header if you want to identify and register students:",
                 "alwaysOptional": "Optional Headers (just for display purposes): ",
-                "tutorialGroupTitle": "gruppe, titel, group, title -> Tutorial Group",
+                "tutorialGroupTitle": "gruppe, titel, group, title, tutorial group -> Tutorial Group",
                 "registrationNumber": "registrationnumber, matriculationnumber, matrikelnummer, number -> Matriculation Number",
                 "login": "login, user, username, benutzer, benutzername -> Login",
                 "firstName": "firstname, firstnameofstudent, givenname, forename, vorname -> First Name",
