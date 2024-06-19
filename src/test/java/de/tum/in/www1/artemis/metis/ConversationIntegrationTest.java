@@ -624,7 +624,6 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     private static List<Arguments> courseConfigurationProvider() {
         return List.of(Arguments.of(CourseInformationSharingConfiguration.DISABLED, HttpStatus.FORBIDDEN),
                 Arguments.of(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING, HttpStatus.OK),
-                Arguments.of(CourseInformationSharingConfiguration.COMMUNICATION_ONLY, HttpStatus.OK),
-                Arguments.of(CourseInformationSharingConfiguration.MESSAGING_ONLY, HttpStatus.OK));
+                Arguments.of(CourseInformationSharingConfiguration.COMMUNICATION_ONLY, HttpStatus.OK));
     }
 }

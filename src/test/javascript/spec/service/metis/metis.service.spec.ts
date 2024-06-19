@@ -309,7 +309,7 @@ describe('Metis Service', () => {
 
     it('should not fetch course post tags if communication is not enabled', () => {
         const updateCoursePostTagsSpy = jest.spyOn(metisService, 'updateCoursePostTags');
-        course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.MESSAGING_ONLY;
+        course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.DISABLED;
         metisService.setCourse(course);
         const getCourseReturn = metisService.getCourse();
         expect(getCourseReturn).toEqual(course);
