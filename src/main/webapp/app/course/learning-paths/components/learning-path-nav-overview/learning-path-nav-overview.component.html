@@ -11,11 +11,12 @@
     @if (isLoading()) {
         <div class="row justify-content-center m-4">
             <div class="spinner-border text-primary" role="status">
+                <!--                TODO: Loading translation-->
                 <span class="sr-only">Loading...</span>
             </div>
         </div>
     } @else if (competencies()) {
-        <div ngbAccordion class="nav-overview-competencies accordion-flush">
+        <div ngbAccordion [destroyOnHide]="false" class="nav-overview-competencies accordion-flush">
             @for (competency of competencies(); track competency.id) {
                 <div ngbAccordionItem (shown)="loadLearningObjectsOfCompetencyId(competency.id)">
                     <h2 ngbAccordionHeader>
@@ -24,7 +25,7 @@
                     <div ngbAccordionCollapse>
                         <div ngbAccordionBody class="p-0">
                             <ng-template>
-                                <jhi-learning-path-nav-overview-item [learningPathId]="learningPathId()" [competencyId]="competency.id" />
+                                <jhi-learning-path-nav-overview-learning-objects [learningPathId]="learningPathId()" [competencyId]="competency.id" />
                             </ng-template>
                         </div>
                     </div>

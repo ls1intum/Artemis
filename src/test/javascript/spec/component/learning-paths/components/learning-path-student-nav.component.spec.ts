@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { LearningPathStudentNavComponent } from 'app/course/learning-paths/components/learning-path-student-nav/learning-path-student-nav.component';
 import { LearningObjectType, LearningPathNavigationDTO } from 'app/entities/competency/learning-path.model';
 import { By } from '@angular/platform-browser';
-import { LearningPathStudentNavOverviewComponent } from 'app/course/learning-paths/components/learning-path-student-nav-overview/learning-path-student-nav-overview.component';
+import { LearningPathNavOverviewComponent } from 'app/course/learning-paths/components/learning-path-nav-overview/learning-path-nav-overview.component';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 
@@ -51,7 +51,7 @@ describe('LearningPathStudentNavComponent', () => {
         })
             .overrideComponent(LearningPathStudentNavComponent, {
                 add: {
-                    imports: [LearningPathStudentNavOverviewComponent],
+                    imports: [LearningPathNavOverviewComponent],
                 },
             })
             .compileComponents();
@@ -175,7 +175,7 @@ describe('LearningPathStudentNavComponent', () => {
         const navOverviewButton = fixture.debugElement.query(By.css('#navigation-overview'));
         navOverviewButton.nativeElement.click();
         fixture.detectChanges();
-        const navOverview = fixture.debugElement.query(By.directive(LearningPathStudentNavOverviewComponent));
+        const navOverview = fixture.debugElement.query(By.directive(LearningPathNavOverviewComponent));
         expect(navOverview).toBeTruthy();
         expect(setShowNavigationOverviewSpy).toHaveBeenCalledWith(true);
         expect(component.showNavigationOverview()).toBeTrue();

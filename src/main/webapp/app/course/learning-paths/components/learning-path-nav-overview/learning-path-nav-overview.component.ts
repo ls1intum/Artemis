@@ -8,16 +8,16 @@ import { LearningPathCompetencyDTO } from 'app/entities/competency/learning-path
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 import { CompetencyGraphModalComponent } from 'app/course/learning-paths/components/competency-graph-modal/competency-graph-modal.component';
-import { LearningPathNavOverviewItemComponent } from 'app/course/learning-paths/components/learning-path-nav-overview-item/learning-path-nav-overview-item.component';
+import { LearningPathNavOverviewLearningObjectsComponent } from 'app/course/learning-paths/components/learning-path-nav-overview-learning-objects/learning-path-nav-overview-learning-objects.component';
 
 @Component({
-    selector: 'jhi-learning-path-student-nav-overview',
+    selector: 'jhi-learning-path-nav-overview',
     standalone: true,
-    imports: [FontAwesomeModule, CommonModule, NgbDropdownModule, NgbAccordionModule, ArtemisSharedModule, LearningPathNavOverviewItemComponent],
-    templateUrl: './learning-path-student-nav-overview.component.html',
-    styleUrl: './learning-path-student-nav-overview.component.scss',
+    imports: [FontAwesomeModule, CommonModule, NgbDropdownModule, NgbAccordionModule, ArtemisSharedModule, LearningPathNavOverviewLearningObjectsComponent],
+    templateUrl: './learning-path-nav-overview.component.html',
+    styleUrl: './learning-path-nav-overview.component.scss',
 })
-export class LearningPathStudentNavOverviewComponent implements OnInit {
+export class LearningPathNavOverviewComponent implements OnInit {
     protected readonly faCheckCircle: IconDefinition = faCheckCircle;
 
     private readonly alertService: AlertService = inject(AlertService);
@@ -30,7 +30,7 @@ export class LearningPathStudentNavOverviewComponent implements OnInit {
     readonly isLoading = signal(false);
     readonly competencies = signal<LearningPathCompetencyDTO[] | undefined>(undefined);
 
-    private readonly competencyDropdowns = viewChildren(LearningPathNavOverviewItemComponent);
+    private readonly competencyDropdowns = viewChildren(LearningPathNavOverviewLearningObjectsComponent);
 
     ngOnInit(): void {
         this.loadCompetencies(this.learningPathId());

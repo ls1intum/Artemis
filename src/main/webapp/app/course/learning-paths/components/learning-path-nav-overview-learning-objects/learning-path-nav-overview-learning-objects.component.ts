@@ -9,13 +9,13 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
-    selector: 'jhi-learning-path-nav-overview-item',
+    selector: 'jhi-learning-path-nav-overview-learning-objects',
     standalone: true,
     imports: [NgbAccordionModule, FontAwesomeModule, ArtemisSharedModule],
-    templateUrl: './learning-path-nav-overview-item.component.html',
-    styleUrl: './learning-path-nav-overview-item.component.scss',
+    templateUrl: './learning-path-nav-overview-learning-objects.component.html',
+    styleUrl: './learning-path-nav-overview-learning-objects.component.scss',
 })
-export class LearningPathNavOverviewItemComponent {
+export class LearningPathNavOverviewLearningObjectsComponent {
     protected readonly faCheckCircle: IconDefinition = faCheckCircle;
 
     private readonly alertService: AlertService = inject(AlertService);
