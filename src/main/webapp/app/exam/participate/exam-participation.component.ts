@@ -274,8 +274,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // Keep working time
             studentExam.workingTime = this.studentExam?.workingTime ?? studentExam.workingTime;
             this.studentExam = studentExam;
-            // no need to change the page layout for test runs
-            if (!this.testRunId) {
+            // no need to change the whole page layout for test runs
+            if (this.testRunId) {
+                this.examParticipationService.setExamLayout(false, true);
+            } else {
                 this.examParticipationService.setExamLayout();
             }
             // provide exam-participation.service with exerciseId information (e.g. needed for exam notifications)

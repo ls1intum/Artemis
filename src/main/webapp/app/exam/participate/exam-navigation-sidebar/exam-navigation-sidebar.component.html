@@ -1,11 +1,11 @@
 <div
-    class="d-flex sidebar h-100 justify-content-between flex-column rounded-3"
-    [ngClass]="{ 'sidebar-height-dev content-height-dev': !isProduction || isTestServer, collapsed: isCollapsed }"
+    class="d-flex sidebar justify-content-between flex-column rounded-3"
+    [ngClass]="{ 'sidebar-height-dev content-height-dev': !isProduction || isTestServer, collapsed: isCollapsed, 'sidebar-height-testRun': isTestRun }"
 >
     <div class="px-3 py-3">
         <div class="w-100 bg-module">
             <div class="sidebar-content" [ngClass]="{ collapsed: isCollapsed }">
-                <div class="scrollable-item-content py-2 px-2 bg-body" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
+                <div class="scrollable-item-content py-2 px-2 bg-body" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer, 'sidebar-height-testRun': isTestRun }">
                     <div
                         id="test-sidebar-card-medium"
                         class="pointer rounded-3 col-12 px-1 pt-2 pb-1 mb-2 border-5 highlight-card bg-module"

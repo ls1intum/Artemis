@@ -55,6 +55,9 @@ $breadcrumb-height: 38px;
     &.content-exam-height-dev {
         height: calc(100vh - var(--sidebar-footer-height-dev) - $breadcrumb-height);
     }
+    &.content-exam-height-testRun {
+        height: calc(100vh - 360px);
+    }
     @media (max-width: 768px) {
         height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height)) !important;
     }

@@ -27,6 +27,9 @@ export class ExamParticipationService {
     private examIsStartedSubject = new BehaviorSubject<boolean>(false);
     examIsStarted$ = this.examIsStartedSubject.asObservable();
 
+    private testRunSubject = new BehaviorSubject<boolean>(false);
+    testRunStarted$ = this.testRunSubject.asObservable();
+
     private examExerciseIds: number[];
 
     public getResourceURL(courseId: number, examId: number): string {
@@ -344,12 +347,14 @@ export class ExamParticipationService {
         this.examExerciseIds = examExerciseIds;
     }
 
-    setExamLayout() {
-        this.examIsStartedSubject.next(true);
+    setExamLayout(isExamStarted: boolean = true, isTestRun: boolean = false) {
+        this.examIsStartedSubject.next(isExamStarted);
+        this.testRunSubject.next(isTestRun);
     }
 
     resetExamLayout() {
         this.examIsStartedSubject.next(false);
+        this.testRunSubject.next(false);
         document.documentElement.style.setProperty('--header-height', '68px'); // Set back to default value, because exam nav bar changes this property within the exam
     }
 

@@ -22,9 +22,11 @@ export class JhiMainComponent implements OnInit, OnDestroy {
     public showSkeleton = true;
     profileSubscription: Subscription;
     examStartedSubscription: Subscription;
+    testRunSubscription: Subscription;
     isProduction: boolean = true;
     isTestServer: boolean = false;
     isExamStarted: boolean = false;
+    isTestRunExam: boolean = false;
 
     constructor(
         private jhiLanguageHelper: JhiLanguageHelper,
@@ -103,6 +105,10 @@ export class JhiMainComponent implements OnInit, OnDestroy {
 
         this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted) => {
             this.isExamStarted = isStarted;
+        });
+
+        this.testRunSubscription = this.examParticipationService.testRunStarted$.subscribe((isStarted) => {
+            this.isTestRunExam = isStarted;
         });
 
         this.themeService.initialize();

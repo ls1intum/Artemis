@@ -8,6 +8,9 @@ $sidebar-width-closed: 100px;
     &.content-height-dev {
         height: calc(100vh - var(--sidebar-footer-height-dev) - var(--header-height) - $search-height);
     }
+    &.sidebar-height-testRun {
+        height: calc(100vh - 360px - $search-height);
+    }
     @media (max-width: 768px) {
         height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height) - $search-height) !important;
     }
@@ -26,6 +29,9 @@ $sidebar-width-closed: 100px;
     }
     &.sidebar-height-dev {
         height: calc(100vh - var(--sidebar-footer-height-dev) - $breadcrumb-height);
+    }
+    &.sidebar-height-testRun {
+        height: calc(100vh - 360px);
     }
     @media (max-width: 768px) {
         height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height)) !important;

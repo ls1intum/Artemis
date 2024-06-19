@@ -18,7 +18,7 @@
     @if (studentExam) {
         <!-- exam participation -->
         @if (isVisible() && isActive() && !isOver() && examStartConfirmed) {
-            <div class="exam-background-wrapper">
+            <div class="exam-background-wrapper" [ngClass]="{ 'py-2': testRunId }">
                 <jhi-exam-bar
                     [examTitle]="exam.title!"
                     [endDate]="individualStudentEndDate"
@@ -36,11 +36,15 @@
                             [exerciseIndex]="exerciseIndex"
                             [overviewPageOpen]="activePageIndex === -1"
                             [examSessions]="studentExam.examSessions"
+                            [isTestRun]="testRunId"
                             (onPageChanged)="onPageChange($event)"
                         />
                     </div>
                     <!-- exercises -->
-                    <div class="vw-100 module-bg rounded-3 me-3 px-3 pt-3 content-exam-height" [ngClass]="{ 'content-exam-height-dev': !isProduction || isTestServer }">
+                    <div
+                        class="vw-100 module-bg rounded-3 me-3 px-3 pt-3 content-exam-height"
+                        [ngClass]="{ 'content-exam-height-dev': !isProduction || isTestServer, 'content-exam-height-testRun': testRunId }"
+                    >
                         <div [ngClass]="{ 'd-flex h-100 justify-content-between flex-column': !checkVerticalOverflow() }">
                             <div [hidden]="activePageIndex !== -1">
                                 <jhi-exam-exercise-overview-page [studentExam]="studentExam" (onPageChanged)="onPageChange($event)" />

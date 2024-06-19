@@ -39,6 +39,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     @Input() overviewPageOpen: boolean;
     @Input() examSessions?: ExamSession[] = [];
     @Input() examTimeLineView = false;
+    @Input() isTestRun = 0;
     @Output() onPageChanged = new EventEmitter<{
         overViewChange: boolean;
         exercise?: Exercise;
