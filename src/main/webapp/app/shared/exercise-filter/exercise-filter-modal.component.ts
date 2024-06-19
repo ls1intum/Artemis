@@ -8,6 +8,7 @@ import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { DifficultyLevel, ExerciseType } from 'app/entities/exercise.model';
 import { DifficultyFilterOptions, ExerciseTypeFilterOptions } from 'app/shared/sidebar/sidebar.component';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 @Component({
     selector: 'jhi-exercise-filter-modal',
@@ -21,12 +22,18 @@ export class ExerciseFilterModalComponent {
 
     @Output() filterApplied = new EventEmitter<SidebarData>();
 
+    // TODO x has a light blue border when opening the modal
+
     form: FormGroup;
+
+    model: any;
 
     sidebarData?: SidebarData;
 
     typeFilters?: ExerciseTypeFilterOptions;
     difficultyFilters?: DifficultyFilterOptions;
+
+    possibleCategories: ExerciseCategory[] = [];
 
     constructor(private activeModal: NgbActiveModal) {}
 
@@ -38,6 +45,11 @@ export class ExerciseFilterModalComponent {
             .map((sidebarElement: SidebarCardElement) => sidebarElement.difficulty);
         this.difficultyFilters?.filter((difficulty) => existingDifficulties?.includes(difficulty.value));
         // TODO do not display difficulties selection if not enough selection options
+
+        this.possibleCategories =
+            this.sidebarData?.ungroupedData
+                ?.filter((sidebarElement: SidebarCardElement) => sidebarElement.exercise?.categories !== undefined)
+                .flatMap((sidebarElement: SidebarCardElement) => sidebarElement.exercise?.categories || []) ?? [];
     }
 
     closeModal(): void {
