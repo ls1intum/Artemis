@@ -86,7 +86,7 @@
                             <ul>
                                 @for (auxiliaryRepository of detail.data.auxiliaryRepositories; track auxiliaryRepository) {
                                     @if (auxiliaryRepository.id && auxiliaryRepository.repositoryUri && detail.data.exerciseId) {
-                                        <li>
+                                        <li class="mt-2">
                                             <span>Repository: {{ auxiliaryRepository.name }}</span>
                                             <jhi-clone-repo-button class="ms-2" [smallButtons]="true" [repositoryUri]="auxiliaryRepository.repositoryUri" />
                                             <jhi-programming-exercise-instructor-repo-download
