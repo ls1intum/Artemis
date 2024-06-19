@@ -7,7 +7,7 @@
             },
             "exercisePerformance": {
                 "title": "Exercise Performance",
-                "info": "Performance is measured as the percentage of points you have achieved in an exercise.",
+                "info": "This shows how well you did in each exercise as a percentage of the total points possible. You can also see the average score of all students to compare your performance with your peers.",
                 "noData": "No scores are available for you in this course yet.",
                 "yourScoreLabel": "Your score",
                 "averageScoreLabel": "Average score",
@@ -16,7 +16,7 @@
             },
             "exerciseLateness": {
                 "title": "Exercise Lateness",
-                "info": "Relative lateness refers to the percentage of working time that has passed.",
+                "info": "This shows how much time you used to complete and submit each exercise as a percentage of the total time available. Compare your submission times with the average to see if you're earlier or later than most students.",
                 "noData": "You have not submitted any exercises in this course yet.",
                 "yourLatenessLabel": "Your lateness",
                 "averageLatenessLabel": "Average lateness",
@@ -25,6 +25,7 @@
             },
             "judgementOfLearning": {
                 "title": "How would you rate your mastery?",
+                "info": "Rate how well you understand and can apply the skills from this competency. Artemis also provides a rating based on your performance to help you see where you stand.",
                 "artemisRating": "Artemis rates your mastery as",
                 "error": "An error occurred while saving your rating.",
                 "redirectButton": "Rate mastery on dashboard"
