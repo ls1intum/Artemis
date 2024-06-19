@@ -1014,9 +1014,8 @@ public class GitService extends AbstractGitService {
 
     /**
      * Lists all files and directories within the given repository, excluding symbolic links.
-     * This method utilizes caching to avoid repeated scanning of the repository. If the repository's content is
-     * already cached, it returns the cached content. Otherwise, it performs a scan, filters out symbolic links,
-     * and caches the result for future use.
+     * This method performs a file scan and filters out symbolic links.
+     * It supports bare and checked-out repositories.
      * <p>
      * Note: This method does not handle changes to the repository content between invocations. If files change
      * after the initial caching, the cache does not automatically refresh, which may lead to stale data.
