@@ -96,7 +96,7 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
 
     @Override
     public void sendOverWebsocket(IrisMessage message) {
-        irisChatWebsocketService.sendMessage(message, null, null);
+        irisChatWebsocketService.sendMessage(message);
     }
 
     @Override

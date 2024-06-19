@@ -45,6 +45,31 @@ public class IrisChatWebsocketService extends IrisWebsocketService {
         super.send(user, session.getId(), new IrisWebsocketDTO(irisMessage, rateLimitInfo, stages, suggestions));
     }
 
+    /**
+     * Sends a message over the websocket to a specific user without stages and suggestions
+     *
+     * @param message that should be sent over the websocket
+     */
+    public void sendMessage(IrisMessage message) {
+        sendMessage(message, null, null);
+    }
+
+    /**
+     * Sends a message over the websocket to a specific user without suggestions
+     *
+     * @param message that should be sent over the websocket
+     * @param stages  that should be sent over the websocket
+     */
+    public void sendMessage(IrisMessage message, List<PyrisStageDTO> stages) {
+        sendMessage(message, stages, null);
+    }
+
+    /**
+     * Sends a status update over the websocket to a specific user
+     *
+     * @param session the session to send the status update to
+     * @param stages  the stages to send
+     */
     public void sendStatusUpdate(IrisSession session, List<PyrisStageDTO> stages) {
         var user = checkSessionTypeAndGetUser(session);
         super.send(user, session.getId(), new IrisWebsocketDTO(null, rateLimitService.getRateLimitInformation(user), stages, null));
