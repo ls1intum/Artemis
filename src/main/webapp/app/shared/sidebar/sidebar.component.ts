@@ -5,8 +5,8 @@ import { Subscription, distinctUntilChanged } from 'rxjs';
 import { ProfileService } from '../layouts/profiles/profile.service';
 import { SidebarData } from 'app/types/sidebar';
 import { SidebarEventService } from './sidebar-event.service';
-import { MatDialog } from '@angular/material/dialog';
-import { ExerciseFilterComponent } from 'app/shared/exercise-filter/exercise-filter.component';
+import { ExerciseFilterModalComponent } from 'app/shared/exercise-filter/exercise-filter-modal.component';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-sidebar',
@@ -31,13 +31,15 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     isProduction = true;
     isTestServer = false;
 
+    private modalRef: NgbModalRef | null;
+
     readonly faFilter = faFilter;
 
     constructor(
         private route: ActivatedRoute,
         private profileService: ProfileService,
         private sidebarEventService: SidebarEventService,
-        private dialog: MatDialog,
+        private modalService: NgbModal,
     ) {}
 
     ngOnInit(): void {
@@ -78,7 +80,11 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         this.sidebarEventService.emitResetValue();
     }
 
-    openFilterDialog() {
-        this.dialog.open(ExerciseFilterComponent);
+    openFilterExercisesDialog() {
+        this.modalRef = this.modalService.open(ExerciseFilterModalComponent, {
+            size: 'lg',
+            backdrop: 'static',
+            animation: true,
+        });
     }
 }
