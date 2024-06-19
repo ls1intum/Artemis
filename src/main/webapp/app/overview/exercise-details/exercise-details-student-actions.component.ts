@@ -112,13 +112,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             this.editorLabel = 'uploadFile';
         }
 
-        if (this.gradedParticipation) {
-            this.beforeDueDate = !this.exercise.dueDate || !hasExerciseDueDatePassed(this.exercise, this.gradedParticipation);
-        } else if (this.practiceParticipation) {
-            this.beforeDueDate = !this.exercise.dueDate || !hasExerciseDueDatePassed(this.exercise, this.practiceParticipation);
-        } else {
-            this.beforeDueDate = !this.exercise.dueDate;
-        }
+        this.beforeDueDate = !this.exercise.dueDate || !hasExerciseDueDatePassed(this.exercise, this.practiceParticipation);
     }
 
     /**
