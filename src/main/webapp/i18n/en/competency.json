@@ -24,8 +24,8 @@
                 "NO_REASON": "The confidence is roughly the same as the mastery",
                 "RECENT_SCORES_LOWER": "Since your recent scores are lower than your average in the competency, the mastery is lower than the progress",
                 "RECENT_SCORES_HIGHER": "Since your recent scores are higher than your average in the competency, the mastery is higher than the progress",
-                "MORE_EASY_POINTS": "Since your points come mostly from easy exercises, the mastery is lower than the progress",
-                "MORE_HARD_POINTS": "Since your points come mostly from hard exercises, the mastery is higher than the progress",
+                "MORE_EASY_POINTS": "Since you mostly scored your points in easy exercises, the mastery is lower than the progress",
+                "MORE_HARD_POINTS": "Since you mostly scored your points in hard exercises, the mastery is higher than the progress",
                 "QUICKLY_SOLVED_EXERCISES": "Since you solved some exercises quickly, the mastery is higher than the progress"
             },
             "taxonomies": {

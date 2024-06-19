@@ -89,7 +89,7 @@
                             <div class="col-5">
                                 <span> {{ mastery }} %</span>
                                 @if (competencyProgress?.confidenceReason && competencyProgress.confidenceReason !== ConfidenceReason.NO_REASON) {
-                                    <jhi-help-icon text=" {{ 'artemisApp.competency.confidenceReasons.' + competencyProgress.confidenceReason }}" />
+                                    <jhi-help-icon text="{{ 'artemisApp.competency.confidenceReasons.' + competencyProgress.confidenceReason }}" />
                                 }
                             </div>
                         </div>
