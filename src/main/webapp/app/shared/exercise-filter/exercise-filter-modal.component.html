@@ -1,8 +1,7 @@
 <form name="workingTimeForm" (ngSubmit)="applyFilter()">
     <div class="modal-header">
         <h4 class="modal-title"><fa-icon [icon]="faFilter" />&nbsp;Filter Exercises</h4>
-        <button type="button" class="btn-close" aria-label="Close"></button>
-        <!--    <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss('Cross click')"></button>-->
+        <button type="button" class="btn-close" (click)="closeModal()"></button>
     </div>
     <div class="modal-body">
         Categories<br />
@@ -39,7 +38,6 @@
         </div>
     </div>
     <div class="modal-footer">
-        <!--    <button type="button" class="btn btn-outline-secondary" (click)="activeModal.close('Close click')">Close</button>-->
-        <button type="button" class="btn btn-outline-secondary">Close</button>
+        <button type="button" class="btn btn-primary" (click)="closeModal()">OK</button>
     </div>
 </form>

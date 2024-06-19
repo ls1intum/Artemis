@@ -32,7 +32,7 @@ export class ExerciseFilterModalComponent {
 
     constructor(private activeModal: NgbActiveModal) {}
 
-    clear(): void {
+    closeModal(): void {
         this.activeModal.close();
     }
 
