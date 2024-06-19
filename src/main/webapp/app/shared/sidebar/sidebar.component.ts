@@ -86,5 +86,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
             backdrop: 'static',
             animation: true,
         });
+
+        this.modalRef.componentInstance.sidebarData = this.sidebarData;
     }
 }

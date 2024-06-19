@@ -1,11 +1,18 @@
 import { Component } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
-import { FormsModule } from 'app/forms/forms.module';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { SidebarCardElement, SidebarData } from 'app/types/sidebar';
+import { DifficultyLevel } from 'app/entities/exercise.model';
+
+const DEFAULT_DIFFICULTIES = [
+    { name: 'Easy', value: DifficultyLevel.EASY, checked: false },
+    { name: 'Medium', value: DifficultyLevel.MEDIUM, checked: false },
+    { name: 'Hard', value: DifficultyLevel.HARD, checked: false },
+];
 
 @Component({
     selector: 'jhi-exercise-filter-modal',
@@ -19,6 +26,9 @@ export class ExerciseFilterModalComponent {
 
     form: FormGroup;
 
+    sidebarData?: SidebarData;
+    groupedData?: { entityData: SidebarCardElement[] };
+
     exerciseTypes = [
         { name: 'Programming', value: 'programming' },
         { name: 'Quiz', value: 'quiz' },
@@ -27,23 +37,52 @@ export class ExerciseFilterModalComponent {
         { name: 'File Upload', value: 'file-upload' },
     ];
 
-    difficulties = [
-        { name: 'Easy', value: 'easy' },
-        { name: 'Medium', value: 'medium' },
-        { name: 'Hard', value: 'hard' },
-    ];
+    difficulties = DEFAULT_DIFFICULTIES;
+    selectedDifficulties: any;
 
     constructor(private activeModal: NgbActiveModal) {}
 
-    // ngOnInit(): void {
-    //     // TODO filter exercise types to exercise types that are used
-    //     // TODO filter difficulties to difficulties that have been used
-    //     let test = 'test';
-    // }
+    ngOnInit(): void {
+        // TODO filter exercise types to exercise types that are used
+        // TODO filter difficulties to difficulties that have been used
+        const existingDifficulties = this.sidebarData?.ungroupedData
+            ?.filter((sidebarElement: SidebarCardElement) => sidebarElement.difficulty !== undefined)
+            .map((sidebarElement: SidebarCardElement) => sidebarElement.difficulty);
+        this.difficulties.filter((difficulty) => existingDifficulties?.includes(difficulty.value));
+    }
 
     closeModal(): void {
         this.activeModal.close();
     }
 
-    applyFilter(): void {}
+    applyFilter(): void {
+        this.applyDifficultyFilter();
+
+        this.closeModal();
+    }
+
+    private applyDifficultyFilter() {
+        const searchedDifficulties: DifficultyLevel[] = this.difficulties.filter((difficulty) => difficulty.checked).map((difficulty) => difficulty.value);
+
+        console.log({ searchedDifficulties });
+
+        if (searchedDifficulties.length === 0) {
+            return;
+        }
+
+        if (this.sidebarData?.groupedData) {
+            for (const groupedDataKey in this.sidebarData.groupedData) {
+                this.sidebarData.groupedData[groupedDataKey].entityData = this.sidebarData.groupedData[groupedDataKey].entityData.filter(
+                    (sidebarElement) => sidebarElement.difficulty && searchedDifficulties.includes(sidebarElement.difficulty),
+                );
+            }
+        }
+
+        // TODO do we need to filter the ungrouped data aswell?
+        if (this.sidebarData?.ungroupedData) {
+            this.sidebarData.ungroupedData = this.sidebarData?.ungroupedData.filter(
+                (sidebarElement: SidebarCardElement) => sidebarElement.difficulty && searchedDifficulties.includes(sidebarElement.difficulty),
+            );
+        }
+    }
 }

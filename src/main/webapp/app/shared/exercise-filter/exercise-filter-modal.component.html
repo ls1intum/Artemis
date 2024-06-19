@@ -1,4 +1,4 @@
-<form name="workingTimeForm" (ngSubmit)="applyFilter()">
+<form name="exerciseFilterForm" (ngSubmit)="applyFilter()">
     <div class="modal-header">
         <h4 class="modal-title"><fa-icon [icon]="faFilter" />&nbsp;Filter Exercises</h4>
         <button type="button" class="btn-close" (click)="closeModal()"></button>
@@ -23,7 +23,7 @@
             <label class="form-control-label" jhiTranslate="Difficulty"></label>
             <div>
                 @for (difficulty of difficulties; track difficulty) {
-                    <input type="checkbox" [value]="difficulty.value" />
+                    <input type="checkbox" [value]="difficulty.value" [(ngModel)]="difficulty.checked" name="difficulty" />
                     <label>{{ difficulty.name }}</label>
                 }
             </div>
@@ -46,6 +46,6 @@
         </div>
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-primary" (click)="closeModal()">OK</button>
+        <button type="button" class="btn btn-primary" (click)="applyFilter()">OK</button>
     </div>
 </form>
