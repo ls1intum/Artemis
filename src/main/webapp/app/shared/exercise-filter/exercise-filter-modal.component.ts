@@ -5,16 +5,19 @@ import { FormsModule } from 'app/forms/forms.module';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
     selector: 'jhi-exercise-filter-modal',
     templateUrl: './exercise-filter-modal.component.html',
     // styleUrls: ['./exercise-filter.component.scss'],
     standalone: true,
-    imports: [FormsModule, FontAwesomeModule, ArtemisSharedCommonModule, ArtemisSharedComponentModule],
+    imports: [FormsModule, ReactiveFormsModule, FontAwesomeModule, ArtemisSharedCommonModule, ArtemisSharedComponentModule],
 })
 export class ExerciseFilterModalComponent {
     readonly faFilter = faFilter;
+
+    form: FormGroup;
 
     exerciseTypes = [
         { name: 'Programming', value: 'programming' },
