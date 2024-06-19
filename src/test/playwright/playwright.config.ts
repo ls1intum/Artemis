@@ -22,11 +22,16 @@ export default defineConfig({
     reporter: [['junit', { outputFile: './test-reports/results.xml' }]],
     /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
     use: {
+        actionTimeout: 10000,
         /* Base URL to use in actions like `await page.goto('/')`. */
         baseURL: process.env.BASE_URL || 'http://localhost:9000',
         /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
         trace: 'on-first-retry',
         ignoreHTTPSErrors: true,
+        video: {
+            mode: 'on-first-retry',
+            size: { width: 1920, height: 1080 },
+        },
     },
 
     /* Configure projects for major browsers */
