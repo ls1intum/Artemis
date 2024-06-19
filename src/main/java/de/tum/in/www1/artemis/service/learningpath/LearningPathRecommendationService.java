@@ -516,8 +516,8 @@ public class LearningPathRecommendationService {
      * The following formulas are used predict the number of exercises required to master the competency:
      * <ul>
      * <li>Mastery >= MasteryThreshold</li>
-     * <li>Mastery = Progress * Confidence</li>
-     * <li>Progress = (#Exercises / # LearningObjects) * (AchievedPoints / TotalPoints) + #LectureUnits / #LearningObjects</li>
+     * <li>Mastery = Progress * Confidence {@link CompetencyProgressService#getMastery}</li>
+     * <li>Progress = (#Exercises / # LearningObjects) * (AchievedPoints / TotalPoints) + #LectureUnits / #LearningObjects {@link CompetencyProgressService#calculateProgress}</li>
      * <li>Confidence ≈ 0.9 * weightedConfidence</li>
      * <li>RequiredPoints = AchievedPoints - CurrentScore</li>
      * </ul>
