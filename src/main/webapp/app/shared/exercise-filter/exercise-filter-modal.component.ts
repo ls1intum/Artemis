@@ -57,6 +57,9 @@ export class ExerciseFilterModalComponent {
             return;
         }
         const searchedTypes: ExerciseType[] = this.typeFilters?.filter((type) => type.checked).map((type) => type.value);
+        if (searchedTypes.length === 0) {
+            return;
+        }
 
         if (this.sidebarData?.groupedData) {
             for (const groupedDataKey in this.sidebarData.groupedData) {
