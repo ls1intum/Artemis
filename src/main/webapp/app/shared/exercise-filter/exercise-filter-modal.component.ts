@@ -32,6 +32,12 @@ export class ExerciseFilterModalComponent {
 
     constructor(private activeModal: NgbActiveModal) {}
 
+    // ngOnInit(): void {
+    //     // TODO filter exercise types to exercise types that are used
+    //     // TODO filter difficulties to difficulties that have been used
+    //     let test = 'test';
+    // }
+
     closeModal(): void {
         this.activeModal.close();
     }
