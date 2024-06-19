@@ -7,16 +7,25 @@ import { SidebarData } from 'app/types/sidebar';
 import { SidebarEventService } from './sidebar-event.service';
 import { ExerciseFilterModalComponent } from 'app/shared/exercise-filter/exercise-filter-modal.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { DifficultyLevel } from 'app/entities/exercise.model';
+import { DifficultyLevel, ExerciseType } from 'app/entities/exercise.model';
 import { cloneDeep } from 'lodash-es';
 
-export type DifficultyFilter = { name: string; value: DifficultyLevel; checked: boolean }[];
+export type ExerciseTypeFilterOptions = { name: string; value: ExerciseType; checked: boolean }[];
+export type DifficultyFilterOptions = { name: string; value: DifficultyLevel; checked: boolean }[];
 
 // TODO allow to filter for no difficulty?
-const DEFAULT_DIFFICULTIES_FILTER: DifficultyFilter = [
+const DEFAULT_DIFFICULTIES_FILTER: DifficultyFilterOptions = [
     { name: 'Easy', value: DifficultyLevel.EASY, checked: false },
     { name: 'Medium', value: DifficultyLevel.MEDIUM, checked: false },
     { name: 'Hard', value: DifficultyLevel.HARD, checked: false },
+];
+
+const DEFAULT_EXERCISE_TYPES_FILTER: ExerciseTypeFilterOptions = [
+    { name: 'Programming', value: ExerciseType.PROGRAMMING, checked: false },
+    { name: 'Quiz', value: ExerciseType.QUIZ, checked: false },
+    { name: 'Modeling', value: ExerciseType.MODELING, checked: false },
+    { name: 'Text', value: ExerciseType.TEXT, checked: false },
+    { name: 'File Upload', value: ExerciseType.FILE_UPLOAD, checked: false },
 ];
 
 @Component({
@@ -48,6 +57,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
 
     sidebarDataBeforeFiltering: SidebarData;
     difficultiesFilter = DEFAULT_DIFFICULTIES_FILTER;
+    exerciseTypesFilter = DEFAULT_EXERCISE_TYPES_FILTER;
 
     constructor(
         private route: ActivatedRoute,
@@ -95,6 +105,9 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     }
 
     openFilterExercisesDialog() {
+        // TODO uncollapse all groups when a filter is active
+        // TODO display a message if filter options lead to no results
+
         if (!this.sidebarDataBeforeFiltering) {
             this.sidebarDataBeforeFiltering = cloneDeep(this.sidebarData);
         }
@@ -106,8 +119,8 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         });
 
         this.modalRef.componentInstance.sidebarData = cloneDeep(this.sidebarDataBeforeFiltering);
-        this.modalRef.componentInstance.difficulties = this.difficultiesFilter;
-
+        this.modalRef.componentInstance.difficultyFilters = this.difficultiesFilter;
+        this.modalRef.componentInstance.typeFilters = this.exerciseTypesFilter;
         this.modalRef.componentInstance.filterApplied.subscribe((filteredSidebarData: SidebarData) => {
             this.sidebarData = filteredSidebarData;
         });

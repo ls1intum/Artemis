@@ -6,8 +6,8 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { SidebarCardElement, SidebarData } from 'app/types/sidebar';
-import { DifficultyLevel } from 'app/entities/exercise.model';
-import { DifficultyFilter } from 'app/shared/sidebar/sidebar.component';
+import { DifficultyLevel, ExerciseType } from 'app/entities/exercise.model';
+import { DifficultyFilterOptions, ExerciseTypeFilterOptions } from 'app/shared/sidebar/sidebar.component';
 
 @Component({
     selector: 'jhi-exercise-filter-modal',
@@ -24,15 +24,9 @@ export class ExerciseFilterModalComponent {
     form: FormGroup;
 
     sidebarData?: SidebarData;
-    difficulties?: DifficultyFilter;
 
-    exerciseTypes = [
-        { name: 'Programming', value: 'programming' },
-        { name: 'Quiz', value: 'quiz' },
-        { name: 'Modeling', value: 'modeling' },
-        { name: 'Text', value: 'text' },
-        { name: 'File Upload', value: 'file-upload' },
-    ];
+    typeFilters?: ExerciseTypeFilterOptions;
+    difficultyFilters?: DifficultyFilterOptions;
 
     constructor(private activeModal: NgbActiveModal) {}
 
@@ -42,7 +36,7 @@ export class ExerciseFilterModalComponent {
         const existingDifficulties = this.sidebarData?.ungroupedData
             ?.filter((sidebarElement: SidebarCardElement) => sidebarElement.difficulty !== undefined)
             .map((sidebarElement: SidebarCardElement) => sidebarElement.difficulty);
-        this.difficulties?.filter((difficulty) => existingDifficulties?.includes(difficulty.value));
+        this.difficultyFilters?.filter((difficulty) => existingDifficulties?.includes(difficulty.value));
         // TODO do not display difficulties selection if not enough selection options
     }
 
@@ -51,17 +45,33 @@ export class ExerciseFilterModalComponent {
     }
 
     applyFilter(): void {
+        this.applyTypeFilter();
         this.applyDifficultyFilter();
 
         this.filterApplied.emit(this.sidebarData);
         this.closeModal();
     }
 
-    private applyDifficultyFilter() {
-        if (!this.difficulties) {
+    private applyTypeFilter() {
+        if (!this.typeFilters) {
             return;
         }
-        const searchedDifficulties: DifficultyLevel[] = this.difficulties?.filter((difficulty) => difficulty.checked).map((difficulty) => difficulty.value);
+        const searchedTypes: ExerciseType[] = this.typeFilters?.filter((type) => type.checked).map((type) => type.value);
+
+        if (this.sidebarData?.groupedData) {
+            for (const groupedDataKey in this.sidebarData.groupedData) {
+                this.sidebarData.groupedData[groupedDataKey].entityData = this.sidebarData.groupedData[groupedDataKey].entityData.filter(
+                    (sidebarElement) => sidebarElement?.exercise?.type && searchedTypes.includes(sidebarElement.exercise.type),
+                );
+            }
+        }
+    }
+
+    private applyDifficultyFilter() {
+        if (!this.difficultyFilters) {
+            return;
+        }
+        const searchedDifficulties: DifficultyLevel[] = this.difficultyFilters?.filter((difficulty) => difficulty.checked).map((difficulty) => difficulty.value);
         if (searchedDifficulties.length === 0) {
             return;
         }

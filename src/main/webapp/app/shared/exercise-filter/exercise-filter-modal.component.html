@@ -6,11 +6,11 @@
     <div class="modal-body">
         Categories<br />
         <div class="form-group">
-            <label class="form-control-label" jhiTranslate="Exercise Type"></label>
-            <div>
-                @for (exerciseType of exerciseTypes; track exerciseType) {
-                    <input type="checkbox" [value]="exerciseType.value" />
-                    <label>{{ exerciseType.name }}</label>
+            <label for="exercise-type-filter-selection" class="form-control-label" jhiTranslate="Exercise Type"></label>
+            <div id="exercise-type-filter-selection">
+                @for (typeFilter of typeFilters; track typeFilter) {
+                    <input type="checkbox" [(ngModel)]="typeFilter.checked" [name]="typeFilter.value" />
+                    <label>{{ typeFilter.name }}</label>
                 }
             </div>
         </div>
@@ -20,11 +20,11 @@
         </div>
 
         <div class="form-group">
-            <label for="difficulty-selection" class="form-control-label" jhiTranslate="Difficulty"></label>
-            <div id="difficulty-selection">
-                @for (difficulty of difficulties; track difficulty) {
-                    <input type="checkbox" [(ngModel)]="difficulty.checked" [name]="difficulty.value" />
-                    <label>{{ difficulty.name }}</label>
+            <label for="difficulty-filter-selection" class="form-control-label" jhiTranslate="Difficulty"></label>
+            <div id="difficulty-filter-selection">
+                @for (difficultyFilter of difficultyFilters; track difficultyFilter) {
+                    <input type="checkbox" [(ngModel)]="difficultyFilter.checked" [name]="difficultyFilter.value" />
+                    <label>{{ difficultyFilter.name }}</label>
                 }
             </div>
         </div>
