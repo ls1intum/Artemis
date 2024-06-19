@@ -6,7 +6,7 @@ import java.util.stream.Collectors;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 
-public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> implements IrisChatBasedFeatureInterface<S> {
+public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> implements IrisChatBasedFeatureInterface<S>, IrisRateLimitedFeatureInterface {
 
     protected IrisSessionRepository irisSessionRepository;
 
@@ -16,7 +16,6 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
 
     /**
      * Updates the latest suggestions of the session.
-     *
      * Concatenates the suggestions with "||" as separator.
      * If a suggestion already contains "||", they are replaced with "\\||", before joining.
      * The updated suggestions are then saved to the session in the database.
