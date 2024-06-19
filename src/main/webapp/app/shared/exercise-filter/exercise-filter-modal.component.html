@@ -1,12 +1,45 @@
-<div class="modal-header">
-    <h4 class="modal-title">Hi there!</h4>
-    <button type="button" class="btn-close" aria-label="Close"></button>
-    <!--    <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss('Cross click')"></button>-->
-</div>
-<div class="modal-body">
-    <p>Hello!</p>
-</div>
-<div class="modal-footer">
-    <!--    <button type="button" class="btn btn-outline-secondary" (click)="activeModal.close('Close click')">Close</button>-->
-    <button type="button" class="btn btn-outline-secondary">Close</button>
-</div>
+<form name="workingTimeForm" (ngSubmit)="applyFilter()">
+    <div class="modal-header">
+        <h4 class="modal-title"><fa-icon [icon]="faFilter" />&nbsp;Filter Exercises</h4>
+        <button type="button" class="btn-close" aria-label="Close"></button>
+        <!--    <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss('Cross click')"></button>-->
+    </div>
+    <div class="modal-body">
+        Categories<br />
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="Exercise Type"></label>
+            <div>
+                @for (exerciseType of exerciseTypes; track exerciseType) {
+                    <input type="checkbox" [value]="exerciseType.value" />
+                    <label>{{ exerciseType.name }}</label>
+                }
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="Due Date Range"></label>
+        </div>
+
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="Difficulty"></label>
+            <div>
+                @for (difficulty of difficulties; track difficulty) {
+                    <input type="checkbox" [value]="difficulty.value" />
+                    <label>{{ difficulty.name }}</label>
+                }
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="Achieved Score"></label>
+        </div>
+
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="Achievable Points"></label>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <!--    <button type="button" class="btn btn-outline-secondary" (click)="activeModal.close('Close click')">Close</button>-->
+        <button type="button" class="btn btn-outline-secondary">Close</button>
+    </div>
+</form>
