@@ -109,8 +109,8 @@ describe('LearningPathStudentPageComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(loadingSpy).toHaveBeenCalledWith(true);
-        expect(loadingSpy).toHaveBeenCalledWith(false);
+        expect(loadingSpy).toHaveBeenNthCalledWith(1, true);
+        expect(loadingSpy).toHaveBeenNthCalledWith(2, false);
     });
 
     it('should generate learning path on click', async () => {
@@ -139,7 +139,7 @@ describe('LearningPathStudentPageComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(loadingSpy).toHaveBeenCalledWith(true);
-        expect(loadingSpy).toHaveBeenCalledWith(false);
+        expect(loadingSpy).toHaveBeenNthCalledWith(1, true);
+        expect(loadingSpy).toHaveBeenNthCalledWith(2, false);
     });
 });

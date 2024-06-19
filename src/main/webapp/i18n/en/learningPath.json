@@ -13,8 +13,8 @@
                 "title": "Learning path competency relations"
             },
             "generation": {
-                "title": "Welcome to learning paths!",
-                "description": "Welcome to your learning path! This feature lets you learn at your own pace with a personalized journey tailored to your performance. It adapts dynamically, ensuring you always have the most relevant content and challenges. Start now and experience a customized path to success!",
+                "title": "Welcome to your learning path!",
+                "description": "This feature lets you learn at your own pace with a personalized journey tailored to your performance. It adapts dynamically, ensuring you always have the most relevant content and challenges. Start now and experience a customized path to success!",
                 "generateButton": "Start my learning path"
             }
         }
