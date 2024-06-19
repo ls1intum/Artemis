@@ -8,6 +8,7 @@ import { SidebarEventService } from './sidebar-event.service';
 import { ExerciseFilterModalComponent } from 'app/shared/exercise-filter/exercise-filter-modal.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { DifficultyLevel } from 'app/entities/exercise.model';
+import { cloneDeep } from 'lodash-es';
 
 export type DifficultyFilter = { name: string; value: DifficultyLevel; checked: boolean }[];
 
@@ -45,6 +46,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
 
     readonly faFilter = faFilter;
 
+    sidebarDataBeforeFiltering: SidebarData;
     difficultiesFilter = DEFAULT_DIFFICULTIES_FILTER;
 
     constructor(
@@ -93,13 +95,21 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     }
 
     openFilterExercisesDialog() {
+        if (!this.sidebarDataBeforeFiltering) {
+            this.sidebarDataBeforeFiltering = cloneDeep(this.sidebarData);
+        }
+
         this.modalRef = this.modalService.open(ExerciseFilterModalComponent, {
             size: 'lg',
             backdrop: 'static',
             animation: true,
         });
 
-        this.modalRef.componentInstance.sidebarData = this.sidebarData;
+        this.modalRef.componentInstance.sidebarData = cloneDeep(this.sidebarDataBeforeFiltering);
         this.modalRef.componentInstance.difficulties = this.difficultiesFilter;
+
+        this.modalRef.componentInstance.filterApplied.subscribe((filteredSidebarData: SidebarData) => {
+            this.sidebarData = filteredSidebarData;
+        });
     }
 }

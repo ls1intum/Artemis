@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -18,6 +18,8 @@ import { DifficultyFilter } from 'app/shared/sidebar/sidebar.component';
 })
 export class ExerciseFilterModalComponent {
     readonly faFilter = faFilter;
+
+    @Output() filterApplied = new EventEmitter<SidebarData>();
 
     form: FormGroup;
 
@@ -51,6 +53,7 @@ export class ExerciseFilterModalComponent {
     applyFilter(): void {
         this.applyDifficultyFilter();
 
+        this.filterApplied.emit(this.sidebarData);
         this.closeModal();
     }
 
