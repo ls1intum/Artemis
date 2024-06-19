@@ -7,6 +7,16 @@ import { SidebarData } from 'app/types/sidebar';
 import { SidebarEventService } from './sidebar-event.service';
 import { ExerciseFilterModalComponent } from 'app/shared/exercise-filter/exercise-filter-modal.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { DifficultyLevel } from 'app/entities/exercise.model';
+
+export type DifficultyFilter = { name: string; value: DifficultyLevel; checked: boolean }[];
+
+// TODO allow to filter for no difficulty?
+const DEFAULT_DIFFICULTIES_FILTER: DifficultyFilter = [
+    { name: 'Easy', value: DifficultyLevel.EASY, checked: false },
+    { name: 'Medium', value: DifficultyLevel.MEDIUM, checked: false },
+    { name: 'Hard', value: DifficultyLevel.HARD, checked: false },
+];
 
 @Component({
     selector: 'jhi-sidebar',
@@ -34,6 +44,8 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     private modalRef: NgbModalRef | null;
 
     readonly faFilter = faFilter;
+
+    difficultiesFilter = DEFAULT_DIFFICULTIES_FILTER;
 
     constructor(
         private route: ActivatedRoute,
@@ -88,5 +100,6 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         });
 
         this.modalRef.componentInstance.sidebarData = this.sidebarData;
+        this.modalRef.componentInstance.difficulties = this.difficultiesFilter;
     }
 }

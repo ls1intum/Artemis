@@ -7,12 +7,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { DifficultyLevel } from 'app/entities/exercise.model';
-
-const DEFAULT_DIFFICULTIES = [
-    { name: 'Easy', value: DifficultyLevel.EASY, checked: false },
-    { name: 'Medium', value: DifficultyLevel.MEDIUM, checked: false },
-    { name: 'Hard', value: DifficultyLevel.HARD, checked: false },
-];
+import { DifficultyFilter } from 'app/shared/sidebar/sidebar.component';
 
 @Component({
     selector: 'jhi-exercise-filter-modal',
@@ -27,7 +22,7 @@ export class ExerciseFilterModalComponent {
     form: FormGroup;
 
     sidebarData?: SidebarData;
-    groupedData?: { entityData: SidebarCardElement[] };
+    difficulties?: DifficultyFilter;
 
     exerciseTypes = [
         { name: 'Programming', value: 'programming' },
@@ -37,9 +32,6 @@ export class ExerciseFilterModalComponent {
         { name: 'File Upload', value: 'file-upload' },
     ];
 
-    difficulties = DEFAULT_DIFFICULTIES;
-    selectedDifficulties: any;
-
     constructor(private activeModal: NgbActiveModal) {}
 
     ngOnInit(): void {
@@ -48,7 +40,8 @@ export class ExerciseFilterModalComponent {
         const existingDifficulties = this.sidebarData?.ungroupedData
             ?.filter((sidebarElement: SidebarCardElement) => sidebarElement.difficulty !== undefined)
             .map((sidebarElement: SidebarCardElement) => sidebarElement.difficulty);
-        this.difficulties.filter((difficulty) => existingDifficulties?.includes(difficulty.value));
+        this.difficulties?.filter((difficulty) => existingDifficulties?.includes(difficulty.value));
+        // TODO do not display difficulties selection if not enough selection options
     }
 
     closeModal(): void {
@@ -62,10 +55,10 @@ export class ExerciseFilterModalComponent {
     }
 
     private applyDifficultyFilter() {
-        const searchedDifficulties: DifficultyLevel[] = this.difficulties.filter((difficulty) => difficulty.checked).map((difficulty) => difficulty.value);
-
-        console.log({ searchedDifficulties });
-
+        if (!this.difficulties) {
+            return;
+        }
+        const searchedDifficulties: DifficultyLevel[] = this.difficulties?.filter((difficulty) => difficulty.checked).map((difficulty) => difficulty.value);
         if (searchedDifficulties.length === 0) {
             return;
         }
