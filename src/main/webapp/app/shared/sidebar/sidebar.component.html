@@ -4,7 +4,7 @@
             @if (searchFieldEnabled) {
                 <div class="mt-2 mb-2">
                     <jhi-search-filter (newSearchEvent)="setSearchValue($event)" class="mb-2" />
-                    <fa-icon [icon]="faFilter" /> Filter
+                    <a (click)="openFilterDialog()"> <fa-icon [icon]="faFilter" /> Filter </a>
                 </div>
             }
             @if (!sidebarData?.ungroupedData || !(sidebarData?.ungroupedData | searchFilter: ['title', 'type'] : searchValue)?.length) {

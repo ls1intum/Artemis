@@ -5,6 +5,8 @@ import { Subscription, distinctUntilChanged } from 'rxjs';
 import { ProfileService } from '../layouts/profiles/profile.service';
 import { SidebarData } from 'app/types/sidebar';
 import { SidebarEventService } from './sidebar-event.service';
+import { MatDialog } from '@angular/material/dialog';
+import { ExerciseFilterComponent } from 'app/shared/exercise-filter/exercise-filter.component';
 
 @Component({
     selector: 'jhi-sidebar',
@@ -35,6 +37,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         private route: ActivatedRoute,
         private profileService: ProfileService,
         private sidebarEventService: SidebarEventService,
+        private dialog: MatDialog,
     ) {}
 
     ngOnInit(): void {
@@ -73,5 +76,9 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         this.profileSubscription?.unsubscribe();
         this.sidebarEventSubscription?.unsubscribe();
         this.sidebarEventService.emitResetValue();
+    }
+
+    openFilterDialog() {
+        this.dialog.open(ExerciseFilterComponent);
     }
 }
