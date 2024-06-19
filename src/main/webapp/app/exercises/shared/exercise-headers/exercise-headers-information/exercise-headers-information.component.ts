@@ -18,6 +18,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
+import { InformationBoxComponent } from 'app/shared/information-box/information-box.component';
 
 export interface InformationBox {
     title: string;
@@ -33,7 +34,7 @@ export interface InformationBox {
     selector: 'jhi-exercise-headers-information',
     templateUrl: './exercise-headers-information.component.html',
     standalone: true,
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, SubmissionResultStatusModule, ExerciseCategoriesModule],
+    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, SubmissionResultStatusModule, ExerciseCategoriesModule, InformationBoxComponent],
     styleUrls: ['./exercise-headers-information.component.scss'],
     // Our tsconfig file has `preserveWhitespaces: 'true'` which causes whitespace to affect content projection.
     // We need to set it to 'false 'for this component, otherwise the components with the selector [contentComponent]
@@ -78,8 +79,6 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     ) {}
 
     ngOnInit() {
-        // this.exerciseCategories = this.exercise.categories || [];
-
         if (this.exercise.type) {
             this.icon = getIcon(this.exercise.type);
         }
@@ -110,18 +109,22 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     }
 
     createInformationBoxItems() {
+        console.log('Create Information Box Items');
         const notReleased = this.exercise.releaseDate && dayjs(this.exercise.releaseDate).isAfter(dayjs());
         if (this.exercise.maxPoints) this.informationBoxItems.push(this.getPointsItem(this.exercise.maxPoints, 'points'));
         if (this.exercise.bonusPoints) this.informationBoxItems.push(this.getPointsItem(this.exercise.bonusPoints, 'bonus'));
 
         if (this.exercise.dueDate) this.informationBoxItems.push(this.getDueDateItem());
-        this.informationBoxItems.push(this.getDifficultyItem());
+        if (this.exercise.startDate && dayjs().isBefore(this.exercise.startDate)) this.informationBoxItems.push(this.getStartDateItem());
         // (exercise.releaseDate && dayjs(exercise.releaseDate).isAfter(dayjs()))
-        if (notReleased || this.exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY || this.exercise.categories?.length)
-            this.informationBoxItems.push(this.getCategoryItems());
+
         // this.informationBoxItems.push(this.getNextRelevantDateItem());
         // if (this.submissionPolicy?.active) this.informationBoxItems.push(this.getSubmissionPolicyItem());
         this.informationBoxItems.push(this.getSubmissionStatusItem());
+        if (this.submissionPolicy?.active && this.submissionPolicy?.submissionLimit) this.informationBoxItems.push(this.getSubmissionPolicyItem());
+        this.informationBoxItems.push(this.getDifficultyItem());
+        if (notReleased || this.exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY || this.exercise.categories?.length)
+            this.informationBoxItems.push(this.getCategoryItems());
 
         // if (this.exercise.assessmentType && this.exercise.type === ExerciseType.PROGRAMMING) this.informationBoxItems.push(this.getAssessmentTypeItem());
     }
@@ -139,12 +142,20 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
 
         return {
             title: 'artemisApp.courseOverview.exerciseDetails.submissionDue',
-            //  less than a week make time relative to now
             content: this.dueDate,
             contentComponent: this.shouldDisplayDueDateRelative ? 'timeAgo' : 'dateTime',
             tooltip: this.shouldDisplayDueDateRelative ? 'artemisApp.courseOverview.exerciseDetails.submissionDueTooltip' : undefined,
             contentColor: this.dueDateStatusBadge,
             tooltipParams: { date: this.dueDate?.format('lll') },
+        };
+    }
+    getStartDateItem(): InformationBox {
+        return {
+            title: 'artemisApp.courseOverview.exerciseDetails.startDate',
+            //  less than a week make time relative to now
+            content: this.exercise.startDate,
+            contentComponent: 'dateTime',
+            tooltip: this.shouldDisplayDueDateRelative ? 'artemisApp.exerciseActions.startExerciseBeforeStartDate' : undefined,
         };
     }
     //  Status: Not released, no graded, graded, submitted, reviewed, assessed, complaint, complaint response, complaint applied, complaint resolved
@@ -164,6 +175,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
         if (!title) return '-';
         return title.toString().charAt(0).toUpperCase() + title.slice(1).toLowerCase();
     }
+
     getDifficultyItem(): InformationBox {
         return {
             title: 'artemisApp.courseOverview.exerciseDetails.difficulty',
@@ -227,7 +239,6 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
 
     // }
 
-    // separate Points and Bonus Points
     // DO one function with input
     getPointsItem(points: number | undefined, title: string): InformationBox {
         return {
@@ -236,36 +247,26 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
         };
     }
 
-    // getDefaultItems(): InformationBox[] {
-    //     const exercisesItem: InformationBox = {
-    //         title: `${this.baseResource}`,
-    //         icon: faEye,
-    //         content: 'entity.action.view',
-    //     };
-
-    //     const statisticsItem: InformationBox = {
-    //         routerLink: `${this.baseResource}scores`,
-    //         icon: faTable,
-    //         translation: 'entity.action.scores',
-    //     };
-
-    //     return [exercisesItem, statisticsItem];
-    // }
-
-    // Check what I really need
-
-    ngOnChanges() {
-        this.course = this.course ?? getCourseFromExercise(this.exercise);
-
+    updateSubmissionPolicyItem() {
         if (this.submissionPolicy?.active && this.submissionPolicy?.submissionLimit) {
-            console.log('Changes Submission');
             this.countSubmissions();
+
             // need to push and pop the submission policy item to update the number of submissions
-            this.informationBoxItems.push(this.getSubmissionPolicyItem());
+            const submissionItemIndex = this.informationBoxItems.findIndex((item) => item.title === 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle');
+            if (submissionItemIndex !== -1) {
+                this.informationBoxItems.splice(submissionItemIndex, 1, this.getSubmissionPolicyItem());
+            }
             // if (this.submissionPolicy?.exceedingPenalty) {
             //     this.informationBoxItems.push(this.getExceedingPenalty());
             // }
         }
+    }
+
+    ngOnChanges() {
+        this.course = this.course ?? getCourseFromExercise(this.exercise);
+
+        this.updateSubmissionPolicyItem();
+
         if (this.studentParticipation?.results?.length) {
             // The updated participation by the websocket is not guaranteed to be sorted, find the newest result (highest id)
             this.sortService.sortByProperty(this.studentParticipation.results, 'id', false);

@@ -1,5 +1,5 @@
 @if (exercise) {
-    <div class="d-flex flex-wrap column-gap-3 flex-nowrap overflow-auto horizontal-scrollbar-hidden">
+    <div class="d-flex flex-row flex-wrap column-gap-3 flex-nowrap overflow-auto horizontal-scrollbar-hidden">
         <!-- TODO ON MOBILE SCROLLABLE  -->
         @for (informationBoxItem of informationBoxItems; track informationBoxItem) {
             <jhi-information-box [informationBoxData]="informationBoxItem">
