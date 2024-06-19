@@ -43,11 +43,11 @@ public interface QuizConfiguration {
                 if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
                     DragAndDropQuestionStatistic dragAndDropStatistic = (DragAndDropQuestionStatistic) dragAndDropQuestion.getQuizQuestionStatistic();
                     // reconnect dropLocations
-                    setQuizQuestions(dragAndDropQuestion.getDropLocations(), dragAndDropQuestion);
+                    setQuizQuestions(dragAndDropQuestion.getContent().getDropLocations(), dragAndDropQuestion);
                     // reconnect dragItems
-                    setQuizQuestions(dragAndDropQuestion.getDragItems(), dragAndDropQuestion);
+                    setQuizQuestions(dragAndDropQuestion.getContent().getDragItems(), dragAndDropQuestion);
                     // reconnect correctMappings
-                    setQuizQuestions(dragAndDropQuestion.getCorrectMappings(), dragAndDropQuestion);
+                    setQuizQuestions(dragAndDropQuestion.getContent().getCorrectMappings(), dragAndDropQuestion);
                     // reconnect dropLocationCounters
                     setQuizQuestionStatistics(dragAndDropStatistic.getDropLocationCounters(), dragAndDropQuestion, dragAndDropStatistic);
                 }

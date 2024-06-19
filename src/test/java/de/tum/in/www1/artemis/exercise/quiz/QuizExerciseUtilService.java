@@ -40,7 +40,6 @@ import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSubmittedText;
 import de.tum.in.www1.artemis.exam.ExamFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.DragAndDropMappingRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.QuizBatchRepository;
@@ -53,6 +52,7 @@ import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.util.QuizUpdaterService;
 
 /**
  * Service responsible for initializing the database with specific testdata related to quiz exercises for use in integration tests.
@@ -97,9 +97,6 @@ public class QuizExerciseUtilService {
     private SubmittedAnswerRepository submittedAnswerRepository;
 
     @Autowired
-    private DragAndDropMappingRepository dragAndDropMappingRepository;
-
-    @Autowired
     private QuizQuestionRepository quizQuestionRepository;
 
     @Autowired
@@ -110,6 +107,9 @@ public class QuizExerciseUtilService {
 
     @Autowired
     private QuizScheduleService quizScheduleService;
+
+    @Autowired
+    private QuizUpdaterService quizUpdaterService;
 
     /**
      * Creates and saves a course with one quiz exercise with the title "Title".
@@ -137,6 +137,7 @@ public class QuizExerciseUtilService {
         assertThat(quizExercise.isValid()).isTrue();
         course.addExercises(quizExercise);
         course = courseRepo.save(course);
+        quizUpdaterService.updateQuizQuestions(quizExercise);
         quizExercise = exerciseRepo.save(quizExercise);
         assertThat(courseRepo.findWithEagerExercisesById(course.getId()).getExercises()).as("course contains the exercise").contains(quizExercise);
         return course;
@@ -180,6 +181,8 @@ public class QuizExerciseUtilService {
      */
     public QuizExercise createAndSaveQuiz(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
         QuizExercise quizExercise = createQuiz(releaseDate, dueDate, quizMode);
+        quizUpdaterService.updateQuizQuestions(quizExercise);
+
         quizExerciseRepository.save(quizExercise);
 
         return quizExercise;
@@ -257,6 +260,7 @@ public class QuizExerciseUtilService {
 
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExerciseForExam(exerciseGroup);
         QuizExerciseFactory.addQuestionsToQuizExercise(quizExercise);
+        quizUpdaterService.updateQuizQuestions(quizExercise);
 
         quizExerciseRepository.save(quizExercise);
 
@@ -365,7 +369,7 @@ public class QuizExerciseUtilService {
         DragAndDropMapping mappingWithImage = new DragAndDropMapping();
         mappingWithImage.setDragItem(dragAndDropQuestion.getDragItems().get(4));
         mappingWithImage.setDropLocation(dragAndDropQuestion.getDropLocations().get(3));
-        dragAndDropQuestion.addCorrectMapping(dragAndDropMapping);
+        dragAndDropQuestion.getContent().getCorrectMappings().add(dragAndDropMapping);
         studentParticipationRepository.save(studentParticipation);
         quizSubmissionRepository.save(quizSubmission);
         submittedShortAnswer.setSubmission(quizSubmission);
@@ -379,9 +383,6 @@ public class QuizExerciseUtilService {
         dragAndDropMapping.setQuestion(null);
         incorrectDragAndDropMapping.setQuestion(null);
         mappingWithImage.setQuestion(null);
-        dragAndDropMapping = dragAndDropMappingRepository.save(dragAndDropMapping);
-        incorrectDragAndDropMapping = dragAndDropMappingRepository.save(incorrectDragAndDropMapping);
-        mappingWithImage = dragAndDropMappingRepository.save(mappingWithImage);
         dragAndDropMapping.setQuestion(dragAndDropQuestion);
         incorrectDragAndDropMapping.setQuestion(dragAndDropQuestion);
         mappingWithImage.setQuestion(dragAndDropQuestion);
@@ -418,6 +419,8 @@ public class QuizExerciseUtilService {
     public QuizExercise createAndSaveQuizWithAllQuestionTypes(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, QuizMode quizMode) {
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(releaseDate, dueDate, assessmentDueDate, quizMode, course);
         QuizExerciseFactory.addAllQuestionTypesToQuizExercise(quizExercise);
+        quizUpdaterService.updateQuizQuestions(quizExercise);
+
         return quizExerciseRepository.save(quizExercise);
     }
 }

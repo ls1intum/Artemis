@@ -63,8 +63,10 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
+import de.tum.in.www1.artemis.service.quiz.QuizExerciseService;
 import de.tum.in.www1.artemis.service.quiz.QuizPoolService;
 import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.util.QuizUpdaterService;
 
 /**
  * Service responsible for initializing the database with specific testdata related to exams for use in integration tests.
@@ -135,6 +137,12 @@ public class ExamUtilService {
 
     @Autowired
     private QuizPoolService quizPoolService;
+
+    @Autowired
+    private QuizExerciseService quizExerciseService;
+
+    @Autowired
+    private QuizUpdaterService quizUpdaterService;
 
     /**
      * Creates and saves a course with an exam and an exercise group with all exercise types excluding programming exercises.
@@ -778,6 +786,10 @@ public class ExamUtilService {
         }
 
         QuizExercise quizExercise2 = QuizExerciseFactory.createQuizForExam(exerciseGroup1);
+
+        quizUpdaterService.updateQuizQuestions(quizExercise1);
+        quizUpdaterService.updateQuizQuestions(quizExercise2);
+
         exerciseGroup1.setExercises(Set.of(quizExercise1, quizExercise2));
         exerciseRepo.save(quizExercise1);
         exerciseRepo.save(quizExercise2);
@@ -872,6 +884,7 @@ public class ExamUtilService {
             var exerciseGroup3 = exam.getExerciseGroups().get(2 + (withProgrammingExercise ? 1 : 0));
             // Programming exercises need a proper setup for 'prepare exam start' to work
             QuizExercise quizExercise = QuizExerciseFactory.createQuizForExam(exerciseGroup3);
+            quizUpdaterService.updateQuizQuestions(quizExercise);
             exerciseRepo.save(quizExercise);
             exerciseGroup3.setExercises(Set.of(quizExercise));
         }
@@ -1115,5 +1128,4 @@ public class ExamUtilService {
         studentExam.addExercise(exercise);
         return studentExamRepository.save(studentExam);
     }
-
 }

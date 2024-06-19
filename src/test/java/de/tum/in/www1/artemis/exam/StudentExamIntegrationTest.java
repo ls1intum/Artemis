@@ -1763,7 +1763,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
                     QuizQuestion question = submittedAnswer.getQuizQuestion();
                     if (question != null) {
                         assertThat(question.getExplanation()).isNotNull();
-                        assertThat(question.getQuizQuestionStatistic()).isNull();
                         if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
                             ((ShortAnswerSubmittedAnswer) submittedAnswer).getSubmittedTexts().forEach(submittedText -> assertThat(submittedText.isIsCorrect()).isNotNull());
                             assertThat(((ShortAnswerQuestion) question).getCorrectMappings()).isNotEmpty();

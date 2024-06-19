@@ -369,36 +369,36 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
             // MC, DnD and short Answer are all incorrect
             if (pointCounter.getPoints() == 0.0) {
                 assertThat(pointCounter.getRatedCounter()).isEqualTo(NUMBER_OF_STUDENTS - NUMBER_OF_STUDENTS / 2 - NUMBER_OF_STUDENTS / 3 + NUMBER_OF_STUDENTS / 6);
-                assertThat(pointCounter.getUnRatedCounter()).isZero();
+                assertThat(pointCounter.getUnratedCounter()).isZero();
             }
             // only DnD is correct
             else if (pointCounter.getPoints() == 3.0) {
                 assertThat(pointCounter.getRatedCounter()).isEqualTo(NUMBER_OF_STUDENTS / 3 - NUMBER_OF_STUDENTS / 6);
-                assertThat(pointCounter.getUnRatedCounter()).isZero();
+                assertThat(pointCounter.getUnratedCounter()).isZero();
             }
             // only MC is correct
             else if (pointCounter.getPoints() == 4.0) {
                 assertThat(pointCounter.getRatedCounter()).isEqualTo(NUMBER_OF_STUDENTS / 2 - NUMBER_OF_STUDENTS / 6 - NUMBER_OF_STUDENTS / 4);
-                assertThat(pointCounter.getUnRatedCounter()).isZero();
+                assertThat(pointCounter.getUnratedCounter()).isZero();
             }
             // MC and short Answer are correct
             else if (pointCounter.getPoints() == 6.0) {
                 assertThat(pointCounter.getRatedCounter()).isEqualTo(NUMBER_OF_STUDENTS / 4);
-                assertThat(pointCounter.getUnRatedCounter()).isZero();
+                assertThat(pointCounter.getUnratedCounter()).isZero();
             }
             // MC and DnD are correct
             else if (pointCounter.getPoints() == 7.0) {
                 assertThat(pointCounter.getRatedCounter()).isEqualTo(NUMBER_OF_STUDENTS / 6);
-                assertThat(pointCounter.getUnRatedCounter()).isZero();
+                assertThat(pointCounter.getUnratedCounter()).isZero();
             }
             // MC, DnD and short Answer are all correct
             else if (pointCounter.getPoints() == 9.0) {
                 assertThat(pointCounter.getRatedCounter()).isEqualTo(NUMBER_OF_STUDENTS / 12);
-                assertThat(pointCounter.getUnRatedCounter()).isZero();
+                assertThat(pointCounter.getUnratedCounter()).isZero();
             }
             else {
                 assertThat(pointCounter.getRatedCounter()).isZero();
-                assertThat(pointCounter.getUnRatedCounter()).isZero();
+                assertThat(pointCounter.getUnratedCounter()).isZero();
             }
         }
         // check statistic for each question
@@ -412,7 +412,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
             else {
                 assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(NUMBER_OF_STUDENTS / 4);
             }
-            assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isZero();
+            assertThat(question.getQuizQuestionStatistic().getUnratedCorrectCounter()).isZero();
             assertThat(question.getQuizQuestionStatistic().getParticipantsRated()).isEqualTo(NUMBER_OF_STUDENTS);
             assertThat(question.getQuizQuestionStatistic().getParticipantsUnrated()).isZero();
         }

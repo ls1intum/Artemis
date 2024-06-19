@@ -1,30 +1,24 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.in.www1.artemis.domain.TempIdObject;
 
 /**
  * A ShortAnswerSpotCounter.
  */
-@Entity
-@DiscriminatorValue(value = "SA")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ShortAnswerSpotCounter extends QuizStatisticCounter implements QuizQuestionStatisticComponent<ShortAnswerQuestionStatistic, ShortAnswerSpot, ShortAnswerQuestion> {
+public class ShortAnswerSpotCounter extends TempIdObject implements QuizQuestionStatisticComponent<ShortAnswerQuestionStatistic, ShortAnswerSpot, ShortAnswerQuestion> {
 
-    @ManyToOne
     @JsonIgnore
     private ShortAnswerQuestionStatistic shortAnswerQuestionStatistic;
 
-    @OneToOne(cascade = { CascadeType.PERSIST })
-    @JoinColumn(unique = true)
     private ShortAnswerSpot spot;
+
+    private Integer ratedCounter = 0;
+
+    private Integer unratedCounter = 0;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
@@ -65,5 +59,21 @@ public class ShortAnswerSpotCounter extends QuizStatisticCounter implements Quiz
     @Override
     public String toString() {
         return "ShortAnswerSpotCounter{" + "id=" + getId() + "}";
+    }
+
+    public Integer getRatedCounter() {
+        return ratedCounter;
+    }
+
+    public void setRatedCounter(Integer ratedCounter) {
+        this.ratedCounter = ratedCounter;
+    }
+
+    public Integer getUnratedCounter() {
+        return unratedCounter;
+    }
+
+    public void setUnratedCounter(Integer unratedCounter) {
+        this.unratedCounter = unratedCounter;
     }
 }

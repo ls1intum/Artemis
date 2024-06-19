@@ -3,27 +3,14 @@ package de.tum.in.www1.artemis.domain.quiz;
 import java.util.HashSet;
 import java.util.Set;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.OneToMany;
-
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * A MultipleChoiceQuestionStatistic.
  */
-@Entity
-@DiscriminatorValue(value = "MC")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic {
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "multipleChoiceQuestionStatistic")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<AnswerCounter> answerCounters = new HashSet<>();
 
     public Set<AnswerCounter> getAnswerCounters() {
@@ -65,9 +52,10 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic {
      * @param rated           specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate
      *                            of the quizExercise)
      * @param change          the int-value, which will be added to the Counter and participants
+     * @param quizQuestion    quiz question object statistics belongs to
      */
     @Override
-    protected void changeStatisticBasedOnResult(SubmittedAnswer submittedAnswer, boolean rated, int change) {
+    protected void changeStatisticBasedOnResult(SubmittedAnswer submittedAnswer, boolean rated, int change, QuizQuestion quizQuestion) {
         if (!(submittedAnswer instanceof MultipleChoiceSubmittedAnswer mcSubmittedAnswer)) {
             return;
         }
@@ -78,14 +66,14 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic {
 
             if (mcSubmittedAnswer.getSelectedOptions() != null) {
                 // change rated answerCounter if answer is selected
-                for (AnswerCounter answerCounter : answerCounters) {
+                for (AnswerCounter answerCounter : getAnswerCounters()) {
                     if (mcSubmittedAnswer.getSelectedOptions().contains(answerCounter.getAnswer())) {
                         answerCounter.setRatedCounter(answerCounter.getRatedCounter() + change);
                     }
                 }
             }
             // change rated correctCounter if answer is complete correct
-            if (getQuizQuestion().isAnswerCorrect(mcSubmittedAnswer)) {
+            if (quizQuestion.isAnswerCorrect(mcSubmittedAnswer)) {
                 setRatedCorrectCounter(getRatedCorrectCounter() + change);
             }
         }
@@ -95,17 +83,17 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic {
             setParticipantsUnrated(getParticipantsUnrated() + change);
 
             if (mcSubmittedAnswer.getSelectedOptions() != null) {
-                for (AnswerCounter answerCounter : answerCounters) {
+                for (AnswerCounter answerCounter : getAnswerCounters()) {
                     // change unrated answerCounter if answer is selected
                     if (mcSubmittedAnswer.getSelectedOptions().contains(answerCounter.getAnswer())) {
-                        answerCounter.setUnRatedCounter(answerCounter.getUnRatedCounter() + change);
+                        answerCounter.setUnratedCounter(answerCounter.getUnratedCounter() + change);
                     }
                 }
             }
 
             // change unrated correctCounter if answer is complete correct
-            if (getQuizQuestion().isAnswerCorrect(mcSubmittedAnswer)) {
-                setUnRatedCorrectCounter(getUnRatedCorrectCounter() + change);
+            if (quizQuestion.isAnswerCorrect(mcSubmittedAnswer)) {
+                setUnratedCorrectCounter(getUnratedCorrectCounter() + change);
             }
         }
     }
@@ -116,9 +104,9 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic {
     @Override
     public void resetStatistic() {
         super.resetStatistic();
-        for (AnswerCounter answerCounter : answerCounters) {
+        for (AnswerCounter answerCounter : getAnswerCounters()) {
             answerCounter.setRatedCounter(0);
-            answerCounter.setUnRatedCounter(0);
+            answerCounter.setUnratedCounter(0);
         }
     }
 }

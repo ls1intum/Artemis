@@ -1,17 +1,16 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
-import jakarta.persistence.OneToOne;
+import java.io.Serializable;
+import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonView;
 
-@Entity
-@DiscriminatorValue(value = "Q")
+import de.tum.in.www1.artemis.domain.view.QuizView;
+
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // @formatter:off
 @JsonSubTypes({
@@ -21,17 +20,18 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 })
 // @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public abstract class QuizQuestionStatistic extends QuizStatistic implements QuizQuestionComponent<QuizQuestion> {
+public abstract class QuizQuestionStatistic implements QuizQuestionComponent<QuizQuestion>, Serializable {
 
-    @Column(name = "rated_correct_counter")
+    @JsonView(QuizView.Before.class)
+    private Long id;
+
+    private Integer participantsRated = 0;
+
+    private Integer participantsUnrated = 0;
+
     private Integer ratedCorrectCounter = 0;
 
-    @Column(name = "un_rated_correct_counter")
-    private Integer unRatedCorrectCounter = 0;
-
-    @OneToOne(mappedBy = "quizQuestionStatistic")
-    @JsonIgnore
-    private QuizQuestion quizQuestion;
+    private Integer unratedCorrectCounter = 0;
 
     public Integer getRatedCorrectCounter() {
         return ratedCorrectCounter;
@@ -41,25 +41,17 @@ public abstract class QuizQuestionStatistic extends QuizStatistic implements Qui
         this.ratedCorrectCounter = ratedCorrectCounter;
     }
 
-    public Integer getUnRatedCorrectCounter() {
-        return unRatedCorrectCounter;
+    public Integer getUnratedCorrectCounter() {
+        return unratedCorrectCounter;
     }
 
-    public void setUnRatedCorrectCounter(Integer unRatedCorrectCounter) {
-        this.unRatedCorrectCounter = unRatedCorrectCounter;
-    }
-
-    public QuizQuestion getQuizQuestion() {
-        return quizQuestion;
-    }
-
-    public void setQuizQuestion(QuizQuestion quizQuestion) {
-        this.quizQuestion = quizQuestion;
+    public void setUnratedCorrectCounter(Integer unratedCorrectCounter) {
+        this.unratedCorrectCounter = unratedCorrectCounter;
     }
 
     @JsonIgnore
     public void setQuestion(QuizQuestion quizQuestion) {
-        setQuizQuestion(quizQuestion);
+
     }
 
     /**
@@ -68,9 +60,10 @@ public abstract class QuizQuestionStatistic extends QuizStatistic implements Qui
      * @param submittedAnswer the submittedAnswer object which contains all selected answers
      * @param rated           specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate
      *                            of the quizExercise)
+     * @param quizQuestion    quiz question object statistics belongs to
      */
-    public void addResult(SubmittedAnswer submittedAnswer, boolean rated) {
-        changeStatisticBasedOnResult(submittedAnswer, rated, 1);
+    public void addResult(SubmittedAnswer submittedAnswer, boolean rated, QuizQuestion quizQuestion) {
+        changeStatisticBasedOnResult(submittedAnswer, rated, 1, quizQuestion);
     }
 
     /**
@@ -79,12 +72,13 @@ public abstract class QuizQuestionStatistic extends QuizStatistic implements Qui
      * @param submittedAnswer the submittedAnswer object which contains all selected answers
      * @param rated           specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate
      *                            of the quizExercise)
+     * @param quizQuestion    quiz question object statistics belongs to
      */
-    public void removeOldResult(SubmittedAnswer submittedAnswer, boolean rated) {
-        changeStatisticBasedOnResult(submittedAnswer, rated, -1);
+    public void removeOldResult(SubmittedAnswer submittedAnswer, boolean rated, QuizQuestion quizQuestion) {
+        changeStatisticBasedOnResult(submittedAnswer, rated, -1, quizQuestion);
     }
 
-    protected abstract void changeStatisticBasedOnResult(SubmittedAnswer submittedAnswer, boolean rated, int change);
+    protected abstract void changeStatisticBasedOnResult(SubmittedAnswer submittedAnswer, boolean rated, int change, QuizQuestion quizQuestion);
 
     /**
      * reset the general statistics
@@ -93,12 +87,56 @@ public abstract class QuizQuestionStatistic extends QuizStatistic implements Qui
         setParticipantsRated(0);
         setParticipantsUnrated(0);
         setRatedCorrectCounter(0);
-        setUnRatedCorrectCounter(0);
+        setUnratedCorrectCounter(0);
     }
 
     @Override
     public String toString() {
-        return getClass() + "{" + "ratedCorrectCounter=" + ratedCorrectCounter + ", unRatedCorrectCounter=" + unRatedCorrectCounter + "participantsRated=" + getParticipantsRated()
+        return getClass() + "{" + "ratedCorrectCounter=" + ratedCorrectCounter + ", unRatedCorrectCounter=" + unratedCorrectCounter + "participantsRated=" + getParticipantsRated()
                 + ", participantsUnrated=" + getParticipantsUnrated() + '}';
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Integer getParticipantsRated() {
+        return participantsRated;
+    }
+
+    public void setParticipantsRated(Integer participantsRated) {
+        this.participantsRated = participantsRated;
+    }
+
+    public Integer getParticipantsUnrated() {
+        return participantsUnrated;
+    }
+
+    public void setParticipantsUnrated(Integer participantsUnrated) {
+        this.participantsUnrated = participantsUnrated;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        QuizQuestionStatistic quizQuestionStatistic = (QuizQuestionStatistic) obj;
+        if (quizQuestionStatistic.getId() == null || getId() == null) {
+            return false;
+        }
+        return Objects.equals(getId(), quizQuestionStatistic.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(getId());
     }
 }

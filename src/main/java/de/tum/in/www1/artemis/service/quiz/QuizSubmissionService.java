@@ -20,6 +20,8 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.AbstractQuizSubmission;
+import de.tum.in.www1.artemis.domain.quiz.DragAndDropSubmittedAnswer;
+import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceSubmittedAnswer;
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
@@ -265,6 +267,12 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         // recreate pointers back to submission in each submitted answer
         for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
             submittedAnswer.setSubmission(quizSubmission);
+            if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer) {
+                QuizIdAssigner.assignIds(multipleChoiceSubmittedAnswer.getSelectedOptions());
+            }
+            else if (submittedAnswer instanceof DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer) {
+                QuizIdAssigner.assignIds(dragAndDropSubmittedAnswer.getMappings());
+            }
         }
         // make sure certain values are not overridden wrongly
         quizSubmission.setId(existingSubmission.getId());

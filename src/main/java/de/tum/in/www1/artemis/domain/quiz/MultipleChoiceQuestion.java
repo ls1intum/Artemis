@@ -5,17 +5,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OrderColumn;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -36,10 +31,9 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class MultipleChoiceQuestion extends QuizQuestion {
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @JoinColumn(name = "question_id")
-    @OrderColumn
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    // Specifies that the `content` field should be stored as JSON in the database.
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "content", columnDefinition = "json")
     @JsonView(QuizView.Before.class)
     private List<AnswerOption> answerOptions = new ArrayList<>();
 
@@ -214,6 +208,9 @@ public class MultipleChoiceQuestion extends QuizQuestion {
         // check answer options
         if (getAnswerOptions() != null) {
             for (AnswerOption answerOption : getAnswerOptions()) {
+                if (!answerOption.explanationValid()) {
+                    return false;
+                }
                 if (answerOption.isIsCorrect()) {
                     correctAnswerCount++;
                 }

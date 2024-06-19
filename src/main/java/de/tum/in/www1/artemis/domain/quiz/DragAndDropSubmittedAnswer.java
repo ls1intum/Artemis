@@ -4,15 +4,12 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToMany;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
@@ -28,10 +25,9 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class DragAndDropSubmittedAnswer extends SubmittedAnswer {
 
-    // NOTE: this relation cannot be bidirectional, because it would otherwise be ManyToMany
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @JoinColumn(name = "submitted_answer_id")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    // Specifies that the `selection` field should be stored as JSON in the database.
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "selection", columnDefinition = "json")
     @JsonView(QuizView.Before.class)
     private Set<DragAndDropMapping> mappings = new HashSet<>();
 

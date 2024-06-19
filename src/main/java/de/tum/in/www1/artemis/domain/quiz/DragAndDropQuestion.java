@@ -6,21 +6,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OrderColumn;
+import jakarta.persistence.PostLoad;
 import jakarta.persistence.PostPersist;
 import jakarta.persistence.PostRemove;
+import jakarta.persistence.PostUpdate;
 import jakarta.persistence.Transient;
 
 import org.apache.commons.lang3.StringUtils;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,36 +48,26 @@ public class DragAndDropQuestion extends QuizQuestion {
     @Transient
     private final transient FileService fileService = new FileService();
 
+    @Transient
+    @JsonView(QuizView.Before.class)
+    private List<DropLocation> dropLocations = new ArrayList<>();
+
+    @Transient
+    @JsonView(QuizView.Before.class)
+    private List<DragItem> dragItems = new ArrayList<>();
+
+    @Transient
+    @JsonView(QuizView.After.class)
+    private List<DragAndDropMapping> correctMappings = new ArrayList<>();
+
     @Column(name = "background_file_path")
     @JsonView(QuizView.Before.class)
     private String backgroundFilePath;
 
-    // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
-    // after 6.x upgrade
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @JoinColumn(name = "question_id")
-    @OrderColumn
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonView(QuizView.Before.class)
-    private List<DropLocation> dropLocations = new ArrayList<>();
-
-    // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
-    // after 6.x upgrade
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @JoinColumn(name = "question_id")
-    @OrderColumn
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonView(QuizView.Before.class)
-    private List<DragItem> dragItems = new ArrayList<>();
-
-    // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
-    // after 6.x upgrade
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @JoinColumn(name = "question_id")
-    @OrderColumn
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonView(QuizView.After.class)
-    private List<DragAndDropMapping> correctMappings = new ArrayList<>();
+    // Specifies that the `content` field should be stored as JSON in the database.
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "content", columnDefinition = "json")
+    private DragAndDropDAO content = new DragAndDropDAO();
 
     public String getBackgroundFilePath() {
         return backgroundFilePath;
@@ -150,6 +137,14 @@ public class DragAndDropQuestion extends QuizQuestion {
         this.correctMappings = dragAndDropMappings;
     }
 
+    public DragAndDropDAO getContent() {
+        return content;
+    }
+
+    public void setContent(DragAndDropDAO content) {
+        this.content = content;
+    }
+
     @Override
     public Boolean isValid() {
         // check general validity (using superclass)
@@ -196,6 +191,18 @@ public class DragAndDropQuestion extends QuizQuestion {
         catch (FilePathParsingException e) {
             // if the file path is invalid, we don't need to delete it
             log.warn("Could not delete file with path {}. Assume already deleted, DragAndDropQuestion {} can be removed.", backgroundFilePath, getId());
+        }
+
+        for (DragItem dragItem : dragItems) {
+            try {
+                if (dragItem.getPictureFilePath() != null) {
+                    fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(dragItem.getPictureFilePath())), 0);
+                }
+            }
+            catch (FilePathParsingException e) {
+                // if the file path is invalid, we don't need to delete it
+                log.warn("Could not delete file with path {}. Assume already deleted, DragAndDropQuestion {} can be removed.", dragItem.getPictureFilePath(), getId());
+            }
         }
     }
 
@@ -411,6 +418,24 @@ public class DragAndDropQuestion extends QuizQuestion {
         return updateNecessary;
     }
 
+    /**
+     * check if the DropLocation is solved correctly
+     *
+     * @param dndAnswer    Answer from the student with the List of submittedMappings from the Result
+     * @param dropLocation Drop location object
+     * @return if the drop location is correct
+     */
+    public boolean isDropLocationCorrect(DragAndDropSubmittedAnswer dndAnswer, DropLocation dropLocation) {
+
+        Set<DragItem> correctDragItems = this.getCorrectDragItemsForDropLocation(dropLocation);
+        DragItem selectedDragItem = dndAnswer.getSelectedDragItemForDropLocation(dropLocation);
+
+        // this drop location was meant to stay empty and user didn't drag anything onto it
+        // OR the user dragged one of the correct drag items onto this drop location
+        // => this is correct => Return true;
+        return ((correctDragItems.isEmpty() && selectedDragItem == null) || (selectedDragItem != null && correctDragItems.contains(selectedDragItem)));
+    }
+
     @Override
     public void filterForStudentsDuringQuiz() {
         super.filterForStudentsDuringQuiz();
@@ -447,5 +472,30 @@ public class DragAndDropQuestion extends QuizQuestion {
         var question = new DragAndDropQuestion();
         question.setId(getId());
         return question;
+    }
+
+    /**
+     * This method is triggered after the entity is loaded from or updated in the database. It performs the following tasks:
+     *
+     * 1. Iterates over the drag items within the content and updates the picture file paths if they contain a specific placeholder.
+     * The placeholder is replaced with the entity's ID and the drag item's ID.
+     * 2. Sets the drop locations, drag items, and correct mappings from the content to the current entity.
+     *
+     * This method is annotated with `@PostLoad` and `@PostUpdate` to ensure it is executed after the entity is loaded or updated.
+     */
+    @PostLoad
+    @PostUpdate
+    public void loadContent() {
+        for (DragItem dragItem : content.getDragItems()) {
+            if (dragItem.getPictureFilePath() != null && dragItem.getPictureFilePath().contains(Constants.FILEPATH_ID_PLACEHOLDER)) {
+                dragItem.setPictureFilePath(dragItem.getPictureFilePath().replace(Constants.FILEPATH_ID_PLACEHOLDER, getId().toString() + "/" + dragItem.getId()));
+            }
+        }
+
+        if (content != null) {
+            setDropLocations(content.getDropLocations());
+            setDragItems(content.getDragItems());
+            setCorrectMappings(content.getCorrectMappings());
+        }
     }
 }

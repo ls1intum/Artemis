@@ -5,20 +5,16 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
-import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
@@ -29,9 +25,9 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JoinTable(name = "multiple_choice_submitted_answer_selected_options", joinColumns = @JoinColumn(name = "multiple_choice_submitted_answers_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "selected_options_id", referencedColumnName = "id"))
+    // Specifies that the `selection` field should be stored as JSON in the database.
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "selection", columnDefinition = "json")
     @JsonView(QuizView.Before.class)
     private Set<AnswerOption> selectedOptions = new HashSet<>();
 
@@ -110,6 +106,6 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
     }
 
     public Set<Long> toSelectedIds() {
-        return getSelectedOptions().stream().map(DomainObject::getId).collect(Collectors.toSet());
+        return getSelectedOptions().stream().map(AnswerOption::getId).collect(Collectors.toSet());
     }
 }

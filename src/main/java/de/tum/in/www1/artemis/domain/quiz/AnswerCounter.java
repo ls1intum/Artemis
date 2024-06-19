@@ -1,30 +1,24 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.in.www1.artemis.domain.TempIdObject;
 
 /**
  * A AnswerCounter.
  */
-@Entity
-@DiscriminatorValue(value = "AC")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class AnswerCounter extends QuizStatisticCounter implements QuizQuestionStatisticComponent<MultipleChoiceQuestionStatistic, AnswerOption, MultipleChoiceQuestion> {
+public class AnswerCounter extends TempIdObject implements QuizQuestionStatisticComponent<MultipleChoiceQuestionStatistic, AnswerOption, MultipleChoiceQuestion> {
 
-    @ManyToOne
     @JsonIgnore
     private MultipleChoiceQuestionStatistic multipleChoiceQuestionStatistic;
 
-    @OneToOne(cascade = { CascadeType.PERSIST })
-    @JoinColumn(unique = true)
     private AnswerOption answer;
+
+    private Integer ratedCounter = 0;
+
+    private Integer unratedCounter = 0;
 
     public MultipleChoiceQuestionStatistic getMultipleChoiceQuestionStatistic() {
         return multipleChoiceQuestionStatistic;
@@ -62,6 +56,22 @@ public class AnswerCounter extends QuizStatisticCounter implements QuizQuestionS
 
     @Override
     public String toString() {
-        return "AnswerCounter{" + "id=" + getId() + ", rated=" + getRatedCounter() + ", unrated=" + getUnRatedCounter() + "}";
+        return "AnswerCounter{" + "id=" + getId() + ", rated=" + getRatedCounter() + ", unrated=" + getUnratedCounter() + "}";
+    }
+
+    public Integer getRatedCounter() {
+        return ratedCounter;
+    }
+
+    public void setRatedCounter(Integer ratedCounter) {
+        this.ratedCounter = ratedCounter;
+    }
+
+    public Integer getUnratedCounter() {
+        return unratedCounter;
+    }
+
+    public void setUnratedCounter(Integer unratedCounter) {
+        this.unratedCounter = unratedCounter;
     }
 }

@@ -187,6 +187,24 @@ public class FilePathService {
     /**
      * Generate the public path for the file at the given path
      *
+     * @param actualPathString the path to the file in the local filesystem
+     * @param idCombination    ids of the question and the drag item associated with the file
+     * @throws FilePathParsingException if the path is unknown
+     * @return the public file url that can be used by users to access the file from outside
+     */
+    public static URI publicPathForActualPathOrThrow(Path actualPathString, @Nullable String idCombination) {
+        URI publicPath = publicPathForActualPath(actualPathString, idCombination);
+        if (publicPath == null) {
+            // path is unknown => cannot convert
+            throw new FilePathParsingException("Unknown Filepath: " + actualPathString);
+        }
+
+        return publicPath;
+    }
+
+    /**
+     * Generate the public path for the file at the given path
+     *
      * @param path     the path to the file in the local filesystem
      * @param entityId the id of the entity associated with the file
      * @return the public file url that can be used by users to access the file from outside
@@ -224,6 +242,28 @@ public class FilePathService {
         }
         if (path.startsWith(getFileUploadExercisesFilePath())) {
             return publicPathForActualFileUploadExercisesFilePath(path, filename, id);
+        }
+
+        return null;
+    }
+
+    /**
+     * Generate the public path for the file at the given path
+     *
+     * @param path          the path to the file in the local filesystem
+     * @param idCombination ids of the question and the drag item associated with the file
+     * @return the public file url that can be used by users to access the file from outside
+     */
+    public static URI publicPathForActualPath(Path path, @Nullable String idCombination) {
+        // first extract filename
+        String filename = path.getFileName().toString();
+
+        // generate part for id
+        String id = (idCombination == null) ? Constants.FILEPATH_ID_PLACEHOLDER : idCombination;
+
+        // check for known path to convert
+        if (path.startsWith(getDragItemFilePath())) {
+            return URI.create("/api/files/drag-and-drop/drag-items/" + id + "/" + filename);
         }
 
         return null;

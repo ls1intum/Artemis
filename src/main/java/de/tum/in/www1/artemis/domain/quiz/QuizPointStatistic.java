@@ -3,34 +3,19 @@ package de.tum.in.www1.artemis.domain.quiz;
 import java.util.HashSet;
 import java.util.Set;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
-
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * A QuizPointStatistic.
  */
-@Entity
-@DiscriminatorValue(value = "QP")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class QuizPointStatistic extends QuizStatistic {
+public class QuizPointStatistic {
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "quizPointStatistic")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<PointCounter> pointCounters = new HashSet<>();
 
-    @OneToOne(mappedBy = "quizPointStatistic", fetch = FetchType.LAZY)
-    @JsonIgnore
-    private QuizExercise quiz;
+    private Integer participantsRated = 0;
+
+    private Integer participantsUnrated = 0;
 
     public Set<PointCounter> getPointCounters() {
         return pointCounters;
@@ -52,17 +37,25 @@ public class QuizPointStatistic extends QuizStatistic {
         this.pointCounters = pointCounters;
     }
 
-    public QuizExercise getQuiz() {
-        return quiz;
+    public Integer getParticipantsRated() {
+        return participantsRated;
     }
 
-    public void setQuiz(QuizExercise quizExercise) {
-        this.quiz = quizExercise;
+    public void setParticipantsRated(Integer participantsRated) {
+        this.participantsRated = participantsRated;
+    }
+
+    public Integer getParticipantsUnrated() {
+        return participantsUnrated;
+    }
+
+    public void setParticipantsUnrated(Integer participantsUnrated) {
+        this.participantsUnrated = participantsUnrated;
     }
 
     @Override
     public String toString() {
-        return "QuizPointStatistic{" + "id=" + getId() + ", counters=" + getPointCounters() + "}";
+        return "QuizPointStatistic{" + "counters=" + getPointCounters() + "}";
     }
 
     /**
@@ -89,29 +82,33 @@ public class QuizPointStatistic extends QuizStatistic {
     /**
      * increase participants and the PointCounter, which is associated to the score
      *
-     * @param score whose PointCounter increases
-     * @param rated specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate of the
-     *                  quizExercise)
+     * @param score        whose PointCounter increases
+     * @param rated        specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate of
+     *                         the
+     *                         quizExercise)
+     * @param quizExercise quiz exercise object statistics belongs to
      */
-    public void addResult(Double score, Boolean rated) {
+    public void addResult(Double score, Boolean rated, QuizExercise quizExercise) {
         if (score == null) {
             return;
         }
-        changeStatisticBasedOnResult(score, rated, 1);
+        changeStatisticBasedOnResult(score, rated, 1, quizExercise);
     }
 
     /**
      * decrease participants and the PointCounter, which is associated to the score
      *
-     * @param score whose PointCounter decreases
-     * @param rated specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate of the
-     *                  quizExercise)
+     * @param score        whose PointCounter decreases
+     * @param rated        specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate of
+     *                         the
+     *                         quizExercise)
+     * @param quizExercise quiz exercise object statistics belongs to
      */
-    public void removeOldResult(Double score, Boolean rated) {
+    public void removeOldResult(Double score, Boolean rated, QuizExercise quizExercise) {
         if (score == null) {
             return;
         }
-        changeStatisticBasedOnResult(score, rated, -1);
+        changeStatisticBasedOnResult(score, rated, -1, quizExercise);
     }
 
     /**
@@ -122,7 +119,7 @@ public class QuizPointStatistic extends QuizStatistic {
      *                        the quizExercise)
      * @param countChange the int-value, which will be added to the Counter and participants
      */
-    private void changeStatisticBasedOnResult(double score, Boolean rated, int countChange) {
+    private void changeStatisticBasedOnResult(double score, Boolean rated, int countChange, QuizExercise quiz) {
         /**
          * {@link RoundingUtil#roundScoreSpecifiedByCourseSettings}
          * is not applicable here, as we need to sort the points into existing integer buckets
@@ -147,7 +144,7 @@ public class QuizPointStatistic extends QuizStatistic {
             // find associated unrated pointCounter and change it
             for (PointCounter pointCounter : pointCounters) {
                 if (points == pointCounter.getPoints()) {
-                    pointCounter.setUnRatedCounter(pointCounter.getUnRatedCounter() + countChange);
+                    pointCounter.setUnratedCounter(pointCounter.getUnratedCounter() + countChange);
                 }
             }
         }
@@ -161,7 +158,7 @@ public class QuizPointStatistic extends QuizStatistic {
         setParticipantsRated(0);
         for (PointCounter pointCounter : pointCounters) {
             pointCounter.setRatedCounter(0);
-            pointCounter.setUnRatedCounter(0);
+            pointCounter.setUnratedCounter(0);
         }
     }
 }

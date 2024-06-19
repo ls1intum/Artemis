@@ -790,8 +790,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         var multipleChoiceQuestionAfterReevaluate = (MultipleChoiceQuestion) quizExerciseWithReevaluatedStatistics.getQuizQuestions().get(0);
         assertThat(multipleChoiceQuestionAfterReevaluate.getAnswerOptions()).hasSize(1);
 
-        assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic()).isEqualTo(quizExercise.getQuizPointStatistic());
-
         // one student should get a higher score
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()).hasSameSizeAs(quizExercise.getQuizPointStatistic().getPointCounters());
         log.debug("QuizPointStatistic after 1st re-evaluate: {}", quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
@@ -1533,7 +1531,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
         question.getAnswerOptions().get(0).setExplanation("0".repeat(validityThreshold + 1));
 
-        createQuizExerciseWithFiles(quizExercise, HttpStatus.INTERNAL_SERVER_ERROR, true);
+        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
     }
 
     @Test
@@ -1726,22 +1724,18 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 assertThat(dropLocations.get(0).getPosY()).as("Pos Y for drop location is correct").isEqualTo(10);
                 assertThat(dropLocations.get(0).getWidth()).as("Width for drop location is correct").isEqualTo(10);
                 assertThat(dropLocations.get(0).getHeight()).as("Height for drop location is correct").isEqualTo(10);
-                assertThat(dropLocations.get(0).getQuestion()).isNotNull();
                 assertThat(dropLocations.get(1).getPosX()).as("Pos X for drop location is correct").isEqualTo(20);
                 assertThat(dropLocations.get(1).getPosY()).as("Pos Y for drop location is correct").isEqualTo(20);
                 assertThat(dropLocations.get(1).getWidth()).as("Width for drop location is correct").isEqualTo(10);
                 assertThat(dropLocations.get(1).getHeight()).as("Height for drop location is correct").isEqualTo(10);
-                assertThat(dropLocations.get(1).getQuestion()).isNotNull();
                 assertThat(dropLocations.get(2).getPosX()).as("Pos X for drop location is correct").isEqualTo(30);
                 assertThat(dropLocations.get(2).getPosY()).as("Pos Y for drop location is correct").isEqualTo(30);
                 assertThat(dropLocations.get(2).getWidth()).as("Width for drop location is correct").isEqualTo(10);
                 assertThat(dropLocations.get(2).getHeight()).as("Height for drop location is correct").isEqualTo(10);
-                assertThat(dropLocations.get(2).getQuestion()).isNotNull();
                 assertThat(dropLocations.get(3).getPosX()).as("Pos X for drop location is correct").isEqualTo(40);
                 assertThat(dropLocations.get(3).getPosY()).as("Pos Y for drop location is correct").isEqualTo(40);
                 assertThat(dropLocations.get(3).getWidth()).as("Width for drop location is correct").isEqualTo(10);
                 assertThat(dropLocations.get(3).getHeight()).as("Height for drop location is correct").isEqualTo(10);
-                assertThat(dropLocations.get(3).getQuestion()).isNotNull();
 
                 List<DragItem> dragItems = dragAndDropQuestion.getDragItems();
                 assertThat(dragItems.get(0).getText()).as("Text for drag item is correct").isEqualTo("D1");
@@ -1855,20 +1849,20 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     }
 
     private void updateMultipleChoice(QuizExercise quizExercise) {
-        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
-        mc.getAnswerOptions().remove(0);
+        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
+        mc.getAnswerOptions().removeFirst();
         mc.getAnswerOptions().add(new AnswerOption().text("C").hint("H3").explanation("E3").isCorrect(true));
         mc.getAnswerOptions().add(new AnswerOption().text("D").hint("H4").explanation("E4").isCorrect(true));
 
         DragAndDropQuestion dnd = (DragAndDropQuestion) quizExercise.getQuizQuestions().get(1);
-        dnd.getDropLocations().remove(0);
-        dnd.getCorrectMappings().remove(0);
-        dnd.getDragItems().remove(0);
+        dnd.getContent().getDropLocations().removeFirst();
+        dnd.getContent().getCorrectMappings().removeFirst();
+        dnd.getContent().getDragItems().removeFirst();
 
         ShortAnswerQuestion sa = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(2);
-        sa.getSpots().remove(0);
-        sa.getSolutions().remove(0);
-        sa.getCorrectMappings().remove(0);
+        sa.getContent().getSpots().removeFirst();
+        sa.getContent().getSolutions().removeFirst();
+        sa.getContent().getCorrectMappings().removeFirst();
     }
 
     private QuizExercise createMultipleChoiceQuizExercise() {
@@ -1904,7 +1898,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private PointCounter pc(int rated, int unrated) {
         PointCounter pointCounter = new PointCounter();
         pointCounter.setRatedCounter(rated);
-        pointCounter.setUnRatedCounter(unrated);
+        pointCounter.setUnratedCounter(unrated);
         return pointCounter;
     }
 
@@ -1922,7 +1916,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
             assertThat(pointCounterAfter.getPoints()).isEqualTo(pointCounterBefore.getPoints());
             assertThat(pointCounterAfter.getRatedCounter()).isEqualTo(pointCounterBefore.getRatedCounter());
-            assertThat(pointCounterAfter.getUnRatedCounter()).isEqualTo(pointCounterBefore.getUnRatedCounter());
+            assertThat(pointCounterAfter.getUnratedCounter()).isEqualTo(pointCounterBefore.getUnratedCounter());
         }
 
         for (var quizQuestion : quizExercise.getQuizQuestions()) {
@@ -1957,12 +1951,12 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
             if (expectedPointCounter != null) {
                 assertThat(pointCounter.getRatedCounter()).as(pointCounter.getPoints() + " should have a rated counter of " + expectedPointCounter.getRatedCounter())
                         .isEqualTo(expectedPointCounter.getRatedCounter());
-                assertThat(pointCounter.getUnRatedCounter()).as(pointCounter.getPoints() + " should have an unrated counter of " + expectedPointCounter.getUnRatedCounter())
-                        .isEqualTo(expectedPointCounter.getUnRatedCounter());
+                assertThat(pointCounter.getUnratedCounter()).as(pointCounter.getPoints() + " should have an unrated counter of " + expectedPointCounter.getUnratedCounter())
+                        .isEqualTo(expectedPointCounter.getUnratedCounter());
             }
             else {
                 assertThat(pointCounter.getRatedCounter()).as(pointCounter.getPoints() + " should have a rated counter of 0").isZero();
-                assertThat(pointCounter.getUnRatedCounter()).as(pointCounter.getPoints() + " should have a rated counter of 0").isZero();
+                assertThat(pointCounter.getUnratedCounter()).as(pointCounter.getPoints() + " should have a rated counter of 0").isZero();
             }
         }
     }

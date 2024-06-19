@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.exercise.quiz;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 import java.io.IOException;
@@ -131,7 +130,6 @@ public class QuizExerciseFactory {
 
         var mapping2 = new ShortAnswerMapping().spot(sa.getSpots().get(1)).solution(sa.getSolutions().get(1));
         sa.addCorrectMapping(mapping1);
-        assertThat(sa).isEqualTo(mapping1.getQuestion());
         sa.removeCorrectMapping(mapping1);
         sa.addCorrectMapping(mapping1);
         sa.addCorrectMapping(mapping2);
@@ -178,7 +176,6 @@ public class QuizExerciseFactory {
         var dragItem4 = new DragItem().pictureFilePath("dragItemImage4.png");
         dragItem4.setTempID(generateTempId());
         dnd.addDragItem(dragItem1);
-        assertThat(dragItem1.getQuestion()).isEqualTo(dnd);
         // also invoke remove once
         dnd.removeDragItem(dragItem1);
         dnd.addDragItem(dragItem1);
@@ -482,7 +479,6 @@ public class QuizExerciseFactory {
         var dragItem5 = new DragItem().pictureFilePath("/api/files/drag-and-drop/drag-items/10/drag_item.jpg");
         dragItem4.setInvalid(true);
         dnd.addDragItem(dragItem1);
-        assertThat(dragItem1.getQuestion()).isEqualTo(dnd);
         // also invoke remove once
         dnd.removeDragItem(dragItem1);
         dnd.addDragItem(dragItem1);

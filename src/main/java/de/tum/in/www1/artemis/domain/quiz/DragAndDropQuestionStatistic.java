@@ -3,27 +3,14 @@ package de.tum.in.www1.artemis.domain.quiz;
 import java.util.HashSet;
 import java.util.Set;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.OneToMany;
-
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * A DragAndDropQuestionStatistic.
  */
-@Entity
-@DiscriminatorValue(value = "DD")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class DragAndDropQuestionStatistic extends QuizQuestionStatistic {
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "dragAndDropQuestionStatistic")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<DropLocationCounter> dropLocationCounters = new HashSet<>();
 
     public Set<DropLocationCounter> getDropLocationCounters() {
@@ -68,46 +55,48 @@ public class DragAndDropQuestionStatistic extends QuizQuestionStatistic {
      * @param rated           specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate
      *                            of the quizExercise)
      * @param change          the int-value, which will be added to the Counter and participants
+     * @param quizQuestion    quiz question object statistics belongs to
      */
     @Override
-    protected void changeStatisticBasedOnResult(SubmittedAnswer submittedAnswer, boolean rated, int change) {
+    protected void changeStatisticBasedOnResult(SubmittedAnswer submittedAnswer, boolean rated, int change, QuizQuestion quizQuestion) {
         if (!(submittedAnswer instanceof DragAndDropSubmittedAnswer ddSubmittedAnswer)) {
             return;
         }
+        if (quizQuestion instanceof DragAndDropQuestion dndQuestion) {
+            if (rated) {
+                // change the rated participants
+                setParticipantsRated(getParticipantsRated() + change);
 
-        if (rated) {
-            // change the rated participants
-            setParticipantsRated(getParticipantsRated() + change);
-
-            if (ddSubmittedAnswer.getMappings() != null) {
-                // change rated dropLocationCounter if dropLocation is correct
-                for (DropLocationCounter dropLocationCounter : dropLocationCounters) {
-                    if (dropLocationCounter.getDropLocation().isDropLocationCorrect(ddSubmittedAnswer)) {
-                        dropLocationCounter.setRatedCounter(dropLocationCounter.getRatedCounter() + change);
+                if (ddSubmittedAnswer.getMappings() != null) {
+                    // change rated dropLocationCounter if dropLocation is correct
+                    for (DropLocationCounter dropLocationCounter : dropLocationCounters) {
+                        if (dndQuestion.isDropLocationCorrect(ddSubmittedAnswer, dropLocationCounter.getDropLocation())) {
+                            dropLocationCounter.setRatedCounter(dropLocationCounter.getRatedCounter() + change);
+                        }
                     }
                 }
-            }
-            // change rated correctCounter if answer is complete correct
-            if (getQuizQuestion().isAnswerCorrect(ddSubmittedAnswer)) {
-                setRatedCorrectCounter(getRatedCorrectCounter() + change);
-            }
-        }
-        // Result is unrated
-        else {
-            // change the unrated participants
-            setParticipantsUnrated(getParticipantsUnrated() + change);
-
-            if (ddSubmittedAnswer.getMappings() != null) {
-                // change unrated dropLocationCounter if dropLocation is correct
-                for (DropLocationCounter dropLocationCounter : dropLocationCounters) {
-                    if (dropLocationCounter.getDropLocation().isDropLocationCorrect(ddSubmittedAnswer)) {
-                        dropLocationCounter.setUnRatedCounter(dropLocationCounter.getUnRatedCounter() + change);
-                    }
+                // change rated correctCounter if answer is complete correct
+                if (dndQuestion.isAnswerCorrect(ddSubmittedAnswer)) {
+                    setRatedCorrectCounter(getRatedCorrectCounter() + change);
                 }
             }
-            // change unrated correctCounter if answer is complete correct
-            if (getQuizQuestion().isAnswerCorrect(ddSubmittedAnswer)) {
-                setUnRatedCorrectCounter(getUnRatedCorrectCounter() + change);
+            // Result is unrated
+            else {
+                // change the unrated participants
+                setParticipantsUnrated(getParticipantsUnrated() + change);
+
+                if (ddSubmittedAnswer.getMappings() != null) {
+                    // change unrated dropLocationCounter if dropLocation is correct
+                    for (DropLocationCounter dropLocationCounter : dropLocationCounters) {
+                        if (dndQuestion.isDropLocationCorrect(ddSubmittedAnswer, dropLocationCounter.getDropLocation())) {
+                            dropLocationCounter.setUnratedCounter(dropLocationCounter.getUnratedCounter() + change);
+                        }
+                    }
+                }
+                // change unrated correctCounter if answer is complete correct
+                if (dndQuestion.isAnswerCorrect(ddSubmittedAnswer)) {
+                    setUnratedCorrectCounter(getUnratedCorrectCounter() + change);
+                }
             }
         }
     }
@@ -120,7 +109,7 @@ public class DragAndDropQuestionStatistic extends QuizQuestionStatistic {
         super.resetStatistic();
         for (DropLocationCounter dropLocationCounter : dropLocationCounters) {
             dropLocationCounter.setRatedCounter(0);
-            dropLocationCounter.setUnRatedCounter(0);
+            dropLocationCounter.setUnratedCounter(0);
         }
     }
 }

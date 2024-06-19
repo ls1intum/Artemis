@@ -5,17 +5,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OrderColumn;
+import jakarta.persistence.PostLoad;
+import jakarta.persistence.PostUpdate;
+import jakarta.persistence.Transient;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -35,32 +33,22 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ShortAnswerQuestion extends QuizQuestion {
 
-    // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
-    // after 6.x upgrade
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @JoinColumn(name = "question_id")
-    @OrderColumn
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @Transient
     @JsonView(QuizView.Before.class)
     private List<ShortAnswerSpot> spots = new ArrayList<>();
 
-    // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
-    // after 6.x upgrade
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @JoinColumn(name = "question_id")
-    @OrderColumn
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @Transient
     @JsonView(QuizView.Before.class)
     private List<ShortAnswerSolution> solutions = new ArrayList<>();
 
-    // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
-    // after 6.x upgrade
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @JoinColumn(name = "question_id")
-    @OrderColumn
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @Transient
     @JsonView(QuizView.After.class)
     private List<ShortAnswerMapping> correctMappings = new ArrayList<>();
+
+    // Specifies that the `content` field should be stored as JSON in the database.
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "content", columnDefinition = "json")
+    private ShortAnswerDAO content = new ShortAnswerDAO();
 
     @Column(name = "similarity_value")
     @JsonView(QuizView.Before.class)
@@ -134,6 +122,14 @@ public class ShortAnswerQuestion extends QuizQuestion {
         this.matchLetterCase = matchLetterCase;
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
+
+    public ShortAnswerDAO getContent() {
+        return content;
+    }
+
+    public void setContent(ShortAnswerDAO content) {
+        this.content = content;
+    }
 
     @Override
     public Boolean isValid() {
@@ -383,5 +379,23 @@ public class ShortAnswerQuestion extends QuizQuestion {
         var question = new ShortAnswerQuestion();
         question.setId(getId());
         return question;
+    }
+
+    /**
+     * This method is triggered after the entity is loaded from or updated in the database. It performs the following tasks:
+     * <p>
+     * 1. Checks if the content is not null.
+     * 2. Sets the spots, solutions, and correct mappings from the content to the current entity.
+     * <p>
+     * This method is annotated with `@PostLoad` and `@PostUpdate` to ensure it is executed after the entity is loaded or updated.
+     */
+    @PostLoad
+    @PostUpdate
+    public void loadContent() {
+        if (content != null) {
+            setSpots(content.getSpots());
+            setSolutions(content.getSolutions());
+            setCorrectMappings(content.getCorrectMappings());
+        }
     }
 }

@@ -1,27 +1,26 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
-import jakarta.persistence.ManyToOne;
+import java.io.Serializable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.in.www1.artemis.domain.TempIdObject;
+
 /**
  * A PointCounter.
  */
-@Entity
-@DiscriminatorValue(value = "PC")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class PointCounter extends QuizStatisticCounter {
+public class PointCounter extends TempIdObject implements Serializable {
 
-    @Column(name = "points")
-    private Double points;
-
-    @ManyToOne
     @JsonIgnore
     private QuizPointStatistic quizPointStatistic;
+
+    private Double points;
+
+    private Integer ratedCounter = 0;
+
+    private Integer unratedCounter = 0;
 
     public Double getPoints() {
         return points;
@@ -39,8 +38,24 @@ public class PointCounter extends QuizStatisticCounter {
         this.quizPointStatistic = quizPointStatistic;
     }
 
+    public Integer getRatedCounter() {
+        return ratedCounter;
+    }
+
+    public void setRatedCounter(Integer ratedCounter) {
+        this.ratedCounter = ratedCounter;
+    }
+
+    public Integer getUnratedCounter() {
+        return unratedCounter;
+    }
+
+    public void setUnratedCounter(Integer unratedCounter) {
+        this.unratedCounter = unratedCounter;
+    }
+
     @Override
     public String toString() {
-        return "PointCounter{" + "id=" + getId() + ", points='" + getPoints() + "'" + ", rated=" + getRatedCounter() + ", unrated=" + getUnRatedCounter() + "}";
+        return "PointCounter{" + "id=" + getId() + ", points='" + getPoints() + "'" + ", rated=" + getRatedCounter() + ", unrated=" + getUnratedCounter() + "}";
     }
 }

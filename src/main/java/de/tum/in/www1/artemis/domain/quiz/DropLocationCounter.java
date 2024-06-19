@@ -1,30 +1,24 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.in.www1.artemis.domain.TempIdObject;
 
 /**
  * A DropLocationCounter.
  */
-@Entity
-@DiscriminatorValue(value = "DD")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class DropLocationCounter extends QuizStatisticCounter implements QuizQuestionStatisticComponent<DragAndDropQuestionStatistic, DropLocation, DragAndDropQuestion> {
+public class DropLocationCounter extends TempIdObject implements QuizQuestionStatisticComponent<DragAndDropQuestionStatistic, DropLocation, DragAndDropQuestion> {
 
-    @ManyToOne
     @JsonIgnore
     private DragAndDropQuestionStatistic dragAndDropQuestionStatistic;
 
-    @OneToOne(cascade = { CascadeType.PERSIST })
-    @JoinColumn(unique = true)
     private DropLocation dropLocation;
+
+    private Integer ratedCounter = 0;
+
+    private Integer unratedCounter = 0;
 
     public DragAndDropQuestionStatistic getDragAndDropQuestionStatistic() {
         return dragAndDropQuestionStatistic;
@@ -63,5 +57,21 @@ public class DropLocationCounter extends QuizStatisticCounter implements QuizQue
     @Override
     public String toString() {
         return "DropLocationCounter{" + "id=" + getId() + "}";
+    }
+
+    public Integer getRatedCounter() {
+        return ratedCounter;
+    }
+
+    public void setRatedCounter(Integer ratedCounter) {
+        this.ratedCounter = ratedCounter;
+    }
+
+    public Integer getUnratedCounter() {
+        return unratedCounter;
+    }
+
+    public void setUnratedCounter(Integer unratedCounter) {
+        this.unratedCounter = unratedCounter;
     }
 }

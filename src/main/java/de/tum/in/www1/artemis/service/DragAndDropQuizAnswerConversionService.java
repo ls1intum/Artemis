@@ -90,7 +90,7 @@ public class DragAndDropQuizAnswerConversionService {
             int dropLocationWidth = (int) (dropLocation.getWidth() / MAX_SIZE_UNIT * backgroundImageWidth);
             int dropLocationHeight = (int) (dropLocation.getHeight() / MAX_SIZE_UNIT * backgroundImageHeight);
             DropLocationCoordinates dropLocationCoordinates = new DropLocationCoordinates(dropLocationX, dropLocationY, dropLocationWidth, dropLocationHeight);
-            drawDropLocation(dragAndDropSubmittedAnswer, graphics, dropLocation, dropLocationCoordinates, showResult);
+            drawDropLocation(dragAndDropSubmittedAnswer, graphics, dropLocation, dropLocationCoordinates, showResult, question);
             drawDragItem(dragAndDropSubmittedAnswer, graphics, dropLocation, dropLocationCoordinates);
         }
         graphics.drawImage(backgroundImage, 0, 0, null);
@@ -131,11 +131,11 @@ public class DragAndDropQuizAnswerConversionService {
     }
 
     private void drawDropLocation(DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer, Graphics2D graphics, DropLocation dropLocation,
-            DropLocationCoordinates dropLocationCoordinates, boolean showResult) {
+            DropLocationCoordinates dropLocationCoordinates, boolean showResult, DragAndDropQuestion dragAndDropQuestion) {
         graphics.setColor(Color.WHITE);
         graphics.fillRect(dropLocationCoordinates.x, dropLocationCoordinates.y, dropLocationCoordinates.width, dropLocationCoordinates.height);
 
-        if (dropLocation.isDropLocationCorrect(dragAndDropSubmittedAnswer)) {
+        if (dragAndDropQuestion.isDropLocationCorrect(dragAndDropSubmittedAnswer, dropLocation)) {
             graphics.setColor(Color.GREEN);
         }
         else if (dropLocation.isInvalid()) {
