@@ -15,7 +15,7 @@ import { IrisStatusService } from 'app/iris/iris-status.service';
 import { IrisChatHttpService } from 'app/iris/iris-chat-http.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/iris-chat.service';
 import { IrisWebsocketService } from 'app/iris/iris-websocket.service';
-import { firstValueFrom, of, skip } from 'rxjs';
+import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared/components/button.component';
@@ -176,8 +176,7 @@ describe('IrisBaseChatbotComponent', () => {
         // when
         component.resendMessage(createdMessage);
 
-        // numNewMessages emits a value after resending is done. skip one value for the initial subscribe (BehaviorSubject)
-        await firstValueFrom(chatService.numNewMessages.pipe(skip(1)));
+        await fixture.whenStable();
 
         // then
         expect(component.messages).toContain(createdMessage);
