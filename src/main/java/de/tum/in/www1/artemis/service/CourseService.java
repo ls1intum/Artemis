@@ -1061,6 +1061,7 @@ public class CourseService {
      * @return the number of weeks the period contains + one week
      */
     public long calculateWeeksBetweenDates(ZonedDateTime startDate, ZonedDateTime endDate) {
+        startDate = startDate.withZoneSameInstant(endDate.getZone());
         var mondayInWeekOfStart = startDate.with(DayOfWeek.MONDAY).withHour(0).withMinute(0).withSecond(0).withNano(0);
         var mondayInWeekOfEnd = endDate.plusWeeks(1).with(DayOfWeek.MONDAY).withHour(0).withMinute(0).withSecond(0).withNano(0);
         return mondayInWeekOfStart.until(mondayInWeekOfEnd, ChronoUnit.WEEKS);
