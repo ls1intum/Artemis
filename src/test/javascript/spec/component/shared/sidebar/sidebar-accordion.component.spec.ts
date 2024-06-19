@@ -76,7 +76,7 @@ describe('SidebarAccordionComponent', () => {
     });
 
     it('should toggle collapse state when group header is clicked', () => {
-        const groupHeader = debugElement.query(By.css('#test-accordion-item-header'));
+        const groupHeader = debugElement.query(By.css('#test-accordion-item-header-current'));
         groupHeader.triggerEventHandler('click', null);
         fixture.detectChanges();
 
