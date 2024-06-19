@@ -1,4 +1,4 @@
-import { Component, InputSignal, OnInit, WritableSignal, computed, inject, input, signal } from '@angular/core';
+import { Component, InputSignal, OnInit, computed, inject, input, viewChild } from '@angular/core';
 import { LearningPathNavigationObjectDTO } from 'app/entities/competency/learning-path.model';
 import { CommonModule } from '@angular/common';
 import { NgbAccordionModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
@@ -23,14 +23,14 @@ export class LearningPathStudentNavComponent implements OnInit {
 
     readonly learningPathId: InputSignal<number> = input.required<number>();
 
-    readonly showNavigationOverview: WritableSignal<boolean> = signal(false);
-
     readonly isLoading = this.learningPathNavigationService.isLoading;
 
     readonly learningPathProgress = computed(() => this.learningPathNavigationService.learningPathNavigation()?.progress ?? 0);
     readonly predecessorLearningObject = computed(() => this.learningPathNavigationService.learningPathNavigation()?.predecessorLearningObject);
     readonly currentLearningObject = computed(() => this.learningPathNavigationService.currentLearningObject());
     readonly successorLearningObject = computed(() => this.learningPathNavigationService.learningPathNavigation()?.successorLearningObject);
+
+    readonly navOverview = viewChild.required(LearningPathNavOverviewComponent);
 
     readonly isCurrentLearningObjectCompleted = this.learningPathNavigationService.isCurrentLearningObjectCompleted;
 
@@ -43,6 +43,8 @@ export class LearningPathStudentNavComponent implements OnInit {
     }
 
     setShowNavigationOverview(show: boolean): void {
-        this.showNavigationOverview.set(show);
+        if (show) {
+            this.navOverview().loadCompetencies(this.learningPathId());
+        }
     }
 }

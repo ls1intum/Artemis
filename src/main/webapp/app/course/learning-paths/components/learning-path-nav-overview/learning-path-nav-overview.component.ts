@@ -1,4 +1,4 @@
-import { Component, InputSignal, OnInit, inject, input, output, signal, viewChildren } from '@angular/core';
+import { Component, InputSignal, inject, input, output, signal, viewChildren } from '@angular/core';
 import { NgbAccordionModule, NgbDropdownModule, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -17,7 +17,7 @@ import { LearningPathNavOverviewLearningObjectsComponent } from 'app/course/lear
     templateUrl: './learning-path-nav-overview.component.html',
     styleUrl: './learning-path-nav-overview.component.scss',
 })
-export class LearningPathNavOverviewComponent implements OnInit {
+export class LearningPathNavOverviewComponent {
     protected readonly faCheckCircle: IconDefinition = faCheckCircle;
 
     private readonly alertService: AlertService = inject(AlertService);
@@ -32,11 +32,7 @@ export class LearningPathNavOverviewComponent implements OnInit {
 
     private readonly competencyDropdowns = viewChildren(LearningPathNavOverviewLearningObjectsComponent);
 
-    ngOnInit(): void {
-        this.loadCompetencies(this.learningPathId());
-    }
-
-    private async loadCompetencies(learningPathId: number): Promise<void> {
+    async loadCompetencies(learningPathId: number): Promise<void> {
         if (this.competencies()) {
             return;
         }

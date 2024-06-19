@@ -11,8 +11,7 @@
     @if (isLoading()) {
         <div class="row justify-content-center m-4">
             <div class="spinner-border text-primary" role="status">
-                <!--                TODO: Loading translation-->
-                <span class="sr-only">Loading...</span>
+                <span class="sr-only" jhiTranslate="loading"></span>
             </div>
         </div>
     } @else if (competencies()) {
@@ -25,7 +24,11 @@
                     <div ngbAccordionCollapse>
                         <div ngbAccordionBody class="p-0">
                             <ng-template>
-                                <jhi-learning-path-nav-overview-learning-objects [learningPathId]="learningPathId()" [competencyId]="competency.id" />
+                                <jhi-learning-path-nav-overview-learning-objects
+                                    (onLearningObjectSelected)="onLearningObjectSelected.emit()"
+                                    [learningPathId]="learningPathId()"
+                                    [competencyId]="competency.id"
+                                />
                             </ng-template>
                         </div>
                     </div>

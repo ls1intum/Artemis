@@ -1,4 +1,4 @@
-import { Component, inject, input, signal } from '@angular/core';
+import { Component, inject, input, output, signal } from '@angular/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { AlertService } from 'app/core/util/alert.service';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
@@ -13,7 +13,6 @@ import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
     standalone: true,
     imports: [NgbAccordionModule, FontAwesomeModule, ArtemisSharedModule],
     templateUrl: './learning-path-nav-overview-learning-objects.component.html',
-    styleUrl: './learning-path-nav-overview-learning-objects.component.scss',
 })
 export class LearningPathNavOverviewLearningObjectsComponent {
     protected readonly faCheckCircle: IconDefinition = faCheckCircle;
@@ -28,6 +27,8 @@ export class LearningPathNavOverviewLearningObjectsComponent {
 
     readonly isLoading = signal(false);
     readonly learningObjects = signal<LearningPathNavigationObjectDTO[] | undefined>(undefined);
+
+    readonly onLearningObjectSelected = output();
 
     async loadLearningObjects() {
         if (this.learningObjects()) {
@@ -47,6 +48,7 @@ export class LearningPathNavOverviewLearningObjectsComponent {
     selectLearningObject(learningObject: LearningPathNavigationObjectDTO): void {
         if (this.isLearningObjectSelectable(learningObject)) {
             this.learningPathNavigationService.loadRelativeLearningPathNavigation(this.learningPathId(), learningObject);
+            this.onLearningObjectSelected.emit();
         }
     }
 
