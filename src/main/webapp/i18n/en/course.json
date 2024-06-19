@@ -103,7 +103,7 @@
                     "tooltip": "Enables communication between course users in private or public channels which can only be created by instructors and tutors. Students can interact with peers and ask questions while moderators can provide course information and answer content-related questions. The communication can happen directly on the page of the respective exercise or lecture or in the dedicated communication space of the course."
                 },
                 "messagingEnabled": {
-                    "label": "Messaging Enabled",
+                    "label": "Direct Messages / Group Chats Enabled",
                     "tooltip": "Enables messaging between course users in group chats or direct messages. Every user can start a direct message, private group chat and add other users. A group chat is limited to 10 members. The chats happens in the communication space of the course.",
                     "codeOfConduct": "Messaging Code of Conduct"
                 }

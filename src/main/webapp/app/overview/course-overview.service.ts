@@ -23,24 +23,13 @@ const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     noDate: { entityData: [] },
 };
 
-const CHANNEL_GROUPS_MESSAGING_ENABLED: AccordionGroups = {
+const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
     generalChannels: { entityData: [] },
     exerciseChannels: { entityData: [] },
     lectureChannels: { entityData: [] },
     examChannels: { entityData: [] },
-    groupChats: { entityData: [] },
-    directMessages: { entityData: [] },
     hiddenChannels: { entityData: [] },
-};
-
-const CHANNEL_GROUPS_MESSAGING_DISABLED: AccordionGroups = {
-    favoriteChannels: { entityData: [] },
-    generalChannels: { entityData: [] },
-    exerciseChannels: { entityData: [] },
-    lectureChannels: { entityData: [] },
-    examChannels: { entityData: [] },
-    groupChats: { entityData: [] },
 };
 
 @Injectable({
@@ -167,7 +156,7 @@ export class CourseOverviewService {
     }
 
     groupConversationsByChannelType(conversations: ConversationDTO[], messagingEnabled: boolean): AccordionGroups {
-        const channelGroups = messagingEnabled ? CHANNEL_GROUPS_MESSAGING_ENABLED : CHANNEL_GROUPS_MESSAGING_DISABLED;
+        const channelGroups = messagingEnabled ? { ...DEFAULT_CHANNEL_GROUPS, groupChats: { entityData: [] }, directMessages: { entityData: [] } } : DEFAULT_CHANNEL_GROUPS;
         const groupedConversationGroups = cloneDeep(channelGroups) as AccordionGroups;
 
         for (const conversation of conversations) {

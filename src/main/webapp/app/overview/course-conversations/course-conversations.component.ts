@@ -22,18 +22,7 @@ import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { OneToOneChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
 import { ChannelsOverviewDialogComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 
-const CHANNEL_GROUPS_MESSAGING_ENABLED: AccordionGroups = {
-    favoriteChannels: { entityData: [] },
-    generalChannels: { entityData: [] },
-    exerciseChannels: { entityData: [] },
-    lectureChannels: { entityData: [] },
-    examChannels: { entityData: [] },
-    groupChats: { entityData: [] },
-    directMessages: { entityData: [] },
-    hiddenChannels: { entityData: [] },
-};
-
-const CHANNEL_GROUPS_MESSAGING_DISABLED: AccordionGroups = {
+const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
     generalChannels: { entityData: [] },
     exerciseChannels: { entityData: [] },
@@ -245,7 +234,9 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     initializeSidebarAccordions() {
         this.messagingEnabled = isMessagingEnabled(this.course);
-        this.accordionConversationGroups = this.messagingEnabled ? CHANNEL_GROUPS_MESSAGING_ENABLED : CHANNEL_GROUPS_MESSAGING_DISABLED;
+        this.accordionConversationGroups = this.messagingEnabled
+            ? { ...DEFAULT_CHANNEL_GROUPS, groupChats: { entityData: [] }, directMessages: { entityData: [] } }
+            : DEFAULT_CHANNEL_GROUPS;
     }
 
     onSearch() {
