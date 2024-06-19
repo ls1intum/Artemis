@@ -34,7 +34,7 @@ public class MigrationServiceGitLabJenkinsToLocalVC {
     public void execute() {
         log.info("Migration GitLab-Jenkins to LocalVC-Jenkins starting");
         List<String> activeProfiles = List.of(environment.getActiveProfiles());
-        if (!new HashSet<>(activeProfiles).containsAll(List.of("gitlab", "jenkins", "localvc"))) {
+        if (!new HashSet<>(activeProfiles).containsAll(List.of("gitlab", "jenkins"))) {
             log.error("Migration not possible, because the system does not support GitLab, Jenkins and LocalVC: {}", activeProfiles);
             return;
         }

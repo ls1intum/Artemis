@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.config.migration.setups.localvc.gitlab;
 
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -38,11 +36,10 @@ import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipatio
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
-import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCService;
 import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
-@Profile("gitlab & " + PROFILE_LOCALVC)
+@Profile("gitlab")
 @Component
 public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationEntry {
 
@@ -86,20 +83,17 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
 
     private final UriService uriService;
 
-    private final Optional<LocalVCService> localVCService;
-
     private final Optional<AbstractVersionControlService> sourceVersionControlService;
 
     public MigrationEntryGitLabToLocalVC(ProgrammingExerciseRepository programmingExerciseRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<LocalVCService> localVCService,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, Optional<AbstractVersionControlService> sourceVersionControlService, UriService uriService) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
+            Optional<AbstractVersionControlService> sourceVersionControlService, UriService uriService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
-        this.localVCService = localVCService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.sourceVersionControlService = sourceVersionControlService;
         this.uriService = uriService;
@@ -389,14 +383,9 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
      * @throws URISyntaxException if the repository URL is invalid
      */
     private String cloneRepositoryFromSourceVCSAndMoveToLocalVC(ProgrammingExercise exercise, String repositoryUri, String oldBranch) throws URISyntaxException {
-        if (localVCService.isEmpty() || sourceVersionControlService.isEmpty()) {
+        if (sourceVersionControlService.isEmpty()) {
             log.error("Failed to clone repository from source VCS: {}", repositoryUri);
-            if (localVCService.isEmpty()) {
-                log.error("Local VC service is not available");
-            }
-            if (sourceVersionControlService.isEmpty()) {
-                log.error("The source VCS service is not available");
-            }
+            log.error("The source VCS service is not available");
             return null;
         }
         // repo is already migrated -> return
@@ -413,7 +402,6 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
             var repositoryName = uriService.getRepositorySlugFromRepositoryUriString(repositoryUri);
             var projectKey = exercise.getProjectKey();
 
-            localVCService.get().createProjectForExercise(exercise);
             log.info("Cloning repository {} from the source VCS and moving it to local VC", repositoryUri);
             copyRepoToLocalVC(projectKey, repositoryName, repositoryUri, oldBranch);
             log.info("Successfully cloned repository {} from the source VCS and moved it to local VC", repositoryUri);
