@@ -7,11 +7,12 @@ import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-
 import { LearningPathNavigationService } from 'app/course/learning-paths/services/learning-path-navigation.service';
 import { lastValueFrom, switchMap } from 'rxjs';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @Component({
     selector: 'jhi-learning-path-lecture-unit',
     standalone: true,
-    imports: [ArtemisLectureUnitsModule],
+    imports: [ArtemisLectureUnitsModule, ArtemisSharedModule],
     templateUrl: './learning-path-lecture-unit.component.html',
 })
 export class LearningPathLectureUnitComponent {

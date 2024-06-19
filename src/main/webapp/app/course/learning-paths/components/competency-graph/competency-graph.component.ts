@@ -5,11 +5,12 @@ import { CompetencyGraphDTO, NodeType } from 'app/entities/competency/learning-p
 import { CompetencyNodeComponent, SizeUpdate } from 'app/course/learning-paths/components/competency-node/competency-node.component';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 import { AlertService } from 'app/core/util/alert.service';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @Component({
     selector: 'jhi-competency-graph',
     standalone: true,
-    imports: [CompetencyNodeComponent, NgxGraphModule],
+    imports: [CompetencyNodeComponent, NgxGraphModule, ArtemisSharedModule],
     templateUrl: './competency-graph.component.html',
     styleUrl: './competency-graph.component.scss',
 })
