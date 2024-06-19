@@ -1,11 +1,11 @@
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs/esm';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NgModel } from '@angular/forms';
 import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { BehaviorSubject, Subject, firstValueFrom, of } from 'rxjs';
+import { BehaviorSubject, Subject, of } from 'rxjs';
 import * as ace from 'brace';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -259,9 +259,10 @@ describe('CodeEditorContainerIntegration', () => {
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id!, participation.results![0]);
     };
 
-    const loadFile = (fileName: string, fileContent: string) => {
+    const loadFile = async (fileName: string, fileContent: string) => {
         getFileStub.mockReturnValue(of({ fileContent }));
         container.fileBrowser.selectedFile = fileName;
+        await container.aceEditor?.ensureLoadedThenInitEditorIfSelected(fileName);
     };
 
     it('should initialize all components correctly if all server calls are successful', fakeAsync(() => {
@@ -338,14 +339,13 @@ describe('CodeEditorContainerIntegration', () => {
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
     }));
 
-    it('should update the file browser and ace editor on file selection', waitForAsync(async () => {
+    it('should update the file browser and ace editor on file selection', async () => {
         cleanInitialize();
         const selectedFile = Object.keys(container.fileBrowser.repositoryFiles)[0];
         const fileContent = 'lorem ipsum';
-        loadFile(selectedFile, fileContent);
+        await loadFile(selectedFile, fileContent);
 
         containerFixture.detectChanges();
-        await containerFixture.whenStable();
         expect(container.selectedFile).toBe(selectedFile);
         expect(container.aceEditor?.selectedFile).toBe(selectedFile);
         expect(container.aceEditor?.isLoading).toBeFalse();
@@ -355,19 +355,18 @@ describe('CodeEditorContainerIntegration', () => {
 
         containerFixture.detectChanges();
         expect(container.aceEditor?.editor?.getEditor()?.getSession()?.getValue()).toBe(fileContent);
-    }));
+    });
 
-    it('should mark file to have unsaved changes in file tree if the file was changed in editor', waitForAsync(async () => {
+    it('should mark file to have unsaved changes in file tree if the file was changed in editor', async () => {
         cleanInitialize();
         const selectedFile = Object.keys(container.fileBrowser.repositoryFiles)[0];
         const fileContent = 'lorem ipsum';
         const newFileContent = 'new lorem ipsum';
-        loadFile(selectedFile, fileContent);
+        await loadFile(selectedFile, fileContent);
 
         containerFixture.detectChanges();
         container.aceEditor?.onFileTextChanged(newFileContent);
         containerFixture.detectChanges();
-        await firstValueFrom(container.onFileChanged);
 
         expect(getFileStub).toHaveBeenCalledOnce();
         expect(getFileStub).toHaveBeenCalledWith(selectedFile);
@@ -375,9 +374,9 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.fileBrowser.unsavedFiles).toEqual([selectedFile]);
         expect(container.editorState).toBe(EditorState.UNSAVED_CHANGES);
         expect(container.actions.editorState).toBe(EditorState.UNSAVED_CHANGES);
-    }));
+    });
 
-    it('should save files and remove unsaved status of saved files afterwards', () => {
+    it('should save files and remove unsaved status of saved files afterwards', async () => {
         // setup
         cleanInitialize();
         const selectedFile = Object.keys(container.fileBrowser.repositoryFiles)[0];
@@ -387,7 +386,7 @@ describe('CodeEditorContainerIntegration', () => {
         const saveFilesSubject = new Subject();
         saveFilesStub.mockReturnValue(saveFilesSubject);
         container.unsavedFiles = { [otherFileWithUnsavedChanges]: 'lorem ipsum dolet', [selectedFile]: newFileContent };
-        loadFile(selectedFile, fileContent);
+        await loadFile(selectedFile, fileContent);
         containerFixture.detectChanges();
 
         // init saving
