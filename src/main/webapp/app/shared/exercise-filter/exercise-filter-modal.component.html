@@ -10,7 +10,7 @@
             <div id="exercise-type-filter-selection">
                 @for (typeFilter of typeFilters; track typeFilter) {
                     <input type="checkbox" [(ngModel)]="typeFilter.checked" [name]="typeFilter.value" />
-                    <label>{{ typeFilter.name | artemisTranslate }}</label>
+                    <label [jhiTranslate]="typeFilter.name"></label>
                 }
             </div>
         </div>
@@ -24,7 +24,7 @@
             <div id="difficulty-filter-selection">
                 @for (difficultyFilter of difficultyFilters; track difficultyFilter) {
                     <input type="checkbox" [(ngModel)]="difficultyFilter.checked" [name]="difficultyFilter.value" />
-                    <label>{{ difficultyFilter.name | artemisTranslate }}</label>
+                    <label [jhiTranslate]="difficultyFilter.name"></label>
                 }
             </div>
         </div>
