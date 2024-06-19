@@ -85,7 +85,7 @@
                 @if (!promptForJolRating || !judgementOfLearningEnabled || judgementOfLearning !== undefined) {
                     <jhi-side-panel class="d-block mt-3" [panelHeader]="'artemisApp.competency.table.panelHeader' | artemisTranslate">
                         <div class="row mb-1 g-0">
-                            <div class="col-7">{{ 'artemisApp.competency.mastery' | artemisTranslate }} <jhi-help-icon text="artemisApp.competency.masteryDescription" /></div>
+                            <div class="col-7"><span jhiTranslate="artemisApp.competency.mastery"></span><jhi-help-icon text="artemisApp.competency.masteryDescription" /></div>
                             <div class="col-5">
                                 <span> {{ mastery }} %</span>
                                 @if (competencyProgress?.confidenceReason && competencyProgress.confidenceReason !== ConfidenceReason.NO_REASON) {
@@ -94,7 +94,7 @@
                             </div>
                         </div>
                         <div class="row mb-1 g-0">
-                            <div class="col-7">{{ 'artemisApp.competency.progress' | artemisTranslate }} <jhi-help-icon text="artemisApp.competency.progressDescription" /></div>
+                            <div class="col-7"><span jhiTranslate="artemisApp.competency.progress"></span><jhi-help-icon text="artemisApp.competency.progressDescription" /></div>
                             <div class="col-5">{{ progress }} %</div>
                         </div>
                     </jhi-side-panel>

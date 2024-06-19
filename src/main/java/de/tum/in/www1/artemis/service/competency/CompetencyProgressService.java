@@ -67,6 +67,16 @@ public class CompetencyProgressService {
 
     private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
 
+    private static final int MIN_EXERCISES_RECENCY_CONFIDENCE = 3;
+
+    private static final int MAX_SUBMISSIONS_FOR_QUICK_SOLVE_HEURISTIC = 3;
+
+    private static final double DEFAULT_CONFIDENCE = 1.0;
+
+    private static final double MAX_CONFIDENCE_HEURISTIC = 0.25;
+
+    private static final double CONFIDENCE_REASON_DEADZONE = 0.05;
+
     public CompetencyProgressService(CompetencyRepository competencyRepository, CompetencyProgressRepository competencyProgressRepository, ExerciseRepository exerciseRepository,
             LectureUnitRepository lectureUnitRepository, UserRepository userRepository, LearningPathService learningPathService, ParticipantScoreService participantScoreService,
             LectureUnitCompletionRepository lectureUnitCompletionRepository) {
@@ -228,7 +238,10 @@ public class CompetencyProgressService {
 
         double lectureProgress = 100.0 * numberOfCompletedLectureUnits / lectureUnits.size();
 
-        double progress = exerciseInfos.size() / numberOfLearningObjects * exerciseProgress + lectureUnits.size() / numberOfLearningObjects * lectureProgress;
+        double weightedExerciseProgress = exerciseInfos.size() / numberOfLearningObjects * exerciseProgress;
+        double weightedLectureProgress = lectureUnits.size() / numberOfLearningObjects * lectureProgress;
+
+        double progress = weightedExerciseProgress + weightedLectureProgress;
         // Bonus points can lead to a progress > 100%
         progress = Math.clamp(Math.round(progress), 0, 100);
         competencyProgress.setProgress(progress);
@@ -248,7 +261,8 @@ public class CompetencyProgressService {
         double difficultyConfidenceHeuristic = calculateDifficultyConfidenceHeuristic(participantScoreInfos, exerciseInfos);
         double quickSolveConfidenceHeuristic = calculateQuickSolveConfidenceHeuristic(participantScoreInfos);
 
-        double confidence = 1 + recencyConfidenceHeuristic + difficultyConfidenceHeuristic + quickSolveConfidenceHeuristic;
+        // Standard factor of 1 (no change to mastery compared to progress) plus the confidence heuristics
+        double confidence = DEFAULT_CONFIDENCE + recencyConfidenceHeuristic + difficultyConfidenceHeuristic + quickSolveConfidenceHeuristic;
 
         competencyProgress.setConfidence(confidence);
         setConfidenceReason(competencyProgress, recencyConfidenceHeuristic, difficultyConfidenceHeuristic, quickSolveConfidenceHeuristic);
@@ -262,7 +276,7 @@ public class CompetencyProgressService {
      * @return The recency confidence heuristic
      */
     private double calculateRecencyConfidenceHeuristic(@NotNull Set<CompetencyExerciseMasteryCalculationDTO> participantScores) {
-        if (participantScores.size() < 3) {
+        if (participantScores.size() < MIN_EXERCISES_RECENCY_CONFIDENCE) {
             return 0;
         }
 
@@ -278,7 +292,7 @@ public class CompetencyProgressService {
 
         double recencyConfidence = weightedAverageScore - averageScore;
 
-        return Math.clamp(recencyConfidence, -0.25, 0.25);
+        return Math.clamp(recencyConfidence, -MAX_CONFIDENCE_HEURISTIC, MAX_CONFIDENCE_HEURISTIC);
     }
 
     /**
@@ -308,7 +322,7 @@ public class CompetencyProgressService {
 
         double difficultyConfidence = hardConfidence - easyConfidence;
 
-        return Math.clamp(difficultyConfidence, -0.25, 0.25);
+        return Math.clamp(difficultyConfidence, -MAX_CONFIDENCE_HEURISTIC, MAX_CONFIDENCE_HEURISTIC);
     }
 
     /**
@@ -352,15 +366,24 @@ public class CompetencyProgressService {
         }
 
         double numberOfQuicklySolvedProgrammingExercises = programmingParticipationScores.stream()
-                .filter(info -> info.lastScore() >= MIN_SCORE_GREEN && info.submissionCount() <= 3).count();
+                .filter(info -> info.lastScore() >= MIN_SCORE_GREEN && info.submissionCount() <= MAX_SUBMISSIONS_FOR_QUICK_SOLVE_HEURISTIC).count();
 
         double quickSolveConfidence = numberOfQuicklySolvedProgrammingExercises / programmingParticipationScores.size();
 
-        return Math.clamp(quickSolveConfidence, -0.25, 0.25);
+        return Math.clamp(quickSolveConfidence, -MAX_CONFIDENCE_HEURISTIC, MAX_CONFIDENCE_HEURISTIC);
     }
 
+    /**
+     * Find most important heuristic that influences the confidence score and set the confidence reason accordingly.
+     * If the confidence does not deviate significantly from 1, the reason is set to NO_REASON.
+     *
+     * @param competencyProgress   the progress entity add the confidence reason to
+     * @param recencyConfidence    the recency confidence heuristic
+     * @param difficultyConfidence the difficulty confidence heuristic
+     * @param quickSolveConfidence the quick solve confidence heuristic
+     */
     private void setConfidenceReason(CompetencyProgress competencyProgress, double recencyConfidence, double difficultyConfidence, double quickSolveConfidence) {
-        if (competencyProgress.getConfidence() < 0.95) {
+        if (competencyProgress.getConfidence() < DEFAULT_CONFIDENCE - CONFIDENCE_REASON_DEADZONE) {
             double minConfidenceHeuristic = Math.min(recencyConfidence, difficultyConfidence);
             if (recencyConfidence == minConfidenceHeuristic) {
                 competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.RECENT_SCORES_LOWER);
@@ -370,7 +393,7 @@ public class CompetencyProgressService {
                 competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.MORE_EASY_POINTS);
             }
         }
-        else if (competencyProgress.getConfidence() > 1.05) {
+        else if (competencyProgress.getConfidence() > DEFAULT_CONFIDENCE + CONFIDENCE_REASON_DEADZONE) {
             double maxConfidenceHeuristic = Math.max(recencyConfidence, Math.max(difficultyConfidence, quickSolveConfidence));
             if (recencyConfidence == maxConfidenceHeuristic) {
                 competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.RECENT_SCORES_HIGHER);

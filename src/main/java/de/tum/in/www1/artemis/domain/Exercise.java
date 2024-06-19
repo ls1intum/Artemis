@@ -241,8 +241,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     @Override
     public boolean isCompletedFor(User user) {
-        return this.getStudentParticipations().stream().filter(participation -> participation.getStudents().contains(user))
-                .flatMap(participation -> participation.getResults().stream()).anyMatch(result -> result.getScore() >= MIN_SCORE_GREEN);
+        var latestResult = this.getStudentParticipations().stream().filter(participation -> participation.getStudents().contains(user))
+                .flatMap(participation -> participation.getResults().stream()).max(Comparator.comparing(Result::getCompletionDate));
+        return latestResult.map(result -> result.getScore() >= MIN_SCORE_GREEN).orElse(false);
     }
 
     public boolean getAllowFeedbackRequests() {
