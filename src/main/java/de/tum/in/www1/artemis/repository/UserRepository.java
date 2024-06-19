@@ -985,6 +985,13 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     Set<User> getUsersWithAccessTokenNull();
 
     @Query("""
+            SELECT user.login
+            FROM User user
+            WHERE :#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+            """)
+    Set<String> findAllAdminLogins();
+
+    @Query("""
             SELECT COUNT(user) > 0
             FROM User user
             WHERE user.login = :login

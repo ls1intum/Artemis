@@ -154,6 +154,8 @@ public class MetricsBean {
 
     private MultiGauge releaseExamStudentMultiplierGauge;
 
+    private MultiGauge activeAdminsGauge;
+
     private boolean scheduledMetricsEnabled = false;
 
     public MetricsBean(MeterRegistry meterRegistry, @Qualifier("taskScheduler") TaskScheduler scheduler, WebSocketMessageBrokerStats webSocketStats, SimpUserRegistry userRegistry,
@@ -223,6 +225,8 @@ public class MetricsBean {
         if (profileService.isLocalCiActive()) {
             registerLocalCIMetrics();
         }
+
+        registerAdminCheckMetrics();
 
         // the data source is optional as it is not used during testing
         hikariDataSource.ifPresent(this::registerDatasourceMetrics);
@@ -374,6 +378,12 @@ public class MetricsBean {
                 .description("Number of exams starting within the next minutes multiplied with students in the course").register(meterRegistry);
     }
 
+    private void registerAdminCheckMetrics() {
+        activeAdminsGauge = MultiGauge.builder("artemis.users.admins.active").description("Number of active admin accounts").register(meterRegistry);
+
+        updateActiveAdminsMetrics();
+    }
+
     /**
      * Calculate active users (active within the last 14 days) and store them in a List.
      * The calculation is performed every 60 minutes.
@@ -431,7 +441,23 @@ public class MetricsBean {
         updateMultiGaugeIntegerForMinuteRanges(releaseExamGauge, examRepository::countExamsWithStartDateBetween);
         updateMultiGaugeIntegerForMinuteRanges(releaseExamStudentMultiplierGauge, examRepository::countExamUsersInExamsWithStartDateBetween);
 
+        updateActiveAdminsMetrics();
+
         log.debug("recalculateMetrics took {}ms", System.currentTimeMillis() - startDate);
+    }
+
+    /**
+     * Get all users that currently have the role ADMIN and update the activeAdminsGauge.
+     */
+    private void updateActiveAdminsMetrics() {
+        var activeAdmins = userRepository.findAllAdminLogins();
+        var results = new ArrayList<MultiGauge.Row<?>>();
+
+        for (var activeAdmin : activeAdmins) {
+            results.add(MultiGauge.Row.of(Tags.of("admin", activeAdmin), 1));
+        }
+
+        activeAdminsGauge.register(results, true);
     }
 
     @FunctionalInterface
