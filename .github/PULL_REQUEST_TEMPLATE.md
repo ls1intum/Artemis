@@ -74,14 +74,15 @@ Prerequisites:
 > [!NOTE]
 > These badges show the state of the test servers.
 > Green = Currently available, Red = Currently locked
+> Click on the badges to get to the test servers.
 
-![](https://byob.yarr.is/ls1intum/Artemis/artemis-test1)
-![](https://byob.yarr.is/ls1intum/Artemis/artemis-test2)
-![](https://byob.yarr.is/ls1intum/Artemis/artemis-test3)
-![](https://byob.yarr.is/ls1intum/Artemis/artemis-test4)
-![](https://byob.yarr.is/ls1intum/Artemis/artemis-test5)
-![](https://byob.yarr.is/ls1intum/Artemis/artemis-test6)
-![](https://byob.yarr.is/ls1intum/Artemis/artemis-test9)
+[![](https://byob.yarr.is/ls1intum/Artemis/artemis-test1)](https://artemis-test1.artemis.cit.tum.de)
+[![](https://byob.yarr.is/ls1intum/Artemis/artemis-test2)](https://artemis-test2.artemis.cit.tum.de)
+[![](https://byob.yarr.is/ls1intum/Artemis/artemis-test3)](https://artemis-test3.artemis.cit.tum.de)
+[![](https://byob.yarr.is/ls1intum/Artemis/artemis-test4)](https://artemis-test4.artemis.cit.tum.de)
+[![](https://byob.yarr.is/ls1intum/Artemis/artemis-test5)](https://artemis-test5.artemis.cit.tum.de)
+[![](https://byob.yarr.is/ls1intum/Artemis/artemis-test6)](https://artemis-test6.artemis.cit.tum.de)
+[![](https://byob.yarr.is/ls1intum/Artemis/artemis-test9)](https://artemis-test9.artemis.cit.tum.de)
 
 ### Review Progress
 <!-- Each PR should be reviewed by at least two other developers. The code, the functionality (= manual test) and the exam mode need to be reviewed. -->
