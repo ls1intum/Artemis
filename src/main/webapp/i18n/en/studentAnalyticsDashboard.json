@@ -4,7 +4,7 @@
             "competencyAccordion": {
                 "title": "Competencies",
                 "noData": "No competencies available for this course.",
-                "nextObjectives": "Next objectives",
+                "nextActivities": "Next activities to master this competency",
                 "exercises": "Exercises",
                 "lectures": "Lectures",
                 "progress": "Progress: {{ progress }}%",
@@ -13,7 +13,7 @@
             },
             "button": {
                 "showLearningPath": "Show Learning Path",
-                "viewLecturesAndExercises": "View Lectures and Exercises"
+                "viewLecturesAndExercises": "View All Lectures and Exercises"
             }
         }
     }
