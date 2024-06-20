@@ -51,10 +51,6 @@ describe('CommitsInfoGroupComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should create', () => {
-        expect(component).toBeTruthy();
-    });
-
     it('should toggle isExpanded when clicking the expand button', () => {
         const compiled = fixture.nativeElement;
         let expandButton = compiled.querySelector('button');

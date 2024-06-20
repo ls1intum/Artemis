@@ -17,7 +17,7 @@ export class CommitsInfoGroupComponent {
     @Input() groupCount: number;
     @Input() pushNumber: number;
 
-    protected isExpanded: boolean = false;
+    protected isExpanded = false;
 
     protected toggleExpand() {
         this.isExpanded = !this.isExpanded;
