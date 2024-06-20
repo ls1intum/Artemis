@@ -1,8 +1,8 @@
 import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExamUser } from 'app/entities/exam-user.model';
-import { Observable, Subject, Subscription, of } from 'rxjs';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Observable, Subject, of } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
@@ -14,10 +14,15 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { EventManager } from 'app/core/util/event-manager.service';
 import { faCheck, faInfoCircle, faPlus, faTimes, faUpload, faUserSlash, faUserTimes } from '@fortawesome/free-solid-svg-icons';
-import dayjs from 'dayjs/esm';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { StudentExamsComponent } from 'app/exam/manage/student-exams/student-exams.component';
 
 const cssClasses = {
     alreadyRegistered: 'already-registered',
@@ -30,7 +35,7 @@ const cssClasses = {
     styleUrls: ['./exam-students.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })
-export class ExamStudentsComponent implements OnInit, OnDestroy {
+export class ExamStudentsComponent extends StudentExamsComponent implements OnInit, OnDestroy {
     @ViewChild(DataTableComponent) dataTable: DataTableComponent;
 
     readonly ButtonType = ButtonType;
@@ -38,19 +43,13 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     readonly ActionType = ActionType;
     readonly missingImage = '/content/images/missing_image.png';
 
-    courseId: number;
-    exam: Exam;
-    isTestExam: boolean;
     allRegisteredUsers: ExamUser[] = [];
     filteredUsersSize = 0;
-    paramSub: Subscription;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
     isLoading = false;
-    hasExamStarted = false;
-    hasExamEnded = false;
     isSearching = false;
     searchFailed = false;
     searchNoResults = false;
@@ -67,27 +66,34 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     faUpload = faUpload;
     faCheck = faCheck;
     faTimes = faTimes;
+    faExclamationTriangle = faExclamationTriangle;
     constructor(
-        private router: Router,
-        private route: ActivatedRoute,
-        private alertService: AlertService,
-        private eventManager: EventManager,
-        private examManagementService: ExamManagementService,
+        route: ActivatedRoute,
+        alertService: AlertService,
+        examManagementService: ExamManagementService,
+        accountService: AccountService,
+        studentExamService: StudentExamService,
+        courseService: CourseManagementService,
+        modalService: NgbModal,
+        artemisTranslatePipe: ArtemisTranslatePipe,
+        websocketService: JhiWebsocketService,
+        profileService: ProfileService,
         private userService: UserService,
-        private accountService: AccountService,
-        private studentExamService: StudentExamService,
-    ) {}
+    ) {
+        super(route, examManagementService, studentExamService, alertService, accountService, profileService, courseService, modalService, artemisTranslatePipe, websocketService);
+    }
 
     ngOnInit() {
         this.isLoading = true;
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.isAdmin = this.accountService.isAdmin();
         this.route.data.subscribe(({ exam }: { exam: Exam }) => {
-            this.setUpExamInformation(exam);
+            this.exam = exam;
+            super.ngOnInit();
         });
     }
 
-    reloadExamWithRegisteredUsers() {
+    override loadAll() {
         this.isLoading = true;
         this.examManagementService.find(this.courseId, this.exam.id!, true).subscribe((examResponse: HttpResponse<Exam>) => {
             this.setUpExamInformation(examResponse.body!);
@@ -96,37 +102,30 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
 
     private setUpExamInformation(exam: Exam) {
         this.exam = exam;
-        this.hasExamStarted = exam.startDate?.isBefore(dayjs()) || false;
-        this.hasExamEnded = exam.endDate?.isBefore(dayjs()) || false;
 
-        if (this.hasExamEnded) {
-            this.studentExamService.findAllForExam(this.courseId, exam.id!).subscribe((res) => {
-                const studentExams = res.body;
-                this.allRegisteredUsers =
-                    exam.examUsers?.map((examUser) => {
-                        const studentExam = studentExams?.filter((studentExam) => studentExam.user?.id === examUser.user!.id).first();
-                        return {
-                            ...examUser.user!,
-                            ...examUser,
-                            didExamUserAttendExam: !!studentExam?.started,
-                        };
-                    }) || [];
-            });
-        } else {
+        this.studentExamService.findAllForExam(this.courseId, exam.id!).subscribe((res) => {
+            const studentExams = res.body;
             this.allRegisteredUsers =
                 exam.examUsers?.map((examUser) => {
+                    const studentExam = studentExams?.filter((studentExam) => studentExam.user?.id === examUser.user!.id).first();
                     return {
                         ...examUser.user!,
                         ...examUser,
+                        didExamUserAttendExam: !!studentExam?.started,
+                        studentExam,
                     };
                 }) || [];
-        }
+            const studentExamsCount = studentExams ? studentExams.length : 0;
+            this.hasStudentsWithoutExam = studentExamsCount < this.allRegisteredUsers.length;
+        });
+
         this.isTestExam = this.exam.testExam!;
         this.isLoading = false;
     }
 
     ngOnDestroy() {
         this.dialogErrorSource.unsubscribe();
+        super.ngOnDestroy();
     }
 
     /**
@@ -190,7 +189,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
             this.examManagementService.addStudentToExam(this.courseId, this.exam.id!, user.login).subscribe({
                 next: () => {
                     this.isTransitioning = false;
-                    this.reloadExamWithRegisteredUsers();
+                    this.loadAll();
                     // Flash green background color to signal to the user that this student was registered
                     this.flashRowClass(cssClasses.newlyRegistered);
                 },
@@ -218,6 +217,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
             next: () => {
                 this.allRegisteredUsers = this.allRegisteredUsers.filter((eu) => eu.user!.login !== examUser.user!.login);
                 this.dialogErrorSource.next('');
+                this.loadAll();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
@@ -231,6 +231,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
             next: () => {
                 this.allRegisteredUsers = [];
                 this.dialogErrorSource.next('');
+                this.loadAll();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
@@ -250,7 +251,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
      *
      * @param user
      */
-    searchResultFormatter = (user: User) => {
+    userSearchResultFormatter = (user: User) => {
         const { name, login } = user;
         return `${name} (${login})`;
     };
@@ -299,7 +300,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
         if (this.exam?.id) {
             this.examManagementService.addAllStudentsOfCourseToExam(this.courseId, this.exam.id).subscribe({
                 next: () => {
-                    this.reloadExamWithRegisteredUsers();
+                    this.loadAll();
                 },
                 error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
             });
