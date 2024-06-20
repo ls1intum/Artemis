@@ -41,8 +41,7 @@ export class CategorySelectorComponent implements OnChanges {
     separatorKeysCodes = [ENTER, COMMA, TAB];
     categoryCtrl = new FormControl<string | undefined>(undefined);
 
-    // Icons
-    faTimes = faTimes;
+    readonly faTimes = faTimes;
 
     ngOnChanges() {
         this.uniqueCategoriesForAutocomplete = this.categoryCtrl.valueChanges.pipe(
