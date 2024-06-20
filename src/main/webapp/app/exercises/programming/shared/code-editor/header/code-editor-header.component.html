@@ -3,7 +3,7 @@
         <fa-icon [icon]="farFileAlt" />
         <span> &nbsp;{{ filename }}</span>
         @if (isLoading) {
-            <fa-icon [icon]="faCircleNotch" [spin]="true" class="ms-2" title="{{ 'artemisApp.editor.loadingFile' | artemisTranslate }}" />
+            <fa-icon [icon]="faCircleNotch" animation="spin" class="ms-2" title="{{ 'artemisApp.editor.loadingFile' | artemisTranslate }}" />
         }
     </h3>
     @if (showTabSizeSelector) {

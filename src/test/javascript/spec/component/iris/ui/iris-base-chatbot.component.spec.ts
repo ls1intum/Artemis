@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { IrisBaseChatbotComponent } from 'app/iris/base-chatbot/iris-base-chatbot.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -134,7 +134,7 @@ describe('IrisBaseChatbotComponent', () => {
         expect(component.userAccepted).toBeTrue();
     });
 
-    it('should add user message on send', waitForAsync(async () => {
+    it('should add user message on send', async () => {
         // given
         jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
         jest.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
@@ -157,9 +157,9 @@ describe('IrisBaseChatbotComponent', () => {
         // then
         expect(component.messages).toContain(createdMessage);
         expect(stub).toHaveBeenCalledWith(content);
-    }));
+    });
 
-    it('should resend message', waitForAsync(async () => {
+    it('should resend message', async () => {
         // given
         jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
         jest.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
@@ -170,7 +170,7 @@ describe('IrisBaseChatbotComponent', () => {
         jest.spyOn(httpService, 'resendMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisUserMessage>));
         jest.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
 
-        const stub = jest.spyOn(chatService, 'sendMessage');
+        const stub = jest.spyOn(chatService, 'resendMessage');
         component.newMessageTextContent = content;
         chatService.switchTo(ChatServiceMode.COURSE, 123);
 
@@ -181,10 +181,10 @@ describe('IrisBaseChatbotComponent', () => {
 
         // then
         expect(component.messages).toContain(createdMessage);
-        expect(stub).toHaveBeenCalledWith(content);
-    }));
+        expect(stub).toHaveBeenCalledWith(createdMessage);
+    });
 
-    it('should rate message', waitForAsync(async () => {
+    it('should rate message', async () => {
         // given
         const id = 123;
         jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
@@ -199,10 +199,12 @@ describe('IrisBaseChatbotComponent', () => {
         // when
         component.rateMessage(message, true);
 
+        await fixture.whenStable();
+
         //then
         expect(stub).toHaveBeenCalledWith(message, true);
         expect(httpService.rateMessage).toHaveBeenCalledWith(id, message.id, true);
-    }));
+    });
 
     it('should clear newMessage on send', async () => {
         // given
