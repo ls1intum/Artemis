@@ -99,28 +99,34 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
         this.uriService = uriService;
     }
 
-    public void execute() {
+    /**
+     * Executes this migration entry.
+     *
+     * @return False if there is a general configuration error, which blocks the whole execution
+     *         and true otherwise.
+     */
+    public boolean execute() {
         if (localVCBasePath == null) {
             log.error("Migration failed because the local VC base path is not configured.");
-            return;
+            return false;
         }
 
         if (localVCBaseUrl == null) {
             log.error("Migration failed because the local VC base URL is not configured.");
-            return;
+            return false;
         }
 
         if (defaultBranch == null) {
             log.error("Migration failed because the default branch is not configured.");
-            return;
+            return false;
         }
 
         var programmingExerciseCount = programmingExerciseRepository.count();
         var studentCount = programmingExerciseStudentParticipationRepository.findAllWithRepositoryUri(Pageable.unpaged()).getTotalElements();
 
         if (programmingExerciseCount == 0) {
-            // no exercises to change, migration complete
-            return;
+            log.info("No programming exercises to change");
+            return true;
         }
 
         log.info("Will migrate {} programming exercises and {} student repositories now. This might take a while", programmingExerciseCount, studentCount);
@@ -194,6 +200,7 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
         shutdown(executorService, timeoutInHours, ERROR_MESSAGE.formatted(timeoutInHours));
         log.info("Finished migrating programming exercises and student participations");
         evaluateErrorList(programmingExerciseRepository);
+        return true;
     }
 
     private void logProgress(long doneCount, long totalCount, long threadCount, long reposPerEntry, String migrationType) {
