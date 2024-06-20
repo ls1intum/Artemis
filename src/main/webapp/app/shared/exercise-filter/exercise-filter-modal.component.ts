@@ -71,7 +71,7 @@ export class ExerciseFilterModalComponent {
     }
 
     ngAfterViewInit(): void {
-        // otherwise the close button will be auto focused, leading to a blue border around the button
+        // otherwise the close button will be autofocused, leading to a blue border around the button
         this.firstCheckbox.nativeElement.focus();
     }
 
@@ -79,19 +79,21 @@ export class ExerciseFilterModalComponent {
         this.activeModal.close();
     }
 
-    search: OperatorFunction<string, readonly string[]> = (text$: Observable<string>) => {
+    search: OperatorFunction<string, readonly ExerciseCategory[]> = (text$: Observable<string>) => {
         const debouncedText$ = text$.pipe(debounceTime(200), distinctUntilChanged());
         const clicksWithClosedPopup$ = this.click$.pipe(filter(() => !this.instance.isPopupOpen()));
         const inputFocus$ = this.focus$;
 
-        const categoryNames = this.possibleCategories.map((exerciseCategory) => exerciseCategory.category!);
-
         return merge(debouncedText$, inputFocus$, clicksWithClosedPopup$).pipe(
-            map((term) => (term === '' ? categoryNames : categoryNames.filter((v) => v.toLowerCase().indexOf(term.toLowerCase()) > -1)).slice(0, 10)),
+            map((term) =>
+                (term === ''
+                    ? this.possibleCategories
+                    : this.possibleCategories.filter((exerciseCategory) => exerciseCategory.category!.toLowerCase().indexOf(term.toLowerCase()) > -1)
+                ).slice(0, 10),
+            ),
         );
     };
 
-    // Method to handle item selection
     onSelectItem(event: any) {
         const item = event.item;
         if (!this.selectedCategories.includes(item)) {
@@ -100,7 +102,6 @@ export class ExerciseFilterModalComponent {
         this.model = ''; // Clear the input field after selection
     }
 
-    // Method to remove an item from the selected items
     removeItem(item: any) {
         this.selectedCategories = this.selectedCategories.filter((i) => i !== item);
     }
@@ -148,7 +149,7 @@ export class ExerciseFilterModalComponent {
             }
         }
 
-        // TODO do we need to filter the ungrouped data aswell?
+        // TODO do we need to filter the ungrouped data as well?
         if (this.sidebarData?.ungroupedData) {
             this.sidebarData.ungroupedData = this.sidebarData?.ungroupedData.filter(
                 (sidebarElement: SidebarCardElement) => sidebarElement.difficulty && searchedDifficulties.includes(sidebarElement.difficulty),
