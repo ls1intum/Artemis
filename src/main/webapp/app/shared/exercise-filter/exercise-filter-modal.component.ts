@@ -27,7 +27,7 @@ export class ExerciseFilterModalComponent {
 
     @ViewChild('firstCheckbox') firstCheckbox: ElementRef;
 
-    @ViewChild('instance', { static: true }) instance: NgbTypeahead;
+    @ViewChild('categoriesFilterSelection', { static: true }) instance: NgbTypeahead;
 
     selectedCategories: ExerciseCategory[] = [];
 
@@ -36,7 +36,7 @@ export class ExerciseFilterModalComponent {
 
     // @ViewChild('exerciseCategorySelectionInput', { static: true }) campusTypeAhead: NgbTypeahead;
 
-    // TODO x has a light blue border when opening the modal
+    // TODO x has a light blue border when opening the modal (the first item in the modal is auto focussed)
 
     form: FormGroup;
 

@@ -17,7 +17,7 @@
                 [placeholder]="'artemisApp.exercise.selectCategories' | artemisTranslate"
                 (focus)="focus$.next($any($event).target.value)"
                 (click)="click$.next($any($event).target.value)"
-                #instance="ngbTypeahead"
+                #categoriesFilterSelection="ngbTypeahead"
                 (selectItem)="onSelectItem($event)"
             />
 
