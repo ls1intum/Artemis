@@ -69,7 +69,7 @@ public class JWTFilter extends GenericFilterBean {
             return null;
         }
 
-        return jwtBearer.split("Bearer ")[1];
+        return jwtBearer.substring(7);
     }
 
     /**
