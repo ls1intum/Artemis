@@ -22,6 +22,9 @@ import { UsersImportButtonComponent } from 'app/shared/user-import/users-import-
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExamUserDTO } from 'app/entities/exam-user-dto.model';
 import { ExamUser } from 'app/entities/exam-user.model';
+import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status/student-exam-status.component';
+import { StudentExam } from 'app/entities/student-exam.model';
+import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 
 describe('ExamStudentsComponent', () => {
     const course = { id: 1 } as Course;
@@ -47,6 +50,10 @@ describe('ExamStudentsComponent', () => {
             { ...examUser2, ...user2 },
         ],
     } as Exam;
+    const studentExam1 = new StudentExam();
+    const studentExam2 = new StudentExam();
+    studentExam1.user = user1;
+    studentExam2.user = user2;
 
     const route = {
         snapshot: { paramMap: convertToParamMap({ courseId: course.id }) },
@@ -57,6 +64,7 @@ describe('ExamStudentsComponent', () => {
     let component: ExamStudentsComponent;
     let fixture: ComponentFixture<ExamStudentsComponent>;
     let examManagementService: ExamManagementService;
+    let studentExamService: StudentExamService;
     let userService: UserService;
 
     beforeEach(() => {
@@ -67,6 +75,7 @@ describe('ExamStudentsComponent', () => {
                 MockComponent(UsersImportButtonComponent),
                 MockComponent(StudentsUploadImagesButtonComponent),
                 MockComponent(DataTableComponent),
+                MockComponent(StudentExamStatusComponent),
                 MockDirective(TranslateDirective),
                 MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisTranslatePipe),
@@ -74,12 +83,14 @@ describe('ExamStudentsComponent', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
+                { provide: ArtemisTranslatePipe, useClass: ArtemisTranslatePipe },
             ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExamStudentsComponent);
         component = fixture.componentInstance;
         examManagementService = TestBed.inject(ExamManagementService);
+        studentExamService = TestBed.inject(StudentExamService);
         userService = TestBed.inject(UserService);
     });
 
@@ -89,7 +100,9 @@ describe('ExamStudentsComponent', () => {
     });
 
     it('should initialize', () => {
+        const examServiceStub = jest.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: examWithCourse })));
         fixture.detectChanges();
+        expect(examServiceStub).toHaveBeenCalledOnce();
         expect(component).not.toBeNull();
         expect(component.courseId).toEqual(course.id);
         expect(component.exam).toEqual(examWithCourse);
@@ -98,32 +111,42 @@ describe('ExamStudentsComponent', () => {
 
     it('should handle auto-complete for user without login', () => {
         const callbackSpy = jest.fn();
+        const examServiceStub = jest.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: examWithCourse })));
+        const fakeResponseStudentExams = { body: [studentExam1, studentExam2] } as HttpResponse<StudentExam[]>;
+        const studentExamServiceStub = jest.spyOn(studentExamService, 'findAllForExam').mockReturnValue(of(fakeResponseStudentExams));
         fixture.detectChanges();
 
         component.onAutocompleteSelect(user1, callbackSpy);
         fixture.detectChanges();
-
+        expect(examServiceStub).toHaveBeenCalledOnce();
+        expect(studentExamServiceStub).toHaveBeenCalledOnce();
         expect(callbackSpy).toHaveBeenCalledWith(user1);
     });
 
     it('should handle auto-complete for unregistered user', () => {
         const user3 = { id: 3, login: 'user3' } as User;
         const student3 = { login: 'user3', firstName: 'student2', lastName: 'student2', registrationNumber: '1234567' } as ExamUserDTO;
+        const studentExam3 = { user: user3 };
         const callbackSpy = jest.fn();
         const flashSpy = jest.spyOn(component, 'flashRowClass');
-        const reloadSpy = jest.spyOn(component, 'reloadExamWithRegisteredUsers');
-        const examServiceStub = jest.spyOn(examManagementService, 'addStudentToExam').mockReturnValue(of(new HttpResponse({ body: student3 })));
+        const reloadSpy = jest.spyOn(component, 'loadAll');
+        const addStudentToExamSpy = jest.spyOn(examManagementService, 'addStudentToExam').mockReturnValue(of(new HttpResponse({ body: student3 })));
+        const findExamSpy = jest.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: examWithCourse })));
+        const fakeResponseStudentExams = { body: [studentExam1, studentExam2, studentExam3] } as HttpResponse<StudentExam[]>;
+        const studentExamServiceStub = jest.spyOn(studentExamService, 'findAllForExam').mockReturnValue(of(fakeResponseStudentExams));
         fixture.detectChanges();
 
         component.onAutocompleteSelect(user3, callbackSpy);
         fixture.detectChanges();
 
-        expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, user3.login);
-        expect(examServiceStub).toHaveBeenCalledOnce();
-        expect(reloadSpy).toHaveBeenCalledOnce();
+        expect(addStudentToExamSpy).toHaveBeenCalledWith(course.id, examWithCourse.id, user3.login);
+        expect(findExamSpy).toHaveBeenCalledTimes(2);
+        expect(reloadSpy).toHaveBeenCalledTimes(2);
+        expect(studentExamServiceStub).toHaveBeenCalledTimes(2);
         expect(callbackSpy).not.toHaveBeenCalled();
         expect(flashSpy).toHaveBeenCalledOnce();
         expect(component.isTransitioning).toBeFalse();
+        expect(component.hasStudentsWithoutExam).toBeFalse();
     });
 
     it('should search for users', () => {
@@ -151,15 +174,27 @@ describe('ExamStudentsComponent', () => {
             examUsers: [{ didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 } as ExamUser],
         };
         const examServiceStub = jest.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: examWithOneUser })));
+        const fakeResponseStudentExams = { body: [studentExam2] } as HttpResponse<StudentExam[]>;
+        const studentExamServiceStub = jest.spyOn(studentExamService, 'findAllForExam').mockReturnValue(of(fakeResponseStudentExams));
         fixture.detectChanges();
 
-        component.reloadExamWithRegisteredUsers();
+        component.loadAll();
         fixture.detectChanges();
 
+        expect(studentExamServiceStub).toHaveBeenCalledTimes(2);
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, true);
         expect(component.exam).toEqual(examWithOneUser);
         expect(component.allRegisteredUsers).toEqual([
-            { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
+            {
+                didCheckImage: false,
+                didCheckLogin: false,
+                didCheckName: false,
+                didCheckRegistrationNumber: false,
+                didExamUserAttendExam: false,
+                ...user2,
+                user: user2,
+                studentExam: studentExam2,
+            },
         ]);
     });
 
@@ -191,6 +226,8 @@ describe('ExamStudentsComponent', () => {
             examUsers: [{ didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 } as ExamUser],
         };
         const examServiceStub = jest.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: examWithOneUser })));
+        const fakeResponseStudentExams = { body: [studentExam2] } as HttpResponse<StudentExam[]>;
+        const studentExamServiceStub = jest.spyOn(studentExamService, 'findAllForExam').mockReturnValue(of(fakeResponseStudentExams));
         fixture.detectChanges();
 
         component.exam = examWithCourse;
@@ -198,8 +235,19 @@ describe('ExamStudentsComponent', () => {
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, true);
         expect(examServiceStubAddAll).toHaveBeenCalledWith(course.id, examWithCourse.id);
+        expect(studentExamServiceStub).toHaveBeenCalledTimes(2);
+        expect(component.hasStudentsWithoutExam).toBeFalse();
         expect(component.allRegisteredUsers).toEqual([
-            { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
+            {
+                didCheckImage: false,
+                didCheckLogin: false,
+                didCheckName: false,
+                didCheckRegistrationNumber: false,
+                didExamUserAttendExam: false,
+                ...user2,
+                user: user2,
+                studentExam: studentExam2,
+            },
         ]);
     });
 
@@ -234,7 +282,7 @@ describe('ExamStudentsComponent', () => {
     });
 
     it('should format search result', () => {
-        const resultString = component.searchResultFormatter(user1);
+        const resultString = component.userSearchResultFormatter(user1);
         expect(resultString).toBe('name (login)');
     });
 
