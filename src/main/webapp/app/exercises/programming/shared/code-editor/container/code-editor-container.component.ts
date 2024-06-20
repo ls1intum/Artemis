@@ -74,8 +74,6 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     highlightDifferences: boolean;
     @Input()
     disableAutoSave = false;
-    @Input()
-    useMonacoEditor = false;
 
     @Output()
     onResizeEditorInstructions = new EventEmitter<void>();
