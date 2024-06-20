@@ -16,6 +16,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { runOnPushChangeDetection } from '../../../helpers/on-push-change-detection.helper';
 import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { TutorialGroupUtilizationIndicatorComponent } from 'app/course/tutorial-groups/shared/tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({ selector: 'jhi-mock-extra-column', template: '' })
 class MockExtraColumnComponent {
@@ -74,6 +75,7 @@ describe('TutorialGroupTableWrapperTest', () => {
                 MockDirective(SortByDirective),
                 MockComponent(FaIconComponent),
                 MockComponent(TutorialGroupUtilizationIndicatorComponent),
+                MockDirective(TranslateDirective),
             ],
             providers: [MockProvider(SortService)],
         })
@@ -131,6 +133,7 @@ describe('TutorialGroupsTableComponent', () => {
                 MockDirective(SortByDirective),
                 MockComponent(TutorialGroupUtilizationIndicatorComponent),
                 MockComponent(FaIconComponent),
+                MockDirective(TranslateDirective),
             ],
             providers: [MockProvider(SortService)],
         })
