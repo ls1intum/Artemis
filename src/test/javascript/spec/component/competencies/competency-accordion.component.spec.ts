@@ -37,6 +37,7 @@ describe('CompetencyAccordionComponent', () => {
         component.competency = { description: '', masteryThreshold: 80, optional: false, title: '', id: 42 };
         component.metrics = metrics;
         const progress = component.calculateExercisesProgress();
+        // achieved points decided by total points
         expect(progress).toBeCloseTo((80 * 10 + 40 * 20) / (10 + 20), 1);
     });
 
@@ -54,6 +55,7 @@ describe('CompetencyAccordionComponent', () => {
         component.competency = { description: '', masteryThreshold: 80, optional: false, title: '', id: 42 };
         component.metrics = metrics;
         const progress = component.calculateLectureUnitsProgress();
-        expect(progress).toBeCloseTo(66.6, 0);
+        // completed 2 out of 3 lecture units
+        expect(progress).toBeCloseTo((2 / 3) * 100, 0);
     });
 });
