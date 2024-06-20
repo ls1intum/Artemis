@@ -20,13 +20,12 @@ import { AlertService } from 'app/core/util/alert.service';
 import { CodeEditorFileBrowserComponent, InteractableEvent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
 import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';
-import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { Participation } from 'app/entities/participation/participation.model';
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 import { ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
-import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { Annotation, CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,
