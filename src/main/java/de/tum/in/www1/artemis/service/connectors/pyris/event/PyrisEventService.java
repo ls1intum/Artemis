@@ -26,8 +26,8 @@ public class PyrisEventService {
      */
     public void trigger(PyrisEvent event) {
         switch (event) {
-            case CompetencyJolEvent competencyJolEvent -> {
-                competencyJolEvent.handleEvent(irisCourseChatSessionService);
+            case CompetencyJolSetEvent competencyJolSetEvent -> {
+                competencyJolSetEvent.handleEvent(irisCourseChatSessionService);
             }
             default -> throw new UnsupportedOperationException("Unsupported event: " + event);
         }

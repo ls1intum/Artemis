@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.repository.CompetencyProgressRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.competency.CompetencyJolRepository;
-import de.tum.in.www1.artemis.service.connectors.pyris.event.CompetencyJolEvent;
+import de.tum.in.www1.artemis.service.connectors.pyris.event.CompetencyJolSetEvent;
 import de.tum.in.www1.artemis.service.connectors.pyris.event.PyrisEventService;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyJolDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyJolPairDTO;
@@ -88,7 +88,7 @@ public class CompetencyJolService {
             // Inform Iris so it can send a message to the user
             try {
                 if (userId % 3 > 0) { // HD3-GROUPS: Iris groups are 1 & 2
-                    service.trigger(new CompetencyJolEvent(jol));
+                    service.trigger(new CompetencyJolSetEvent(jol));
                 }
             }
             catch (Exception e) {
