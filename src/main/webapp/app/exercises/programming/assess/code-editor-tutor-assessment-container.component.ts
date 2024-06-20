@@ -341,7 +341,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private highlightLines(firstLine: number, lastLine: number) {
-        this.codeEditorContainer.highlightLines(firstLine, lastLine);
+        // We add 1 to make the lines 1-based.
+        this.codeEditorContainer.highlightLines(firstLine + 1, lastLine + 1);
     }
 
     /**

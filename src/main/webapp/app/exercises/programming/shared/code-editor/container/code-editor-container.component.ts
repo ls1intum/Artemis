@@ -278,10 +278,13 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         return this.monacoEditor.getNumberOfLines() ?? 0;
     }
 
+    /**
+     * Highlights the line range in the Monaco editor.
+     * @param startLine The first line to highlight. Line numbers start at 1.
+     * @param endLine The last line to highlight.
+     */
     highlightLines(startLine: number, endLine: number): void {
-        // Workaround: increase line number by 1 for monaco
-        // Will be removed once ace is gone from every instance of this component
-        this.monacoEditor.highlightLines(startLine + 1, endLine + 1);
+        this.monacoEditor.highlightLines(startLine, endLine);
     }
 
     // displays the alert for confirming refreshing or closing the page if there are unsaved changes
