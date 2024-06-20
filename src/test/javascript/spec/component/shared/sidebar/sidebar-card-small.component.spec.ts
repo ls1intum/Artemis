@@ -35,7 +35,6 @@ describe('SidebarCardSmallComponent', () => {
                 { provide: NotificationService, useClass: MockNotificationService },
             ],
         }).compileComponents();
-    });
 
         const metisService = new MockMetisService();
         TestBed.overrideComponent(SidebarCardSmallComponent, {
