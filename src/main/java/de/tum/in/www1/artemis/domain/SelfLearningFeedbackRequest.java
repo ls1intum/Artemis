@@ -21,11 +21,10 @@ import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 
-import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
- * A Self Learning Request.
+ * A Self Learning Feedback Request.
  */
 @Entity
 @Table(name = "self_learning_feedback_request")
@@ -33,11 +32,6 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class SelfLearningFeedbackRequest extends DomainObject {
-
-    @ManyToOne
-    @JsonView(QuizView.Before.class)
-    @JsonIgnoreProperties({ "results", "submissions", "selfLearningFeedbackRequests" })
-    private Participation participation;
 
     @Column(name = "request_datetime")
     @JsonView(QuizView.Before.class)
@@ -57,16 +51,8 @@ public class SelfLearningFeedbackRequest extends DomainObject {
     private Result result;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnoreProperties({ "results", "participation" })
+    @JsonIgnoreProperties({ "results" })
     private Submission submission;
-
-    public Participation getParticipation() {
-        return participation;
-    }
-
-    public void setParticipation(Participation participation) {
-        this.participation = participation;
-    }
 
     public ZonedDateTime getRequestDateTime() {
         return requestDateTime;

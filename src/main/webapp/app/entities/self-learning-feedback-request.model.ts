@@ -25,7 +25,7 @@ export class SelfLearningFeedbackRequest implements BaseEntity {
     }
 
     public static isFailed(selfLearningFeedbackRequest: SelfLearningFeedbackRequest): boolean {
-        return selfLearningFeedbackRequest.requestDateTime !== undefined && !selfLearningFeedbackRequest.successful;
+        return selfLearningFeedbackRequest.requestDateTime !== undefined && selfLearningFeedbackRequest.successful === false;
     }
 
     // if there is a result - then the request was successful

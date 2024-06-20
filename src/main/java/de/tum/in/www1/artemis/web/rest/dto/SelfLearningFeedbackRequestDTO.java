@@ -36,7 +36,7 @@ public record SelfLearningFeedbackRequestDTO(Long id, ZonedDateTime requestDateT
             resultDTO = ResultDTO.of(selfLearningFeedbackRequest.getResult(), feedbacks);
         }
         return new SelfLearningFeedbackRequestDTO(selfLearningFeedbackRequest.getId(), selfLearningFeedbackRequest.getRequestDateTime(),
-                selfLearningFeedbackRequest.getResponseDateTime(), ParticipationDTO.of(selfLearningFeedbackRequest.getParticipation()), resultDTO, submissionDTO,
+                selfLearningFeedbackRequest.getResponseDateTime(), ParticipationDTO.of(selfLearningFeedbackRequest.getSubmission().getParticipation()), resultDTO, submissionDTO,
                 selfLearningFeedbackRequest.isSuccessful());
     }
 
@@ -56,7 +56,7 @@ public record SelfLearningFeedbackRequestDTO(Long id, ZonedDateTime requestDateT
             resultDTO = ResultDTO.of(selfLearningFeedbackRequest.getResult());
         }
         return new SelfLearningFeedbackRequestDTO(selfLearningFeedbackRequest.getId(), selfLearningFeedbackRequest.getRequestDateTime(),
-                selfLearningFeedbackRequest.getResponseDateTime(), ParticipationDTO.of(selfLearningFeedbackRequest.getParticipation()), resultDTO, submissionDTO,
+                selfLearningFeedbackRequest.getResponseDateTime(), ParticipationDTO.of(selfLearningFeedbackRequest.getSubmission().getParticipation()), resultDTO, submissionDTO,
                 selfLearningFeedbackRequest.isSuccessful());
     }
 }

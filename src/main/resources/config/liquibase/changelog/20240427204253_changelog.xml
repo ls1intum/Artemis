@@ -12,7 +12,6 @@
             </column>
             <column name="request_datetime" type="datetime(3)"/>
             <column name="response_datetime" type="datetime(3)"/>
-            <column name="participation_id" type="bigint"/>
             <column name="submission_id" type="bigint"/>
             <column name="result_id" type="bigint"/>
             <column name="successful" type="boolean"/>
@@ -20,8 +19,6 @@
         <addForeignKeyConstraint baseTableName="self_learning_feedback_request" baseColumnNames="result_id" constraintName="fk_self_learning_feedback_request_result" referencedTableName="result"
                                  referencedColumnNames="id" onDelete="SET NULL"/>
         <addForeignKeyConstraint baseTableName="self_learning_feedback_request" baseColumnNames="submission_id" constraintName="fk_self_learning_feedback_request_submission" referencedTableName="submission"
-                                 referencedColumnNames="id" onDelete="SET NULL"/>
-        <addForeignKeyConstraint baseTableName="self_learning_feedback_request" baseColumnNames="participation_id" constraintName="fk_self_learning_feedback_request_participation" referencedTableName="participation"
                                  referencedColumnNames="id" onDelete="SET NULL"/>
     </changeSet>
 </databaseChangeLog>

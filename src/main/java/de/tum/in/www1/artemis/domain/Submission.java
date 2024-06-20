@@ -100,6 +100,11 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Column(name = "submission_date")
     private ZonedDateTime submissionDate;
 
+    @OneToMany(mappedBy = "submission")
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonView(QuizView.Before.class)
+    private Set<SelfLearningFeedbackRequest> selfLearningFeedbackRequests = new HashSet<>();
+
     @JsonView(QuizView.Before.class)
     public ZonedDateTime getSubmissionDate() {
         return submissionDate;
@@ -374,4 +379,13 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
         }
         return getSubmissionDate().compareTo(other.getSubmissionDate());
     }
+
+    public Set<SelfLearningFeedbackRequest> getSelfLearningFeedbackRequests() {
+        return selfLearningFeedbackRequests;
+    }
+
+    public void setSelfLearningFeedbackRequests(Set<SelfLearningFeedbackRequest> selfLearningFeedbackRequests) {
+        this.selfLearningFeedbackRequests = selfLearningFeedbackRequests;
+    }
+
 }

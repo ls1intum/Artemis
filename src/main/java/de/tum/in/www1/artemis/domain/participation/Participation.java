@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain.participation;
 
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -24,12 +25,14 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.persistence.UniqueConstraint;
 
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonView;
@@ -123,12 +126,6 @@ public abstract class Participation extends DomainObject implements Participatio
      */
     @Transient
     private Integer submissionCountTransient;
-
-    @OneToMany(mappedBy = "participation")
-    @JsonIgnoreProperties(value = "participation", allowSetters = true)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonView(QuizView.Before.class)
-    private Set<SelfLearningFeedbackRequest> selfLearningFeedbackRequests = new HashSet<>();
 
     public Integer getSubmissionCount() {
         return submissionCountTransient;
@@ -350,4 +347,22 @@ public abstract class Participation extends DomainObject implements Participatio
 
     @JsonIgnore
     public abstract String getType();
+
+    /**
+     * Re-flat-map self-learning feedback requests
+     *
+     * @return A set of self-learning-feedback requests of all submissions associated with the given participation
+     */
+    @Transient
+    @JsonProperty("selfLearningFeedbackRequests")
+    public Set<SelfLearningFeedbackRequest> getSelfLearningFeedbackRequests() {
+        if (Hibernate.isInitialized(this.submissions)) {
+            Set<SelfLearningFeedbackRequest> feedbackRequests = new HashSet<>();
+            for (Submission submission : this.getSubmissions()) {
+                feedbackRequests.addAll(submission.getSelfLearningFeedbackRequests());
+            }
+            return feedbackRequests;
+        }
+        return Collections.emptySet();
+    }
 }

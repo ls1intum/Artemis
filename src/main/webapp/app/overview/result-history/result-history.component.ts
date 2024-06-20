@@ -18,6 +18,10 @@ export class ResultHistoryComponent implements OnChanges {
     readonly getResultIconClass = getResultIconClass;
     readonly evaluateTemplateStatus = evaluateTemplateStatus;
     readonly MissingResultInfo = MissingResultInformation;
+    protected readonly Result = Result;
+    protected readonly SelfLearningFeedbackRequest = SelfLearningFeedbackRequest;
+    protected readonly getSelfLearningIconClass = getSelfLearningIconClass;
+    protected readonly getSelfLearningFeedbackTextColorClass = getSelfLearningFeedbackTextColorClass;
 
     @Input() entries: (Result | SelfLearningFeedbackRequest)[];
     @Input() exercise: Exercise;
@@ -48,9 +52,4 @@ export class ResultHistoryComponent implements OnChanges {
             }
         }
     }
-
-    protected readonly Result = Result;
-    protected readonly SelfLearningFeedbackRequest = SelfLearningFeedbackRequest;
-    protected readonly getSelfLearningIconClass = getSelfLearningIconClass;
-    protected readonly getSelfLearningFeedbackTextColorClass = getSelfLearningFeedbackTextColorClass;
 }

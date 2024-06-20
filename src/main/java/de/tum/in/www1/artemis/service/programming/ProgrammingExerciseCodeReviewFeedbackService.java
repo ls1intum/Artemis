@@ -124,7 +124,6 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
 
         // save self learning feedback request and transmit it over websockets to notify the client about the status
         var newRequest = new SelfLearningFeedbackRequest();
-        newRequest.setParticipation(participation);
         newRequest.setSubmission(submission);
         newRequest.setRequestDateTime(now());
         newRequest = this.selfLearningFeedbackRequestRepository.save(newRequest);
@@ -174,14 +173,14 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
             newRequest.setSuccessful(true);
             newRequest.setResult(automaticResult);
             newRequest.setResponseDateTime(ZonedDateTime.now());
-            newRequest = this.selfLearningFeedbackRequestRepository.save(newRequest);
+            this.selfLearningFeedbackRequestRepository.save(newRequest);
 
             this.programmingMessagingService.notifyUserAboutNewRequest(SelfLearningFeedbackRequestDTO.of(newRequest, feedbacks), participation);
         }
         catch (Exception e) {
             log.error("Could not generate feedback", e);
             newRequest.setSuccessful(false);
-            newRequest = this.selfLearningFeedbackRequestRepository.save(newRequest);
+            this.selfLearningFeedbackRequestRepository.save(newRequest);
             this.programmingMessagingService.notifyUserAboutNewRequest(SelfLearningFeedbackRequestDTO.of(newRequest), participation);
         }
         finally {
@@ -232,8 +231,14 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
     private void checkRateLimitOrThrow(ProgrammingExerciseStudentParticipation participation) {
 
         List<Result> athenaResults = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
+        List<SelfLearningFeedbackRequest> selfLearningFeedbackRequests = participation.getSelfLearningFeedbackRequests().stream()
+                .filter(request -> request.isSuccessful() == null || request.isSuccessful()).toList();
 
         if (athenaResults.size() >= 20) {
+            throw new BadRequestAlertException("Maximum number of AI feedback requests reached.", "participation", "preconditions not met");
+        }
+
+        if (selfLearningFeedbackRequests.size() >= 20) {
             throw new BadRequestAlertException("Maximum number of AI feedback requests reached.", "participation", "preconditions not met");
         }
     }

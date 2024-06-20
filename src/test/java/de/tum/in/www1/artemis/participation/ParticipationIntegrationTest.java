@@ -97,8 +97,8 @@ import de.tum.in.www1.artemis.service.quiz.QuizBatchService;
 import de.tum.in.www1.artemis.service.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
-import de.tum.in.www1.artemis.web.rest.dto.SelfLearningFeedbackRequestDTO;
 import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SelfLearningFeedbackRequestDTO;
 
 class ParticipationIntegrationTest extends AbstractAthenaTest {
 
@@ -578,7 +578,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void requestFeedbackSuccess_withAthenaSuccess() throws Exception {
+    void requestFeedback_withAthenaSuccess() throws Exception {
 
         var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
         course.setRestrictedAthenaModulesAccess(true);
@@ -626,7 +626,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void requestFeedbackSuccess_withAthenaFailure() throws Exception {
+    void requestFeedback_withAthenaFailure() throws Exception {
 
         var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
         course.setRestrictedAthenaModulesAccess(true);
@@ -1543,7 +1543,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         resultRepository.save(result);
 
         // generate 5 athena results
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 20; i++) {
             var athenaResult = ParticipationFactory.generateResult(false, 100).participation(participation);
             athenaResult.setCompletionDate(ZonedDateTime.now());
             athenaResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
@@ -1578,7 +1578,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         resultRepository.save(result);
 
         // generate 5 athena results
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 20; i++) {
             var athenaResult = ParticipationFactory.generateResult(false, 100).participation(participation);
             athenaResult.setCompletionDate(ZonedDateTime.now());
             athenaResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
