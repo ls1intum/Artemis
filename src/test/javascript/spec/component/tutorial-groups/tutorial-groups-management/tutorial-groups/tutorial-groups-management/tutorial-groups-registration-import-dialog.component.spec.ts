@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { TutorialGroupsRegistrationImportDialogComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
@@ -14,6 +14,7 @@ import { StudentDTO } from 'app/entities/student-dto.model';
 import { ParseError, ParseResult, ParseWorkerConfig, parse } from 'papaparse';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 jest.mock('papaparse', () => {
     const original = jest.requireActual('papaparse');
     return {
@@ -30,7 +31,7 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [FormsModule, ReactiveFormsModule],
-            declarations: [TutorialGroupsRegistrationImportDialogComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent)],
+            declarations: [TutorialGroupsRegistrationImportDialogComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockDirective(TranslateDirective)],
             providers: [MockProvider(TranslateService), MockProvider(AlertService), MockProvider(TutorialGroupsService), MockProvider(NgbActiveModal)],
         }).compileComponents();
 
