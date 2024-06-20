@@ -1,6 +1,7 @@
 import { User } from 'app/core/user/user.model';
 import { Exam } from 'app/entities/exam.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
+import { StudentExam } from 'app/entities/student-exam.model';
 
 export class ExamUser implements BaseEntity {
     public id?: number;
@@ -16,6 +17,7 @@ export class ExamUser implements BaseEntity {
     public didCheckRegistrationNumber = false; // default value
     public user?: User;
     public exam?: Exam;
+    public studentExam?: StudentExam;
 
     // helper attributes
     public didExamUserAttendExam?: boolean;
