@@ -38,7 +38,8 @@ for (const fileName of fileNames.filter(fileName => fileName.endsWith('.ts')))  
     // Start traversing the AST from the root
     visit(sourceFile, classProperties, parameterTypes, sourceFile, fileName, restCalls);
     isFirstRestCall = true;
-    restCallFiles.push({fileName: fileName, restCalls: restCalls});
+    if (restCalls.length > 0)
+        restCallFiles.push({fileName: fileName, restCalls: restCalls});
 };
 
 // Write the restCalls array to a JSON file
