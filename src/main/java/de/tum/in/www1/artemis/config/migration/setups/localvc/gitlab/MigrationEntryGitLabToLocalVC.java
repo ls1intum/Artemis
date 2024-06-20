@@ -39,8 +39,8 @@ import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
-@Profile("gitlab")
 @Component
+@Profile("gitlab")
 public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationEntry {
 
     @Value("${migration.scaling.batch-size:100}")
