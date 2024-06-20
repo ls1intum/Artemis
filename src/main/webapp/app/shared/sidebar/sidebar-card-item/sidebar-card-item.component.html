@@ -45,7 +45,7 @@
             </div>
         } @else {
             <div class="d-flex justify-content-between mb-1 align-items-baseline">
-                <span id="test-sidebar-card-title" class="small fw-semibold text-truncate me-2" [title]="sidebarItem.title">
+                <span id="test-sidebar-card-title" class="small fw-semibold text-truncate me-2" [title]="sidebarItem.title" [class.muted]="sidebarItem.conversation?.isMuted">
                     @if (sidebarItem.icon) {
                         <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" />
                     }

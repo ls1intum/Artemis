@@ -53,7 +53,6 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
-import { sortCourses } from 'app/shared/util/course.util';
 import dayjs from 'dayjs/esm';
 import { Observable, Subject, Subscription, catchError, firstValueFrom, map, of, takeUntil, throwError } from 'rxjs';
 import { facSidebar } from '../../content/icons/icons';
@@ -63,6 +62,8 @@ import { CourseLecturesComponent } from './course-lectures/course-lectures.compo
 import { CourseExamsComponent } from './course-exams/course-exams.component';
 import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-tutorial-groups.component';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
+import { sortCourses } from 'app/shared/util/course.util';
 import { CourseUnenrollmentModalComponent } from './course-unenrollment-modal.component';
 
 interface CourseActionItem {
@@ -136,7 +137,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     private conversationServiceInstantiated = false;
     private checkedForUnreadMessages = false;
-    activatedComponentReference: CourseExercisesComponent | CourseLecturesComponent | CourseExamsComponent | CourseTutorialGroupsComponent;
+    activatedComponentReference: CourseExercisesComponent | CourseLecturesComponent | CourseExamsComponent | CourseTutorialGroupsComponent | CourseConversationsComponent;
 
     // Rendered embedded view for controls in the bar so we can destroy it if needed
     private controlsEmbeddedView?: EmbeddedViewRef<any>;
@@ -599,7 +600,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             componentRef instanceof CourseExercisesComponent ||
             componentRef instanceof CourseLecturesComponent ||
             componentRef instanceof CourseTutorialGroupsComponent ||
-            componentRef instanceof CourseExamsComponent
+            componentRef instanceof CourseExamsComponent ||
+            componentRef instanceof CourseConversationsComponent
         ) {
             this.activatedComponentReference = componentRef;
         }

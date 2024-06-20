@@ -2,15 +2,28 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { DifficultyLevel, Exercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import dayjs from 'dayjs/esm';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 
 export type SidebarCardSize = 'S' | 'M' | 'L';
 export type TimeGroupCategory = 'past' | 'current' | 'future' | 'noDate';
 export type ExamGroupCategory = 'real' | 'test';
 export type TutorialGroupCategory = 'all' | 'registered' | 'further';
-export type SidebarTypes = 'exercise' | 'exam' | 'default';
-
-export type AccordionGroups = Record<TimeGroupCategory | TutorialGroupCategory | ExamGroupCategory | string, { entityData: SidebarCardElement[] }>;
+export type SidebarTypes = 'exercise' | 'exam' | 'conversation' | 'default';
+export type AccordionGroups = Record<TimeGroupCategory | TutorialGroupCategory | ExamGroupCategory | ChannelGroupCategory | string, { entityData: SidebarCardElement[] }>;
 export type ExerciseCollapseState = Record<TimeGroupCategory, boolean>;
+export type ChannelGroupCategory =
+    | 'favoriteChannels'
+    | 'generalChannels'
+    | 'exerciseChannels'
+    | 'lectureChannels'
+    | 'groupChats'
+    | 'directMessages'
+    | 'examChannels'
+    | 'hiddenChannels';
+
+export type CollapseState = Record<TimeGroupCategory, boolean> | Record<ChannelGroupCategory, boolean>;
+export type ChannelAccordionShowAdd = Record<ChannelGroupCategory, boolean>;
+export type ChannelTypeIcons = Record<ChannelGroupCategory, IconProp>;
 
 export interface SidebarData {
     groupByCategory: boolean;
@@ -18,6 +31,8 @@ export interface SidebarData {
     groupedData?: AccordionGroups;
     ungroupedData?: SidebarCardElement[];
     storageId?: string;
+    showAccordionAddOption?: boolean;
+    showAccordionLeadingIcon?: boolean;
 }
 
 export interface SidebarCardElement {
@@ -79,7 +94,6 @@ export interface SidebarCardElement {
      * Set for Exercises. Will be removed after refactoring
      */
     exercise?: Exercise;
-
     // TODO Extra Exam Part
     /**
      * This is a string which may define an icon for the status of the exam.
@@ -103,4 +117,10 @@ export interface SidebarCardElement {
      * Set for exam, shows the maximum attainable Points
      */
     attainablePoints?: number;
+
+    // TODO Extra Conversation Part
+    /**
+     * Set for Conversation. Will be removed after refactoring
+     */
+    conversation?: ConversationDTO;
 }
