@@ -57,7 +57,7 @@ artemis:
         name: Artemis
         email: artemis@in.tum.de
     athena:
-        url: http://localhost:5000
+        url: http://localhost:5100
         secret: abcdef12345
         restricted-modules: module_text_test_restricted,module_programming_test_restricted
     apollon:

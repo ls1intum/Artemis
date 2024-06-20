@@ -1,6 +1,6 @@
 {
     "name": "artemis",
-    "version": "7.2.1",
+    "version": "7.2.3",
     "description": "Interactive Learning with Individual Feedback",
     "private": true,
     "license": "MIT",
@@ -93,6 +93,7 @@
             "d3-transition": "^3.0.0"
         },
         "axios": "1.6.8",
+        "braces": "3.0.3",
         "critters": "0.0.22",
         "debug": "4.3.4",
         "katex": "0.16.10",
@@ -105,7 +106,8 @@
         "undici": "6.12.0",
         "vite": "5.1.7",
         "webpack-dev-middleware": "7.2.1",
-        "word-wrap": "1.2.5"
+        "word-wrap": "1.2.5",
+        "ws": "8.17.1"
     },
     "devDependencies": {
         "@angular-builders/jest": "17.0.3",
