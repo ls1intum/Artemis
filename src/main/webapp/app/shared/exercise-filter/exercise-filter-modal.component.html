@@ -21,12 +21,13 @@
                 (selectItem)="onSelectItem($event)"
             />
 
-            @if (selectedItems.length > 0) {
+            @if (selectedCategories.length > 0) {
                 <ul>
-                    @for (item of selectedItems; track item) {
+                    @for (item of selectedCategories; track item) {
                         <li>
-                            {{ item }}
+                            <jhi-custom-exercise-category-badge [category]="item" />
                             <button (click)="removeItem(item)">Remove</button>
+                            <pre>{{ item }}</pre>
                         </li>
                     }
                 </ul>

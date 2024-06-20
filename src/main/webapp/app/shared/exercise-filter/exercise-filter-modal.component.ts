@@ -11,13 +11,14 @@ import { DifficultyFilterOptions, ExerciseTypeFilterOptions } from 'app/shared/s
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { Observable, OperatorFunction, Subject, merge } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
+import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge.component';
 
 @Component({
     selector: 'jhi-exercise-filter-modal',
     templateUrl: './exercise-filter-modal.component.html',
     // styleUrls: ['./exercise-filter.component.scss'],
     standalone: true,
-    imports: [FormsModule, ReactiveFormsModule, FontAwesomeModule, ArtemisSharedCommonModule, ArtemisSharedComponentModule],
+    imports: [FormsModule, ReactiveFormsModule, FontAwesomeModule, ArtemisSharedCommonModule, ArtemisSharedComponentModule, CustomExerciseCategoryBadgeComponent],
 })
 export class ExerciseFilterModalComponent {
     readonly faFilter = faFilter;
@@ -28,7 +29,7 @@ export class ExerciseFilterModalComponent {
 
     @ViewChild('instance', { static: true }) instance: NgbTypeahead;
 
-    selectedItems: any[] = [];
+    selectedCategories: ExerciseCategory[] = [];
 
     focus$ = new Subject<string>();
     click$ = new Subject<string>();
@@ -93,15 +94,15 @@ export class ExerciseFilterModalComponent {
     // Method to handle item selection
     onSelectItem(event: any) {
         const item = event.item;
-        if (!this.selectedItems.includes(item)) {
-            this.selectedItems.push(item);
+        if (!this.selectedCategories.includes(item)) {
+            this.selectedCategories.push(item);
         }
         this.model = ''; // Clear the input field after selection
     }
 
     // Method to remove an item from the selected items
     removeItem(item: any) {
-        this.selectedItems = this.selectedItems.filter((i) => i !== item);
+        this.selectedCategories = this.selectedCategories.filter((i) => i !== item);
     }
 
     applyFilter(): void {
