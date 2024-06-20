@@ -212,14 +212,16 @@ public class ExerciseGroupResource {
      * @param courseId                     the course to which the exercise group belongs to
      * @param examId                       the exam to which the exercise group belongs to
      * @param exerciseGroupId              the id of the exercise group to delete
-     * @param deleteStudentReposBuildPlans boolean which states whether the corresponding student build plans should be deleted
-     * @param deleteBaseReposBuildPlans    boolean which states whether the corresponding base build plans should be deleted
+     * @param deleteStudentReposBuildPlans boolean which states whether the student repos and build plans should be deleted as well, this is true by default because for LocalVC
+     *                                         and LocalCI, it does not make sense to keep these artifacts
+     * @param deleteBaseReposBuildPlans    boolean which states whether the base repos and build plans should be deleted as well, this is true by default because for LocalVC and
+     *                                         LocalCI, it does not make sense to keep these artifacts
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("courses/{courseId}/exams/{examId}/exerciseGroups/{exerciseGroupId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId,
-            @RequestParam(defaultValue = "false") boolean deleteStudentReposBuildPlans, @RequestParam(defaultValue = "false") boolean deleteBaseReposBuildPlans) {
+            @RequestParam(defaultValue = "true") boolean deleteStudentReposBuildPlans, @RequestParam(defaultValue = "true") boolean deleteBaseReposBuildPlans) {
         log.info("REST request to delete exercise group : {}", exerciseGroupId);
 
         ExerciseGroup exerciseGroup = exerciseGroupRepository.findByIdWithExercisesElseThrow(exerciseGroupId);

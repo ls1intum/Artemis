@@ -95,14 +95,14 @@ public interface ConversationMessageRepository extends JpaRepository<Post, Long>
         // Only fetch the postIds without any left joins to avoid that Hibernate loads all objects and creates the page in Java
         long start = System.nanoTime();
         Page<Long> postIds = findPostIdsWithSpecification(specification, pageable);
-        log.info("findPostIdsWithSpecification took {}", TimeLogUtil.formatDurationFrom(start));
+        log.debug("findPostIdsWithSpecification took {}", TimeLogUtil.formatDurationFrom(start));
         // Fetch all necessary attributes to avoid lazy loading (even though relations are defined as EAGER in the domain class, specification queries do not respect this)
         long start2 = System.nanoTime();
         List<Post> posts = findByPostIdsWithEagerRelationships(postIds.getContent());
         // Make sure to sort the posts in the same order as the postIds
         Map<Long, Post> postMap = posts.stream().collect(Collectors.toMap(Post::getId, post -> post));
         posts = postIds.stream().map(postMap::get).toList();
-        log.info("findByPostIdsWithEagerRelationships took {}", TimeLogUtil.formatDurationFrom(start2));
+        log.debug("findByPostIdsWithEagerRelationships took {}", TimeLogUtil.formatDurationFrom(start2));
         // Recreate the page with the fetched posts
         return new PageImpl<>(posts, postIds.getPageable(), postIds.getTotalElements());
     }
