@@ -61,10 +61,10 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
-    @Value("${migration.local-vc.base-url:http://0.0.0.0}")
+    @Value("${server.url}")
     private URL localVCBaseUrl;
 
-    @Value("${migration.local-vc.repo-path:null}")
+    @Value("${artemis.version-control.local-vcs-repo-path:#{null}}")
     private String localVCBasePath;
 
     private static final String ERROR_MESSAGE = "Failed to migrate programming exercises within %d hours. Aborting migration.";
@@ -105,7 +105,7 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
             return;
         }
 
-        if (localVCBaseUrl == null || localVCBaseUrl.toString().equals("http://0.0.0.0")) {
+        if (localVCBaseUrl == null) {
             log.error("Migration failed because the local VC base URL is not configured.");
             return;
         }
