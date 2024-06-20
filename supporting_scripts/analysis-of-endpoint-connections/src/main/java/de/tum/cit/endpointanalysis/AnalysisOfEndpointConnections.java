@@ -53,7 +53,7 @@ public class AnalysisOfEndpointConnections {
 
         }
 
-//        parseServerEndpoints(filesToParse);
+        parseServerEndpoints(filesToParse);
         analyzeEndpoints();
         printEndpointAnalysisResult();
 //        analyzeRestCalls();
@@ -98,16 +98,6 @@ public class AnalysisOfEndpointConnections {
                             if (httpMethodClasses.contains(annotation.getNameAsString())) {
                                 final String[] annotationPathValue = {""};
 
-                                if (annotation.getNameAsString().equals(RequestMapping.class.getSimpleName())) {
-                                    if (annotation instanceof SingleMemberAnnotationExpr) {
-                                        SingleMemberAnnotationExpr single = (SingleMemberAnnotationExpr) annotation;
-                                    } else if (annotation instanceof NormalAnnotationExpr) {
-                                        NormalAnnotationExpr normal = (NormalAnnotationExpr) annotation;
-                                        normal.getPairs().forEach(pair -> System.out.println(pair.getNameAsString() + ": " + pair.getValue().toString()));
-                                    }
-                                } else {
-                                }
-
                                 if (annotation instanceof SingleMemberAnnotationExpr) {
                                     SingleMemberAnnotationExpr single = (SingleMemberAnnotationExpr) annotation;
                                     annotationPathValue[0] = single.getMemberValue().toString();
@@ -119,21 +109,18 @@ public class AnalysisOfEndpointConnections {
                                     });
                                 }
 
-                                List<String> annotations = method.getAnnotations().stream().filter(a -> !a.equals(annotation)).map(a -> a.getNameAsString()).toList();
-
-                                List<String> javaAnnotations = method.getAnnotations().stream().filter(a -> !a.equals(annotation)).map(a -> a.toString()).toList();
+                                List<String> annotations = method.getAnnotations().stream().filter(a -> !a.equals(annotation)).map(a -> a.toString()).toList();
                                 EndpointInformation endpointInformation = new EndpointInformation(classRequestMapping[0], method.getNameAsString(),
                                     annotation.getNameAsString(), annotationPathValue[0], javaClass.getNameAsString(), method.getBegin().get().line,
-                                    javaAnnotations);
+                                    annotations);
                                 endpoints.add(endpointInformation);
                             }
                         }
                     }
-                    if (endpoints.isEmpty()) {
-                        continue;
+                    if (!endpoints.isEmpty()) {
+                        endpointClasses.add(new EndpointClassInformation(javaClass.getNameAsString(),
+                            requestMappingOptional.isPresent() ? requestMappingOptional.get().toString() : "", endpoints));
                     }
-                    endpointClasses.add(new EndpointClassInformation(javaClass.getNameAsString(),
-                        requestMappingOptional.isPresent() ? requestMappingOptional.get().toString() : "", endpoints));
                 }
             } catch (Exception e) {
                 filesFailedToParse.add(filePath);
