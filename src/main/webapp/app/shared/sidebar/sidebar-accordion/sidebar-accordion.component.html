@@ -2,14 +2,22 @@
     <div
         id="test-accordion-item-container-{{ i }}"
         class="pointer"
-        [ngClass]="{ 'd-none': !(groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length }"
+        [ngClass]="{ 'd-none': (!showAddOptions || searchValue?.length !== 0) && !(groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length }"
     >
-        <div id="test-accordion-item-header" class="control-label d-flex align-items-center justify-content-between py-2 bg-module" (click)="toggleGroupCategoryCollapse(groupKey)">
+        <div
+            [id]="'test-accordion-item-header-' + groupKey"
+            class="control-label d-flex align-items-center justify-content-between py-2 bg-module"
+            (click)="toggleGroupCategoryCollapse(groupKey)"
+        >
             <div class="my-2">
+                @if (showLeadingIcon) {
+                    <fa-icon [fixedWidth]="true" [icon]="channelTypeIcon?.[groupKey]" />
+                }
                 {{ 'artemisApp.courseOverview.sidebar.' + groupKey | artemisTranslate | titlecase }}
                 ({{ (groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length }})
             </div>
-            <div class="pe-3">
+            <div class="icon-container pe-3">
+                <jhi-accordion-add-options [hidden]="!showAddOptions || (showAddOption ? !showAddOption[groupKey] : false)" [groupKey]="groupKey" />
                 <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!collapseState[groupKey]" />
             </div>
         </div>
@@ -18,7 +26,14 @@
             @for (sidebarItem of groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue; let last = $last; track sidebarItem) {
                 <div [ngClass]="{ 'mb-2': !last }">
                     <!-- loading sidebarCard with help of a directive depending on its size input-->
-                    <div jhiSidebarCard [size]="sidebarItem.size" [itemSelected]="itemSelected" [sidebarType]="sidebarType" [sidebarItem]="sidebarItem"></div>
+                    <div
+                        jhiSidebarCard
+                        [size]="sidebarItem.size"
+                        [itemSelected]="itemSelected"
+                        [sidebarType]="sidebarType"
+                        [sidebarItem]="sidebarItem"
+                        (onUpdateSidebar)="onUpdateSidebar.emit()"
+                    ></div>
                 </div>
             }
         </div>
