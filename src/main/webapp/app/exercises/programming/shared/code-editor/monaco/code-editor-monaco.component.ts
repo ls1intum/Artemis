@@ -381,9 +381,6 @@ export class CodeEditorMonacoComponent implements OnChanges {
         this.setBuildAnnotations(this.annotationsArray);
     }
 
-    /*
-     * Taken from code-editor-ace.component.ts
-     */
     /**
      * Saves the updated annotations to local storage
      * @param savedFiles
