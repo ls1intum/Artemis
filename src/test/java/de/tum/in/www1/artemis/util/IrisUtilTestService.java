@@ -51,6 +51,10 @@ public class IrisUtilTestService {
 
         var templateRepoUri = new GitUtilService.MockFileRepositoryUri(templateRepo.localRepoFile);
         exercise.setTemplateRepositoryUri(templateRepoUri.toString());
+        // Get bare repository
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepo.localRepoFile.toPath(), null)).when(gitService).getBareRepository(templateRepoUri);
+
+        // Get or checkout repository
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(templateRepoUri, true);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(templateRepoUri, false);
 
@@ -81,6 +85,11 @@ public class IrisUtilTestService {
     public void setupStudentParticipation(ProgrammingExerciseStudentParticipation participation, LocalRepository studentRepo) throws Exception {
         studentRepo.configureRepos("studentLocalRepo", "studentOriginRepo");
 
+        // Get bare repository
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null)).when(gitService)
+                .getBareRepository(participation.getVcsRepositoryUri());
+
+        // Get or checkout repository
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(participation.getVcsRepositoryUri(), true);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null)).when(gitService)
@@ -105,6 +114,11 @@ public class IrisUtilTestService {
 
         var solutionRepoUri = new GitUtilService.MockFileRepositoryUri(solutionRepo.localRepoFile);
         exercise.setSolutionRepositoryUri(solutionRepoUri.toString());
+
+        // Get bare repository
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null)).when(gitService).getBareRepository(solutionRepoUri);
+
+        // Get or checkout repository
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(solutionRepoUri, true);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(solutionRepoUri, false);
 
@@ -138,6 +152,11 @@ public class IrisUtilTestService {
 
         var testRepoUri = new GitUtilService.MockFileRepositoryUri(testRepo.localRepoFile);
         exercise.setTestRepositoryUri(testRepoUri.toString());
+
+        // Get bare repository
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getBareRepository(testRepoUri);
+
+        // Get or checkout repository
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(testRepoUri, true);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(testRepoUri, false);
 

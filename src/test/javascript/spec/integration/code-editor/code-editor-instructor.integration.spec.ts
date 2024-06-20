@@ -307,7 +307,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
         expect(setDomainSpy).toHaveBeenCalledOnce();
         expect(setDomainSpy).toHaveBeenCalledWith([DomainType.TEST_REPOSITORY, exercise]);
-        expect(container.selectedParticipation).toBeUndefined();
+        expect(container.selectedParticipation).toEqual(exercise.templateParticipation);
         expect(container.selectedRepository).toBe(container.REPOSITORY.TEST);
         expect(getBuildLogsStub).not.toHaveBeenCalled();
         expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();

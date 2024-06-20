@@ -1,7 +1,6 @@
 import { Component, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
-import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { CodeEditorInstructorBaseContainerComponent } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
@@ -41,7 +40,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         location: Location,
         participationService: ParticipationService,
-        translateService: TranslateService,
         route: ActivatedRoute,
         alertService: AlertService,
     ) {

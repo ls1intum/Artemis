@@ -3,7 +3,7 @@
         <div class="card-body">
             @if (loadingState === LOADING_STATE.INITIALIZING) {
                 <span>
-                    <fa-icon [icon]="faCircleNotch" [spin]="true" />
+                    <fa-icon [icon]="faCircleNotch" animation="spin" />
                     <span jhiTranslate="artemisApp.editor.fetchingParticipation"></span>
                 </span>
             }
@@ -97,7 +97,7 @@
                             <fa-icon [icon]="faPlus" class="text-white me-2" />
                         }
                         @if (loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO) {
-                            <fa-icon [icon]="faCircleNotch" [spin]="true" class="text-white me-2" />
+                            <fa-icon [icon]="faCircleNotch" animation="spin" class="text-white me-2" />
                         }
                         <span jhiTranslate="artemisApp.editor.repoSelect.createAssignmentRepo"></span>
                     </button>
@@ -108,7 +108,7 @@
                             <fa-icon [icon]="faTimes" class="text-white me-2" />
                         }
                         @if (loadingState === LOADING_STATE.DELETING_ASSIGNMENT_REPO || loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO) {
-                            <fa-icon [icon]="faCircleNotch" [spin]="true" class="text-white me-2" />
+                            <fa-icon [icon]="faCircleNotch" animation="spin" class="text-white me-2" />
                         }
                         <span jhiTranslate="artemisApp.editor.repoSelect.deleteAssignmentRepo"></span>
                     </button>
@@ -133,7 +133,7 @@
         <jhi-programming-exercise-editable-instructions
             editorSidebar
             [(exercise)]="exercise"
-            [(participation)]="selectedRepository !== REPOSITORY.TEST ? selectedParticipation! : exercise.templateParticipation!"
+            [(participation)]="selectedParticipation!"
             [templateParticipation]="exercise.templateParticipation!"
             [enableResize]="false"
             class="instructions-wrapper__content card-body p-0"
