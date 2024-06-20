@@ -43,10 +43,10 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
             return true;
         }
         else if (localCIBuildJobQueueService.isPresent() && localCIBuildJobQueueService.orElseThrow().getBuildAgentInformation().stream().anyMatch(agent -> {
-            if (agent.publicSshKey().isEmpty()) {
+            if (agent.publicSshKeyHash() == null) {
                 return false;
             }
-            return agent.publicSshKey().orElseThrow().equals(publicKey);
+            return agent.publicSshKeyHash().equals(keyHash);
         })) {
             log.info("Authenticating as build agent");
             session.setAttribute(SshConstants.IS_BUILD_AGENT_KEY, true);

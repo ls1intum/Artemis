@@ -2,12 +2,10 @@ package de.tum.in.www1.artemis.service.connectors.localci.buildagent;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 
-import java.security.PublicKey;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
@@ -258,9 +256,9 @@ public class SharedQueueProcessingService {
             recentBuildJobs.add(recentBuildJob);
         }
 
-        Optional<PublicKey> sshKey = buildAgentSSHKeyService.getPublicKey();
+        String sshKeyHash = buildAgentSSHKeyService.getPublicKeyHash();
 
-        return new BuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, active, recentBuildJobs, sshKey);
+        return new BuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, active, recentBuildJobs, sshKeyHash);
     }
 
     private List<BuildJobQueueItem> getProcessingJobsOfNode(String memberAddress) {
