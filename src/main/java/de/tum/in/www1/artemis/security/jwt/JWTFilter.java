@@ -33,6 +33,8 @@ public class JWTFilter extends GenericFilterBean {
         HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
         Cookie jwtCookie = WebUtils.getCookie(httpServletRequest, JWT_COOKIE_NAME);
 
+        // check if valid JWT token is in the cookie or in the Authorization header
+        // then proceed to do authentication with this token
         String jwtToken;
         if (isJwtValid(this.tokenProvider, jwtToken = getJwtFromCookie(jwtCookie))
                 || isJwtValid(this.tokenProvider, jwtToken = getJwtFromBearer(httpServletRequest.getHeader("Authorization")))) {
@@ -43,6 +45,12 @@ public class JWTFilter extends GenericFilterBean {
         filterChain.doFilter(servletRequest, servletResponse);
     }
 
+    /**
+     * Extracts the jwt token from the cookie
+     *
+     * @param jwtCookie the cookie with Key "jwt"
+     * @return the jwt token
+     */
     public static String getJwtFromCookie(Cookie jwtCookie) {
         if (jwtCookie == null) {
             return null;
@@ -50,6 +58,12 @@ public class JWTFilter extends GenericFilterBean {
         return jwtCookie.getValue();
     }
 
+    /**
+     * Extracts the jwt token from the Authorization header
+     *
+     * @param jwtBearer the content of the Authorization header
+     * @return the jwt token
+     */
     private static String getJwtFromBearer(String jwtBearer) {
         if (!StringUtils.hasText(jwtBearer) || !jwtBearer.startsWith("Bearer ")) {
             return null;
