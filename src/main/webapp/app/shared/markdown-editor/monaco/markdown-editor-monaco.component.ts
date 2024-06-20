@@ -22,6 +22,7 @@ import { MonacoHeadingAction } from 'app/shared/monaco-editor/model/actions/mona
 import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/monaco-formula.action';
 import { MonacoFullscreenAction } from 'app/shared/monaco-editor/model/actions/monaco-fullscreen.action';
 import { MonacoColorAction } from 'app/shared/monaco-editor/model/actions/monaco-color.action';
+import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 
 // TODO: Once the old markdown editor is gone, remove the style url.
 @Component({
@@ -34,6 +35,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     @ViewChild('wrapper', { static: true }) wrapper: ElementRef<HTMLDivElement>;
     @ViewChild('fileUploadFooter', { static: false }) fileUploadFooter?: ElementRef<HTMLDivElement>;
     @ViewChild('actionPalette', { static: false }) actionPalette?: ElementRef<HTMLElement>;
+    @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
 
     @Input()
     set markdown(value: string | undefined) {
@@ -92,6 +94,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     faQuestionCircle = faQuestionCircle;
     resizeObserver?: ResizeObserver;
     targetWrapperHeight?: number;
+
+    readonly markdownColors = ['#ca2024', '#3ea119', '#ffffff', '#000000', '#fffa5c', '#0d3cc2', '#b05db8', '#d86b1f'];
+    readonly markdownColorNames = ['red', 'green', 'white', 'black', 'yellow', 'blue', 'lila', 'orange'];
 
     constructor(
         private alertService: AlertService,
@@ -200,5 +205,20 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                 },
             );
         });
+    }
+
+    openColorSelector(event: MouseEvent) {
+        const marginTop = 35;
+        const height = 110;
+        this.colorSelector.openColorSelector(event, marginTop, height);
+    }
+
+    onSelectedColor(color: string) {
+        // Map the hex code to the color name.
+        const index = this.markdownColors.indexOf(color);
+        const colorName = this.markdownColorNames[index];
+        if (colorName) {
+            this.triggerAction('monaco-color.action', colorName);
+        }
     }
 }

@@ -83,17 +83,9 @@
                         }
                         <!-- Color -->
                         @if (colorAction) {
-                            <div class="btn-group" ngbDropdown role="group" aria-label="Button group with nested dropdown">
-                                <button class="btn btn-sm px-2 py-0" type="button" ngbDropdownToggle>
-                                    <span [jhiTranslate]="colorAction.translationKey"></span>
-                                </button>
-                                <div class="dropdown-menu markdown-color-picker" ngbDropdownMenu>
-                                    @for (color of colorAction.possibleValues; track color) {
-                                        <button type="button" class="dropdown-item" (click)="triggerAction(colorAction.id, color)">
-                                            <span>{{ color }}</span>
-                                        </button>
-                                    }
-                                </div>
+                            <div class="btn-group col-xs-6">
+                                <div class="color-preview btn btn-sm px-2 py-0" (click)="openColorSelector($event)" [jhiTranslate]="colorAction.translationKey"></div>
+                                <jhi-color-selector [tagColors]="markdownColors" (selectedColor)="onSelectedColor($event)" />
                             </div>
                         }
                         <!-- Domain -->
