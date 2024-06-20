@@ -6,14 +6,18 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
 import java.security.spec.ECGenParameterSpec;
 import java.util.Base64;
 import java.util.Optional;
 
+import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -67,8 +71,12 @@ public class BuildAgentSSHKeyService {
         log.debug("Key pair successfully generated");
 
         try {
-            Files.writeString(Path.of(gitSshPrivateKeyPath.orElseThrow(), "id_ecdsa"), getPrivateKeyAsString());
-            Files.writeString(Path.of(gitSshPrivateKeyPath.orElseThrow(), "id_ecdsa.pub"), getPublicKeyAsString());
+            Path privateKeyPath = Path.of(gitSshPrivateKeyPath.orElseThrow(), "id_ecdsa");
+            Files.writeString(privateKeyPath, getPrivateKeyAsString());
+            Files.setPosixFilePermissions(privateKeyPath, PosixFilePermissions.fromString("rw-------"));
+
+            Path publicKeyPath = Path.of(gitSshPrivateKeyPath.orElseThrow(), "id_ecdsa.pub");
+            Files.writeString(publicKeyPath, getPublicKeyAsString());
         }
         catch (IOException e) {
             throw new RuntimeException(e);
@@ -95,7 +103,17 @@ public class BuildAgentSSHKeyService {
             return null;
         }
 
-        return HashUtils.getSha512Fingerprint(keyPair.getPublic());
+        // Transform public key into another format used for authentication
+        AuthorizedKeyEntry keyEntry = AuthorizedKeyEntry.parseAuthorizedKeyEntry(getPublicKeyAsString());
+        PublicKey publicKey;
+        try {
+            publicKey = keyEntry.resolvePublicKey(null, null, null);
+        }
+        catch (IOException | GeneralSecurityException e) {
+            throw new RuntimeException(e);
+        }
+
+        return HashUtils.getSha512Fingerprint(publicKey);
     }
 
     private boolean shouldUseSSHForBuildAgent() {
