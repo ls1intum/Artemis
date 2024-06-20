@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, async } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SidebarCardSmallComponent } from 'app/shared/sidebar/sidebar-card-small/sidebar-card-small.component';
 import { SidebarCardItemComponent } from 'app/shared/sidebar/sidebar-card-item/sidebar-card-item.component';
 import { ArtemisTestModule } from '../../../test.module';
@@ -12,14 +12,14 @@ describe('SidebarCardSmallComponent', () => {
     let fixture: ComponentFixture<SidebarCardSmallComponent>;
     let router: MockRouter;
 
-    beforeEach(async(() => {
+    beforeEach(() => {
         router = new MockRouter();
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(RouterModule)],
             declarations: [SidebarCardSmallComponent, SidebarCardItemComponent, MockRouterLinkDirective],
             providers: [{ provide: Router, useValue: router }],
         }).compileComponents();
-    }));
+    });
 
     beforeEach(() => {
         fixture = TestBed.createComponent(SidebarCardSmallComponent);
