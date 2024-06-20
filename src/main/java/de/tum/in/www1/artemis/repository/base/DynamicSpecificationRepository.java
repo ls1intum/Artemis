@@ -29,7 +29,7 @@ public interface DynamicSpecificationRepository<T, ID, F extends FetchOptions> e
      * @param id            the id of the entity to find
      * @return the entity with the given id
      */
-    default Optional<T> findOneById(Specification<T> specification, long id) {
+    default Optional<T> findOneById(Specification<T> specification, ID id) {
         final Specification<T> hasIdSpec = (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get(DomainObject_.ID), id);
         return findOne(specification.and(hasIdSpec));
     }
@@ -42,8 +42,8 @@ public interface DynamicSpecificationRepository<T, ID, F extends FetchOptions> e
      * @param entityName    the name of the entity to find
      * @return the entity with the given id
      */
-    default T findOneByIdElseThrow(Specification<T> specification, long id, String entityName) {
-        return findOneById(specification, id).orElseThrow(() -> new EntityNotFoundException(entityName, id));
+    default T findOneByIdElseThrow(Specification<T> specification, ID id, String entityName) {
+        return findOneById(specification, id).orElseThrow(() -> new EntityNotFoundException(entityName, String.valueOf(id)));
     }
 
     /**
