@@ -146,11 +146,19 @@ export class CompetencyAccordionComponent implements OnChanges {
         }
 
         const competencyExercises = this.metrics.competencyMetrics?.exercises?.[this.competency.id];
-        const completedExercises = competencyExercises?.filter((exerciseId) => this.metrics.exerciseMetrics?.completed?.includes(exerciseId)).length ?? 0;
+
         if (competencyExercises === undefined || competencyExercises.length === 0) {
             return undefined;
         }
-        const progress = (completedExercises / competencyExercises.length) * 100;
+
+        const competencyPoints = competencyExercises
+            ?.map((exercise) => ((this.metrics.exerciseMetrics?.score?.[exercise] ?? 0) * (this.metrics.exerciseMetrics?.exerciseInformation?.[exercise]?.maxPoints ?? 0)) / 100)
+            .reduce((a, b) => a + b, 0);
+        const competencyMaxPoints = competencyExercises
+            ?.map((exercise) => this.metrics.exerciseMetrics?.exerciseInformation?.[exercise]?.maxPoints ?? 0)
+            .reduce((a, b) => a + b, 0);
+
+        const progress = (competencyPoints / competencyMaxPoints) * 100;
         return round(progress, 1);
     }
 
@@ -163,10 +171,11 @@ export class CompetencyAccordionComponent implements OnChanges {
         const releasedLectureUnits = competencyLectureUnits?.filter((lectureUnitId) =>
             this.metrics.lectureUnitStudentMetricsDTO?.lectureUnitInformation?.[lectureUnitId]?.releaseDate?.isBefore(dayjs()),
         );
-        const completedLectureUnits = releasedLectureUnits?.filter((lectureUnitId) => this.metrics.lectureUnitStudentMetricsDTO?.completed?.includes(lectureUnitId)).length ?? 0;
         if (releasedLectureUnits === undefined || releasedLectureUnits.length === 0) {
             return undefined;
         }
+
+        const completedLectureUnits = releasedLectureUnits?.filter((lectureUnitId) => this.metrics.lectureUnitStudentMetricsDTO?.completed?.includes(lectureUnitId)).length ?? 0;
         const progress = (completedLectureUnits / releasedLectureUnits.length) * 100;
         return round(progress, 1);
     }

@@ -142,12 +142,13 @@ public interface ExerciseMetricsRepository extends JpaRepository<Exercise, Long>
      */
     @Query("""
             SELECT e.id
-            FROM Exercise e
-                LEFT JOIN e.studentParticipations p
-                LEFT JOIN e.teams t
-                LEFT JOIN t.students u
-            WHERE e.id IN :exerciseIds
-                AND (p.student.id = :userId OR u.id = :userId)
+            FROM ParticipantScore p
+                LEFT JOIN p.exercise e
+                LEFT JOIN TREAT (p AS StudentScore).user u
+                LEFT JOIN TREAT (p AS TeamScore).team.students s
+            WHERE (u.id = :userId OR s.id = :userId)
+                AND p.exercise.id IN :exerciseIds
+                AND COALESCE(p.lastRatedScore, p.lastScore, 0) >= 80
             """)
     Set<Long> findAllCompletedExerciseIdsForUserByExerciseIds(@Param("userId") long userId, @Param("exerciseIds") Set<Long> exerciseIds);
 
