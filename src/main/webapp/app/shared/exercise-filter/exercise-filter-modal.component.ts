@@ -93,6 +93,8 @@ export class ExerciseFilterModalComponent {
             ),
         );
     };
+    inputFormatter = (exerciseCategory: ExerciseCategory) => exerciseCategory.category ?? '';
+    resultFormatter = (exerciseCategory: ExerciseCategory) => exerciseCategory.category ?? '';
 
     onSelectItem(event: any) {
         const item = event.item;

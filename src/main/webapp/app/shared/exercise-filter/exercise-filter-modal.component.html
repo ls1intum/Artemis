@@ -19,6 +19,8 @@
                 (click)="click$.next($any($event).target.value)"
                 #categoriesFilterSelection="ngbTypeahead"
                 (selectItem)="onSelectItem($event)"
+                [inputFormatter]="inputFormatter"
+                [resultFormatter]="resultFormatter"
             />
 
             @if (selectedCategories.length > 0) {
@@ -27,7 +29,6 @@
                         <li>
                             <jhi-custom-exercise-category-badge [category]="item" />
                             <button (click)="removeItem(item)">Remove</button>
-                            <pre>{{ item }}</pre>
                         </li>
                     }
                 </ul>
