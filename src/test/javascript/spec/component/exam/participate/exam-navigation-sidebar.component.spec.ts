@@ -26,7 +26,6 @@ describe('Exam Navigation Sidebar Component', () => {
     let fixture: ComponentFixture<ExamNavigationSidebarComponent>;
     let comp: ExamNavigationSidebarComponent;
     let repositoryService: CodeEditorRepositoryService;
-    let examParticipationService: ExamParticipationService;
 
     const examExerciseIdForNavigationSourceMock = new BehaviorSubject<number>(-1);
     const mockExamExerciseUpdateService = {
@@ -132,6 +131,7 @@ describe('Exam Navigation Sidebar Component', () => {
         expect(comp.setExerciseButtonStatus).not.toHaveBeenCalledWith(exerciseIndex);
     });
 
+    /*
     it('should tell the type of the selected programming exercise', () => {
         comp.exerciseIndex = 0;
 
@@ -149,6 +149,7 @@ describe('Exam Navigation Sidebar Component', () => {
 
         expect(comp.isProgrammingExercise()).toBeFalse();
     });
+    */
 
     /*
     it('save the exercise with changeExercise', () => {
@@ -279,15 +280,35 @@ describe('Exam Navigation Sidebar Component', () => {
         expect(fixture.nativeElement.querySelector('.collapsed')).toBeNull();
     });
 
-    it('should initialize the number of saved exercises correctly', () => {
-        const submission1 = new Submission();
-        submission1.submitted = true;
-        const submission2 = new Submission();
-        submission2.submitted = true;
-
-        jest.spyOn(examParticipationService, 'getSubmissionForExercise').mockReturnValue(of(submission1));
-        jest.spyOn(examParticipationService, 'getSubmissionForExercise').mockReturnValue(of(submission2));
-
+    it('should call toggleCollapseState when clicking on collapse', () => {
+        comp.isCollapsed = false;
+        const toggleCollapseStateStub = jest.spyOn(comp, 'toggleCollapseState');
         fixture.detectChanges();
+        const actionItem = fixture.nativeElement.querySelector('#test-collapse');
+        actionItem.click();
+        expect(toggleCollapseStateStub).toHaveBeenCalled();
+        expect(comp.isCollapsed).toBeTrue();
+    });
+
+    it('should toggle collapse state on Control+M keydown event', () => {
+        const event = new KeyboardEvent('keydown', {
+            key: 'm',
+            ctrlKey: true,
+        });
+        const toggleCollapseStateSpy = jest.spyOn(comp, 'toggleCollapseState');
+        fixture.detectChanges();
+        window.dispatchEvent(event);
+        expect(toggleCollapseStateSpy).toHaveBeenCalled();
+    });
+
+    it('should prevent default action on Control+M keydown event', () => {
+        const event = new KeyboardEvent('keydown', {
+            key: 'm',
+            ctrlKey: true,
+        });
+        const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
+        fixture.detectChanges();
+        window.dispatchEvent(event);
+        expect(preventDefaultSpy).toHaveBeenCalled();
     });
 });

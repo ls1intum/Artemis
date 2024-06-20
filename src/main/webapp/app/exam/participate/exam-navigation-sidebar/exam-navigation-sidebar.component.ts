@@ -134,7 +134,6 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
         this.sidebarEventService.emitResetValue();
     }
 
-    // NOT NEEDED
     getExerciseButtonTooltip(exercise: Exercise): ButtonTooltipType {
         return this.examParticipationService.getExerciseButtonTooltip(exercise);
     }
@@ -174,19 +173,6 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     changeExerciseById(exerciseId: number) {
         const foundIndex = this.exercises.findIndex((exercise) => exercise.id === exerciseId);
         this.changePage(false, foundIndex, true);
-    }
-
-    // NOT NEEDED
-    isProgrammingExercise() {
-        return this.exercises[this.exerciseIndex].type === ExerciseType.PROGRAMMING;
-    }
-    // NOT NEEDED
-    isFileUploadExercise() {
-        return this.exercises[this.exerciseIndex].type === ExerciseType.FILE_UPLOAD;
-    }
-    // NOT NEEDED
-    getOverviewStatus(): 'active' | '' {
-        return this.overviewPageOpen ? 'active' : '';
     }
 
     refreshExerciseSaveCount() {

@@ -127,5 +127,6 @@ export class JhiMainComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {
         this.profileSubscription?.unsubscribe();
         this.examStartedSubscription?.unsubscribe();
+        this.testRunSubscription?.unsubscribe();
     }
 }
