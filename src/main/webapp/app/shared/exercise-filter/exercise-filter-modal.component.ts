@@ -1,5 +1,5 @@
-import { Component, EventEmitter, Output } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Component, ElementRef, EventEmitter, Output, ViewChild } from '@angular/core';
+import { NgbActiveModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
@@ -9,6 +9,8 @@ import { SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { DifficultyLevel, ExerciseType } from 'app/entities/exercise.model';
 import { DifficultyFilterOptions, ExerciseTypeFilterOptions } from 'app/shared/sidebar/sidebar.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { Observable, OperatorFunction, Subject, merge } from 'rxjs';
+import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-exercise-filter-modal',
@@ -21,6 +23,17 @@ export class ExerciseFilterModalComponent {
     readonly faFilter = faFilter;
 
     @Output() filterApplied = new EventEmitter<SidebarData>();
+
+    @ViewChild('firstCheckbox') firstCheckbox: ElementRef;
+
+    @ViewChild('instance', { static: true }) instance: NgbTypeahead;
+
+    selectedItems: any[] = [];
+
+    focus$ = new Subject<string>();
+    click$ = new Subject<string>();
+
+    // @ViewChild('exerciseCategorySelectionInput', { static: true }) campusTypeAhead: NgbTypeahead;
 
     // TODO x has a light blue border when opening the modal
 
@@ -38,6 +51,10 @@ export class ExerciseFilterModalComponent {
     constructor(private activeModal: NgbActiveModal) {}
 
     ngOnInit(): void {
+        // TODO reset filter state when closing the modal without saving
+
+        // TODO move to parent component
+
         // TODO filter exercise types to exercise types that are used
         // TODO filter difficulties to difficulties that have been used
         const existingDifficulties = this.sidebarData?.ungroupedData
@@ -52,8 +69,99 @@ export class ExerciseFilterModalComponent {
                 .flatMap((sidebarElement: SidebarCardElement) => sidebarElement.exercise?.categories || []) ?? [];
     }
 
+    ngAfterViewInit(): void {
+        // otherwise the close button will be auto focused, leading to a blue border around the button
+        this.firstCheckbox.nativeElement.focus();
+    }
+
     closeModal(): void {
         this.activeModal.close();
+    }
+
+    states = [
+        'Alabama',
+        'Alaska',
+        'American Samoa',
+        'Arizona',
+        'Arkansas',
+        'California',
+        'Colorado',
+        'Connecticut',
+        'Delaware',
+        'District Of Columbia',
+        'Federated States Of Micronesia',
+        'Florida',
+        'Georgia',
+        'Guam',
+        'Hawaii',
+        'Idaho',
+        'Illinois',
+        'Indiana',
+        'Iowa',
+        'Kansas',
+        'Kentucky',
+        'Louisiana',
+        'Maine',
+        'Marshall Islands',
+        'Maryland',
+        'Massachusetts',
+        'Michigan',
+        'Minnesota',
+        'Mississippi',
+        'Missouri',
+        'Montana',
+        'Nebraska',
+        'Nevada',
+        'New Hampshire',
+        'New Jersey',
+        'New Mexico',
+        'New York',
+        'North Carolina',
+        'North Dakota',
+        'Northern Mariana Islands',
+        'Ohio',
+        'Oklahoma',
+        'Oregon',
+        'Palau',
+        'Pennsylvania',
+        'Puerto Rico',
+        'Rhode Island',
+        'South Carolina',
+        'South Dakota',
+        'Tennessee',
+        'Texas',
+        'Utah',
+        'Vermont',
+        'Virgin Islands',
+        'Virginia',
+        'Washington',
+        'West Virginia',
+        'Wisconsin',
+        'Wyoming',
+    ];
+
+    search: OperatorFunction<string, readonly string[]> = (text$: Observable<string>) => {
+        const debouncedText$ = text$.pipe(debounceTime(200), distinctUntilChanged());
+        const clicksWithClosedPopup$ = this.click$.pipe(filter(() => !this.instance.isPopupOpen()));
+        const inputFocus$ = this.focus$;
+
+        return merge(debouncedText$, inputFocus$, clicksWithClosedPopup$).pipe(
+            map((term) => (term === '' ? this.states : this.states.filter((v) => v.toLowerCase().indexOf(term.toLowerCase()) > -1)).slice(0, 10)),
+        );
+    };
+
+    // Method to handle item selection
+    onSelectItem(event: any) {
+        const item = event.item;
+        if (!this.selectedItems.includes(item)) {
+            this.selectedItems.push(item);
+        }
+        this.model = ''; // Clear the input field after selection
+    }
+
+    // Method to remove an item from the selected items
+    removeItem(item: any) {
+        this.selectedItems = this.selectedItems.filter((i) => i !== item);
     }
 
     applyFilter(): void {

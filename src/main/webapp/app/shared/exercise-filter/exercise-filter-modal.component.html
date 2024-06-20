@@ -4,7 +4,33 @@
         <button type="button" class="btn-close" (click)="closeModal()"></button>
     </div>
     <div class="modal-body">
-        <span jhiTranslate="artemisApp.exercise.categories"></span>
+        <div #firstCheckbox class="form-group">
+            <label for="exercise-categories-filter-selection" class="form-control-label" jhiTranslate="artemisApp.exercise.categories"></label>
+
+            <input
+                id="exercise-categories-filter-selection"
+                type="text"
+                class="form-control"
+                [(ngModel)]="model"
+                [ngbTypeahead]="search"
+                (focus)="focus$.next($any($event).target.value)"
+                (click)="click$.next($any($event).target.value)"
+                #instance="ngbTypeahead"
+                (selectItem)="onSelectItem($event)"
+            />
+
+            @if (selectedItems.length > 0) {
+                <ul>
+                    @for (item of selectedItems; track item) {
+                        <li>
+                            {{ item }}
+                            <button (click)="removeItem(item)">Remove</button>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+
         <div class="form-group">
             <label for="exercise-type-filter-selection" class="form-control-label" jhiTranslate="artemisApp.courseStatistics.exerciseType"></label>
             <div id="exercise-type-filter-selection">
