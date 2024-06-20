@@ -15,7 +15,7 @@
     </thead>
     <tbody>
         <!-- Exercise Group as rows -->
-        @for (exerciseGroup of exam.exerciseGroups; track exerciseGroup) {
+        @for (exerciseGroup of exam.exerciseGroups; track exerciseGroup.id) {
             <tr [class.exerciseGroupNotSelected]="!exerciseGroupContainsExercises(exerciseGroup)">
                 <td>
                     <!-- Display general exercise group settings (name, mandatory) to the left -->
@@ -83,7 +83,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @for (exercise of exerciseGroup.exercises; track exercise) {
+                            @for (exercise of exerciseGroup.exercises; track exercise.id) {
                                 <tr [id]="'exercise-' + exercise.id">
                                     <td>
                                         <h4 class="form-check d-flex justify-content-center">
