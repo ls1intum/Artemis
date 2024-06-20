@@ -12,7 +12,7 @@
                 }
             </div>
             <div class="status-step-content">
-                <h6 class="text-center">{{ 'artemisApp.examStatus.preparation.' + (isTestExam ? 'testExam.' : '') + 'examPreparation' | artemisTranslate }}</h6>
+                <h6 class="text-center" jhiTranslate="artemisApp.examStatus.preparation.{{ isTestExam ? 'testExam.' : '' }}examPreparation"></h6>
                 <ol>
                     <li class="d-flex align-items-center">
                         <span
@@ -113,13 +113,13 @@
         </div>
         <div class="status-step-content">
             <div class="text-center mb-1">
-                <h6>{{ 'artemisApp.examStatus.conduction.' + (isTestExam ? 'testExam.' : '') + 'examConduction' | artemisTranslate }}</h6>
+                <h6 jhiTranslate="artemisApp.examStatus.conduction.{{ isTestExam ? 'testExam.' : '' }}examConduction"></h6>
                 <b>{{ exam.startDate | artemisDate }} - {{ exam.endDate | artemisDate }}</b>
             </div>
             <!-- In case the exercise configuration is wrong, but the test eam already started, students are not able to start a test eam -->
             @if (examConductionState === examConductionStateEnum.ERROR) {
                 <div class="text-center mb-1">
-                    <h6>{{ 'artemisApp.examStatus.conduction.' + (isTestExam ? 'testExam.' : '') + 'conductionSuspended' | artemisTranslate }}</h6>
+                    <h6 jhiTranslate="artemisApp.examStatus.conduction.{{ isTestExam ? 'testExam.' : '' }}conductionSuspended"></h6>
                 </div>
             }
             @if (course?.isAtLeastInstructor && examChecklist && examConductionState !== examConductionStateEnum.ERROR) {

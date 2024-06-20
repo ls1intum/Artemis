@@ -2,7 +2,7 @@
     <h3 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle" id="artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle"></h3>
     <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepMessage"></p>
     <div class="form-group">
-        <label class="form-control-label">{{ 'artemisApp.exercise.includedInOverallScore' + (programmingExercise.course ? 'Course' : 'Exam') + 'Label' | artemisTranslate }}</label>
+        <label class="form-control-label" jhiTranslate="artemisApp.exercise.includedInOverallScore{{ programmingExercise.course ? 'Course' : 'Exam' }}Label"></label>
         <div>
             <jhi-included-in-overall-score-picker [(includedInOverallScore)]="programmingExercise.includedInOverallScore" [allowNotIncluded]="true" />
         </div>

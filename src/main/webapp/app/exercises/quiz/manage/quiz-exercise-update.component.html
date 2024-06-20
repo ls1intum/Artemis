@@ -199,9 +199,7 @@
                 <div class="row">
                     <div class="col">
                         <div class="form-group">
-                            <label class="form-control-label">{{
-                                'artemisApp.exercise.includedInOverallScore' + (quizExercise.course ? 'Course' : 'Exam') + 'Label' | artemisTranslate
-                            }}</label>
+                            <label class="form-control-label" jhiTranslate="artemisApp.exercise.includedInOverallScore{{ quizExercise.course ? 'Course' : 'Exam' }}Label"></label>
                             <div>
                                 @if (quizExercise.includedInOverallScore) {
                                     <jhi-included-in-overall-score-picker

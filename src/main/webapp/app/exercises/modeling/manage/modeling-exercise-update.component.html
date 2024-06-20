@@ -165,9 +165,7 @@
             </div>
         }
         <div class="form-group">
-            <label class="form-control-label">{{
-                'artemisApp.exercise.includedInOverallScore' + (modelingExercise.course ? 'Course' : 'Exam') + 'Label' | artemisTranslate
-            }}</label>
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.includedInOverallScore{{ modelingExercise.course ? 'Course' : 'Exam' }}Label"></label>
             <div>
                 <jhi-included-in-overall-score-picker
                     [(includedInOverallScore)]="modelingExercise.includedInOverallScore"

@@ -59,10 +59,9 @@
                 />
                 <label class="form-check-label" for="field_showAddressedComplaint">
                     @if (complaintType === ComplaintType.COMPLAINT) {
-                        <span>{{
-                            'artemisApp.complaint.listOfComplaints.show' + (filterOption === FilterOptionAddressedComplaints ? 'Only' : '') + 'AddressedComplaints'
-                                | artemisTranslate
-                        }}</span>
+                        <span
+                            jhiTranslate="artemisApp.complaint.listOfComplaints.show{{ filterOption === FilterOptionAddressedComplaints ? 'Only' : '' }}AddressedComplaints"
+                        ></span>
                     }
                     @if (complaintType === ComplaintType.MORE_FEEDBACK) {
                         <span jhiTranslate="artemisApp.moreFeedback.list.showAnsweredRequests"></span>

@@ -54,7 +54,7 @@
                     @switch (examState) {
                         @case ('UPCOMING') {
                             <div>
-                                <h5 class="text-center">{{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'upcoming' | artemisTranslate }}</h5>
+                                <h5 class="text-center" jhiTranslate="artemisApp.exam.overview.{{ exam.testExam ? 'testExam.' : '' }}upcoming"></h5>
                                 <div class="text-center">
                                     {{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'imminent' | artemisTranslate }}
                                     {{ timeLeftToStart | artemisDurationFromSeconds }}
@@ -67,12 +67,12 @@
                                     {{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'imminent' | artemisTranslate }}
                                     {{ timeLeftToStart | artemisDurationFromSeconds }}
                                 </h5>
-                                <div class="text-center">{{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'imminentExplanation' | artemisTranslate }}</div>
+                                <div class="text-center" jhiTranslate="artemisApp.exam.overview.{{ exam.testExam ? 'testExam.' : '' }}imminentExplanation"></div>
                             </div>
                         }
                         @case ('CONDUCTING') {
                             <div>
-                                <h5 class="text-center">{{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'conducting' | artemisTranslate }}</h5>
+                                <h5 class="text-center" jhiTranslate="artemisApp.exam.overview.{{ exam.testExam ? 'testExam.' : '' }}conducting"></h5>
                             </div>
                         }
                         @case ('TIMEEXTENSION') {
@@ -83,7 +83,7 @@
                         }
                         @case ('CLOSED') {
                             <div>
-                                <h5 class="text-center">{{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'closed' | artemisTranslate }}</h5>
+                                <h5 class="text-center" jhiTranslate="artemisApp.exam.overview.{{ exam.testExam ? 'testExam.' : '' }}closed"></h5>
                             </div>
                         }
                         @case ('STUDENTREVIEW') {

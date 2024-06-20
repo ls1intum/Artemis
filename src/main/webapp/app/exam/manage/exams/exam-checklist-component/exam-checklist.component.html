@@ -1,7 +1,7 @@
 @if (exam?.course?.isAtLeastInstructor) {
     <div>
         <h2>
-            <span>{{ 'artemisApp.examManagement.checklist.' + (isTestExam ? 'testExam.' : '') + 'title' | artemisTranslate }}</span>
+            <span jhiTranslate="artemisApp.examManagement.checklist.{{ isTestExam ? 'testExam.' : '' }}title"></span>
         </h2>
         @if (!isTestExam) {
             <p>
@@ -19,9 +19,7 @@
             </p>
         }
         <br />
-        <h3>
-            {{ 'artemisApp.examStatus.preparation.' + (isTestExam ? 'testExam.' : '') + 'examPreparation' | artemisTranslate }}
-        </h3>
+        <h3 jhiTranslate="artemisApp.examStatus.preparation.{{ isTestExam ? 'testExam.' : '' }}examPreparation"></h3>
         <div class="table-responsive">
             <table class="table table-striped">
                 <thead>
@@ -249,7 +247,7 @@
             </table>
         </div>
         <hr />
-        <h3>{{ 'artemisApp.examStatus.conduction.' + (isTestExam ? 'testExam.' : '') + 'examConduction' | artemisTranslate }}</h3>
+        <h3 jhiTranslate="artemisApp.examStatus.conduction.{{ isTestExam ? 'testExam.' : '' }}examConduction"></h3>
         <b
             jhiTranslate="artemisApp.examManagement.checklist.conductionPlannedFromTo"
             [translateValues]="{
