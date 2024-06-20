@@ -20,7 +20,8 @@ import de.tum.in.www1.artemis.repository.CompetencyProgressRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.competency.CompetencyJolRepository;
-import de.tum.in.www1.artemis.service.iris.session.IrisCourseChatSessionService;
+import de.tum.in.www1.artemis.service.connectors.pyris.event.CompetencyJolEvent;
+import de.tum.in.www1.artemis.service.connectors.pyris.event.PyrisEventService;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyJolDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyJolPairDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -44,15 +45,15 @@ public class CompetencyJolService {
 
     private final UserRepository userRepository;
 
-    private final Optional<IrisCourseChatSessionService> irisCourseChatSessionService;
+    private final Optional<PyrisEventService> pyrisEventService;
 
     public CompetencyJolService(CompetencyJolRepository competencyJolRepository, CompetencyRepository competencyRepository,
-            CompetencyProgressRepository competencyProgressRepository, UserRepository userRepository, Optional<IrisCourseChatSessionService> irisCourseChatSessionService) {
+            CompetencyProgressRepository competencyProgressRepository, UserRepository userRepository, Optional<PyrisEventService> pyrisEventService) {
         this.competencyJolRepository = competencyJolRepository;
         this.competencyRepository = competencyRepository;
         this.competencyProgressRepository = competencyProgressRepository;
         this.userRepository = userRepository;
-        this.irisCourseChatSessionService = irisCourseChatSessionService;
+        this.pyrisEventService = pyrisEventService;
     }
 
     /**
@@ -83,11 +84,11 @@ public class CompetencyJolService {
         final var jol = createCompetencyJol(competencyId, userId, jolValue, ZonedDateTime.now(), competencyProgress);
         competencyJolRepository.save(jol);
 
-        irisCourseChatSessionService.ifPresent(service -> {
+        pyrisEventService.ifPresent(service -> {
             // Inform Iris so it can send a message to the user
             try {
                 if (userId % 3 > 0) { // HD3-GROUPS: Iris groups are 1 & 2
-                    service.onJudgementOfLearningSet(jol);
+                    service.trigger(new CompetencyJolEvent(jol));
                 }
             }
             catch (Exception e) {
