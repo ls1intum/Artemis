@@ -4,23 +4,18 @@
     </div>
     @if (!startView) {
         <h2 class="col-md-6" style="text-align: center; font-weight: normal" id="exam-finished-title">
-            <span>
-                {{
-                    'artemisApp.examParticipation.finish'
-                        | artemisTranslate
-                            : {
-                                  title: exam.title
-                              }
-                }}
-            </span>
+            <span
+                jhiTranslate="artemisApp.examParticipation.finish"
+                [translateValues]="{
+                    title: exam.title
+                }"
+            ></span>
             <br />
         </h2>
     }
     @if (startView) {
         <h2 class="col-md-6" style="text-align: center; font-weight: normal">
-            <span>
-                {{ 'artemisApp.examParticipation.greeting' | artemisTranslate: { title: exam.title } }}
-            </span>
+            <span jhiTranslate="artemisApp.examParticipation.greeting" [translateValues]="{ title: exam.title }"></span>
             <br />
         </h2>
     }
@@ -155,7 +150,7 @@
         </div>
         @if (waitingForExamStart) {
             <div class="exam-waiting-for-start-overlay alert alert-info">
-                <span>{{ 'artemisApp.examParticipation.waitForStart' | artemisTranslate: { title: exam.title } }}</span>
+                <span jhiTranslate="artemisApp.examParticipation.waitForStart" [translateValues]="{ title: exam.title }"></span>
                 @if (exam.startDate) {
                     <div>
                         <hr />

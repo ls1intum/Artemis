@@ -14,19 +14,20 @@
             <ul>
                 <li jhiTranslate="artemisApp.tutorialGroupImportDialog.supportedHeaderNames.alwaysRequired"></li>
                 <ul>
-                    <li>{{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.tutorialGroupTitle' | artemisTranslate: { headers: supportedTitleHeader } }}</li>
+                    <li jhiTranslate="artemisApp.tutorialGroupImportDialog.supportedHeaderNames.tutorialGroupTitle" [translateValues]="{ headers: supportedTitleHeader }"></li>
                 </ul>
                 <li jhiTranslate="artemisApp.tutorialGroupImportDialog.supportedHeaderNames.requiredIfStudentRegistration"></li>
                 <ul>
-                    <li>
-                        {{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.registrationNumber' | artemisTranslate: { headers: supportedRegistrationNumberHeaders } }}
-                    </li>
-                    <li>{{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.login' | artemisTranslate: { headers: supportedLoginHeaders } }}</li>
+                    <li
+                        jhiTranslate="artemisApp.tutorialGroupImportDialog.supportedHeaderNames.registrationNumber"
+                        [translateValues]="{ headers: supportedRegistrationNumberHeaders }"
+                    ></li>
+                    <li jhiTranslate="artemisApp.tutorialGroupImportDialog.supportedHeaderNames.login" [translateValues]="{ headers: supportedLoginHeaders }"></li>
                 </ul>
                 <li jhiTranslate="artemisApp.tutorialGroupImportDialog.supportedHeaderNames.alwaysOptional"></li>
                 <ul>
-                    <li>{{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.firstName' | artemisTranslate: { headers: supportedFirstNameHeaders } }}</li>
-                    <li>{{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.lastName' | artemisTranslate: { headers: supportedLastNameHeaders } }}</li>
+                    <li jhiTranslate="artemisApp.tutorialGroupImportDialog.supportedHeaderNames.firstName" [translateValues]="{ headers: supportedFirstNameHeaders }"></li>
+                    <li jhiTranslate="artemisApp.tutorialGroupImportDialog.supportedHeaderNames.lastName" [translateValues]="{ headers: supportedLastNameHeaders }"></li>
                 </ul>
             </ul>
         </div>
@@ -80,9 +81,10 @@
                     @if (statusHeaderControl?.invalid && (statusHeaderControl?.dirty || statusHeaderControl?.touched)) {
                         <div class="alert alert-danger">
                             @if (statusHeaderControl?.errors?.maxlength) {
-                                <div>
-                                    {{ 'artemisApp.tutorialGroupImportDialog.fixedPlaceForm.statusHeaderInput.maxLengthValidationError' | artemisTranslate: { max: '255' } }}
-                                </div>
+                                <div
+                                    jhiTranslate="artemisApp.tutorialGroupImportDialog.fixedPlaceForm.statusHeaderInput.maxLengthValidationError"
+                                    [translateValues]="{ max: '255' }"
+                                ></div>
                             }
                         </div>
                     }
@@ -100,9 +102,10 @@
                     @if (fixedPlaceValueControl?.invalid && (fixedPlaceValueControl?.dirty || fixedPlaceValueControl?.touched)) {
                         <div class="alert alert-danger">
                             @if (fixedPlaceValueControl?.errors?.maxlength) {
-                                <div>
-                                    {{ 'artemisApp.tutorialGroupImportDialog.fixedPlaceForm.fixedPlaceValueInput.maxLengthValidationError' | artemisTranslate: { max: '255' } }}
-                                </div>
+                                <div
+                                    jhiTranslate="artemisApp.tutorialGroupImportDialog.fixedPlaceForm.fixedPlaceValueInput.maxLengthValidationError"
+                                    [translateValues]="{ max: '255' }"
+                                ></div>
                             }
                         </div>
                     }
@@ -228,14 +231,17 @@
             <div class="flex-shrink-0 me-2 d-flex">
                 @if (!isImportDone) {
                     <div>
-                        <strong>{{ 'artemisApp.tutorialGroupImportDialog.table.footer.total' | artemisTranslate: { count: allRegistrations.length } }}</strong>
+                        <strong jhiTranslate="artemisApp.tutorialGroupImportDialog.table.footer.total" [translateValues]="{ count: allRegistrations.length }"></strong>
                     </div>
                 } @else {
                     <div>
-                        <strong>{{ 'artemisApp.tutorialGroupImportDialog.table.footer.imported' | artemisTranslate: { count: numberOfImportedRegistrations } }}</strong>
+                        <strong jhiTranslate="artemisApp.tutorialGroupImportDialog.table.footer.imported" [translateValues]="{ count: numberOfImportedRegistrations }"></strong>
                     </div>
                     <div class="ms-2">
-                        <strong>{{ 'artemisApp.tutorialGroupImportDialog.table.footer.notImported' | artemisTranslate: { count: numberOfNotImportedRegistration } }}</strong>
+                        <strong
+                            jhiTranslate="artemisApp.tutorialGroupImportDialog.table.footer.notImported"
+                            [translateValues]="{ count: numberOfNotImportedRegistration }"
+                        ></strong>
                     </div>
                 }
             </div>

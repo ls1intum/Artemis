@@ -353,24 +353,26 @@
                 @if (gradingScaleExists && this.aggregatedExamResults.medianRelativePassed !== null) {
                     <div class="form-check">
                         <input id="toggleMedianPassed" class="form-check-input" type="checkbox" [checked]="showPassedMedian" (change)="toggleMedian(medianType.PASSED)" />
-                        <label for="toggleMedianPassed" class="form-check-label">
-                            {{
-                                'artemisApp.examScores.highlightPassedMedian'
-                                    | artemisTranslate
-                                        : {
-                                              median: this.aggregatedExamResults.medianRelativePassed
-                                                  ? roundScoreSpecifiedByCourseSettings(this.aggregatedExamResults.medianRelativePassed, course)
-                                                  : 0
-                                          }
-                            }}
-                        </label>
+                        <label
+                            for="toggleMedianPassed"
+                            class="form-check-label"
+                            jhiTranslate="artemisApp.examScores.highlightPassedMedian"
+                            [translateValues]="{
+                                median: this.aggregatedExamResults.medianRelativePassed
+                                    ? roundScoreSpecifiedByCourseSettings(this.aggregatedExamResults.medianRelativePassed, course)
+                                    : 0
+                            }"
+                        ></label>
                     </div>
                 }
                 <div class="form-check">
                     <input id="toggleMedianOverall" class="form-check-input" type="checkbox" [checked]="showOverallMedian" (change)="toggleMedian(overallChartMedianType)" />
-                    <label for="toggleMedianOverall" class="form-check-label">
-                        {{ 'artemisApp.examScores.highlightOverallMedian' | artemisTranslate: { median: this.overallChartMedian } }}
-                    </label>
+                    <label
+                        for="toggleMedianOverall"
+                        class="form-check-label"
+                        jhiTranslate="artemisApp.examScores.highlightOverallMedian"
+                        [translateValues]="{ median: this.overallChartMedian }"
+                    ></label>
                 </div>
                 <!-- Histogram -->
                 @if (hasBonus) {
@@ -566,7 +568,10 @@
                             @if (hasBonus) {
                                 @if (presentationScoreThreshold !== undefined) {
                                     <th jhiSortBy="gradeWithBonus.achievedPresentationScore">
-                                        <span>{{ 'artemisApp.examScores.presentationScoreThresholdColumn' | artemisTranslate: { threshold: presentationScoreThreshold } }}</span>
+                                        <span
+                                            jhiTranslate="artemisApp.examScores.presentationScoreThresholdColumn"
+                                            [translateValues]="{ threshold: presentationScoreThreshold }"
+                                        ></span>
                                         <fa-icon [icon]="faSort" />
                                     </th>
                                 }

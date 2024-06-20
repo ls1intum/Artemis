@@ -13,9 +13,11 @@
                 </div>
             </div>
             <div class="col-12 mb-2">
-                <div class="alert alert-info">
-                    {{ 'artemisApp.pages.tutorialFreePeriodsManagement.timeZoneExplanation' | artemisTranslate: { timeZone: course.timeZone } }}
-                </div>
+                <div
+                    class="alert alert-info"
+                    jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.timeZoneExplanation"
+                    [translateValues]="{ timeZone: course.timeZone }"
+                ></div>
             </div>
 
             <!-- List of free Periods -->

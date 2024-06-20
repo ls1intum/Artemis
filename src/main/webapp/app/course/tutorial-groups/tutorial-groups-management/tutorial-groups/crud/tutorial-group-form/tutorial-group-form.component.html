@@ -18,9 +18,7 @@
                                 <div jhiTranslate="artemisApp.forms.tutorialGroupForm.titleInput.requiredValidationError"></div>
                             }
                             @if (titleControl?.errors?.maxlength) {
-                                <div>
-                                    {{ 'artemisApp.forms.tutorialGroupForm.titleInput.maxLengthValidationError' | artemisTranslate: { max: '19' } }}
-                                </div>
+                                <div jhiTranslate="artemisApp.forms.tutorialGroupForm.titleInput.maxLengthValidationError" [translateValues]="{ max: '19' }"></div>
                             }
                             @if (!titleControl?.errors?.required && !titleControl?.errors?.maxlength && titleControl?.errors?.pattern) {
                                 <div jhiTranslate="artemisApp.forms.tutorialGroupForm.titleInput.regexValidationError"></div>
@@ -98,9 +96,7 @@
                     @if (campusControl?.invalid && (campusControl?.dirty || campusControl?.touched)) {
                         <div class="alert alert-danger">
                             @if (campusControl?.errors?.max) {
-                                <div>
-                                    {{ 'artemisApp.forms.tutorialGroupForm.campusInput.maxLengthValidationError' | artemisTranslate: { max: '255' } }}
-                                </div>
+                                <div jhiTranslate="artemisApp.forms.tutorialGroupForm.campusInput.maxLengthValidationError" [translateValues]="{ max: '255' }"></div>
                             }
                         </div>
                     }
@@ -146,9 +142,7 @@
                     @if (languageControl?.invalid && (languageControl?.dirty || languageControl?.touched)) {
                         <div class="alert alert-danger">
                             @if (languageControl?.errors?.max) {
-                                <div>
-                                    {{ 'artemisApp.forms.tutorialGroupForm.languageInput.maxLengthValidationError' | artemisTranslate: { max: '255' } }}
-                                </div>
+                                <div jhiTranslate="artemisApp.forms.tutorialGroupForm.languageInput.maxLengthValidationError" [translateValues]="{ max: '255' }"></div>
                             }
                             @if (languageControl?.errors?.required) {
                                 <div jhiTranslate="artemisApp.forms.tutorialGroupForm.languageInput.requiredValidationError"></div>
@@ -193,9 +187,7 @@
                         @if (notificationControl?.invalid && (notificationControl?.dirty || notificationControl?.touched)) {
                             <div class="alert alert-danger">
                                 @if (notificationControl?.errors?.maxlength) {
-                                    <div>
-                                        {{ 'artemisApp.forms.tutorialGroupForm.notificationInput.maxLengthValidationError' | artemisTranslate: { max: '1000' } }}
-                                    </div>
+                                    <div jhiTranslate="artemisApp.forms.tutorialGroupForm.notificationInput.maxLengthValidationError" [translateValues]="{ max: '1000' }"></div>
                                 }
                             </div>
                         }

@@ -35,9 +35,11 @@
                         <fa-icon class="ng-fa-icon" [icon]="faEye" [ngbTooltip]="'artemisApp.notification.showAllSavedNotifications' | artemisTranslate" />
                     }
                 </button>
-                <small class="text-body-secondary">
-                    {{ 'artemisApp.notification.loadedNotificationCount' | artemisTranslate: { loaded: sortedNotifications?.length || '0', total: totalNotifications } }}
-                </small>
+                <small
+                    class="text-body-secondary"
+                    jhiTranslate="artemisApp.notification.loadedNotificationCount"
+                    [translateValues]="{ loaded: sortedNotifications?.length || '0', total: totalNotifications }"
+                ></small>
             </div>
         </div>
         <div id="notification-sidebar-container" (scroll)="onScroll()">

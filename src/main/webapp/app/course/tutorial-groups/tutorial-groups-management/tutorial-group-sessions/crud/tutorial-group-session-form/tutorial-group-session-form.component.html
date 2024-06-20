@@ -1,8 +1,6 @@
 <div class="row">
     <div class="col-12 mb-2">
-        <div class="alert alert-info">
-            {{ 'artemisApp.generic.timeZone' | artemisTranslate: { timeZone } }}
-        </div>
+        <div class="alert alert-info" jhiTranslate="artemisApp.generic.timeZone" [translateValues]="{ timeZone }"></div>
     </div>
     <div class="col-12">
         @if (form) {
@@ -88,9 +86,7 @@
                     @if (locationControl?.invalid && (locationControl?.dirty || locationControl?.touched)) {
                         <div class="alert alert-danger">
                             @if (locationControl?.errors?.maxlength) {
-                                <div>
-                                    {{ 'artemisApp.forms.sessionForm.locationInput.maxLengthValidationError' | artemisTranslate: { max: '2000' } }}
-                                </div>
+                                <div jhiTranslate="artemisApp.forms.sessionForm.locationInput.maxLengthValidationError" [translateValues]="{ max: '2000' }"></div>
                             }
                             @if (locationControl?.errors?.required) {
                                 <div jhiTranslate="artemisApp.forms.sessionForm.locationInput.requiredValidationError"></div>

@@ -12,7 +12,7 @@
             <h4 class="d-flex align-items-center">
                 <span class="me-2">
                     <strong class="text-primary"> {{ 'artemisApp.assessment.dashboard.activeFilter' | artemisTranslate }}: </strong>
-                    <span class="ms-1">{{ 'artemisApp.exercise.showingOnlyInRange' | artemisTranslate: { range: this.rangeFilter.toString() } }}</span>
+                    <span class="ms-1" jhiTranslate="artemisApp.exercise.showingOnlyInRange" [translateValues]="{ range: this.rangeFilter.toString() }"></span>
                 </span>
                 <button type="button" class="btn btn-primary" (click)="resetFilterOptions()" jhiTranslate="artemisApp.assessment.dashboard.resetFilter"></button>
             </h4>
@@ -46,17 +46,14 @@
                     </ul>
                 </div>
                 @if (filteredParticipations.length && participationsPerFilter.get(resultCriteria.filterProp) !== filteredParticipations.length) {
-                    <span>
-                        {{
-                            'artemisApp.exercise.showingOfResults'
-                                | artemisTranslate
-                                    : {
-                                          filtered: participationsPerFilter.get(resultCriteria.filterProp),
-                                          total: filteredParticipations.length,
-                                          percent: ((participationsPerFilter.get(resultCriteria.filterProp) ?? 0) * 100) / filteredParticipations.length | number: '1.0-1'
-                                      }
-                        }}
-                    </span>
+                    <span
+                        jhiTranslate="artemisApp.exercise.showingOfResults"
+                        [translateValues]="{
+                            filtered: participationsPerFilter.get(resultCriteria.filterProp),
+                            total: filteredParticipations.length,
+                            percent: ((participationsPerFilter.get(resultCriteria.filterProp) ?? 0) * 100) / filteredParticipations.length | number: '1.0-1'
+                        }"
+                    ></span>
                 }
             </div>
             <div class="p-2">

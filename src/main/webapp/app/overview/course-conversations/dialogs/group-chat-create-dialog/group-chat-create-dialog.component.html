@@ -19,9 +19,7 @@
                             <div jhiTranslate="artemisApp.dialogs.createGroupChat.requiredError"></div>
                         }
                         @if (selectedUsersControl?.errors?.maxlength) {
-                            <div>
-                                {{ 'artemisApp.dialogs.createGroupChat.maxError' | artemisTranslate: { max: 9 } }}
-                            </div>
+                            <div jhiTranslate="artemisApp.dialogs.createGroupChat.maxError" [translateValues]="{ max: 9 }"></div>
                         }
                     </div>
                 }

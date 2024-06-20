@@ -250,14 +250,13 @@
         </div>
         <hr />
         <h3>{{ 'artemisApp.examStatus.conduction.' + (isTestExam ? 'testExam.' : '') + 'examConduction' | artemisTranslate }}</h3>
-        <b>{{
-            'artemisApp.examManagement.checklist.conductionPlannedFromTo'
-                | artemisTranslate
-                    : {
-                          from: exam.startDate! | artemisDate,
-                          to: exam.endDate! | artemisDate
-                      }
-        }}</b>
+        <b
+            jhiTranslate="artemisApp.examManagement.checklist.conductionPlannedFromTo"
+            [translateValues]="{
+                from: exam.startDate! | artemisDate,
+                to: exam.endDate! | artemisDate
+            }"
+        ></b>
         <div class="table-responsive">
             <table class="table table-striped">
                 <thead>

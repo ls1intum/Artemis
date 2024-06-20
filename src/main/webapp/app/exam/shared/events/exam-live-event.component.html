@@ -61,9 +61,10 @@
             }
             @case (ExamLiveEventType.PROBLEM_STATEMENT_UPDATE) {
                 <div>
-                    <div>
-                        {{ 'artemisApp.exam.events.messages.problemStatementUpdate.description' | artemisTranslate: { exerciseName: problemStatementUpdateEvent.exerciseName } }}
-                    </div>
+                    <div
+                        jhiTranslate="artemisApp.exam.events.messages.problemStatementUpdate.description"
+                        [translateValues]="{ exerciseName: problemStatementUpdateEvent.exerciseName }"
+                    ></div>
                     @if (problemStatementUpdateEvent.text) {
                         <div jhiTranslate="artemisApp.exam.events.messages.problemStatementUpdate.instructorMessage"></div>
                         <div [innerHTML]="problemStatementUpdateEvent.text | htmlForMarkdown"></div>

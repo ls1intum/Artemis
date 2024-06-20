@@ -13,9 +13,14 @@
                 </span>
                 @if (getAsChannel(activeConversation); as channel) {
                     @if (channel.tutorialGroupId && channel.tutorialGroupTitle) {
-                        <a (click)="clear()" class="btn btn-info btn-sm ms-2" [routerLink]="['/courses', course.id, 'tutorial-groups', channel.tutorialGroupId]" role="button">{{
-                            'artemisApp.entities.tutorialGroup.channelReverse' | artemisTranslate: { title: channel.tutorialGroupTitle }
-                        }}</a>
+                        <a
+                            (click)="clear()"
+                            class="btn btn-info btn-sm ms-2"
+                            [routerLink]="['/courses', course.id, 'tutorial-groups', channel.tutorialGroupId]"
+                            role="button"
+                            jhiTranslate="artemisApp.entities.tutorialGroup.channelReverse"
+                            [translateValues]="{ title: channel.tutorialGroupTitle }"
+                        ></a>
                     }
                 }
             </h4>

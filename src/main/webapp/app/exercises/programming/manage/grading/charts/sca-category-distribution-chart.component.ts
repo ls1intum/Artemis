@@ -51,49 +51,31 @@ enum ScaChartBarTitle {
                             @switch (model.series) {
                                 @case (scaChartBarTitle.PENALTY) {
                                     <div>
-                                        <span>
-                                            {{ 'artemisApp.programmingAssessment.penaltyTooltip' | artemisTranslate: { percentage: model.value.toFixed(2) } }}
-                                        </span>
+                                        <span jhiTranslate="artemisApp.programmingAssessment.penaltyTooltip" [translateValues]="{ percentage: model.value.toFixed(2) }"></span>
                                         <br />
-                                        <span>
-                                            {{ 'artemisApp.programmingAssessment.issuesTooltip' | artemisTranslate: { percentage: model.issues.toFixed(2) } }}
-                                        </span>
+                                        <span jhiTranslate="artemisApp.programmingAssessment.issuesTooltip" [translateValues]="{ percentage: model.issues.toFixed(2) }"></span>
                                         <br />
-                                        <span>
-                                            {{ 'artemisApp.programmingAssessment.deductionsTooltip' | artemisTranslate: { percentage: model.points.toFixed(2) } }}
-                                        </span>
+                                        <span jhiTranslate="artemisApp.programmingAssessment.deductionsTooltip" [translateValues]="{ percentage: model.points.toFixed(2) }"></span>
                                     </div>
                                 }
                                 @case (scaChartBarTitle.ISSUES) {
                                     <div>
-                                        <span>
-                                            {{ 'artemisApp.programmingAssessment.penaltyTooltip' | artemisTranslate: { percentage: model.penalty.toFixed(2) } }}
-                                        </span>
+                                        <span jhiTranslate="artemisApp.programmingAssessment.penaltyTooltip" [translateValues]="{ percentage: model.penalty.toFixed(2) }"></span>
                                         <br />
-                                        <span>
-                                            {{ 'artemisApp.programmingAssessment.issuesTooltip' | artemisTranslate: { percentage: model.value.toFixed(2) } }}
-                                        </span>
+                                        <span jhiTranslate="artemisApp.programmingAssessment.issuesTooltip" [translateValues]="{ percentage: model.value.toFixed(2) }"></span>
                                         <br />
-                                        <span>
-                                            {{ 'artemisApp.programmingAssessment.deductionsTooltip' | artemisTranslate: { percentage: model.points.toFixed(2) } }}
-                                        </span>
+                                        <span jhiTranslate="artemisApp.programmingAssessment.deductionsTooltip" [translateValues]="{ percentage: model.points.toFixed(2) }"></span>
                                     </div>
                                 }
                             }
                         </div>
                         @if ([scaChartBarTitle.DEDUCTIONS_EN, scaChartBarTitle.DEDUCTIONS_DE].includes(model.series)) {
                             <div>
-                                <span>
-                                    {{ 'artemisApp.programmingAssessment.penaltyTooltip' | artemisTranslate: { percentage: model.penalty.toFixed(2) } }}
-                                </span>
+                                <span jhiTranslate="artemisApp.programmingAssessment.penaltyTooltip" [translateValues]="{ percentage: model.penalty.toFixed(2) }"></span>
                                 <br />
-                                <span>
-                                    {{ 'artemisApp.programmingAssessment.issuesTooltip' | artemisTranslate: { percentage: model.issues.toFixed(2) } }}
-                                </span>
+                                <span jhiTranslate="artemisApp.programmingAssessment.issuesTooltip" [translateValues]="{ percentage: model.issues.toFixed(2) }"></span>
                                 <br />
-                                <span>
-                                    {{ 'artemisApp.programmingAssessment.deductionsTooltip' | artemisTranslate: { percentage: model.value.toFixed(2) } }}
-                                </span>
+                                <span jhiTranslate="artemisApp.programmingAssessment.deductionsTooltip" [translateValues]="{ percentage: model.value.toFixed(2) }"></span>
                             </div>
                         }
                     </ng-template>

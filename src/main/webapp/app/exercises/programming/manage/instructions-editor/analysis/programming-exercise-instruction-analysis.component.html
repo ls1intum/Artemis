@@ -26,7 +26,7 @@
             }
             @if (missingTestCases.length) {
                 <div class="text-start">
-                    <span>{{ 'artemisApp.programmingExercise.testCaseAnalysis.missingTestCases' | artemisTranslate: { number: missingTestCases.length } }}</span>
+                    <span jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.missingTestCases" [translateValues]="{ number: missingTestCases.length }"></span>
                     <ul>
                         @for (test of missingTestCases; track test) {
                             <li>{{ test }}</li>
@@ -37,7 +37,7 @@
 
             @if (repeatedTestCases.length) {
                 <div class="text-start">
-                    <span>{{ 'artemisApp.programmingExercise.testCaseAnalysis.repeatedTestCases' | artemisTranslate: { number: repeatedTestCases.length } }}</span>
+                    <span jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.repeatedTestCases" [translateValues]="{ number: repeatedTestCases.length }"></span>
                     <ul>
                         @for (test of repeatedTestCases; track test) {
                             <li>{{ test }}</li>

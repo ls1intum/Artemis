@@ -10,7 +10,7 @@
                 id="filter-dropdown-button"
             >
                 <fa-icon [icon]="faFilter" />
-                <span>{{ 'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate: { num: exerciseTypeFilter.numberOfActiveFilters } }}</span>
+                <span jhiTranslate="artemisApp.courseOverview.exerciseList.filter" [translateValues]="{ num: exerciseTypeFilter.numberOfActiveFilters }"></span>
             </button>
             <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
                 <li>

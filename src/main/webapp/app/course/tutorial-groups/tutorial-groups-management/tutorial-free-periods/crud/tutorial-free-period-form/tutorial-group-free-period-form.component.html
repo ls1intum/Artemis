@@ -1,8 +1,6 @@
 <div class="row">
     <div class="col-12 mb-2">
-        <div class="alert alert-info">
-            {{ 'artemisApp.generic.timeZone' | artemisTranslate: { timeZone } }}
-        </div>
+        <div class="alert alert-info" jhiTranslate="artemisApp.generic.timeZone" [translateValues]="{ timeZone }"></div>
     </div>
     <div class="col-12">
         @if (form) {
@@ -156,9 +154,11 @@
                         [placeholder]="'artemisApp.forms.tutorialFreePeriodForm.reasonInput.placeholder' | artemisTranslate"
                     ></textarea>
                     @if (form.controls.reason?.invalid && (form.controls.reason?.dirty || (form.controls.reason?.touched && form.controls.reason?.errors?.maxlength))) {
-                        <div class="alert alert-danger">
-                            {{ 'artemisApp.forms.tutorialFreePeriodForm.reasonInput.maxLengthValidationError' | artemisTranslate: { max: '256' } }}
-                        </div>
+                        <div
+                            class="alert alert-danger"
+                            jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.reasonInput.maxLengthValidationError"
+                            [translateValues]="{ max: '256' }"
+                        ></div>
                     }
                 </div>
                 <div class="row mt-2">

@@ -18,9 +18,11 @@
             }
             @if (channel.tutorialGroupId && channel.tutorialGroupTitle) {
                 <div>
-                    <span class="badge bg-info rounded-pill">{{
-                        'artemisApp.entities.tutorialGroup.channelReverse' | artemisTranslate: { title: channel.tutorialGroupTitle }
-                    }}</span>
+                    <span
+                        class="badge bg-info rounded-pill"
+                        jhiTranslate="artemisApp.entities.tutorialGroup.channelReverse"
+                        [translateValues]="{ title: channel.tutorialGroupTitle }"
+                    ></span>
                 </div>
             }
         </div>

@@ -366,9 +366,11 @@
                                     <h4 class="d-inline-block" jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissions"></h4>
                                 }
                                 @if (isExamMode) {
-                                    <h4 class="d-inline-block">
-                                        {{ 'artemisApp.exerciseAssessmentDashboard.studentsSubmissionsExam' | artemisTranslate: { round: correctionRound + 1 } }}
-                                    </h4>
+                                    <h4
+                                        class="d-inline-block"
+                                        jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissionsExam"
+                                        [translateValues]="{ round: correctionRound + 1 }"
+                                    ></h4>
                                 }
                                 @if (correctionRound > 0) {
                                     <fa-icon

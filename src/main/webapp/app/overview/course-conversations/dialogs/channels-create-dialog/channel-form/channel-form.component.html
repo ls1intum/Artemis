@@ -23,9 +23,7 @@
                                 <div jhiTranslate="artemisApp.dialogs.createChannel.channelForm.nameInput.requiredValidationError"></div>
                             }
                             @if (nameControl?.errors?.maxlength) {
-                                <div>
-                                    {{ 'artemisApp.dialogs.createChannel.channelForm.nameInput.maxLengthValidationError' | artemisTranslate: { max: '30' } }}
-                                </div>
+                                <div jhiTranslate="artemisApp.dialogs.createChannel.channelForm.nameInput.maxLengthValidationError" [translateValues]="{ max: '30' }"></div>
                             }
                             @if (!nameControl?.errors?.required && !nameControl?.errors?.maxlength && nameControl?.errors?.pattern) {
                                 <div jhiTranslate="artemisApp.dialogs.createChannel.channelForm.nameInput.regexValidationError"></div>
@@ -43,9 +41,7 @@
                     @if (descriptionControl?.invalid && (descriptionControl?.dirty || descriptionControl?.touched)) {
                         <div class="alert alert-danger">
                             @if (descriptionControl?.errors?.maxlength) {
-                                <div>
-                                    {{ 'artemisApp.dialogs.createChannel.channelForm.descriptionInput.maxLengthValidationError' | artemisTranslate: { max: '250' } }}
-                                </div>
+                                <div jhiTranslate="artemisApp.dialogs.createChannel.channelForm.descriptionInput.maxLengthValidationError" [translateValues]="{ max: '250' }"></div>
                             }
                         </div>
                     }

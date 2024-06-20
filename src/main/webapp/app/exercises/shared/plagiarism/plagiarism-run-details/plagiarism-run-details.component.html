@@ -57,15 +57,15 @@
                 (select)="onSelect($event)"
             >
                 <ng-template #tooltipTemplate let-model="model">
-                    <b>{{ 'artemisApp.plagiarism.numberIdentifiedPairs' | artemisTranslate: { amount: model.value } }} </b> <br />
-                    <span> {{ 'artemisApp.plagiarism.confirmed' | artemisTranslate: { amount: getBucketDTO(model.label).confirmed } }}</span> <br />
-                    <span> {{ 'artemisApp.plagiarism.denied' | artemisTranslate: { amount: getBucketDTO(model.label).denied } }}</span> <br />
-                    <span> {{ 'artemisApp.plagiarism.open' | artemisTranslate: { amount: getBucketDTO(model.label).open } }}</span> <br />
-                    <span>{{ 'artemisApp.plagiarism.withSimilarity' | artemisTranslate: { range: model.name } }}</span> <br />
-                    <b>{{
-                        'artemisApp.plagiarism.portionOfAllCases'
-                            | artemisTranslate: { percentage: totalDetectedPlagiarisms > 0 ? round((model.value * 100) / totalDetectedPlagiarisms, 2) : 0 }
-                    }}</b>
+                    <b jhiTranslate="artemisApp.plagiarism.numberIdentifiedPairs" [translateValues]="{ amount: model.value }"></b> <br />
+                    <span jhiTranslate="artemisApp.plagiarism.confirmed" [translateValues]="{ amount: getBucketDTO(model.label).confirmed }"></span> <br />
+                    <span jhiTranslate="artemisApp.plagiarism.denied" [translateValues]="{ amount: getBucketDTO(model.label).denied }"></span> <br />
+                    <span jhiTranslate="artemisApp.plagiarism.open" [translateValues]="{ amount: getBucketDTO(model.label).open }"></span> <br />
+                    <span jhiTranslate="artemisApp.plagiarism.withSimilarity" [translateValues]="{ range: model.name }"></span> <br />
+                    <b
+                        jhiTranslate="artemisApp.plagiarism.portionOfAllCases"
+                        [translateValues]="{ percentage: totalDetectedPlagiarisms > 0 ? round((model.value * 100) / totalDetectedPlagiarisms, 2) : 0 }"
+                    ></b>
                 </ng-template>
             </ngx-charts-bar-vertical>
         </div>

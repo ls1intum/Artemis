@@ -56,9 +56,7 @@
                         <div jhiTranslate="artemisApp.competency.createCompetency.titleRequiredValidationError"></div>
                     }
                     @if (titleControl.errors?.maxlength) {
-                        <div>
-                            {{ 'artemisApp.competency.createCompetency.titleMaxLengthValidationError' | artemisTranslate: { max: competencyValidators.TITLE_MAX } }}
-                        </div>
+                        <div jhiTranslate="artemisApp.competency.createCompetency.titleMaxLengthValidationError" [translateValues]="{ max: competencyValidators.TITLE_MAX }"></div>
                     }
                 </div>
             }
@@ -84,9 +82,10 @@
             @if (descriptionControl.invalid && descriptionControl.dirty) {
                 <div class="alert alert-danger">
                     @if (descriptionControl.errors?.maxlength) {
-                        <div>
-                            {{ 'artemisApp.competency.createCompetency.descriptionMaxLengthValidationError' | artemisTranslate: { max: competencyValidators.DESCRIPTION_MAX } }}
-                        </div>
+                        <div
+                            jhiTranslate="artemisApp.competency.createCompetency.descriptionMaxLengthValidationError"
+                            [translateValues]="{ max: competencyValidators.DESCRIPTION_MAX }"
+                        ></div>
                     }
                 </div>
             }

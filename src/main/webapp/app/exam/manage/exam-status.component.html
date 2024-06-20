@@ -15,9 +15,10 @@
                 <h6 class="text-center">{{ 'artemisApp.examStatus.preparation.' + (isTestExam ? 'testExam.' : '') + 'examPreparation' | artemisTranslate }}</h6>
                 <ol>
                     <li class="d-flex align-items-center">
-                        <span>{{
-                            'artemisApp.examStatus.preparation.configureExercises' | artemisTranslate: { amount: exam.exerciseGroups ? exam.exerciseGroups.length : 0 }
-                        }}</span>
+                        <span
+                            jhiTranslate="artemisApp.examStatus.preparation.configureExercises"
+                            [translateValues]="{ amount: exam.exerciseGroups ? exam.exerciseGroups.length : 0 }"
+                        ></span>
                         @if (configuredExercises) {
                             <fa-icon [icon]="faCheckCircle" class="check" />
                         }
@@ -32,14 +33,14 @@
                                 <fa-icon [icon]="faCheckCircle" class="check" />
                             }
                             @if (maxPointExercises !== exam.examMaxPoints) {
-                                <span>{{ 'artemisApp.examStatus.preparation.testExam.maxPointsWrong' | artemisTranslate: { points: maxPointExercises } }} </span>
+                                <span jhiTranslate="artemisApp.examStatus.preparation.testExam.maxPointsWrong" [translateValues]="{ points: maxPointExercises }"></span>
                                 <fa-icon [icon]="faTimes" class="cross" />
                             }
                         </li>
                     }
                     @if (!isTestExam) {
                         <li class="d-flex align-items-center">
-                            <span>{{ 'artemisApp.examStatus.preparation.registerStudents' | artemisTranslate: { registered: exam.numberOfExamUsers } }} </span>
+                            <span jhiTranslate="artemisApp.examStatus.preparation.registerStudents" [translateValues]="{ registered: exam.numberOfExamUsers }"></span>
                             @if (registeredStudents) {
                                 <fa-icon [icon]="faCheckCircle" class="check" />
                             }
@@ -56,16 +57,13 @@
                                 <span jhiTranslate="artemisApp.examStatus.preparation.notRegistered"></span>
                             }
                             @if (registeredStudents) {
-                                <span>
-                                    {{
-                                        'artemisApp.examStatus.preparation.registered'
-                                            | artemisTranslate
-                                                : {
-                                                      generated: numberOfGeneratedStudentExams,
-                                                      total: exam.numberOfExamUsers
-                                                  }
-                                    }}
-                                </span>
+                                <span
+                                    jhiTranslate="artemisApp.examStatus.preparation.registered"
+                                    [translateValues]="{
+                                        generated: numberOfGeneratedStudentExams,
+                                        total: exam.numberOfExamUsers
+                                    }"
+                                ></span>
                             }
                             @if (generatedStudentExams) {
                                 <fa-icon [icon]="faCheckCircle" class="check" />

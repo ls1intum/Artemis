@@ -115,9 +115,7 @@
                     @if (bonus.bonusStrategy === BonusStrategy.POINTS) {
                         <div class="row fs-6 ps-2" jhiTranslate="artemisApp.bonus.formula.finalGradeFromPoints"></div>
                     }
-                    <div class="row fs-6 ps-2">
-                        {{ 'artemisApp.bonus.formula.finalGradeLimit' | artemisTranslate: { maxPossibleGrade: maxPossibleGrade() } }}
-                    </div>
+                    <div class="row fs-6 ps-2" jhiTranslate="artemisApp.bonus.formula.finalGradeLimit" [translateValues]="{ maxPossibleGrade: maxPossibleGrade() }"></div>
                 </div>
             }
             @if (hasBonusStrategyWeightMismatch) {

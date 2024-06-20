@@ -1,14 +1,19 @@
 <div class="row justify-content-between align-items-start exam-navigation pt-3">
     <div class="col m-0">
         @if (exercises && exercises.length > 0 && !overviewPageOpen) {
-            <div class="col d-none d-lg-block h3 m-0 text-overflow">
-                {{ 'artemisApp.examParticipation.progress' | artemisTranslate: { current: exerciseIndex + 1, all: exercises.length } }}
-            </div>
+            <div
+                class="col d-none d-lg-block h3 m-0 text-overflow"
+                jhiTranslate="artemisApp.examParticipation.progress"
+                [translateValues]="{ current: exerciseIndex + 1, all: exercises.length }"
+            ></div>
         }
         @if (exercises && exercises.length > 0 && !overviewPageOpen) {
-            <div class="col d-block d-lg-none h3 m-0 text-overflow" style="flex: 0.2">
-                {{ 'artemisApp.examParticipation.progressSmall' | artemisTranslate: { current: exerciseIndex + 1, all: exercises.length } }}
-            </div>
+            <div
+                class="col d-block d-lg-none h3 m-0 text-overflow"
+                style="flex: 0.2"
+                jhiTranslate="artemisApp.examParticipation.progressSmall"
+                [translateValues]="{ current: exerciseIndex + 1, all: exercises.length }"
+            ></div>
         }
         @if (overviewPageOpen) {
             <div class="h3 m-0 text-overflow d-block col" jhiTranslate="artemisApp.examParticipation.examOverview"></div>

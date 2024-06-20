@@ -177,7 +177,7 @@
                             <div>
                                 <div class="control-label" (click)="showPastExercises = !showPastExercises">
                                     <fa-icon class="control-icon" [icon]="showPastExercises ? faAngleDown : faAngleUp" />
-                                    <strong>{{ 'artemisApp.course.pastExercises' | artemisTranslate: { amount: pastExercises.length, total: pastExerciseCount } }}</strong>
+                                    <strong jhiTranslate="artemisApp.course.pastExercises" [translateValues]="{ amount: pastExercises.length, total: pastExerciseCount }"></strong>
                                 </div>
                                 @if (showPastExercises) {
                                     <div>

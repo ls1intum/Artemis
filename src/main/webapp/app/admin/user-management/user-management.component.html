@@ -63,9 +63,11 @@
                                     [ngClass]="{ 'btn-secondary': !filters.numberOfAppliedFilters, 'btn-success': !!filters.numberOfAppliedFilters }"
                                 >
                                     <fa-icon [icon]="faFilter" />
-                                    <span class="d-s-none d-md-inline">{{
-                                        'artemisApp.userManagement.filter.modal.open' | artemisTranslate: { num: filters.numberOfAppliedFilters }
-                                    }}</span>
+                                    <span
+                                        class="d-s-none d-md-inline"
+                                        jhiTranslate="artemisApp.userManagement.filter.modal.open"
+                                        [translateValues]="{ num: filters.numberOfAppliedFilters }"
+                                    ></span>
                                 </button>
                             </div>
                         </div>
@@ -245,7 +247,7 @@
         <div class="container-fluid">
             <div class="row user-management-border-bottom">
                 <div class="col d-flex flex-row pb-1">
-                    <h5 class="my-0">{{ 'artemisApp.userManagement.filter.authority.title' | artemisTranslate: { num: this.filters.authorityFilter.size } }}</h5>
+                    <h5 class="my-0" jhiTranslate="artemisApp.userManagement.filter.authority.title" [translateValues]="{ num: this.filters.authorityFilter.size }"></h5>
                     <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.authority.tooltip" />
                 </div>
             </div>
@@ -309,7 +311,7 @@
             </div>
             <div class="row row user-management-border-bottom">
                 <div class="col d-flex flex-row pt-3 pb-1">
-                    <h5 class="my-0">{{ 'artemisApp.userManagement.filter.origin.title' | artemisTranslate: { num: this.filters.originFilter.size } }}</h5>
+                    <h5 class="my-0" jhiTranslate="artemisApp.userManagement.filter.origin.title" [translateValues]="{ num: this.filters.originFilter.size }"></h5>
                     <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.origin.tooltip" />
                 </div>
             </div>
@@ -333,7 +335,11 @@
             </div>
             <div class="row row user-management-border-bottom">
                 <div class="col d-flex flex-row pt-3 pb-1">
-                    <h5 class="my-0">{{ 'artemisApp.userManagement.filter.registrationNumber.title' | artemisTranslate: { num: this.filters.registrationNumberFilter.size } }}</h5>
+                    <h5
+                        class="my-0"
+                        jhiTranslate="artemisApp.userManagement.filter.registrationNumber.title"
+                        [translateValues]="{ num: this.filters.registrationNumberFilter.size }"
+                    ></h5>
                     <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.registrationNumber.tooltip" />
                 </div>
             </div>
@@ -370,7 +376,7 @@
             </div>
             <div class="row user-management-border-bottom">
                 <div class="col d-flex flex-row pt-3 pb-1">
-                    <h5 class="my-0">{{ 'artemisApp.userManagement.filter.status.title' | artemisTranslate: { num: this.filters.statusFilter.size } }}</h5>
+                    <h5 class="my-0" jhiTranslate="artemisApp.userManagement.filter.status.title" [translateValues]="{ num: this.filters.statusFilter.size }"></h5>
                     <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.status.tooltip" />
                 </div>
             </div>

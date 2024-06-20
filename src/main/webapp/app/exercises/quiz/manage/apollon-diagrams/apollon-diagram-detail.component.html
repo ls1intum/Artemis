@@ -1,5 +1,5 @@
 <div class="modal-header">
-    <h4 class="modal-title">{{ 'artemisApp.apollonDiagram.detail.title' | artemisTranslate: { title: this.apollonDiagram?.title } }}</h4>
+    <h4 class="modal-title" jhiTranslate="artemisApp.apollonDiagram.detail.title" [translateValues]="{ title: this.apollonDiagram?.title }"></h4>
     <button type="button" class="btn ms-auto text-secondary" (click)="confirmExitDetailView(true)"><fa-icon [icon]="faX" size="lg" /></button>
 </div>
 <div class="modal-body">

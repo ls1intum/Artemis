@@ -26,11 +26,10 @@
                 @if (reasonControl?.invalid && (reasonControl?.dirty || reasonControl?.touched)) {
                     <div class="alert alert-danger">
                         @if (reasonControl?.errors?.maxlength) {
-                            <div>
-                                {{
-                                    'artemisApp.pages.tutorialGroupSessionManagement.cancelActivateModal.cancelSession.maxLengthValidationError' | artemisTranslate: { max: '256' }
-                                }}
-                            </div>
+                            <div
+                                jhiTranslate="artemisApp.pages.tutorialGroupSessionManagement.cancelActivateModal.cancelSession.maxLengthValidationError"
+                                [translateValues]="{ max: '256' }"
+                            ></div>
                         }
                     </div>
                 }

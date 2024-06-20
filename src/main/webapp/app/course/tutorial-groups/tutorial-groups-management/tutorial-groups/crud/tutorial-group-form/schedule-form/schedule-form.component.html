@@ -13,14 +13,10 @@
             @if (repetitionFrequencyControl?.invalid && (repetitionFrequencyControl?.dirty || repetitionFrequencyControl?.touched)) {
                 <div class="alert alert-danger">
                     @if (repetitionFrequencyControl?.errors?.min) {
-                        <div>
-                            {{ 'artemisApp.forms.scheduleForm.repetitionFrequencyInput.minValidationError' | artemisTranslate: { min: 1 } }}
-                        </div>
+                        <div jhiTranslate="artemisApp.forms.scheduleForm.repetitionFrequencyInput.minValidationError" [translateValues]="{ min: 1 }"></div>
                     }
                     @if (repetitionFrequencyControl?.errors?.max) {
-                        <div>
-                            {{ 'artemisApp.forms.scheduleForm.repetitionFrequencyInput.maxValidationError' | artemisTranslate: { max: 7 } }}
-                        </div>
+                        <div jhiTranslate="artemisApp.forms.scheduleForm.repetitionFrequencyInput.maxValidationError" [translateValues]="{ max: 7 }"></div>
                     }
                     @if (repetitionFrequencyControl?.errors?.required) {
                         <div jhiTranslate="artemisApp.forms.scheduleForm.repetitionFrequencyInput.requiredValidationError"></div>
@@ -99,9 +95,7 @@
             @if (locationControl?.invalid && (locationControl?.dirty || locationControl?.touched)) {
                 <div class="alert alert-danger">
                     @if (locationControl?.errors?.maxlength) {
-                        <div>
-                            {{ 'artemisApp.forms.scheduleForm.locationInput.maxLengthValidationError' | artemisTranslate: { max: '2000' } }}
-                        </div>
+                        <div jhiTranslate="artemisApp.forms.scheduleForm.locationInput.maxLengthValidationError" [translateValues]="{ max: '2000' }"></div>
                     }
                     @if (locationControl?.errors?.required) {
                         <div jhiTranslate="artemisApp.forms.scheduleForm.locationInput.requiredValidationError"></div>

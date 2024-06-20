@@ -2,9 +2,7 @@
     <div class="row">
         <div class="col-12">
             @if (maxSelectable !== undefined) {
-                <div class="alert alert-info">
-                    {{ 'artemisApp.dialogs.addUsers.addUsersForm.maxUsersNote' | artemisTranslate: { max: maxSelectable } }}
-                </div>
+                <div class="alert alert-info" jhiTranslate="artemisApp.dialogs.addUsers.addUsersForm.maxUsersNote" [translateValues]="{ max: maxSelectable }"></div>
             }
             <div [hidden]="maxSelectable === 0">
                 <div class="mode-switch" [hidden]="!getAsChannel(activeConversation)">
@@ -39,9 +37,7 @@
                                         <div jhiTranslate="artemisApp.dialogs.addUsers.addUsersForm.requiredError"></div>
                                     }
                                     @if (selectedUsersControl?.errors?.maxlength) {
-                                        <div>
-                                            {{ 'artemisApp.dialogs.addUsers.addUsersForm.maxError' | artemisTranslate: { max: maxSelectable } }}
-                                        </div>
+                                        <div jhiTranslate="artemisApp.dialogs.addUsers.addUsersForm.maxError" [translateValues]="{ max: maxSelectable }"></div>
                                     }
                                 </div>
                             }

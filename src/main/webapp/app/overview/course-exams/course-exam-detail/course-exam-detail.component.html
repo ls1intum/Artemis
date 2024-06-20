@@ -106,25 +106,23 @@
         <div class="card-footer row">
             <!-- For real exams, the start date is shown. For test exams, the working window is shown to the students -->
             @if (!exam.testExam && exam.startDate) {
-                <div class="col-sm">{{ 'artemisApp.exam.overview.start' | artemisTranslate: { start: exam.startDate | artemisDate } }}</div>
+                <div class="col-sm" jhiTranslate="artemisApp.exam.overview.start" [translateValues]="{ start: exam.startDate | artemisDate }"></div>
             }
             @if (exam.testExam && exam.startDate && exam.endDate) {
-                <div class="col-12">
-                    {{
-                        'artemisApp.exam.overview.testExam.available'
-                            | artemisTranslate
-                                : {
-                                      startDate: exam.startDate | artemisDate,
-                                      endDate: exam.endDate | artemisDate
-                                  }
-                    }}
-                </div>
+                <div
+                    class="col-12"
+                    jhiTranslate="artemisApp.exam.overview.testExam.available"
+                    [translateValues]="{
+                        startDate: exam.startDate | artemisDate,
+                        endDate: exam.endDate | artemisDate
+                    }"
+                ></div>
             }
             @if (exam.startDate && exam.endDate) {
                 <div class="col-12">{{ 'artemisApp.exam.overview.duration' | artemisTranslate }} {{ exam.workingTime! | artemisDurationFromSeconds: true }}</div>
             }
             @if (exam.examMaxPoints) {
-                <div class="col-sm">{{ 'artemisApp.exam.overview.maxPoints' | artemisTranslate: { points: exam.examMaxPoints } }}</div>
+                <div class="col-sm" jhiTranslate="artemisApp.exam.overview.maxPoints" [translateValues]="{ points: exam.examMaxPoints }"></div>
             }
         </div>
     </div>

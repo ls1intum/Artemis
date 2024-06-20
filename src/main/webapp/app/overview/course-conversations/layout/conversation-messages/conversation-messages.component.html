@@ -39,7 +39,10 @@
                                 <span jhiTranslate="artemisApp.conversationsLayout.conversationMessages.searchResultsSingle"></span>
                             }
                             @default {
-                                <span> {{ 'artemisApp.conversationsLayout.conversationMessages.searchResultsMultiple' | artemisTranslate: { count: totalNumberOfPosts } }}</span>
+                                <span
+                                    jhiTranslate="artemisApp.conversationsLayout.conversationMessages.searchResultsMultiple"
+                                    [translateValues]="{ count: totalNumberOfPosts }"
+                                ></span>
                             }
                         }
                     </span>

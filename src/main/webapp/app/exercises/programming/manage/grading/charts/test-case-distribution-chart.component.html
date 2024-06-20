@@ -26,30 +26,28 @@
                 <br />
                 @if ([testCaseBarTitle.WEIGHT_EN, testCaseBarTitle.WEIGHT_DE].includes(model.series)) {
                     <div>
-                        <span>
-                            {{ 'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightTooltip' | artemisTranslate: { percentage: model.value.toFixed(2) } }}
-                        </span>
+                        <span
+                            jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightTooltip"
+                            [translateValues]="{ percentage: model.value.toFixed(2) }"
+                        ></span>
                         <br />
-                        <span>
-                            {{
-                                'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonusTooltip'
-                                    | artemisTranslate: { percentage: model.bonus.toFixed(2) }
-                            }}
-                        </span>
+                        <span
+                            jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonusTooltip"
+                            [translateValues]="{ percentage: model.bonus.toFixed(2) }"
+                        ></span>
                     </div>
                 }
                 @if ([testCaseBarTitle.WEIGHT_AND_BONUS_EN, testCaseBarTitle.WEIGHT_AND_BONUS_DE].includes(model.series)) {
                     <div>
-                        <span>
-                            {{ 'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightTooltip' | artemisTranslate: { percentage: model.weight.toFixed(2) } }}
-                        </span>
+                        <span
+                            jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightTooltip"
+                            [translateValues]="{ percentage: model.weight.toFixed(2) }"
+                        ></span>
                         <br />
-                        <span>
-                            {{
-                                'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonusTooltip'
-                                    | artemisTranslate: { percentage: model.value.toFixed(2) }
-                            }}
-                        </span>
+                        <span
+                            jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonusTooltip"
+                            [translateValues]="{ percentage: model.value.toFixed(2) }"
+                        ></span>
                     </div>
                 }
             </ng-template>
@@ -72,9 +70,10 @@
             <ng-template #tooltipTemplate let-model="model">
                 <b>{{ model.name }}</b>
                 <br />
-                <span>
-                    {{ 'artemisApp.programmingExercise.configureGrading.charts.testCasePoints.pointsTooltip' | artemisTranslate: { percentage: model.value.toFixed(2) } }}
-                </span>
+                <span
+                    jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.testCasePoints.pointsTooltip"
+                    [translateValues]="{ percentage: model.value.toFixed(2) }"
+                ></span>
             </ng-template>
         </ngx-charts-bar-horizontal-stacked>
     </div>

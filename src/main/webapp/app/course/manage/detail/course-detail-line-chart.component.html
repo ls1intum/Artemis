@@ -16,17 +16,17 @@
                                 [disabled]="!showLifetimeOverview && displayedNumberOfWeeks === 4"
                                 (click)="displayPeriodOverview(4)"
                                 ngbTooltip="{{ 'artemisApp.courseStatistics.scopeButton.periodTooltip' | artemisTranslate: { amount: 4 } }}"
-                            >
-                                {{ 'artemisApp.courseStatistics.scopeButton.period' | artemisTranslate: { amount: 4 } }}
-                            </button>
+                                jhiTranslate="artemisApp.courseStatistics.scopeButton.period"
+                                [translateValues]="{ amount: 4 }"
+                            ></button>
                             <button
                                 class="btn"
                                 [disabled]="!showLifetimeOverview && displayedNumberOfWeeks === 8"
                                 (click)="displayPeriodOverview(8)"
                                 ngbTooltip="{{ 'artemisApp.courseStatistics.scopeButton.periodTooltip' | artemisTranslate: { amount: 8 } }}"
-                            >
-                                {{ 'artemisApp.courseStatistics.scopeButton.period' | artemisTranslate: { amount: 8 } }}
-                            </button>
+                                jhiTranslate="artemisApp.courseStatistics.scopeButton.period"
+                                [translateValues]="{ amount: 8 }"
+                            ></button>
                             <button
                                 class="btn"
                                 [disabled]="showLifetimeOverview"

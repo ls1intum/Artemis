@@ -1,8 +1,10 @@
 <div class="table-responsive tutorial-groups-table">
     <div class="col-12 mb-2">
-        <div class="alert alert-info">
-            {{ 'artemisApp.pages.tutorialGroupSessionManagement.timeZoneExplanation' | artemisTranslate: { timeZone: timeZoneUsedForDisplay } }}
-        </div>
+        <div
+            class="alert alert-info"
+            jhiTranslate="artemisApp.pages.tutorialGroupSessionManagement.timeZoneExplanation"
+            [translateValues]="{ timeZone: timeZoneUsedForDisplay }"
+        ></div>
     </div>
     <table class="table table-sm table-hover">
         <thead>
