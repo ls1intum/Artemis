@@ -17,6 +17,7 @@ describe('SidebarCardSmallComponent', () => {
     let component: SidebarCardSmallComponent;
     let fixture: ComponentFixture<SidebarCardSmallComponent>;
     let router: MockRouter;
+
     beforeEach(() => {
         router = new MockRouter();
         TestBed.configureTestingModule({
@@ -34,6 +35,7 @@ describe('SidebarCardSmallComponent', () => {
                 { provide: NotificationService, useClass: MockNotificationService },
             ],
         }).compileComponents();
+    });
 
         const metisService = new MockMetisService();
         TestBed.overrideComponent(SidebarCardSmallComponent, {
