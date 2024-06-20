@@ -11,19 +11,21 @@ import {
     isParameter,
     isTypeReferenceNode, SyntaxKind, ClassDeclaration, CallExpression, ConstructorDeclaration,
 } from 'typescript';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 // Get the file names from the command line arguments
-const fileNames = process.argv.slice(2);
-fileNames.push("../../../../../src/main/webapp/app/course/tutorial-groups/services/tutorial-group-free-period.service.ts")
+const clientDirectory = '../../../../../src/main/webapp/app/';
+const fileNames = getFilePaths(clientDirectory);
 
-let restCalls: Array<{method: string, url: string, line: number, filePath: string}> = [];
-let restCallFiles: Array<{path: string, restCalls: {method: string, url: string, line: number, filePath: string}[]}> = [];
+let restCallFiles: Array<{fileName: string, restCalls: {method: string, url: string, line: number, filePath: string}[]}> = [];
 
 const HTTP_METHODS = ['get', 'post', 'put', 'delete'];
 let isFirstRestCall = true;
 
 for (const fileName of fileNames.filter(fileName => fileName.endsWith('.ts')))  {
+    let restCalls: Array<{method: string, url: string, line: number, filePath: string}> = [];
+
     // Load the TypeScript file
     const sourceFile = createSourceFile(fileName, readFileSync(fileName).toString(), ScriptTarget.ES2022, true);
 
@@ -34,26 +36,44 @@ for (const fileName of fileNames.filter(fileName => fileName.endsWith('.ts')))  
     const parameterTypes: { [key: string]: string } = {};
 
     // Start traversing the AST from the root
-    visit(sourceFile, classProperties, parameterTypes, sourceFile, fileName);
+    visit(sourceFile, classProperties, parameterTypes, sourceFile, fileName, restCalls);
     isFirstRestCall = true;
-    restCallFiles.push({path: fileName, restCalls: restCalls});
+    restCallFiles.push({fileName: fileName, restCalls: restCalls});
 };
 
 // Write the restCalls array to a JSON file
 writeFileSync('../../../../../supporting_scripts/analysis-of-endpoint-connections/restCalls.json', JSON.stringify(restCallFiles, null, 2));
 
+function getFilePaths(directoryPath: string): string[] {
+    let filePaths: string[] = [];
+
+    const files = readdirSync(directoryPath);
+
+    for (const file of files) {
+        const fullPath = join(directoryPath, file);
+        const stat = statSync(fullPath);
+
+        if (stat.isDirectory()) {
+            filePaths = filePaths.concat(getFilePaths(fullPath));
+        } else {
+            filePaths.push(fullPath);
+        }
+    }
+    return filePaths;
+}
+
 // This function will be called for each node in the AST
-function visit(node: Node, classProperties: { [key: string]: string }, parameterTypes: { [key: string]: string }, sourceFile: SourceFile, fileName: string) {
+function visit(node: Node, classProperties: { [key: string]: string }, parameterTypes: { [key: string]: string }, sourceFile: SourceFile, fileName: string, restCalls: Array<{method: string, url: string, line: number, filePath: string}>) {
     if (isClassDeclaration(node)) {
         processClassDeclaration(node, classProperties, parameterTypes);
     }
 
     if (isCallExpression(node)) {
-        processCallExpression(node, classProperties, parameterTypes, sourceFile, fileName);
+        processCallExpression(node, classProperties, parameterTypes, sourceFile, fileName, restCalls);
     }
 
     // Continue traversing the AST
-    forEachChild(node, (childNode) => visit(childNode, classProperties, parameterTypes, sourceFile, fileName));
+    forEachChild(node, (childNode) => visit(childNode, classProperties, parameterTypes, sourceFile, fileName, restCalls));
 }
 
 function processClassDeclaration(classDeclaration: ClassDeclaration, classProperties: { [key: string]: string }, parameterTypes: { [key: string]: string }) {
@@ -80,7 +100,7 @@ function processConstructorDeclaration(constructorDeclaration: ConstructorDeclar
     }
 }
 
-function processCallExpression(callExpression: CallExpression, classProperties: { [key: string]: string }, parameterTypes: { [key: string]: string }, sourceFile: SourceFile, fileName: string) {
+function processCallExpression(callExpression: CallExpression, classProperties: { [key: string]: string }, parameterTypes: { [key: string]: string }, sourceFile: SourceFile, fileName: string, restCalls: Array<{method: string, url: string, line: number, filePath: string}>) {
     const expression = callExpression.expression;
     // Check if the expression is a property access expression (e.g. httpClient.get)
     if (isPropertyAccessExpression(expression)) {
@@ -88,12 +108,12 @@ function processCallExpression(callExpression: CallExpression, classProperties: 
         const objectName = expression.expression.getText().replace(/^this\./, ''); // Remove 'this.' prefix if present;
         // Check if the property name is one of the httpClient methods
         if (HTTP_METHODS.includes(methodName) && parameterTypes[objectName] === 'HttpClient') {
-            logRestCall(callExpression, methodName, classProperties, sourceFile, fileName);
+            logRestCall(callExpression, methodName, classProperties, sourceFile, fileName, restCalls);
         }
     }
 }
 
-function logRestCall(restCall: CallExpression, methodName: string, classProperties: { [key: string]: string }, sourceFile: SourceFile, fileName: string) {
+function logRestCall(restCall: CallExpression, methodName: string, classProperties: { [key: string]: string }, sourceFile: SourceFile, fileName: string, restCalls: Array<{method: string, url: string, line: number, filePath: string}>) {
     if (isFirstRestCall) {
         console.log('===================================');
         console.log('REST calls found in the following file: ' + fileName);

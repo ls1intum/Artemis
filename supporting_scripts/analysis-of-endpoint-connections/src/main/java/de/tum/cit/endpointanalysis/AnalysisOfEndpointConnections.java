@@ -2,12 +2,9 @@ package de.tum.cit.endpointanalysis;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Member;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -27,8 +24,6 @@ import com.github.javaparser.ast.expr.NormalAnnotationExpr;
 import com.github.javaparser.ast.expr.SingleMemberAnnotationExpr;
 
 import com.github.javaparser.ParserConfiguration;
-import com.github.javaparser.StaticJavaParser;
-import com.github.javaparser.ast.CompilationUnit;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -46,50 +41,7 @@ public class AnalysisOfEndpointConnections {
     public static void main(String[] args) {
         final String directoryPath = "src/main/java/de/tum/in/www1/artemis";
 
-        String[] testFiles = {"src/main/java/de/tum/in/www1/artemis/service/compass/umlmodel/parsers/v2/PetriNetParser.java"};
-
-        String[] failToParse = {
-            "src/main/java/de/tum/in/www1/artemis/service/compass/umlmodel/parsers/v2/PetriNetParser.java",
-            "src/main/java/de/tum/in/www1/artemis/service/compass/umlmodel/parsers/v2/FlowchartParser.java",
-            "src/main/java/de/tum/in/www1/artemis/service/compass/umlmodel/parsers/v2/SyntaxTreeParser.java",
-            "src/main/java/de/tum/in/www1/artemis/service/compass/umlmodel/parsers/v3/PetriNetParser.java",
-            "src/main/java/de/tum/in/www1/artemis/service/compass/umlmodel/parsers/v3/FlowchartParser.java",
-            "src/main/java/de/tum/in/www1/artemis/service/compass/umlmodel/parsers/v3/SyntaxTreeParser.java"
-        };
-
-//        ParserConfiguration configuration = new ParserConfiguration();
-//        configuration.setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_21);
         StaticJavaParser.getParserConfiguration().setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_21);
-
-//        String code = """
-//            public class Test {
-//
-//                 public static void main(String[] args) {
-//                     Test test = new Test();
-//                     test.testSwitch("test");
-//                 }
-//
-//                 public char testSwitch(String value) {
-//                     for (char character : value.toCharArray()) {
-//                         switch (character) {
-//                             case 'a' -> {
-//                                 System.out.println("A");
-//                             }
-//                             case 'b' -> {
-//                                 System.out.println("B");
-//                             }
-//                             default -> {
-//                                 System.out.println("Default");
-//                             }
-//                         }
-//                     }
-//
-//                     return 'a';
-//                 }
-//             }
-//            """;
-//
-//        CompilationUnit compilationUnit = StaticJavaParser.parse(code);
 
         String[] filesToParse = {};
         try (Stream<Path> paths = Files.walk(Paths.get(directoryPath))) {
@@ -101,10 +53,9 @@ public class AnalysisOfEndpointConnections {
 
         }
 
-//        String[] filePaths = new String[] { "src/main/java/de/tum/in/www1/artemis/web/rest/tutorialgroups/TutorialGroupFreePeriodResource.java" };
-
-        parseServerEndpoints(failToParse);
-//        analyzeEndpoints();
+//        parseServerEndpoints(filesToParse);
+        analyzeEndpoints();
+        printEndpointAnalysisResult();
 //        analyzeRestCalls();
     }
 
@@ -113,6 +64,8 @@ public class AnalysisOfEndpointConnections {
 
         final Set<String> httpMethodClasses = Set.of(GetMapping.class.getSimpleName(), PostMapping.class.getSimpleName(), PutMapping.class.getSimpleName(), DeleteMapping.class.getSimpleName(),
             PatchMapping.class.getSimpleName(), RequestMapping.class.getSimpleName());
+
+        List<String> filesFailedToParse = new ArrayList<>();
 
         for (String filePath : filePaths) {
             try {
@@ -183,9 +136,13 @@ public class AnalysisOfEndpointConnections {
                         requestMappingOptional.isPresent() ? requestMappingOptional.get().toString() : "", endpoints));
                 }
             } catch (Exception e) {
-                e.printStackTrace();
-                System.out.println(filePath);
+                filesFailedToParse.add(filePath);
             }
+        }
+
+        System.out.println("Files failed to Parse:");
+        for (String file : filesFailedToParse) {
+            System.out.println(file);
         }
 
         ObjectMapper mapper = new ObjectMapper();
@@ -204,34 +161,39 @@ public class AnalysisOfEndpointConnections {
             List<EndpointClassInformation> endpointClasses = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/endpoints.json"),
                 new TypeReference<List<EndpointClassInformation>>() {
                 });
-            List<RestCallFileInformation> restCalls = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/restCalls.json"),
+            List<RestCallFileInformation> restCallFiles = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/restCalls.json"),
                 new TypeReference<List<RestCallFileInformation>>() {
                 });
 
-            List<EndpointAnalysis> endpointsAndMatchingRestCalls = new ArrayList<>();
+            List<UsedEndpoints> endpointsAndMatchingRestCalls = new ArrayList<>();
+            List<EndpointInformation> unusedEndpoints = new ArrayList<>();
 
             for (EndpointClassInformation endpointClass : endpointClasses) {
                 for (EndpointInformation endpoint : endpointClass.getEndpoints()) {
                     List<RestCallInformation> matchingRestCalls = new ArrayList<>();
 
-                    for (RestCallFileInformation restCallFile : restCalls) {
+                    for (RestCallFileInformation restCallFile : restCallFiles) {
                         for (RestCallInformation restCall : restCallFile.getRestCalls()) {
                             String endpointURI = endpoint.buildComparableEndpointUri();
                             String restCallURI = restCall.buildComparableRestCallUri();
                             if (endpointURI.equals(restCallURI) && endpoint.getHttpMethod().equals(restCall.getMethod())) {
-                                System.out.println("Matching REST call found.\nURI: " + endpoint.getURI() + "\nHTTP method: " + restCall.getMethod());
-                                System.out.println("---------------------------------------------");
+//                                System.out.println("Matching REST call found.\nURI: " + endpoint.getURI() + "\nHTTP method: " + restCall.getMethod());
+//                                System.out.println("---------------------------------------------");
                                 matchingRestCalls.add(restCall);
                             }
                         }
                     }
 
-
-                    endpointsAndMatchingRestCalls.add(new EndpointAnalysis(endpoint, matchingRestCalls, endpointClass.getFilePath()));
+                    if (matchingRestCalls.isEmpty()) {
+                        unusedEndpoints.add(endpoint);
+                    } else {
+                        endpointsAndMatchingRestCalls.add(new UsedEndpoints(endpoint, matchingRestCalls, endpointClass.getFilePath()));
+                    }
                 }
             }
 
-            mapper.writeValue(new File("supporting_scripts/analysis-of-endpoint-connections/endpointsAndMatchingRestCalls.json"), endpointsAndMatchingRestCalls);
+            EndpointAnalysis endpointAnalysis = new EndpointAnalysis(endpointsAndMatchingRestCalls, unusedEndpoints);
+            mapper.writeValue(new File("supporting_scripts/analysis-of-endpoint-connections/endpointsAndMatchingRestCalls.json"), endpointAnalysis);
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -240,22 +202,22 @@ public class AnalysisOfEndpointConnections {
 
     private static void printEndpointAnalysisResult() {
         ObjectMapper mapper = new ObjectMapper();
-        List<EndpointAnalysis> endpointsAndMatchingRestCalls = new ArrayList<>();
+        EndpointAnalysis endpointsAndMatchingRestCalls = null;
         try {
             endpointsAndMatchingRestCalls = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/endpointsAndMatchingRestCalls.json"),
-                new TypeReference<List<EndpointAnalysis>>() {
+                new TypeReference<EndpointAnalysis>() {
                 });
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        endpointsAndMatchingRestCalls.stream().filter(endpoint -> endpoint.getMatchingRestCalls().isEmpty()).forEach(endpoint -> {
+        endpointsAndMatchingRestCalls.getUnusedEndpoints().stream().forEach(endpoint -> {
             System.out.println("=============================================");
-            System.out.println("Endpoint URI: " + endpoint.getEndpointInformation().buildCompleteEndpointURI());
-            System.out.println("HTTP method: " + endpoint.getEndpointInformation().getHttpMethodAnnotation());
-            System.out.println("File path: " + endpoint.getFilePath());
-            System.out.println("Line: " + endpoint.getEndpointInformation().getLine());
+            System.out.println("Endpoint URI: " + endpoint.buildCompleteEndpointURI());
+            System.out.println("HTTP method: " + endpoint.getHttpMethodAnnotation());
+            System.out.println("File path: " + endpoint.getClassName());
+            System.out.println("Line: " + endpoint.getLine());
             System.out.println("=============================================");
-            System.out.println("No matching REST call found for endpoint: " + endpoint.getEndpointInformation().buildCompleteEndpointURI());
+            System.out.println("No matching REST call found for endpoint: " + endpoint.buildCompleteEndpointURI());
             System.out.println("---------------------------------------------");
             System.out.println();
         });
