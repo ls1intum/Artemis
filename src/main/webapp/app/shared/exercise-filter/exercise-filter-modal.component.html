@@ -27,7 +27,7 @@
                 <ul>
                     @for (item of selectedCategories; track item) {
                         <li>
-                            <jhi-custom-exercise-category-badge [category]="item" />
+                            <jhi-custom-exercise-category-badge [category]="item" [displayRemoveButton]="true" />
                             <button (click)="removeItem(item)">Remove</button>
                         </li>
                     }

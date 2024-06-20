@@ -2,3 +2,14 @@ h4 {
     margin-bottom: 0.25rem;
     margin-right: 0.25rem;
 }
+
+// TODO support change of theme, darkmode vs lightmode
+.remove-button {
+    color: #fff;
+    background: transparent !important;
+    border: none !important;
+
+    &:hover {
+        opacity: 0.8;
+    }
+}
