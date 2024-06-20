@@ -71,7 +71,7 @@ server:
 jhipster:
     # CORS is only enabled by default with the "dev" profile, so the client can access the API
     cors:
-        allowed-origins: "vscode-file://vscode-app"
+        allowed-origin-patterns: "*"
         allowed-methods: "*"
         allowed-headers: "*"
         exposed-headers: "Authorization,Link,X-Total-Count"
