@@ -13,6 +13,7 @@
                 class="form-control"
                 [(ngModel)]="model"
                 [ngbTypeahead]="search"
+                [placeholder]="'artemisApp.exercise.selectCategories' | artemisTranslate"
                 (focus)="focus$.next($any($event).target.value)"
                 (click)="click$.next($any($event).target.value)"
                 #instance="ngbTypeahead"
