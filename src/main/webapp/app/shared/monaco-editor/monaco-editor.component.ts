@@ -49,6 +49,9 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             readOnly: this._readOnly,
             lineNumbersMinChars: 4,
             scrollBeyondLastLine: false,
+            scrollbar: {
+                alwaysConsumeMouseWheel: false, // Allows scrolling past the editor once the editor is at the end.
+            },
             wordWrap: 'on', // TODO make this a setting
         });
         renderer.appendChild(elementRef.nativeElement, this.monacoEditorContainerElement);
