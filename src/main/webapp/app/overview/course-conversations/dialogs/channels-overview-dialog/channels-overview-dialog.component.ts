@@ -89,10 +89,6 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
         }
     }
 
-    trackIdentity(index: number, item: ChannelDTO) {
-        return item.id!;
-    }
-
     onChannelAction(channelAction: ChannelAction) {
         this.channelActions$.next(channelAction);
     }

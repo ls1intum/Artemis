@@ -5,12 +5,12 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyJolDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.CompetencyInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.CompetencyProgressDTO;
@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.web.rest.dto.metrics.MapEntryLongLong;
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface CompetencyMetricsRepository extends JpaRepository<Competency, Long> {
+public interface CompetencyMetricsRepository extends ArtemisJpaRepository<Competency, Long> {
 
     /**
      * Get the competency information for all competencies in a course.

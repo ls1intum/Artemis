@@ -16,11 +16,12 @@
             }
         </div>
         @if (!exportReady) {
-            <span style="color: grey"
-                ><fa-icon [icon]="faSpinner" [spin]="true" />&nbsp;<span jhiTranslate="artemisApp.instructorDashboard.loadingStudents"
-                    >Loading the results of all students...</span
-                ></span
-            >
+            <span style="color: grey">
+                <fa-icon [icon]="faSpinner" animation="spin" />&nbsp;
+                <span jhiTranslate="artemisApp.instructorDashboard.loadingStudents">
+                    Loading the results of all students...
+                </span>
+            </span>
         }
         <div class="row d-flex align-items-center">
             <div class="col-lg-9">

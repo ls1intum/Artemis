@@ -956,6 +956,36 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testEvaluateQuizKeepsResult() throws Exception {
+        var quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().minusHours(5), ZonedDateTime.now().minusHours(2), QuizMode.SYNCHRONIZED);
+        var quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, ZonedDateTime.now().minusHours(3));
+        var submission = participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student1");
+        submission = participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
+        assertThat(submission.getResults()).hasSize(1);
+
+        request.postWithoutResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/evaluate", null, OK);
+
+        var newResult = resultRepository.findDistinctBySubmissionId(submission.getId());
+        assertThat(newResult).isPresent();
+        assertThat(newResult.get()).isEqualTo(submission.getResults().get(0));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testEvaluateQuizCreatesResult() throws Exception {
+        var quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().minusHours(5), ZonedDateTime.now().minusHours(2), QuizMode.SYNCHRONIZED);
+        var quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, ZonedDateTime.now().minusHours(3));
+        var submission = participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student1");
+        assertThat(submission.getResults()).isEmpty();
+
+        request.postWithoutResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/evaluate", null, OK);
+
+        var newResult = resultRepository.findDistinctBySubmissionId(submission.getId());
+        assertThat(newResult).isPresent();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testAddAndStartQuizBatch() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.BATCHED);

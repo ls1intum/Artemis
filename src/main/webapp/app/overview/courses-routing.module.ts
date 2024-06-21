@@ -198,6 +198,7 @@ const routes: Routes = [
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.messages',
+                    hasSidebar: true,
                     showRefreshButton: true,
                 },
             },
