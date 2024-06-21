@@ -30,7 +30,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -45,6 +44,7 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Organization;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
@@ -62,7 +62,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
+public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpecificationExecutor<User> {
 
     String USERS_CACHE = "users";
 
@@ -1135,10 +1135,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      */
     default boolean isCurrentUser(String login) {
         return SecurityUtils.getCurrentUserLogin().map(currentLogin -> currentLogin.equals(login)).orElse(false);
-    }
-
-    default User findByIdElseThrow(long userId) throws EntityNotFoundException {
-        return findById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
     }
 
     Optional<User> findBySshPublicKeyHash(String keyString);

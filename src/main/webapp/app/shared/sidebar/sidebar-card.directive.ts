@@ -1,4 +1,4 @@
-import { ComponentRef, Directive, Input, OnDestroy, OnInit, ViewContainerRef } from '@angular/core';
+import { ComponentRef, Directive, EventEmitter, Input, OnDestroy, OnInit, Output, ViewContainerRef } from '@angular/core';
 import { SidebarCardSmallComponent } from 'app/shared/sidebar/sidebar-card-small/sidebar-card-small.component';
 import { SidebarCardMediumComponent } from 'app/shared/sidebar/sidebar-card-medium/sidebar-card-medium.component';
 import { SidebarCardLargeComponent } from 'app/shared/sidebar/sidebar-card-large/sidebar-card-large.component';
@@ -13,6 +13,8 @@ export class SidebarCardDirective implements OnInit, OnDestroy {
     @Input() sidebarItem: SidebarCardElement;
     @Input() sidebarType?: SidebarTypes;
     @Input() itemSelected?: boolean;
+
+    @Output() onUpdateSidebar = new EventEmitter<void>();
 
     private componentRef: ComponentRef<any>;
 
@@ -43,6 +45,9 @@ export class SidebarCardDirective implements OnInit, OnDestroy {
             this.componentRef.instance.itemSelected = this.itemSelected;
             this.componentRef.instance.sidebarType = this.sidebarType;
             this.componentRef.instance.sidebarItem = this.sidebarItem;
+            if (this.size == 'S') {
+                this.componentRef.instance.onUpdateSidebar = this.onUpdateSidebar;
+            }
         }
     }
 }

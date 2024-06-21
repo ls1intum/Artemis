@@ -13,13 +13,13 @@ import jakarta.validation.constraints.NotNull;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 record ProgrammingSubmissionAndSubmissionDate(ProgrammingSubmission programmingSubmission, ZonedDateTime submissionDate) {
@@ -35,18 +35,7 @@ record ProgrammingSubmissionAndSubmissionDate(ProgrammingSubmission programmingS
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface ProgrammingSubmissionRepository extends JpaRepository<ProgrammingSubmission, Long> {
-
-    /**
-     * Load programming submission only
-     *
-     * @param submissionId the submissionId
-     * @return programming submission
-     */
-    @NotNull
-    default ProgrammingSubmission findByIdElseThrow(long submissionId) {
-        return findById(submissionId).orElseThrow(() -> new EntityNotFoundException("ProgrammingSubmission", submissionId));
-    }
+public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<ProgrammingSubmission, Long> {
 
     @Query("""
             SELECT s

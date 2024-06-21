@@ -121,12 +121,6 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
     }
 
     /**
-     * defines a function that returns the answerPost id as unique identifier,
-     * by this means, Angular determines which answerPost in the collection of answerPosts has to be reloaded/destroyed on changes
-     */
-    answerPostTrackByFn = (index: number, answerPost: AnswerPost): number => answerPost.id!;
-
-    /**
      * Open create answer modal
      */
     openCreateAnswerPostModal() {

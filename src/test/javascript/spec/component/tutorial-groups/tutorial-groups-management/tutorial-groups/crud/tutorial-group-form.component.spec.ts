@@ -13,8 +13,7 @@ import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { NgbTimepickerModule, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
-import { EventEmitter, Input, Output } from '@angular/core';
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ScheduleFormComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/tutorial-group-form/schedule-form/schedule-form.component';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
@@ -93,7 +92,6 @@ describe('TutorialGroupFormComponent', () => {
                 validTeachingAssistant.login = 'testLogin';
                 component = fixture.componentInstance;
                 component.course = course;
-                testFormIsInvalidOnMissingRequiredProperty = generateTestFormIsInvalidOnMissingRequiredProperty(component, fixture, setValidFormValues, clickSubmit);
                 fixture.detectChanges();
             });
     });
@@ -123,14 +121,12 @@ describe('TutorialGroupFormComponent', () => {
                     location: validLocation,
                 },
             });
-        });
-
-        it('should initialize', () => {
-            fixture.detectChanges();
-            expect(component).not.toBeNull();
+            testFormIsInvalidOnMissingRequiredProperty = generateTestFormIsInvalidOnMissingRequiredProperty(component, fixture, setValidFormValues, clickSubmit);
         });
 
         it('should block submit when required property is missing', fakeAsync(() => {
+            jest.spyOn(console, 'warn').mockImplementation(() => {});
+
             const requiredGroupControlNames = ['title', 'teachingAssistant', 'isOnline', 'language'];
             const requiredScheduleControlNames = ['dayOfWeek', 'startTime', 'endTime', 'repetitionFrequency', 'period', 'location'];
 
@@ -215,13 +211,12 @@ describe('TutorialGroupFormComponent', () => {
                 campus: validCampus,
                 additionalInformation: validAdditionalInformation,
             });
-        });
-
-        it('should initialize', () => {
-            expect(component).not.toBeNull();
+            testFormIsInvalidOnMissingRequiredProperty = generateTestFormIsInvalidOnMissingRequiredProperty(component, fixture, setValidFormValues, clickSubmit);
         });
 
         it('should block submit when required property is missing', fakeAsync(() => {
+            jest.spyOn(console, 'warn').mockImplementation(() => {});
+
             const requiredGroupControlNames = ['title', 'teachingAssistant', 'isOnline', 'language'];
             for (const controlName of requiredGroupControlNames) {
                 testFormIsInvalidOnMissingRequiredProperty(controlName);

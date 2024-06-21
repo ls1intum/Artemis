@@ -17,11 +17,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import de.tum.in.www1.artemis.domain.PersistentAuditEvent;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data JPA repository for the PersistentAuditEvent entity.
  */
-public interface PersistenceAuditEventRepository extends JpaRepository<PersistentAuditEvent, Long> {
+public interface PersistenceAuditEventRepository extends ArtemisJpaRepository<PersistentAuditEvent, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "data" })
     List<PersistentAuditEvent> findByPrincipalAndAuditEventDateAfterAndAuditEventType(String principle, Instant after, String type);

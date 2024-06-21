@@ -8,7 +8,6 @@ import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.hestia.CoverageReport;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 record CoverageReportAndSubmissionDate(CoverageReport coverageReport, ZonedDateTime submissionDate) {
@@ -32,7 +32,7 @@ record CoverageReportAndSubmissionDate(CoverageReport coverageReport, ZonedDateT
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface CoverageReportRepository extends JpaRepository<CoverageReport, Long> {
+public interface CoverageReportRepository extends ArtemisJpaRepository<CoverageReport, Long> {
 
     Boolean existsBySubmissionId(Long submissionId);
 

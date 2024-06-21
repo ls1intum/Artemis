@@ -17,6 +17,8 @@ import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-ed
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { metisExamChannelDTO, metisExerciseChannelDTO, metisGeneralChannelDTO, metisLectureChannelDTO } from '../../../helpers/sample/metis-sample-data';
+import { getElement } from '../../../helpers/utils/general.utils';
+import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
 
 @Directive({
     // eslint-disable-next-line @angular-eslint/directive-selector
@@ -56,7 +58,7 @@ describe('CourseWideSearchComponent', () => {
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
-            imports: [FormsModule, ReactiveFormsModule],
+            imports: [FormsModule, ReactiveFormsModule, NgbTooltipMocksModule],
             declarations: [
                 CourseWideSearchComponent,
                 InfiniteScrollStubDirective,
@@ -159,5 +161,97 @@ describe('CourseWideSearchComponent', () => {
         component.totalNumberOfPosts = 10;
         component.fetchNextPage();
         expect(getFilteredPostSpy).toHaveBeenCalledOnce();
+    }));
+
+    it('should initialize formGroup correctly', fakeAsync(() => {
+        component.ngOnInit();
+        tick();
+        expect(component.formGroup.get('filterToOwn')?.value).toBeFalse();
+        expect(component.formGroup.get('filterToUnresolved')?.value).toBeFalse();
+        expect(component.formGroup.get('filterToAnsweredOrReacted')?.value).toBeFalse();
+    }));
+
+    it('Should update filter setting when filterToUnresolved checkbox is checked', fakeAsync(() => {
+        fixture.detectChanges();
+        component.formGroup.patchValue({
+            filterToUnresolved: true,
+            filterToOwn: false,
+            filterToAnsweredOrReacted: false,
+        });
+        const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
+        filterResolvedCheckbox.dispatchEvent(new Event('change'));
+        tick();
+        fixture.detectChanges();
+        expect(component.courseWideSearchConfig.filterToUnresolved).toBeTrue();
+        expect(component.courseWideSearchConfig.filterToOwn).toBeFalse();
+        expect(component.courseWideSearchConfig.filterToAnsweredOrReacted).toBeFalse();
+    }));
+
+    it('Should update filter setting when filterToOwn checkbox is checked', fakeAsync(() => {
+        fixture.detectChanges();
+        component.formGroup.patchValue({
+            filterToUnresolved: false,
+            filterToOwn: true,
+            filterToAnsweredOrReacted: false,
+        });
+        const filterOwnCheckbox = getElement(fixture.debugElement, 'input[name=filterToOwn]');
+        filterOwnCheckbox.dispatchEvent(new Event('change'));
+        tick();
+        fixture.detectChanges();
+        expect(component.courseWideSearchConfig.filterToUnresolved).toBeFalse();
+        expect(component.courseWideSearchConfig.filterToOwn).toBeTrue();
+        expect(component.courseWideSearchConfig.filterToAnsweredOrReacted).toBeFalse();
+    }));
+
+    it('Should update filter setting when filterToAnsweredOrReacted checkbox is checked', fakeAsync(() => {
+        fixture.detectChanges();
+        component.formGroup.patchValue({
+            filterToUnresolved: false,
+            filterToOwn: false,
+            filterToAnsweredOrReacted: true,
+        });
+        const filterAnsweredOrReactedCheckbox = getElement(fixture.debugElement, 'input[name=filterToAnsweredOrReacted]');
+        filterAnsweredOrReactedCheckbox.dispatchEvent(new Event('change'));
+        tick();
+        fixture.detectChanges();
+        expect(component.courseWideSearchConfig.filterToUnresolved).toBeFalse();
+        expect(component.courseWideSearchConfig.filterToOwn).toBeFalse();
+        expect(component.courseWideSearchConfig.filterToAnsweredOrReacted).toBeTrue();
+    }));
+
+    it('Should update filter setting when all filter checkboxes are checked', fakeAsync(() => {
+        fixture.detectChanges();
+        component.formGroup.patchValue({
+            filterToUnresolved: true,
+            filterToOwn: true,
+            filterToAnsweredOrReacted: true,
+        });
+        const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
+        const filterOwnCheckbox = getElement(fixture.debugElement, 'input[name=filterToOwn]');
+        const filterAnsweredOrReactedCheckbox = getElement(fixture.debugElement, 'input[name=filterToAnsweredOrReacted]');
+        filterResolvedCheckbox.dispatchEvent(new Event('change'));
+        filterOwnCheckbox.dispatchEvent(new Event('change'));
+        filterAnsweredOrReactedCheckbox.dispatchEvent(new Event('change'));
+        tick();
+        fixture.detectChanges();
+        expect(component.courseWideSearchConfig.filterToUnresolved).toBeTrue();
+        expect(component.courseWideSearchConfig.filterToOwn).toBeTrue();
+        expect(component.courseWideSearchConfig.filterToAnsweredOrReacted).toBeTrue();
+    }));
+
+    it('should initialize sorting direction correctly', fakeAsync(() => {
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+        expect(component.courseWideSearchConfig.sortingOrder).toBe(SortDirection.ASCENDING);
+    }));
+
+    it('should change sorting direction after clicking the order direction button', fakeAsync(() => {
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+        const selectedDirectionOption = getElement(fixture.debugElement, '.clickable');
+        selectedDirectionOption.dispatchEvent(new Event('click'));
+        expect(component.courseWideSearchConfig.sortingOrder).toBe(SortDirection.DESCENDING);
     }));
 });

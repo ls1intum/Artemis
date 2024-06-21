@@ -1,12 +1,12 @@
 import { APP_INITIALIZER, ErrorHandler, LOCALE_ID, NgModule } from '@angular/core';
 import { DatePipe, registerLocaleData } from '@angular/common';
-import { HTTP_INTERCEPTORS, HttpClient, HttpClientModule } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { Title } from '@angular/platform-browser';
 import { AuthExpiredInterceptor } from 'app/core/interceptor/auth-expired.interceptor';
 import { ErrorHandlerInterceptor } from 'app/core/interceptor/errorhandler.interceptor';
 import { NotificationInterceptor } from 'app/core/interceptor/notification.interceptor';
 import { NgbDateAdapter, NgbDatepickerConfig, NgbTooltipConfig } from '@ng-bootstrap/ng-bootstrap';
-import { NgxWebstorageModule, SessionStorageService } from 'ngx-webstorage';
+import { SessionStorageService, provideNgxWebstorage, withLocalStorage, withNgxWebstorageConfig, withSessionStorage } from 'ngx-webstorage';
 import locale from '@angular/common/locales/en';
 import { MissingTranslationHandler, TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
@@ -23,8 +23,6 @@ import { Router } from '@angular/router';
 
 @NgModule({
     imports: [
-        HttpClientModule,
-        NgxWebstorageModule.forRoot({ prefix: 'jhi', separator: '-' }),
         TranslateModule.forRoot({
             loader: {
                 provide: TranslateLoader,
@@ -38,6 +36,8 @@ import { Router } from '@angular/router';
         }),
     ],
     providers: [
+        provideHttpClient(withInterceptorsFromDi()),
+        provideNgxWebstorage(withNgxWebstorageConfig({ prefix: 'jhi', separator: '-' }), withLocalStorage(), withSessionStorage()),
         Title,
         {
             provide: LOCALE_ID,

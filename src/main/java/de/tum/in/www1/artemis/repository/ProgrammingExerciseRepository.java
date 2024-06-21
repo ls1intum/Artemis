@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.repository;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
 import static de.tum.in.www1.artemis.config.Constants.TITLE_NAME_PATTERN;
+import static de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository.ProgrammingExerciseFetchOptions;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
@@ -12,21 +13,16 @@ import java.util.Set;
 import java.util.regex.Matcher;
 
 import jakarta.annotation.Nullable;
-import jakarta.persistence.criteria.JoinType;
 import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.DomainObject_;
 import de.tum.in.www1.artemis.domain.Exercise_;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise_;
@@ -35,6 +31,8 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.repository.base.DynamicSpecificationRepository;
+import de.tum.in.www1.artemis.repository.base.FetchOptions;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -43,7 +41,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface ProgrammingExerciseRepository extends JpaRepository<ProgrammingExercise, Long>, JpaSpecificationExecutor<ProgrammingExercise> {
+public interface ProgrammingExerciseRepository extends DynamicSpecificationRepository<ProgrammingExercise, Long, ProgrammingExerciseFetchOptions> {
 
     default ProgrammingExercise findOneByIdElseThrow(final Specification<ProgrammingExercise> specification, long exerciseId) {
         final Specification<ProgrammingExercise> hasIdSpec = (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get(DomainObject_.ID), exerciseId);
@@ -494,17 +492,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     long countByTitleAndExerciseGroupExamCourse(String shortName, Course course);
 
     /**
-     * Find a programming exercise by its id and throw an EntityNotFoundException if it cannot be found
-     *
-     * @param programmingExerciseId of the programming exercise.
-     * @return The programming exercise related to the given id
-     */
-    @NotNull
-    default ProgrammingExercise findByIdElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        return findById(programmingExerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
-    }
-
-    /**
      * Find a programming exercise by its id, with grading criteria loaded, and throw an EntityNotFoundException if it cannot be found
      *
      * @param exerciseId of the programming exercise.
@@ -642,34 +629,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             long programmingExerciseId) throws EntityNotFoundException {
         Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigById(
                 programmingExerciseId);
-        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
-    }
-
-    /**
-     * Finds a programming exercise by its id including the submissions for its solution and template participation.
-     *
-     * @param exerciseId          The id of the programming exercise.
-     * @param withGradingCriteria True, if the grading instructions of the exercise should be included as well.
-     * @return A programming exercise that has the given id.
-     * @throws EntityNotFoundException In case no exercise with the given id exists.
-     */
-    @NotNull
-    default ProgrammingExercise findByIdWithAuxiliaryRepositoriesTeamAssignmentConfigAndGradingCriteriaElseThrow(long exerciseId, boolean withGradingCriteria)
-            throws EntityNotFoundException {
-
-        final Specification<ProgrammingExercise> specification = (root, query, criteriaBuilder) -> {
-            root.fetch(Exercise_.CATEGORIES, JoinType.LEFT);
-            root.fetch(Exercise_.TEAM_ASSIGNMENT_CONFIG, JoinType.LEFT);
-            root.fetch(ProgrammingExercise_.AUXILIARY_REPOSITORIES, JoinType.LEFT);
-
-            if (withGradingCriteria) {
-                root.fetch(Exercise_.GRADING_CRITERIA, JoinType.LEFT);
-            }
-
-            return null;
-        };
-
-        return findOneByIdElseThrow(specification, exerciseId);
+        return getValueElseThrow(programmingExercise, programmingExerciseId);
     }
 
     /**
@@ -857,6 +817,46 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
         if (!exercise.hasBuildPlanAccessSecretSet()) {
             exercise.generateAndSetBuildPlanAccessSecret();
             save(exercise);
+        }
+    }
+
+    /**
+     * Fetch options for the {@link ProgrammingExercise} entity.
+     * Each option specifies an entity or a collection of entities to fetch eagerly when using a dynamic fetching query.
+     */
+    enum ProgrammingExerciseFetchOptions implements FetchOptions {
+
+        // @formatter:off
+        Categories(Exercise_.CATEGORIES),
+        TeamAssignmentConfig(Exercise_.TEAM_ASSIGNMENT_CONFIG),
+        AuxiliaryRepositories(ProgrammingExercise_.AUXILIARY_REPOSITORIES),
+        GradingCriteria(Exercise_.GRADING_CRITERIA),
+        StudentParticipations(ProgrammingExercise_.STUDENT_PARTICIPATIONS),
+        TemplateParticipation(ProgrammingExercise_.TEMPLATE_PARTICIPATION),
+        SolutionParticipation(ProgrammingExercise_.SOLUTION_PARTICIPATION),
+        TestCases(ProgrammingExercise_.TEST_CASES),
+        Tasks(ProgrammingExercise_.TASKS),
+        StaticCodeAnalysisCategories(ProgrammingExercise_.STATIC_CODE_ANALYSIS_CATEGORIES),
+        SubmissionPolicy(ProgrammingExercise_.SUBMISSION_POLICY),
+        ExerciseHints(ProgrammingExercise_.EXERCISE_HINTS),
+        Competencies(ProgrammingExercise_.COMPETENCIES),
+        Teams(ProgrammingExercise_.TEAMS),
+        TutorParticipations(ProgrammingExercise_.TUTOR_PARTICIPATIONS),
+        ExampleSubmissions(ProgrammingExercise_.EXAMPLE_SUBMISSIONS),
+        Attachments(ProgrammingExercise_.ATTACHMENTS),
+        Posts(ProgrammingExercise_.POSTS),
+        PlagiarismCases(ProgrammingExercise_.PLAGIARISM_CASES),
+        PlagiarismDetectionConfig(ProgrammingExercise_.PLAGIARISM_DETECTION_CONFIG);
+        // @formatter:on
+
+        private final String fetchPath;
+
+        ProgrammingExerciseFetchOptions(String fetchPath) {
+            this.fetchPath = fetchPath;
+        }
+
+        public String getFetchPath() {
+            return fetchPath;
         }
     }
 }

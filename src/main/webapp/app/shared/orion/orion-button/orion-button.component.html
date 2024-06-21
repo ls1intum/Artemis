@@ -7,7 +7,7 @@
     [class.btn-sm]="smallButton"
     (click)="handleClick()"
 >
-    <fa-icon [hidden]="!buttonLoading" [spin]="true" [icon]="faCircleNotch" />
+    <fa-icon [hidden]="!buttonLoading" animation="spin" [icon]="faCircleNotch" />
     <fa-icon [hidden]="buttonType !== OrionButtonType.Reload" [icon]="faRotateRight" />
     <fa-icon [hidden]="buttonType !== OrionButtonType.Submit" [icon]="faUpload" />
     <fa-icon [hidden]="buttonType !== OrionButtonType.Download" [icon]="faDownload" />
