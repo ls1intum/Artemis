@@ -7,7 +7,6 @@ import java.util.List;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,13 +15,14 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data JPA repository for the TutorParticipation entity.
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface TutorParticipationRepository extends JpaRepository<TutorParticipation, Long> {
+public interface TutorParticipationRepository extends ArtemisJpaRepository<TutorParticipation, Long> {
 
     List<TutorParticipation> findByAssessedExercise(Exercise assessedExercise);
 

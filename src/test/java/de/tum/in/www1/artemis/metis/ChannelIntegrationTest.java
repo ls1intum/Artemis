@@ -68,6 +68,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     private ExerciseUtilService exerciseUtilService;
 
     @BeforeEach
+    @Override
     void setupTestScenario() throws Exception {
         super.setupTestScenario();
         userUtilService.addUsers(TEST_PREFIX, 2, 2, 1, 2);

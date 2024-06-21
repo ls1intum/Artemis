@@ -4,24 +4,21 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data JPA repository for the ApollonDiagram entity.
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface ApollonDiagramRepository extends JpaRepository<ApollonDiagram, Long> {
+public interface ApollonDiagramRepository extends ArtemisJpaRepository<ApollonDiagram, Long> {
 
     List<ApollonDiagram> findDiagramsByCourseId(Long courseId);
 
@@ -38,9 +35,4 @@ public interface ApollonDiagramRepository extends JpaRepository<ApollonDiagram, 
             """)
     @Cacheable(cacheNames = "diagramTitle", key = "#diagramId", unless = "#result == null")
     String getDiagramTitle(@Param("diagramId") Long diagramId);
-
-    @NotNull
-    default ApollonDiagram findByIdElseThrow(Long apollonDiagramId) throws EntityNotFoundException {
-        return findById(apollonDiagramId).orElseThrow(() -> new EntityNotFoundException("ApollonDiagram", apollonDiagramId));
-    }
 }
