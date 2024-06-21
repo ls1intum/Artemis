@@ -27,7 +27,11 @@
                                 [multiple]="true"
                                 (change)="onFileUpload($event)"
                             />
-                            <label [for]="'file-upload ' + uniqueMarkdownEditorId" class="file-upload-footer-label d-inline">
+                            <label
+                                [for]="'file-upload ' + uniqueMarkdownEditorId"
+                                class="file-upload-footer-label d-inline"
+                                [style.cursor]="isResizing ? 'ns-resize !important' : undefined"
+                            >
                                 <div class="row mx-0 align-items-baseline">
                                     <span class="col upload-subtitle">{{ 'artemisApp.markdownEditor.fileUpload' | artemisTranslate }}</span>
                                     <a class="col-auto" href="http://demo.showdownjs.com">
@@ -129,8 +133,11 @@
     cdkDrag
     cdkDragLockAxis="y"
     [cdkDragConstrainPosition]="constrainDragPositionFn"
+    (cdkDragStarted)="isResizing = true"
     (cdkDragMoved)="onResizeMoved($event)"
+    (cdkDragEnded)="isResizing = false"
     [style.position]="'absolute'"
     [style.left.%]="50"
+    [style.cursor]="'ns-resize'"
     ><fa-icon [icon]="faGripLines" class="rg-bottom md-resize-icon"
 /></span>

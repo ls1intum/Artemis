@@ -105,6 +105,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     resizeObserver?: ResizeObserver;
     targetWrapperHeight?: number;
     constrainDragPositionFn?: (pointerPosition: Point) => Point;
+    isResizing = false;
 
     readonly markdownColors = ['#ca2024', '#3ea119', '#ffffff', '#000000', '#fffa5c', '#0d3cc2', '#b05db8', '#d86b1f'];
     readonly markdownColorNames = ['red', 'green', 'white', 'black', 'yellow', 'blue', 'lila', 'orange'];
