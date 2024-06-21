@@ -120,6 +120,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     ngAfterContentInit(): void {
         // Setting the desired height is done here to avoid an ExpressionChangedAfterItHasBeenCheckedError.
         this.targetWrapperHeight = this.initialEditorHeight?.valueOf();
+        this.constrainDragPositionFn = this.constrainDragPosition.bind(this);
     }
 
     ngAfterViewInit(): void {
@@ -142,7 +143,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
         if (this.resizeHandle && this.resizePlaceholder && this.enableResize) {
             const resizeHandleHeight = this.getElementClientHeight(this.resizeHandle);
-            this.constrainDragPositionFn = this.constrainDragPosition.bind(this);
             this.resizePlaceholder.nativeElement.style.height = resizeHandleHeight + 'px';
             this.resizeHandle.nativeElement.style.top =
                 (this.resizePlaceholder?.nativeElement?.getBoundingClientRect()?.top ?? 0) - this.wrapper.nativeElement?.getBoundingClientRect()?.top + -resizeHandleHeight + 'px';
