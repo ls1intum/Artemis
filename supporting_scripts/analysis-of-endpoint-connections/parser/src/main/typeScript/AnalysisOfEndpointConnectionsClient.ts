@@ -116,13 +116,13 @@ function processCallExpression(callExpression: CallExpression, classProperties: 
 }
 
 function logRestCall(restCall: CallExpression, methodName: string, classProperties: { [key: string]: string }, sourceFile: SourceFile, fileName: string, restCalls: Array<{method: string, url: string, line: number, filePath: string}>) {
-    if (isFirstRestCall) {
-        console.log('===================================');
-        console.log('REST calls found in the following file: ' + fileName);
-        console.log('===================================');
-        isFirstRestCall = false;
-    }
-    console.log(`Found REST call: ${methodName}`);
+    // if (isFirstRestCall) {
+    //     console.log('===================================');
+    //     console.log('REST calls found in the following file: ' + fileName);
+    //     console.log('===================================');
+    //     isFirstRestCall = false;
+    // }
+    // console.log(`Found REST call: ${methodName}`);
     let url = '';
     if (restCall.arguments.length > 0) {
         url = restCall.arguments[0].getText();
@@ -130,12 +130,12 @@ function logRestCall(restCall: CallExpression, methodName: string, classProperti
         for (const prop in classProperties) {
             url = url.replace(new RegExp(`\\$\\{this.${prop}\\}`, 'g'), classProperties[prop]);
         }
-        console.log(`with URL: ${url}`);
-
-        // Log the other arguments
-        for (let i = 1; i < restCall.arguments.length; i++) {
-            console.log(`Argument ${i}: ${restCall.arguments[i].getText()}`);
-        }
+        // console.log(`with URL: ${url}`);
+        //
+        // // Log the other arguments
+        // for (let i = 1; i < restCall.arguments.length; i++) {
+        //     console.log(`Argument ${i}: ${restCall.arguments[i].getText()}`);
+        // }
     } else {
         console.log('No arguments provided for this REST call');
     }
