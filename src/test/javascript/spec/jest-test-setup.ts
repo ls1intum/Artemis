@@ -53,13 +53,6 @@ Object.defineProperty(window, 'getComputedStyle', {
     }),
 });
 
-Object.defineProperty(window, 'location', {
-    value: {
-        hash: '',
-        href: 'https://artemis.fake/test',
-    },
-});
-
 Object.defineProperty(window, 'matchMedia', {
     writable: true,
     value: jest.fn().mockImplementation((query) => ({

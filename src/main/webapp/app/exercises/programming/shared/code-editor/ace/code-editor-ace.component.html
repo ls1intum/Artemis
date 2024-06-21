@@ -14,7 +14,7 @@
       Therefore, the existing feedback has to be before the new feedback in the DOM.
       -->
             <!-- Existing, saved feedback -->
-            @for (feedback of filterFeedbackForFile(feedbacks); track feedback) {
+            @for (feedback of filterFeedbackForFile(feedbacks); track feedback.id) {
                 <jhi-code-editor-tutor-assessment-inline-feedback
                     [selectedFile]="selectedFile"
                     [codeLine]="Feedback.getReferenceLine(feedback)!"
@@ -44,7 +44,7 @@
                 />
             }
             <!-- Feedback suggestions -->
-            @for (suggestion of filterFeedbackForFile(feedbackSuggestions); track suggestion) {
+            @for (suggestion of filterFeedbackForFile(feedbackSuggestions); track suggestion.id) {
                 <jhi-code-editor-tutor-assessment-inline-feedback-suggestion
                     [codeLine]="Feedback.getReferenceLine(suggestion)!"
                     [feedback]="suggestion"
