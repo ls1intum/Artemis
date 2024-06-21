@@ -10,7 +10,7 @@ type EntityResponseType = SearchResult<Lecture>;
 
 @Injectable({ providedIn: 'root' })
 export class LecturePagingService extends PagingService<Lecture> {
-    private static readonly resourceUrl = 'api/lectures';
+    private static readonly RESOURCE_URL = 'api/lectures';
 
     constructor(private http: HttpClient) {
         super();
@@ -18,6 +18,6 @@ export class LecturePagingService extends PagingService<Lecture> {
 
     override search(pageable: SearchTermPageableSearch): Observable<EntityResponseType> {
         const params = this.createHttpParams(pageable);
-        return this.http.get(`${LecturePagingService.resourceUrl}`, { params, observe: 'response' }).pipe(map((resp: HttpResponse<EntityResponseType>) => resp && resp.body!));
+        return this.http.get(`${LecturePagingService.RESOURCE_URL}`, { params, observe: 'response' }).pipe(map((resp: HttpResponse<EntityResponseType>) => resp && resp.body!));
     }
 }

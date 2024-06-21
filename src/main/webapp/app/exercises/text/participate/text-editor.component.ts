@@ -36,7 +36,7 @@ import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants
 })
 export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     readonly ButtonType = ButtonType;
-    readonly maxCharacterCount = MAX_SUBMISSION_TEXT_LENGTH;
+    readonly MAX_CHARACTER_COUNT = MAX_SUBMISSION_TEXT_LENGTH;
 
     @Input() participationId?: number;
     @Input() displayHeader: boolean = true;
