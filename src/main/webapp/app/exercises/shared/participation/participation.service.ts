@@ -240,7 +240,6 @@ export class ParticipationService {
         if (participations[0].participantName) {
             combinedParticipation.participantName = participations[0].participantName;
         }
-
         participations.forEach((participation) => {
             if (participation.results) {
                 combinedParticipation.results = combinedParticipation.results ? combinedParticipation.results.concat(participation.results) : participation.results;

@@ -95,7 +95,7 @@ public class Result extends DomainObject implements Comparable<Result> {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonView(QuizView.Before.class)
-    @JsonIgnoreProperties({ "results", "participation" })
+    @JsonIgnoreProperties({ "results", "participation", "selfLearningFeedbackRequests" })
     private Submission submission;
 
     @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)

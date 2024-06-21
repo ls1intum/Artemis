@@ -9,7 +9,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -17,7 +16,6 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 
@@ -47,11 +45,10 @@ public class SelfLearningFeedbackRequest extends DomainObject {
 
     @OneToOne
     @JsonIgnoreProperties({ "submission", "participation" })
-    @JsonIncludeProperties({ "participation.id" })
     private Result result;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnoreProperties({ "results" })
+    @JsonIgnoreProperties({ "participation" })
     private Submission submission;
 
     public ZonedDateTime getRequestDateTime() {
@@ -94,9 +91,13 @@ public class SelfLearningFeedbackRequest extends DomainObject {
         this.successful = successful;
     }
 
-    @Transient
     @JsonProperty("type")
     public String getType() {
         return this.getClass().getSimpleName();
+    }
+
+    @JsonProperty("participationId")
+    public long getParticipationId() {
+        return this.submission.getId();
     }
 }

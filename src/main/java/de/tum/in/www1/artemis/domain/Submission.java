@@ -102,7 +102,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
 
     @OneToMany(mappedBy = "submission")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonView(QuizView.Before.class)
+    @JsonIgnore
     private Set<SelfLearningFeedbackRequest> selfLearningFeedbackRequests = new HashSet<>();
 
     @JsonView(QuizView.Before.class)

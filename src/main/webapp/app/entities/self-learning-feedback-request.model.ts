@@ -1,6 +1,5 @@
 import type { BaseEntity } from 'app/shared/model/base-entity';
 import type dayjs from 'dayjs/esm';
-import type { Participation } from 'app/entities/participation/participation.model';
 import type { Submission } from 'app/entities/submission.model';
 import type { Result } from 'app/entities/result.model';
 
@@ -9,8 +8,8 @@ export class SelfLearningFeedbackRequest implements BaseEntity {
     public requestDateTime?: dayjs.Dayjs;
     public responseDateTime?: dayjs.Dayjs;
     public successful?: boolean;
+    public participationId?: number;
 
-    public participation?: Participation;
     public result?: Result;
     public submission?: Submission;
 
@@ -20,7 +19,7 @@ export class SelfLearningFeedbackRequest implements BaseEntity {
         return obj instanceof SelfLearningFeedbackRequest;
     }
 
-    public static isNotCompletedAndNotFailed(selfLearningFeedbackRequest: SelfLearningFeedbackRequest): boolean {
+    public static isPending(selfLearningFeedbackRequest: SelfLearningFeedbackRequest): boolean {
         return selfLearningFeedbackRequest.requestDateTime !== undefined && selfLearningFeedbackRequest.successful === undefined;
     }
 

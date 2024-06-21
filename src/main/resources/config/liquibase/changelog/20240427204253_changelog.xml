@@ -20,5 +20,8 @@
                                  referencedColumnNames="id" onDelete="SET NULL"/>
         <addForeignKeyConstraint baseTableName="self_learning_feedback_request" baseColumnNames="submission_id" constraintName="fk_self_learning_feedback_request_submission" referencedTableName="submission"
                                  referencedColumnNames="id" onDelete="SET NULL"/>
+        <createIndex indexName="idx_submission_id" tableName="self_learning_feedback_request">
+            <column name="submission_id"/>
+        </createIndex>
     </changeSet>
 </databaseChangeLog>

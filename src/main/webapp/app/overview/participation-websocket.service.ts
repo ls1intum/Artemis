@@ -105,9 +105,9 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     private notifySelfLearningFeedbackSubscribers = (selfLearningFeedback: SelfLearningFeedbackRequest) => {
         selfLearningFeedback.requestDateTime = convertDateFromServer(selfLearningFeedback.requestDateTime);
         selfLearningFeedback.responseDateTime = convertDateFromServer(selfLearningFeedback.responseDateTime);
-        const selfLearningFeedbackObservable = this.selfLearningFeedbackObservables.get(selfLearningFeedback.participation!.id!);
+        const selfLearningFeedbackObservable = this.selfLearningFeedbackObservables.get(selfLearningFeedback.participationId!);
         if (!selfLearningFeedbackObservable) {
-            this.selfLearningFeedbackObservables.set(selfLearningFeedback.participation!.id!, new BehaviorSubject(selfLearningFeedback));
+            this.selfLearningFeedbackObservables.set(selfLearningFeedback.participationId!, new BehaviorSubject(selfLearningFeedback));
         } else {
             selfLearningFeedbackObservable.next(selfLearningFeedback);
         }
@@ -135,13 +135,13 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param selfLearningFeedback
      */
     private addSelfLearningFeedbackToParticipation = (selfLearningFeedback: SelfLearningFeedbackRequest) => {
-        const cachedParticipation = this.cachedParticipations.get(selfLearningFeedback.participation!.id!);
+        const cachedParticipation = this.cachedParticipations.get(selfLearningFeedback.participationId!);
         if (cachedParticipation) {
             // update the results with the new received one by filtering the old result
             const updatedSelfLearnigFeedbacks = [...(cachedParticipation.selfLearningFeedbackRequests || [])].filter((s) => s.id !== selfLearningFeedback.id);
             updatedSelfLearnigFeedbacks.push(selfLearningFeedback);
             // create a clone
-            this.cachedParticipations.set(selfLearningFeedback.participation!.id!, {
+            this.cachedParticipations.set(selfLearningFeedback.participationId!, {
                 ...cachedParticipation,
                 selfLearningFeedbackRequests: updatedSelfLearnigFeedbacks,
             } as StudentParticipation);
@@ -152,7 +152,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
                 this.notifyParticipationSubscribers(cachedParticipation);
             }
 
-            return of(this.cachedParticipations.get(selfLearningFeedback.participation!.id!));
+            return of(this.cachedParticipations.get(selfLearningFeedback.participationId!));
         }
         return of();
     };

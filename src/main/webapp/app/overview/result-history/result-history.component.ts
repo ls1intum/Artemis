@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { Result } from 'app/entities/result.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { MissingResultInformation, evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
@@ -13,7 +13,7 @@ export const MAX_RESULT_HISTORY_LENGTH = 5;
     templateUrl: './result-history.component.html',
     styleUrls: ['./result-history.scss'],
 })
-export class ResultHistoryComponent implements OnChanges {
+export class ResultHistoryComponent implements OnInit, OnChanges {
     readonly getTextColorClass = getTextColorClass;
     readonly getResultIconClass = getResultIconClass;
     readonly evaluateTemplateStatus = evaluateTemplateStatus;
@@ -29,6 +29,10 @@ export class ResultHistoryComponent implements OnChanges {
     showPreviousDivider = false;
     displayedEntries: (Result | SelfLearningFeedbackRequest)[];
     movedLastRatedResult: boolean;
+
+    ngOnInit(): void {
+        console.log(this.displayedEntries);
+    }
 
     ngOnChanges(): void {
         this.showPreviousDivider = this.entries.length > MAX_RESULT_HISTORY_LENGTH;

@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.domain.participation;
 
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -353,16 +352,17 @@ public abstract class Participation extends DomainObject implements Participatio
      *
      * @return A set of self-learning-feedback requests of all submissions associated with the given participation
      */
-    @Transient
     @JsonProperty("selfLearningFeedbackRequests")
     public Set<SelfLearningFeedbackRequest> getSelfLearningFeedbackRequests() {
-        if (Hibernate.isInitialized(this.submissions)) {
+        if (this.submissions != null && Hibernate.isInitialized(this.submissions)) {
             Set<SelfLearningFeedbackRequest> feedbackRequests = new HashSet<>();
             for (Submission submission : this.getSubmissions()) {
-                feedbackRequests.addAll(submission.getSelfLearningFeedbackRequests());
+                if (Hibernate.isInitialized(submission.getSelfLearningFeedbackRequests()) && submission.getSelfLearningFeedbackRequests() != null) {
+                    feedbackRequests.addAll(submission.getSelfLearningFeedbackRequests());
+                }
             }
             return feedbackRequests;
         }
-        return Collections.emptySet();
+        return null;
     }
 }

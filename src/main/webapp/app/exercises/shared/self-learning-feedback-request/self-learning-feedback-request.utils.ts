@@ -8,7 +8,7 @@ import { SelfLearningFeedbackRequest } from 'app/entities/self-learning-feedback
  *
  */
 export const getSelfLearningIconClass = (selfLearningFeedbackRequest: SelfLearningFeedbackRequest | undefined): IconProp => {
-    if (selfLearningFeedbackRequest && SelfLearningFeedbackRequest.isNotCompletedAndNotFailed(selfLearningFeedbackRequest)) {
+    if (selfLearningFeedbackRequest && SelfLearningFeedbackRequest.isPending(selfLearningFeedbackRequest)) {
         return faQuestionCircle;
     }
     if (selfLearningFeedbackRequest && SelfLearningFeedbackRequest.isFailed(selfLearningFeedbackRequest)) {
@@ -23,7 +23,7 @@ export const getSelfLearningIconClass = (selfLearningFeedbackRequest: SelfLearni
  * @return {string} the css class
  */
 export const getSelfLearningFeedbackTextColorClass = (selfLearningFeedbackRequest: SelfLearningFeedbackRequest | undefined) => {
-    if (selfLearningFeedbackRequest && SelfLearningFeedbackRequest.isNotCompletedAndNotFailed(selfLearningFeedbackRequest)) {
+    if (selfLearningFeedbackRequest && SelfLearningFeedbackRequest.isPending(selfLearningFeedbackRequest)) {
         return 'text-secondary';
     }
     if (selfLearningFeedbackRequest && SelfLearningFeedbackRequest.isFailed(selfLearningFeedbackRequest)) {
