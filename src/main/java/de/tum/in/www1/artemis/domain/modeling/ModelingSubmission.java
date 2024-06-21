@@ -80,6 +80,7 @@ public class ModelingSubmission extends Submission {
      *
      * @return true if the submission is empty, false otherwise
      */
+    @Override
     public boolean isEmpty() {
         return isEmpty(new ObjectMapper());
     }

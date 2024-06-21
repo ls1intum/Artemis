@@ -73,6 +73,7 @@ public class ShortAnswerSolution extends TempIdObject implements QuizQuestionCom
         return question;
     }
 
+    @Override
     public void setQuestion(ShortAnswerQuestion shortAnswerQuestion) {
         this.question = shortAnswerQuestion;
     }
