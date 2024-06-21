@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
-import { faFilter } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition, faCheckDouble, faDiagramProject, faFileArrowUp, faFilter, faFont, faKeyboard } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Subscription, distinctUntilChanged } from 'rxjs';
 import { ProfileService } from '../layouts/profiles/profile.service';
@@ -12,7 +12,7 @@ import { cloneDeep } from 'lodash-es';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/participation/participation.utils';
 
-export type ExerciseTypeFilterOptions = { name: string; value: ExerciseType; checked: boolean }[];
+export type ExerciseTypeFilterOptions = { name: string; value: ExerciseType; checked: boolean; icon: IconDefinition }[];
 export type DifficultyFilterOptions = { name: string; value: DifficultyLevel; checked: boolean }[];
 export type RangeFilter = { generalMin: number; generalMax: number; selectedMin: number; selectedMax: number };
 
@@ -24,11 +24,11 @@ const DEFAULT_DIFFICULTIES_FILTER: DifficultyFilterOptions = [
 ];
 
 const DEFAULT_EXERCISE_TYPES_FILTER: ExerciseTypeFilterOptions = [
-    { name: 'artemisApp.courseStatistics.programming', value: ExerciseType.PROGRAMMING, checked: false },
-    { name: 'artemisApp.courseStatistics.quiz', value: ExerciseType.QUIZ, checked: false },
-    { name: 'artemisApp.courseStatistics.modeling', value: ExerciseType.MODELING, checked: false },
-    { name: 'artemisApp.courseStatistics.text', value: ExerciseType.TEXT, checked: false },
-    { name: 'artemisApp.courseStatistics.file-upload', value: ExerciseType.FILE_UPLOAD, checked: false },
+    { name: 'artemisApp.courseStatistics.programming', value: ExerciseType.PROGRAMMING, checked: false, icon: faKeyboard },
+    { name: 'artemisApp.courseStatistics.quiz', value: ExerciseType.QUIZ, checked: false, icon: faCheckDouble },
+    { name: 'artemisApp.courseStatistics.modeling', value: ExerciseType.MODELING, checked: false, icon: faDiagramProject },
+    { name: 'artemisApp.courseStatistics.text', value: ExerciseType.TEXT, checked: false, icon: faFont },
+    { name: 'artemisApp.courseStatistics.file-upload', value: ExerciseType.FILE_UPLOAD, checked: false, icon: faFileArrowUp },
 ];
 
 @Component({

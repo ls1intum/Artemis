@@ -39,8 +39,11 @@
             <label for="exercise-type-filter-selection" class="form-control-label" jhiTranslate="artemisApp.courseStatistics.exerciseType"></label>
             <div id="exercise-type-filter-selection">
                 @for (typeFilter of typeFilters; track typeFilter) {
-                    <input type="checkbox" [(ngModel)]="typeFilter.checked" [name]="typeFilter.value" />
-                    <label [jhiTranslate]="typeFilter.name"></label>
+                    <div class="form-check form-check-inline">
+                        <input type="checkbox" [(ngModel)]="typeFilter.checked" [name]="typeFilter.value" />
+                        <label [jhiTranslate]="typeFilter.name"></label>
+                        <fa-icon [icon]="typeFilter.icon" />
+                    </div>
                 }
             </div>
         </div>
