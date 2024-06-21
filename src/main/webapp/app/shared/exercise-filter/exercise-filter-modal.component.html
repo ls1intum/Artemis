@@ -60,17 +60,14 @@
         </div>
 
         <div class="form-group">
-            <label class="form-control-label" jhiTranslate="Achieved Score"></label>
-            <jhi-range-slider />
+            <label class="form-control-label" for="achieved-score-range-slider" jhiTranslate="Achieved Score"></label>
+            <jhi-range-slider id="achieved-score-range-slider" />
         </div>
 
-        <!--        <div class="form-group">-->
-        <!--            <label class="form-control-label" jhiTranslate="Achievable Points"></label>-->
-        <!--            <div class="double-slider">-->
-        <!--                <input type="range" min="0" max="100" value="25" class="slider" id="lower1" />-->
-        <!--                <input type="range" min="0" max="100" value="75" class="slider" id="upper1" />-->
-        <!--            </div>-->
-        <!--        </div>-->
+        <div class="form-group">
+            <label class="form-control-label" for="achieved-points-range-slider" jhiTranslate="Achievable Points"></label>
+            <jhi-range-slider id="achieved-points-range-slider" />
+        </div>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-primary" (click)="applyFilter()">OK</button>
