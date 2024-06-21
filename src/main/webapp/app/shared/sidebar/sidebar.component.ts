@@ -61,7 +61,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     sidebarDataBeforeFiltering: SidebarData;
     difficultyFilters?: DifficultyFilterOptions;
     possibleCategories?: ExerciseCategory[];
-    exerciseTypesFilter = DEFAULT_EXERCISE_TYPES_FILTER;
+    exerciseTypesFilter?: ExerciseTypeFilterOptions;
     achievablePoints?: RangeFilter;
     achievedScore?: RangeFilter;
 
@@ -140,9 +140,22 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
 
     private initializeFilterOptions() {
         // TODO do not display difficulties selection if not enough selection options
-        this.initializeDifficultyFilter();
         this.initializeCategoryFilter();
+        this.initializeExerciseTypeFilter();
+        this.initializeDifficultyFilter();
         this.initializeAchievablePointsAndAchievedScoreFilters();
+    }
+
+    private initializeExerciseTypeFilter() {
+        if (this.exerciseTypesFilter) {
+            return;
+        }
+
+        const existingExerciseTypes = this.sidebarData?.ungroupedData
+            ?.filter((sidebarElement: SidebarCardElement) => sidebarElement.type !== undefined)
+            .map((sidebarElement: SidebarCardElement) => sidebarElement.type);
+
+        this.exerciseTypesFilter = DEFAULT_EXERCISE_TYPES_FILTER?.filter((exerciseType) => existingExerciseTypes?.includes(exerciseType.value));
     }
 
     private initializeDifficultyFilter() {
