@@ -260,37 +260,51 @@ export class QuizExerciseService {
         const filePromises: any[] = [];
         const fileService = new FileService(this.http);
         // Will return all matches of ![file_name](path), will group file_name and path
-        const embeddedImageRegex = /!\[(.+?)\]\((.+?)\)/g;
         questions.forEach((question, questionIndex) => {
             if (question.type === QuizQuestionType.DRAG_AND_DROP) {
                 this.exportDragAndDropAssets(question, zip, filePromises, fileService, questionIndex);
             }
-            // Get assets from markdown in description
-            if (question.text) {
-                const embeddedImages = [...question.text.matchAll(embeddedImageRegex)];
-                embeddedImages.forEach((embeddedImage) => {
-                    this.addFilePromise('q' + questionIndex + '_' + embeddedImage[1], zip, embeddedImage[2], filePromises, fileService);
-                });
-            }
-            // Get assets from markdown in multiple choice options
             if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                // question.answerOptions -> then text -> both optional chaining
-                if ((<MultipleChoiceQuestion>question).answerOptions) {
-                    (<MultipleChoiceQuestion>question).answerOptions?.forEach((option) => {
-                        if (option.text) {
-                            const embeddedImagesOption = [...option.text.matchAll(embeddedImageRegex)];
-                            embeddedImagesOption.forEach((embeddedImage) => {
-                                this.addFilePromise('q' + questionIndex + '_' + embeddedImage[1], zip, embeddedImage[2], filePromises, fileService);
-                            });
-                        }
-                    });
-                }
+                this.exportMultipleChoiceOptionAssets(question, zip, filePromises, fileService, questionIndex);
+            }
+            if (question.text) {
+                this.exportImageFromMarkdown(question.text, questionIndex, zip, filePromises, fileService);
             }
         });
         if (filePromises.length === 0) {
             return;
         }
         downloadZipFromFilePromises(zip, filePromises, fileName ?? 'quiz');
+    }
+
+    exportDragAndDropAssets(question: QuizQuestion, zip: JSZip, filePromises: Promise<void | File>[], fileService: FileService, questionIndex: number) {
+        this.addFilePromise('q' + questionIndex + '_background.png', zip, <string>(<DragAndDropQuestion>question).backgroundFilePath, filePromises, fileService);
+        if ((<DragAndDropQuestion>question).dragItems) {
+            (<DragAndDropQuestion>question).dragItems!.forEach((dragItem, drag_index) => {
+                if (dragItem.pictureFilePath) {
+                    this.addFilePromise('q' + questionIndex + '_dragItem-' + drag_index + '.png', zip, <string>(<string>dragItem.pictureFilePath), filePromises, fileService);
+                }
+            });
+        }
+    }
+
+    exportMultipleChoiceOptionAssets(question: QuizQuestion, zip: JSZip, filePromises: Promise<void | File>[], fileService: FileService, questionIndex: number) {
+        if ((<MultipleChoiceQuestion>question).answerOptions) {
+            (<MultipleChoiceQuestion>question).answerOptions?.forEach((option) => {
+                if (option.text) {
+                    this.exportImageFromMarkdown(option.text, questionIndex, zip, filePromises, fileService);
+                }
+            });
+        }
+    }
+
+    exportImageFromMarkdown(description: string, questionIndex: number, zip: JSZip, filePromises: Promise<void | File>[], fileService: FileService) {
+        const embeddedImageRegex = /!\[(.+?)\]\((.+?)\)/g;
+        const embeddedImagesOption = [...description.matchAll(embeddedImageRegex)];
+
+        embeddedImagesOption.forEach((embeddedImage) => {
+            this.addFilePromise('q' + questionIndex + '_' + embeddedImage[1], zip, embeddedImage[2], filePromises, fileService);
+        });
     }
 
     addFilePromise(fileName: string, zip: JSZip, filePath: string, filePromises: Promise<void | File>[], fileService: FileService) {
@@ -305,18 +319,6 @@ export class QuizExerciseService {
                     throw error;
                 }),
         );
-    }
-
-    exportDragAndDropAssets(question: QuizQuestion, zip: JSZip, filePromises: Promise<void | File>[], fileService: FileService, questionIndex: number) {
-        this.addFilePromise('q' + questionIndex + '_background.png', zip, <string>(<DragAndDropQuestion>question).backgroundFilePath, filePromises, fileService);
-        if ((<DragAndDropQuestion>question).dragItems) {
-            const counter: number = 0;
-            (<DragAndDropQuestion>question).dragItems!.forEach((dragItem) => {
-                if (dragItem.pictureFilePath) {
-                    this.addFilePromise('q' + questionIndex + '_dragItem-' + counter + '.png', zip, <string>(<string>dragItem.pictureFilePath), filePromises, fileService);
-                }
-            });
-        }
     }
 
     /**
