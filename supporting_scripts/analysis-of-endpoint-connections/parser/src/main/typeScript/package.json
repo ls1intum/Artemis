@@ -1,0 +1,17 @@
+{
+  "type": "commonjs",
+  "name": "analysis-of-endpoint-connections",
+  "version": "1.0.0",
+  "description": "Parses Typescript files and generates a report of all the endpoint connections in the file.",
+  "main": "AnalysisOfEndpointConnectionsClient.ts",
+  "license": "ISC",
+  "scripts": {
+    "start": "node -r esm AnalysisOfEndpointConnectionsClient.ts"
+  },
+  "dependencies": {
+    "typescript": "^5.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12"
+  }
+}
