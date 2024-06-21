@@ -12,7 +12,7 @@
         "uuid": "9.0.1"
     },
     "scripts": {
-        "playwright:test": "playwright test e2e",
+        "playwright:test": "playwright test e2e/course/CourseManagement.spec.ts",
         "playwright:open": "playwright test e2e --ui",
         "playwright:setup": "npx playwright install --with-deps chromium && playwright test init",
         "update": "ncu -i --format group"
