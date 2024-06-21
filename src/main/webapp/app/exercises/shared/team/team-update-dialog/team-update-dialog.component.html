@@ -64,7 +64,7 @@
                     <jhi-help-icon text="artemisApp.team.owner.tooltip" class="me-1" />
                 </div>
                 @if (searchingOwner) {
-                    <fa-icon class="search-searching" [icon]="faSpinner" [spin]="true" />
+                    <fa-icon class="search-searching" [icon]="faSpinner" animation="spin" />
                 }
                 @if (searchingOwnerQueryTooShort) {
                     <span class="label-inline-message text-danger" jhiTranslate="artemisApp.team.ownerSearch.queryTooShort"></span>
@@ -101,7 +101,7 @@
             <div class="d-flex align-items-end">
                 <label class="label-narrow me-1" jhiTranslate="artemisApp.team.students"></label>
                 @if (searchingStudents) {
-                    <fa-icon class="search-searching" [icon]="faSpinner" [spin]="true" />
+                    <fa-icon class="search-searching" [icon]="faSpinner" animation="spin" />
                 }
                 @if (searchingStudentsQueryTooShort) {
                     <span class="label-inline-message text-danger" jhiTranslate="artemisApp.team.studentSearch.queryTooShort"></span>
