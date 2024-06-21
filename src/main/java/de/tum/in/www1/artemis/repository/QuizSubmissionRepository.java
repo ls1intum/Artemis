@@ -8,19 +8,19 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data JPA repository for the QuizSubmission entity.
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface QuizSubmissionRepository extends JpaRepository<QuizSubmission, Long> {
+public interface QuizSubmissionRepository extends ArtemisJpaRepository<QuizSubmission, Long> {
 
     @Query("""
             SELECT DISTINCT submission
