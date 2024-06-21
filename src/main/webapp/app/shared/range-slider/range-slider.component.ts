@@ -1,16 +1,12 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge.component';
 
 @Component({
     selector: 'jhi-range-slider',
     templateUrl: './range-slider.component.html',
     styleUrls: ['./range-slider.component.scss'],
     standalone: true,
-    imports: [FormsModule, ReactiveFormsModule, FontAwesomeModule, ArtemisSharedCommonModule, ArtemisSharedComponentModule, CustomExerciseCategoryBadgeComponent],
+    imports: [FormsModule, ReactiveFormsModule],
 })
 export class RangeSliderComponent implements OnInit, OnDestroy {
     generalMaxValue = 100;
