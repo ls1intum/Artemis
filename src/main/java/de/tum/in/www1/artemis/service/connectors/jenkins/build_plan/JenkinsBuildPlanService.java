@@ -177,11 +177,10 @@ public class JenkinsBuildPlanService {
             throw new UnsupportedOperationException("Xcode templates are not available for Jenkins.");
         }
         return switch (programmingLanguage) {
-            case JAVA, KOTLIN, PYTHON, C, HASKELL, SWIFT, EMPTY -> jenkinsBuildPlanCreator;
+            case JAVA, KOTLIN, PYTHON, C, HASKELL, SWIFT, EMPTY, RUST -> jenkinsBuildPlanCreator;
             case VHDL -> throw new UnsupportedOperationException("VHDL templates are not available for Jenkins.");
             case ASSEMBLER -> throw new UnsupportedOperationException("Assembler templates are not available for Jenkins.");
             case OCAML -> throw new UnsupportedOperationException("OCaml templates are not available for Jenkins.");
-            case RUST -> throw new UnsupportedOperationException("Rust templates are not available for Jenkins.");
         };
     }
 
