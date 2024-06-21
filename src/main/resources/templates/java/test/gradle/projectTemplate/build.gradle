@@ -2,10 +2,10 @@ plugins {
     // %static-code-analysis-start%
     id 'checkstyle'
     id 'pmd'
-    id 'com.github.spotbugs' version '5.1.1'
+    id 'com.github.spotbugs' version '6.0.9'
     // %static-code-analysis-stop%
     // %record-testwise-coverage-start%
-    id 'com.teamscale' version '30.1.1'
+    id 'com.teamscale' version '33.1.2'
     // %record-testwise-coverage-stop%
 }
 
@@ -22,7 +22,7 @@ repositories {
 
 dependencies {
     testImplementation 'de.tum.in.ase:artemis-java-test-sandbox:1.13.0'
-    implementation 'org.apache.commons:commons-lang3:3.13.0'
+    implementation 'org.apache.commons:commons-lang3:3.14.0'
 
     // testImplementation(':${exerciseNamePomXml}')
     // testImplementation(':${exerciseNamePomXml}-Solution')
@@ -170,7 +170,7 @@ pmd {
     ruleSets = ["$scaConfigDirectory/pmd-configuration.xml"]
     rulesMinimumPriority = 5
     ignoreFailures = true
-    toolVersion = '6.55.0'
+    toolVersion = '7.2.0'
     // exclude the test files
     pmdTest.enabled = false
     pmdMain.reports {

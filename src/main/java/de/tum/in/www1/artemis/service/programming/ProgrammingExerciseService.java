@@ -3,6 +3,10 @@ package de.tum.in.www1.artemis.service.programming;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
+import static de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository.ProgrammingExerciseFetchOptions.AuxiliaryRepositories;
+import static de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository.ProgrammingExerciseFetchOptions.GradingCriteria;
+import static de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository.SolutionParticipationFetchOptions;
+import static de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository.TemplateParticipationFetchOptions;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -950,5 +954,39 @@ public class ProgrammingExerciseService {
 
     private void resetAllStudentBuildPlanIdsForExercise(ProgrammingExercise programmingExercise) {
         programmingExerciseStudentParticipationRepository.unsetBuildPlanIdForExercise(programmingExercise.getId());
+    }
+
+    /**
+     * Load a programming exercise with eager
+     * - auxiliary repositories
+     * - template participation with submissions (and results if withSubmissionResults is true)
+     * - solution participation with submissions (and results if withSubmissionResults is true)
+     * - grading criteria (only if withGradingCriteria is true)
+     *
+     * @param exerciseId            the ID of the programming exercise to load
+     * @param withSubmissionResults a flag indicating whether to include submission results
+     * @param withGradingCriteria   a flag indicating whether to include grading criteria
+     * @return the loaded programming exercise entity
+     */
+    public ProgrammingExercise loadProgrammingExercise(long exerciseId, boolean withSubmissionResults, boolean withGradingCriteria) {
+        // 1. Load programming exercise, optionally with grading criteria
+        final Set<ProgrammingExerciseRepository.ProgrammingExerciseFetchOptions> fetchOptions = withGradingCriteria ? Set.of(GradingCriteria, AuxiliaryRepositories)
+                : Set.of(AuxiliaryRepositories);
+        var programmingExercise = programmingExerciseRepository.findByIdWithDynamicFetchElseThrow(exerciseId, fetchOptions);
+
+        // 2. Load template and solution participation, either with only submissions or with submissions and results
+        final var templateFetchOptions = withSubmissionResults ? Set.of(TemplateParticipationFetchOptions.SubmissionsAndResults)
+                : Set.of(TemplateParticipationFetchOptions.Submissions);
+        final var templateParticipation = templateProgrammingExerciseParticipationRepository.findByExerciseIdWithDynamicFetchElseThrow(exerciseId, templateFetchOptions);
+
+        final var solutionFetchOptions = withSubmissionResults ? Set.of(SolutionParticipationFetchOptions.SubmissionsAndResults)
+                : Set.of(SolutionParticipationFetchOptions.Submissions);
+        final var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByExerciseIdWithDynamicFetchElseThrow(exerciseId, solutionFetchOptions);
+
+        programmingExercise.setSolutionParticipation(solutionParticipation);
+        programmingExercise.setTemplateParticipation(templateParticipation);
+
+        programmingExerciseTaskService.replaceTestIdsWithNames(programmingExercise);
+        return programmingExercise;
     }
 }

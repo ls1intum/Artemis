@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.messaging;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_SCHEDULING;
+
 import java.util.Optional;
 
 import jakarta.annotation.PostConstruct;
@@ -21,6 +23,7 @@ import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.AthenaScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.ModelingExerciseScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.NotificationScheduleService;
@@ -33,7 +36,7 @@ import de.tum.in.www1.artemis.service.scheduled.UserScheduleService;
  * It receives messages from Hazelcast whenever another node sends a message to a specific topic and processes it on this node.
  */
 @Service
-@Profile("scheduling")
+@Profile(PROFILE_SCHEDULING)
 public class InstanceMessageReceiveService {
 
     private static final Logger log = LoggerFactory.getLogger(InstanceMessageReceiveService.class);
@@ -60,10 +63,13 @@ public class InstanceMessageReceiveService {
 
     private final HazelcastInstance hazelcastInstance;
 
+    private final QuizScheduleService quizScheduleService;
+
     public InstanceMessageReceiveService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
             ModelingExerciseRepository modelingExerciseRepository, ModelingExerciseScheduleService modelingExerciseScheduleService, ExerciseRepository exerciseRepository,
             Optional<AthenaScheduleService> athenaScheduleService, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, UserRepository userRepository,
-            UserScheduleService userScheduleService, NotificationScheduleService notificationScheduleService, ParticipantScoreScheduleService participantScoreScheduleService) {
+            UserScheduleService userScheduleService, NotificationScheduleService notificationScheduleService, ParticipantScoreScheduleService participantScoreScheduleService,
+            QuizScheduleService quizScheduleService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.athenaScheduleService = athenaScheduleService;
@@ -75,6 +81,7 @@ public class InstanceMessageReceiveService {
         this.notificationScheduleService = notificationScheduleService;
         this.participantScoreScheduleService = participantScoreScheduleService;
         this.hazelcastInstance = hazelcastInstance;
+        this.quizScheduleService = quizScheduleService;
     }
 
     /**
@@ -178,6 +185,14 @@ public class InstanceMessageReceiveService {
         hazelcastInstance.<Long[]>getTopic(MessageTopic.PARTICIPANT_SCORE_SCHEDULE.toString()).addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
             processScheduleParticipantScore(message.getMessageObject()[0], message.getMessageObject()[1], message.getMessageObject()[2]);
+        });
+        hazelcastInstance.<Long>getTopic(MessageTopic.QUIZ_EXERCISE_START_SCHEDULE.toString()).addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processScheduleQuizStart(message.getMessageObject());
+        });
+        hazelcastInstance.<Long>getTopic(MessageTopic.QUIZ_EXERCISE_START_CANCEL.toString()).addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processCancelQuizStart(message.getMessageObject());
         });
     }
 
@@ -326,4 +341,13 @@ public class InstanceMessageReceiveService {
         participantScoreScheduleService.scheduleTask(exerciseId, participantId, resultIdToBeDeleted);
     }
 
+    public void processScheduleQuizStart(Long exerciseId) {
+        log.info("Received schedule quiz start for quiz exercise {}", exerciseId);
+        quizScheduleService.scheduleQuizStart(exerciseId);
+    }
+
+    public void processCancelQuizStart(Long exerciseId) {
+        log.info("Received cancel quiz start for quiz exercise {}", exerciseId);
+        quizScheduleService.cancelScheduledQuizStart(exerciseId);
+    }
 }

@@ -44,7 +44,23 @@
                 "all": "Übungsgruppen",
                 "registered": "Meine Übungsgruppen",
                 "further": "Weitere Übungsgruppen",
-                "noUpcomingSession": "Kein Termin"
+                "noUpcomingSession": "Kein Termin",
+                "header": "Konversationen",
+                "show": "Konversationen zeigen",
+                "hide": "Konversationen ausblenden",
+                "notFound": "Keine Konversation gefunden",
+                "favoriteChannels": "Favoriten",
+                "hiddenChannels": "Ausgeblendet",
+                "channels": "Kanäle",
+                "generalChannels": "Allgemein",
+                "exerciseChannels": "Aufgaben",
+                "lectureChannels": "Vorlesungen",
+                "examChannels": "Klausuren",
+                "createChannel": "Kanal erstellen",
+                "browseChannels": "Kanäle durchsuchen",
+                "groupChats": "Gruppen-Chats",
+                "directMessages": "Direktnachrichten",
+                "filterConversationPlaceholder": "Konversationen filtern"
             },
             "menu": {
                 "exercises": "Aufgaben",
@@ -58,6 +74,7 @@
                 "lectures": "Vorlesungen",
                 "competencies": "Kompetenzen",
                 "learningPath": "Lernpfad",
+                "dashboard": "Übersichtsseite",
                 "tutorialGroups": "Tutorien",
                 "more": "Mehr",
                 "exams": "Klausuren",
@@ -232,7 +249,7 @@
                 "instructorActions": {
                     "title": "Aktionen für Lehrende:",
                     "titleTutor": "Aktionen für Tutor:innen",
-                    "scores": "Bewertungen",
+                    "scores": "Ergebnisse",
                     "statistics": "Statistiken"
                 },
                 "notParticipated": "Nicht teilgenommen",

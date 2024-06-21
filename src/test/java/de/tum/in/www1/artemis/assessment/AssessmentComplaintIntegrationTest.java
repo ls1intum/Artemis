@@ -18,7 +18,6 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.AssessmentUpdate;
 import de.tum.in.www1.artemis.domain.Complaint;
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
 import de.tum.in.www1.artemis.domain.Course;
@@ -57,6 +56,7 @@ import de.tum.in.www1.artemis.service.dto.ComplaintRequestDTO;
 import de.tum.in.www1.artemis.service.dto.ComplaintResponseUpdateDTO;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.TestResourceUtils;
+import de.tum.in.www1.artemis.web.rest.dto.AssessmentUpdateDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionWithComplaintDTO;
 
 class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -118,8 +118,6 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
 
     private ComplaintRequestDTO complaintRequest;
 
-    private Complaint moreFeedbackRequest;
-
     private Course course;
 
     @BeforeEach
@@ -132,7 +130,6 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         saveModelingSubmissionAndAssessment();
         complaint = new Complaint().result(modelingAssessment).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
         complaintRequest = new ComplaintRequestDTO(modelingAssessment.getId(), "This is not fair", ComplaintType.COMPLAINT, Optional.empty());
-        moreFeedbackRequest = new Complaint().result(modelingAssessment).complaintText("Please explain").complaintType(ComplaintType.MORE_FEEDBACK);
     }
 
     @Test
@@ -280,7 +277,8 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         Result storedResult = resultRepo.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(modelingAssessment.getId());
         Result updatedResult = storedResult.getSubmission().getLatestResult();
         participationUtilService.checkFeedbackCorrectlyStored(modelingAssessment.getFeedbacks(), updatedResult.getFeedbacks(), FeedbackType.MANUAL);
-        assertThat(storedResult).as("only feedbacks are changed in the result").isEqualToIgnoringGivenFields(modelingAssessment, "feedbacks");
+        final String[] ignoringFields = { "feedbacks", "submission", "participation", "assessor" };
+        assertThat(storedResult).as("only feedbacks are changed in the result").usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(modelingAssessment);
     }
 
     @Test
@@ -294,7 +292,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
 
         List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         feedbacks.forEach((feedback -> feedback.setType(FeedbackType.MANUAL)));
-        AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(feedbacks).complaintResponse(complaintResponse);
+        final var assessmentUpdate = new AssessmentUpdateDTO(feedbacks, complaintResponse, null);
         Result receivedResult = request.putWithResponseBody("/api/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
                 Result.class, HttpStatus.OK);
 
@@ -324,7 +322,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
 
         List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         feedbacks.forEach((feedback -> feedback.setType(FeedbackType.MANUAL)));
-        AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(feedbacks).complaintResponse(complaintResponse);
+        final var assessmentUpdate = new AssessmentUpdateDTO(feedbacks, complaintResponse, null);
         request.putWithResponseBody("/api/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class,
                 HttpStatus.BAD_REQUEST);
     }
@@ -342,7 +340,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
 
         List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         feedbacks.forEach((feedback -> feedback.setType(FeedbackType.MANUAL)));
-        AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(feedbacks).complaintResponse(complaintResponse);
+        final var assessmentUpdate = new AssessmentUpdateDTO(feedbacks, complaintResponse, null);
         request.putWithResponseBody("/api/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class, HttpStatus.OK);
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).isPresent();
     }
@@ -640,7 +638,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         params.add("courseId", course.getId().toString());
         List<Complaint> complaints = request.getList(coursesUrl, HttpStatus.OK, Complaint.class, params);
         assertThat(complaints).hasSize(1);
-        Complaint complaintFromServer = complaints.get(0);
+        Complaint complaintFromServer = complaints.getFirst();
         assertThat(complaintFromServer.getId()).isEqualTo(programmingComplaint.getId());
         assertThat(complaintFromServer.getComplaintText()).isEqualTo(programmingComplaint.getComplaintText());
 
@@ -666,7 +664,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         params.add("courseId", course.getId().toString());
         List<Complaint> complaints = request.getList(coursesUrl, HttpStatus.OK, Complaint.class, params);
         assertThat(complaints).hasSize(1);
-        Complaint complaintFromServer = complaints.get(0);
+        Complaint complaintFromServer = complaints.getFirst();
         assertThat(complaintFromServer.getId()).isEqualTo(fileUploadComplaint.getId());
         assertThat(complaintFromServer.getComplaintText()).isEqualTo(fileUploadComplaint.getComplaintText());
     }
@@ -723,16 +721,18 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
             assertThat(exercise.getStudentParticipations()).as("Exercise only contains title and ID").isNullOrEmpty();
             assertThat(exercise.getTutorParticipations()).as("Exercise only contains title and ID").isNullOrEmpty();
             // TODO check exercise type specific sensitive attributes
-            if (exercise instanceof ModelingExercise modelingExercise) {
-                assertThat(modelingExercise.getExampleSolutionModel()).as("Exercise only contains title and ID").isNull();
-                assertThat(modelingExercise.getExampleSolutionExplanation()).as("Exercise only contains title and ID").isNull();
-            }
-            else if (exercise instanceof TextExercise textExercise) {
-                assertThat(textExercise.getExampleSolution()).as("Exercise only contains title and ID").isNull();
-                assertThat(textExercise.getExampleSubmissions()).as("Exercise only contains title and ID").isNull();
-            }
-            else if (exercise instanceof ProgrammingExercise programmingExercise) {
-                assertThat(programmingExercise.getProgrammingLanguage()).as("Exercise only contains title and ID").isNull();
+            switch (exercise) {
+                case ModelingExercise aModelingExercise -> {
+                    assertThat(aModelingExercise.getExampleSolutionModel()).as("Exercise only contains title and ID").isNull();
+                    assertThat(aModelingExercise.getExampleSolutionExplanation()).as("Exercise only contains title and ID").isNull();
+                }
+                case TextExercise textExercise -> {
+                    assertThat(textExercise.getExampleSolution()).as("Exercise only contains title and ID").isNull();
+                    assertThat(textExercise.getExampleSubmissions()).as("Exercise only contains title and ID").isNull();
+                }
+                case ProgrammingExercise programmingExercise -> assertThat(programmingExercise.getProgrammingLanguage()).as("Exercise only contains title and ID").isNull();
+                default -> {
+                }
             }
         }
     }
@@ -895,8 +895,8 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         request.get("/api/complaints", HttpStatus.FORBIDDEN, List.class, params);
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         var fetchedComplaints = request.getList("/api/complaints", HttpStatus.OK, Complaint.class, params);
-        assertThat(fetchedComplaints.get(0).getId()).isEqualTo(storedComplaint.orElseThrow().getId().intValue());
-        assertThat(fetchedComplaints.get(0).getComplaintText()).isEqualTo(storedComplaint.get().getComplaintText());
+        assertThat(fetchedComplaints.getFirst().getId()).isEqualTo(storedComplaint.orElseThrow().getId().intValue());
+        assertThat(fetchedComplaints.getFirst().getComplaintText()).isEqualTo(storedComplaint.get().getComplaintText());
     }
 
     @Test

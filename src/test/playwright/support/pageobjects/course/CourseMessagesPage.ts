@@ -18,40 +18,15 @@ export class CourseMessagesPage {
      * Clicks the button to initiate channel creation.
      */
     async createChannelButton() {
-        await this.page.locator('#channelButton').click();
-        await this.page.locator('#createChannel').click();
+        await this.page.locator('#plusButton-generalChannels').click();
+        await this.page.locator('.modal-content #createChannel').click();
     }
 
     /**
      * Navigates to the channel overview section.
      */
-    async browseChannelsButton() {
-        await this.page.locator('#channelButton').click();
-        await this.page.locator('#channelOverview').click();
-    }
-
-    /**
-     * Navigates to the exercise channel overview section.
-     */
-    async browseExerciseChannelsButton() {
-        await this.page.locator('#exerciseChannelButton').click();
-        await this.page.locator('#exerciseChannelOverview').click();
-    }
-
-    /**
-     * Navigates to the lecture channel overview section.
-     */
-    async browseLectureChannelsButton() {
-        await this.page.locator('#lectureChannelButton').click();
-        await this.page.locator('#lectureChannelOverview').click();
-    }
-
-    /**
-     * Navigates to the exam channel overview section.
-     */
-    async browseExamChannelsButton() {
-        await this.page.locator('#examChannelButton').click();
-        await this.page.locator('#examChannelOverview').click();
+    browseChannelsButton(channelGroup: string) {
+        return this.page.locator(`#plusButton-${channelGroup}`);
     }
 
     /**
@@ -313,7 +288,7 @@ export class CourseMessagesPage {
      * Clicks the button to initiate group chat creation.
      */
     async createGroupChatButton() {
-        await this.page.locator('#createGroupChat').click();
+        await this.page.locator('#plusButton-groupChats').click();
     }
 
     /**
@@ -390,12 +365,16 @@ export class CourseMessagesPage {
      * @param exist - A boolean indicating whether the group chat should exist or not.
      */
     async checkGroupChatExists(name: string, exist: boolean) {
-        const groupChat = this.page.locator('.conversation-list').getByText(name);
+        const groupChat = this.page.getByTitle(name);
         if (exist) {
             await expect(groupChat).toBeVisible();
         } else {
             await expect(groupChat).toBeHidden();
         }
+    }
+
+    toggleSidebarAccordion(sidebarTitle: string) {
+        return this.page.locator(`#test-accordion-item-header-${sidebarTitle}`);
     }
 
     /**

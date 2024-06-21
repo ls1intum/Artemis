@@ -7,7 +7,7 @@
     [overwriteDisabled]="disabled || isLoading"
 >
     @if (isLoading) {
-        <fa-icon class="jhi-btn__loading" [icon]="faCircleNotch" [spin]="true" size="sm" />
+        <fa-icon class="jhi-btn__loading" [icon]="faCircleNotch" animation="spin" size="sm" />
     } @else {
         <jhi-iris-logo [size]="SMALL" />
     }
