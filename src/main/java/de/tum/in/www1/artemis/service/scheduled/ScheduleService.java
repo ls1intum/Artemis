@@ -3,10 +3,10 @@ package de.tum.in.www1.artemis.service.scheduled;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.stream.Stream;
 
@@ -20,6 +20,8 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.domain.enumeration.ParticipationLifecycle;
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.service.ExerciseLifecycleService;
 import de.tum.in.www1.artemis.service.ParticipationLifecycleService;
 import de.tum.in.www1.artemis.service.util.Tuple;
@@ -34,10 +36,10 @@ public class ScheduleService {
 
     private final ParticipationLifecycleService participationLifecycleService;
 
-    private final Map<Tuple<Long, ExerciseLifecycle>, Set<ScheduledFuture<?>>> scheduledExerciseTasks = new HashMap<>();
+    private final ConcurrentMap<Tuple<Long, ExerciseLifecycle>, Set<ScheduledFuture<?>>> scheduledExerciseTasks = new ConcurrentHashMap<>();
 
     // triple of exercise id, participation id, and lifecycle
-    private final Map<Triple<Long, Long, ParticipationLifecycle>, Set<ScheduledFuture<?>>> scheduledParticipationTasks = new HashMap<>();
+    private final ConcurrentMap<Triple<Long, Long, ParticipationLifecycle>, Set<ScheduledFuture<?>>> scheduledParticipationTasks = new ConcurrentHashMap<>();
 
     public ScheduleService(ExerciseLifecycleService exerciseLifecycleService, ParticipationLifecycleService participationLifecycleService) {
         this.exerciseLifecycleService = exerciseLifecycleService;
@@ -76,6 +78,22 @@ public class ScheduleService {
         // no exercise should be scheduled more than once.
         cancelScheduledTaskForLifecycle(exercise.getId(), lifecycle);
         ScheduledFuture<?> scheduledTask = exerciseLifecycleService.scheduleTask(exercise, lifecycle, task);
+        addScheduledTask(exercise, lifecycle, Set.of(scheduledTask));
+    }
+
+    /**
+     * Schedule a task for the given QuizExercise for the provided ExerciseLifecycle.
+     *
+     * @param exercise  QuizExercise
+     * @param batch     QuizBatch
+     * @param lifecycle ExerciseLifecycle
+     * @param task      Runnable task to be executed on the lifecycle hook
+     */
+    public void scheduleTask(QuizExercise exercise, QuizBatch batch, ExerciseLifecycle lifecycle, Runnable task) {
+        // check if already scheduled for exercise. if so, cancel.
+        // no exercise should be scheduled more than once.
+        cancelScheduledTaskForLifecycle(exercise.getId(), lifecycle);
+        ScheduledFuture<?> scheduledTask = exerciseLifecycleService.scheduleTask(exercise, batch, lifecycle, task);
         addScheduledTask(exercise, lifecycle, Set.of(scheduledTask));
     }
 
@@ -169,7 +187,7 @@ public class ScheduleService {
     }
 
     /**
-     * cancels all futures tasks, only us this for testing purposes
+     * Cancels all futures tasks, only use this for testing purposes
      */
     public void clearAllTasks() {
         scheduledParticipationTasks.values().forEach(futures -> futures.forEach(future -> future.cancel(true)));

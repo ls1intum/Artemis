@@ -296,7 +296,7 @@ public class TextAssessmentResource extends AssessmentResource {
         TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         checkAuthorization(textExercise, user);
         Result result = textAssessmentService.updateAssessmentAfterComplaint(textSubmission.getLatestResult(), textExercise, assessmentUpdate);
-        saveTextBlocks(assessmentUpdate.getTextBlocks(), textSubmission, result.getFeedbacks());
+        saveTextBlocks(assessmentUpdate.textBlocks(), textSubmission, result.getFeedbacks());
 
         if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation && !authCheckService.isAtLeastInstructorForExercise(textExercise)) {
             ((StudentParticipation) result.getParticipation()).setParticipant(null);
@@ -492,25 +492,27 @@ public class TextAssessmentResource extends AssessmentResource {
      * @param feedbacks      the feedbacks to associate with the blocks
      */
     private void saveTextBlocks(final Set<TextBlock> textBlocks, final TextSubmission textSubmission, final List<Feedback> feedbacks) {
-        if (textBlocks != null) {
-            List<Feedback> nonGeneralFeedbacks = feedbacks.stream().filter(feedback -> feedback.getReference() != null).toList();
-            Map<String, Feedback> feedbackMap = nonGeneralFeedbacks.stream().collect(Collectors.toMap(Feedback::getReference, Function.identity()));
-            final Set<String> existingTextBlockIds = textSubmission.getBlocks().stream().map(TextBlock::getId).collect(toSet());
-            final var updatedTextBlocks = textBlocks.stream().filter(tb -> !existingTextBlockIds.contains(tb.getId())).peek(tb -> {
-                tb.setSubmission(textSubmission);
-                tb.setFeedback(feedbackMap.get(tb.getId()));
-            }).collect(toSet());
-            // Update the feedback_id for existing text blocks
-            if (!existingTextBlockIds.isEmpty()) {
-                final var blocksToUpdate = textSubmission.getBlocks();
-                blocksToUpdate.forEach(tb -> tb.setFeedback(feedbackMap.get(tb.getId())));
-                updatedTextBlocks.addAll(blocksToUpdate);
-            }
-            if (!updatedTextBlocks.isEmpty()) {
-                // Reload text blocks to avoid trying to delete already removed referenced feedback.
-                textBlockService.findAllBySubmissionId(textSubmission.getId());
-                textBlockService.saveAll(updatedTextBlocks);
-            }
+        if (textBlocks == null) {
+            return;
+        }
+
+        List<Feedback> nonGeneralFeedbacks = feedbacks.stream().filter(feedback -> feedback.getReference() != null).toList();
+        Map<String, Feedback> feedbackMap = nonGeneralFeedbacks.stream().collect(Collectors.toMap(Feedback::getReference, Function.identity()));
+        final Set<String> existingTextBlockIds = textSubmission.getBlocks().stream().map(TextBlock::getId).collect(toSet());
+        final var updatedTextBlocks = textBlocks.stream().filter(tb -> !existingTextBlockIds.contains(tb.getId())).peek(tb -> {
+            tb.setSubmission(textSubmission);
+            tb.setFeedback(feedbackMap.get(tb.getId()));
+        }).collect(toSet());
+        // Update the feedback_id for existing text blocks
+        if (!existingTextBlockIds.isEmpty()) {
+            final var blocksToUpdate = textSubmission.getBlocks();
+            blocksToUpdate.forEach(tb -> tb.setFeedback(feedbackMap.get(tb.getId())));
+            updatedTextBlocks.addAll(blocksToUpdate);
+        }
+        if (!updatedTextBlocks.isEmpty()) {
+            // Reload text blocks to avoid trying to delete already removed referenced feedback.
+            textBlockService.findAllBySubmissionId(textSubmission.getId());
+            textBlockService.saveAll(updatedTextBlocks);
         }
     }
 

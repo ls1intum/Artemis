@@ -31,6 +31,8 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 describe('CourseCompetenciesDetails', () => {
     let fixture: ComponentFixture<CourseCompetenciesDetailsComponent>;
@@ -66,6 +68,8 @@ describe('CourseCompetenciesDetails', () => {
             providers: [
                 MockProvider(LectureUnitService),
                 MockProvider(AlertService),
+                MockProvider(FeatureToggleService),
+                MockProvider(CourseStorageService),
                 {
                     provide: ActivatedRoute,
                     useValue: route,
@@ -79,6 +83,8 @@ describe('CourseCompetenciesDetails', () => {
                 fixture = TestBed.createComponent(CourseCompetenciesDetailsComponent);
                 component = fixture.componentInstance;
                 competencyService = TestBed.inject(CompetencyService);
+                const featureToggleService = TestBed.inject(FeatureToggleService);
+                jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
             });
     });
 
@@ -115,6 +121,7 @@ describe('CourseCompetenciesDetails', () => {
             id: 1,
             exercises: [{ id: 5 } as ModelingExercise],
         } as Competency;
+
         const findByIdSpy = jest.spyOn(competencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
 
         fixture.detectChanges();

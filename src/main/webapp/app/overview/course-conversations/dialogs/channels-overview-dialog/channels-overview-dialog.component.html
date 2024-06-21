@@ -13,7 +13,7 @@
                     <div class="form-group mt-4">
                         <div class="table-wrapper-scroll-y scrollbar">
                             <ul class="list-group">
-                                @for (channel of channels; track trackIdentity($index, channel)) {
+                                @for (channel of channels; track channels.indexOf(channel)) {
                                     <li [id]="'channel-' + channel.id" class="list-group-item">
                                         <jhi-channel-item [channel]="channel" (channelAction)="onChannelAction($event)" />
                                     </li>
@@ -31,7 +31,7 @@
                         <div [(ngbCollapse)]="otherChannelsAreCollapsed">
                             <div class="table-wrapper-scroll-y scrollbar mt-2">
                                 <ul class="list-group">
-                                    @for (channel of otherChannels; track trackIdentity($index, channel)) {
+                                    @for (channel of otherChannels; track otherChannels.indexOf(channel)) {
                                         <li [id]="'channel-' + channel.id" class="list-group-item">
                                             <jhi-channel-item [channel]="channel" (channelAction)="onChannelAction($event)" />
                                         </li>

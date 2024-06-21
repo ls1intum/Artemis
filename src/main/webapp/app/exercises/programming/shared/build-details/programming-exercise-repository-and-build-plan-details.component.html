@@ -1,0 +1,115 @@
+<div id="preview" class="row ms-0 mt-1 mb-1 pt-1 pb-1">
+    <div class="col-auto rounded pt-1 pb-1 preview-box">
+        <div>
+            <div>
+                <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.preview.repositories"></span>
+            </div>
+            <hr class="pt-0 pb-0 mt-1 mb-1" />
+            <ul>
+                <ng-container
+                    *ngTemplateOutlet="
+                        repositoryBadge;
+                        context: {
+                            helpIconText: 'artemisApp.programmingExercise.preview.templateRepoTooltip',
+                            trailingRepoSlug: '-exercise',
+                        }
+                    "
+                />
+                <ng-container
+                    *ngTemplateOutlet="
+                        repositoryBadge;
+                        context: {
+                            helpIconText: 'artemisApp.programmingExercise.preview.solutionRepoTooltip',
+                            trailingRepoSlug: '-solution',
+                        }
+                    "
+                />
+                <ng-container
+                    *ngTemplateOutlet="
+                        repositoryBadge;
+                        context: {
+                            helpIconText: 'artemisApp.programmingExercise.preview.testRepoTooltip',
+                            trailingRepoSlug: '-tests',
+                        }
+                    "
+                />
+
+                @if (programmingExercise?.auxiliaryRepositories?.length) {
+                    @for (auxiliaryRepository of programmingExercise!.auxiliaryRepositories; track auxiliaryRepository) {
+                        <ng-container
+                            *ngTemplateOutlet="
+                                repositoryBadge;
+                                context: {
+                                    trailingRepoSlug: '-' + auxiliaryRepository.name,
+                                    isAuxRepo: true,
+                                }
+                            "
+                        />
+                    }
+                }
+            </ul>
+        </div>
+    </div>
+    @if (!isLocal) {
+        <div class="col-auto rounded pt-1 pb-1 preview-box">
+            <div>
+                <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.preview.buildPlans"></span>
+            </div>
+            <hr class="pt-0 pb-0 mt-1 mb-1" />
+            <ul>
+                <ng-container
+                    *ngTemplateOutlet="
+                        repositoryBadge;
+                        context: {
+                            helpIconText: 'artemisApp.programmingExercise.preview.templateBuildPlanTooltip',
+                            trailingRepoSlug: '-BASE',
+                            isBuildPlan: true,
+                        }
+                    "
+                />
+                <ng-container
+                    *ngTemplateOutlet="
+                        repositoryBadge;
+                        context: {
+                            helpIconText: 'artemisApp.programmingExercise.preview.solutionBuildPlanTooltip',
+                            trailingRepoSlug: '-SOLUTION',
+                            isBuildPlan: true,
+                        }
+                    "
+                />
+            </ul>
+        </div>
+    } @else if (checkoutDirectories) {
+        <div class="col-auto rounded pt-1 pb-1 preview-box" id="checkout-directory-preview-submission-build-plan">
+            <div>
+                <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.preview.submissionBuildPlan"></span>
+                <jhi-help-icon text="artemisApp.programmingExercise.preview.templateBuildPlanTooltip" />
+            </div>
+            <jhi-programming-exercise-build-plan-checkout-directories
+                [checkoutDirectories]="checkoutDirectories.submissionBuildPlanCheckoutDirectories"
+                [auxiliaryRepositories]="programmingExercise.auxiliaryRepositories ?? []"
+            />
+        </div>
+        <div class="col-auto rounded pt-1 pb-1 preview-box" id="checkout-directory-preview-solution-build-plan">
+            <div>
+                <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.preview.solutionBuildPlan"></span>
+                <jhi-help-icon text="artemisApp.programmingExercise.preview.solutionBuildPlanTooltip" />
+            </div>
+            <jhi-programming-exercise-build-plan-checkout-directories
+                [checkoutDirectories]="checkoutDirectories.solutionBuildPlanCheckoutDirectories"
+                [auxiliaryRepositories]="programmingExercise.auxiliaryRepositories ?? []"
+            />
+        </div>
+    }
+</div>
+
+<ng-template #repositoryBadge let-helpIconText="helpIconText" let-trailingRepoSlug="trailingRepoSlug" let-isBuildPlan="isBuildPlan" let-isAuxRepo="isAuxRepo">
+    <li>
+        <code [class]="'text-white badge label-preview ' + (isBuildPlan ? ' text-uppercase' : 'text-lowercase') + (isAuxRepo ? ' bg-success' : ' bg-primary')">
+            {{ courseShortName }}{{ programmingExercise?.shortName }}{{ trailingRepoSlug }}
+        </code>
+        @if (helpIconText) {
+            <jhi-help-icon [text]="helpIconText" />
+        }
+    </li>
+</ng-template>

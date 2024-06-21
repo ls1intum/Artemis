@@ -1,4 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.pyris.dto.data;
 
-public record PyrisTextMessageContentDTO(String textContent) implements PyrisMessageContentDTO {
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record PyrisTextMessageContentDTO(String textContent) implements PyrisMessageContentBaseDTO {
 }

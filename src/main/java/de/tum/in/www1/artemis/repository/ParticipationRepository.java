@@ -12,18 +12,18 @@ import java.util.Set;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Profile(PROFILE_CORE)
 @Repository
-public interface ParticipationRepository extends JpaRepository<Participation, Long> {
+public interface ParticipationRepository extends ArtemisJpaRepository<Participation, Long> {
 
     @Query("""
             SELECT DISTINCT p
@@ -87,11 +87,6 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
         return findWithEagerSubmissionsByIdWithTeamStudents(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
     }
 
-    @NotNull
-    default Participation findByIdElseThrow(long participationId) {
-        return findById(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
-    }
-
     @Query("""
             SELECT MAX(p.individualDueDate)
             FROM Participation p
@@ -116,12 +111,7 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
             """)
     Set<Participation> findWithIndividualDueDateByExerciseId(@Param("exerciseId") long exerciseId);
 
-    @Query("""
-            SELECT p
-            FROM Participation p
-            WHERE p.exercise.id = :exerciseId
-            """)
-    Set<Participation> findByExerciseId(@Param("exerciseId") Long exerciseId);
+    Set<Participation> findByExerciseId(long exerciseId);
 
     /**
      * Removes all individual due dates of participations for which the individual due date is before the updated due date of the exercise.
