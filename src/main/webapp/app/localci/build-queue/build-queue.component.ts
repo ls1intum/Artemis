@@ -49,7 +49,6 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     ascending = false;
     buildDurationInterval: ReturnType<typeof setInterval>;
     isCollapsed = false;
-    buildStatisticsInterval: ReturnType<typeof setInterval>;
     successfulBuildsPercentage: string;
     failedBuildsPercentage: string;
     cancelledBuildsPercentage: string;
@@ -91,7 +90,6 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
             this.websocketService.unsubscribe(channel);
         });
         clearInterval(this.buildDurationInterval);
-        clearInterval(this.buildStatisticsInterval);
     }
 
     /**
