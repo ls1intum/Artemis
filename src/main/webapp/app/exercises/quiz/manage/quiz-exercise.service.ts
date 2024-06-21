@@ -259,16 +259,32 @@ export class QuizExerciseService {
         const zip: JSZip = new JSZip();
         const filePromises: any[] = [];
         const fileService = new FileService(this.http);
-        // Will return all matches of ![file_name](path), will group file_name and path
         questions.forEach((question, questionIndex) => {
             if (question.type === QuizQuestionType.DRAG_AND_DROP) {
-                this.exportDragAndDropAssets(question, zip, filePromises, fileService, questionIndex);
-            }
-            if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                this.exportMultipleChoiceOptionAssets(question, zip, filePromises, fileService, questionIndex);
+                this.fetchFilePromise('q' + questionIndex + '_background.png', zip, <string>(<DragAndDropQuestion>question).backgroundFilePath, filePromises, fileService);
+                if ((<DragAndDropQuestion>question).dragItems) {
+                    (<DragAndDropQuestion>question).dragItems!.forEach((dragItem, drag_index) => {
+                        if (dragItem.pictureFilePath) {
+                            this.fetchFilePromise(
+                                'q' + questionIndex + '_dragItem-' + drag_index + '.png',
+                                zip,
+                                <string>(<string>dragItem.pictureFilePath),
+                                filePromises,
+                                fileService,
+                            );
+                        }
+                    });
+                }
             }
             if (question.text) {
                 this.exportImageFromMarkdown(question.text, questionIndex, zip, filePromises, fileService);
+            }
+            if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
+                (<MultipleChoiceQuestion>question).answerOptions?.forEach((option) => {
+                    if (option.text) {
+                        this.exportImageFromMarkdown(option.text, questionIndex, zip, filePromises, fileService);
+                    }
+                });
             }
         });
         if (filePromises.length === 0) {
@@ -277,37 +293,25 @@ export class QuizExerciseService {
         downloadZipFromFilePromises(zip, filePromises, fileName ?? 'quiz');
     }
 
-    exportDragAndDropAssets(question: QuizQuestion, zip: JSZip, filePromises: Promise<void | File>[], fileService: FileService, questionIndex: number) {
-        this.addFilePromise('q' + questionIndex + '_background.png', zip, <string>(<DragAndDropQuestion>question).backgroundFilePath, filePromises, fileService);
-        if ((<DragAndDropQuestion>question).dragItems) {
-            (<DragAndDropQuestion>question).dragItems!.forEach((dragItem, drag_index) => {
-                if (dragItem.pictureFilePath) {
-                    this.addFilePromise('q' + questionIndex + '_dragItem-' + drag_index + '.png', zip, <string>(<string>dragItem.pictureFilePath), filePromises, fileService);
-                }
-            });
-        }
-    }
-
-    exportMultipleChoiceOptionAssets(question: QuizQuestion, zip: JSZip, filePromises: Promise<void | File>[], fileService: FileService, questionIndex: number) {
-        if ((<MultipleChoiceQuestion>question).answerOptions) {
-            (<MultipleChoiceQuestion>question).answerOptions?.forEach((option) => {
-                if (option.text) {
-                    this.exportImageFromMarkdown(option.text, questionIndex, zip, filePromises, fileService);
-                }
-            });
-        }
-    }
-
     exportImageFromMarkdown(description: string, questionIndex: number, zip: JSZip, filePromises: Promise<void | File>[], fileService: FileService) {
+        // Will return all matches of ![file_name](path), will group file_name and path
         const embeddedImageRegex = /!\[(.+?)\]\((.+?)\)/g;
         const embeddedImagesOption = [...description.matchAll(embeddedImageRegex)];
 
         embeddedImagesOption.forEach((embeddedImage) => {
-            this.addFilePromise('q' + questionIndex + '_' + embeddedImage[1], zip, embeddedImage[2], filePromises, fileService);
+            this.fetchFilePromise('q' + questionIndex + '_' + embeddedImage[1], zip, embeddedImage[2], filePromises, fileService);
         });
     }
 
-    addFilePromise(fileName: string, zip: JSZip, filePath: string, filePromises: Promise<void | File>[], fileService: FileService) {
+    /**
+     * This method fetches a file through the file Service, zips it and pushes it to the provided list of file Promises
+     * @param fileName the name of the file to be zipped
+     * @param zip a JSZip instance
+     * @param filePath the internal path of the file to be fetched
+     * @param filePromises a list of File Promises, is used to download
+     * @param fileService fileService instance
+     */
+    fetchFilePromise(fileName: string, zip: JSZip, filePath: string, filePromises: Promise<void | File>[], fileService: FileService) {
         filePromises.push(
             fileService
                 .getFile(filePath)
