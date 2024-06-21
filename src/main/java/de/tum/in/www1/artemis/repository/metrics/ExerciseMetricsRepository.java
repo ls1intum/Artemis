@@ -53,7 +53,7 @@ public interface ExerciseMetricsRepository extends JpaRepository<Exercise, Long>
     @Query("""
             SELECT e.id AS key, c AS value
             FROM Exercise e
-                LEFT JOIN e.categories c
+                JOIN e.categories c
             WHERE e.id IN :exerciseIds
             """)
     Set<Entry<Long, String>> findCategoriesByExerciseIds(@Param("exerciseIds") Set<Long> exerciseIds);
