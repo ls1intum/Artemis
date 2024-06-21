@@ -7,19 +7,19 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data repository for the TextAssessmentEvent entity.
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface TextAssessmentEventRepository extends JpaRepository<TextAssessmentEvent, Long> {
+public interface TextAssessmentEventRepository extends ArtemisJpaRepository<TextAssessmentEvent, Long> {
 
     List<TextAssessmentEvent> findAllByCourseId(long courseId);
 
