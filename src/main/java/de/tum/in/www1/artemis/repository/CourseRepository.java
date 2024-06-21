@@ -96,14 +96,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     boolean informationSharingConfigurationIsOneOf(@Param("courseId") long courseId, @Param("values") Set<CourseInformationSharingConfiguration> values);
 
     @Query("""
-            SELECT COUNT(c) > 0
-            FROM Course c
-            WHERE c.id = :courseId
-                AND c.courseInformationSharingConfiguration = :configuration
-            """)
-    boolean informationSharingConfigurationIs(@Param("courseId") long courseId, @Param("configuration") CourseInformationSharingConfiguration configuration);
-
-    @Query("""
             SELECT DISTINCT c
             FROM Course c
             WHERE (c.startDate <= :now OR c.startDate IS NULL)
@@ -506,7 +498,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
      * @return true if the messaging feature is enabled for the course, false otherwise
      */
     default boolean isMessagingEnabled(long courseId) {
-        return informationSharingConfigurationIs(courseId, CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+        return informationSharingConfigurationIsOneOf(courseId, Set.of(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING));
     }
 
     /**
