@@ -13,7 +13,14 @@
                     class="mt-2 text-center scrollable-item-content"
                 ></div>
             } @else {
-                <div class="scrollable-item-content my-2" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
+                <div
+                    class="scrollable-item-content my-2"
+                    [ngClass]="{
+                        'content-height-dev': !isProduction || isTestServer,
+                        'search-height-conversations': sidebarData?.sidebarType === 'conversation',
+                        'search-height-normal': sidebarData?.sidebarType !== 'conversation',
+                    }"
+                >
                     @if (sidebarData?.groupByCategory && sidebarData.groupedData) {
                         <jhi-sidebar-accordion
                             [searchValue]="searchValue"
@@ -23,6 +30,12 @@
                             [routeParams]="routeParams"
                             [courseId]="courseId"
                             [itemSelected]="itemSelected"
+                            [showAddOptions]="sidebarData.showAccordionAddOption ?? false"
+                            [showLeadingIcon]="sidebarData.showAccordionLeadingIcon ?? false"
+                            [showAddOption]="showAddOption"
+                            [channelTypeIcon]="channelTypeIcon"
+                            [collapseState]="collapseState"
+                            (onUpdateSidebar)="onUpdateSidebar.emit()"
                         />
                     } @else {
                         @for (sidebarItem of sidebarData?.ungroupedData | searchFilter: ['title', 'type'] : searchValue; track sidebarItem; let last = $last) {

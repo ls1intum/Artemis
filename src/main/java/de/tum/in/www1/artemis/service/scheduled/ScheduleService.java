@@ -3,10 +3,10 @@ package de.tum.in.www1.artemis.service.scheduled;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.stream.Stream;
 
@@ -36,10 +36,10 @@ public class ScheduleService {
 
     private final ParticipationLifecycleService participationLifecycleService;
 
-    private final Map<Tuple<Long, ExerciseLifecycle>, Set<ScheduledFuture<?>>> scheduledExerciseTasks = new HashMap<>();
+    private final ConcurrentMap<Tuple<Long, ExerciseLifecycle>, Set<ScheduledFuture<?>>> scheduledExerciseTasks = new ConcurrentHashMap<>();
 
     // triple of exercise id, participation id, and lifecycle
-    private final Map<Triple<Long, Long, ParticipationLifecycle>, Set<ScheduledFuture<?>>> scheduledParticipationTasks = new HashMap<>();
+    private final ConcurrentMap<Triple<Long, Long, ParticipationLifecycle>, Set<ScheduledFuture<?>>> scheduledParticipationTasks = new ConcurrentHashMap<>();
 
     public ScheduleService(ExerciseLifecycleService exerciseLifecycleService, ParticipationLifecycleService participationLifecycleService) {
         this.exerciseLifecycleService = exerciseLifecycleService;
@@ -187,7 +187,7 @@ public class ScheduleService {
     }
 
     /**
-     * cancels all futures tasks, only use this for testing purposes
+     * Cancels all futures tasks, only use this for testing purposes
      */
     public void clearAllTasks() {
         scheduledParticipationTasks.values().forEach(futures -> futures.forEach(future -> future.cancel(true)));

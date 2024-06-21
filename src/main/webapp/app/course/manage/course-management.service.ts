@@ -145,6 +145,10 @@ export class CourseManagementService {
             .pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
     }
 
+    findAllForDropdown(): Observable<HttpResponse<Course[]>> {
+        return this.http.get<Course[]>(`${this.resourceUrl}/for-dropdown`, { observe: 'response' });
+    }
+
     /**
      * finds all courses using a GET request
      */

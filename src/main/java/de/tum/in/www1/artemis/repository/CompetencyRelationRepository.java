@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,13 +13,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.RelationType;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data JPA repository for the Competency Relation entity.
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface CompetencyRelationRepository extends JpaRepository<CompetencyRelation, Long> {
+public interface CompetencyRelationRepository extends ArtemisJpaRepository<CompetencyRelation, Long> {
 
     @Transactional // ok because of delete
     @Modifying

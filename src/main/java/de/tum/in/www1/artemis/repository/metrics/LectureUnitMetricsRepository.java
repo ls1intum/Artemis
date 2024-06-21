@@ -5,12 +5,12 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.LectureUnitInformationDTO;
 
 /**
@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.web.rest.dto.metrics.LectureUnitInformationDTO;
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface LectureUnitMetricsRepository extends JpaRepository<LectureUnit, Long> {
+public interface LectureUnitMetricsRepository extends ArtemisJpaRepository<LectureUnit, Long> {
 
     /**
      * Get the lecture unit information for all lecture units in a course.
@@ -27,8 +27,9 @@ public interface LectureUnitMetricsRepository extends JpaRepository<LectureUnit,
      * @return the lecture unit information for all lecture units in the course
      */
     @Query("""
-            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.LectureUnitInformationDTO(lu.id, lu.lecture.id, lu.name, lu.releaseDate, TYPE(lu))
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.LectureUnitInformationDTO(lu.id, lu.lecture.id, lu.lecture.title, COALESCE(lu.name, a.name), lu.releaseDate, TYPE(lu))
             FROM LectureUnit lu
+                LEFT JOIN Attachment a ON a.attachmentUnit.id = lu.id
             WHERE lu.lecture.course.id = :courseId
             """)
     Set<LectureUnitInformationDTO> findAllLectureUnitInformationByCourseId(@Param("courseId") long courseId);

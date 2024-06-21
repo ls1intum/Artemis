@@ -19,6 +19,7 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
     let comp: CodeEditorInstructorAndEditorOrionContainerComponent;
@@ -63,7 +64,7 @@ describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
 
     it('applyDomainChange should inform connector', () => {
         const selectRepositorySpy = jest.spyOn(orionConnectorService, 'selectRepository');
-
+        comp.exercise = { id: 5 } as ProgrammingExercise;
         // @ts-ignore
         comp.applyDomainChange({}, {});
 

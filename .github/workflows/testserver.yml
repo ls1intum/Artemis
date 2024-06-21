@@ -152,12 +152,13 @@ jobs:
           #  hosts: artemis-test8.artemis.cit.tum.de
           #  folder: /opt/artemis
 
-          #- environment: artemis-test9.artemis.cit.tum.de
-          #  label-identifier: artemis-test9
-          #  url: https://artemis-test9.artemis.cit.tum.de
-          #  user: deployment
-          #  hosts: artemis-test9.artemis.cit.tum.de
-          #  folder: /opt/artemis
+          - environment: artemis-test9.artemis.cit.tum.de
+            label-identifier: artemis-test9
+            url: https://artemis-test9.artemis.cit.tum.de
+            user: deployment
+            hosts: artemis-test9.artemis.cit.tum.de
+            folder: /opt/artemis
+            host_keys: |
 
           #- environment: artemis-test10.artemis.cit.tum.de
           #  label-identifier: artemis-test10
@@ -174,7 +175,7 @@ jobs:
       TS6: ${{ steps.filter.outputs.artemis-test6 || '' }}
       #TS7: ${{ steps.filter.outputs.artemis-test7 || '' }}
       #TS8: ${{ steps.filter.outputs.artemis-test8 || '' }}
-      #TS9: ${{ steps.filter.outputs.artemis-test9 || '' }}
+      TS9: ${{ steps.filter.outputs.artemis-test9 || '' }}
       #TS10: ${{ steps.filter.outputs.artemis-test10 || '' }}
     steps:
       - run: |
