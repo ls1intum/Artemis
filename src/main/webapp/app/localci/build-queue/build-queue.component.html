@@ -31,7 +31,7 @@
                         <p class="m-0 text-center" jhiTranslate="artemisApp.buildQueue.statistics.successfulBuilds"></p>
                     </div>
                 </div>
-                <div class="d-flex flex-column gap-3 justify-content-around">
+                <div class="d-flex flex-column gap-3 justify-content-around stats-column">
                     <div>
                         <span class="bold" jhiTranslate="artemisApp.buildQueue.statistics.totalBuilds"></span>
                         <span>{{ buildJobStatistics.totalBuilds }}</span>
@@ -41,7 +41,7 @@
                         <span>{{ buildJobStatistics.successfulBuilds }}</span>
                     </div>
                 </div>
-                <div class="d-flex flex-column gap-3 justify-content-around">
+                <div class="d-flex flex-column gap-3 justify-content-around stats-column">
                     <div>
                         <span class="bold" jhiTranslate="artemisApp.buildQueue.statistics.failedBuildsPercentage"></span>
                         <span>{{ failedBuildsPercentage }}</span>
@@ -51,7 +51,7 @@
                         <span>{{ buildJobStatistics.failedBuilds }}</span>
                     </div>
                 </div>
-                <div class="d-flex flex-column gap-3 justify-content-around">
+                <div class="d-flex flex-column gap-3 justify-content-around stats-column">
                     <div>
                         <span class="bold" jhiTranslate="artemisApp.buildQueue.statistics.cancelledBuildsPercentage"></span>
                         <span>{{ cancelledBuildsPercentage }}</span>
