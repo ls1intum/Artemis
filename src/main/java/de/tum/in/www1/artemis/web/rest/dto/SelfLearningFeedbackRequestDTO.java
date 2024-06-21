@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.domain.SelfLearningFeedbackRequest;
  * This does not include large reference attributes in order to send minimal data to the client.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record SelfLearningFeedbackRequestDTO(Long id, ZonedDateTime requestDateTime, ZonedDateTime responseDateTime, ParticipationDTO participation, ResultDTO result,
+public record SelfLearningFeedbackRequestDTO(Long id, ZonedDateTime requestDateTime, ZonedDateTime responseDateTime, long participationId, ResultDTO result,
         SubmissionDTO submission, Boolean successful) implements Serializable {
 
     /**
@@ -36,7 +36,7 @@ public record SelfLearningFeedbackRequestDTO(Long id, ZonedDateTime requestDateT
             resultDTO = ResultDTO.of(selfLearningFeedbackRequest.getResult(), feedbacks);
         }
         return new SelfLearningFeedbackRequestDTO(selfLearningFeedbackRequest.getId(), selfLearningFeedbackRequest.getRequestDateTime(),
-                selfLearningFeedbackRequest.getResponseDateTime(), ParticipationDTO.of(selfLearningFeedbackRequest.getSubmission().getParticipation()), resultDTO, submissionDTO,
+                selfLearningFeedbackRequest.getResponseDateTime(), selfLearningFeedbackRequest.getSubmission().getParticipation().getId(), resultDTO, submissionDTO,
                 selfLearningFeedbackRequest.isSuccessful());
     }
 
@@ -56,7 +56,7 @@ public record SelfLearningFeedbackRequestDTO(Long id, ZonedDateTime requestDateT
             resultDTO = ResultDTO.of(selfLearningFeedbackRequest.getResult());
         }
         return new SelfLearningFeedbackRequestDTO(selfLearningFeedbackRequest.getId(), selfLearningFeedbackRequest.getRequestDateTime(),
-                selfLearningFeedbackRequest.getResponseDateTime(), ParticipationDTO.of(selfLearningFeedbackRequest.getSubmission().getParticipation()), resultDTO, submissionDTO,
+                selfLearningFeedbackRequest.getResponseDateTime(), selfLearningFeedbackRequest.getSubmission().getParticipation().getId(), resultDTO, submissionDTO,
                 selfLearningFeedbackRequest.isSuccessful());
     }
 }
