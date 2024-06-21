@@ -7,7 +7,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,14 +16,14 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data JPA repository for the ComplaintResponse entity.
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface ComplaintResponseRepository extends JpaRepository<ComplaintResponse, Long> {
+public interface ComplaintResponseRepository extends ArtemisJpaRepository<ComplaintResponse, Long> {
 
     Optional<ComplaintResponse> findByComplaint_Id(Long complaintId);
 
@@ -112,8 +111,4 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
     @Transactional // ok because of delete
     @Modifying
     void deleteByComplaint_Result_Id(long resultId);
-
-    default ComplaintResponse findByIdElseThrow(Long complaintResponseId) {
-        return findById(complaintResponseId).orElseThrow(() -> new EntityNotFoundException("ComplaintResponse", complaintResponseId));
-    }
 }
