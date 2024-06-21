@@ -61,8 +61,8 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     difficultyFilters?: DifficultyFilterOptions;
     possibleCategories?: ExerciseCategory[];
     exerciseTypesFilter = DEFAULT_EXERCISE_TYPES_FILTER;
-    pointsFilter?: RangeFilter;
-    scoreFilter?: RangeFilter;
+    achievablePoints?: RangeFilter;
+    achievedScore?: RangeFilter;
 
     constructor(
         private route: ActivatedRoute,
@@ -138,7 +138,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         // TODO do not display difficulties selection if not enough selection options
         this.initializeDifficultyFilter();
         this.initializeCategoryFilter();
-        this.initializeAchievedScoreFilter();
+        this.initializeAchievablePointsAndAchievedScoreFilters();
     }
 
     private initializeDifficultyFilter() {
@@ -164,27 +164,27 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
                 .flatMap((sidebarElement: SidebarCardElement) => sidebarElement.exercise?.categories || []) ?? [];
     }
 
-    private initializeAchievedScoreFilter() {
-        if (this.scoreFilter || !this.sidebarData?.ungroupedData) {
+    private initializeAchievablePointsAndAchievedScoreFilters() {
+        if ((this.achievablePoints && this.achievedScore) || !this.sidebarData?.ungroupedData) {
             return;
         }
 
-        let minPoints = Infinity;
-        let maxPoints = -Infinity;
+        let minAchievablePoints = Infinity;
+        let maxAchievablePoints = -Infinity;
 
         this.sidebarData.ungroupedData.forEach((sidebarElement: SidebarCardElement) => {
             if (sidebarElement.exercise?.maxPoints) {
                 const currentExerciseMaxPoints = sidebarElement.exercise.maxPoints;
 
-                if (currentExerciseMaxPoints > maxPoints) {
-                    maxPoints = currentExerciseMaxPoints;
+                if (currentExerciseMaxPoints > maxAchievablePoints) {
+                    maxAchievablePoints = currentExerciseMaxPoints;
                 }
-                if (currentExerciseMaxPoints < minPoints) {
-                    minPoints = currentExerciseMaxPoints;
+                if (currentExerciseMaxPoints < minAchievablePoints) {
+                    minAchievablePoints = currentExerciseMaxPoints;
                 }
             }
         });
 
-        this.pointsFilter = { min: minPoints, max: maxPoints };
+        this.achievablePoints = { min: minAchievablePoints, max: maxAchievablePoints };
     }
 }
