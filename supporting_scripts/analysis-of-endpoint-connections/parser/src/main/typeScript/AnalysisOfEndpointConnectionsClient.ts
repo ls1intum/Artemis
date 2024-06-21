@@ -11,11 +11,10 @@ import {
     isParameter,
     isTypeReferenceNode, SyntaxKind, ClassDeclaration, CallExpression, ConstructorDeclaration,
 } from 'typescript';
-import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
 
 // Get the file names from the command line arguments
-console.log('Working directory: ' + process.cwd());
 const clientDirectory = 'src/main/webapp/app/';
 const fileNames = getFilePaths(clientDirectory);
 
@@ -44,7 +43,14 @@ for (const fileName of fileNames.filter(fileName => fileName.endsWith('.ts')))  
 };
 
 // Write the restCalls array to a JSON file
-writeFileSync('../../../../../supporting_scripts/analysis-of-endpoint-connections/restCalls.json', JSON.stringify(restCallFiles, null, 2));
+const filePath = '../../../../../supporting_scripts/analysis-of-endpoint-connections/restCalls.json';
+
+// Ensure the directory exists
+mkdirSync(dirname(filePath), { recursive: true });
+
+// Write the restCalls array to a JSON file
+writeFileSync(filePath, JSON.stringify(restCallFiles, null, 2));
+// writeFileSync('../../../../../supporting_scripts/analysis-of-endpoint-connections/restCalls.json', JSON.stringify(restCallFiles, null, 2));
 
 function getFilePaths(directoryPath: string): string[] {
     let filePaths: string[] = [];
