@@ -261,16 +261,15 @@ export class QuizExerciseService {
         const fileService = new FileService(this.http);
         // Will return all matches of ![file_name](path), will group file_name and path
         const embeddedImageRegex = /!\[(.+?)\]\((.+?)\)/g;
-
-        questions.forEach((question) => {
+        questions.forEach((question, questionIndex) => {
             if (question.type === QuizQuestionType.DRAG_AND_DROP) {
-                this.exportDragAndDropAssets(question, zip, filePromises, fileService);
+                this.exportDragAndDropAssets(question, zip, filePromises, fileService, questionIndex);
             }
             // Get assets from markdown in description
             if (question.text) {
                 const embeddedImages = [...question.text.matchAll(embeddedImageRegex)];
                 embeddedImages.forEach((embeddedImage) => {
-                    this.addFilePromise(embeddedImage[1], zip, embeddedImage[2], filePromises, fileService);
+                    this.addFilePromise('q' + questionIndex + '_' + embeddedImage[1], zip, embeddedImage[2], filePromises, fileService);
                 });
             }
             // Get assets from markdown in multiple choice options
@@ -281,7 +280,7 @@ export class QuizExerciseService {
                         if (option.text) {
                             const embeddedImagesOption = [...option.text.matchAll(embeddedImageRegex)];
                             embeddedImagesOption.forEach((embeddedImage) => {
-                                this.addFilePromise(embeddedImage[1], zip, embeddedImage[2], filePromises, fileService);
+                                this.addFilePromise('q' + questionIndex + '_' + embeddedImage[1], zip, embeddedImage[2], filePromises, fileService);
                             });
                         }
                     });
@@ -291,7 +290,7 @@ export class QuizExerciseService {
         if (filePromises.length === 0) {
             return;
         }
-        downloadZipFromFilePromises(zip, filePromises, fileName ?? 'downloadZip');
+        downloadZipFromFilePromises(zip, filePromises, fileName ?? 'quiz');
     }
 
     addFilePromise(fileName: string, zip: JSZip, filePath: string, filePromises: Promise<void | File>[], fileService: FileService) {
@@ -302,24 +301,22 @@ export class QuizExerciseService {
                     zip.file(fileName, fileResult);
                 })
                 .catch((error) => {
-                    // Handle the error here
                     console.error('Error fetching the file:', error);
                     throw error;
                 }),
         );
     }
 
-    exportDragAndDropAssets(question: QuizQuestion, zip: JSZip, filePromises: Promise<void | File>[], fileService: FileService) {
-        this.addFilePromise('background.png', zip, <string>(<DragAndDropQuestion>question).backgroundFilePath, filePromises, fileService);
+    exportDragAndDropAssets(question: QuizQuestion, zip: JSZip, filePromises: Promise<void | File>[], fileService: FileService, questionIndex: number) {
+        this.addFilePromise('q' + questionIndex + '_background.png', zip, <string>(<DragAndDropQuestion>question).backgroundFilePath, filePromises, fileService);
         if ((<DragAndDropQuestion>question).dragItems) {
             const counter: number = 0;
             (<DragAndDropQuestion>question).dragItems!.forEach((dragItem) => {
                 if (dragItem.pictureFilePath) {
-                    this.addFilePromise('dragItem-' + counter + '.png', zip, <string>(<string>dragItem.pictureFilePath), filePromises, fileService);
+                    this.addFilePromise('q' + questionIndex + '_dragItem-' + counter + '.png', zip, <string>(<string>dragItem.pictureFilePath), filePromises, fileService);
                 }
             });
         }
-        // this.downloadZipFromFilePromises(zip, filePromises, zipFileName);
     }
 
     /**
