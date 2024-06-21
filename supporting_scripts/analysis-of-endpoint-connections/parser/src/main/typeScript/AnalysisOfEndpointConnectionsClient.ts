@@ -137,10 +137,10 @@ function logRestCall(restCall: CallExpression, methodName: string, classProperti
         //     console.log(`Argument ${i}: ${restCall.arguments[i].getText()}`);
         // }
     } else {
-        console.log('No arguments provided for this REST call');
+        // console.log('No arguments provided for this REST call');
     }
-    console.log(`At line: ${sourceFile.getLineAndCharacterOfPosition(restCall.getStart()).line + 1}`);
-    console.log('-----------------------------------');
+    // console.log(`At line: ${sourceFile.getLineAndCharacterOfPosition(restCall.getStart()).line + 1}`);
+    // console.log('-----------------------------------');
 
     let restCallInformation  = {
         method: methodName,
