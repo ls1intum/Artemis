@@ -231,6 +231,9 @@ export class QuizExerciseService {
     exportQuiz(quizQuestions?: QuizQuestion[], exportAll?: boolean, fileName?: string) {
         // Make list of questions which we need to export,
         const questions: QuizQuestion[] = [];
+        const zip: JSZip = new JSZip();
+        const filePromises: any[] = [];
+        const fileService = new FileService(this.http);
         quizQuestions!.forEach((question) => {
             if (exportAll === true || question.exportQuiz) {
                 question.quizQuestionStatistic = undefined;
@@ -238,7 +241,14 @@ export class QuizExerciseService {
                 questions.push(question);
                 // download a zip file of the image assets
                 if (question.type === QuizQuestionType.DRAG_AND_DROP) {
-                    this.exportDragAndDropAssets(question, fileName ?? 'quiz');
+                    this.exportDragAndDropAssets(question, fileName ?? 'quiz', zip, filePromises, fileService);
+                }
+                if (question.text) {
+                    const embededImageRegex = /!\[(.+?)\]\((.+?)\)/g;
+                    const embededImages = [...question.text.matchAll(embededImageRegex)];
+                    embededImages.forEach((embededImage) => {
+                        this.addFilePromise(embededImage[1], zip, embededImage[2], filePromises, fileService);
+                    });
                 }
             }
         });
@@ -248,46 +258,43 @@ export class QuizExerciseService {
         // Make blob from the list of questions and download the file,
         const quizJson = JSON.stringify(questions);
         const blob = new Blob([quizJson], { type: 'application/json' });
+        this.downloadZipFromFilePromises(zip, filePromises, 'downloadZip.zip');
         downloadFile(blob, (fileName ?? 'quiz') + '.json');
     }
 
-    exportDragAndDropAssets(question: QuizQuestion, zipFileName: string) {
-        const zip: JSZip = new JSZip();
-        const filePromises: any[] = [];
-        const fileService = new FileService(this.http);
+    addFilePromise(fileName: string, zip: JSZip, filePath: string, filePromises: Promise<void | File>[], fileService: FileService) {
         filePromises.push(
-            fileService.getFile(<string>(<DragAndDropQuestion>question).backgroundFilePath).then((fileResult) => {
-                zip.file('background.png', fileResult);
+            fileService.getFile(filePath).then((fileResult) => {
+                zip.file(fileName, fileResult);
             }),
         );
+    }
 
+    downloadZipFromFilePromises(zip: JSZip, filePromises: Promise<void | File>[], zipFileName: string) {
+        Promise.all(filePromises).then(() => {
+            zip.generateAsync({ type: 'blob' })
+                .then((zipBlob) => {
+                    downloadFile(zipBlob, zipFileName + '.zip');
+                })
+                .catch((error) => {
+                    console.error('Error generating ZIP:', error);
+                });
+        });
+    }
+
+    exportDragAndDropAssets(question: QuizQuestion, zipFileName: string, zip: JSZip, filePromises: Promise<void | File>[], fileService: FileService) {
+        this.addFilePromise('background.png', zip, <string>(<DragAndDropQuestion>question).backgroundFilePath, filePromises, fileService);
         if ((<DragAndDropQuestion>question).dragItems) {
-            let counter: number = 0;
+            const counter: number = 0;
             (<DragAndDropQuestion>question).dragItems!.forEach((dragItem) => {
                 if (dragItem.pictureFilePath) {
-                    filePromises.push(
-                        fileService.getFile(<string>dragItem.pictureFilePath).then((fileResult) => {
-                            counter += 1;
-                            zip.file('dragItem-' + counter + '.png', fileResult);
-                        }),
-                    );
+                    this.addFilePromise('dragItem-' + counter + '.png', zip, <string>(<string>dragItem.pictureFilePath), filePromises, fileService);
                 }
             });
         }
-        Promise.all(filePromises)
-            .then(() => {
-                zip.generateAsync({ type: 'blob' })
-                    .then((zipBlob) => {
-                        downloadFile(zipBlob, zipFileName + '.zip');
-                    })
-                    .catch((error) => {
-                        console.error('Error generating ZIP:', error);
-                    });
-            })
-            .catch((error) => {
-                console.error('Error fetching files:', error);
-            });
+        this.downloadZipFromFilePromises(zip, filePromises, zipFileName);
     }
+
     /**
      * Evaluates the QuizStatus for a given quiz
      *
