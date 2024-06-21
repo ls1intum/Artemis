@@ -37,6 +37,9 @@
                             </label>
                         </div>
                     }
+                    @if (enableResize) {
+                        <span #resizablePlaceholder [style.height.px]="24"></span>
+                    }
                 </div>
             </ng-template>
         </ng-container>
@@ -117,3 +120,8 @@
     </nav>
     <div [ngbNavOutlet]="nav"></div>
 </div>
+
+<!-- Resize handle - will be placed in its corresponding placeholder -->
+<span #resizeHandle [hidden]="inPreviewMode || !enableResize" cdkDrag cdkDragLockAxis="y" (cdkDragMoved)="onResizeMoved($event)" [style.position]="'absolute'" [style.left.%]="50"
+    ><fa-icon [icon]="faGripLines" class="rg-bottom md-resize-icon"
+/></span>

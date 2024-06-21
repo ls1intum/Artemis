@@ -20,6 +20,7 @@ export class MonacoTestCaseAction extends MonacoEditorInsertAction {
     /**
      * Registers the action with the given editor and sets up the completion provider.
      * @param editor The editor to register the action in.
+     * @param translateService The translation service to use for translating the action label.
      * @throws error If the action is already registered with an editor or no model is attached to the editor.
      */
     register(editor: monaco.editor.IStandaloneCodeEditor, translateService: TranslateService) {

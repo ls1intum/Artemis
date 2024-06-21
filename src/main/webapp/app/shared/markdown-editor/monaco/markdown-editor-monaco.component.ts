@@ -13,7 +13,7 @@ import { MonacoUrlAction } from 'app/shared/monaco-editor/model/actions/monaco-u
 import { MonacoAttachmentAction } from 'app/shared/monaco-editor/model/actions/monaco-attachment.action';
 import { MonacoUnorderedListAction } from 'app/shared/monaco-editor/model/actions/monaco-unordered-list.action';
 import { MonacoOrderedListAction } from 'app/shared/monaco-editor/model/actions/monaco-ordered-list.action';
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faGripLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { v4 as uuid } from 'uuid';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
@@ -23,6 +23,7 @@ import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/mona
 import { MonacoFullscreenAction } from 'app/shared/monaco-editor/model/actions/monaco-fullscreen.action';
 import { MonacoColorAction } from 'app/shared/monaco-editor/model/actions/monaco-color.action';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
+import { CdkDragMove } from '@angular/cdk/drag-drop';
 
 // TODO: Once the old markdown editor is gone, remove the style url.
 @Component({
@@ -34,6 +35,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     @ViewChild(MonacoEditorComponent, { static: false }) monacoEditor: MonacoEditorComponent;
     @ViewChild('wrapper', { static: true }) wrapper: ElementRef<HTMLDivElement>;
     @ViewChild('fileUploadFooter', { static: false }) fileUploadFooter?: ElementRef<HTMLDivElement>;
+    @ViewChild('resizablePlaceholder', { static: false }) resizablePlaceholder?: ElementRef<HTMLDivElement>;
+    @ViewChild('resizeHandle', { static: false }) resizeHandle?: ElementRef<HTMLDivElement>;
     @ViewChild('actionPalette', { static: false }) actionPalette?: ElementRef<HTMLElement>;
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
 
@@ -53,6 +56,12 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     @Input()
     initialEditorHeight?: MarkdownEditorHeight;
+
+    @Input()
+    resizableMaxHeight = MarkdownEditorHeight.LARGE;
+
+    @Input()
+    resizableMinHeight = MarkdownEditorHeight.SMALL;
 
     @Input()
     defaultActions: MonacoEditorAction[] = [
@@ -92,6 +101,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     inPreviewMode = false;
     uniqueMarkdownEditorId: string;
     faQuestionCircle = faQuestionCircle;
+    faGripLines = faGripLines;
     resizeObserver?: ResizeObserver;
     targetWrapperHeight?: number;
 
@@ -127,6 +137,11 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             }
             this.monacoEditor.registerAction(action);
         });
+
+        if (this.resizeHandle && this.enableResize) {
+            this.resizeHandle.nativeElement.style.top =
+                (this.resizablePlaceholder?.nativeElement?.getBoundingClientRect()?.top ?? 0) - this.wrapper.nativeElement?.getBoundingClientRect()?.top + 'px';
+        }
     }
 
     ngOnDestroy(): void {
@@ -138,11 +153,17 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.markdownChange.emit(text);
     }
 
+    onResizeMoved(event: CdkDragMove) {
+        // The editor's bottom edge becomes the top edge of the handle.
+        this.targetWrapperHeight = event.source.element.nativeElement.getBoundingClientRect().top - this.wrapper.nativeElement.getBoundingClientRect().top + 24;
+        this.adjustEditorDimensions();
+    }
+
     getEditorHeight(targetHeight?: number): number {
         const wrapperHeight = this.wrapper.nativeElement.clientHeight;
         const fileUploadFooterHeight = this.fileUploadFooter?.nativeElement?.clientHeight ?? 0;
         const actionPaletteHeight = this.actionPalette?.nativeElement?.clientHeight ?? 0;
-        return (targetHeight ?? wrapperHeight) - fileUploadFooterHeight - actionPaletteHeight;
+        return (targetHeight ?? wrapperHeight) - fileUploadFooterHeight - actionPaletteHeight - 24; // TODO: remove
     }
 
     getEditorWidth(): number {
@@ -189,10 +210,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                     let actionData: { id: string; payload: unknown };
                     if (extension !== 'pdf') {
                         // Mode: embedded image
-                        actionData = { id: 'monaco-attachment.action', payload: { text: file.name, url: response.path } };
+                        actionData = { id: MonacoAttachmentAction.ID, payload: { text: file.name, url: response.path } };
                     } else {
                         // For PDFs, just link to the file
-                        actionData = { id: 'monaco-url.action', payload: { text: file.name, url: response.path } };
+                        actionData = { id: MonacoUrlAction.ID, payload: { text: file.name, url: response.path } };
                     }
                     this.triggerAction(actionData.id, actionData.payload);
                 },
@@ -218,7 +239,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         const index = this.markdownColors.indexOf(color);
         const colorName = this.markdownColorNames[index];
         if (colorName) {
-            this.triggerAction('monaco-color.action', colorName);
+            this.triggerAction(MonacoColorAction.ID, colorName);
         }
     }
 }

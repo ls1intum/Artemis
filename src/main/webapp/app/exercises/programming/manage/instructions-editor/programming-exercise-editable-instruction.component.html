@@ -26,6 +26,7 @@
             class="overflow-auto flex-grow-1"
             [domainActions]="domainActions"
             [initialEditorHeight]="initialEditorHeight"
+            [enableResize]="enableResize"
             [markdown]="exercise.problemStatement"
             (onPreviewSelect)="generateHtml()"
             (markdownChange)="updateProblemStatement($event)"
