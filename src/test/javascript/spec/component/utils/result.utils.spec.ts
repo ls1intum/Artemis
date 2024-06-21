@@ -1,6 +1,8 @@
 import {
+    MissingResultInformation,
     ResultTemplateStatus,
     breakCircularResultBackReferences,
+    evaluateTemplateStatus,
     getResultIconClass,
     getTextColorClass,
     getUnreferencedFeedback,
@@ -14,6 +16,7 @@ import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
 describe('ResultUtils', () => {
     it('should filter out all non unreferenced feedbacks', () => {
@@ -195,5 +198,42 @@ describe('ResultUtils', () => {
 
             expect(baseResult.feedbacks[0].result).toBeUndefined();
         });
+    });
+
+    it.each([
+        {
+            participation: undefined,
+            exercise: undefined,
+            result: undefined,
+            isBuilding: false,
+            missingResultInfo: MissingResultInformation.NONE,
+            expected: ResultTemplateStatus.NO_RESULT,
+        },
+        {
+            participation: undefined,
+            exercise: undefined,
+            result: {},
+            isBuilding: false,
+            missingResultInfo: MissingResultInformation.NONE,
+            expected: ResultTemplateStatus.HAS_RESULT,
+        },
+        {
+            participation: { type: ParticipationType.STUDENT },
+            exercise: { type: ExerciseType.MODELING },
+            result: undefined,
+            isBuilding: false,
+            missingResultInfo: MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE,
+            expected: ResultTemplateStatus.MISSING,
+        },
+        {
+            participation: { type: ParticipationType.PROGRAMMING, exercise: { type: ExerciseType.PROGRAMMING } } as ProgrammingExerciseStudentParticipation,
+            exercise: { type: ExerciseType.PROGRAMMING },
+            result: undefined,
+            isBuilding: true,
+            missingResultInfo: MissingResultInformation.NONE,
+            expected: ResultTemplateStatus.IS_BUILDING,
+        },
+    ])('should return correct status for edge cases', ({ participation, exercise, result, isBuilding, missingResultInfo, expected }) => {
+        expect(evaluateTemplateStatus(exercise, participation, result, isBuilding, missingResultInfo)).toBe(expected);
     });
 });
