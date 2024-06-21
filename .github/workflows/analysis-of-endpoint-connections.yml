@@ -22,13 +22,17 @@ jobs:
       - name: parse client sided REST-API calls
         run: |
           pwd
-          ls
+#          ls
 #          cd ..
 #          ls
 #          cd supporting_scripts/analysis-of-endpoint-connections/parser/src/main/typeScript
 #          npm install
 #          tsc -p tsconfig.analysisOfEndpointConnections.json
 #          node supporting_scripts/analysis-of-endpoint-connections/parser/src/main/typeScript/AnalysisOfEndpointConnectionsClient.js
+
+      - name: debugging
+        run: |
+          ls
 
       - name: parse server sided REST-API calls
         run: ./gradlew :supporting_scripts:analysis-of-endpoint-connections:parser:run
