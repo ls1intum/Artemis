@@ -647,6 +647,10 @@ export class CourseUpdateComponent implements OnInit {
             }
         });
     }
+
+    disableMessaging() {
+        this.messagingEnabled = false;
+    }
 }
 
 const CourseValidator: ValidatorFn = (formGroup: FormGroup) => {
