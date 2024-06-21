@@ -8,7 +8,6 @@ import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,11 +17,11 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.domain.metis.conversation.GeneralConversationInfo;
 import de.tum.in.www1.artemis.domain.metis.conversation.UserConversationInfo;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 @Profile(PROFILE_CORE)
 @Repository
-public interface ConversationRepository extends JpaRepository<Conversation, Long> {
+public interface ConversationRepository extends ArtemisJpaRepository<Conversation, Long> {
 
     @Transactional // ok because of delete
     @Modifying
@@ -33,10 +32,6 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
 
     @EntityGraph(type = LOAD, attributePaths = { "conversationParticipants" })
     Optional<Conversation> findWithParticipantsById(long conversationId);
-
-    default Conversation findByIdElseThrow(long conversationId) {
-        return this.findById(conversationId).orElseThrow(() -> new EntityNotFoundException("Conversation", conversationId));
-    }
 
     /**
      * Retrieves a list of user-related information for the provided conversations for the given user
