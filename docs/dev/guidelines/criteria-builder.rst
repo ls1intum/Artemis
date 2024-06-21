@@ -32,7 +32,7 @@ In order to use Criteria Builder and benefit from Specifications, we need to adj
     .. code-block:: java
 
         @Repository
-        public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
+        public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpecificationExecutor<User> {
         }
 
 3. **(Optional) Show queries:** To ease debugging, generated queries can be displayed by enabling the output of executed SQL probes.
