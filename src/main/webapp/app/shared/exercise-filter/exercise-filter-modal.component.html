@@ -64,8 +64,12 @@
                 <label for="difficulty-filter-selection" class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty"></label>
                 <div id="difficulty-filter-selection">
                     @for (difficultyFilter of difficultyFilters; track difficultyFilter) {
-                        <input type="checkbox" [(ngModel)]="difficultyFilter.checked" [name]="difficultyFilter.value" />
-                        <label [jhiTranslate]="difficultyFilter.name"></label>
+                        <div class="form-check form-check-inline">
+                            <label>
+                                <input type="checkbox" [(ngModel)]="difficultyFilter.checked" [name]="difficultyFilter.value" />
+                                <span [jhiTranslate]="difficultyFilter.name"></span>
+                            </label>
+                        </div>
                     }
                 </div>
             </div>
