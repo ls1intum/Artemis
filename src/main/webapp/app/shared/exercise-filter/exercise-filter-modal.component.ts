@@ -60,29 +60,18 @@ export class ExerciseFilterModalComponent {
 
     constructor(private activeModal: NgbActiveModal) {}
 
-    ngOnInit(): void {
-        // TODO reset filter state when closing the modal without saving
+    // TODO reset filter state when closing the modal without saving
 
-        // TODO move to parent component
+    // TODO move to parent component
 
-        // TODO filter exercise types to exercise types that are used
-        // TODO filter difficulties to difficulties that have been used
-        const existingDifficulties = this.sidebarData?.ungroupedData
-            ?.filter((sidebarElement: SidebarCardElement) => sidebarElement.difficulty !== undefined)
-            .map((sidebarElement: SidebarCardElement) => sidebarElement.difficulty);
-        this.difficultyFilters?.filter((difficulty) => existingDifficulties?.includes(difficulty.value));
-        // TODO do not display difficulties selection if not enough selection options
+    // TODO filter exercise types to exercise types that are used
 
-        this.possibleCategories =
-            this.sidebarData?.ungroupedData
-                ?.filter((sidebarElement: SidebarCardElement) => sidebarElement.exercise?.categories !== undefined)
-                .flatMap((sidebarElement: SidebarCardElement) => sidebarElement.exercise?.categories || []) ?? [];
-    }
+    // TODO do not display difficulties selection if not enough selection options
 
-    ngAfterViewInit(): void {
-        // otherwise the close button will be autofocused, leading to a blue border around the button
-        this.firstCheckbox.nativeElement.focus();
-    }
+    // ngAfterViewInit(): void {
+    //     // otherwise the close button will be autofocused, leading to a blue border around the button
+    //     this.firstCheckbox.nativeElement.focus();
+    // }
 
     closeModal(): void {
         this.activeModal.close();
