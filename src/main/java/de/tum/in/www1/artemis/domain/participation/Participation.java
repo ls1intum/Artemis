@@ -373,6 +373,6 @@ public abstract class Participation extends DomainObject implements Participatio
             }
             return feedbackRequests;
         }
-        return null;
+        return new HashSet<>();
     }
 }
