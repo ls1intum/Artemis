@@ -26,20 +26,24 @@
     -webkit-appearance: none;
 }
 
+$slider-gobble-size: 17px;
+$slider-gobble-border-radius: 50%;
+$slider-gobble-color: $primary;
+
 [type='range']::-webkit-slider-thumb {
-    height: 17px;
-    width: 17px;
-    border-radius: 50%;
-    background: $primary;
+    height: $slider-gobble-size;
+    width: $slider-gobble-size;
+    border-radius: $slider-gobble-border-radius;
+    background: $slider-gobble-color;
     pointer-events: auto;
     -webkit-appearance: none;
 }
 
 [type='range']::-moz-range-thumb {
-    height: 17px;
-    width: 17px;
-    border-radius: 50%;
-    background: $primary;
+    height: $slider-gobble-size;
+    width: $slider-gobble-size;
+    border-radius: $slider-gobble-border-radius;
+    background: $slider-gobble-color;
     pointer-events: auto;
     -moz-appearance: none;
     border: none; // TODO is this needed?
