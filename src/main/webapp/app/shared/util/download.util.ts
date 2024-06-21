@@ -1,4 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
+import JSZip from 'jszip';
 
 export function downloadZipFileFromResponse(response: HttpResponse<Blob>): void {
     if (response.body) {
@@ -28,4 +29,17 @@ export function downloadFile(blob: Blob, filename: string) {
 export function downloadStream(data: any, type: string, filename: string) {
     const blob = new Blob([data], { type });
     downloadFile(blob, `${filename || 'file'}.pdf`);
+}
+
+export function downloadZipFromFilePromises(zip: JSZip, filePromises: Promise<void | File>[], zipFileName: string) {
+    Promise.all(filePromises).then(() => {
+        zip.generateAsync({ type: 'blob' })
+            .then((zipBlob) => {
+                downloadFile(zipBlob, zipFileName + '.zip');
+            })
+            .catch((error) => {
+                console.error('Error generating ZIP:', error);
+                throw error;
+            });
+    });
 }

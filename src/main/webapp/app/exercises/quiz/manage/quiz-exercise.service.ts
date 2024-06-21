@@ -8,7 +8,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { downloadFile } from 'app/shared/util/download.util';
+import { downloadFile, downloadZipFromFilePromises } from 'app/shared/util/download.util';
 import { objectToJsonBlob } from 'app/utils/blob-util';
 import { FileService } from 'app/shared/http/file.service';
 import JSZip from 'jszip';
@@ -287,34 +287,26 @@ export class QuizExerciseService {
                     });
                 }
             }
-
-            // TODO If Multiple choice look for embeded markdowns there too.
         });
         if (filePromises.length === 0) {
             return;
         }
-        this.downloadZipFromFilePromises(zip, filePromises, fileName ?? 'downloadZip');
+        downloadZipFromFilePromises(zip, filePromises, fileName ?? 'downloadZip');
     }
 
     addFilePromise(fileName: string, zip: JSZip, filePath: string, filePromises: Promise<void | File>[], fileService: FileService) {
         filePromises.push(
-            fileService.getFile(filePath).then((fileResult) => {
-                zip.file(fileName, fileResult);
-            }),
-            // TODO HERE ADD AN EXCEPTION CATCH THROW ERROR if file not can be read
-        );
-    }
-
-    downloadZipFromFilePromises(zip: JSZip, filePromises: Promise<void | File>[], zipFileName: string) {
-        Promise.all(filePromises).then(() => {
-            zip.generateAsync({ type: 'blob' })
-                .then((zipBlob) => {
-                    downloadFile(zipBlob, zipFileName + '.zip');
+            fileService
+                .getFile(filePath)
+                .then((fileResult) => {
+                    zip.file(fileName, fileResult);
                 })
                 .catch((error) => {
-                    console.error('Error generating ZIP:', error);
-                });
-        });
+                    // Handle the error here
+                    console.error('Error fetching the file:', error);
+                    throw error;
+                }),
+        );
     }
 
     exportDragAndDropAssets(question: QuizQuestion, zip: JSZip, filePromises: Promise<void | File>[], fileService: FileService) {
