@@ -14,7 +14,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
@@ -219,7 +219,7 @@ describe('ResultUtils', () => {
         },
         {
             participation: { type: ParticipationType.STUDENT },
-            exercise: { type: ExerciseType.MODELING },
+            exercise: { type: ExerciseType.MODELING } as Exercise,
             result: undefined,
             isBuilding: false,
             missingResultInfo: MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE,
@@ -227,7 +227,7 @@ describe('ResultUtils', () => {
         },
         {
             participation: { type: ParticipationType.PROGRAMMING, exercise: { type: ExerciseType.PROGRAMMING } } as ProgrammingExerciseStudentParticipation,
-            exercise: { type: ExerciseType.PROGRAMMING },
+            exercise: { type: ExerciseType.PROGRAMMING } as Exercise,
             result: undefined,
             isBuilding: true,
             missingResultInfo: MissingResultInformation.NONE,
