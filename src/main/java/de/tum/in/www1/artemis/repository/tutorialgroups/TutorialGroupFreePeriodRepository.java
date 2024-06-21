@@ -7,18 +7,17 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupFreePeriod;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 @Profile(PROFILE_CORE)
 @Repository
-public interface TutorialGroupFreePeriodRepository extends JpaRepository<TutorialGroupFreePeriod, Long> {
+public interface TutorialGroupFreePeriodRepository extends ArtemisJpaRepository<TutorialGroupFreePeriod, Long> {
 
     @Query("""
             SELECT period
@@ -39,10 +38,6 @@ public interface TutorialGroupFreePeriodRepository extends JpaRepository<Tutoria
             """)
     Set<TutorialGroupFreePeriod> findOverlappingInSameCourseExclusive(@Param("course") Course course, @Param("fromExclusive") ZonedDateTime fromExclusive,
             @Param("toExclusive") ZonedDateTime toExclusive);
-
-    default TutorialGroupFreePeriod findByIdElseThrow(Long tutorialGroupFreePeriodId) {
-        return findById(tutorialGroupFreePeriodId).orElseThrow(() -> new EntityNotFoundException("TutorialGroupFreePeriod", tutorialGroupFreePeriodId));
-    }
 
     /**
      * Finds the first overlapping tutorial group free period in the same course.

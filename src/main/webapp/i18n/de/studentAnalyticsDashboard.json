@@ -4,7 +4,7 @@
             "competencyAccordion": {
                 "title": "Kompetenzen",
                 "noData": "Für diesen Kurs sind keine Kompetenzen verfügbar.",
-                "nextObjectives": "Nächste Ziele",
+                "nextActivities": "Nächste Aktivitäten, um diese Kompetenz zu meistern",
                 "exercises": "Aufgaben",
                 "lectures": "Vorlesungen",
                 "progress": "Fortschritt: {{ progress }}%",
@@ -13,7 +13,7 @@
             },
             "button": {
                 "showLearningPath": "Lernpfad anzeigen",
-                "viewLecturesAndExercises": "Vorlesungen und Aufgaben ansehen"
+                "viewLecturesAndExercises": "Alle Vorlesungen und Aufgaben ansehen"
             }
         }
     }

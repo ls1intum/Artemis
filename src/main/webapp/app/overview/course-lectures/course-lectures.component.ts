@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { Lecture } from 'app/entities/lecture.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { AccordionGroups, SidebarCardElement, SidebarData } from 'app/types/sidebar';
+import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { CourseOverviewService } from '../course-overview.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
@@ -12,6 +12,13 @@ const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     current: { entityData: [] },
     past: { entityData: [] },
     noDate: { entityData: [] },
+};
+
+const DEFAULT_COLLAPSE_STATE: CollapseState = {
+    future: true,
+    current: false,
+    past: true,
+    noDate: true,
 };
 
 @Component({
@@ -31,6 +38,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     sortedLectures: Lecture[] = [];
     sidebarLectures: SidebarCardElement[] = [];
     isCollapsed: boolean = false;
+    readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
 
     constructor(
         private courseStorageService: CourseStorageService,
