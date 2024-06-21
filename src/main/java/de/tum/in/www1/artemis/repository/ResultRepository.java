@@ -16,7 +16,6 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -33,6 +32,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ResultCount;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
@@ -43,7 +43,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface ResultRepository extends JpaRepository<Result, Long> {
+public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
 
     @Query("""
             SELECT r
@@ -727,16 +727,6 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     default Result findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(long resultId) {
         return findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsById(resultId)
                 .orElseThrow(() -> new EntityNotFoundException("Result", resultId));
-    }
-
-    /**
-     * Get a result from the database by its id, else throws an EntityNotFoundException
-     *
-     * @param resultId the id of the result to load from the database
-     * @return the result
-     */
-    default Result findByIdElseThrow(long resultId) {
-        return findById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
     }
 
     /**
