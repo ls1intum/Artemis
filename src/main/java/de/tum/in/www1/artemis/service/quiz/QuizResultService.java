@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service.quiz;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -107,81 +106,78 @@ public class QuizResultService {
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(studentParticipations);
 
         for (var participation : studentParticipations) {
-            if (!participation.isTestRun()) {
-                try {
-                    // reconnect so that the quiz questions are available later on (otherwise there will be a org.hibernate.LazyInitializationException)
-                    participation.setExercise(quizExercise);
-                    Set<Submission> submissions = participation.getSubmissions();
-                    QuizSubmission quizSubmission;
-                    if (submissions.isEmpty()) {
-                        log.warn("Found no submissions for participation {} (Participant {}) in quiz {}", participation.getId(), participation.getParticipant().getName(),
-                                quizExercise.getId());
-                        continue;
-                    }
-                    else if (submissions.size() > 1) {
-                        log.warn("Found multiple ({}) submissions for participation {} (Participant {}) in quiz {}, taking the one with highest id", submissions.size(),
-                                participation.getId(), participation.getParticipant().getName(), quizExercise.getId());
-                        List<Submission> submissionsList = new ArrayList<>(submissions);
-
-                        // Load submission with highest id
-                        submissionsList.sort(Comparator.comparing(Submission::getId).reversed());
-                        quizSubmission = (QuizSubmission) submissionsList.getFirst();
-                    }
-                    else {
-                        quizSubmission = (QuizSubmission) submissions.iterator().next();
-                    }
-
-                    participation.setInitializationState(InitializationState.FINISHED);
-
-                    boolean resultExisting = false;
-                    // create new result if none is existing
-                    Result result;
-                    if (participation.getResults().isEmpty()) {
-                        result = new Result().participation(participation);
-                    }
-                    else {
-                        resultExisting = true;
-                        result = participation.getResults().iterator().next();
-                    }
-                    // Only create Results once after the first evaluation
-                    if (!resultExisting) {
-                        // delete result from quizSubmission, to be able to set a new one
-                        if (quizSubmission.getLatestResult() != null) {
-                            resultService.deleteResult(quizSubmission.getLatestResult(), true);
-                        }
-                        result.setRated(true);
-                        result.setAssessmentType(AssessmentType.AUTOMATIC);
-                        result.setCompletionDate(ZonedDateTime.now());
-
-                        // set submission to calculate scores
-                        result.setSubmission(quizSubmission);
-                        // calculate scores and update result and submission accordingly
-                        quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
-                        result.evaluateQuizSubmission(quizExercise);
-                        // remove submission to follow save order for ordered collections
-                        result.setSubmission(null);
-
-                        // NOTE: we save participation, submission and result here individually so that one exception (e.g. duplicated key) cannot destroy multiple student answers
-                        submissionRepository.save(quizSubmission);
-                        result = resultRepository.save(result);
-
-                        // add result to participation
-                        participation.addResult(result);
-                        studentParticipationRepository.save(participation);
-
-                        // add result to submission
-                        result.setSubmission(quizSubmission);
-                        quizSubmission.addResult(result);
-                        submissionRepository.save(quizSubmission);
-
-                        // Add result so that it can be returned (and processed later)
-                        createdResults.add(result);
-                    }
+            if (participation.isTestRun()) {
+                continue;
+            }
+            try {
+                // reconnect so that the quiz questions are available later on (otherwise there will be a org.hibernate.LazyInitializationException)
+                participation.setExercise(quizExercise);
+                Set<Submission> submissions = participation.getSubmissions();
+                QuizSubmission quizSubmission;
+                if (submissions.isEmpty()) {
+                    log.warn("Found no submissions for participation {} (Participant {}) in quiz {}", participation.getId(), participation.getParticipant().getName(),
+                            quizExercise.getId());
+                    continue;
                 }
-                catch (Exception e) {
-                    log.error("Exception in evaluateExamQuizExercise() for user {} in quiz {}: {}", participation.getParticipantIdentifier(), quizExercise.getId(), e.getMessage(),
-                            e);
+                else if (submissions.size() > 1) {
+                    log.warn("Found multiple ({}) submissions for participation {} (Participant {}) in quiz {}, taking the one with highest id", submissions.size(),
+                            participation.getId(), participation.getParticipant().getName(), quizExercise.getId());
+                    // Load submission with highest id
+                    quizSubmission = (QuizSubmission) submissions.stream().max(Comparator.comparing(Submission::getId)).get();
                 }
+                else {
+                    quizSubmission = (QuizSubmission) submissions.iterator().next();
+                }
+
+                participation.setInitializationState(InitializationState.FINISHED);
+
+                boolean resultExisting = false;
+                // create new result if none is existing
+                Result result;
+                if (participation.getResults().isEmpty()) {
+                    result = new Result().participation(participation);
+                }
+                else {
+                    resultExisting = true;
+                    result = participation.getResults().iterator().next();
+                }
+                // Only create Results once after the first evaluation
+                if (!resultExisting) {
+                    // delete result from quizSubmission, to be able to set a new one
+                    if (quizSubmission.getLatestResult() != null) {
+                        resultService.deleteResult(quizSubmission.getLatestResult(), true);
+                    }
+                    result.setRated(true);
+                    result.setAssessmentType(AssessmentType.AUTOMATIC);
+                    result.setCompletionDate(ZonedDateTime.now());
+
+                    // set submission to calculate scores
+                    result.setSubmission(quizSubmission);
+                    // calculate scores and update result and submission accordingly
+                    quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
+                    result.evaluateQuizSubmission(quizExercise);
+                    // remove submission to follow save order for ordered collections
+                    result.setSubmission(null);
+
+                    // NOTE: we save participation, submission and result here individually so that one exception (e.g. duplicated key) cannot destroy multiple student answers
+                    submissionRepository.save(quizSubmission);
+                    result = resultRepository.save(result);
+
+                    // add result to participation
+                    participation.addResult(result);
+                    studentParticipationRepository.save(participation);
+
+                    // add result to submission
+                    result.setSubmission(quizSubmission);
+                    quizSubmission.addResult(result);
+                    submissionRepository.save(quizSubmission);
+
+                    // Add result so that it can be returned (and processed later)
+                    createdResults.add(result);
+                }
+            }
+            catch (Exception e) {
+                log.error("Exception in evaluateExamQuizExercise() for user {} in quiz {}: {}", participation.getParticipantIdentifier(), quizExercise.getId(), e.getMessage(), e);
             }
 
         }

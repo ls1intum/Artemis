@@ -613,7 +613,7 @@ public class QuizExerciseResource {
      */
     @PostMapping("quiz-exercises/{quizExerciseId}/evaluate")
     @EnforceAtLeastInstructorInExercise(resourceIdFieldName = "quizExerciseId")
-    public ResponseEntity<Long> evaluateQuizExercise(@PathVariable Long quizExerciseId) {
+    public ResponseEntity<Void> evaluateQuizExercise(@PathVariable Long quizExerciseId) {
         log.debug("REST request to evaluate quiz exercise {}", quizExerciseId);
         var quizExercise = quizExerciseRepository.findByIdElseThrow(quizExerciseId);
         if (!quizExercise.isQuizEnded()) {
