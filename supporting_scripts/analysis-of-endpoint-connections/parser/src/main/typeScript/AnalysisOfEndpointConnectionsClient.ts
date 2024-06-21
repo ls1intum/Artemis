@@ -15,6 +15,7 @@ import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 // Get the file names from the command line arguments
+console.log('Working directory: ' + process.cwd());
 const clientDirectory = 'src/main/webapp/app/';
 const fileNames = getFilePaths(clientDirectory);
 
