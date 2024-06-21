@@ -42,11 +42,10 @@ for (const fileName of fileNames.filter(fileName => fileName.endsWith('.ts')))  
         restCallFiles.push({fileName: fileName, restCalls: restCalls});
 };
 
-// Write the restCalls array to a JSON file
 const filePath = '../../../../../supporting_scripts/analysis-of-endpoint-connections/restCalls.json';
 
-// Ensure the directory exists
-mkdirSync(dirname(filePath), { recursive: true });
+// // Ensure the directory exists
+// mkdirSync(dirname(filePath), { recursive: true });
 
 // Write the restCalls array to a JSON file
 writeFileSync(filePath, JSON.stringify(restCallFiles, null, 2));
