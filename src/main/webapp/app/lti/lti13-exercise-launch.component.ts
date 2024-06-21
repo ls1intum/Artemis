@@ -80,7 +80,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
         this.storeLtiSessionData(ltiIdToken, clientRegistrationId);
 
         // Redirect to target link since the user is already logged in
-        window.location.replace(data.error['targetLinkUri'].toString());
+        this.replaceWindowLocationWrapper(data.error['targetLinkUri'].toString());
     }
 
     redirectUserToLoginThenTargetLink(error: any): void {
@@ -104,7 +104,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
         this.storeLtiSessionData(ltiIdToken, clientRegistrationId);
 
         if (targetLinkUri) {
-            window.location.replace(targetLinkUri);
+            this.replaceWindowLocationWrapper(targetLinkUri);
         } else {
             this.isLaunching = false;
             console.error('No LTI targetLinkUri received for a successful launch');
@@ -133,5 +133,9 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
         } catch (error) {
             console.error('Failed to store session data:', error);
         }
+    }
+
+    replaceWindowLocationWrapper(url: string): void {
+        window.location.replace(url);
     }
 }

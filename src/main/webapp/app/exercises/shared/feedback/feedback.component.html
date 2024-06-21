@@ -30,7 +30,7 @@
     <!-- Loading state -->
     @if (isLoading) {
         <div class="text-body-secondary d-flex justify-content-center" id="result-detail-spinner">
-            <fa-icon [spin]="true" size="lg" [icon]="faCircleNotch" />
+            <fa-icon animation="spin" size="lg" [icon]="faCircleNotch" />
         </div>
     } @else {
         @if (!loadingFailed && feedbackItemNodes?.length) {

@@ -1,6 +1,6 @@
-import { ComponentFixture, TestBed, async } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
-import { SearchFilterComponent } from '../../../../../main/webapp/app/shared/search-filter/search-filter.component';
+import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { MockModule, MockPipe } from 'ng-mocks';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -11,12 +11,12 @@ describe('SearchFilterComponent', () => {
     let component: SearchFilterComponent;
     let fixture: ComponentFixture<SearchFilterComponent>;
 
-    beforeEach(async(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(ReactiveFormsModule), MockModule(FormsModule), MockModule(FontAwesomeModule)],
             declarations: [SearchFilterComponent, MockPipe(ArtemisTranslatePipe)],
         }).compileComponents();
-    }));
+    });
 
     beforeEach(() => {
         fixture = TestBed.createComponent(SearchFilterComponent);
