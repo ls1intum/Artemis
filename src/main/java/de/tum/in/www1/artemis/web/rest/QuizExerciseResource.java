@@ -57,7 +57,6 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
-import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
@@ -613,11 +612,10 @@ public class QuizExerciseResource {
      * @return ResponseEntity void
      */
     @PostMapping("quiz-exercises/{quizExerciseId}/evaluate")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<Void> evaluateQuizExercises(@PathVariable Long quizExerciseId) {
+    @EnforceAtLeastInstructorInExercise(resourceIdFieldName = "quizExerciseId")
+    public ResponseEntity<Long> evaluateQuizExercises(@PathVariable Long quizExerciseId) {
         log.debug("REST request to evaluate quiz exercise {}", quizExerciseId);
         var quizExercise = quizExerciseRepository.findByIdElseThrow(quizExerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, quizExercise, null);
         if (!quizExercise.isQuizEnded()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizNotEndedYet", "Quiz hasn't ended yet.")).build();
         }
