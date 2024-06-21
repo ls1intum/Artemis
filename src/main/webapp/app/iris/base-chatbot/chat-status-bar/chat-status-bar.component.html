@@ -1,0 +1,26 @@
+<div class="chat-status-bar" [class.open]="open">
+    <div class="display" [class.active]="activeStage" [class.has-message]="displayedSubText" [class.error]="activeStage?.state === IrisStageStateDTO.ERROR">
+        @if (displayedText) {
+            @switch (activeStage?.state) {
+                @case (IrisStageStateDTO.ERROR) {
+                    <fa-icon [icon]="faCircleXmark" />
+                }
+                @default {
+                    <fa-icon [icon]="faArrowsRotate" animation="spin" />
+                }
+            }
+
+            <div>
+                {{ displayedText }}
+                @if (displayedSubText) {
+                    <div class="message">{{ displayedSubText }}</div>
+                }
+            </div>
+        }
+    </div>
+    <div class="progress-bar">
+        @for (stage of stages; track $index) {
+            <div class="part" [style.flex-grow]="stage.weight" [style]="stage.state === IrisStageStateDTO.IN_PROGRESS ? style : undefined" [ngClass]="stage.lowerCaseState"></div>
+        }
+    </div>
+</div>

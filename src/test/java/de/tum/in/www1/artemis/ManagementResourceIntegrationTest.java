@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis;
 
+import static de.tum.in.www1.artemis.util.RequestUtilService.deleteProgrammingExerciseParamsFalse;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doNothing;
@@ -111,7 +112,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
         request.put("/api/participations/" + participation.getId() + "/cleanupBuildPlan", null, HttpStatus.OK);
         request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-failed-build", null, HttpStatus.OK, null);
         programmingExercise2 = programmingExerciseRepository.save(programmingExercise2);
-        request.delete("/api/programming-exercises/" + programmingExercise2.getId(), HttpStatus.OK);
+        request.delete("/api/programming-exercises/" + programmingExercise2.getId(), HttpStatus.OK, deleteProgrammingExerciseParamsFalse());
 
         var features = new HashMap<Feature, Boolean>();
         features.put(Feature.ProgrammingExercises, false);
@@ -144,7 +145,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
         String currentDate = LocalDate.now().toString();
         var auditEvents = request.getList("/api/admin/audits?fromDate=" + pastDate + "&toDate=" + currentDate, HttpStatus.OK, PersistentAuditEvent.class);
         assertThat(auditEvents).hasSize(1);
-        var auditEvent = auditEvents.get(0);
+        var auditEvent = auditEvents.getFirst();
         var auditEventsInDb = persistenceAuditEventRepository.findAllByAuditEventDateBetween(Instant.now().minus(2, ChronoUnit.DAYS), Instant.now(), Pageable.unpaged());
         assertThat(auditEventsInDb.getTotalElements()).isEqualTo(1);
         assertThat(auditEvent.getPrincipal()).isEqualTo(auditEventsInDb.get().findFirst().orElseThrow().getPrincipal());

@@ -1,0 +1,20 @@
+{
+    "artemisApp": {
+        "studentAnalyticsDashboard": {
+            "competencyAccordion": {
+                "title": "Competencies",
+                "noData": "No competencies available for this course.",
+                "nextActivities": "Next activities to master this competency",
+                "exercises": "Exercises",
+                "lectures": "Lectures",
+                "progress": "Progress: {{ progress }}%",
+                "lectureProgress": "Lecture Progress: {{ progress }}%",
+                "exerciseProgress": "Exercise Progress: {{ progress }}%"
+            },
+            "button": {
+                "showLearningPath": "Show Learning Path",
+                "viewLecturesAndExercises": "View All Lectures and Exercises"
+            }
+        }
+    }
+}

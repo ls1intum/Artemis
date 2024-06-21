@@ -137,7 +137,7 @@
                     <label class="font-weight-bold" jhiTranslate="artemisApp.tutorialGroupImportDialog.csvFile.label"></label>
                 </div>
                 @if (isCSVParsing) {
-                    <fa-icon class="position-relative ms-1" [icon]="faSpinner" [spin]="true" />
+                    <fa-icon class="position-relative ms-1" [icon]="faSpinner" animation="spin" />
                 }
             </div>
             <div class="mt-2">
@@ -346,8 +346,8 @@
             @if (!isImportDone) {
                 <button type="submit" id="import" name="importButton" class="btn btn-primary" [disabled]="isSubmitDisabled" (click)="import()">
                     <fa-icon [icon]="faFileImport" class="me-2" />
-                    <span jhiTranslate="entity.action.to-import"></span>
-                    <fa-icon class="ms-1" [hidden]="!isImporting" [spin]="true" [icon]="faCircleNotch" />
+                    <span>{{ 'entity.action.to-import' | artemisTranslate }}</span>
+                    <fa-icon class="ms-1" [hidden]="!isImporting" animation="spin" [icon]="faCircleNotch" />
                 </button>
             } @else {
                 <button class="btn btn-success" id="finish-button" (click)="onFinish()">
