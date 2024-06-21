@@ -377,7 +377,7 @@ describe('CourseExerciseDetailsComponent', () => {
         const submission = { id: submissionId };
         const participation = { submissions: [submission] };
         comp.gradedStudentParticipation = participation;
-        comp.sortedHistoryResults = [{ id: 2 }];
+        comp.sortedHistoryEntries = [{ id: 2 }];
         comp.exercise = { ...programmingExercise };
 
         comp.courseId = programmingExercise.course!.id!;

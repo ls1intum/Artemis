@@ -226,7 +226,7 @@ describe('ResultUtils', () => {
             expected: ResultTemplateStatus.MISSING,
         },
         {
-            participation: { type: ParticipationType.PROGRAMMING, exercise: { type: ExerciseType.PROGRAMMING } } as ProgrammingExerciseStudentParticipation,
+            participation: { type: ParticipationType.PROGRAMMING, exercise: { type: ExerciseType.PROGRAMMING } as Exercise } as ProgrammingExerciseStudentParticipation,
             exercise: { type: ExerciseType.PROGRAMMING } as Exercise,
             result: undefined,
             isBuilding: true,
