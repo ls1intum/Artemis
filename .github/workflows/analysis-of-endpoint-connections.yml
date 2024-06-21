@@ -2,9 +2,6 @@ name: Analysis-of-Endpoint-Connections
 
 on:
   push:
-    paths:
-      - 'src/main/java/**'
-      - 'src/main/webapp/**'
 
 jobs:
   parse-rest-calls-and-endpoints:
