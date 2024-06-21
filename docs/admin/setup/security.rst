@@ -58,10 +58,15 @@ variables (`Spring relaxed binding <https://github.com/spring-projects/spring-bo
     possible for the system account that runs Artemis and administrators.
 
 
+.. _configure-ssh-access:
+
 SSH Access
 ----------
 
-Follow the following steps to create and manage SSH key pairs,
+To allow users to clone their programming exercises via SSH in the integrated code lifecycle setup, SSH must be
+configured correctly on the server.
+
+Follow the next steps to create and manage SSH key pairs,
 distribute them across multiple nodes via Ansible, configure the
 system to use these keys, and adapt Nginx to enable SSH routing.
 
@@ -74,11 +79,12 @@ using the ssh-keygen command. Here's how you can do it:
 .. code-block:: bash
 
     # Generate RSA key pair
-    ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa
+    ssh-keygen -t rsa -b 4096 -f ~/id_rsa
 
     # Generate Ed25519 key pair
-    ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519
+    ssh-keygen -t ed25519 -f ~/id_ed25519
 
+Make sure the keys have the standard name for the according key type. E.g. id_rsa for RSA.
 
 Adding Key Pairs to VM via Ansible
 """"""""""""""""""""""""""""""""""
