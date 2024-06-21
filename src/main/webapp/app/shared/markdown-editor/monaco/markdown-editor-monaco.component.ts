@@ -35,7 +35,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     @ViewChild(MonacoEditorComponent, { static: false }) monacoEditor: MonacoEditorComponent;
     @ViewChild('wrapper', { static: true }) wrapper: ElementRef<HTMLDivElement>;
     @ViewChild('fileUploadFooter', { static: false }) fileUploadFooter?: ElementRef<HTMLDivElement>;
-    @ViewChild('resizablePlaceholder', { static: false }) resizablePlaceholder?: ElementRef<HTMLDivElement>;
+    @ViewChild('resizablePlaceholder', { static: false }) resizePlaceholder?: ElementRef<HTMLDivElement>;
     @ViewChild('resizeHandle', { static: false }) resizeHandle?: ElementRef<HTMLDivElement>;
     @ViewChild('actionPalette', { static: false }) actionPalette?: ElementRef<HTMLElement>;
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
@@ -138,9 +138,11 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             this.monacoEditor.registerAction(action);
         });
 
-        if (this.resizeHandle && this.enableResize) {
+        if (this.resizeHandle && this.resizePlaceholder && this.enableResize) {
+            const resizeHandleHeight = this.getElementClientHeight(this.resizeHandle);
+            this.resizePlaceholder.nativeElement.style.height = resizeHandleHeight + 'px';
             this.resizeHandle.nativeElement.style.top =
-                (this.resizablePlaceholder?.nativeElement?.getBoundingClientRect()?.top ?? 0) - this.wrapper.nativeElement?.getBoundingClientRect()?.top + 'px';
+                (this.resizePlaceholder?.nativeElement?.getBoundingClientRect()?.top ?? 0) - this.wrapper.nativeElement?.getBoundingClientRect()?.top + -resizeHandleHeight + 'px';
         }
     }
 
@@ -155,15 +157,23 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     onResizeMoved(event: CdkDragMove) {
         // The editor's bottom edge becomes the top edge of the handle.
-        this.targetWrapperHeight = event.source.element.nativeElement.getBoundingClientRect().top - this.wrapper.nativeElement.getBoundingClientRect().top + 24;
+        this.targetWrapperHeight =
+            event.source.element.nativeElement.getBoundingClientRect().top -
+            this.wrapper.nativeElement.getBoundingClientRect().top +
+            this.getElementClientHeight(this.resizePlaceholder);
         this.adjustEditorDimensions();
     }
 
     getEditorHeight(targetHeight?: number): number {
-        const wrapperHeight = this.wrapper.nativeElement.clientHeight;
-        const fileUploadFooterHeight = this.fileUploadFooter?.nativeElement?.clientHeight ?? 0;
-        const actionPaletteHeight = this.actionPalette?.nativeElement?.clientHeight ?? 0;
-        return (targetHeight ?? wrapperHeight) - fileUploadFooterHeight - actionPaletteHeight - 24; // TODO: remove
+        const wrapperHeight = this.getElementClientHeight(this.wrapper);
+        const fileUploadFooterHeight = this.getElementClientHeight(this.fileUploadFooter);
+        const actionPaletteHeight = this.getElementClientHeight(this.actionPalette);
+        const resizePlaceholderHeight = this.getElementClientHeight(this.resizePlaceholder);
+        return (targetHeight ?? wrapperHeight) - fileUploadFooterHeight - actionPaletteHeight - resizePlaceholderHeight;
+    }
+
+    getElementClientHeight(element?: ElementRef): number {
+        return element?.nativeElement?.clientHeight ?? 0;
     }
 
     getEditorWidth(): number {

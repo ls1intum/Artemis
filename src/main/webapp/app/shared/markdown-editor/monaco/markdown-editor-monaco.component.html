@@ -38,7 +38,8 @@
                         </div>
                     }
                     @if (enableResize) {
-                        <span #resizablePlaceholder [style.height.px]="24"></span>
+                        <!-- This placeholder will hold the resize handle. -->
+                        <span #resizablePlaceholder></span>
                     }
                 </div>
             </ng-template>
