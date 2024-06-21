@@ -7,7 +7,6 @@ import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
-import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 import { Course } from 'app/entities/course.model';
 import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
@@ -61,7 +60,6 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
 
     constructor(
         private channelService: ChannelService,
-        private conversationService: ConversationService,
         private alertService: AlertService,
         private modalService: NgbModal,
 
