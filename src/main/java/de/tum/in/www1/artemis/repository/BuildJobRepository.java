@@ -66,8 +66,9 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSp
             )
             FROM BuildJob b
             WHERE b.buildStartDate >= :fromDateTime
+                AND :courseId IS NULL OR b.courseId = :courseId
             GROUP BY b.buildStatus
             """)
-    List<BuildJobResultCountDTO> getBuildJobsResultsStatistics(@Param("fromDateTime") ZonedDateTime fromDateTime);
+    List<BuildJobResultCountDTO> getBuildJobsResultsStatistics(@Param("fromDateTime") ZonedDateTime fromDateTime, @Param("courseId") Long courseId);
 
 }

@@ -191,7 +191,7 @@ public class AdminBuildJobQueueResource {
     @EnforceAdmin
     public ResponseEntity<BuildJobsStatisticsDTO> getBuildJobStatistics(@RequestParam(required = false, defaultValue = "7") int span) {
         log.debug("REST request to get the build job statistics");
-        List<BuildJobResultCountDTO> buildJobResultCountDtos = buildJobRepository.getBuildJobsResultsStatistics(ZonedDateTime.now().minusDays(span));
+        List<BuildJobResultCountDTO> buildJobResultCountDtos = buildJobRepository.getBuildJobsResultsStatistics(ZonedDateTime.now().minusDays(span), null);
         BuildJobsStatisticsDTO buildJobStatistics = BuildJobsStatisticsDTO.of(buildJobResultCountDtos);
         return ResponseEntity.ok(buildJobStatistics);
     }
