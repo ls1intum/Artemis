@@ -7,6 +7,7 @@ import { createRequestOption } from 'app/shared/util/request.util';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
+import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { downloadFile } from 'app/shared/util/download.util';
 import { objectToJsonBlob } from 'app/utils/blob-util';
 import { FileService } from 'app/shared/http/file.service';
@@ -231,25 +232,12 @@ export class QuizExerciseService {
     exportQuiz(quizQuestions?: QuizQuestion[], exportAll?: boolean, fileName?: string) {
         // Make list of questions which we need to export,
         const questions: QuizQuestion[] = [];
-        const zip: JSZip = new JSZip();
-        const filePromises: any[] = [];
-        const fileService = new FileService(this.http);
+
         quizQuestions!.forEach((question) => {
             if (exportAll === true || question.exportQuiz) {
                 question.quizQuestionStatistic = undefined;
                 question.exercise = undefined;
                 questions.push(question);
-                // download a zip file of the image assets
-                if (question.type === QuizQuestionType.DRAG_AND_DROP) {
-                    this.exportDragAndDropAssets(question, fileName ?? 'quiz', zip, filePromises, fileService);
-                }
-                if (question.text) {
-                    const embededImageRegex = /!\[(.+?)\]\((.+?)\)/g;
-                    const embededImages = [...question.text.matchAll(embededImageRegex)];
-                    embededImages.forEach((embededImage) => {
-                        this.addFilePromise(embededImage[1], zip, embededImage[2], filePromises, fileService);
-                    });
-                }
             }
         });
         if (questions.length === 0) {
@@ -258,8 +246,54 @@ export class QuizExerciseService {
         // Make blob from the list of questions and download the file,
         const quizJson = JSON.stringify(questions);
         const blob = new Blob([quizJson], { type: 'application/json' });
-        this.downloadZipFromFilePromises(zip, filePromises, 'downloadZip.zip');
         downloadFile(blob, (fileName ?? 'quiz') + '.json');
+        this.exportAssetsFromAllQuestions(questions, fileName);
+    }
+
+    /**
+     * Exports assets (images) embedded in the markdown and from drag and drop exercises
+     * @param questions list of questions which will be exported
+     * @param fileName name of the output zip file
+     */
+    exportAssetsFromAllQuestions(questions: QuizQuestion[], fileName?: string) {
+        const zip: JSZip = new JSZip();
+        const filePromises: any[] = [];
+        const fileService = new FileService(this.http);
+        // Will return all matches of ![file_name](path), will group file_name and path
+        const embeddedImageRegex = /!\[(.+?)\]\((.+?)\)/g;
+
+        questions.forEach((question) => {
+            if (question.type === QuizQuestionType.DRAG_AND_DROP) {
+                this.exportDragAndDropAssets(question, zip, filePromises, fileService);
+            }
+            // Get assets from markdown in description
+            if (question.text) {
+                const embeddedImages = [...question.text.matchAll(embeddedImageRegex)];
+                embeddedImages.forEach((embeddedImage) => {
+                    this.addFilePromise(embeddedImage[1], zip, embeddedImage[2], filePromises, fileService);
+                });
+            }
+            // Get assets from markdown in multiple choice options
+            if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
+                // question.answerOptions -> then text -> both optional chaining
+                if ((<MultipleChoiceQuestion>question).answerOptions) {
+                    (<MultipleChoiceQuestion>question).answerOptions?.forEach((option) => {
+                        if (option.text) {
+                            const embeddedImagesOption = [...option.text.matchAll(embeddedImageRegex)];
+                            embeddedImagesOption.forEach((embeddedImage) => {
+                                this.addFilePromise(embeddedImage[1], zip, embeddedImage[2], filePromises, fileService);
+                            });
+                        }
+                    });
+                }
+            }
+
+            // TODO If Multiple choice look for embeded markdowns there too.
+        });
+        if (filePromises.length === 0) {
+            return;
+        }
+        this.downloadZipFromFilePromises(zip, filePromises, fileName ?? 'downloadZip');
     }
 
     addFilePromise(fileName: string, zip: JSZip, filePath: string, filePromises: Promise<void | File>[], fileService: FileService) {
@@ -267,6 +301,7 @@ export class QuizExerciseService {
             fileService.getFile(filePath).then((fileResult) => {
                 zip.file(fileName, fileResult);
             }),
+            // TODO HERE ADD AN EXCEPTION CATCH THROW ERROR if file not can be read
         );
     }
 
@@ -282,7 +317,7 @@ export class QuizExerciseService {
         });
     }
 
-    exportDragAndDropAssets(question: QuizQuestion, zipFileName: string, zip: JSZip, filePromises: Promise<void | File>[], fileService: FileService) {
+    exportDragAndDropAssets(question: QuizQuestion, zip: JSZip, filePromises: Promise<void | File>[], fileService: FileService) {
         this.addFilePromise('background.png', zip, <string>(<DragAndDropQuestion>question).backgroundFilePath, filePromises, fileService);
         if ((<DragAndDropQuestion>question).dragItems) {
             const counter: number = 0;
@@ -292,7 +327,7 @@ export class QuizExerciseService {
                 }
             });
         }
-        this.downloadZipFromFilePromises(zip, filePromises, zipFileName);
+        // this.downloadZipFromFilePromises(zip, filePromises, zipFileName);
     }
 
     /**
