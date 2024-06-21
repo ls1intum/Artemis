@@ -15,7 +15,7 @@ import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 // Get the file names from the command line arguments
-const clientDirectory = '../../../../../src/main/webapp/app/';
+const clientDirectory = 'src/main/webapp/app/';
 const fileNames = getFilePaths(clientDirectory);
 
 let restCallFiles: Array<{fileName: string, restCalls: {method: string, url: string, line: number, filePath: string}[]}> = [];
