@@ -114,11 +114,10 @@ export class CompetencyAccordionComponent implements OnChanges {
 
                 if (scoreA !== scoreB) {
                     return scoreA - scoreB;
-                } else {
-                    const dueDateA = a.dueDate ?? a.startDate;
-                    const dueDateB = b.dueDate ?? b.startDate;
-                    return dueDateA?.diff(dueDateB) ?? 0;
                 }
+                const dueDateA = a.dueDate ?? a.startDate;
+                const dueDateB = b.dueDate ?? b.startDate;
+                return dueDateA?.diff(dueDateB) ?? 0;
             })
             .slice(0, 5);
     }
