@@ -17,16 +17,14 @@ export class RangeSliderComponent implements OnInit, OnDestroy {
     maxValue = 75;
 
     rangeInputElements?: NodeList;
-    progressElement?: any;
 
     eventListeners: { element: any; listener: any }[] = [];
 
-    sliderMinPercentage = '50%';
-    sliderMaxPercentage = '75%';
+    sliderMinPercentage = '0%';
+    sliderMaxPercentage = '100%';
 
     ngOnInit() {
         this.rangeInputElements = document.querySelectorAll('.range-input input');
-        this.progressElement = document.querySelector('.slider .progress') ?? undefined;
 
         this.rangeInputElements?.forEach((input) => {
             const listener = (event: any) => {
@@ -35,6 +33,8 @@ export class RangeSliderComponent implements OnInit, OnDestroy {
             input.addEventListener('input', listener);
             this.eventListeners.push({ element: input, listener });
         });
+
+        this.updateSliderPercentage();
     }
 
     ngOnDestroy() {
@@ -44,20 +44,17 @@ export class RangeSliderComponent implements OnInit, OnDestroy {
     }
 
     updateProgress(event: any) {
-        if (!this.progressElement) {
-            return;
-        }
-
         const isMinMaxDifferenceLessThanStepWidth = this.maxValue - this.minValue < this.stepWidth;
         if (isMinMaxDifferenceLessThanStepWidth) {
             this.ensureMinValueIsSmallerThanMaxValueViceVersa(event);
         }
 
+        this.updateSliderPercentage();
+    }
+
+    private updateSliderPercentage() {
         this.sliderMinPercentage = (this.minValue / this.generalMaxValue) * 100 + '%';
         this.sliderMaxPercentage = 100 - (this.maxValue / this.generalMaxValue) * 100 + '%';
-
-        this.progressElement.style.left = this.sliderMinPercentage;
-        this.progressElement.style.right = this.sliderMaxPercentage;
     }
 
     private ensureMinValueIsSmallerThanMaxValueViceVersa(event: any) {
