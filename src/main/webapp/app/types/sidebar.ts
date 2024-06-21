@@ -21,7 +21,7 @@ export type ChannelGroupCategory =
     | 'examChannels'
     | 'hiddenChannels';
 
-export type CollapseState = Record<TimeGroupCategory, boolean> | Record<ChannelGroupCategory, boolean>;
+export type CollapseState = Record<TimeGroupCategory, boolean> | Record<ChannelGroupCategory, boolean> | Record<ExamGroupCategory, boolean>;
 export type ChannelAccordionShowAdd = Record<ChannelGroupCategory, boolean>;
 export type ChannelTypeIcons = Record<ChannelGroupCategory, IconProp>;
 
