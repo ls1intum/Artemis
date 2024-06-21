@@ -68,6 +68,11 @@
                 "plagiarismCases": "Plagiatsfälle",
                 "gradingSystem": "Notenschlüssel"
             },
+            "exerciseFilter": {
+                "dueDateRange": "Zeitraum der Einreichungsfrist",
+                "achievedScore": "Erreichtes Ergebnis",
+                "achievablePoints": "Erreichbare Punktzahl"
+            },
             "exerciseList": {
                 "filter": "Filter ({{ num }})",
                 "releaseDate": "Veröffentlichungsdatum",

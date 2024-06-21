@@ -68,6 +68,11 @@
                 "plagiarismCases": "Plagiarism Cases",
                 "gradingSystem": "Grading System"
             },
+            "exerciseFilter": {
+                "dueDateRange": "Due Date Range",
+                "achievedScore": "Achieved Score",
+                "achievablePoints": "Achievable Points"
+            },
             "exerciseList": {
                 "filter": "Filter ({{ num }})",
                 "releaseDate": "Release Date",

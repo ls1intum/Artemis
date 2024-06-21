@@ -46,7 +46,7 @@
         </div>
 
         <div class="form-group">
-            <label class="form-control-label" jhiTranslate="Due Date Range"> </label>
+            <label class="form-control-label" jhiTranslate="artemisApp.courseOverview.exerciseFilter.dueDateRange"> </label>
         </div>
 
         <div class="form-group">
@@ -61,7 +61,7 @@
 
         @if (achievedScore && achievedScore.generalMin && achievedScore.generalMax && achievedScore.generalMin < achievedScore.generalMax) {
             <div class="form-group">
-                <label class="form-control-label" for="achieved-score-range-slider" jhiTranslate="Achieved Score"></label>
+                <label class="form-control-label" for="achieved-score-range-slider" jhiTranslate="artemisApp.courseOverview.exerciseFilter.achievedScore"></label>
                 <jhi-range-slider
                     id="achieved-score-range-slider"
                     [generalMinValue]="achievedScore.generalMin"
@@ -74,7 +74,7 @@
 
         @if (achievablePoints && achievablePoints.generalMin && achievablePoints.generalMax && achievablePoints.generalMin < achievablePoints.generalMax) {
             <div class="form-group">
-                <label class="form-control-label" for="achieved-points-range-slider" jhiTranslate="Achievable Points"></label>
+                <label class="form-control-label" for="achieved-points-range-slider" jhiTranslate="artemisApp.courseOverview.exerciseFilter.achievablePoints"></label>
                 <jhi-range-slider
                     id="achieved-points-range-slider"
                     [generalMinValue]="achievablePoints.generalMin"
