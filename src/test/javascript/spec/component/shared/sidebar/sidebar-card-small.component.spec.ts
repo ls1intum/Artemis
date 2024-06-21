@@ -17,6 +17,8 @@ describe('SidebarCardSmallComponent', () => {
     let component: SidebarCardSmallComponent;
     let fixture: ComponentFixture<SidebarCardSmallComponent>;
     let router: MockRouter;
+
+
     beforeEach(() => {
         router = new MockRouter();
         TestBed.configureTestingModule({

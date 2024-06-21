@@ -6,19 +6,19 @@ import java.util.Collection;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data repository for the SubmissionPolicy entity.
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface SubmissionPolicyRepository extends JpaRepository<SubmissionPolicy, Long> {
+public interface SubmissionPolicyRepository extends ArtemisJpaRepository<SubmissionPolicy, Long> {
 
     SubmissionPolicy findByProgrammingExerciseId(Long exerciseId);
 
