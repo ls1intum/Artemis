@@ -5,65 +5,71 @@
         <button type="button" class="btn-close" (click)="closeModal()"></button>
     </div>
     <div class="modal-body">
-        <div #firstCheckbox class="form-group">
-            <label for="exercise-categories-filter-selection" class="form-control-label" jhiTranslate="artemisApp.exercise.categories"></label>
+        @if (possibleCategories.length) {
+            <div #firstCheckbox class="form-group">
+                <label for="exercise-categories-filter-selection" class="form-control-label" jhiTranslate="artemisApp.exercise.categories"></label>
 
-            <input
-                id="exercise-categories-filter-selection"
-                type="text"
-                class="form-control"
-                [(ngModel)]="model"
-                [ngbTypeahead]="search"
-                [placeholder]="'artemisApp.exercise.selectCategories' | artemisTranslate"
-                (focus)="focus$.next($any($event).target.value)"
-                (click)="click$.next($any($event).target.value)"
-                #categoriesFilterSelection="ngbTypeahead"
-                (selectItem)="onSelectItem($event)"
-                [inputFormatter]="inputFormatter"
-                [resultFormatter]="resultFormatter"
-            />
+                <input
+                    id="exercise-categories-filter-selection"
+                    type="text"
+                    class="form-control"
+                    [(ngModel)]="model"
+                    [ngbTypeahead]="search"
+                    [placeholder]="'artemisApp.exercise.selectCategories' | artemisTranslate"
+                    (focus)="focus$.next($any($event).target.value)"
+                    (click)="click$.next($any($event).target.value)"
+                    #categoriesFilterSelection="ngbTypeahead"
+                    (selectItem)="onSelectItem($event)"
+                    [inputFormatter]="inputFormatter"
+                    [resultFormatter]="resultFormatter"
+                />
 
-            @if (selectedCategories.length > 0) {
-                <ul>
-                    @for (item of selectedCategories; track item) {
-                        <li>
-                            <jhi-custom-exercise-category-badge [category]="item" [displayRemoveButton]="true" />
-                            <button (click)="removeItem(item)">Remove</button>
-                        </li>
-                    }
-                </ul>
-            }
-        </div>
-
-        <div class="form-group">
-            <label for="exercise-type-filter-selection" class="form-control-label" jhiTranslate="artemisApp.courseStatistics.exerciseType"></label>
-            <div id="exercise-type-filter-selection">
-                @for (typeFilter of typeFilters; track typeFilter) {
-                    <div class="form-check form-check-inline">
-                        <label>
-                            <input type="checkbox" [(ngModel)]="typeFilter.checked" [name]="typeFilter.value" />
-                            <span [jhiTranslate]="typeFilter.name"></span>
-                            <fa-icon [icon]="typeFilter.icon" />
-                        </label>
-                    </div>
+                @if (selectedCategories.length > 0) {
+                    <ul>
+                        @for (item of selectedCategories; track item) {
+                            <li>
+                                <jhi-custom-exercise-category-badge [category]="item" [displayRemoveButton]="true" />
+                                <button (click)="removeItem(item)">Remove</button>
+                            </li>
+                        }
+                    </ul>
                 }
             </div>
-        </div>
+        }
+
+        @if (typeFilters?.length ?? 0 > 1) {
+            <div class="form-group">
+                <label for="exercise-type-filter-selection" class="form-control-label" jhiTranslate="artemisApp.courseStatistics.exerciseType"></label>
+                <div id="exercise-type-filter-selection">
+                    @for (typeFilter of typeFilters; track typeFilter) {
+                        <div class="form-check form-check-inline">
+                            <label>
+                                <input type="checkbox" [(ngModel)]="typeFilter.checked" [name]="typeFilter.value" />
+                                <span [jhiTranslate]="typeFilter.name"></span>
+                                <fa-icon [icon]="typeFilter.icon" />
+                            </label>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
 
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.courseOverview.exerciseFilter.dueDateRange"> </label>
-            TODO - not implemented yet
+            TODO: Implement Date Range Picker
         </div>
 
-        <div class="form-group">
-            <label for="difficulty-filter-selection" class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty"></label>
-            <div id="difficulty-filter-selection">
-                @for (difficultyFilter of difficultyFilters; track difficultyFilter) {
-                    <input type="checkbox" [(ngModel)]="difficultyFilter.checked" [name]="difficultyFilter.value" />
-                    <label [jhiTranslate]="difficultyFilter.name"></label>
-                }
+        @if (difficultyFilters?.length) {
+            <div class="form-group">
+                <label for="difficulty-filter-selection" class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty"></label>
+                <div id="difficulty-filter-selection">
+                    @for (difficultyFilter of difficultyFilters; track difficultyFilter) {
+                        <input type="checkbox" [(ngModel)]="difficultyFilter.checked" [name]="difficultyFilter.value" />
+                        <label [jhiTranslate]="difficultyFilter.name"></label>
+                    }
+                </div>
             </div>
-        </div>
+        }
 
         @if (achievedScore && achievedScore.generalMin && achievedScore.generalMax && achievedScore.generalMin < achievedScore.generalMax) {
             <div class="form-group">

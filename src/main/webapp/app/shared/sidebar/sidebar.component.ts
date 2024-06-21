@@ -138,6 +138,10 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         });
     }
 
+    // TODO handle course switching (reset filters when switching courses)
+
+    // TODO dont display the filter option if no filter option is reasonable
+
     private initializeFilterOptions() {
         // TODO do not display difficulties selection if not enough selection options
         this.initializeCategoryFilter();
