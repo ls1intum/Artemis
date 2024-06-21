@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
@@ -9,12 +9,12 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
     imports: [FormsModule, ReactiveFormsModule],
 })
 export class RangeSliderComponent implements OnInit, OnDestroy {
-    generalMaxValue = 100;
-    generalMinValue = 0;
-    stepWidth = 10;
+    @Input() minValue: number;
+    @Input() maxValue: number;
 
-    minValue = 50;
-    maxValue = 75;
+    @Input() generalMaxValue: number;
+    @Input() generalMinValue: number;
+    @Input() stepWidth: number = 1;
 
     get sliderMinPercentage(): number {
         return ((this.minValue - this.generalMinValue) / (this.generalMaxValue - this.generalMinValue)) * 100;

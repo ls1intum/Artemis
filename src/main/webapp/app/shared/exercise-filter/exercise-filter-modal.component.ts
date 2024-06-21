@@ -7,7 +7,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { DifficultyLevel, ExerciseType } from 'app/entities/exercise.model';
-import { DifficultyFilterOptions, ExerciseTypeFilterOptions } from 'app/shared/sidebar/sidebar.component';
+import { DifficultyFilterOptions, ExerciseTypeFilterOptions, RangeFilter } from 'app/shared/sidebar/sidebar.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { Observable, OperatorFunction, Subject, merge } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
@@ -57,6 +57,8 @@ export class ExerciseFilterModalComponent {
     difficultyFilters?: DifficultyFilterOptions;
 
     possibleCategories: ExerciseCategory[] = [];
+    achievablePoints?: RangeFilter;
+    achievedScore?: RangeFilter;
 
     constructor(private activeModal: NgbActiveModal) {}
 

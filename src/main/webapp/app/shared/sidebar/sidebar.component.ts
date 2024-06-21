@@ -130,6 +130,9 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         this.modalRef.componentInstance.difficultyFilters = this.difficultyFilters;
         this.modalRef.componentInstance.possibleCategories = this.possibleCategories;
         this.modalRef.componentInstance.typeFilters = this.exerciseTypesFilter;
+        this.modalRef.componentInstance.achievablePoints = this.achievablePoints;
+        this.modalRef.componentInstance.achievedScore = this.achievedScore;
+
         this.modalRef.componentInstance.filterApplied.subscribe((filteredSidebarData: SidebarData) => {
             this.sidebarData = filteredSidebarData;
         });

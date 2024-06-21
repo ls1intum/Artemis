@@ -59,10 +59,12 @@
             </div>
         </div>
 
-        <div class="form-group">
-            <label class="form-control-label" for="achieved-score-range-slider" jhiTranslate="Achieved Score"></label>
-            <jhi-range-slider id="achieved-score-range-slider" />
-        </div>
+        @if (achievedScore && achievedScore?.min && achievedScore.max && achievedScore.min < achievedScore.max) {
+            <div class="form-group">
+                <label class="form-control-label" for="achieved-score-range-slider" jhiTranslate="Achieved Score"></label>
+                <jhi-range-slider id="achieved-score-range-slider" [generalMinValue]="achievedScore.min" [generalMaxValue]="achievedScore.max" />
+            </div>
+        }
 
         <div class="form-group">
             <label class="form-control-label" for="achieved-points-range-slider" jhiTranslate="Achievable Points"></label>
