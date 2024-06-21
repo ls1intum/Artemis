@@ -16,16 +16,10 @@ dependencies {
     implementation 'com.github.javaparser:javaparser-symbol-solver-core:3.26.0'
     implementation 'com.github.javaparser:javaparser-core:3.26.0'
     implementation 'com.github.javaparser:javaparser-core-serialization:3.26.0'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.0'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.4.1'
     implementation rootProject.ext.springBootStarterWeb
 }
 
 application {
-    mainClassName = 'de.tum.cit.endpointanalysis.AnalysisOfEndpointConnections'
-}
-
-run {
-    if (project.hasProperty('appArgs')) {
-        args = project.appArgs.split(' ')
-    }
+    mainClassName = 'de/tum/in/www1/artemis/EndpointParser.java'
 }
