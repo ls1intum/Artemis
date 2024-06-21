@@ -21,6 +21,7 @@ jobs:
 
       - name: parse client sided REST-API calls
         run: |
+          pwd
           cd supporting_scripts/analysis-of-endpoint-connections/parser/src/main/typeScript
           npm install
           tsc -p tsconfig.analysisOfEndpointConnections.json
