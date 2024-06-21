@@ -9,19 +9,19 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
     imports: [FormsModule, ReactiveFormsModule],
 })
 export class RangeSliderComponent implements OnInit, OnDestroy {
-    @Input() minValue: number;
-    @Input() maxValue: number;
+    @Input() selectedMinValue: number;
+    @Input() selectedMaxValue: number;
 
     @Input() generalMaxValue: number;
     @Input() generalMinValue: number;
     @Input() stepWidth: number = 1;
 
     get sliderMinPercentage(): number {
-        return ((this.minValue - this.generalMinValue) / (this.generalMaxValue - this.generalMinValue)) * 100;
+        return ((this.selectedMinValue - this.generalMinValue) / (this.generalMaxValue - this.generalMinValue)) * 100;
     }
 
     get sliderMaxPercentage(): number {
-        return 100 - ((this.maxValue - this.generalMinValue) / (this.generalMaxValue - this.generalMinValue)) * 100;
+        return 100 - ((this.selectedMaxValue - this.generalMinValue) / (this.generalMaxValue - this.generalMinValue)) * 100;
     }
 
     rangeInputElements?: NodeList;
@@ -48,12 +48,12 @@ export class RangeSliderComponent implements OnInit, OnDestroy {
     private ensureMinValueIsSmallerThanMaxValueViceVersa(event: any) {
         const minSliderIsUpdated = event.target.className.includes('range-min');
         if (minSliderIsUpdated) {
-            if (this.minValue >= this.maxValue) {
-                this.minValue = this.maxValue - this.stepWidth;
+            if (this.selectedMinValue >= this.selectedMaxValue) {
+                this.selectedMinValue = this.selectedMaxValue - this.stepWidth;
             }
         } else {
-            if (this.maxValue <= this.minValue) {
-                this.maxValue = this.minValue + this.stepWidth;
+            if (this.selectedMaxValue <= this.selectedMinValue) {
+                this.selectedMaxValue = this.selectedMinValue + this.stepWidth;
             }
         }
     }

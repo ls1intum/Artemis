@@ -14,7 +14,7 @@ import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/part
 
 export type ExerciseTypeFilterOptions = { name: string; value: ExerciseType; checked: boolean }[];
 export type DifficultyFilterOptions = { name: string; value: DifficultyLevel; checked: boolean }[];
-export type RangeFilter = { min: number; max: number };
+export type RangeFilter = { generalMin: number; generalMax: number; selectedMin: number; selectedMax: number };
 
 // TODO allow to filter for no difficulty?
 const DEFAULT_DIFFICULTIES_FILTER: DifficultyFilterOptions = [
@@ -205,7 +205,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
             }
         });
 
-        this.achievablePoints = { min: minAchievablePoints, max: maxAchievablePoints };
-        this.achievedScore = { min: minAchievedScore, max: maxAchievedScore };
+        this.achievablePoints = { generalMin: minAchievablePoints, generalMax: maxAchievablePoints, selectedMin: minAchievablePoints, selectedMax: maxAchievablePoints };
+        this.achievedScore = { generalMin: minAchievedScore, generalMax: maxAchievedScore, selectedMin: minAchievedScore, selectedMax: maxAchievedScore };
     }
 }

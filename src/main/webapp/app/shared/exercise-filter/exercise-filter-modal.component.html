@@ -59,17 +59,31 @@
             </div>
         </div>
 
-        @if (achievedScore && achievedScore?.min && achievedScore.max && achievedScore.min < achievedScore.max) {
+        @if (achievedScore && achievedScore.generalMin && achievedScore.generalMax && achievedScore.generalMin < achievedScore.generalMax) {
             <div class="form-group">
                 <label class="form-control-label" for="achieved-score-range-slider" jhiTranslate="Achieved Score"></label>
-                <jhi-range-slider id="achieved-score-range-slider" [generalMinValue]="achievedScore.min" [generalMaxValue]="achievedScore.max" />
+                <jhi-range-slider
+                    id="achieved-score-range-slider"
+                    [generalMinValue]="achievedScore.generalMin"
+                    [generalMaxValue]="achievedScore.generalMax"
+                    [selectedMinValue]="achievedScore.selectedMin"
+                    [selectedMaxValue]="achievedScore.selectedMax"
+                />
             </div>
         }
 
-        <div class="form-group">
-            <label class="form-control-label" for="achieved-points-range-slider" jhiTranslate="Achievable Points"></label>
-            <jhi-range-slider id="achieved-points-range-slider" />
-        </div>
+        @if (achievablePoints && achievablePoints.generalMin && achievablePoints.generalMax && achievablePoints.generalMin < achievablePoints.generalMax) {
+            <div class="form-group">
+                <label class="form-control-label" for="achieved-points-range-slider" jhiTranslate="Achievable Points"></label>
+                <jhi-range-slider
+                    id="achieved-points-range-slider"
+                    [generalMinValue]="achievablePoints.generalMin"
+                    [generalMaxValue]="achievablePoints.generalMax"
+                    [selectedMinValue]="achievablePoints.selectedMin"
+                    [selectedMaxValue]="achievablePoints.selectedMax"
+                />
+            </div>
+        }
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-primary" (click)="applyFilter()">OK</button>
