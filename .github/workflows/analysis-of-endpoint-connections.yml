@@ -21,8 +21,6 @@ jobs:
 
       - name: parse client sided REST-API calls
         run: |
-#          pwd
-#          ls
           cd ..
           ls
 #          cd supporting_scripts/analysis-of-endpoint-connections/parser/src/main/typeScript
