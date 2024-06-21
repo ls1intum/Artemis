@@ -104,7 +104,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     private teamAssignmentUpdateListener: Subscription;
     private quizExercisesChannel: string;
     hasUnreadMessages: boolean;
-    messagesRouteLoaded: boolean;
+    communicationRouteLoaded: boolean;
     isProduction = true;
     isTestServer = false;
     pageTitle: string;
@@ -494,7 +494,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             return;
         }
 
-        if (!this.conversationServiceInstantiated && this.messagesRouteLoaded) {
+        if (!this.conversationServiceInstantiated && this.communicationRouteLoaded) {
             this.metisConversationService
                 .setUpConversationService(this.course!)
                 .pipe(takeUntil(this.ngUnsubscribe))
@@ -550,7 +550,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     onSubRouteActivate(componentRef: any) {
         this.getPageTitle();
         this.getShowRefreshButton();
-        this.messagesRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'communication';
+        this.communicationRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'communication';
 
         this.setUpConversationService();
 
