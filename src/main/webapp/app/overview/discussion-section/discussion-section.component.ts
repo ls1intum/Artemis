@@ -175,12 +175,6 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     }
 
     /**
-     * defines a function that returns the post id as unique identifier,
-     * by this means, Angular determines which post in the collection of posts has to be reloaded/destroyed on changes
-     */
-    postsTrackByFn = (index: number, post: Post): number => post.id!;
-
-    /**
      * makes discussion section expandable by configuring 'interact'
      */
     ngAfterViewInit(): void {

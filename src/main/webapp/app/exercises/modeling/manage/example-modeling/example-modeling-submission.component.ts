@@ -66,25 +66,21 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
             text: 'artemisApp.exampleSubmission.legend.positiveScore',
             icon: faCheck as IconProp,
             color: 'green',
-            size: '2em',
         },
         {
             text: 'artemisApp.exampleSubmission.legend.negativeScore',
             icon: faTimes as IconProp,
             color: 'red',
-            size: '2em',
         },
         {
             text: 'artemisApp.exampleSubmission.legend.feedbackWithoutScore',
             icon: faExclamation as IconProp,
             color: 'blue',
-            size: '1.66em',
         },
         {
             text: 'artemisApp.exampleSubmission.legend.incorrectAssessment',
             icon: faExclamationTriangle as IconProp,
             color: 'yellow',
-            size: '2em',
         },
     ];
 
