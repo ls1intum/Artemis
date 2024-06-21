@@ -179,7 +179,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             event.source.element.nativeElement.getBoundingClientRect().top -
             this.wrapper.nativeElement.getBoundingClientRect().top +
             this.getElementClientHeight(this.resizePlaceholder);
-        this.adjustEditorDimensions();
     }
 
     getEditorHeight(targetHeight?: number): number {
