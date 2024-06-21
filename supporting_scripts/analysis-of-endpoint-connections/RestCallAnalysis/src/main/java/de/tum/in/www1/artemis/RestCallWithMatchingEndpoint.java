@@ -1,8 +1,11 @@
 package de.tum.in.www1.artemis;
 
 public class RestCallWithMatchingEndpoint {
+
     private EndpointInformation matchingEndpoint;
+
     private RestCallInformation restCallInformation;
+
     private String filePath;
 
     public RestCallWithMatchingEndpoint(EndpointInformation matchingEndpoint, RestCallInformation restCallInformation, String filePath) {

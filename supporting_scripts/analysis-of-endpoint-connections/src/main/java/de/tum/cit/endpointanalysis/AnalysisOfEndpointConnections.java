@@ -5,15 +5,22 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.ArrayList;
 import java.util.stream.Stream;
 
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
@@ -22,14 +29,6 @@ import com.github.javaparser.ast.expr.AnnotationExpr;
 import com.github.javaparser.ast.expr.MemberValuePair;
 import com.github.javaparser.ast.expr.NormalAnnotationExpr;
 import com.github.javaparser.ast.expr.SingleMemberAnnotationExpr;
-
-import com.github.javaparser.ParserConfiguration;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 
 public class AnalysisOfEndpointConnections {
 
@@ -45,25 +44,23 @@ public class AnalysisOfEndpointConnections {
 
         String[] filesToParse = {};
         try (Stream<Path> paths = Files.walk(Paths.get(directoryPath))) {
-            filesToParse = paths.filter(Files::isRegularFile)
-                .filter(path -> path.toString().endsWith(".java"))
-                .map(Path::toString)
-                .toArray(String[]::new);
-        } catch (IOException e) {
+            filesToParse = paths.filter(Files::isRegularFile).filter(path -> path.toString().endsWith(".java")).map(Path::toString).toArray(String[]::new);
+        }
+        catch (IOException e) {
 
         }
 
         parseServerEndpoints(filesToParse);
         analyzeEndpoints();
         printEndpointAnalysisResult();
-//        analyzeRestCalls();
+        // analyzeRestCalls();
     }
 
     private static void parseServerEndpoints(String[] filePaths) {
         List<EndpointClassInformation> endpointClasses = new ArrayList<>();
 
-        final Set<String> httpMethodClasses = Set.of(GetMapping.class.getSimpleName(), PostMapping.class.getSimpleName(), PutMapping.class.getSimpleName(), DeleteMapping.class.getSimpleName(),
-            PatchMapping.class.getSimpleName(), RequestMapping.class.getSimpleName());
+        final Set<String> httpMethodClasses = Set.of(GetMapping.class.getSimpleName(), PostMapping.class.getSimpleName(), PutMapping.class.getSimpleName(),
+                DeleteMapping.class.getSimpleName(), PatchMapping.class.getSimpleName(), RequestMapping.class.getSimpleName());
 
         List<String> filesFailedToParse = new ArrayList<>();
 
@@ -73,19 +70,20 @@ public class AnalysisOfEndpointConnections {
                 List<ClassOrInterfaceDeclaration> classes = compilationUnit.findAll(ClassOrInterfaceDeclaration.class);
                 for (ClassOrInterfaceDeclaration javaClass : classes) {
                     List<EndpointInformation> endpoints = new ArrayList<>();
-                    final String[] classRequestMapping = {""};
+                    final String[] classRequestMapping = { "" };
                     Optional<AnnotationExpr> requestMappingOptional = javaClass.getAnnotations().stream()
-                        .filter(annotation -> annotation.getNameAsString().equals(RequestMapping.class.getSimpleName())).findFirst();
+                            .filter(annotation -> annotation.getNameAsString().equals(RequestMapping.class.getSimpleName())).findFirst();
 
                     boolean hasEndpoint = javaClass.getMethods().stream().flatMap(method -> method.getAnnotations().stream())
-                        .anyMatch(annotation -> httpMethodClasses.contains(annotation.getNameAsString()));
+                            .anyMatch(annotation -> httpMethodClasses.contains(annotation.getNameAsString()));
 
                     if (hasEndpoint) {
                         requestMappingOptional.ifPresent(annotation -> {
                             if (annotation instanceof SingleMemberAnnotationExpr) {
                                 SingleMemberAnnotationExpr single = (SingleMemberAnnotationExpr) annotation;
                                 classRequestMapping[0] = single.getMemberValue().toString();
-                            } else if (annotation instanceof NormalAnnotationExpr) {
+                            }
+                            else if (annotation instanceof NormalAnnotationExpr) {
                                 NormalAnnotationExpr normal = (NormalAnnotationExpr) annotation;
                                 Optional<MemberValuePair> pathOptional = normal.getPairs().stream().filter(pair -> "path".equals(pair.getNameAsString())).findFirst();
                                 pathOptional.ifPresent(pair -> classRequestMapping[0] = pair.getValue().toString());
@@ -96,12 +94,13 @@ public class AnalysisOfEndpointConnections {
                     for (MethodDeclaration method : javaClass.getMethods()) {
                         for (AnnotationExpr annotation : method.getAnnotations()) {
                             if (httpMethodClasses.contains(annotation.getNameAsString())) {
-                                final String[] annotationPathValue = {""};
+                                final String[] annotationPathValue = { "" };
 
                                 if (annotation instanceof SingleMemberAnnotationExpr) {
                                     SingleMemberAnnotationExpr single = (SingleMemberAnnotationExpr) annotation;
                                     annotationPathValue[0] = single.getMemberValue().toString();
-                                } else if (annotation instanceof NormalAnnotationExpr) {
+                                }
+                                else if (annotation instanceof NormalAnnotationExpr) {
                                     NormalAnnotationExpr normal = (NormalAnnotationExpr) annotation;
                                     Optional<MemberValuePair> annotationPathOptional = normal.getPairs().stream().filter(pair -> "path".equals(pair.getNameAsString())).findFirst();
                                     annotationPathOptional.ifPresent(pair -> {
@@ -110,19 +109,19 @@ public class AnalysisOfEndpointConnections {
                                 }
 
                                 List<String> annotations = method.getAnnotations().stream().filter(a -> !a.equals(annotation)).map(a -> a.toString()).toList();
-                                EndpointInformation endpointInformation = new EndpointInformation(classRequestMapping[0], method.getNameAsString(),
-                                    annotation.getNameAsString(), annotationPathValue[0], javaClass.getNameAsString(), method.getBegin().get().line,
-                                    annotations);
+                                EndpointInformation endpointInformation = new EndpointInformation(classRequestMapping[0], method.getNameAsString(), annotation.getNameAsString(),
+                                        annotationPathValue[0], javaClass.getNameAsString(), method.getBegin().get().line, annotations);
                                 endpoints.add(endpointInformation);
                             }
                         }
                     }
                     if (!endpoints.isEmpty()) {
                         endpointClasses.add(new EndpointClassInformation(javaClass.getNameAsString(),
-                            requestMappingOptional.isPresent() ? requestMappingOptional.get().toString() : "", endpoints));
+                                requestMappingOptional.isPresent() ? requestMappingOptional.get().toString() : "", endpoints));
                     }
                 }
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 filesFailedToParse.add(filePath);
             }
         }
@@ -146,11 +145,11 @@ public class AnalysisOfEndpointConnections {
 
         try {
             List<EndpointClassInformation> endpointClasses = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/endpoints.json"),
-                new TypeReference<List<EndpointClassInformation>>() {
-                });
+                    new TypeReference<List<EndpointClassInformation>>() {
+                    });
             List<RestCallFileInformation> restCallFiles = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/restCalls.json"),
-                new TypeReference<List<RestCallFileInformation>>() {
-                });
+                    new TypeReference<List<RestCallFileInformation>>() {
+                    });
 
             List<UsedEndpoints> endpointsAndMatchingRestCalls = new ArrayList<>();
             List<EndpointInformation> unusedEndpoints = new ArrayList<>();
@@ -164,8 +163,8 @@ public class AnalysisOfEndpointConnections {
                             String endpointURI = endpoint.buildComparableEndpointUri();
                             String restCallURI = restCall.buildComparableRestCallUri();
                             if (endpointURI.equals(restCallURI) && endpoint.getHttpMethod().equals(restCall.getMethod())) {
-//                                System.out.println("Matching REST call found.\nURI: " + endpoint.getURI() + "\nHTTP method: " + restCall.getMethod());
-//                                System.out.println("---------------------------------------------");
+                                // System.out.println("Matching REST call found.\nURI: " + endpoint.getURI() + "\nHTTP method: " + restCall.getMethod());
+                                // System.out.println("---------------------------------------------");
                                 matchingRestCalls.add(restCall);
                             }
                         }
@@ -173,7 +172,8 @@ public class AnalysisOfEndpointConnections {
 
                     if (matchingRestCalls.isEmpty()) {
                         unusedEndpoints.add(endpoint);
-                    } else {
+                    }
+                    else {
                         endpointsAndMatchingRestCalls.add(new UsedEndpoints(endpoint, matchingRestCalls, endpointClass.getFilePath()));
                     }
                 }
@@ -192,9 +192,10 @@ public class AnalysisOfEndpointConnections {
         EndpointAnalysis endpointsAndMatchingRestCalls = null;
         try {
             endpointsAndMatchingRestCalls = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/endpointsAndMatchingRestCalls.json"),
-                new TypeReference<EndpointAnalysis>() {
-                });
-        } catch (IOException e) {
+                    new TypeReference<EndpointAnalysis>() {
+                    });
+        }
+        catch (IOException e) {
             throw new RuntimeException(e);
         }
         endpointsAndMatchingRestCalls.getUnusedEndpoints().stream().forEach(endpoint -> {
@@ -215,11 +216,11 @@ public class AnalysisOfEndpointConnections {
 
         try {
             List<EndpointClassInformation> endpointClasses = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/endpoints.json"),
-                new TypeReference<List<EndpointClassInformation>>() {
-                });
+                    new TypeReference<List<EndpointClassInformation>>() {
+                    });
             List<RestCallInformation> restCalls = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/restCalls.json"),
-                new TypeReference<List<RestCallInformation>>() {
-                });
+                    new TypeReference<List<RestCallInformation>>() {
+                    });
 
             for (RestCallInformation restCall : restCalls) {
                 boolean matchingEndpointFound = false;

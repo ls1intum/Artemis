@@ -21,11 +21,11 @@ public class RestCallAnalyzer {
 
         try {
             List<EndpointClassInformation> endpointClasses = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/endpoints.json"),
-                new TypeReference<List<EndpointClassInformation>>() {
-                });
+                    new TypeReference<List<EndpointClassInformation>>() {
+                    });
             List<RestCallFileInformation> restCalls = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/restCalls.json"),
-                new TypeReference<List<RestCallFileInformation>>() {
-                });
+                    new TypeReference<List<RestCallFileInformation>>() {
+                    });
 
             List<RestCallWithMatchingEndpoint> restCallsWithMatchingEndpoint = new ArrayList<>();
             List<RestCallInformation> restCallsWithoutMatchingEndpoint = new ArrayList<>();
@@ -46,7 +46,8 @@ public class RestCallAnalyzer {
 
                     if (matchingEndpoint.isPresent()) {
                         restCallsWithMatchingEndpoint.add(new RestCallWithMatchingEndpoint(matchingEndpoint.get(), restCall, restCall.getFilePath()));
-                    } else {
+                    }
+                    else {
                         restCallsWithoutMatchingEndpoint.add(restCall);
                     }
                 }
@@ -66,9 +67,10 @@ public class RestCallAnalyzer {
 
         try {
             restCallsAndMatchingEndpoints = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/restCallsAndMatchingEndpoints.json"),
-                new TypeReference<RestCallAnalysis>() {
-                });
-        } catch (IOException e) {
+                    new TypeReference<RestCallAnalysis>() {
+                    });
+        }
+        catch (IOException e) {
             throw new RuntimeException(e);
         }
 

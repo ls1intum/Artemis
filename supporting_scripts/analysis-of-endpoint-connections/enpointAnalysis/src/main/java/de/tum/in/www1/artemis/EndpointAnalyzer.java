@@ -9,6 +9,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class EndpointAnalyzer {
+
     public static void main(String[] args) {
         analyzeEndpoints();
         printEndpointAnalysisResult();
@@ -19,11 +20,11 @@ public class EndpointAnalyzer {
 
         try {
             List<EndpointClassInformation> endpointClasses = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/endpoints.json"),
-                new TypeReference<List<EndpointClassInformation>>() {
-                });
+                    new TypeReference<List<EndpointClassInformation>>() {
+                    });
             List<RestCallFileInformation> restCallFiles = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/restCalls.json"),
-                new TypeReference<List<RestCallFileInformation>>() {
-                });
+                    new TypeReference<List<RestCallFileInformation>>() {
+                    });
 
             List<UsedEndpoints> endpointsAndMatchingRestCalls = new ArrayList<>();
             List<EndpointInformation> unusedEndpoints = new ArrayList<>();
@@ -44,7 +45,8 @@ public class EndpointAnalyzer {
 
                     if (matchingRestCalls.isEmpty()) {
                         unusedEndpoints.add(endpoint);
-                    } else {
+                    }
+                    else {
                         endpointsAndMatchingRestCalls.add(new UsedEndpoints(endpoint, matchingRestCalls, endpointClass.getFilePath()));
                     }
                 }
@@ -63,9 +65,10 @@ public class EndpointAnalyzer {
         EndpointAnalysis endpointsAndMatchingRestCalls = null;
         try {
             endpointsAndMatchingRestCalls = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/endpointsAndMatchingRestCalls.json"),
-                new TypeReference<EndpointAnalysis>() {
-                });
-        } catch (IOException e) {
+                    new TypeReference<EndpointAnalysis>() {
+                    });
+        }
+        catch (IOException e) {
             throw new RuntimeException(e);
         }
         endpointsAndMatchingRestCalls.getUnusedEndpoints().stream().forEach(endpoint -> {

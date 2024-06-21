@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class EndpointClassInformation {

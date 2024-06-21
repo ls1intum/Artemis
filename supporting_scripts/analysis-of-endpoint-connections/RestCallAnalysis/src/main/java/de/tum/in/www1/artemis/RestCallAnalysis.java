@@ -3,7 +3,9 @@ package de.tum.in.www1.artemis;
 import java.util.List;
 
 public class RestCallAnalysis {
+
     private List<RestCallWithMatchingEndpoint> restCallsWithMatchingEndpoints;
+
     private List<RestCallInformation> restCallsWithoutMatchingEndpoints;
 
     public RestCallAnalysis(List<RestCallWithMatchingEndpoint> restCallsWithMatchingEndpoints, List<RestCallInformation> restCallsWithoutMatchingEndpoints) {

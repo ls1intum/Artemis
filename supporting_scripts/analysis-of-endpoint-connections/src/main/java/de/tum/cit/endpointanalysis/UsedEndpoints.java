@@ -3,8 +3,11 @@ package de.tum.cit.endpointanalysis;
 import java.util.List;
 
 public class UsedEndpoints {
+
     private EndpointInformation endpointInformation;
+
     private List<RestCallInformation> matchingRestCalls;
+
     private String filePath;
 
     public UsedEndpoints(EndpointInformation endpointInformation, List<RestCallInformation> matchingRestCalls, String filePath) {
