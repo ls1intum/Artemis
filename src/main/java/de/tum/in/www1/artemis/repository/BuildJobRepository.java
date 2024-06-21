@@ -11,7 +11,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,13 +18,14 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.BuildJob;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.ResultBuildJob;
 import de.tum.in.www1.artemis.service.dto.BuildJobResultCountDTO;
 
 @Profile(PROFILE_CORE)
 @Repository
-public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSpecificationExecutor<BuildJob> {
+public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>, JpaSpecificationExecutor<BuildJob> {
 
     Optional<BuildJob> findFirstByParticipationIdOrderByBuildStartDateDesc(Long participationId);
 
