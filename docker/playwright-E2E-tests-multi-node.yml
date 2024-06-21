@@ -5,7 +5,7 @@
 services:
   artemis-app-node-1:
     &artemis-app-base
-    image: ghcr.io/ls1intum/artemis:${ARTEMIS_DOCKER_TAG:-latest}
+    image: ghcr.io/ls1intum/artemis
     extends:
       file: ./artemis.yml
       service: artemis-app
