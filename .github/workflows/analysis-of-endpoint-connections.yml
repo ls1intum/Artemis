@@ -1,51 +1,48 @@
 name: Analysis-of-Endpoint-Connections
 
 on:
-  pull_request:
-    types:
-      - opened
-      - synchronize
+  push:
     paths:
       - 'src/main/java/**'
       - 'src/main/webapp/**'
 
 jobs:
-  analysis-of-endpoint-connections:
+  parse-rest-calls-and-endpoints:
     timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Get list of modified files
-        run: |
-          git diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD > modified_files.txt
-
-      # Analyze the client sided REST-API calls
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.8.0'
-
-      - name: Install and compile TypeScript
-        run: |
-          cd supporting_scripts/analysis-of-endpoint-connections/src/main/typeScript/
-          npm install
-          tsc -p tsconfig.analysisOfEndpointConnections.json
-
-      - name: Run analysis-of-endpoint-connections-client
-        run: |
-          node supporting_scripts/analysis-of-endpoint-connections/src/main/typeScript/AnalysisOfEndpointConnectionsClient.js $(cat modified_files.txt)
-
-      # Analyze the server sided endpoints
       - name: Set up JDK 21
         uses: actions/setup-java@v2
         with:
           java-version: '21'
           distribution: 'adopt'
 
-      - name: Run analysis-of-endpoint-connections
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.8.0'
+
+      - name: parse client sided REST-API calls
         run: |
-          ./gradlew :supporting_scripts:analysis-of-endpoint-connections:run --args="$(cat modified_files.txt)"
+          cd supporting_scripts/analysis-of-endpoint-connections/parser/src/main/typeScript
+          npm install
+          tsc -p tsconfig.analysisOfEndpointConnections.json
+          node supporting_scripts/analysis-of-endpoint-connections/parser/src/main/typeScript/AnalysisOfEndpointConnectionsClient.js
+
+  analysis-of-endpoint-connections:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up JDK 21
+        uses: actions/setup-java@v2
+        with:
+          java-version: '21'
+          distribution: 'adopt'
+
+      - name: Analyze Endpoints
+        run:
+          ./gradlew :supporting_scripts:analysis-of-endpoint-connections:endpointAnalysis:run
+
+      - name: Run analysis-of-endpoint-connections
+        run:
+          ./gradlew :supporting_scripts:analysis-of-endpoint-connections:RestCallAnalysis:run
