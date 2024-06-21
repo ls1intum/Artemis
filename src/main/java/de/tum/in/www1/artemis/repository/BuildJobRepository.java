@@ -66,7 +66,7 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             )
             FROM BuildJob b
             WHERE b.buildStartDate >= :fromDateTime
-                AND :courseId IS NULL OR b.courseId = :courseId
+                AND (:courseId IS NULL OR b.courseId = :courseId)
             GROUP BY b.buildStatus
             """)
     List<BuildJobResultCountDTO> getBuildJobsResultsStatistics(@Param("fromDateTime") ZonedDateTime fromDateTime, @Param("courseId") Long courseId);

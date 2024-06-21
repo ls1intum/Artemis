@@ -153,12 +153,28 @@ export class BuildQueueService {
 
     /**
      * Get BuildJobStatistics
+     *
+     * @param span the time span
      * @returns BuildJobStatistics
      */
     getBuildJobStatistics(span: SpanType): Observable<BuildJobStatistics> {
         return this.http.get<BuildJobStatistics>(`${this.adminResourceUrl}/build-job-statistics`, { params: { span } }).pipe(
             catchError((err) => {
                 return throwError(() => new Error(`Failed to get build job statistics\n${err.message}`));
+            }),
+        );
+    }
+
+    /**
+     * Get BuildJobStatistics for a specific course
+     * @param courseId the id of the course
+     * @param span the time span
+     * @returns BuildJobStatistics
+     */
+    getBuildJobStatisticsForCourse(courseId: number, span: SpanType): Observable<BuildJobStatistics> {
+        return this.http.get<BuildJobStatistics>(`${this.resourceUrl}/courses/${courseId}/build-job-statistics`, { params: { span } }).pipe(
+            catchError((err) => {
+                return throwError(() => new Error(`Failed to get build job statistics for course ${courseId}\n${err.message}`));
             }),
         );
     }

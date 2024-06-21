@@ -28,7 +28,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     runningBuildJobs: BuildJob[] = [];
     finishedBuildJobs: FinishedBuildJob[] = [];
     courseChannels: string[] = [];
-    buildJobStatistics: BuildJobStatistics;
+    buildJobStatistics = new BuildJobStatistics();
 
     //icons
     readonly faTimes = faTimes;
@@ -53,7 +53,6 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     successfulBuildsPercentage: string;
     failedBuildsPercentage: string;
     cancelledBuildsPercentage: string;
-    showOverview = false;
     currentSpan: SpanType = SpanType.WEEK;
 
     ngxData: NgxChartsSingleSeriesDataEntry[] = [];
@@ -77,12 +76,9 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
         this.buildDurationInterval = setInterval(() => {
             this.updateBuildJobDuration();
         }, 1000); // 1 second
+        this.getBuildJobStatistics(this.currentSpan);
         this.loadFinishedBuildJobs();
         this.initWebsocketSubscription();
-        this.showOverview = !this.route.snapshot.paramMap.get('courseId'); // Should only show the overview in admin view
-        if (this.showOverview) {
-            this.getBuildJobStatistics(this.currentSpan);
-        }
     }
 
     /**
@@ -317,13 +313,27 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      * Get Build Job Result statistics. Should be called in admin view only.
      */
     getBuildJobStatistics(span: SpanType = SpanType.WEEK) {
-        this.buildQueueService.getBuildJobStatistics(span).subscribe({
-            next: (res: BuildJobStatistics) => {
-                this.updateDisplayedBuildJobStatistics(res);
-            },
-            error: (res: HttpErrorResponse) => {
-                onError(this.alertService, res);
-            },
+        this.route.paramMap.pipe(take(1)).subscribe((params) => {
+            const courseId = Number(params.get('courseId'));
+            if (courseId) {
+                this.buildQueueService.getBuildJobStatisticsForCourse(courseId, span).subscribe({
+                    next: (res: BuildJobStatistics) => {
+                        this.updateDisplayedBuildJobStatistics(res);
+                    },
+                    error: (res: HttpErrorResponse) => {
+                        onError(this.alertService, res);
+                    },
+                });
+            } else {
+                this.buildQueueService.getBuildJobStatistics(span).subscribe({
+                    next: (res: BuildJobStatistics) => {
+                        this.updateDisplayedBuildJobStatistics(res);
+                    },
+                    error: (res: HttpErrorResponse) => {
+                        onError(this.alertService, res);
+                    },
+                });
+            }
         });
     }
 
@@ -333,9 +343,15 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      */
     updateDisplayedBuildJobStatistics(stats: BuildJobStatistics) {
         this.buildJobStatistics = stats;
-        this.successfulBuildsPercentage = ((stats.successfulBuilds / stats.totalBuilds) * 100).toFixed(2) + '%';
-        this.failedBuildsPercentage = ((stats.failedBuilds / stats.totalBuilds) * 100).toFixed(2) + '%';
-        this.cancelledBuildsPercentage = ((stats.cancelledBuilds / stats.totalBuilds) * 100).toFixed(2) + '%';
+        if (stats.totalBuilds === 0) {
+            this.successfulBuildsPercentage = '-%';
+            this.failedBuildsPercentage = '-%';
+            this.cancelledBuildsPercentage = '-%';
+        } else {
+            this.successfulBuildsPercentage = ((stats.successfulBuilds / stats.totalBuilds) * 100).toFixed(2) + '%';
+            this.failedBuildsPercentage = ((stats.failedBuilds / stats.totalBuilds) * 100).toFixed(2) + '%';
+            this.cancelledBuildsPercentage = ((stats.cancelledBuilds / stats.totalBuilds) * 100).toFixed(2) + '%';
+        }
         this.ngxData = [
             { name: 'Successful', value: stats.successfulBuilds },
             { name: 'Failed', value: stats.failedBuilds },

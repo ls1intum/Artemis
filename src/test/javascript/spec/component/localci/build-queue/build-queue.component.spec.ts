@@ -15,6 +15,8 @@ import { TriggeredByPushTo } from 'app/entities/repository-info.model';
 import { waitForAsync } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { SortingOrder } from 'app/shared/table/pageable-table';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { PieChartModule } from '@swimlane/ngx-charts';
 
 describe('BuildQueueComponent', () => {
     let component: BuildQueueComponent;
@@ -35,6 +37,7 @@ describe('BuildQueueComponent', () => {
         getFinishedBuildJobsByCourseId: jest.fn(),
         getFinishedBuildJobs: jest.fn(),
         getBuildJobStatistics: jest.fn(),
+        getBuildJobStatisticsForCourse: jest.fn(),
     };
 
     const accountServiceMock = { identity: jest.fn(), getAuthenticationState: jest.fn() };
@@ -242,11 +245,11 @@ describe('BuildQueueComponent', () => {
     };
 
     beforeEach(waitForAsync(() => {
-        mockActivatedRoute = { params: of({ courseId: testCourseId }), snapshot: { paramMap: new Map([]) } };
+        mockActivatedRoute = { params: of({ courseId: testCourseId }) };
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgxDatatableModule],
-            declarations: [BuildQueueComponent, MockPipe(ArtemisTranslatePipe), MockComponent(DataTableComponent)],
+            declarations: [BuildQueueComponent, MockPipe(ArtemisTranslatePipe), MockComponent(DataTableComponent), ArtemisSharedComponentModule, PieChartModule],
             providers: [
                 { provide: BuildQueueService, useValue: mockBuildQueueService },
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },
@@ -310,7 +313,7 @@ describe('BuildQueueComponent', () => {
         mockBuildQueueService.getQueuedBuildJobsByCourseId.mockReturnValue(of(mockQueuedJobs));
         mockBuildQueueService.getRunningBuildJobsByCourseId.mockReturnValue(of(mockRunningJobs));
         mockBuildQueueService.getFinishedBuildJobsByCourseId.mockReturnValue(of(mockFinishedJobsResponse));
-        mockBuildQueueService.getBuildJobStatistics.mockReturnValue(of(mockBuildJobStatistics));
+        mockBuildQueueService.getBuildJobStatisticsForCourse.mockReturnValue(of(mockBuildJobStatistics));
 
         // Initialize the component
         component.ngOnInit();
@@ -319,36 +322,13 @@ describe('BuildQueueComponent', () => {
         expect(mockBuildQueueService.getQueuedBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId);
         expect(mockBuildQueueService.getRunningBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId);
         expect(mockBuildQueueService.getFinishedBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId, request);
+        expect(mockBuildQueueService.getBuildJobStatisticsForCourse).toHaveBeenCalledWith(testCourseId, SpanType.WEEK);
 
         // Expectations: The component's properties are set with the mock data
         expect(component.queuedBuildJobs).toEqual(mockQueuedJobs);
         expect(component.runningBuildJobs).toEqual(mockRunningJobs);
         expect(component.finishedBuildJobs).toEqual(mockFinishedJobs);
-    });
-
-    it('should get build job statistics', () => {
-        // Mock ActivatedRoute to return no course ID
-        mockActivatedRoute.paramMap = of(new Map([]));
-
-        mockBuildQueueService.getBuildJobStatistics.mockReturnValue(of(mockBuildJobStatistics));
-
-        component.ngOnInit();
-
-        expect(mockBuildQueueService.getBuildJobStatistics).toHaveBeenCalled();
         expect(component.buildJobStatistics).toEqual(mockBuildJobStatistics);
-    });
-
-    it('should not get build job statistics if there is a course ID', () => {
-        // Mock ActivatedRoute to return a specific course ID
-        mockActivatedRoute.paramMap = of(new Map([['courseId', testCourseId.toString()]]));
-        mockActivatedRoute.snapshot.paramMap = new Map([['courseId', testCourseId.toString()]]);
-
-        mockBuildQueueService.getBuildJobStatistics.mockReturnValue(of(mockBuildJobStatistics));
-
-        component.ngOnInit();
-
-        expect(mockBuildQueueService.getBuildJobStatistics).not.toHaveBeenCalled();
-        expect(component.buildJobStatistics).toBeUndefined();
     });
 
     it('should get build job statistics when changing the span', () => {
