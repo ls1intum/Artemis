@@ -148,7 +148,7 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
                     this.noOfChannels = this.channels.length;
                 },
                 error: (errorResponse: HttpErrorResponse) => {
-                    onError(this.alertService, errorResponse), console.log('view opened');
+                    onError(this.alertService, errorResponse);
                 },
             });
     }
