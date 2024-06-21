@@ -143,7 +143,6 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     // TODO dont display the filter option if no filter option is reasonable
 
     private initializeFilterOptions() {
-        // TODO do not display difficulties selection if not enough selection options
         this.initializeCategoryFilter();
         this.initializeExerciseTypeFilter();
         this.initializeDifficultyFilter();
@@ -166,6 +165,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         if (this.difficultyFilters) {
             return;
         }
+        // TODO handle noLevel difficulty
 
         const existingDifficulties = this.sidebarData?.ungroupedData
             ?.filter((sidebarElement: SidebarCardElement) => sidebarElement.difficulty !== undefined)

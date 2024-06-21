@@ -5,37 +5,35 @@
         <button type="button" class="btn-close" (click)="closeModal()"></button>
     </div>
     <div class="modal-body">
-        @if (possibleCategories.length) {
-            <div #firstCheckbox class="form-group">
-                <label for="exercise-categories-filter-selection" class="form-control-label" jhiTranslate="artemisApp.exercise.categories"></label>
+        <div #firstCheckbox class="form-group">
+            <label for="exercise-categories-filter-selection" class="form-control-label" jhiTranslate="artemisApp.exercise.categories"></label>
 
-                <input
-                    id="exercise-categories-filter-selection"
-                    type="text"
-                    class="form-control"
-                    [(ngModel)]="model"
-                    [ngbTypeahead]="search"
-                    [placeholder]="'artemisApp.exercise.selectCategories' | artemisTranslate"
-                    (focus)="focus$.next($any($event).target.value)"
-                    (click)="click$.next($any($event).target.value)"
-                    #categoriesFilterSelection="ngbTypeahead"
-                    (selectItem)="onSelectItem($event)"
-                    [inputFormatter]="inputFormatter"
-                    [resultFormatter]="resultFormatter"
-                />
+            <input
+                id="exercise-categories-filter-selection"
+                type="text"
+                class="form-control"
+                [(ngModel)]="model"
+                [ngbTypeahead]="search"
+                [placeholder]="'artemisApp.exercise.selectCategories' | artemisTranslate"
+                (focus)="focus$.next($any($event).target.value)"
+                (click)="click$.next($any($event).target.value)"
+                #categoriesFilterSelection="ngbTypeahead"
+                (selectItem)="onSelectItem($event)"
+                [inputFormatter]="inputFormatter"
+                [resultFormatter]="resultFormatter"
+            />
 
-                @if (selectedCategories.length > 0) {
-                    <ul>
-                        @for (item of selectedCategories; track item) {
-                            <li>
-                                <jhi-custom-exercise-category-badge [category]="item" [displayRemoveButton]="true" />
-                                <button (click)="removeItem(item)">Remove</button>
-                            </li>
-                        }
-                    </ul>
-                }
-            </div>
-        }
+            @if (selectedCategories.length > 0) {
+                <ul>
+                    @for (item of selectedCategories; track item) {
+                        <li>
+                            <jhi-custom-exercise-category-badge [category]="item" [displayRemoveButton]="true" />
+                            <button (click)="removeItem(item)">Remove</button>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
 
         @if (typeFilters?.length ?? 0 > 1) {
             <div class="form-group">
