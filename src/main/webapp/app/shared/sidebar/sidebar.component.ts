@@ -10,6 +10,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { DifficultyLevel, ExerciseType } from 'app/entities/exercise.model';
 import { cloneDeep } from 'lodash-es';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/participation/participation.utils';
 
 export type ExerciseTypeFilterOptions = { name: string; value: ExerciseType; checked: boolean }[];
 export type DifficultyFilterOptions = { name: string; value: DifficultyLevel; checked: boolean }[];
@@ -172,6 +173,9 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         let minAchievablePoints = Infinity;
         let maxAchievablePoints = -Infinity;
 
+        let minAchievedScore = Infinity;
+        let maxAchievedScore = -Infinity;
+
         this.sidebarData.ungroupedData.forEach((sidebarElement: SidebarCardElement) => {
             if (sidebarElement.exercise?.maxPoints) {
                 const currentExerciseMaxPoints = sidebarElement.exercise.maxPoints;
@@ -182,9 +186,23 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
                 if (currentExerciseMaxPoints < minAchievablePoints) {
                     minAchievablePoints = currentExerciseMaxPoints;
                 }
+
+                if (sidebarElement.studentParticipation) {
+                    const currentExerciseAchievedScore = getLatestResultOfStudentParticipation(sidebarElement.studentParticipation, false)?.score;
+
+                    if (currentExerciseAchievedScore !== undefined) {
+                        if (currentExerciseAchievedScore > maxAchievedScore) {
+                            maxAchievedScore = currentExerciseAchievedScore;
+                        }
+                        if (currentExerciseAchievedScore < minAchievedScore) {
+                            minAchievedScore = currentExerciseAchievedScore;
+                        }
+                    }
+                }
             }
         });
 
         this.achievablePoints = { min: minAchievablePoints, max: maxAchievablePoints };
+        this.achievedScore = { min: minAchievedScore, max: maxAchievedScore };
     }
 }
