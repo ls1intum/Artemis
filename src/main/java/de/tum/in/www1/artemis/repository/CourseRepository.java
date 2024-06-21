@@ -101,7 +101,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             WHERE c.id = :courseId
                 AND c.courseInformationSharingConfiguration = :configuration
             """)
-    boolean informationSharingConfigurationIs(@Param("courseId") long courseId, @Param("values") CourseInformationSharingConfiguration configuration);
+    boolean informationSharingConfigurationIs(@Param("courseId") long courseId, @Param("configuration") CourseInformationSharingConfiguration configuration);
 
     @Query("""
             SELECT DISTINCT c
