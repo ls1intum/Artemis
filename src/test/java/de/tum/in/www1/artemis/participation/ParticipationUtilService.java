@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Rating;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.SelfLearningFeedbackRequest;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.TextExercise;
@@ -61,6 +62,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipation
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.in.www1.artemis.repository.RatingRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SelfLearningFeedbackRequestRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
@@ -97,6 +99,9 @@ public class ParticipationUtilService {
 
     @Autowired
     private ResultRepository resultRepo;
+
+    @Autowired
+    private SelfLearningFeedbackRequestRepository selfLearningFeedbackRequestRepository;
 
     @Autowired
     private FeedbackRepository feedbackRepo;
@@ -925,5 +930,19 @@ public class ParticipationUtilService {
         doReturn("buildPlanId").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
         doNothing().when(continuousIntegrationService).configureBuildPlan(any(), any());
         doNothing().when(versionControlService).addWebHookForParticipation(any());
+    }
+
+    /**
+     * Creates and saves a SelfLearningFeedbackRequest for the given submission.
+     *
+     * @param submissionId The id of the Submission
+     * @return The created self-learning feedback request
+     */
+    public SelfLearningFeedbackRequest createSelfLearningFeedbackRequest(long submissionId) {
+        Submission submission = submissionRepository.findByIdElseThrow(submissionId);
+        SelfLearningFeedbackRequest selfLearningFeedbackRequest = new SelfLearningFeedbackRequest();
+        selfLearningFeedbackRequest.setSubmission(submission);
+        this.selfLearningFeedbackRequestRepository.save(selfLearningFeedbackRequest);
+        return selfLearningFeedbackRequest;
     }
 }
