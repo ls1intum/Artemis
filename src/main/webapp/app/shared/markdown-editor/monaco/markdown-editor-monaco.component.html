@@ -123,6 +123,14 @@
 </div>
 
 <!-- Resize handle - will be placed in its corresponding placeholder -->
-<span #resizeHandle [hidden]="inPreviewMode || !enableResize" cdkDrag cdkDragLockAxis="y" (cdkDragMoved)="onResizeMoved($event)" [style.position]="'absolute'" [style.left.%]="50"
+<span
+    #resizeHandle
+    [hidden]="inPreviewMode || !enableResize"
+    cdkDrag
+    cdkDragLockAxis="y"
+    [cdkDragConstrainPosition]="constrainDragPositionFn"
+    (cdkDragMoved)="onResizeMoved($event)"
+    [style.position]="'absolute'"
+    [style.left.%]="50"
     ><fa-icon [icon]="faGripLines" class="rg-bottom md-resize-icon"
 /></span>

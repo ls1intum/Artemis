@@ -23,7 +23,7 @@ import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/mona
 import { MonacoFullscreenAction } from 'app/shared/monaco-editor/model/actions/monaco-fullscreen.action';
 import { MonacoColorAction } from 'app/shared/monaco-editor/model/actions/monaco-color.action';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
-import { CdkDragMove } from '@angular/cdk/drag-drop';
+import { CdkDragMove, Point } from '@angular/cdk/drag-drop';
 
 // TODO: Once the old markdown editor is gone, remove the style url.
 @Component({
@@ -104,6 +104,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     faGripLines = faGripLines;
     resizeObserver?: ResizeObserver;
     targetWrapperHeight?: number;
+    constrainDragPositionFn?: (pointerPosition: Point) => Point;
 
     readonly markdownColors = ['#ca2024', '#3ea119', '#ffffff', '#000000', '#fffa5c', '#0d3cc2', '#b05db8', '#d86b1f'];
     readonly markdownColorNames = ['red', 'green', 'white', 'black', 'yellow', 'blue', 'lila', 'orange'];
@@ -140,10 +141,26 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
         if (this.resizeHandle && this.resizePlaceholder && this.enableResize) {
             const resizeHandleHeight = this.getElementClientHeight(this.resizeHandle);
+            this.constrainDragPositionFn = this.constrainDragPosition.bind(this);
             this.resizePlaceholder.nativeElement.style.height = resizeHandleHeight + 'px';
             this.resizeHandle.nativeElement.style.top =
                 (this.resizePlaceholder?.nativeElement?.getBoundingClientRect()?.top ?? 0) - this.wrapper.nativeElement?.getBoundingClientRect()?.top + -resizeHandleHeight + 'px';
         }
+    }
+
+    /**
+     * Constrain the drag position of the resize handle.
+     * @param pointerPosition The current mouse position while dragging.
+     */
+    constrainDragPosition(pointerPosition: Point): Point {
+        // We do not want to drag past the minimum or maximum height.
+        // x is not used, so we can ignore it.
+        const minY = this.wrapper.nativeElement.getBoundingClientRect().top + this.resizableMinHeight;
+        const maxY = this.wrapper.nativeElement.getBoundingClientRect().top + this.resizableMaxHeight;
+        return {
+            x: pointerPosition.x,
+            y: Math.min(maxY, Math.max(minY, pointerPosition.y)),
+        };
     }
 
     ngOnDestroy(): void {
