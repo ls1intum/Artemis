@@ -138,6 +138,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         // TODO do not display difficulties selection if not enough selection options
         this.initializeDifficultyFilter();
         this.initializeCategoryFilter();
+        this.initializeAchievedScoreFilter();
     }
 
     private initializeDifficultyFilter() {
@@ -161,5 +162,29 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
             this.sidebarData?.ungroupedData
                 ?.filter((sidebarElement: SidebarCardElement) => sidebarElement.exercise?.categories !== undefined)
                 .flatMap((sidebarElement: SidebarCardElement) => sidebarElement.exercise?.categories || []) ?? [];
+    }
+
+    private initializeAchievedScoreFilter() {
+        if (this.scoreFilter || !this.sidebarData?.ungroupedData) {
+            return;
+        }
+
+        let minPoints = Infinity;
+        let maxPoints = -Infinity;
+
+        this.sidebarData.ungroupedData.forEach((sidebarElement: SidebarCardElement) => {
+            if (sidebarElement.exercise?.maxPoints) {
+                const currentExerciseMaxPoints = sidebarElement.exercise.maxPoints;
+
+                if (currentExerciseMaxPoints > maxPoints) {
+                    maxPoints = currentExerciseMaxPoints;
+                }
+                if (currentExerciseMaxPoints < minPoints) {
+                    minPoints = currentExerciseMaxPoints;
+                }
+            }
+        });
+
+        this.pointsFilter = { min: minPoints, max: maxPoints };
     }
 }
