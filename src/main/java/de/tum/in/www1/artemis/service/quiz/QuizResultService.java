@@ -77,7 +77,9 @@ public class QuizResultService {
         var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         Set<Result> createdResults = evaluateSubmissions(quizExercise);
         log.info("Quiz evaluation for quiz {} finished after {} with {} created results", quizExercise.getId(), TimeLogUtil.formatDurationFrom(start), createdResults.size());
-        quizStatisticService.recalculateStatistics(quizExercise);
+        if (quizExercise.getQuizPointStatistic() == null) {
+            quizStatisticService.recalculateStatistics(quizExercise);
+        }
         quizStatisticService.updateStatistics(createdResults, quizExercise);
         log.info("Statistic update for quiz {} finished after {}", quizExercise.getId(), TimeLogUtil.formatDurationFrom(start));
     }
