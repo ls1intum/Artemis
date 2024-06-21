@@ -3,7 +3,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription, combineLatest } from 'rxjs';
-import { filter, switchMap } from 'rxjs/operators';
+import { filter, skip } from 'rxjs/operators';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
@@ -16,7 +16,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ExampleSolutionInfo, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ExampleSolutionInfo, ExerciseDetailsType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -203,23 +203,21 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
         this.studentParticipations = this.participationWebsocketService.getParticipationsForExercise(this.exerciseId);
         this.updateStudentParticipations();
         this.resultWithComplaint = getFirstResultWithComplaintFromResults(this.gradedStudentParticipation?.results);
-        this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
+        this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
             this.handleNewExercise(exerciseResponse.body!);
             this.loadComplaintAndLatestRatedResult();
         });
-        this.plagiarismCaseService.getPlagiarismCaseInfoForStudent(this.courseId, this.exerciseId).subscribe((res: HttpResponse<PlagiarismCaseInfo>) => {
-            this.plagiarismCaseInfo = res.body ?? undefined;
-        });
     }
 
-    handleNewExercise(newExercise: Exercise) {
-        this.exercise = newExercise;
+    handleNewExercise(newExerciseDetails: ExerciseDetailsType) {
+        this.exercise = newExerciseDetails.exercise;
 
         this.filterUnfinishedResults(this.exercise.studentParticipations);
         this.mergeResultsAndSubmissionsForParticipations();
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || dayjs().isAfter(this.exercise.assessmentDueDate);
         this.exerciseCategories = this.exercise.categories ?? [];
         this.allowComplaintsForAutomaticAssessments = false;
+        this.plagiarismCaseInfo = newExerciseDetails.plagiarismCaseInfo;
 
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
             const programmingExercise = this.exercise as ProgrammingExercise;
@@ -229,22 +227,18 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
                     (!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || dayjs().isAfter(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate)));
 
             this.allowComplaintsForAutomaticAssessments = !!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint;
-            this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(this.exerciseId).subscribe((submissionPolicy) => {
-                this.submissionPolicy = submissionPolicy;
-            });
+            this.submissionPolicy = programmingExercise.submissionPolicy;
 
-            this.profileService
-                .getProfileInfo()
-                .pipe(
-                    filter((profileInfo) => profileInfo?.activeProfiles?.includes(PROFILE_IRIS)),
-                    switchMap(() => this.irisSettingsService.getCombinedProgrammingExerciseSettings(this.exercise!.id!)),
-                )
-                .subscribe((settings) => {
-                    this.irisSettings = settings;
-                });
+            this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                if (profileInfo?.activeProfiles?.includes(PROFILE_IRIS)) {
+                    this.irisSettings = newExerciseDetails.irisSettings;
+                }
+            });
+            this.availableExerciseHints = newExerciseDetails.availableExerciseHints || [];
+            this.activatedExerciseHints = newExerciseDetails.activatedExerciseHints || [];
         }
 
-        this.showIfExampleSolutionPresent(newExercise);
+        this.showIfExampleSolutionPresent(newExerciseDetails.exercise);
         this.subscribeForNewResults();
         this.subscribeToTeamAssignmentUpdates();
 
@@ -321,48 +315,52 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
         }
 
         this.participationUpdateListener?.unsubscribe();
-        this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
-            if (changedParticipation && this.exercise && changedParticipation.exercise?.id === this.exercise.id) {
-                // Notify student about late submission result
-                if (
-                    changedParticipation.exercise?.dueDate &&
-                    hasExerciseDueDatePassed(changedParticipation.exercise, changedParticipation) &&
-                    changedParticipation.id === this.gradedStudentParticipation?.id &&
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-                    changedParticipation.results?.length! > this.gradedStudentParticipation?.results?.length!
-                ) {
-                    this.alertService.success('artemisApp.exercise.lateSubmissionResultReceived');
-                }
-                if (this.studentParticipations?.some((participation) => participation.id === changedParticipation.id)) {
-                    this.exercise.studentParticipations = this.studentParticipations.map((participation) =>
-                        participation.id === changedParticipation.id ? changedParticipation : participation,
-                    );
-                } else {
-                    this.exercise.studentParticipations = [...this.studentParticipations, changedParticipation];
-                }
-                this.updateStudentParticipations();
-                this.mergeResultsAndSubmissionsForParticipations();
+        this.participationUpdateListener = this.participationWebsocketService
+            .subscribeForParticipationChanges()
+            // Skip the first event, as it is the initial state. All data should already be loaded.
+            .pipe(skip(1))
+            .subscribe((changedParticipation: StudentParticipation) => {
+                if (changedParticipation && this.exercise && changedParticipation.exercise?.id === this.exercise.id) {
+                    // Notify student about late submission result
+                    if (
+                        changedParticipation.exercise?.dueDate &&
+                        hasExerciseDueDatePassed(changedParticipation.exercise, changedParticipation) &&
+                        changedParticipation.id === this.gradedStudentParticipation?.id &&
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+                        changedParticipation.results?.length! > this.gradedStudentParticipation?.results?.length!
+                    ) {
+                        this.alertService.success('artemisApp.exercise.lateSubmissionResultReceived');
+                    }
+                    if (this.studentParticipations?.some((participation) => participation.id === changedParticipation.id)) {
+                        this.exercise.studentParticipations = this.studentParticipations.map((participation) =>
+                            participation.id === changedParticipation.id ? changedParticipation : participation,
+                        );
+                    } else {
+                        this.exercise.studentParticipations = [...this.studentParticipations, changedParticipation];
+                    }
+                    this.updateStudentParticipations();
+                    this.mergeResultsAndSubmissionsForParticipations();
 
-                if (ExerciseType.PROGRAMMING === this.exercise?.type) {
-                    this.exerciseHintService.getActivatedExerciseHints(this.exerciseId).subscribe((activatedRes?: HttpResponse<ExerciseHint[]>) => {
-                        this.activatedExerciseHints = activatedRes!.body!;
+                    if (ExerciseType.PROGRAMMING === this.exercise?.type) {
+                        this.exerciseHintService.getActivatedExerciseHints(this.exerciseId).subscribe((activatedRes?: HttpResponse<ExerciseHint[]>) => {
+                            this.activatedExerciseHints = activatedRes!.body!;
 
-                        this.exerciseHintService.getAvailableExerciseHints(this.exerciseId).subscribe((availableRes?: HttpResponse<ExerciseHint[]>) => {
-                            // filter out the activated hints from the available hints
-                            this.availableExerciseHints = availableRes!.body!.filter(
-                                (availableHint) => !this.activatedExerciseHints.some((activatedHint) => availableHint.id === activatedHint.id),
-                            );
-                            const filteredAvailableExerciseHints = this.availableExerciseHints.filter((hint) => hint.displayThreshold !== 0);
-                            if (filteredAvailableExerciseHints.length) {
-                                this.alertService.info('artemisApp.exerciseHint.availableHintsAlertMessage', {
-                                    taskName: filteredAvailableExerciseHints.first()?.programmingExerciseTask?.taskName,
-                                });
-                            }
+                            this.exerciseHintService.getAvailableExerciseHints(this.exerciseId).subscribe((availableRes?: HttpResponse<ExerciseHint[]>) => {
+                                // filter out the activated hints from the available hints
+                                this.availableExerciseHints = availableRes!.body!.filter(
+                                    (availableHint) => !this.activatedExerciseHints.some((activatedHint) => availableHint.id === activatedHint.id),
+                                );
+                                const filteredAvailableExerciseHints = this.availableExerciseHints.filter((hint) => hint.displayThreshold !== 0);
+                                if (filteredAvailableExerciseHints.length) {
+                                    this.alertService.info('artemisApp.exerciseHint.availableHintsAlertMessage', {
+                                        taskName: filteredAvailableExerciseHints.first()?.programmingExerciseTask?.taskName,
+                                    });
+                                }
+                            });
                         });
-                    });
+                    }
                 }
-            }
-        });
+            });
     }
 
     private updateStudentParticipations() {
