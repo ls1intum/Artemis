@@ -3,7 +3,7 @@
         <div class="card-body">
             @if (loadingState === LOADING_STATE.INITIALIZING) {
                 <span>
-                    <fa-icon [icon]="faCircleNotch" [spin]="true" />
+                    <fa-icon [icon]="faCircleNotch" animation="spin" />
                     <span jhiTranslate="artemisApp.editor.fetchingParticipation"></span>
                 </span>
             }

@@ -6,7 +6,7 @@
         @if (loadingState !== 'error') {
             <h2>
                 <span style="color: grey"
-                    ><fa-icon [icon]="faSpinner" [spin]="true" />&nbsp;<span>{{ 'artemisApp.quizQuestion.loading' | artemisTranslate }}</span></span
+                    ><fa-icon [icon]="faSpinner" animation="spin" />&nbsp;<span>{{ 'artemisApp.quizQuestion.loading' | artemisTranslate }}</span></span
                 >
             </h2>
         }
@@ -120,7 +120,7 @@
                                         top: dropLocation.posY! / 2 + '%',
                                         left: dropLocation.posX! / 2 + '%',
                                         width: dropLocation.width! / 2 + '%',
-                                        height: dropLocation.height! / 2 + '%'
+                                        height: dropLocation.height! / 2 + '%',
                                     }"
                                     (cdkDropListDropped)="onDragDrop(dropLocation, $event)"
                                     (onDragEnter)="preventDefault($event)"
@@ -154,13 +154,13 @@
                                                 isLocationCorrect(dropLocation) === MappingResult.MAPPED_INCORRECT &&
                                                 !dropLocation.invalid &&
                                                 !invalidDragItemForDropLocation(dropLocation) &&
-                                                !question.invalid
+                                                !question.invalid,
                                         }"
                                         [ngStyle]="{
                                             top: dropLocation.posY! / 2 + '%',
                                             left: dropLocation.posX! / 2 + '%',
                                             width: dropLocation.width! / 2 + '%',
-                                            height: dropLocation.height! / 2 + '%'
+                                            height: dropLocation.height! / 2 + '%',
                                         }"
                                     >
                                         @if (
@@ -220,13 +220,13 @@
                                                 isLocationCorrect(dropLocation) === MappingResult.MAPPED_INCORRECT &&
                                                 !dropLocation.invalid &&
                                                 !invalidDragItemForDropLocation(dropLocation) &&
-                                                !question.invalid
+                                                !question.invalid,
                                         }"
                                         [ngStyle]="{
                                             top: dropLocation.posY! / 2 + '%',
                                             left: dropLocation.posX! / 2 + '%',
                                             width: dropLocation.width! / 2 + '%',
-                                            height: dropLocation.height! / 2 + '%'
+                                            height: dropLocation.height! / 2 + '%',
                                         }"
                                     >
                                         @if (
