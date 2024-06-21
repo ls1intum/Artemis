@@ -7,8 +7,9 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faEye, faFileExport, faListAlt, faSignal, faTable, faTrash, faUndo, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faClipboardCheck, faEye, faFileExport, faListAlt, faSignal, faTable, faTrash, faUndo, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { Subject } from 'rxjs';
+import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-quiz-exercise-manage-buttons',
@@ -24,6 +25,10 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
     readonly faTrash = faTrash;
     readonly faListAlt = faListAlt;
     readonly faUndo = faUndo;
+    readonly faClipboardCheck = faClipboardCheck;
+
+    readonly ButtonType = ButtonType;
+    readonly ButtonSize = ButtonSize;
 
     protected dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -119,8 +124,8 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
     evaluateQuizExercise() {
         this.isEvaluatingQuizExercise = true;
         this.exerciseService.evaluateQuizExercise(this.quizExercise.id!).subscribe({
-            next: (res) => {
-                this.alertService.success('artemisApp.quizExercise.evaluateQuizExerciseSuccess', { number: res?.body });
+            next: () => {
+                this.alertService.success('artemisApp.quizExercise.evaluateQuizExerciseSuccess');
                 this.isEvaluatingQuizExercise = false;
             },
             error: (error: HttpErrorResponse) => {
