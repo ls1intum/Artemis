@@ -33,7 +33,7 @@ describe('ParticipationWebsocketService', () => {
     participation.selfLearningFeedbackRequests = [];
     const newRatedResult = { id: 11, rated: true, participation } as Result;
     const newUnratedResult = { id: 12, rated: false, participation } as Result;
-    const newSelfLearningFeedbackRequest = { id: 11, requestDateTime: dayjs(), participation } as SelfLearningFeedbackRequest;
+    const newSelfLearningFeedbackRequest = { id: 11, requestDateTime: dayjs(), participationId: participation.id } as SelfLearningFeedbackRequest;
 
     const participationPersonalTopicPrefix = `/user/topic`;
     const participationPersonalResultTopic = `/user/topic/newResults`;
