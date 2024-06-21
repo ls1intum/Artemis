@@ -1,3 +1,5 @@
+@import 'src/main/webapp/content/scss/themes/default-variables';
+
 .slider {
     height: 5px;
     border-radius: 5px;
@@ -6,11 +8,9 @@
 
 .slider .progress {
     height: 5px;
-    left: 25%;
-    right: 25%;
     position: absolute;
     border-radius: 5px;
-    background: #ff0026;
+    background: $primary;
 }
 
 .range-input {
@@ -30,7 +30,7 @@
     height: 17px;
     width: 17px;
     border-radius: 50%;
-    background: #73ff00;
+    background: $primary;
     pointer-events: auto;
     -webkit-appearance: none;
 }
@@ -39,7 +39,7 @@
     height: 17px;
     width: 17px;
     border-radius: 50%;
-    background: #007bff;
+    background: $primary;
     pointer-events: auto;
     -moz-appearance: none;
     border: none; // TODO is this needed?
