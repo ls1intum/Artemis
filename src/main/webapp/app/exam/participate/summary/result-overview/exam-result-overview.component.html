@@ -31,7 +31,7 @@
                             <tr
                                 [ngClass]="{
                                     'font-italic text-danger font-weight-bold': exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED,
-                                    'font-italic text-warning font-weight-bold': exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS
+                                    'font-italic text-warning font-weight-bold': exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS,
                                 }"
                                 (click)="scrollToExercise(exercise.id)"
                                 [class.not-included-in-score]="exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED"
@@ -112,7 +112,7 @@
                                     | artemisTranslate
                                         : {
                                               achievedPoints: overallAchievedPoints,
-                                              normalPoints: maxPoints
+                                              normalPoints: maxPoints,
                                           }
                             }}
                         }
@@ -122,7 +122,7 @@
                                     | artemisTranslate
                                         : {
                                               achievedPoints: overallAchievedPoints,
-                                              normalPoints: maxPoints
+                                              normalPoints: maxPoints,
                                           }
                             }}
                         }
@@ -132,7 +132,7 @@
                                     | artemisTranslate
                                         : {
                                               achievedBonus: studentExamWithGrade.studentResult.gradeWithBonus.bonusGrade,
-                                              bonusFromTitle: studentExamWithGrade.studentResult.gradeWithBonus.bonusFromTitle
+                                              bonusFromTitle: studentExamWithGrade.studentResult.gradeWithBonus.bonusFromTitle,
                                           }
                             }}
                         }

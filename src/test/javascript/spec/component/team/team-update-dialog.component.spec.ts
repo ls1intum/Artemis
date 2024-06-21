@@ -127,7 +127,7 @@ describe('TeamUpdateDialogComponent', () => {
         expect(submitButton.nativeElement.disabled).toBeFalse();
 
         // Click on save
-        debugElement.query(By.css('#teamUpdateDialogForm')).nativeElement.submit();
+        submitButton.nativeElement.click();
         fixture.detectChanges();
         fixture.whenStable().then(() => {
             // Check that saving worked and that modal was closed
@@ -189,7 +189,7 @@ describe('TeamUpdateDialogComponent', () => {
         expect(comp.pendingTeam.students).toEqual(comp.team.students?.slice(1).concat(mockNonTeamStudents));
 
         // Click on save
-        debugElement.query(By.css('#teamUpdateDialogForm')).nativeElement.submit();
+        submitButton.nativeElement.click();
         fixture.detectChanges();
 
         // Check that saving worked and that modal was closed
