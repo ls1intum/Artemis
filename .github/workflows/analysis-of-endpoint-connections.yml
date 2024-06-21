@@ -8,6 +8,11 @@ jobs:
     timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Set up JDK 21
         uses: actions/setup-java@v2
         with:
@@ -21,15 +26,10 @@ jobs:
 
       - name: parse client sided REST-API calls
         run: |
-          ls
-#          cd supporting_scripts/analysis-of-endpoint-connections/parser/src/main/typeScript
-#          npm install
-#          tsc -p tsconfig.analysisOfEndpointConnections.json
-#          node supporting_scripts/analysis-of-endpoint-connections/parser/src/main/typeScript/AnalysisOfEndpointConnectionsClient.js
-
-#      - name: debugging
-#        run: |
-#          ls
+          cd supporting_scripts/analysis-of-endpoint-connections/parser/src/main/typeScript
+          npm install
+          tsc -p tsconfig.analysisOfEndpointConnections.json
+          node supporting_scripts/analysis-of-endpoint-connections/parser/src/main/typeScript/AnalysisOfEndpointConnectionsClient.js
 
       - name: parse server sided REST-API calls
         run: ./gradlew :supporting_scripts:analysis-of-endpoint-connections:parser:run
@@ -38,6 +38,11 @@ jobs:
     timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Set up JDK 21
         uses: actions/setup-java@v2
         with:
