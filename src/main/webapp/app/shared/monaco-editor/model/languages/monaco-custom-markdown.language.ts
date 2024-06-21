@@ -1,4 +1,5 @@
 import { languages } from 'monaco-editor';
+import { taskRegex } from 'app/exercises/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
 /*
  * Language definition taken from monaco-editor/esm/vs/basic-languages/markdown/markdown
  */
@@ -46,7 +47,7 @@ const language: languages.IMonarchLanguage = {
         root: [
             [/^[@]startuml$/, { token: 'task', next: '@uml' }],
             // Programming exercise tasks are malformed in the Markdown syntax. We parse them immediately to prevent problems with the bracket matching.
-            [/\[task\]\[.*\]\(.*\)/, 'task'],
+            [taskRegex, 'task'],
             // markdown tables
             [/^\s*\|/, '@rematch', '@table_header'],
             // headers (with #)
