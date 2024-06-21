@@ -29,6 +29,7 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
     private static final int NUMBER_OF_STUDENTS = 11;
 
     @BeforeEach
+    @Override
     void setupTestScenario() throws Exception {
         super.setupTestScenario();
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 0, 0, 0);

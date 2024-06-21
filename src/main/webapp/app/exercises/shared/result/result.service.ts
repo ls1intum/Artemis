@@ -45,7 +45,7 @@ export class ResultService implements IResultService {
     private resultResourceUrl = 'api/results';
     private participationResourceUrl = 'api/participations';
 
-    private readonly maxValueProgrammingResultInts = 255; // Size of tinyInt in SQL, that is used to store these values
+    private readonly MAX_VALUE_PROGRAMMING_RESULT_INTS = 255; // Size of tinyInt in SQL, that is used to store these values
 
     constructor(
         private http: HttpClient,
@@ -130,8 +130,9 @@ export class ResultService implements IResultService {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.buildSuccessfulNoTests');
         } else {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.buildSuccessfulTests', {
-                numberOfTestsPassed: result.passedTestCaseCount! >= this.maxValueProgrammingResultInts ? `${this.maxValueProgrammingResultInts}+` : result.passedTestCaseCount,
-                numberOfTestsTotal: result.testCaseCount! >= this.maxValueProgrammingResultInts ? `${this.maxValueProgrammingResultInts}+` : result.testCaseCount,
+                numberOfTestsPassed:
+                    result.passedTestCaseCount! >= this.MAX_VALUE_PROGRAMMING_RESULT_INTS ? `${this.MAX_VALUE_PROGRAMMING_RESULT_INTS}+` : result.passedTestCaseCount,
+                numberOfTestsTotal: result.testCaseCount! >= this.MAX_VALUE_PROGRAMMING_RESULT_INTS ? `${this.MAX_VALUE_PROGRAMMING_RESULT_INTS}+` : result.testCaseCount,
             });
         }
 
@@ -171,7 +172,7 @@ export class ResultService implements IResultService {
             return this.translateService.instant('artemisApp.result.resultString.programmingCodeIssues', {
                 relativeScore,
                 buildAndTestMessage,
-                numberOfIssues: result.codeIssueCount! >= this.maxValueProgrammingResultInts ? `${this.maxValueProgrammingResultInts}+` : result.codeIssueCount,
+                numberOfIssues: result.codeIssueCount! >= this.MAX_VALUE_PROGRAMMING_RESULT_INTS ? `${this.MAX_VALUE_PROGRAMMING_RESULT_INTS}+` : result.codeIssueCount,
                 points,
             });
         } else {

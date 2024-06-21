@@ -57,9 +57,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { LockRepositoryPolicy } from 'app/entities/submission-policy.model';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
-import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
-import { HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExerciseHintButtonOverlayComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-button-overlay.component';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
@@ -73,23 +71,25 @@ import { MockScienceService } from '../../../helpers/mocks/service/mock-science-
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { SelfLearningFeedbackRequest } from 'app/entities/self-learning-feedback-request.model';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
     let fixture: ComponentFixture<CourseExerciseDetailsComponent>;
     let profileService: ProfileService;
     let exerciseService: ExerciseService;
+    let exerciseHintService: ExerciseHintService;
     let teamService: TeamService;
     let participationService: ParticipationService;
     let participationWebsocketService: ParticipationWebsocketService;
     let complaintService: ComplaintService;
-    let plagiarismCaseService: PlagiarismCasesService;
-
     let getProfileInfoMock: jest.SpyInstance;
     let getExerciseDetailsMock: jest.SpyInstance;
+    let getActivatedExerciseHintsMock: jest.SpyInstance;
+    let getAvailableExerciseHintsMock: jest.SpyInstance;
     let mergeStudentParticipationMock: jest.SpyInstance;
     let subscribeForParticipationChangesMock: jest.SpyInstance;
-    let plagiarismCaseServiceMock: jest.SpyInstance;
+    let participationWebsockerBehaviourSubject: BehaviorSubject<Participation | undefined>;
     let scienceService: ScienceService;
     let logEventStub: jest.SpyInstance;
 
@@ -103,6 +103,20 @@ describe('CourseExerciseDetailsComponent', () => {
     } as unknown as TextExercise;
 
     const plagiarismCaseInfo = { id: 20, verdict: PlagiarismVerdict.WARNING };
+
+    const submissionPolicy = new LockRepositoryPolicy();
+
+    const programmingExercise = {
+        id: exercise.id,
+        type: ExerciseType.PROGRAMMING,
+        studentParticipations: [],
+        course: { id: 2 },
+        allowComplaintsForAutomaticAssessments: true,
+        secondCorrectionEnabled: false,
+        studentAssignedTeamIdComputed: true,
+        numberOfAssessmentsOfCorrectionRounds: [],
+        submissionPolicy: submissionPolicy,
+    } as ProgrammingExercise;
 
     const parentParams = { courseId: 1 };
     const parentRoute = { parent: { parent: { params: of(parentParams) } } } as any as ActivatedRoute;
@@ -158,6 +172,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockProvider(PlagiarismCasesService),
                 MockProvider(AlertService),
                 MockProvider(IrisSettingsService),
+                MockProvider(ExerciseHintService),
             ],
         })
             .compileComponents()
@@ -177,7 +192,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 // mock exerciseService
                 exerciseService = fixture.debugElement.injector.get(ExerciseService);
                 getExerciseDetailsMock = jest.spyOn(exerciseService, 'getExerciseDetails');
-                getExerciseDetailsMock.mockReturnValue(of({ body: exercise }));
+                getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: exercise } }));
 
                 // mock teamService, needed for team assignment
                 teamService = fixture.debugElement.injector.get(TeamService);
@@ -185,20 +200,22 @@ describe('CourseExerciseDetailsComponent', () => {
                 jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockReturnValue(Promise.resolve(of(teamAssignmentPayload)));
 
                 // mock participationService, needed for team assignment
+                participationWebsockerBehaviourSubject = new BehaviorSubject<Participation | undefined>(undefined);
                 participationWebsocketService = fixture.debugElement.injector.get(ParticipationWebsocketService);
                 subscribeForParticipationChangesMock = jest.spyOn(participationWebsocketService, 'subscribeForParticipationChanges');
-                subscribeForParticipationChangesMock.mockReturnValue(new BehaviorSubject<Participation | undefined>(undefined));
+                subscribeForParticipationChangesMock.mockReturnValue(participationWebsockerBehaviourSubject);
 
                 complaintService = fixture.debugElement.injector.get(ComplaintService);
 
-                // mock plagiarismCaseService used when loading exercises
-                plagiarismCaseService = fixture.debugElement.injector.get(PlagiarismCasesService);
-                plagiarismCaseServiceMock = jest
-                    .spyOn(plagiarismCaseService, 'getPlagiarismCaseInfoForStudent')
-                    .mockReturnValue(of({ body: plagiarismCaseInfo } as HttpResponse<PlagiarismCaseInfo>));
-
                 scienceService = TestBed.inject(ScienceService);
                 logEventStub = jest.spyOn(scienceService, 'logEvent');
+
+                exerciseHintService = TestBed.inject(ExerciseHintService);
+                getActivatedExerciseHintsMock = jest.spyOn(exerciseHintService, 'getActivatedExerciseHints');
+                getAvailableExerciseHintsMock = jest.spyOn(exerciseHintService, 'getAvailableExerciseHints');
+
+                participationService = TestBed.inject(ParticipationService);
+                mergeStudentParticipationMock = jest.spyOn(participationService, 'mergeStudentParticipations');
             });
     });
 
@@ -233,7 +250,7 @@ describe('CourseExerciseDetailsComponent', () => {
         studentParticipation.selfLearningFeedbackRequests = [selfLearningFeedbackRequest];
         studentParticipation.exercise = exercise;
 
-        const exerciseDetail = { ...exercise, studentParticipations: [studentParticipation] };
+        const exerciseDetail = { exercise: { ...exercise, studentParticipations: [studentParticipation] }, plagiarismCaseInfo: plagiarismCaseInfo };
         const exerciseDetailResponse = of({ body: exerciseDetail });
 
         // return initial participation for websocketService
@@ -241,8 +258,6 @@ describe('CourseExerciseDetailsComponent', () => {
         jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({} as EntityResponseType));
 
         // mock participationService, needed for team assignment
-        participationService = TestBed.inject(ParticipationService);
-        mergeStudentParticipationMock = jest.spyOn(participationService, 'mergeStudentParticipations');
         mergeStudentParticipationMock.mockReturnValue([studentParticipation]);
         const changedParticipation = cloneDeep(studentParticipation);
         const changedResult = { ...result, id: 2 };
@@ -258,14 +273,12 @@ describe('CourseExerciseDetailsComponent', () => {
         comp.loadExercise();
         fixture.detectChanges();
         expect(comp.courseId).toBe(1);
-        expect(comp.studentParticipations?.[0].exercise?.id).toBe(exerciseDetail.id);
+        expect(comp.studentParticipations?.[0].exercise?.id).toBe(exercise.id);
         expect(comp.exercise!.id).toBe(exercise.id);
         expect(comp.exercise!.studentParticipations![0].results![0]).toStrictEqual(changedResult);
         expect(comp.plagiarismCaseInfo).toEqual(plagiarismCaseInfo);
         expect(comp.hasMoreResults).toBeFalse();
         expect(comp.exerciseRatedBadge(result)).toBe('bg-info');
-        expect(plagiarismCaseServiceMock).toHaveBeenCalledTimes(2);
-        expect(plagiarismCaseServiceMock).toHaveBeenCalledWith(1, exercise.id);
     }));
 
     it('should not be a quiz exercise', () => {
@@ -324,21 +337,6 @@ describe('CourseExerciseDetailsComponent', () => {
     });
 
     it('should handle new programming exercise', () => {
-        const submissionPolicyService = fixture.debugElement.injector.get(SubmissionPolicyService);
-        const submissionPolicy = new LockRepositoryPolicy();
-        const submissionPolicyServiceSpy = jest.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(submissionPolicy));
-
-        const programmingExercise = {
-            id: exercise.id,
-            type: ExerciseType.PROGRAMMING,
-            studentParticipations: [],
-            course: { id: 2 },
-            allowComplaintsForAutomaticAssessments: true,
-            secondCorrectionEnabled: false,
-            studentAssignedTeamIdComputed: true,
-            numberOfAssessmentsOfCorrectionRounds: [],
-        } as ProgrammingExercise;
-
         const childComponent = {} as DiscussionSectionComponent;
         comp.onChildActivate(childComponent);
 
@@ -346,10 +344,9 @@ describe('CourseExerciseDetailsComponent', () => {
 
         comp.courseId = courseId;
 
-        comp.handleNewExercise(programmingExercise);
+        comp.handleNewExercise({ exercise: programmingExercise });
         expect(comp.baseResource).toBe(`/course-management/${courseId}/${programmingExercise.type}-exercises/${programmingExercise.id}/`);
         expect(comp.allowComplaintsForAutomaticAssessments).toBeTrue();
-        expect(submissionPolicyServiceSpy).toHaveBeenCalledOnce();
         expect(comp.submissionPolicy).toEqual(submissionPolicy);
         expect(childComponent.exercise).toEqual(programmingExercise);
     });
@@ -375,28 +372,49 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(alertServiceSpy).toHaveBeenCalledWith(error.message);
     }));
 
+    it('should handle participation update', fakeAsync(() => {
+        const submissionId = 55;
+        const submission = { id: submissionId };
+        const participation = { submissions: [submission] };
+        comp.gradedStudentParticipation = participation;
+        comp.sortedHistoryResults = [{ id: 2 }];
+        comp.exercise = { ...programmingExercise };
+
+        comp.courseId = programmingExercise.course!.id!;
+
+        comp.handleNewExercise({ exercise: programmingExercise });
+        tick();
+
+        const newParticipation = { ...participation, submissions: [submission, { id: submissionId + 1 }] };
+
+        getActivatedExerciseHintsMock.mockReturnValue(of({ body: [] }));
+        getAvailableExerciseHintsMock.mockReturnValue(of({ body: [] }));
+        mergeStudentParticipationMock.mockReturnValue([newParticipation]);
+
+        participationWebsockerBehaviourSubject.next({ ...newParticipation, exercise: programmingExercise, results: [] });
+
+        tick();
+
+        expect(getActivatedExerciseHintsMock).toHaveBeenCalledOnce();
+        expect(getAvailableExerciseHintsMock).toHaveBeenCalledOnce();
+    }));
+
     it.each<[string[]]>([[[]], [[PROFILE_IRIS]]])(
         'should load iris settings only if profile iris is active',
         fakeAsync((activeProfiles: string[]) => {
             // Setup
+            const submissionPolicy = new LockRepositoryPolicy();
             const programmingExercise = {
                 id: 42,
                 type: ExerciseType.PROGRAMMING,
                 studentParticipations: [],
                 course: {},
+                submissionPolicy: submissionPolicy,
             } as unknown as ProgrammingExercise;
 
             const fakeSettings = {} as any as IrisSettings;
 
-            const irisSettingsService = TestBed.inject(IrisSettingsService);
-            const getCombinedProgrammingExerciseSettingsMock = jest.spyOn(irisSettingsService, 'getCombinedProgrammingExerciseSettings');
-            getCombinedProgrammingExerciseSettingsMock.mockReturnValue(of(fakeSettings));
-
-            const submissionPolicyService = TestBed.inject(SubmissionPolicyService);
-            const submissionPolicy = new LockRepositoryPolicy();
-            jest.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(submissionPolicy));
-
-            getExerciseDetailsMock.mockReturnValue(of({ body: programmingExercise }));
+            getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: programmingExercise, irisSettings: fakeSettings } }));
 
             const profileService = TestBed.inject(ProfileService);
             jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of({ activeProfiles } as any as ProfileInfo));
@@ -407,11 +425,9 @@ describe('CourseExerciseDetailsComponent', () => {
 
             if (activeProfiles.includes(PROFILE_IRIS)) {
                 // Should have called getCombinedProgrammingExerciseSettings if 'iris' is active
-                expect(getCombinedProgrammingExerciseSettingsMock).toHaveBeenCalled();
                 expect(comp.irisSettings).toBe(fakeSettings);
             } else {
                 // Should not have called getCombinedProgrammingExerciseSettings if 'iris' is not active
-                expect(getCombinedProgrammingExerciseSettingsMock).not.toHaveBeenCalled();
                 expect(comp.irisSettings).toBeUndefined();
             }
         }),

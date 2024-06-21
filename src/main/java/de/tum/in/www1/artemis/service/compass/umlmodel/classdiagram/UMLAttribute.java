@@ -40,6 +40,7 @@ public class UMLAttribute extends UMLElement implements Serializable {
      * @return the UML element that contains this attribute
      */
     @NotNull
+    @Override
     public UMLElement getParentElement() {
         return parentElement;
     }
@@ -49,6 +50,7 @@ public class UMLAttribute extends UMLElement implements Serializable {
      *
      * @param parentElement the UML element that contains this attribute
      */
+    @Override
     public void setParentElement(@NotNull UMLElement parentElement) {
         this.parentElement = parentElement;
     }

@@ -127,7 +127,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             // update Successful-Flag in Result
             StudentParticipation studentParticipation = (StudentParticipation) result.getParticipation();
             studentParticipation.setExercise(quizExercise);
-            result.evaluateQuizSubmission();
+            result.evaluateQuizSubmission(quizExercise);
 
             submissions.add(quizSubmission);
         }
