@@ -54,6 +54,12 @@
                 <fa-icon [icon]="faWrench" />
                 <span class="d-none d-md-inline" jhiTranslate="entity.action.re-evaluate"></span>
             </a>
+            <button id="evaluateQuizExerciseButton" class="btn btn-primary mt-1" (click)="evaluateQuizExercise()" [disabled]="isEvaluatingQuizExercise || !quizExercise.quizEnded">
+                @if (isEvaluatingQuizExercise) {
+                    <span class="d-none d-md-inline spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                }
+                <span jhiTranslate="artemisApp.studentExams.evaluateQuizExercises"></span>
+            </button>
         }
     </div>
     @if (quizExercise.isAtLeastInstructor) {

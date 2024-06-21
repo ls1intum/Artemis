@@ -607,12 +607,12 @@ public class QuizExerciseResource {
     }
 
     /**
-     * POST /quiz-exercises/{exerciseId}/evaluate-quiz-exercises : Evaluate the quiz exercise
+     * POST /quiz-exercises/{exerciseId}/evaluate : Evaluate the quiz exercise
      *
      * @param quizExerciseId the id of the quiz exercise
      * @return ResponseEntity void
      */
-    @PostMapping("quiz-exercises/{quizExerciseId}/evaluate-quiz-exercises")
+    @PostMapping("quiz-exercises/{quizExerciseId}/evaluate")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> evaluateQuizExercises(@PathVariable Long quizExerciseId) {
         log.debug("REST request to evaluate quiz exercise {}", quizExerciseId);

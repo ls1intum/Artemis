@@ -33,6 +33,7 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
     isExamMode: boolean;
 
     baseUrl: string;
+    isEvaluatingQuizExercise: boolean;
 
     constructor(
         private quizExerciseService: QuizExerciseService,
@@ -112,6 +113,20 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
                 this.loadQuizExercises.emit();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
+    }
+
+    evaluateQuizExercise() {
+        this.isEvaluatingQuizExercise = true;
+        this.exerciseService.evaluateQuizExercise(this.quizExercise.id!).subscribe({
+            next: (res) => {
+                this.alertService.success('artemisApp.quizExercise.evaluateQuizExerciseSuccess', { number: res?.body });
+                this.isEvaluatingQuizExercise = false;
+            },
+            error: (error: HttpErrorResponse) => {
+                this.dialogErrorSource.next(error.message);
+                this.isEvaluatingQuizExercise = false;
+            },
         });
     }
 }
