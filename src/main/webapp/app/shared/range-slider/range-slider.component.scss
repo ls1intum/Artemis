@@ -1,0 +1,46 @@
+.slider {
+    height: 5px;
+    border-radius: 5px;
+    background: #ddd;
+}
+
+.slider .progress {
+    height: 5px;
+    left: 25%;
+    right: 25%;
+    position: absolute;
+    border-radius: 5px;
+    background: #ff0026;
+}
+
+.range-input {
+    position: relative;
+}
+
+.range-input input {
+    position: absolute;
+    height: 5px;
+    width: 100%;
+    background: none;
+    pointer-events: none;
+    -webkit-appearance: none;
+}
+
+[type='range']::-webkit-slider-thumb {
+    height: 17px;
+    width: 17px;
+    border-radius: 50%;
+    background: #73ff00;
+    pointer-events: auto;
+    -webkit-appearance: none;
+}
+
+[type='range']::-moz-range-thumb {
+    height: 17px;
+    width: 17px;
+    border-radius: 50%;
+    background: #007bff;
+    pointer-events: auto;
+    -moz-appearance: none;
+    border: none; // TODO is this needed?
+}

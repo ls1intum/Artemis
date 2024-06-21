@@ -12,13 +12,22 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { Observable, OperatorFunction, Subject, merge } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge.component';
+import { RangeSliderComponent } from 'app/shared/range-slider/range-slider.component';
 
 @Component({
     selector: 'jhi-exercise-filter-modal',
     templateUrl: './exercise-filter-modal.component.html',
     // styleUrls: ['./exercise-filter.component.scss'],
     standalone: true,
-    imports: [FormsModule, ReactiveFormsModule, FontAwesomeModule, ArtemisSharedCommonModule, ArtemisSharedComponentModule, CustomExerciseCategoryBadgeComponent],
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        FontAwesomeModule,
+        ArtemisSharedCommonModule,
+        ArtemisSharedComponentModule,
+        CustomExerciseCategoryBadgeComponent,
+        RangeSliderComponent,
+    ],
 })
 export class ExerciseFilterModalComponent {
     readonly faFilter = faFilter;

@@ -1,0 +1,12 @@
+<br />
+<span>MinValue: {{ minValue }}</span>
+<br />
+<span>MaxValue: {{ maxValue }}</span>
+
+<div class="slider">
+    <div class="progress"></div>
+    <div class="range-input">
+        <input type="range" [min]="generalMinValue" [max]="generalMaxValue" [(ngModel)]="minValue" class="range-min" [step]="stepWidth" />
+        <input type="range" [min]="generalMinValue" [max]="generalMaxValue" [(ngModel)]="maxValue" class="range-max" [step]="stepWidth" />
+    </div>
+</div>
