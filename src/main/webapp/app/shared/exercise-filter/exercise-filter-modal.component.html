@@ -40,9 +40,11 @@
             <div id="exercise-type-filter-selection">
                 @for (typeFilter of typeFilters; track typeFilter) {
                     <div class="form-check form-check-inline">
-                        <input type="checkbox" [(ngModel)]="typeFilter.checked" [name]="typeFilter.value" />
-                        <label [jhiTranslate]="typeFilter.name"></label>
-                        <fa-icon [icon]="typeFilter.icon" />
+                        <label>
+                            <input type="checkbox" [(ngModel)]="typeFilter.checked" [name]="typeFilter.value" />
+                            <span [jhiTranslate]="typeFilter.name"></span>
+                            <fa-icon [icon]="typeFilter.icon" />
+                        </label>
                     </div>
                 }
             </div>
