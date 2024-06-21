@@ -120,6 +120,7 @@ public class DropLocation extends TempIdObject implements QuizQuestionComponent<
         return invalid != null && invalid;
     }
 
+    @Override
     public void setQuestion(DragAndDropQuestion dragAndDropQuestion) {
         this.question = dragAndDropQuestion;
     }

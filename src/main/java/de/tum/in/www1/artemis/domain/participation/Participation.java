@@ -131,6 +131,7 @@ public abstract class Participation extends DomainObject implements Participatio
         this.submissionCountTransient = submissionCount;
     }
 
+    @Override
     public InitializationState getInitializationState() {
         return initializationState;
     }
@@ -140,10 +141,12 @@ public abstract class Participation extends DomainObject implements Participatio
         return this;
     }
 
+    @Override
     public void setInitializationState(InitializationState initializationState) {
         this.initializationState = initializationState;
     }
 
+    @Override
     public ZonedDateTime getInitializationDate() {
         return initializationDate;
     }
@@ -153,14 +156,17 @@ public abstract class Participation extends DomainObject implements Participatio
         return this;
     }
 
+    @Override
     public void setInitializationDate(ZonedDateTime initializationDate) {
         this.initializationDate = initializationDate;
     }
 
+    @Override
     public ZonedDateTime getIndividualDueDate() {
         return individualDueDate;
     }
 
+    @Override
     public void setIndividualDueDate(ZonedDateTime individualDueDate) {
         this.individualDueDate = individualDueDate;
     }
@@ -201,6 +207,7 @@ public abstract class Participation extends DomainObject implements Participatio
         return this;
     }
 
+    @Override
     public void addResult(Result result) {
         this.results.add(result);
         result.setParticipation(this);
@@ -215,6 +222,7 @@ public abstract class Participation extends DomainObject implements Participatio
         this.results = results;
     }
 
+    @Override
     public Set<Submission> getSubmissions() {
         return submissions;
     }
@@ -224,6 +232,7 @@ public abstract class Participation extends DomainObject implements Participatio
         return this;
     }
 
+    @Override
     public void addSubmission(Submission submission) {
         this.submissions.add(submission);
         submission.setParticipation(this);
@@ -289,6 +298,7 @@ public abstract class Participation extends DomainObject implements Participatio
      * @param <T> submission type
      * @return the latest submission or null
      */
+    @Override
     public <T extends Submission> Optional<T> findLatestSubmission() {
         return findLatestSubmission(false);
     }

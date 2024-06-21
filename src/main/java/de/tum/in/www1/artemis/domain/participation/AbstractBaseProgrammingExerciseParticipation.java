@@ -23,18 +23,22 @@ public abstract class AbstractBaseProgrammingExerciseParticipation extends Parti
     @JsonView(QuizView.Before.class)
     private String buildPlanId;
 
+    @Override
     public String getRepositoryUri() {
         return repositoryUri;
     }
 
+    @Override
     public void setRepositoryUri(String repositoryUri) {
         this.repositoryUri = repositoryUri;
     }
 
+    @Override
     public String getBuildPlanId() {
         return buildPlanId;
     }
 
+    @Override
     public void setBuildPlanId(String buildPlanId) {
         this.buildPlanId = buildPlanId;
     }
