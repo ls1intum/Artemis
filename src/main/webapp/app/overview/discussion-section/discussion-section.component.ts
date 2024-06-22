@@ -33,7 +33,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     private ngUnsubscribe = new Subject<void>();
     private previousScrollDistanceFromTop: number;
     private page = 1;
-    private readonly pageSize = 50;
+    private readonly PAGE_SIZE = 50;
     private totalNumberOfPosts = 0;
     // as set for the css class '.items-container'
     private messagesContainerHeight = 700;
@@ -45,7 +45,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     currentPostId?: number;
     currentPost?: Post;
     shouldSendMessage: boolean;
-    readonly pageType = PageType.PAGE_SECTION;
+    readonly PAGE_TYPE = PageType.PAGE_SECTION;
 
     // Icons
     faChevronRight = faChevronRight;
@@ -77,7 +77,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             this.currentPostId = +routeParams.queryParams.postId;
             this.course = this.exercise?.course ?? this.lecture?.course;
             this.metisService.setCourse(this.course);
-            this.metisService.setPageType(this.pageType);
+            this.metisService.setPageType(this.PAGE_TYPE);
             if (routeParams.params.courseId) {
                 this.setChannel(routeParams.params.courseId);
             } else if (this.course?.id) {
@@ -223,7 +223,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             this.page += 1;
             this.commandMetisToFetchPosts();
         }
-        this.content.nativeElement.scrollTop = this.content.nativeElement.scrollTop + this.pageSize;
+        this.content.nativeElement.scrollTop = this.content.nativeElement.scrollTop + this.PAGE_SIZE;
     }
 
     public commandMetisToFetchPosts(forceUpdate = false) {
@@ -248,7 +248,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             filterToAnsweredOrReacted: this.formGroup.get('filterToAnsweredOrReacted')?.value,
             pagingEnabled: true,
             page: 0,
-            pageSize: this.pageSize,
+            pageSize: this.PAGE_SIZE,
             postSortCriterion: PostSortCriterion.CREATION_DATE,
             sortingOrder: this.currentSortDirection,
         };

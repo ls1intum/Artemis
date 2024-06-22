@@ -7,8 +7,8 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
     styleUrls: ['./footer.scss'],
 })
 export class FooterComponent implements OnInit {
-    readonly releaseUrl = 'https://github.com/ls1intum/Artemis/releases';
-    readonly feedbackUrl = 'https://github.com/ls1intum/Artemis/issues/new/choose';
+    readonly RELEASE_URL = 'https://github.com/ls1intum/Artemis/releases';
+    readonly FEEDBACK_URL = 'https://github.com/ls1intum/Artemis/issues/new/choose';
 
     email: string;
     gitBranch: string;
