@@ -48,6 +48,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseService;
@@ -435,7 +436,7 @@ public class CompetencyResource {
      * @return the ResponseEntity with status 200 (OK) and with the competency course performance in the body
      */
     @GetMapping("courses/{courseId}/competencies/{competencyId}/student-progress")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInCourse
     public ResponseEntity<CompetencyProgress> getCompetencyStudentProgress(@PathVariable long courseId, @PathVariable long competencyId,
             @RequestParam(defaultValue = "false") Boolean refresh) {
         log.debug("REST request to get student progress for competency: {}", competencyId);
@@ -463,12 +464,11 @@ public class CompetencyResource {
      * @return the ResponseEntity with status 200 (OK) and with the competency course performance in the body
      */
     @GetMapping("courses/{courseId}/competencies/{competencyId}/course-progress")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<CourseCompetencyProgressDTO> getCompetencyCourseProgress(@PathVariable long courseId, @PathVariable long competencyId) {
         log.debug("REST request to get course progress for competency: {}", competencyId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        var competency = competencyRepository.findByIdWithLectureUnitsAndCompletionsElseThrow(competencyId);
-        checkAuthorizationForCompetency(Role.INSTRUCTOR, course, competency);
+        var competency = competencyRepository.findByIdWithExercisesElseThrow(competencyId);
 
         var progress = competencyProgressService.getCompetencyCourseProgress(competency, course);
 

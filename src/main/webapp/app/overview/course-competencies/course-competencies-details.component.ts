@@ -1,7 +1,7 @@
 import dayjs from 'dayjs/esm';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Competency, CompetencyJol, CompetencyProgress, getIcon } from 'app/entities/competency.model';
+import { Competency, CompetencyJol, CompetencyProgress, ConfidenceReason, getConfidence, getIcon, getMastery, getProgress } from 'app/entities/competency.model';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -27,6 +27,7 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     courseId?: number;
     isLoading = false;
     competency: Competency;
+    competencyProgress: CompetencyProgress;
     judgementOfLearning: CompetencyJol | undefined;
     promptForJolRating = false;
     showFireworks = false;
@@ -34,6 +35,7 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     paramsSubscription: Subscription;
 
     readonly LectureUnitType = LectureUnitType;
+    protected readonly ConfidenceReason = ConfidenceReason;
 
     faPencilAlt = faPencilAlt;
     getIcon = getIcon;
@@ -87,6 +89,7 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
         forkJoin(observables).subscribe({
             next: ([competencyResp, courseCompetenciesResp, judgementOfLearningResp]) => {
                 this.competency = competencyResp.body! as Competency;
+                this.competencyProgress = this.getUserProgress();
 
                 if (this.judgementOfLearningEnabled) {
                     const competencies = courseCompetenciesResp.body! as Competency[];
@@ -94,10 +97,9 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
                     this.promptForJolRating = CompetencyJol.shouldPromptForJol(this.competency, progress, competencies);
                     const judgementOfLearning = (judgementOfLearningResp?.body ?? undefined) as { current: CompetencyJol; prior?: CompetencyJol } | undefined;
                     if (
-                        judgementOfLearning &&
-                        progress &&
-                        (judgementOfLearning.current.competencyProgress !== (progress?.progress ?? 0) ||
-                            judgementOfLearning.current.competencyConfidence !== (progress?.confidence ?? 0))
+                        !judgementOfLearning?.current ||
+                        judgementOfLearning.current.competencyProgress !== (progress?.progress ?? 0) ||
+                        judgementOfLearning.current.competencyConfidence !== (progress?.confidence ?? 1)
                     ) {
                         this.judgementOfLearning = undefined;
                     } else {
@@ -134,24 +136,19 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
         if (this.competency.userProgress?.length) {
             return this.competency.userProgress.first()!;
         }
-        return { progress: 0, confidence: 0 } as CompetencyProgress;
+        return { progress: 0, confidence: 1 } as CompetencyProgress;
     }
 
     get progress(): number {
-        // The percentage of completed lecture units and participated exercises
-        return Math.round(this.getUserProgress().progress ?? 0);
+        return getProgress(this.competencyProgress);
     }
 
     get confidence(): number {
-        // Confidence level (average score in exercises) in proportion to the threshold value (max. 100 %)
-        // Example: If the student’s latest confidence level equals 60 % and the mastery threshold is set to 80 %, the ring would be 75 % full.
-        return Math.min(Math.round(((this.getUserProgress().confidence ?? 0) / (this.competency.masteryThreshold ?? 100)) * 100), 100);
+        return getConfidence(this.competencyProgress);
     }
 
     get mastery(): number {
-        // Advancement towards mastery as a weighted function of progress and confidence
-        const weight = 2 / 3;
-        return Math.round((1 - weight) * this.progress + weight * this.confidence);
+        return getMastery(this.competencyProgress);
     }
 
     get isMastered(): boolean {

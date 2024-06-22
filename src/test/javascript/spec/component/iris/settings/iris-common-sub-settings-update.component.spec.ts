@@ -82,6 +82,19 @@ describe('IrisCommonSubSettingsUpdateComponent Component', () => {
         expect(comp.isSettingsSwitchDisabled).toBeTrue();
     });
 
+    it('prevents enabling settings if the parent chat settings disabled', () => {
+        comp.subSettings = baseSettings();
+        comp.parentSubSettings = baseSettings();
+        comp.parentSubSettings.enabled = false;
+        comp.isAdmin = true;
+        comp.settingsType = IrisSettingsType.COURSE;
+        comp.allIrisModels = mockModels();
+        fixture.detectChanges();
+
+        expect(comp.inheritDisabled).toBeTrue();
+        expect(comp.isSettingsSwitchDisabled).toBeTrue();
+    });
+
     it('change allowed model', () => {
         const allIrisModels = mockModels();
         comp.subSettings = baseSettings();

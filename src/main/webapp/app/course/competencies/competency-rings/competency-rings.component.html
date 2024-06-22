@@ -1,21 +1,7 @@
 <!-- Adapted from https://www.chilitime.design/2018/09/ActivityRings/ -->
 <div [class.muted-competency-rings]="hideProgress" class="position-relative" [ngbTooltip]="hideTooltip ? undefined : (tooltipText | artemisTranslate)" #container>
     <svg viewBox="0 0 35 35" xmlns="http://www.w3.org/2000/svg">
-        <g class="ring ring1">
-            <circle class="background" cx="50%" cy="50%" r="15.915" stroke-width="3" />
-            <circle
-                [class.progressbar-anim]="playAnimation"
-                class="progressbar"
-                cx="50%"
-                cy="50%"
-                r="15.915"
-                stroke-width="3"
-                [style.opacity]="masteryPercentage === 0 ? 0 : 1"
-                [attr.stroke-dasharray]="masteryPercentage + ', 100'"
-            />
-        </g>
-
-        <g class="ring ring2">
+        <g class="ring mastery-ring">
             <circle class="background" cx="50%" cy="50%" r="15.915" stroke-width="4" />
             <circle
                 [class.progressbar-anim]="playAnimation"
@@ -24,12 +10,12 @@
                 cy="50%"
                 r="15.915"
                 stroke-width="4"
-                [style.opacity]="confidencePercentage === 0 ? 0 : 1"
-                [attr.stroke-dasharray]="confidencePercentage + ', 100'"
+                [style.opacity]="masteryPercentage === 0 ? 0 : 1"
+                [attr.stroke-dasharray]="masteryPercentage + ', 100'"
             />
         </g>
 
-        <g class="ring ring3">
+        <g class="ring progress-ring">
             <circle class="background" cx="50%" cy="50%" r="15.915" stroke-width="6" />
             <circle
                 [class.progressbar-anim]="playAnimation"
