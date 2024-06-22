@@ -405,15 +405,16 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      * @returns The updated list of build jobs with the duration
      */
     updateBuildJobDuration(buildJobs: BuildJob[]): BuildJob[] {
-        for (const buildJob of buildJobs) {
-            if (buildJob.jobTimingInfo && buildJob.jobTimingInfo?.buildStartDate) {
-                const start = dayjs(buildJob.jobTimingInfo?.buildStartDate);
+        // iterate over all build jobs and calculate the duration
+        return buildJobs.map((buildJob) => {
+            if (buildJob.jobTimingInfo && buildJob.jobTimingInfo.buildStartDate) {
+                const start = dayjs(buildJob.jobTimingInfo.buildStartDate);
                 const now = dayjs();
                 buildJob.jobTimingInfo.buildDuration = now.diff(start, 'seconds');
             }
-        }
-        // This is necessary to update the view when the build job duration is updated
-        return buildJobs.map((buildJob) => ({ ...buildJob }));
+            // This is necessary to update the view when the build job duration is updated
+            return { ...buildJob };
+        });
     }
 
     /**
