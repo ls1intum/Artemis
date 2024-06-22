@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,16 +17,16 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+
+import com.google.common.util.concurrent.AtomicDouble;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.LearningObject;
 import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.domain.competency.RelationType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
@@ -76,8 +75,6 @@ public class LearningPathRecommendationService {
      * Base utility that is used to calculate a competencies' utility with respect to the mastery level.
      */
     private static final double MASTERY_PROGRESS_UTILITY = 1;
-
-    private static final double SCORE_THRESHOLD = 80;
 
     /**
      * Lookup table containing the distribution of exercises by difficulty level that should be recommended.
@@ -504,23 +501,30 @@ public class LearningPathRecommendationService {
         }
 
         final var combinedPriorConfidence = computeCombinedPriorConfidence(competency, state);
-        final var pendingExercises = competency.getExercises().stream().filter(exercise -> !learningObjectService.isCompletedByUser(exercise, learningPath.getUser()))
-                .collect(Collectors.toSet());
-        final var numberOfExercisesRequiredToMaster = predictNumberOfExercisesRequiredToMaster(learningPath, competency, combinedPriorConfidence, pendingExercises.size());
-        Map<DifficultyLevel, Set<Exercise>> difficultyLevelMap = generateDifficultyLevelMap(competency.getExercises());
-        if (numberOfExercisesRequiredToMaster >= competency.getExercises().size()) {
-            scheduleAllExercises(recommendedOrder, difficultyLevelMap);
-            return recommendedOrder;
+        final var optionalCompetencyProgress = competency.getUserProgress().stream().findAny();
+        final double weightedConfidence;
+        if (optionalCompetencyProgress.isPresent()) {
+            final var competencyProgress = optionalCompetencyProgress.get();
+            weightedConfidence = (competencyProgress.getProgress() * competencyProgress.getConfidence()) + (1 - competencyProgress.getProgress()) * combinedPriorConfidence;
         }
-        final var recommendedExerciseDistribution = getRecommendedExerciseDistribution(numberOfExercisesRequiredToMaster, combinedPriorConfidence);
-        if (Arrays.stream(recommendedExerciseDistribution).sum() >= competency.getExercises().size()) {
-            // The calculation of the distribution uses the ceiling of the recommendation to schedule sufficiently many exercises required for mastery.
-            // For competencies with only few exercises, this might cause the number of recommended exercises to surpass the number of linked exercises.
-            scheduleAllExercises(recommendedOrder, difficultyLevelMap);
-            return recommendedOrder;
+        else {
+            weightedConfidence = combinedPriorConfidence;
         }
 
-        scheduleExercisesByDistribution(recommendedOrder, recommendedExerciseDistribution, learningPath, competency);
+        final var numberOfRequiredExercisePointsToMaster = calculateNumberOfExercisePointsRequiredToMaster(learningPath, competency, weightedConfidence);
+
+        final var pendingExercises = competency.getExercises().stream().filter(exercise -> !learningObjectService.isCompletedByUser(exercise, learningPath.getUser()))
+                .collect(Collectors.toSet());
+        final var pendingExercisePoints = pendingExercises.stream().mapToDouble(Exercise::getMaxPoints).sum();
+
+        Map<DifficultyLevel, Set<Exercise>> difficultyLevelMap = generateDifficultyLevelMap(pendingExercises);
+        if (numberOfRequiredExercisePointsToMaster >= pendingExercisePoints) {
+            scheduleAllExercises(recommendedOrder, difficultyLevelMap);
+            return recommendedOrder;
+        }
+        final var recommendedExerciseDistribution = getRecommendedExercisePointDistribution(numberOfRequiredExercisePointsToMaster, weightedConfidence);
+
+        scheduleExercisesByDistribution(recommendedOrder, recommendedExerciseDistribution, difficultyLevelMap);
         return recommendedOrder;
     }
 
@@ -539,41 +543,35 @@ public class LearningPathRecommendationService {
     /**
      * Adds exercises to the recommended order of learning objects according to the given distribution.
      *
-     * @param recommendedOrder                 the list storing the recommended order of learning objects
-     * @param recommendedExercisesDistribution an array containing the number of exercises that should be scheduled per difficulty (easy to hard)
-     * @param learningPath                     the learning path for which the recommendation should be performed
-     * @param competency                       the competency from which the exercises should be chosen
+     * @param recommendedOrder                     the list storing the recommended order of learning objects
+     * @param recommendedExercisePointDistribution an array containing the number of exercise points that should be scheduled per difficulty (easy to hard)
+     * @param difficultyMap                        a map from difficulty level to a set of corresponding exercises
      */
-    private void scheduleExercisesByDistribution(List<LearningObject> recommendedOrder, int[] recommendedExercisesDistribution, LearningPath learningPath, Competency competency) {
-        var exerciseCandidates = competency.getExercises().stream().filter(exercise -> !hasScoredAtLeast(exercise, learningPath.getUser(), SCORE_THRESHOLD))
-                .collect(Collectors.toSet());
-        final var difficultyMap = generateDifficultyLevelMap(exerciseCandidates);
+    private void scheduleExercisesByDistribution(List<LearningObject> recommendedOrder, double[] recommendedExercisePointDistribution,
+            Map<DifficultyLevel, Set<Exercise>> difficultyMap) {
         final var easyExercises = new HashSet<Exercise>();
         final var mediumExercises = new HashSet<Exercise>();
         final var hardExercises = new HashSet<Exercise>();
 
         // choose as many exercises from the correct difficulty level as possible
-        final var missingEasy = selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.EASY, recommendedExercisesDistribution[0], easyExercises);
-        final var missingMedium = selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.MEDIUM, recommendedExercisesDistribution[1], mediumExercises);
-        final var missingHard = selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.HARD, recommendedExercisesDistribution[2], hardExercises);
-        int numberOfMissingExercises = missingEasy + missingMedium + missingHard;
+        final var missingEasy = selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.EASY, recommendedExercisePointDistribution[0], easyExercises);
+        final var missingHard = selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.HARD, recommendedExercisePointDistribution[2], hardExercises);
 
         // if there are not sufficiently many exercises per difficulty level, prefer medium difficulty
         // case 1: no medium exercises available/medium exercises missing: continue to fill with easy/hard exercises
         // case 2: medium exercises available: no medium exercises missing -> missing exercises must be easy/hard -> in both scenarios medium is the closest difficulty level
-        if (numberOfMissingExercises > 0 && !difficultyMap.get(DifficultyLevel.MEDIUM).isEmpty()) {
-            numberOfMissingExercises = selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.MEDIUM, numberOfMissingExercises, mediumExercises);
-        }
+        double mediumExercisePoints = recommendedExercisePointDistribution[1] + missingEasy + missingHard;
+        double numberOfMissingExercisePoints = selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.MEDIUM, mediumExercisePoints, mediumExercises);
 
         // if there are still not sufficiently many medium exercises, choose easy difficulty
         // prefer easy to hard exercises to avoid student overload
-        if (numberOfMissingExercises > 0 && !difficultyMap.get(DifficultyLevel.EASY).isEmpty()) {
-            numberOfMissingExercises = selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.EASY, numberOfMissingExercises, easyExercises);
+        if (numberOfMissingExercisePoints > 0 && !difficultyMap.get(DifficultyLevel.EASY).isEmpty()) {
+            numberOfMissingExercisePoints = selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.EASY, numberOfMissingExercisePoints, easyExercises);
         }
 
         // fill remaining slots with hard difficulty
-        if (numberOfMissingExercises > 0) {
-            selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.HARD, numberOfMissingExercises, hardExercises);
+        if (numberOfMissingExercisePoints > 0 && !difficultyMap.get(DifficultyLevel.HARD).isEmpty()) {
+            selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.HARD, numberOfMissingExercisePoints, hardExercises);
         }
 
         recommendedOrder.addAll(easyExercises);
@@ -586,18 +584,20 @@ public class LearningPathRecommendationService {
      * <p>
      * If there are not sufficiently exercises available, the method returns the number of exercises that could not be selected with the particular difficulty.
      *
-     * @param difficultyMap     a map from difficulty level to a set of corresponding exercises
-     * @param difficulty        the difficulty level that should be chosen
-     * @param numberOfExercises the number of exercises that should be selected
-     * @param exercises         the set to store the selected exercises
-     * @return number of exercises that could not be selected
+     * @param difficultyMap  a map from difficulty level to a set of corresponding exercises
+     * @param difficulty     the difficulty level that should be chosen
+     * @param exercisePoints the amount of exercise points that should be selected
+     * @param exercises      the set to store the selected exercises
+     * @return amount of points that are missing, if negative the amount of points that are selected too much
      */
-    private static int selectExercisesWithDifficulty(Map<DifficultyLevel, Set<Exercise>> difficultyMap, DifficultyLevel difficulty, int numberOfExercises,
+    private static double selectExercisesWithDifficulty(Map<DifficultyLevel, Set<Exercise>> difficultyMap, DifficultyLevel difficulty, double exercisePoints,
             Set<Exercise> exercises) {
-        var selectedExercises = difficultyMap.get(difficulty).stream().limit(numberOfExercises).collect(Collectors.toSet());
+        var remainingExercisePoints = new AtomicDouble(exercisePoints);
+        var selectedExercises = difficultyMap.get(difficulty).stream().takeWhile(exercise -> remainingExercisePoints.getAndAdd(-exercise.getMaxPoints()) >= 0)
+                .collect(Collectors.toSet());
         exercises.addAll(selectedExercises);
         difficultyMap.get(difficulty).removeAll(selectedExercises);
-        return numberOfExercises - selectedExercises.size();
+        return remainingExercisePoints.get();
     }
 
     /**
@@ -608,51 +608,46 @@ public class LearningPathRecommendationService {
      * @return the average confidence of all prior competencies
      */
     private static double computeCombinedPriorConfidence(Competency competency, RecommendationState state) {
-        return state.priorCompetencies.get(competency.getId()).stream().map(state.competencyIdMap::get).map(c -> c.getUserProgress().stream().findFirst())
-                .mapToDouble(competencyProgress -> {
-                    if (competencyProgress.isEmpty()) {
-                        return 0;
-                    }
-                    return competencyProgress.get().getConfidence();
-                }).sorted().average().orElse(100);
+        return state.priorCompetencies.get(competency.getId()).stream().map(state.competencyIdMap::get).flatMap(c -> c.getUserProgress().stream())
+                .mapToDouble(CompetencyProgress::getConfidence).sorted().average().orElse(1);
     }
 
     /**
-     * Predicts the number of exercises required to master the given competency based on prior performance and current progress.
+     * Predicts the additionally needed exercise points required to master the given competency based on prior performance and current progress.
      * <p>
      * The following formulas are used predict the number of exercises required to master the competency:
      * <ul>
      * <li>Mastery >= MasteryThreshold</li>
-     * <li>Mastery = 1/3 * Progress + 2/3 * Confidence</li>
-     * <li>Progress = (#CompletedLearningObjects + #ExercisesRequiredToMaster) / #LearningObjects</li>
-     * <li>Confidence = (Sum of LatestScores + #ExercisesRequiredToMaster * avg. prior Confidence) / (#LatestScores + #ExercisesRequiredToMaster)</li>
+     * <li>Mastery = Progress * Confidence {@link CompetencyProgressService#getMastery}</li>
+     * <li>Progress = (#Exercises / # LearningObjects) * (AchievedPoints / TotalPoints) + #LectureUnits / #LearningObjects {@link CompetencyProgressService#calculateProgress}</li>
+     * <li>Confidence ≈ 0.9 * weightedConfidence</li>
+     * <li>RequiredPoints = AchievedPoints - CurrentScore</li>
      * </ul>
-     * The formulas are substituted and solved for #ExercisesRequiredToMaster.
+     * The formulas are substituted and solved for RequiredScore.
      *
-     * @param learningPath             the learning path for which the prediction should be computed
-     * @param competency               the competency for which the prediction should be computed
-     * @param priorConfidence          the average confidence of all prior competencies
-     * @param numberOfPendingExercises the number of exercises that have not been completed by the user
-     * @return the predicted number of exercises required to master the given competency
+     * @param learningPath       the learning path for which the prediction should be computed
+     * @param competency         the competency for which the prediction should be computed
+     * @param weightedConfidence the weighted confidence of the current and prior competencies
+     * @return the predicted number of exercise points required to master the given competency
      */
-    private int predictNumberOfExercisesRequiredToMaster(LearningPath learningPath, Competency competency, double priorConfidence, int numberOfPendingExercises) {
-        // we assume that the student may perform slightly worse that previously and dampen the prior confidence for the prediction process
-        priorConfidence *= 0.75;
-        final var scores = participantScoreService.getStudentAndTeamParticipationScoresAsDoubleStream(learningPath.getUser(), competency.getExercises()).summaryStatistics();
+    private double calculateNumberOfExercisePointsRequiredToMaster(LearningPath learningPath, Competency competency, double weightedConfidence) {
+        // we assume that the student may perform slightly worse than previously and dampen the confidence for the prediction process
+        weightedConfidence *= 0.9;
+        double currentPoints = participantScoreService.getStudentAndTeamParticipationPointsAsDoubleStream(learningPath.getUser(), competency.getExercises()).sum();
+        double maxPoints = competency.getExercises().stream().mapToDouble(Exercise::getMaxPoints).sum();
         double lectureUnits = competency.getLectureUnits().size();
         double exercises = competency.getExercises().size();
         double learningObjects = lectureUnits + exercises;
         double masteryThreshold = competency.getMasteryThreshold();
-        double completedExercises = exercises - numberOfPendingExercises;
-        double a = 100d / (3d * learningObjects);
-        double b = 100d * (lectureUnits + completedExercises + scores.getCount()) / (3d * learningObjects) + 2d * priorConfidence / 3d - masteryThreshold;
-        double c = 100d * (lectureUnits + completedExercises) * scores.getCount() / (3d * learningObjects) + 2d * scores.getSum() / 3d - masteryThreshold * scores.getCount();
-        double D = Math.sqrt(Math.pow(b, 2) - 4 * a * c);
-        double prediction1 = Math.ceil((-b + D) / (2d * a));
-        double prediction2 = Math.ceil((-b - D) / (2d * a));
-        int prediction = (int) Math.max(prediction1, prediction2);
+
+        double neededProgress = masteryThreshold / weightedConfidence;
+        double maxLectureUnitProgress = lectureUnits / learningObjects * 100;
+        double exerciseWeight = exercises / learningObjects;
+        double neededTotalExercisePoints = (neededProgress - maxLectureUnitProgress) / exerciseWeight * (maxPoints / 100);
+
+        double neededExercisePoints = neededTotalExercisePoints - currentPoints;
         // numerical edge case, can't happen for valid competencies
-        return Math.max(prediction, 0);
+        return Math.max(neededExercisePoints, 0);
     }
 
     /**
@@ -682,48 +677,32 @@ public class LearningPathRecommendationService {
     /**
      * Computes the recommended amount of exercises per difficulty level.
      *
-     * @param numberOfExercisesRequiredToMaster the minimum number of exercises that should be recommended
-     * @param priorConfidence                   the average confidence of all prior competencies
+     * @param numberOfExercisePointsRequiredToMaster the minimum amount of exercise points that should be recommended
+     * @param weightedConfidence                     the weighted confidence of the current and prior competencies
      * @return array containing the recommended number of exercises per difficulty level (easy to hard)
      */
-    private static int[] getRecommendedExerciseDistribution(int numberOfExercisesRequiredToMaster, double priorConfidence) {
-        final var distribution = getExerciseDifficultyDistribution(priorConfidence);
-        final var numberOfExercises = new int[DifficultyLevel.values().length];
-        for (int i = 0; i < numberOfExercises.length; i++) {
-            numberOfExercises[i] = (int) Math.round(Math.ceil(distribution[i] * numberOfExercisesRequiredToMaster));
+    private static double[] getRecommendedExercisePointDistribution(double numberOfExercisePointsRequiredToMaster, double weightedConfidence) {
+        final var distribution = getExerciseDifficultyDistribution(weightedConfidence);
+        final var numberOfExercisePoints = new double[DifficultyLevel.values().length];
+        for (int i = 0; i < numberOfExercisePoints.length; i++) {
+            numberOfExercisePoints[i] = distribution[i] * numberOfExercisePointsRequiredToMaster;
         }
-        return numberOfExercises;
+        return numberOfExercisePoints;
     }
 
     /**
      * Retrieves the corresponding distribution from the lookup table.
      *
-     * @param priorConfidence the median of the normal distribution
+     * @param weightedConfidence the weighted confidence of the current and prior competencies
      * @return array containing the distribution in percent per difficulty level (easy to hard)
      */
-    private static double[] getExerciseDifficultyDistribution(double priorConfidence) {
-        int distributionIndex = (int) Math.round(priorConfidence * (EXERCISE_DIFFICULTY_DISTRIBUTION_LUT.length - 1) / 100);
-        return EXERCISE_DIFFICULTY_DISTRIBUTION_LUT[distributionIndex];
+    private static double[] getExerciseDifficultyDistribution(double weightedConfidence) {
+        int distributionIndex = (int) Math.round(weightedConfidence * (EXERCISE_DIFFICULTY_DISTRIBUTION_LUT.length - 1));
+        return EXERCISE_DIFFICULTY_DISTRIBUTION_LUT[Math.clamp(distributionIndex, 0, EXERCISE_DIFFICULTY_DISTRIBUTION_LUT.length - 1)];
     }
 
     public record RecommendationState(Map<Long, Competency> competencyIdMap, List<Long> recommendedOrderOfCompetencies, Set<Long> masteredCompetencies,
             Map<Long, Double> competencyMastery, Map<Long, Set<Long>> matchingClusters, Map<Long, Set<Long>> priorCompetencies, Map<Long, Long> extendsCompetencies,
             Map<Long, Long> assumesCompetencies) {
-    }
-
-    /**
-     * Checks if the user has achieved the minimum score.
-     *
-     * @param exercise the exercise that should be checked
-     * @param user     the user for which to check the score
-     * @param minScore the minimum score that should be achieved
-     * @return true if the user achieved the minimum score, false otherwise
-     */
-    private boolean hasScoredAtLeast(@NotNull Exercise exercise, @NotNull User user, double minScore) {
-        final var score = participantScoreService.getStudentAndTeamParticipationScoresAsDoubleStream(user, Set.of(exercise)).max();
-        if (score.isEmpty()) {
-            return false;
-        }
-        return score.getAsDouble() >= minScore;
     }
 }

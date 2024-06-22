@@ -32,6 +32,37 @@
     }
 }
 
+.suggestions-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px;
+    justify-content: center;
+    align-items: stretch;
+}
+
+.suggestion-button {
+    background-color: var(--iris-suggestion-background);
+    color: var(--bs-body-color);
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 12px;
+    text-wrap: wrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition:
+        background-color 0.3s,
+        color 0.3s;
+    border: 1px solid var(--border-color);
+    border-radius: var(--bs-border-radius-lg);
+    flex: 1;
+
+    &:hover {
+        background-color: var(--iris-tool-background);
+    }
+}
+
 .toolbox {
     background: var(--iris-tool-background);
     border: 1px solid var(--border-color);

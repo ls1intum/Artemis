@@ -38,10 +38,14 @@
                 @if (competency.description) {
                     <p class="m-0 markdown-preview" [innerHTML]="competency.description | htmlForMarkdown"></p>
                 }
-                @if (isPrerequisite && competency.course) {
+                @if (isPrerequisite && competency.linkedCourseCompetency?.course) {
                     <div>
-                        <span class="badge bg-primary">{{ competency.course.title }}</span>
-                        <span class="badge bg-secondary">{{ competency.course.semester }}</span>
+                        @if (competency.linkedCourseCompetency!.course!.title) {
+                            <span class="badge bg-primary">{{ competency.linkedCourseCompetency!.course!.title! }}</span>
+                        }
+                        @if (competency.linkedCourseCompetency!.course!.semester) {
+                            <span class="badge bg-secondary">{{ competency.linkedCourseCompetency!.course!.semester! }}</span>
+                        }
                     </div>
                 }
                 <ng-content />
@@ -50,13 +54,13 @@
                 <div class="col-sm col py-2" style="max-width: fit-content">
                     <span style="vertical-align: middle"> {{ 'artemisApp.competency.competencyCard.softDueDate' | artemisTranslate }} </span>
                     <span class="badge" [ngClass]="softDueDatePassed && !isMastered ? 'bg-danger' : 'bg-success'" id="date-badge">
-                        {{ competency.softDueDate | artemisTimeAgo }}
+                        {{ competency.softDueDate! | artemisTimeAgo }}
                     </span>
                 </div>
             }
             @if (!isPrerequisite) {
                 <div class="col-sm col text-end py-1 px-2" style="max-width: 95px">
-                    <jhi-competency-rings [progress]="progress" [confidence]="confidence" [mastery]="mastery" [hideProgress]="hideProgress" />
+                    <jhi-competency-rings [progress]="progress" [mastery]="mastery" [hideProgress]="hideProgress" />
                 </div>
             }
         </div>

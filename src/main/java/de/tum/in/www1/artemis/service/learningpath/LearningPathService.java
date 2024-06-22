@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
+import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -382,6 +383,9 @@ public class LearningPathService {
      */
     public LearningPath findWithCompetenciesAndLearningObjectsAndCompletedUsersById(long learningPathId) {
         LearningPath learningPath = learningPathRepository.findWithCompetenciesAndLectureUnitsAndExercisesByIdElseThrow(learningPathId);
+        // Remove exercise units, since they are already retrieved as exercises
+        learningPath.getCompetencies().stream().forEach(competency -> competency
+                .setLectureUnits(competency.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).collect(Collectors.toSet())));
         if (learningPath.getUser() == null) {
             learningPath.getCompetencies().forEach(competency -> {
                 competency.setUserProgress(Collections.emptySet());

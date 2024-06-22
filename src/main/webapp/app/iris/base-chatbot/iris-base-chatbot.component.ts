@@ -42,6 +42,32 @@ import { IrisChatService } from 'app/iris/iris-chat.service';
                 ]),
             ]),
         ]),
+        trigger('suggestionAnimation', [
+            transition(':enter', [
+                style({ height: 0, opacity: 0 }),
+                group([
+                    animate(
+                        '0.3s 0.5s ease-in-out',
+                        style({
+                            height: '*',
+                            opacity: 1,
+                        }),
+                    ),
+                ]),
+            ]),
+            transition(':leave', [
+                style({ height: '*', opacity: 1 }),
+                group([
+                    animate(
+                        '0.3s ease-in-out',
+                        style({
+                            height: 0,
+                            opacity: 0,
+                        }),
+                    ),
+                ]),
+            ]),
+        ]),
     ],
 })
 export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -65,9 +91,11 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     numNewMessageSubscription: Subscription;
     rateLimitSubscription: Subscription;
     activeStatusSubscription: Subscription;
+    suggestionsSubscription: Subscription;
 
     messages: IrisMessage[] = [];
     stages?: IrisStageDTO[] = [];
+    suggestions?: string[] = [];
     error?: IrisErrorMessageKey;
     numNewMessages: number = 0;
     rateLimitInfo: IrisRateLimitInformation;
@@ -135,6 +163,9 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
             }
             this.active = active;
         });
+        this.suggestionsSubscription = this.chatService.currentSuggestions().subscribe((suggestions) => {
+            this.suggestions = suggestions;
+        });
 
         this.checkIfUserAcceptedIris();
 
@@ -166,6 +197,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         this.numNewMessageSubscription.unsubscribe();
         this.rateLimitSubscription.unsubscribe();
         this.activeStatusSubscription.unsubscribe();
+        this.suggestionsSubscription.unsubscribe();
     }
 
     checkIfUserAcceptedIris(): void {
@@ -366,5 +398,10 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         const messagesElement = this.messagesElement.nativeElement;
         const scrollTop = messagesElement.scrollTop;
         this.isScrolledToBottom = scrollTop < 50;
+    }
+
+    onSuggestionClick(suggestion: string) {
+        this.newMessageTextContent = suggestion;
+        this.onSend();
     }
 }

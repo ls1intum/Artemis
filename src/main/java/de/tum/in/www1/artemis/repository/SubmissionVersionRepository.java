@@ -6,19 +6,19 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.SubmissionVersion;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data repository for the SubmissionVersion entity.
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface SubmissionVersionRepository extends JpaRepository<SubmissionVersion, Long> {
+public interface SubmissionVersionRepository extends ArtemisJpaRepository<SubmissionVersion, Long> {
 
     @Query("""
             SELECT version

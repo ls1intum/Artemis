@@ -40,7 +40,7 @@
                         <jhi-help-icon text="artemisApp.team.sourceExercise.tooltip" class="me-1" />
                     </div>
                     @if (searchingExercises) {
-                        <fa-icon class="loading-spinner" [icon]="faSpinner" [spin]="true" />
+                        <fa-icon class="loading-spinner" [icon]="faSpinner" animation="spin" />
                     }
                     @if (searchingExercisesNoResultsForQuery === '') {
                         <span class="error-message text-danger">
@@ -76,7 +76,7 @@
                         <jhi-help-icon text="artemisApp.team.sourceTeams.tooltip" class="me-1" />
                     </div>
                     @if (loadingSourceTeams) {
-                        <fa-icon class="loading-spinner" [icon]="faSpinner" [spin]="true" />
+                        <fa-icon class="loading-spinner" [icon]="faSpinner" animation="spin" />
                     }
                     @if (loadingSourceTeamsFailed) {
                         <span class="error-message text-danger" jhiTranslate="artemisApp.team.loadSourceTeams.failed"></span>
@@ -270,7 +270,7 @@
                 <button type="submit" class="btn btn-warning" [disabled]="editForm.invalid || isSubmitDisabled">
                     <fa-icon [icon]="faUpload" class="me-2" />
                     <span jhiTranslate="entity.action.to-import"></span>
-                    <fa-icon class="ms-1" [hidden]="!isImporting" [spin]="true" [icon]="faCircleNotch" />
+                    <fa-icon class="ms-1" [hidden]="!isImporting" animation="spin" [icon]="faCircleNotch" />
                 </button>
             }
             @if (importStrategy === ImportStrategy.PURGE_EXISTING) {
@@ -289,7 +289,7 @@
                     <fa-icon [icon]="faUpload" class="me-1" />
                     <span jhiTranslate="entity.action.purge"></span> +
                     <span jhiTranslate="entity.action.to-import"></span>
-                    <fa-icon class="ms-1" [hidden]="!isImporting" [spin]="true" [icon]="faCircleNotch" />
+                    <fa-icon class="ms-1" [hidden]="!isImporting" animation="spin" [icon]="faCircleNotch" />
                 </button>
             }
         </div>
