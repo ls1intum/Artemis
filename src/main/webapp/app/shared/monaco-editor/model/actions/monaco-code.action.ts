@@ -11,5 +11,6 @@ export class MonacoCodeAction extends MonacoEditorAction {
 
     run(editor: monaco.editor.ICodeEditor) {
         this.toggleDelimiterAroundSelection(editor, CODE_DELIMITER, CODE_DELIMITER);
+        editor.focus();
     }
 }

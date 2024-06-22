@@ -12,5 +12,6 @@ export class MonacoUnderlineAction extends MonacoEditorAction {
 
     run(editor: monaco.editor.ICodeEditor): void {
         this.toggleDelimiterAroundSelection(editor, UNDERLINE_OPEN_DELIMITER, UNDERLINE_CLOSE_DELIMITER);
+        editor.focus();
     }
 }

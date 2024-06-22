@@ -65,7 +65,6 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
             // Move the cursor to the end of the inserted text.
             editor.setPosition(position.delta(0, openDelimiter.length + textToInsert.length));
         }
-        editor.focus();
     }
 
     isTextSurroundedByDelimiters(text: string, openDelimiter: string, closeDelimiter: string): boolean {

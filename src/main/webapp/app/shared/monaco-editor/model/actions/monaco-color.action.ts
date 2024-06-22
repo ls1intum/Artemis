@@ -12,5 +12,6 @@ export class MonacoColorAction extends MonacoEditorAction {
     run(editor: monaco.editor.ICodeEditor, color: string = 'red') {
         const openDelimiter = `<span class="${color}">`;
         this.toggleDelimiterAroundSelection(editor, openDelimiter, CLOSE_DELIMITER);
+        editor.focus();
     }
 }

@@ -11,5 +11,6 @@ export class MonacoFormulaAction extends MonacoEditorAction {
 
     run(editor: monaco.editor.ICodeEditor) {
         this.toggleDelimiterAroundSelection(editor, FORMULA_DELIMITER, FORMULA_DELIMITER, DEFAULT_FORMULA);
+        editor.focus();
     }
 }
