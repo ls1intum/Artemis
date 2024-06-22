@@ -111,9 +111,30 @@ export class ExerciseFilterModalComponent {
     applyFilter(): void {
         this.applyTypeFilter();
         this.applyDifficultyFilter();
+        this.applyExerciseCategoryFilter();
 
         this.filterApplied.emit(this.sidebarData);
         this.closeModal();
+    }
+
+    private applyExerciseCategoryFilter() {
+        if (!this.selectedCategoryOptions.length) {
+            return;
+        }
+
+        const selectedCategories = this.selectedCategoryOptions.map((categoryOption: ExerciseCategoryFilterOption) => categoryOption.category);
+
+        if (this.sidebarData?.groupedData) {
+            for (const groupedDataKey in this.sidebarData.groupedData) {
+                this.sidebarData.groupedData[groupedDataKey].entityData = this.sidebarData.groupedData[groupedDataKey].entityData.filter(
+                    (sidebarElement) =>
+                        sidebarElement?.exercise?.categories &&
+                        sidebarElement.exercise.categories.some((category) =>
+                            selectedCategories.some((selectedCategory) => selectedCategory.category === category.category && selectedCategory.color === category.color),
+                        ),
+                );
+            }
+        }
     }
 
     private applyTypeFilter() {
