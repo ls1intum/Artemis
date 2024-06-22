@@ -37,9 +37,9 @@ import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupsConfigurat
 @Service
 public class TutorialGroupUtilService {
 
-    private static final ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
+    private static final ZonedDateTime PAST_TIMESTAMP = ZonedDateTime.now().minusDays(1);
 
-    private static final ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
+    private static final ZonedDateTime FUTURE_FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(2);
 
     @Value("${info.guided-tour.course-group-students:#{null}}")
     private Optional<String> tutorialGroupStudents;
@@ -75,7 +75,7 @@ public class TutorialGroupUtilService {
      * Creates and saves a Course for TutorialGroup tests.
      */
     public void addTutorialCourse() {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), tutorialGroupStudents.orElseThrow(),
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), tutorialGroupStudents.orElseThrow(),
                 tutorialGroupTutors.orElseThrow(), tutorialGroupEditors.orElseThrow(), tutorialGroupInstructors.orElseThrow());
         courseRepo.save(course);
         assertThat(courseRepo.findById(course.getId())).as("tutorial course is initialized").isPresent();
