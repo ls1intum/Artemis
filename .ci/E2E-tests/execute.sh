@@ -52,17 +52,17 @@ export HOST_HOSTNAME=$(hostname)
 cd docker
 #just pull everything else than artemis-app as we build it later either way
 if [ "$TEST_FRAMEWORK" = "playwright" ]; then
-#  if [ "$CONFIGURATION" = "multi-node" ]; then
-#    echo "Building for playwright (multi-node)"
-#    docker compose -f $COMPOSE_FILE pull artemis-playwright $DB nginx
-#    docker compose -f $COMPOSE_FILE build --build-arg WAR_FILE_STAGE=external_builder --no-cache --pull artemis-app-node-1 artemis-app-node-2 artemis-app-node-3
-#    docker compose -f $COMPOSE_FILE up --exit-code-from artemis-playwright
-#  else
+  if [ "$CONFIGURATION" = "multi-node" ]; then
+    echo "Building for playwright (multi-node)"
+    docker compose -f $COMPOSE_FILE pull artemis-playwright $DB nginx
+    docker compose -f $COMPOSE_FILE build --build-arg WAR_FILE_STAGE=external_builder --no-cache --pull artemis-app-node-1 artemis-app-node-2 artemis-app-node-3
+    docker compose -f $COMPOSE_FILE up --exit-code-from artemis-playwright
+  else
     echo "Building for playwright"
     docker compose -f $COMPOSE_FILE pull artemis-playwright $DB nginx
     docker compose -f $COMPOSE_FILE build --build-arg WAR_FILE_STAGE=external_builder --no-cache --pull artemis-app
     docker compose -f $COMPOSE_FILE up --exit-code-from artemis-playwright
-#  fi
+  fi
 else
   if [ "$CONFIGURATION" = "multi-node" ]; then
     echo "Building for cypress (multi-node)"

@@ -1,49 +1,112 @@
 # ----------------------------------------------------------------------------------------------------------------------
-# Playwright Setup Local
+# Playwright setup for multi-node
 # ----------------------------------------------------------------------------------------------------------------------
 
 services:
+  artemis-app-node-1:
+    &artemis-app-base
+    image: ghcr.io/ls1intum/artemis
+    extends:
+      file: ./artemis.yml
+      service: artemis-app
+    pull_policy: always
+    restart: always
+    user: 0:0
+    depends_on:
+      &depends-on-base
+      mysql:
+        condition: service_healthy
+      jhipster-registry:
+        condition: service_healthy
+      activemq-broker:
+        condition: service_healthy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    container_name: artemis-app-node-1
+    env_file:
+      - ./artemis/config/prod-multinode.env
+      - ./artemis/config/node1.env
+      - ./artemis/config/cypress.env
+
+  artemis-app-node-2:
+    <<: *artemis-app-base
+    container_name: artemis-app-node-2
+    depends_on:
+      <<: *depends-on-base
+      artemis-app-node-1:
+        condition: service_healthy
+    env_file:
+      - ./artemis/config/prod-multinode.env
+      - ./artemis/config/node2.env
+      - ./artemis/config/cypress.env
+
+  artemis-app-node-3:
+    <<: *artemis-app-base
+    container_name: artemis-app-node-3
+    depends_on:
+      <<: *depends-on-base
+      artemis-app-node-1:
+        condition: service_healthy
+    env_file:
+      - ./artemis/config/prod-multinode.env
+      - ./artemis/config/node3.env
+      - ./artemis/config/cypress.env
+
+  jhipster-registry:
+    extends:
+      file: ./broker-registry.yml
+      service: jhipster-registry
+    networks:
+      - artemis
+
+  activemq-broker:
+    extends:
+      file: ./broker-registry.yml
+      service: activemq-broker
+    networks:
+      - artemis
+
   mysql:
     extends:
       file: ./mysql.yml
       service: mysql
-
-  artemis-app:
-    extends:
-      file: ./artemis.yml
-      service: artemis-app
-    user: 0:0
-    depends_on:
-      mysql:
-        condition: service_healthy
-    env_file:
-      - ./artemis/config/cypress.env
-      - ./artemis/config/cypress-local.env
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+    restart: always
 
   nginx:
     extends:
       file: ./nginx.yml
       service: nginx
-    # the artemis-app service needs to be started, otherwise there are problems with name resolution in docker
     depends_on:
-      artemis-app:
+      artemis-app-node-1:
         condition: service_started
-    volumes:
-      - ./nginx/artemis-nginx-cypress.conf:/etc/nginx/conf.d/artemis-nginx-cypress.conf:ro
+      artemis-app-node-2:
+        condition: service_started
+      artemis-app-node-3:
+        condition: service_started
+    restart: always
     ports:
       - '80:80'
       - '443:443'
       # see comments in artemis/config/cypress.env why this port is necessary
       - '54321:54321'
+    volumes:
+      - ./nginx/artemis-upstream-multi-node.conf:/etc/nginx/includes/artemis-upstream.conf:ro
+      - ./nginx/artemis-ssh-upstream-multi-node.conf:/etc/nginx/includes/artemis-ssh-upstream.conf:ro
+      - ./nginx/artemis-nginx-cypress.conf:/etc/nginx/conf.d/artemis-nginx-cypress.conf:ro
+      - type: bind
+        source: ${NGINX_PROXY_SSL_CERTIFICATE_PATH:-../src/test/cypress/certs/artemis-nginx+4.pem}
+        target: "/certs/fullchain.pem"
+      - type: bind
+        source: ${NGINX_PROXY_SSL_CERTIFICATE_KEY_PATH:-../src/test/cypress/certs/artemis-nginx+4-key.pem}
+        target: "/certs/priv_key.pem"
+
 
   artemis-playwright:
     extends:
       file: ./playwright.yml
       service: artemis-playwright
     depends_on:
-      artemis-app:
+      nginx:
         condition: service_healthy
     environment:
       PLAYWRIGHT_DB_TYPE: 'MySQL'
@@ -58,10 +121,12 @@ services:
 
 networks:
   artemis:
-    driver: 'bridge'
+    driver: "bridge"
     name: artemis
+
 volumes:
   artemis-mysql-data:
     name: artemis-mysql-data
   artemis-data:
     name: artemis-data
+
