@@ -167,10 +167,10 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
             var message = new IrisMessage();
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));
             var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
-            irisChatWebsocketService.sendMessage(savedMessage, statusUpdate.stages(), statusUpdate.suggestions());
+            irisChatWebsocketService.sendMessage(savedMessage, statusUpdate.stages());
         }
         else {
-            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages());
+            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), statusUpdate.suggestions());
         }
 
         updateLatestSuggestions(session, statusUpdate.suggestions());

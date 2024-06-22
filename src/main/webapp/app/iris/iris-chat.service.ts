@@ -220,12 +220,12 @@ export class IrisChatService implements OnDestroy {
                 if (payload.stages) {
                     this.stages.next(payload.stages);
                 }
-                if (payload.suggestions) {
-                    this.suggestions.next(payload.suggestions);
-                }
                 break;
             case IrisChatWebsocketPayloadType.STATUS:
                 this.stages.next(payload.stages || []);
+                if (payload.suggestions) {
+                    this.suggestions.next(payload.suggestions);
+                }
                 break;
         }
     }
