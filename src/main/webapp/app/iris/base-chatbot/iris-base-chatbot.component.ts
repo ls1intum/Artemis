@@ -183,6 +183,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         this.numNewMessageSubscription.unsubscribe();
         this.rateLimitSubscription.unsubscribe();
         this.activeStatusSubscription.unsubscribe();
+        this.suggestionsSubscription.unsubscribe();
     }
 
     checkIfUserAcceptedIris(): void {

@@ -10,13 +10,13 @@ import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 
 public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> implements IrisChatBasedFeatureInterface<S>, IrisRateLimitedFeatureInterface {
 
-    protected IrisSessionRepository irisSessionRepository;
+    private final IrisSessionRepository irisSessionRepository;
 
-    protected final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
-    public AbstractIrisChatSessionService(IrisSessionRepository irisSessionRepository) {
+    public AbstractIrisChatSessionService(IrisSessionRepository irisSessionRepository, ObjectMapper objectMapper) {
         this.irisSessionRepository = irisSessionRepository;
-        this.objectMapper = new ObjectMapper();
+        this.objectMapper = objectMapper;
     }
 
     /**
