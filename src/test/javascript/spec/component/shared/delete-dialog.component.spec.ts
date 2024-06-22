@@ -13,7 +13,6 @@ import { MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import '@angular/localize/init';
 import { ButtonType } from 'app/shared/components/button.component';
 import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confirm-entity-name.component';
 

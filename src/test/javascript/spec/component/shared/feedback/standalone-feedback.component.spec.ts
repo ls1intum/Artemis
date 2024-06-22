@@ -46,7 +46,7 @@ describe('StandaloneFeedbackComponent', () => {
                 participation.results = [result];
                 exercise.studentParticipations = [participation];
                 course.exercises = [exercise];
-                getExerciseDetailsMock.mockReturnValue(of({ body: exercise }));
+                getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: exercise } }));
 
                 // mock exerciseCacheService
                 exerciseCacheService = fixture.debugElement.injector.get(ExerciseCacheService);

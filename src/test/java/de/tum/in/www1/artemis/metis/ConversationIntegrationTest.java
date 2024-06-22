@@ -65,6 +65,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @BeforeEach
+    @Override
     void setupTestScenario() throws Exception {
         super.setupTestScenario();
         users = userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
