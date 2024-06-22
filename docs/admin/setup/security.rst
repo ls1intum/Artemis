@@ -82,7 +82,7 @@ using the ssh-keygen command. Here's how you can do it:
     ssh-keygen -t rsa -b 4096 -f ~/artemis_ssh/id_rsa
 
     # Generate Ed25519 key pair
-    ssh-keygen -t ed25519 -f ~/id_ed25519
+    ssh-keygen -t ed25519 -f ~/artemis_ssh/id_ed25519
 
 Make sure the keys have the standard name for the according key type. E.g. id_rsa for RSA.
 
