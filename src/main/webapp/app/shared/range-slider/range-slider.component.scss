@@ -1,15 +1,22 @@
 @import 'src/main/webapp/content/scss/themes/default-variables';
 
+$height: 0.5rem;
+$border-radius: 0.5rem;
+
+$slider-thumb-size: 1.2rem;
+$slider-thumb-border-radius: 50%;
+$slider-thumb-color: $primary;
+
 .slider {
-    height: 5px;
-    border-radius: 5px;
+    height: $height;
+    border-radius: $border-radius;
     background: #ddd;
 }
 
 .slider .progress {
-    height: 5px;
+    height: $height;
+    border-radius: $border-radius;
     position: absolute;
-    border-radius: 5px;
     background: $primary;
 }
 
@@ -18,33 +25,38 @@
 }
 
 .range-input input {
+    height: $height;
     position: absolute;
-    height: 5px;
     width: 100%;
     background: none;
     pointer-events: none;
     -webkit-appearance: none;
 }
 
-$slider-gobble-size: 17px;
-$slider-gobble-border-radius: 50%;
-$slider-gobble-color: $primary;
-
 [type='range']::-webkit-slider-thumb {
-    height: $slider-gobble-size;
-    width: $slider-gobble-size;
-    border-radius: $slider-gobble-border-radius;
-    background: $slider-gobble-color;
+    height: $slider-thumb-size;
+    width: $slider-thumb-size;
+    border-radius: $slider-thumb-border-radius;
+    background: $slider-thumb-color;
     pointer-events: auto;
     -webkit-appearance: none;
 }
 
 [type='range']::-moz-range-thumb {
-    height: $slider-gobble-size;
-    width: $slider-gobble-size;
-    border-radius: $slider-gobble-border-radius;
-    background: $slider-gobble-color;
+    height: $slider-thumb-size;
+    width: $slider-thumb-size;
+    border-radius: $slider-thumb-border-radius;
+    background: $slider-thumb-color;
     pointer-events: auto;
     -moz-appearance: none;
     border: none; // TODO is this needed?
+}
+
+.slider-value {
+    position: absolute;
+    bottom: -2.2rem;
+    transform: translateX(-50%);
+    pointer-events: none; // we do not want to click the label but the range-thumb
+    color: $secondary;
+    text-align: center;
 }

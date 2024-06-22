@@ -1,12 +1,11 @@
-<br />
-<span>MinValue: {{ selectedMinValue }}</span>
-<br />
-<span>MaxValue: {{ selectedMaxValue }}</span>
-
-<div class="slider">
+<div class="slider m-3">
     <div class="range-input">
         <div class="progress" [style.left.%]="sliderMinPercentage" [style.right.%]="sliderMaxPercentage"></div>
+
         <input type="range" [min]="generalMinValue" [max]="generalMaxValue" [(ngModel)]="selectedMinValue" class="range-min" [step]="stepWidth" />
+        <span class="slider-value" [style.left.%]="sliderMinPercentage">{{ selectedMinValue }}</span>
+
         <input type="range" [min]="generalMinValue" [max]="generalMaxValue" [(ngModel)]="selectedMaxValue" class="range-max" [step]="stepWidth" />
+        <span class="slider-value" [style.right.%]="sliderMaxPercentage">{{ selectedMaxValue }}</span>
     </div>
 </div>
