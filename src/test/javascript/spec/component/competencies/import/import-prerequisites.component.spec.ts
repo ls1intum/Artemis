@@ -2,28 +2,26 @@ import { ArtemisTestModule } from '../../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockPipe } from 'ng-mocks';
-import { ImportCompetenciesComponent } from 'app/course/competencies/import-competencies/import-competencies.component';
+import { ImportPrerequisitesComponent } from 'app/course/competencies/import-competencies/import-prerequisites.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { FormsModule } from 'app/forms/forms.module';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { CompetencyService } from 'app/course/competencies/competency.service';
 import { of } from 'rxjs';
-import { CompetencyWithTailRelationDTO } from 'app/entities/competency.model';
-import { HttpResponse } from '@angular/common/http';
 import { ImportCompetenciesTableComponent } from 'app/course/competencies/import-competencies/import-competencies-table.component';
 import { CompetencySearchComponent } from 'app/course/competencies/import-competencies/competency-search.component';
+import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 
-describe('ImportCompetenciesComponent', () => {
-    let componentFixture: ComponentFixture<ImportCompetenciesComponent>;
-    let component: ImportCompetenciesComponent;
-    let competencyService: CompetencyService;
+describe('ImportPrerequisitesComponent', () => {
+    let componentFixture: ComponentFixture<ImportPrerequisitesComponent>;
+    let component: ImportPrerequisitesComponent;
+    let prerequisiteService: PrerequisiteService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule],
             declarations: [
-                ImportCompetenciesComponent,
+                ImportPrerequisitesComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(ButtonComponent),
                 MockComponent(ImportCompetenciesTableComponent),
@@ -41,9 +39,9 @@ describe('ImportCompetenciesComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                componentFixture = TestBed.createComponent(ImportCompetenciesComponent);
+                componentFixture = TestBed.createComponent(ImportPrerequisitesComponent);
                 component = componentFixture.componentInstance;
-                competencyService = TestBed.inject(CompetencyService);
+                prerequisiteService = TestBed.inject(PrerequisiteService);
             });
     });
 
@@ -56,19 +54,27 @@ describe('ImportCompetenciesComponent', () => {
         expect(component).toBeDefined();
     });
 
-    it('should import competencies on submit', () => {
-        const competencyDTOs: CompetencyWithTailRelationDTO[] = [{ competency: { id: 1 } }, { competency: { id: 2 } }];
-        const importBulkSpy = jest.spyOn(competencyService, 'importBulk').mockReturnValue(
-            of({
-                body: competencyDTOs,
-            } as HttpResponse<CompetencyWithTailRelationDTO[]>),
+    it('should import prerequisites on submit', () => {
+        component.courseId = 1;
+        component.selectedCourseCompetencies = {
+            resultsOnPage: [
+                { id: 1, title: 'competency1' },
+                { id: 2, title: 'competency2' },
+            ],
+            numberOfPages: 0,
+        };
+        const importBulkSpy = jest.spyOn(prerequisiteService, 'importPrerequisites').mockReturnValue(
+            of([
+                { id: 11, title: 'competency1' },
+                { id: 12, title: 'competency2' },
+            ]),
         );
         const router: Router = TestBed.inject(Router);
         const navigateSpy = jest.spyOn(router, 'navigate');
 
         component.onSubmit();
 
-        expect(importBulkSpy).toHaveBeenCalled();
+        expect(importBulkSpy).toHaveBeenCalledWith([1, 2], 1);
         expect(navigateSpy).toHaveBeenCalled();
     });
 });

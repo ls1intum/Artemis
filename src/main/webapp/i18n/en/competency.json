@@ -51,7 +51,7 @@
             "manageCompetencies": {
                 "title": "Competency Management",
                 "importButton": "Import competencies",
-                "importFromCoursesButton": "Import competencies from other courses",
+                "importFromCoursesButton": "Import from other courses",
                 "importAllButton": "Import all competencies of a course",
                 "importStandardizedButton": "Import standardized competencies",
                 "createButton": "Create competency",
@@ -65,7 +65,7 @@
                 "searchTableHeader": "Search Competencies",
                 "searchTableEmpty": "Found no competencies matching your search",
                 "selectedTableHeader": "Selected Competencies",
-                "selectedTableEmpty": "No competencies selected",
+                "selectedTableEmpty": "No competencies selected to import",
                 "importRelations": "Import Relations?",
                 "search": {
                     "title": "Competency Search",
@@ -82,7 +82,7 @@
                     "COURSE_TITLE": "Course Title",
                     "SEMESTER": "Semester"
                 },
-                "success": "Imported {{ noOfCompetencies }} competencies."
+                "success": "Imported {{ numCompetencies }} competencies."
             },
             "generate": {
                 "title": "Generate Competency Recommendations",
@@ -179,22 +179,6 @@
                 "explanation": "This lecture unit helps you to achieve the following competencies: ",
                 "noCompetencies": "No competencies are linked with this lecture unit! "
             },
-            "prerequisite": {
-                "title": "Prerequisites",
-                "select": "Select prerequisite",
-                "empty": "No prerequisites exist for this course",
-                "import": {
-                    "label": "Add prerequisites",
-                    "table": {
-                        "TITLE": "Title",
-                        "COURSE_TITLE": "Course",
-                        "SEMESTER": "Semester",
-                        "doImport": "Select"
-                    },
-                    "search": "Search competency:",
-                    "loading": "Loading..."
-                }
-            },
             "relation": {
                 "competencyRelations": "Competency Relations",
                 "tailCompetency": "Tail Competency",
@@ -213,7 +197,23 @@
             }
         },
         "prerequisite": {
-            "deleted": "Prerequisite removed"
+            "title": "Prerequisites",
+            "empty": "No prerequisites exist for this course",
+            "manage": {
+                "importButton": "Import prerequisites",
+                "importFromCoursesButton": "Import from other courses",
+                "deleted": "Prerequisite deleted",
+                "delete": {
+                    "question": "Do you really want to delete the prerequisite <strong>{{ title }}</strong>? You can not undo this action!",
+                    "typeNameToConfirm": "Please enter the name of the prerequisite for confirmation."
+                }
+            },
+            "import": {
+                "title": "Import Prerequisites",
+                "success": "Imported {{ numPrerequisites }} prerequisites.",
+                "selectedTableHeader": "Selected Prerequisites",
+                "selectedTableEmpty": "No competencies selected to import as prerequisites"
+            }
         },
         "learningPath": {
             "learningPathButton": "Learning Paths",

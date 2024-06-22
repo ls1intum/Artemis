@@ -51,7 +51,7 @@
             "manageCompetencies": {
                 "title": "Kompetenzmanagement",
                 "importButton": "Kompetenzen importieren",
-                "importFromCoursesButton": "Kompetenzen aus anderen Kursen importieren",
+                "importFromCoursesButton": "Aus anderen Kursen importieren",
                 "importAllButton": "Alle Kompetenzen eines Kurses importieren",
                 "importStandardizedButton": "Standardisierte Kompetenzen importieren",
                 "createButton": "Kompetenz erstellen",
@@ -65,7 +65,7 @@
                 "searchTableHeader": "Nach Kompetenzen suchen",
                 "searchTableEmpty": "Keine Kompetenzen gefunden, die deiner Suche entsprechen",
                 "selectedTableHeader": "Ausgewählte Kompetenzen",
-                "selectedTableEmpty": "Keine Kompetenzen ausgewählt",
+                "selectedTableEmpty": "Keine Kompetenzen zum Import ausgewählt",
                 "importRelations": "Relationen importieren?",
                 "search": {
                     "title": "Kompetenzen durchsuchen",
@@ -82,7 +82,7 @@
                     "COURSE_TITLE": "Kurstitel",
                     "SEMESTER": "Semester"
                 },
-                "success": "Imported {{ noOfCompetencies }} competencies."
+                "success": "{{ numCompetencies }} Kompetenzen importiert."
             },
             "generate": {
                 "title": "Kompetenzvorschläge generieren",
@@ -179,22 +179,6 @@
                 "explanation": "Diese Vorlesungseinheit hilft dir bei der Erreichung der folgenden Kompetenzen:",
                 "noCompetencies": "Keine Kompetenzen mit dieser Vorlesungseinheit verbunden!"
             },
-            "prerequisite": {
-                "title": "Voraussetzungen",
-                "select": "Voraussetzung auswählen",
-                "empty": "Es existieren keine Voraussetzungen für diesen Kurs",
-                "import": {
-                    "label": "Voraussetzungen hinzufügen",
-                    "table": {
-                        "TITLE": "Titel",
-                        "COURSE_TITLE": "Kurs",
-                        "SEMESTER": "Semester",
-                        "doImport": "Auswählen"
-                    },
-                    "search": "Nach Kompetenz suchen:",
-                    "loading": "Lade..."
-                }
-            },
             "relation": {
                 "competencyRelations": "Beziehungen zwischen Kompetenzen",
                 "tailCompetency": "Kompetenz Schluss",
@@ -213,7 +197,23 @@
             }
         },
         "prerequisite": {
-            "deleted": "Voraussetzung entfernt"
+            "title": "Voraussetzungen",
+            "empty": "Es existieren keine Voraussetzungen für diesen Kurs",
+            "manage": {
+                "importButton": "Voraussetzungen importieren",
+                "importFromCoursesButton": "Aus anderen Kursen importieren",
+                "deleted": "Voraussetzung gelöscht",
+                "delete": {
+                    "question": "Willst du wirklich die Voraussetzung <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen!",
+                    "typeNameToConfirm": "Bitte gib zur Bestätigung den Namen der Voraussetzung ein."
+                }
+            },
+            "import": {
+                "title": "Voraussetzungen importieren",
+                "success": "{{ numPrerequisites }} Voraussetzungen importiert.",
+                "selectedTableHeader": "Ausgewählte Kompetenzen",
+                "selectedTableEmpty": "Keine Kompetenzen zum Import als Voraussetzungen ausgewählt"
+            }
         },
         "learningPath": {
             "learningPathButton": "Lernpfade",
