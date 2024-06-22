@@ -177,9 +177,6 @@ public interface CompetencyRepository extends ArtemisJpaRepository<Competency, L
             """)
     Set<Competency> findAllByLearningPath(@Param("learningPath") LearningPath learningPath);
 
-    @SuppressWarnings("PMD.MethodNamingConventions")
-    Page<Competency> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(String partialTitle, String partialCourseTitle, Pageable pageable);
-
     default Competency findByIdWithLectureUnitsAndCompletionsElseThrow(long competencyId) {
         return findByIdWithLectureUnitsAndCompletions(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
     }
