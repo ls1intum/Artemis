@@ -69,6 +69,7 @@
                 "gradingSystem": "Grading System"
             },
             "exerciseFilter": {
+                "modalTitle": "Filter Exercises",
                 "dueDateRange": "Due Date Range",
                 "achievedScore": "Achieved Score",
                 "achievablePoints": "Achievable Points"

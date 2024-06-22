@@ -17,7 +17,6 @@ import { RangeSliderComponent } from 'app/shared/range-slider/range-slider.compo
 @Component({
     selector: 'jhi-exercise-filter-modal',
     templateUrl: './exercise-filter-modal.component.html',
-    // styleUrls: ['./exercise-filter.component.scss'],
     standalone: true,
     imports: [
         FormsModule,

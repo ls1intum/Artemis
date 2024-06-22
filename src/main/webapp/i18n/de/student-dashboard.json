@@ -69,6 +69,7 @@
                 "gradingSystem": "Notenschlüssel"
             },
             "exerciseFilter": {
+                "modalTitle": "Aufgaben Filtern",
                 "dueDateRange": "Zeitraum der Einreichungsfrist",
                 "achievedScore": "Erreichtes Ergebnis",
                 "achievablePoints": "Erreichbare Punktzahl"
