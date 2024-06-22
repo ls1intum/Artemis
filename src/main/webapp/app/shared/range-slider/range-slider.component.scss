@@ -55,8 +55,10 @@ $slider-thumb-color: $primary;
 .slider-value {
     position: absolute;
     bottom: -2.2rem;
-    transform: translateX(-50%);
     pointer-events: none; // we do not want to click the label but the range-thumb
     color: $secondary;
     text-align: center;
+    justify-content: center;
+    align-content: center;
+    display: flex;
 }
