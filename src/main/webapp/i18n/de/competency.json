@@ -14,7 +14,7 @@
             "optionalDescription": "Optionale Kompetenzen müssen nicht absolviert werden um den Lernpfad zu vervollständigen. Sie dienen entweder als zusätzliche Übung oder gehen über die erwarteten Inhalte des Kurses hinaus.",
             "course": "Kurs",
             "progress": "Fortschritt",
-            "progressDescription": "Der Fortschritt an Inhalten, die mit dieser Kompetenz verknüpft sind. Er basiert auf dem Prozentsatz an abgeschlossenen Vorlesungseinheiten und den erreichten Punkten in den Übungen.",
+            "progressDescription": "Der Fortschritt basiert auf dem Prozentsatz an abgeschlossenen Vorlesungseinheiten und den erreichten Punkten in den Übungen.",
             "mastery": "Kompetenzbeherrschung",
             "masteryDescription": "Ein gewichteter Leistungsindex aus deinem Fortschritt, der Deine Entwicklung auf dem Weg zur Beherrschung der Kompetenz veranschaulicht.",
             "masteredStudents": "Studierende mit Kompetenz",

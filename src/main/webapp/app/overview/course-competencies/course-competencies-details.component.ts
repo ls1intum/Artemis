@@ -97,10 +97,9 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
                     this.promptForJolRating = CompetencyJol.shouldPromptForJol(this.competency, progress, competencies);
                     const judgementOfLearning = (judgementOfLearningResp?.body ?? undefined) as { current: CompetencyJol; prior?: CompetencyJol } | undefined;
                     if (
-                        judgementOfLearning &&
-                        progress &&
-                        (judgementOfLearning.current.competencyProgress !== (progress?.progress ?? 0) ||
-                            judgementOfLearning.current.competencyConfidence !== (progress?.confidence ?? 1))
+                        !judgementOfLearning?.current ||
+                        judgementOfLearning.current.competencyProgress !== (progress?.progress ?? 0) ||
+                        judgementOfLearning.current.competencyConfidence !== (progress?.confidence ?? 1)
                     ) {
                         this.judgementOfLearning = undefined;
                     } else {

@@ -414,7 +414,6 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testShouldOnlySendUserSpecificData() throws Exception {
-
             User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
             competencyProgressUtilService.createCompetencyProgress(competency, student1, 0, 1);
 

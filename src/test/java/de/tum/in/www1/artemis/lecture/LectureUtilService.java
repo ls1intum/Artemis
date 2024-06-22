@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
@@ -317,6 +318,11 @@ public class LectureUtilService {
         lectureUnitCompletion.setUser(user);
         lectureUnitCompletion.setCompletedAt(ZonedDateTime.now());
         lectureUnitCompletion = lectureUnitCompletionRepository.save(lectureUnitCompletion);
+
+        if (Hibernate.isInitialized(lectureUnit.getCompletedUsers())) {
+            lectureUnit.getCompletedUsers().add(lectureUnitCompletion);
+        }
+
         return lectureUnitCompletion.getLectureUnit();
     }
 }

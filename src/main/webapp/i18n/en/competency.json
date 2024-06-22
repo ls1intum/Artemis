@@ -14,7 +14,7 @@
             "optionalDescription": "Optional competencies are not required to complete the learning path. They can provide additional practice or may cover material that exceeds the courses requirements.",
             "course": "Course",
             "progress": "Progress",
-            "progressDescription": "The progress in this competency. It is influenced by the percentage of completed lecture units and your score in the exercises.",
+            "progressDescription": "The progress is influenced by the percentage of completed lecture units and your score in the exercises.",
             "mastery": "Mastery",
             "masteryDescription": "A weighted metric of your progress, which shows your overall advancement towards competency mastery.",
             "masteredStudents": "Mastered students",
