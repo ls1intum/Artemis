@@ -21,8 +21,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
 
     /**
      * Updates the latest suggestions of the session.
-     * Concatenates the suggestions with "||" as separator.
-     * If a suggestion already contains "||", they are replaced with "\\||", before joining.
+     * Converts the list of latest suggestions to a JSON string.
      * The updated suggestions are then saved to the session in the database.
      *
      * @param session           The session to update
