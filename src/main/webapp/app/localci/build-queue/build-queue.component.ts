@@ -401,8 +401,10 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
 
     /**
      * Update the build jobs duration
+     * @param buildJobs The list of build jobs
+     * @returns The updated list of build jobs with the duration
      */
-    updateBuildJobDuration(buildJobs: BuildJob[]) {
+    updateBuildJobDuration(buildJobs: BuildJob[]): BuildJob[] {
         for (const buildJob of buildJobs) {
             if (buildJob.jobTimingInfo && buildJob.jobTimingInfo?.buildStartDate) {
                 const start = dayjs(buildJob.jobTimingInfo?.buildStartDate);
