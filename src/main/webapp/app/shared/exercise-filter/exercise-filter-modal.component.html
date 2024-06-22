@@ -14,6 +14,7 @@
                 id="exercise-categories-filter-selection"
                 type="text"
                 class="form-control"
+                name="category-filter-selection"
                 [(ngModel)]="model"
                 [ngbTypeahead]="search"
                 [placeholder]="'artemisApp.exercise.selectCategories' | artemisTranslate"
@@ -25,12 +26,12 @@
                 [resultFormatter]="resultFormatter"
             />
 
-            @if (selectedCategories.length > 0) {
+            @if (selectedCategoryOptions.length) {
                 <ul>
-                    @for (item of selectedCategories; track item) {
+                    @for (categoryFilterOption of selectedCategoryOptions; track categoryFilterOption) {
                         <li>
-                            <jhi-custom-exercise-category-badge [category]="item" [displayRemoveButton]="true" />
-                            <button (click)="removeItem(item)">Remove</button>
+                            <jhi-custom-exercise-category-badge [category]="categoryFilterOption.category" [displayRemoveButton]="true" />
+                            <button (click)="removeItem(categoryFilterOption)">Remove</button>
                         </li>
                     }
                 </ul>

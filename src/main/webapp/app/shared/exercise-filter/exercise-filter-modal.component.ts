@@ -7,8 +7,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { DifficultyLevel, ExerciseType } from 'app/entities/exercise.model';
-import { DifficultyFilterOptions, ExerciseTypeFilterOptions, RangeFilter } from 'app/shared/sidebar/sidebar.component';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { DifficultyFilterOptions, ExerciseCategoryFilterOption, ExerciseTypeFilterOptions, RangeFilter } from 'app/shared/sidebar/sidebar.component';
 import { Observable, OperatorFunction, Subject, merge } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge.component';
@@ -37,7 +36,9 @@ export class ExerciseFilterModalComponent {
 
     @ViewChild('categoriesFilterSelection', { static: true }) instance: NgbTypeahead;
 
-    selectedCategories: ExerciseCategory[] = [];
+    get selectedCategoryOptions(): ExerciseCategoryFilterOption[] {
+        return this.categoryFilters.filter((categoryFilter) => categoryFilter.searched);
+    }
 
     focus$ = new Subject<string>();
     click$ = new Subject<string>();
@@ -52,10 +53,10 @@ export class ExerciseFilterModalComponent {
 
     sidebarData?: SidebarData;
 
+    categoryFilters: ExerciseCategoryFilterOption[] = [];
     typeFilters?: ExerciseTypeFilterOptions;
     difficultyFilters?: DifficultyFilterOptions;
 
-    possibleCategories: ExerciseCategory[] = [];
     achievablePoints?: RangeFilter;
     achievedScore?: RangeFilter;
 
@@ -78,7 +79,7 @@ export class ExerciseFilterModalComponent {
         this.activeModal.close();
     }
 
-    search: OperatorFunction<string, readonly ExerciseCategory[]> = (text$: Observable<string>) => {
+    search: OperatorFunction<string, readonly ExerciseCategoryFilterOption[]> = (text$: Observable<string>) => {
         const debouncedText$ = text$.pipe(debounceTime(200), distinctUntilChanged());
         const clicksWithClosedPopup$ = this.click$.pipe(filter(() => !this.instance.isPopupOpen()));
         const inputFocus$ = this.focus$;
@@ -86,25 +87,25 @@ export class ExerciseFilterModalComponent {
         return merge(debouncedText$, inputFocus$, clicksWithClosedPopup$).pipe(
             map((term) =>
                 (term === ''
-                    ? this.possibleCategories
-                    : this.possibleCategories.filter((exerciseCategory) => exerciseCategory.category!.toLowerCase().indexOf(term.toLowerCase()) > -1)
+                    ? this.categoryFilters
+                    : this.categoryFilters.filter(
+                          (categoryFilter: ExerciseCategoryFilterOption) => categoryFilter.category.category!.toLowerCase().indexOf(term.toLowerCase()) > -1,
+                      )
                 ).slice(0, 10),
             ),
         );
     };
-    inputFormatter = (exerciseCategory: ExerciseCategory) => exerciseCategory.category ?? '';
-    resultFormatter = (exerciseCategory: ExerciseCategory) => exerciseCategory.category ?? '';
+    inputFormatter = (exerciseCategory: ExerciseCategoryFilterOption) => exerciseCategory.category.category ?? '';
+    resultFormatter = (exerciseCategory: ExerciseCategoryFilterOption) => exerciseCategory.category.category ?? '';
 
     onSelectItem(event: any) {
-        const item = event.item;
-        if (!this.selectedCategories.includes(item)) {
-            this.selectedCategories.push(item);
-        }
+        const filterOption: ExerciseCategoryFilterOption = event.item;
+        filterOption.searched = true;
         this.model = ''; // Clear the input field after selection
     }
 
-    removeItem(item: any) {
-        this.selectedCategories = this.selectedCategories.filter((i) => i !== item);
+    removeItem(item: ExerciseCategoryFilterOption) {
+        item.searched = false;
     }
 
     applyFilter(): void {

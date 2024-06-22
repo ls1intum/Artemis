@@ -12,6 +12,7 @@ import { cloneDeep } from 'lodash-es';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/participation/participation.utils';
 
+export type ExerciseCategoryFilterOption = { category: ExerciseCategory; searched: boolean };
 export type ExerciseTypeFilterOptions = { name: string; value: ExerciseType; checked: boolean; icon: IconDefinition }[];
 export type DifficultyFilterOptions = { name: string; value: DifficultyLevel; checked: boolean }[];
 export type RangeFilter = { generalMin: number; generalMax: number; selectedMin: number; selectedMax: number };
@@ -59,8 +60,9 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     readonly faFilter = faFilter;
 
     sidebarDataBeforeFiltering: SidebarData;
+
+    categoryFilters?: ExerciseCategoryFilterOption[];
     difficultyFilters?: DifficultyFilterOptions;
-    possibleCategories?: ExerciseCategory[];
     exerciseTypesFilter?: ExerciseTypeFilterOptions;
     achievablePoints?: RangeFilter;
     achievedScore?: RangeFilter;
@@ -127,8 +129,8 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         });
 
         this.modalRef.componentInstance.sidebarData = cloneDeep(this.sidebarDataBeforeFiltering);
+        this.modalRef.componentInstance.categoryFilters = this.categoryFilters;
         this.modalRef.componentInstance.difficultyFilters = this.difficultyFilters;
-        this.modalRef.componentInstance.possibleCategories = this.possibleCategories;
         this.modalRef.componentInstance.typeFilters = this.exerciseTypesFilter;
         this.modalRef.componentInstance.achievablePoints = this.achievablePoints;
         this.modalRef.componentInstance.achievedScore = this.achievedScore;
@@ -150,14 +152,15 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     }
 
     private initializeCategoryFilter() {
-        if (this.possibleCategories) {
+        if (this.categoryFilters) {
             return;
         }
 
-        this.possibleCategories =
+        this.categoryFilters =
             this.sidebarData?.ungroupedData
                 ?.filter((sidebarElement: SidebarCardElement) => sidebarElement.exercise?.categories !== undefined)
-                .flatMap((sidebarElement: SidebarCardElement) => sidebarElement.exercise?.categories || []) ?? [];
+                .flatMap((sidebarElement: SidebarCardElement) => sidebarElement.exercise?.categories || [])
+                .map((category: ExerciseCategory) => ({ category: category, searched: false })) ?? [];
     }
 
     private initializeExerciseTypeFilter() {
