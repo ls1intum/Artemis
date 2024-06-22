@@ -66,7 +66,7 @@ public interface ExerciseMetricsRepository extends ArtemisJpaRepository<Exercise
      * @return the average score for each exercise
      */
     @Query("""
-            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.ScoreDTO(p.exercise.id, AVG(COALESCE(p.lastScore, 0)))
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.ScoreDTO(p.exercise.id, AVG(COALESCE(p.lastRatedScore, 0)))
             FROM ParticipantScore p
             WHERE p.exercise.id IN :exerciseIds
             GROUP BY p.exercise.id
@@ -81,7 +81,7 @@ public interface ExerciseMetricsRepository extends ArtemisJpaRepository<Exercise
      * @return the score for the user in each exercise
      */
     @Query("""
-            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.ScoreDTO(s.exercise.id, CAST(COALESCE(s.lastRatedScore, s.lastScore, 0) AS DOUBLE))
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.ScoreDTO(s.exercise.id, CAST(COALESCE(s.lastRatedScore, 0) AS DOUBLE))
             FROM StudentScore s
             WHERE s.exercise.id IN :exerciseIds
                 AND s.user.id = :userId

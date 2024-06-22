@@ -109,50 +109,6 @@ public interface CompetencyRepository extends ArtemisJpaRepository<Competency, L
             """)
     Optional<Competency> findByIdWithExercisesAndLectureUnitsBidirectional(@Param("competencyId") long competencyId);
 
-    @Query("""
-            SELECT c
-            FROM Competency c
-                LEFT JOIN FETCH c.consecutiveCourses
-            WHERE c.id = :competencyId
-            """)
-    Optional<Competency> findByIdWithConsecutiveCourses(@Param("competencyId") long competencyId);
-
-    @Query("""
-            SELECT pr
-            FROM Competency pr
-                LEFT JOIN pr.consecutiveCourses c
-            WHERE c.id = :courseId
-            ORDER BY pr.title
-            """)
-    Set<Competency> findPrerequisitesByCourseId(@Param("courseId") long courseId);
-
-    @Query("""
-            SELECT COUNT(*)
-            FROM Competency pr
-                LEFT JOIN pr.consecutiveCourses c
-            WHERE c.id = :courseId
-            """)
-    Long countPrerequisitesByCourseId(@Param("courseId") long courseId);
-
-    /**
-     * Query which fetches all competencies for which the user is editor or instructor in the course and
-     * matching the search criteria.
-     *
-     * @param partialTitle       competency title search term
-     * @param partialCourseTitle course title search term
-     * @param groups             user groups
-     * @param pageable           Pageable
-     * @return Page with search results
-     */
-    @Query("""
-            SELECT c
-            FROM Competency c
-            WHERE (c.course.instructorGroupName IN :groups OR c.course.editorGroupName IN :groups)
-                AND (c.title LIKE %:partialTitle% OR c.course.title LIKE %:partialCourseTitle%)
-            """)
-    Page<Competency> findByTitleInLectureOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("partialCourseTitle") String partialCourseTitle,
-            @Param("groups") Set<String> groups, Pageable pageable);
-
     /**
      * Query which fetches all competencies for which the user is editor or instructor in the course and
      * matching the search criteria.
@@ -212,9 +168,6 @@ public interface CompetencyRepository extends ArtemisJpaRepository<Competency, L
     @Cacheable(cacheNames = "competencyTitle", key = "#competencyId", unless = "#result == null")
     String getCompetencyTitle(@Param("competencyId") long competencyId);
 
-    @SuppressWarnings("PMD.MethodNamingConventions")
-    Page<Competency> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(String partialTitle, String partialCourseTitle, Pageable pageable);
-
     default Competency findByIdWithLectureUnitsAndCompletionsElseThrow(long competencyId) {
         return findByIdWithLectureUnitsAndCompletions(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
     }
@@ -227,8 +180,8 @@ public interface CompetencyRepository extends ArtemisJpaRepository<Competency, L
         return findByIdWithExercisesAndLectureUnitsBidirectional(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
     }
 
-    default Competency findByIdWithConsecutiveCoursesElseThrow(long competencyId) {
-        return findByIdWithConsecutiveCourses(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
+    default Competency findByIdElseThrow(long competencyId) {
+        return findById(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
     }
 
     default Competency findWithLectureUnitsAndExercisesByIdElseThrow(long competencyId) {
@@ -241,7 +194,7 @@ public interface CompetencyRepository extends ArtemisJpaRepository<Competency, L
 
     long countByCourse(Course course);
 
-    List<Competency> findByCourseId(long courseId);
+    List<Competency> findByCourseIdOrderById(long courseId);
 
     boolean existsByIdAndCourseId(long competencyId, long courseId);
 }
