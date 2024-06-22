@@ -4,7 +4,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { NgbDropdownModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyFormComponent, CompetencyFormData } from 'app/course/competencies/competency-form/competency-form.component';
 import { CompetencyService } from 'app/course/competencies/competency.service';
-import { CompetencyTaxonomy } from 'app/entities/competency.model';
+import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
@@ -70,7 +70,7 @@ describe('CompetencyFormComponent', () => {
             status: 200,
         });
 
-        const getAllForCourseSpy = jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(response));
+        jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(response));
 
         competencyFormComponentFixture.detectChanges();
 
