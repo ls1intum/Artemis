@@ -47,7 +47,7 @@ export class ListOfComplaintsComponent implements OnInit {
     faFolderOpen = faFolderOpen;
     faExclamationTriangle = faExclamationTriangle;
 
-    readonly FilterOptionAddressedComplaints = 4; // the number passed by the chart through the route indicating that only addressed complaints should be shown
+    readonly FILTER_OPTION_ADDRESSED_COMPLAINTS = 4; // the number passed by the chart through the route indicating that only addressed complaints should be shown
 
     constructor(
         public complaintService: ComplaintService,
@@ -115,13 +115,13 @@ export class ListOfComplaintsComponent implements OnInit {
         complaintResponse.subscribe({
             next: (res) => {
                 this.complaints = res.body!;
-                if (this.filterOption === this.FilterOptionAddressedComplaints) {
+                if (this.filterOption === this.FILTER_OPTION_ADDRESSED_COMPLAINTS) {
                     this.showAddressedComplaints = true;
                 }
 
                 if (!this.showAddressedComplaints) {
                     this.complaintsToShow = this.complaints.filter((complaint) => complaint.accepted === undefined);
-                } else if (this.filterOption === this.FilterOptionAddressedComplaints) {
+                } else if (this.filterOption === this.FILTER_OPTION_ADDRESSED_COMPLAINTS) {
                     this.complaintsToShow = this.complaints.filter((complaint) => complaint.accepted !== undefined);
                 } else {
                     this.complaintsToShow = this.complaints;

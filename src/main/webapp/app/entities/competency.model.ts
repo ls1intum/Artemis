@@ -73,6 +73,11 @@ export class CompetencyJol {
         const softDueDateMinusOneDay = competency.softDueDate?.subtract(1, 'day');
         const competencyProgress = progress?.progress ?? 0;
 
+        // Precondition: Student has at least some progress on the competency
+        if (competencyProgress === undefined || competencyProgress === 0) {
+            return false;
+        }
+
         // Condition 1: Current Date >= Competency Soft Due Date - 1 Days && Competency Progress >= 20%
         if (softDueDateMinusOneDay && currentDate.isAfter(softDueDateMinusOneDay) && competencyProgress >= 20) {
             return true;
