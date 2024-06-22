@@ -97,6 +97,7 @@ public class StudentParticipation extends Participation {
         return Optional.ofNullable(getParticipant()).map(Participant::getName).orElse(null);
     }
 
+    @Override
     public Exercise getExercise() {
         return exercise;
     }
@@ -106,6 +107,7 @@ public class StudentParticipation extends Participation {
         return this;
     }
 
+    @Override
     public void setExercise(Exercise exercise) {
         this.exercise = exercise;
     }

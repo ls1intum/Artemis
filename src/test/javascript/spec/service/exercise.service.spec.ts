@@ -6,7 +6,8 @@ import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exe
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
-import { EntityResponseType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import type { EntityResponseType, ExerciseDetailsType } from 'app/exercises/shared/exercise/exercise.service';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import dayjs from 'dayjs/esm';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockRouter } from '../helpers/mocks/mock-router';
@@ -444,31 +445,30 @@ describe('Exercise Service', () => {
     });
 
     it('should get exercise details', () => {
-        const serviceSpy = jest.spyOn(service, 'processExerciseEntityResponse');
-
         const exerciseId = 123;
 
-        const expectedReturnedExercise = {
-            id: exerciseId,
-            posts: undefined,
-        } as Exercise;
+        const expectedReturnedExerciseDetails = {
+            exercise: {
+                id: exerciseId,
+                posts: undefined,
+            } as ProgrammingExercise,
+            activatedExerciseHints: [{ id: 42, title: 'testHint' }],
+        } as ExerciseDetailsType;
 
         const result = service.getExerciseDetails(exerciseId);
 
-        let actualReturnedExercise: Exercise | undefined = undefined;
-        result.subscribe((exerciseResponse) => (actualReturnedExercise = exerciseResponse.body!));
+        let actualReturnedExerciseDetails: ExerciseDetailsType | undefined = undefined;
+        result.subscribe((exerciseResponse) => (actualReturnedExerciseDetails = exerciseResponse.body!));
 
         const testRequest = httpMock.expectOne({
             url: `api/exercises/${exerciseId}/details`,
             method: 'GET',
         });
 
-        testRequest.flush(expectedReturnedExercise);
+        testRequest.flush(expectedReturnedExerciseDetails);
 
-        expect(serviceSpy).toHaveBeenCalledOnce();
-        expect(serviceSpy).toHaveBeenCalledWith(expect.objectContaining({ body: expectedReturnedExercise }));
-        expect(actualReturnedExercise).toEqual(expectedReturnedExercise);
-        expect(actualReturnedExercise!.posts).toEqual([]);
+        expect(actualReturnedExerciseDetails).toEqual(expectedReturnedExerciseDetails);
+        expect(expectedReturnedExerciseDetails.exercise!.posts).toEqual([]);
     });
 
     it('should get exercise for example solution', () => {

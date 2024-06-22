@@ -10,6 +10,8 @@ import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
@@ -23,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.CompetencyProgressConfidenceReason;
 
 /**
  * This class models the 'progress' association between a user and a competency.
@@ -56,6 +59,10 @@ public class CompetencyProgress implements Serializable {
 
     @Column(name = "confidence")
     private Double confidence;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "confidence_reason", columnDefinition = "varchar(30) default 'NO_REASON'")
+    private CompetencyProgressConfidenceReason confidenceReason = CompetencyProgressConfidenceReason.NO_REASON;
 
     @LastModifiedDate
     @Column(name = "last_modified_date")
@@ -96,6 +103,14 @@ public class CompetencyProgress implements Serializable {
 
     public void setConfidence(Double confidence) {
         this.confidence = confidence;
+    }
+
+    public CompetencyProgressConfidenceReason getConfidenceReason() {
+        return confidenceReason;
+    }
+
+    public void setConfidenceReason(CompetencyProgressConfidenceReason confidenceReason) {
+        this.confidenceReason = confidenceReason;
     }
 
     public Instant getLastModifiedDate() {
