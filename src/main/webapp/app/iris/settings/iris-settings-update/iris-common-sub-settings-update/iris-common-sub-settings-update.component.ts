@@ -119,7 +119,6 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
     get isSettingsSwitchDisabled() {
         return this.inheritDisabled || (!this.isAdmin && this.settingsType !== this.EXERCISE);
     }
-
     protected readonly IrisSubSettings = IrisSubSettings;
     protected readonly IrisSubSettingsType = IrisSubSettingsType;
 }

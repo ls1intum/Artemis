@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { faFile, faFilePdf, faList } from '@fortawesome/free-solid-svg-icons';
+import { MIN_SCORE_GREEN } from 'app/app.constants';
 import { Competency, CompetencyJol, CompetencyProgress, getConfidence, getIcon, getMastery, getProgress } from 'app/entities/competency.model';
 import { Course } from 'app/entities/course.model';
 import { Router } from '@angular/router';
@@ -105,7 +106,7 @@ export class CompetencyAccordionComponent implements OnChanges {
             }),
         );
 
-        const completionThreshold = 80;
+        const completionThreshold = MIN_SCORE_GREEN;
         this.nextExercises = activeCompetencyExercises
             .filter((exercise) => exercise.id && exerciseIdToMaxScore[exercise.id] <= completionThreshold)
             .sort((a, b) => {
