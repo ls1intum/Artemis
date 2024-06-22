@@ -18,6 +18,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
+import de.tum.in.www1.artemis.web.rest.dto.metrics.CompetencyExerciseMasteryCalculationDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -60,15 +61,42 @@ public interface CompetencyRepository extends ArtemisJpaRepository<Competency, L
             """)
     Optional<Competency> findByIdWithLectureUnitsAndCompletions(@Param("competencyId") long competencyId);
 
+    /**
+     * Fetches all information related to the calculation of the mastery for exercises in a competency.
+     * The complex grouping by is necessary for postgres
+     *
+     * @param competencyId the id of the competency for which to fetch the exercise information
+     * @return the exercise information for the calculation of the mastery in the competency
+     */
+    @Query("""
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.CompetencyExerciseMasteryCalculationDTO(
+                ex.maxPoints,
+                ex.difficulty,
+                CASE WHEN TYPE(ex) = ProgrammingExercise THEN TRUE ELSE FALSE END,
+                COALESCE(sS.lastScore, tS.lastScore),
+                COALESCE(sS.lastPoints, tS.lastPoints),
+                COALESCE(sS.lastModifiedDate, tS.lastModifiedDate),
+                COUNT(s)
+            )
+            FROM Competency c
+                LEFT JOIN c.exercises ex
+                LEFT JOIN ex.studentParticipations sp
+                LEFT JOIN sp.submissions s
+                LEFT JOIN StudentScore sS ON sS.exercise = ex
+                LEFT JOIN TeamScore tS ON tS.exercise = ex
+            WHERE c.id = :competencyId
+                AND ex IS NOT NULL
+            GROUP BY ex.maxPoints, ex.difficulty, TYPE(ex), sS.lastScore, tS.lastScore, sS.lastPoints, tS.lastPoints, sS.lastModifiedDate, tS.lastModifiedDate
+            """)
+    Set<CompetencyExerciseMasteryCalculationDTO> findAllExerciseInfoByCompetencyId(@Param("competencyId") long competencyId);
+
     @Query("""
             SELECT c
             FROM Competency c
-                LEFT JOIN FETCH c.exercises
-                LEFT JOIN FETCH c.lectureUnits lu
-                LEFT JOIN FETCH lu.completedUsers
+                LEFT JOIN FETCH c.exercises ex
             WHERE c.id = :competencyId
             """)
-    Optional<Competency> findByIdWithExercisesAndLectureUnitsAndCompletions(@Param("competencyId") long competencyId);
+    Optional<Competency> findByIdWithExercises(@Param("competencyId") long competencyId);
 
     @Query("""
             SELECT c
@@ -142,6 +170,10 @@ public interface CompetencyRepository extends ArtemisJpaRepository<Competency, L
 
     default Competency findByIdWithLectureUnitsAndCompletionsElseThrow(long competencyId) {
         return findByIdWithLectureUnitsAndCompletions(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
+    }
+
+    default Competency findByIdWithExercisesElseThrow(long competencyId) {
+        return findByIdWithExercises(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
     }
 
     default Competency findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(long competencyId) {
