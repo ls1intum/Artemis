@@ -73,28 +73,19 @@ public interface CompetencyProgressRepository extends ArtemisJpaRepository<Compe
     Set<CompetencyProgress> findAllByCompetencyIdsAndUserId(@Param("competencyIds") Set<Long> competencyIds, @Param("userId") long userId);
 
     @Query("""
-            SELECT AVG(cp.confidence)
+            SELECT COUNT(cp)
             FROM CompetencyProgress cp
             WHERE cp.competency.id = :competencyId
             """)
-    Optional<Double> findAverageConfidenceByCompetencyId(@Param("competencyId") long competencyId);
+    long countByCompetency(@Param("competencyId") long competencyId);
 
     @Query("""
             SELECT COUNT(cp)
             FROM CompetencyProgress cp
             WHERE cp.competency.id = :competencyId
+                AND cp.progress * cp.confidence >= :masteryThreshold
             """)
-    Long countByCompetency(@Param("competencyId") long competencyId);
-
-    @Query("""
-            SELECT COUNT(cp)
-            FROM CompetencyProgress cp
-            WHERE cp.competency.id = :competencyId
-                AND cp.progress >= :progress
-                AND cp.confidence >= :confidence
-            """)
-    Long countByCompetencyAndProgressAndConfidenceGreaterThanEqual(@Param("competencyId") long competencyId, @Param("progress") double progress,
-            @Param("confidence") double confidence);
+    long countByCompetencyAndMastered(@Param("competencyId") long competencyId, @Param("masteryThreshold") int masteryThreshold);
 
     @Query("""
             SELECT cp
