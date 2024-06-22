@@ -79,7 +79,7 @@ using the ssh-keygen command. Here's how you can do it:
 .. code-block:: bash
 
     # Generate RSA key pair
-    ssh-keygen -t rsa -b 4096 -f ~/id_rsa
+    ssh-keygen -t rsa -b 4096 -f ~/artemis_ssh/id_rsa
 
     # Generate Ed25519 key pair
     ssh-keygen -t ed25519 -f ~/id_ed25519
