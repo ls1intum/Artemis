@@ -33,7 +33,7 @@ export class CompetencyAccordionComponent implements OnChanges {
     nextLectureUnits: LectureUnitInformation[] = [];
     exercisesProgress?: number;
     lectureUnitsProgress?: number;
-    confidence: number = 0;
+    confidence: number = 1;
     mastery: number = 0;
     progress: number = 0;
     jolRating?: number;
@@ -68,7 +68,7 @@ export class CompetencyAccordionComponent implements OnChanges {
                     userProgress: [
                         {
                             progress: this.metrics.competencyMetrics?.progress?.[competency.id] ?? 0,
-                            confidence: this.metrics.competencyMetrics?.confidence?.[competency.id] ?? 0,
+                            confidence: this.metrics.competencyMetrics?.confidence?.[competency.id] ?? 1,
                         },
                     ],
                 } satisfies Competency;
@@ -131,11 +131,11 @@ export class CompetencyAccordionComponent implements OnChanges {
         const userProgress = this.getUserProgress();
         if (this.jolRating !== undefined) {
             this.progress = this.getProgress(userProgress);
-            this.confidence = this.getConfidence(userProgress, this.competency.masteryThreshold!);
-            this.mastery = this.getMastery(userProgress, this.competency.masteryThreshold!);
+            this.confidence = this.getConfidence(userProgress);
+            this.mastery = this.getMastery(userProgress);
         } else {
             this.progress = 0;
-            this.confidence = 0;
+            this.confidence = 1;
             this.mastery = 0;
         }
     }
@@ -146,11 +146,19 @@ export class CompetencyAccordionComponent implements OnChanges {
         }
 
         const competencyExercises = this.metrics.competencyMetrics?.exercises?.[this.competency.id];
-        const completedExercises = competencyExercises?.filter((exerciseId) => this.metrics.exerciseMetrics?.completed?.includes(exerciseId)).length ?? 0;
+
         if (competencyExercises === undefined || competencyExercises.length === 0) {
             return undefined;
         }
-        const progress = (completedExercises / competencyExercises.length) * 100;
+
+        const competencyPoints = competencyExercises
+            ?.map((exercise) => ((this.metrics.exerciseMetrics?.score?.[exercise] ?? 0) * (this.metrics.exerciseMetrics?.exerciseInformation?.[exercise]?.maxPoints ?? 0)) / 100)
+            .reduce((a, b) => a + b, 0);
+        const competencyMaxPoints = competencyExercises
+            ?.map((exercise) => this.metrics.exerciseMetrics?.exerciseInformation?.[exercise]?.maxPoints ?? 0)
+            .reduce((a, b) => a + b, 0);
+
+        const progress = (competencyPoints / competencyMaxPoints) * 100;
         return round(progress, 1);
     }
 
@@ -163,17 +171,18 @@ export class CompetencyAccordionComponent implements OnChanges {
         const releasedLectureUnits = competencyLectureUnits?.filter((lectureUnitId) =>
             this.metrics.lectureUnitStudentMetricsDTO?.lectureUnitInformation?.[lectureUnitId]?.releaseDate?.isBefore(dayjs()),
         );
-        const completedLectureUnits = releasedLectureUnits?.filter((lectureUnitId) => this.metrics.lectureUnitStudentMetricsDTO?.completed?.includes(lectureUnitId)).length ?? 0;
         if (releasedLectureUnits === undefined || releasedLectureUnits.length === 0) {
             return undefined;
         }
+
+        const completedLectureUnits = releasedLectureUnits?.filter((lectureUnitId) => this.metrics.lectureUnitStudentMetricsDTO?.completed?.includes(lectureUnitId)).length ?? 0;
         const progress = (completedLectureUnits / releasedLectureUnits.length) * 100;
         return round(progress, 1);
     }
 
     getUserProgress(): CompetencyProgress {
         const progress = this.metrics.competencyMetrics?.progress?.[this.competency.id] ?? 0;
-        const confidence = this.metrics.competencyMetrics?.confidence?.[this.competency.id] ?? 0;
+        const confidence = this.metrics.competencyMetrics?.confidence?.[this.competency.id] ?? 1;
         return { progress, confidence };
     }
 

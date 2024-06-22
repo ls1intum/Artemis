@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.within;
 import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
@@ -9,7 +10,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
+import org.glassfish.jersey.internal.util.Producer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -20,6 +23,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.in.www1.artemis.StudentScoreUtilService;
 import de.tum.in.www1.artemis.competency.CompetencyProgressUtilService;
 import de.tum.in.www1.artemis.competency.CompetencyUtilService;
 import de.tum.in.www1.artemis.competency.StandardizedCompetencyUtilService;
@@ -28,6 +32,8 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.TextExercise;
@@ -38,16 +44,21 @@ import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.CompetencyTaxonomy;
 import de.tum.in.www1.artemis.domain.competency.RelationType;
+import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.TextUnit;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseFactory;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
+import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
@@ -83,6 +94,9 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     private ParticipationService participationService;
 
     @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -93,6 +107,9 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
     @Autowired
     private TextUnitRepository textUnitRepository;
+
+    @Autowired
+    private AttachmentUnitRepository attachmentUnitRepository;
 
     @Autowired
     private ExerciseUnitRepository exerciseUnitRepository;
@@ -133,6 +150,9 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     @Autowired
     private StandardizedCompetencyUtilService standardizedCompetencyUtilService;
 
+    @Autowired
+    private StudentScoreUtilService studentScoreUtilService;
+
     private Course course;
 
     private Course course2;
@@ -141,11 +161,13 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
     private Lecture lecture;
 
-    private Long idOfTextUnitOfLectureOne;
+    private long idOfTextUnitOfLectureOne;
 
-    private Exercise teamTextExercise;
+    private long idOfAttachmentUnitOfLectureOne;
 
-    private Exercise textExercise;
+    private TextExercise teamTextExercise;
+
+    private TextExercise textExercise;
 
     @BeforeEach
     void setupTestScenario() {
@@ -200,6 +222,12 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         textUnit = textUnitRepository.save(textUnit);
         idOfTextUnitOfLectureOne = textUnit.getId();
 
+        AttachmentUnit attachmentUnit = new AttachmentUnit();
+        attachmentUnit.setName("AttachmentUnitOfLectureOne");
+        attachmentUnit.setCompetencies(Set.of(competency));
+        attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
+        idOfAttachmentUnitOfLectureOne = attachmentUnit.getId();
+
         ExerciseUnit textExerciseUnit = new ExerciseUnit();
         textExerciseUnit.setExercise(textExercise);
         exerciseUnitRepository.save(textExerciseUnit);
@@ -208,7 +236,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         teamTextExerciseUnit.setExercise(teamTextExercise);
         exerciseUnitRepository.save(teamTextExerciseUnit);
 
-        for (LectureUnit lectureUnit : List.of(textUnit, textExerciseUnit, teamTextExerciseUnit)) {
+        for (LectureUnit lectureUnit : List.of(textUnit, attachmentUnit, textExerciseUnit, teamTextExerciseUnit)) {
             lecture.addLectureUnit(lectureUnit);
         }
 
@@ -224,10 +252,10 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         return lecture;
     }
 
-    private TextExercise createTextExercise(ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp, Set<Competency> competencies,
+    private TextExercise createTextExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assassmentDueDate, Set<Competency> competencies,
             boolean isTeamExercise) {
         // creating text exercise with Result
-        TextExercise textExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+        TextExercise textExercise = TextExerciseFactory.generateTextExercise(releaseDate, dueDate, assassmentDueDate, course);
 
         if (isTeamExercise) {
             textExercise.setMode(ExerciseMode.TEAM);
@@ -236,28 +264,52 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
         textExercise.setCompetencies(competencies);
-        exerciseRepository.save(textExercise);
 
-        return textExercise;
+        return exerciseRepository.save(textExercise);
     }
 
-    private void createTextExerciseParticipationSubmissionAndResult(Exercise exercise, Participant participant, Double pointsOfExercise, Double bonusPointsOfExercise,
+    private ProgrammingExercise createProgrammingExercise(int i, Set<Competency> competencies) {
+        ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(null, null, course);
+
+        programmingExercise.setMaxPoints(i * 10.0);
+        programmingExercise.setCompetencies(competencies);
+        programmingExercise.setDifficulty(i == 1 ? DifficultyLevel.EASY : i == 2 ? DifficultyLevel.MEDIUM : DifficultyLevel.HARD);
+
+        return programmingExerciseRepository.save(programmingExercise);
+    }
+
+    private Result createTextExerciseParticipationSubmissionAndResult(TextExercise exercise, Participant participant, double pointsOfExercise, double bonusPointsOfExercise,
             long scoreAwarded, boolean rated) {
+        StudentParticipation studentParticipation = participationService.startExercise(exercise, participant, false);
+        return createExerciseParticipationSubmissionAndResult(exercise, studentParticipation, participant, pointsOfExercise, bonusPointsOfExercise, scoreAwarded, rated,
+                TextSubmission::new, 1);
+    }
+
+    private Result createProgrammingExerciseParticipationSubmissionAndResult(ProgrammingExercise exercise, Participant participant, long scoreAwarded, boolean rated,
+            int numberOfSubmissions) {
+        StudentParticipation studentParticipation = participationUtilService.createAndSaveParticipationForExercise(exercise, participant.getParticipantIdentifier());
+        return createExerciseParticipationSubmissionAndResult(exercise, studentParticipation, participant, exercise.getMaxPoints(), 0, scoreAwarded, rated,
+                ProgrammingSubmission::new, numberOfSubmissions);
+    }
+
+    private Result createExerciseParticipationSubmissionAndResult(Exercise exercise, StudentParticipation studentParticipation, Participant participant, double pointsOfExercise,
+            double bonusPointsOfExercise, long scoreAwarded, boolean rated, Producer<Submission> submissionConstructor, int numberOfSubmissions) {
         if (!exercise.getMaxPoints().equals(pointsOfExercise)) {
             exercise.setMaxPoints(pointsOfExercise);
         }
         if (!exercise.getBonusPoints().equals(bonusPointsOfExercise)) {
             exercise.setBonusPoints(bonusPointsOfExercise);
         }
-        exercise = exerciseRepository.save(exercise);
+        exerciseRepository.save(exercise);
 
-        StudentParticipation studentParticipation = participationService.startExercise(exercise, participant, false);
+        Submission submission = null;
 
-        Submission submission = new TextSubmission();
-
-        submission.setType(SubmissionType.MANUAL);
-        submission.setParticipation(studentParticipation);
-        submission = submissionRepository.save(submission);
+        for (int i = 0; i < numberOfSubmissions; i++) {
+            submission = submissionConstructor.call();
+            submission.setType(SubmissionType.MANUAL);
+            submission.setParticipation(studentParticipation);
+            submission = submissionRepository.save(submission);
+        }
 
         // result
         Result result = ParticipationFactory.generateResult(rated, scoreAwarded);
@@ -268,6 +320,8 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         submission.addResult(result);
         result.setSubmission(submission);
         submissionRepository.save(submission);
+
+        return result;
     }
 
     @Nested
@@ -346,12 +400,11 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testShouldOnlySendUserSpecificData() throws Exception {
-
             User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-            competencyProgressUtilService.createCompetencyProgress(competency, student1, 0, 0);
+            competencyProgressUtilService.createCompetencyProgress(competency, student1, 0, 1);
 
             User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-            competencyProgressUtilService.createCompetencyProgress(competency, student2, 1, 1);
+            competencyProgressUtilService.createCompetencyProgress(competency, student2, 10, 1);
 
             final var textUnit = textUnitRepository.findById(idOfTextUnitOfLectureOne).get();
             lectureUtilService.completeLectureUnitForUser(textUnit, student2);
@@ -562,7 +615,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     void deleteLectureUnitShouldUpdateCompetency() throws Exception {
         request.delete("/api/lectures/" + lecture.getId() + "/lecture-units/" + idOfTextUnitOfLectureOne, HttpStatus.OK);
         Competency competency = request.get("/api/courses/" + course.getId() + "/competencies/" + this.competency.getId(), HttpStatus.OK, Competency.class);
-        assertThat(competency.getLectureUnits()).isEmpty();
+        assertThat(competency.getLectureUnits()).map(LectureUnit::getId).containsExactly(idOfAttachmentUnitOfLectureOne);
     }
 
     @Nested
@@ -609,28 +662,68 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         }
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getCompetencyStudentProgressShouldReturnProgress() throws Exception {
-        User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
-        lectureUnitService.setLectureUnitCompletion(textUnitRepository.findById(idOfTextUnitOfLectureOne).orElseThrow(), student1, true);
+    @Nested
+    class GetCompetencyStudentProgress {
 
-        createTextExerciseParticipationSubmissionAndResult(textExercise, student1, 10.0, 0.0, 90, true);  // will be ignored in favor of last submission from team
-        createTextExerciseParticipationSubmissionAndResult(textExercise, student1, 10.0, 0.0, 85, false);
+        private ProgrammingExercise[] programmingExercises;
 
-        await().until(() -> participantScoreScheduleService.isIdle());
+        @BeforeEach
+        void setupTestScenario() {
+            programmingExercises = IntStream.range(1, 4).mapToObj(i -> createProgrammingExercise(i, Set.of(competency))).toArray(ProgrammingExercise[]::new);
+        }
 
-        CompetencyProgress studentCompetencyProgress1 = request.get("/api/courses/" + course.getId() + "/competencies/" + competency.getId() + "/student-progress?refresh=true",
-                HttpStatus.OK, CompetencyProgress.class);
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void getCompetencyStudentProgressShouldReturnProgress() throws Exception {
+            User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+            lectureUnitService.setLectureUnitCompletion(textUnitRepository.findById(idOfTextUnitOfLectureOne).orElseThrow(), student1, true);
 
-        assertThat(studentCompetencyProgress1.getProgress()).isEqualTo(66.7);
-        assertThat(studentCompetencyProgress1.getConfidence()).isEqualTo(85.0);
+            createTextExerciseParticipationSubmissionAndResult(textExercise, student1, 10.0, 0.0, 90, true);  // will be ignored in favor of last submission from team
+            createTextExerciseParticipationSubmissionAndResult(textExercise, student1, 10.0, 0.0, 85, false);
 
-        CompetencyProgress studentCompetencyProgress2 = request.get("/api/courses/" + course.getId() + "/competencies/" + competency.getId() + "/student-progress?refresh=false",
-                HttpStatus.OK, CompetencyProgress.class);
+            await().until(() -> participantScoreScheduleService.isIdle());
 
-        assertThat(studentCompetencyProgress2.getProgress()).isEqualTo(66.7);
-        assertThat(studentCompetencyProgress2.getConfidence()).isEqualTo(85.0);
+            CompetencyProgress studentCompetencyProgress1 = request.get("/api/courses/" + course.getId() + "/competencies/" + competency.getId() + "/student-progress?refresh=true",
+                    HttpStatus.OK, CompetencyProgress.class);
+
+            assertThat(studentCompetencyProgress1.getProgress()).isEqualTo(22);
+            assertThat(studentCompetencyProgress1.getConfidence()).isEqualTo(0.75);
+
+            lectureUnitService.setLectureUnitCompletion(attachmentUnitRepository.findById(idOfAttachmentUnitOfLectureOne).orElseThrow(), student1, true);
+
+            CompetencyProgress studentCompetencyProgress2 = request
+                    .get("/api/courses/" + course.getId() + "/competencies/" + competency.getId() + "/student-progress?refresh=false", HttpStatus.OK, CompetencyProgress.class);
+
+            assertThat(studentCompetencyProgress2.getProgress()).isEqualTo(22);
+            assertThat(studentCompetencyProgress2.getConfidence()).isEqualTo(0.75);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void getCompetencyStudentProgressMultipleExercises() throws Exception {
+            // The scheduling for all results interferes with the competency progress calculation, since only one per second is allowed
+            // Therefore creating the participant scores manually
+            participantScoreScheduleService.shutdown();
+
+            User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+            Result textResult = createTextExerciseParticipationSubmissionAndResult(textExercise, student1, textExercise.getMaxPoints(), 0.0, 90, true);
+            Result programming1Result = createProgrammingExerciseParticipationSubmissionAndResult(programmingExercises[0], student1, 85, true, 10);
+            Result programming2Result = createProgrammingExerciseParticipationSubmissionAndResult(programmingExercises[1], student1, 75, false, 1);
+            Result programming3Result = createProgrammingExerciseParticipationSubmissionAndResult(programmingExercises[2], student1, 95, false, 1);
+
+            studentScoreUtilService.createStudentScore(textExercise, student1, textResult);
+            studentScoreUtilService.createStudentScore(programmingExercises[0], student1, programming1Result);
+            studentScoreUtilService.createStudentScore(programmingExercises[1], student1, programming2Result);
+            studentScoreUtilService.createStudentScore(programmingExercises[2], student1, programming3Result);
+
+            CompetencyProgress studentCompetencyProgress = request.get("/api/courses/" + course.getId() + "/competencies/" + competency.getId() + "/student-progress?refresh=true",
+                    HttpStatus.OK, CompetencyProgress.class);
+
+            // No lecture units are completed and no participation in team exercise
+            assertThat(studentCompetencyProgress.getProgress()).isEqualTo(54);
+            // Slightly more points in an easy exercise but solved one programming exercise quickly
+            assertThat(studentCompetencyProgress.getConfidence()).isCloseTo(1.328, within(0.001));
+        }
     }
 
     @Nested

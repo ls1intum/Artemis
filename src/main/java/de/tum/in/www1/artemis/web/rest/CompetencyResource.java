@@ -442,8 +442,7 @@ public class CompetencyResource {
     public ResponseEntity<CourseCompetencyProgressDTO> getCompetencyCourseProgress(@PathVariable long courseId, @PathVariable long competencyId) {
         log.debug("REST request to get course progress for competency: {}", competencyId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        var competency = competencyRepository.findByIdWithLectureUnitsAndCompletionsElseThrow(competencyId);
-        checkAuthorizationForCompetency(Role.INSTRUCTOR, course, competency);
+        var competency = competencyRepository.findByIdWithExercisesElseThrow(competencyId);
 
         var progress = competencyProgressService.getCompetencyCourseProgress(competency, course);
 

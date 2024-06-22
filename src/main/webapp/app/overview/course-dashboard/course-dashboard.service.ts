@@ -82,7 +82,7 @@ export class CourseDashboardService {
         return Object.fromEntries(
             Object.entries(competencyMetrics.currentJolValues ?? {}).filter(([key, value]) => {
                 const progress = competencyMetrics?.progress?.[key] ?? 0;
-                const confidence = competencyMetrics?.confidence?.[key] ?? 0;
+                const confidence = competencyMetrics?.confidence?.[key] ?? 1;
                 return value.competencyProgress === progress && value.competencyConfidence === confidence;
             }),
         );
