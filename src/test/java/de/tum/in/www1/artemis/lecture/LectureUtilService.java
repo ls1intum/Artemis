@@ -238,6 +238,41 @@ public class LectureUtilService {
     }
 
     /**
+     * Creates and saves an AttachmentUnit with an Attachment that has a file. Also creates and saves the given number of Slides for the AttachmentUnit.
+     * The Slides link to image files.
+     *
+     * @param numberOfSlides The number of Slides to create
+     * @param shouldBePdf    if true file will be pdf, else image
+     * @return The created AttachmentUnit
+     */
+    public AttachmentUnit createAttachmentUnitWithSlidesAndFile(int numberOfSlides, boolean shouldBePdf) {
+        ZonedDateTime started = ZonedDateTime.now().minusDays(5);
+        AttachmentUnit attachmentUnit = new AttachmentUnit();
+        attachmentUnit.setDescription("Lorem Ipsum");
+        attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
+        Attachment attachmentOfAttachmentUnit = shouldBePdf ? LectureFactory.generateAttachmentWithPdfFile(started, attachmentUnit.getId(), true)
+                : LectureFactory.generateAttachmentWithFile(started, attachmentUnit.getId(), true);
+        attachmentOfAttachmentUnit.setAttachmentUnit(attachmentUnit);
+        attachmentOfAttachmentUnit = attachmentRepository.save(attachmentOfAttachmentUnit);
+        attachmentUnit.setAttachment(attachmentOfAttachmentUnit);
+        for (int i = 1; i <= numberOfSlides; i++) {
+            Slide slide = new Slide();
+            slide.setSlideNumber(i);
+            String testFileName = "slide" + i + ".png";
+            try {
+                FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"), FilePathService.getTempFilePath().resolve(testFileName).toFile());
+            }
+            catch (IOException ex) {
+                fail("Failed while copying test attachment files", ex);
+            }
+            slide.setSlideImagePath("/api/files/temp/" + testFileName);
+            slide.setAttachmentUnit(attachmentUnit);
+            slideRepository.save(slide);
+        }
+        return attachmentUnitRepository.save(attachmentUnit);
+    }
+
+    /**
      * Creates and saves an AttachmentUnit with an Attachment. Also creates and saves the given number of Slides for the AttachmentUnit. The Slides link to image files.
      *
      * @param numberOfSlides The number of Slides to create
