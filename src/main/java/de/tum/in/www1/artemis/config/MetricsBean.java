@@ -215,18 +215,17 @@ public class MetricsBean {
             // Should only be activated if the scheduling profile is present, because these metrics are the same for all instances
             this.scheduledMetricsEnabled = true;
 
-            // Initial calculation is done in constructor to ensure the values are present before the first metrics are calculated
-            calculateCachedActiveUserNames();
-
+            registerActiveAdminMetrics();
             registerExerciseAndExamMetrics();
             registerPublicArtemisMetrics();
+
+            // Initial calculation is done in constructor to ensure the values are present before the first metrics are calculated
+            calculateActiveUserMetrics();
         }
 
         if (profileService.isLocalCiActive()) {
             registerLocalCIMetrics();
         }
-
-        registerAdminCheckMetrics();
 
         // the data source is optional as it is not used during testing
         hikariDataSource.ifPresent(this::registerDatasourceMetrics);
@@ -378,10 +377,8 @@ public class MetricsBean {
                 .description("Number of exams starting within the next minutes multiplied with students in the course").register(meterRegistry);
     }
 
-    private void registerAdminCheckMetrics() {
+    private void registerActiveAdminMetrics() {
         activeAdminsGauge = MultiGauge.builder("artemis.users.admins.active").description("Number of active admin accounts").register(meterRegistry);
-
-        updateActiveAdminsMetrics();
     }
 
     /**
@@ -391,13 +388,15 @@ public class MetricsBean {
      * is called.
      */
     @Scheduled(fixedRate = 60 * 60 * 1000, initialDelay = 60 * 60 * 1000) // Every 60 minutes
-    public void calculateCachedActiveUserNames() {
+    public void calculateActiveUserMetrics() {
         var startDate = System.currentTimeMillis();
 
         // The authorization object has to be set because this method is not called by a user but by the scheduler
         SecurityUtils.setAuthorizationObject();
 
         cachedActiveUserNames = statisticsRepository.getActiveUserNames(ZonedDateTime.now().minusDays(14), ZonedDateTime.now());
+
+        updateActiveAdminsMetrics();
 
         log.debug("calculateCachedActiveUserLogins took {}ms", System.currentTimeMillis() - startDate);
     }
@@ -440,8 +439,6 @@ public class MetricsBean {
 
         updateMultiGaugeIntegerForMinuteRanges(releaseExamGauge, examRepository::countExamsWithStartDateBetween);
         updateMultiGaugeIntegerForMinuteRanges(releaseExamStudentMultiplierGauge, examRepository::countExamUsersInExamsWithStartDateBetween);
-
-        updateActiveAdminsMetrics();
 
         log.debug("recalculateMetrics took {}ms", System.currentTimeMillis() - startDate);
     }
