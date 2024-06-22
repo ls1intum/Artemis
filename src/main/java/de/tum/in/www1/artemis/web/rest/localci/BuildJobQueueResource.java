@@ -22,6 +22,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.BuildJob;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.repository.BuildJobRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
@@ -48,10 +49,14 @@ public class BuildJobQueueResource {
 
     private final CourseRepository courseRepository;
 
-    public BuildJobQueueResource(SharedQueueManagementService localCIBuildJobQueueService, AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository) {
+    private final BuildJobRepository buildJobRepository;
+
+    public BuildJobQueueResource(SharedQueueManagementService localCIBuildJobQueueService, AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository,
+            BuildJobRepository buildJobRepository) {
         this.localCIBuildJobQueueService = localCIBuildJobQueueService;
         this.authorizationCheckService = authorizationCheckService;
         this.courseRepository = courseRepository;
+        this.buildJobRepository = buildJobRepository;
     }
 
     /**
