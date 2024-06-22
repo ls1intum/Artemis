@@ -12,6 +12,7 @@ import { OnlineCourseConfiguration } from 'app/entities/online-course-configurat
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { LearningPath } from 'app/entities/competency/learning-path.model';
+import { Prerequisite } from 'app/entities/prerequisite.model';
 
 export enum CourseInformationSharingConfiguration {
     COMMUNICATION_AND_MESSAGING = 'COMMUNICATION_AND_MESSAGING',
@@ -105,7 +106,7 @@ export class Course implements BaseEntity {
     public exercises?: Exercise[];
     public lectures?: Lecture[];
     public competencies?: Competency[];
-    public prerequisites?: Competency[];
+    public prerequisites?: Prerequisite[];
     public learningPathsEnabled?: boolean;
     public learningPaths?: LearningPath[];
     public exams?: Exam[];

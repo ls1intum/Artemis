@@ -29,6 +29,7 @@ export class IrisChatService implements OnDestroy {
     messages: BehaviorSubject<IrisMessage[]> = new BehaviorSubject([]);
     numNewMessages: BehaviorSubject<number> = new BehaviorSubject(0);
     stages: BehaviorSubject<IrisStageDTO[]> = new BehaviorSubject([]);
+    suggestions: BehaviorSubject<string[]> = new BehaviorSubject([]);
     error: BehaviorSubject<IrisErrorMessageKey | undefined> = new BehaviorSubject(undefined);
 
     rateLimitInfo?: IrisRateLimitInformation;
@@ -74,6 +75,7 @@ export class IrisChatService implements OnDestroy {
         if (!this.sessionId) {
             return throwError(() => new Error('Not initialized'));
         }
+        this.suggestions.next([]);
 
         const newMessage = new IrisUserMessage();
         newMessage.content = [new IrisTextMessageContent(message)];
@@ -171,12 +173,28 @@ export class IrisChatService implements OnDestroy {
             next: (r: IrisSession) => {
                 this.sessionId = r.id;
                 this.messages.next(r.messages || []);
+                this.parseLatestSuggestions(r.latestSuggestions);
                 this.ws.subscribeToSession(this.sessionId).subscribe((m) => this.handleWebsocketMessage(m));
             },
             error: (e: IrisErrorMessageKey) => {
                 this.error.next(e as IrisErrorMessageKey);
             },
         };
+    }
+
+    /**
+     * Parses the latest suggestions string and updates the suggestions subject.
+     * @param s: The latest suggestions string
+     * @private
+     */
+    private parseLatestSuggestions(s?: string) {
+        if (!s) {
+            this.suggestions.next([]);
+            return;
+        }
+
+        const suggestions = JSON.parse(s);
+        this.suggestions.next(suggestions);
     }
 
     public clearChat(): void {
@@ -202,6 +220,9 @@ export class IrisChatService implements OnDestroy {
                 break;
             case IrisChatWebsocketPayloadType.STATUS:
                 this.stages.next(payload.stages || []);
+                if (payload.suggestions) {
+                    this.suggestions.next(payload.suggestions);
+                }
                 break;
         }
     }
@@ -212,6 +233,7 @@ export class IrisChatService implements OnDestroy {
             this.sessionId = undefined;
             this.messages.next([]);
             this.stages.next([]);
+            this.suggestions.next([]);
             this.numNewMessages.next(0);
         }
         this.error.next(undefined);
@@ -285,5 +307,9 @@ export class IrisChatService implements OnDestroy {
 
     public currentNumNewMessages(): Observable<number> {
         return this.numNewMessages.asObservable();
+    }
+
+    public currentSuggestions(): Observable<string[]> {
+        return this.suggestions.asObservable();
     }
 }
