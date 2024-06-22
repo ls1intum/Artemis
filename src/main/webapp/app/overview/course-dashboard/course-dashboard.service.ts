@@ -47,7 +47,7 @@ export class CourseDashboardService {
     ): { [key: string]: ExerciseInformation } {
         return Object.keys(exerciseInformation).reduce(
             (acc, key) => {
-                const exerciseCategories = (categories[key] as (string | null)[]).flatMap((category) => (category ? (JSON.parse(category) as ExerciseCategory) : []));
+                const exerciseCategories = categories[key]?.map((category: string) => JSON.parse(category) as ExerciseCategory) || [];
                 const exercise = exerciseInformation[key];
                 acc[key] = {
                     ...exercise,

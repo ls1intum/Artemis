@@ -1,15 +1,12 @@
 import { Component, ContentChild, OnDestroy, OnInit, TemplateRef } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription, combineLatest } from 'rxjs';
 import { filter, skip } from 'rxjs/operators';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
-import { User } from 'app/core/user/user.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { programmingExerciseFail, programmingExerciseSuccess } from 'app/guided-tour/tours/course-exercise-detail-tour';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -31,20 +28,17 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { getFirstResultWithComplaintFromResults } from 'app/entities/submission.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint } from 'app/entities/complaint.model';
-import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { faAngleDown, faAngleUp, faBook, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { MAX_RESULT_HISTORY_LENGTH } from 'app/overview/result-history/result-history.component';
-import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
+import { isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
-import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { AbstractScienceComponent } from 'app/shared/science/science.component';
 import { ScienceService } from 'app/shared/science/science.service';
@@ -74,11 +68,9 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     readonly isMessagingEnabled = isMessagingEnabled;
 
     public learningPathMode = false;
-    private currentUser: User;
     public exerciseId: number;
     public courseId: number;
-    public course: Course;
-    public exercise?: Exercise;
+    public exercise: Exercise;
     public resultWithComplaint?: Result;
     public latestRatedResult?: Result;
     public complaint?: Complaint;
@@ -126,22 +118,17 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
 
     constructor(
         private exerciseService: ExerciseService,
-        private accountService: AccountService,
         private participationWebsocketService: ParticipationWebsocketService,
         private participationService: ParticipationService,
         private route: ActivatedRoute,
         private profileService: ProfileService,
         private guidedTourService: GuidedTourService,
         private alertService: AlertService,
-        private programmingExerciseSubmissionPolicyService: SubmissionPolicyService,
         private teamService: TeamService,
         private quizExerciseService: QuizExerciseService,
         private complaintService: ComplaintService,
         private artemisMarkdown: ArtemisMarkdownService,
-        private plagiarismCaseService: PlagiarismCasesService,
         private exerciseHintService: ExerciseHintService,
-        private courseService: CourseManagementService,
-        private irisSettingsService: IrisSettingsService,
         scienceService: ScienceService,
     ) {
         super(scienceService, ScienceEventType.EXERCISE__OPEN);
@@ -160,10 +147,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
                     this.exerciseId = parseInt(exerciseIdParams.exerciseId, 10);
                     this.courseId = parseInt(courseIdParams.courseId, 10);
                 }
-                this.courseService.find(this.courseId).subscribe((courseResponse) => (this.course = courseResponse.body!));
-                this.accountService.identity().then((user: User) => {
-                    this.currentUser = user;
-                });
                 if (didExerciseChange || didCourseChange) {
                     this.loadExercise();
                 }
@@ -198,7 +181,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     }
 
     loadExercise() {
-        this.exercise = undefined;
         this.irisSettings = undefined;
         this.studentParticipations = this.participationWebsocketService.getParticipationsForExercise(this.exerciseId);
         this.updateStudentParticipations();
