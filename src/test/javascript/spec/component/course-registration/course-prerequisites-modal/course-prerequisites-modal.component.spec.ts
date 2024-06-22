@@ -47,7 +47,7 @@ describe('CoursePrerequisitesModal', () => {
     });
 
     it('should load prerequisites and display a card for each of them', () => {
-        const getAllPrerequisitesForCourseSpy = jest.spyOn(prerequisiteService, 'getAllPrerequisitesForCourse').mockReturnValue(of([{}, {}]));
+        const getAllPrerequisitesForCourseSpy = jest.spyOn(prerequisiteService, 'getAllPrerequisitesForCourse').mockReturnValue(of([{ id: 1 }, { id: 2 }]));
 
         coursePrerequisitesModalComponentFixture.detectChanges();
 
