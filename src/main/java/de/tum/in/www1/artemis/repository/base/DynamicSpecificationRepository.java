@@ -1,17 +1,15 @@
 package de.tum.in.www1.artemis.repository.base;
 
 import java.util.Collection;
-import java.util.Optional;
+import java.util.List;
 
 import jakarta.persistence.criteria.JoinType;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.repository.NoRepositoryBean;
 
-import de.tum.in.www1.artemis.domain.DomainObject_;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -20,30 +18,44 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  * @param <T> the type of the entity
  */
 @NoRepositoryBean
-public interface DynamicSpecificationRepository<T, ID, F extends FetchOptions> extends JpaRepository<T, ID>, JpaSpecificationExecutor<T> {
-
-    /**
-     * Find an entity by its id and given specification.
-     *
-     * @param specification the specification to apply
-     * @param id            the id of the entity to find
-     * @return the entity with the given id
-     */
-    default Optional<T> findOneById(Specification<T> specification, ID id) {
-        final Specification<T> hasIdSpec = (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get(DomainObject_.ID), id);
-        return findOne(specification.and(hasIdSpec));
-    }
+public interface DynamicSpecificationRepository<T, ID, F extends FetchOptions> extends ArtemisJpaRepository<T, ID>, JpaSpecificationExecutor<T> {
 
     /**
      * Find an entity by its id and given specification or throw an EntityNotFoundException if it does not exist.
+     * Implemented in {@link RepositoryImpl#findOneByIdElseThrow(Specification, ID)}.
      *
      * @param specification the specification to apply
      * @param id            the id of the entity to find
-     * @param entityName    the name of the entity to find
      * @return the entity with the given id
      */
-    default T findOneByIdElseThrow(Specification<T> specification, ID id, String entityName) {
-        return findOneById(specification, id).orElseThrow(() -> new EntityNotFoundException(entityName, String.valueOf(id)));
+    @NotNull
+    T findOneByIdElseThrow(final Specification<T> specification, ID id);
+
+    /**
+     * Finds an entity by its ID with optional dynamic fetching of associated entities.
+     * Throws an {@link EntityNotFoundException} if the entity with the specified ID does not exist.
+     *
+     * @param id           the ID of the entity to find.
+     * @param fetchOptions a collection of fetch options specifying the entities to fetch dynamically.
+     * @return the entity with the specified ID and the associated entities fetched according to the provided options.
+     */
+    @NotNull
+    default T findByIdWithDynamicFetchElseThrow(ID id, F... fetchOptions) {
+        return findByIdWithDynamicFetchElseThrow(id, List.of(fetchOptions));
+    }
+
+    /**
+     * Finds an entity by its ID with optional dynamic fetching of associated entities.
+     * Throws an {@link EntityNotFoundException} if the entity with the specified ID does not exist.
+     *
+     * @param id           the ID of the entity to find.
+     * @param fetchOptions a collection of fetch options specifying the entities to fetch dynamically.
+     * @return the entity with the specified ID and the associated entities fetched according to the provided options.
+     */
+    @NotNull
+    default T findByIdWithDynamicFetchElseThrow(ID id, Collection<F> fetchOptions) {
+        var specification = getDynamicSpecification(fetchOptions);
+        return findOneByIdElseThrow(specification, id);
     }
 
     /**
