@@ -7,7 +7,6 @@ import static de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository.Pr
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -481,17 +480,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     long countByTitleAndExerciseGroupExamCourse(String shortName, Course course);
 
     /**
-     * Find a programming exercise by its id and throw an EntityNotFoundException if it cannot be found
-     *
-     * @param programmingExerciseId of the programming exercise.
-     * @return The programming exercise related to the given id
-     */
-    @NotNull
-    default ProgrammingExercise findByIdElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        return findById(programmingExerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
-    }
-
-    /**
      * Find a programming exercise by its id, with grading criteria loaded, and throw an EntityNotFoundException if it cannot be found
      *
      * @param exerciseId of the programming exercise.
@@ -629,34 +617,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             long programmingExerciseId) throws EntityNotFoundException {
         Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigById(
                 programmingExerciseId);
-        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
-    }
-
-    /**
-     * Finds a {@link ProgrammingExercise} by its ID with optional dynamic fetching of associated entities.
-     *
-     * @param exerciseId   the ID of the programming exercise to find.
-     * @param fetchOptions a collection of {@link ProgrammingExerciseFetchOptions} indicating which associated entities to fetch.
-     * @return the {@link ProgrammingExercise} with the specified ID and the associated entities fetched according to the provided options.
-     * @throws EntityNotFoundException if the programming exercise with the specified ID does not exist.
-     */
-    @NotNull
-    default ProgrammingExercise findByIdWithDynamicFetchElseThrow(long exerciseId, ProgrammingExerciseFetchOptions... fetchOptions) throws EntityNotFoundException {
-        return findByIdWithDynamicFetchElseThrow(exerciseId, Set.of(fetchOptions));
-    }
-
-    /**
-     * Finds a {@link ProgrammingExercise} by its ID with optional dynamic fetching of associated entities.
-     *
-     * @param exerciseId   the ID of the programming exercise to find.
-     * @param fetchOptions a collection of {@link ProgrammingExerciseFetchOptions} indicating which associated entities to fetch.
-     * @return the {@link ProgrammingExercise} with the specified ID and the associated entities fetched according to the provided options.
-     * @throws EntityNotFoundException if the programming exercise with the specified ID does not exist.
-     */
-    @NotNull
-    default ProgrammingExercise findByIdWithDynamicFetchElseThrow(long exerciseId, Collection<ProgrammingExerciseFetchOptions> fetchOptions) throws EntityNotFoundException {
-        var specification = getDynamicSpecification(fetchOptions);
-        return findOneByIdElseThrow(specification, exerciseId, "Programming Exercise");
+        return getValueElseThrow(programmingExercise, programmingExerciseId);
     }
 
     /**

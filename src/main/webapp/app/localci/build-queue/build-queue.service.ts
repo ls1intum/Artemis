@@ -4,13 +4,15 @@ import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
 import { BuildJob, FinishedBuildJob } from 'app/entities/build-job.model';
-import { createRequestOption } from 'app/shared/util/request.util';
+import { createNestedRequestOption } from 'app/shared/util/request.util';
 import { HttpResponse } from '@angular/common/http';
+import { FinishedBuildJobFilter } from 'app/localci/build-queue/build-queue.component';
 
 @Injectable({ providedIn: 'root' })
 export class BuildQueueService {
     public resourceUrl = 'api';
     public adminResourceUrl = 'api/admin';
+    nestedDtoKey = 'pageable';
 
     constructor(private http: HttpClient) {}
     /**
@@ -127,9 +129,13 @@ export class BuildQueueService {
     /**
      * Get all finished build jobs
      * @param req The query request
+     * @param filter The filter to apply
      */
-    getFinishedBuildJobs(req?: any): Observable<HttpResponse<FinishedBuildJob[]>> {
-        const options = createRequestOption(req);
+    getFinishedBuildJobs(req?: any, filter?: FinishedBuildJobFilter): Observable<HttpResponse<FinishedBuildJob[]>> {
+        let options = createNestedRequestOption(req, this.nestedDtoKey);
+        if (filter) {
+            options = filter.addHttpParams(options);
+        }
         return this.http.get<FinishedBuildJob[]>(`${this.adminResourceUrl}/finished-jobs`, { params: options, observe: 'response' }).pipe(
             catchError((err) => {
                 return throwError(() => new Error(`Failed to get all finished build jobs\n${err.message}`));
@@ -141,9 +147,13 @@ export class BuildQueueService {
      * Get all finished build jobs associated with a course
      * @param courseId the id of the course
      * @param req The query request
+     * @param filter The filter to apply
      */
-    getFinishedBuildJobsByCourseId(courseId: number, req?: any): Observable<HttpResponse<FinishedBuildJob[]>> {
-        const options = createRequestOption(req);
+    getFinishedBuildJobsByCourseId(courseId: number, req?: any, filter?: FinishedBuildJobFilter): Observable<HttpResponse<FinishedBuildJob[]>> {
+        let options = createNestedRequestOption(req, this.nestedDtoKey);
+        if (filter) {
+            options = filter.addHttpParams(options);
+        }
         return this.http.get<FinishedBuildJob[]>(`${this.resourceUrl}/courses/${courseId}/finished-jobs`, { params: options, observe: 'response' }).pipe(
             catchError((err) => {
                 return throwError(() => new Error(`Failed to get all finished build jobs in course ${courseId}\n${err.message}`));

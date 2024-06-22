@@ -87,6 +87,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     protected GroupNotificationScheduleService groupNotificationScheduleService;
 
     @AfterEach
+    @Override
     protected void resetSpyBeans() {
         Mockito.reset(continuousIntegrationService, versionControlService, jenkinsServer);
         super.resetSpyBeans();
