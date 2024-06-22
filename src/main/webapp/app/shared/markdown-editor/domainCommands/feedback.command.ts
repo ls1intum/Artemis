@@ -2,8 +2,8 @@ import { DomainTagCommand } from 'app/shared/markdown-editor/domainCommands/doma
 import { addTextAtCursor } from 'app/shared/util/markdown.util';
 
 export class FeedbackCommand extends DomainTagCommand {
-    public static readonly identifier = '[feedback]';
-    public static readonly text = 'Add feedback for students here (visible for students)';
+    public static readonly IDENTIFIER = '[feedback]';
+    public static readonly TEXT = 'Add feedback for students here (visible for students)';
 
     buttonTranslationString = 'artemisApp.assessmentInstructions.instructions.editor.addFeedback';
     displayCommandButton = false;
@@ -13,7 +13,7 @@ export class FeedbackCommand extends DomainTagCommand {
      * @desc Add a new feedback for the corresponding instruction in the editor at the location of the cursor
      */
     execute(): void {
-        const text = '\n' + this.getOpeningIdentifier() + FeedbackCommand.text;
+        const text = '\n' + this.getOpeningIdentifier() + FeedbackCommand.TEXT;
         addTextAtCursor(text, this.aceEditor);
     }
 
@@ -22,7 +22,7 @@ export class FeedbackCommand extends DomainTagCommand {
      * @desc identify the start of the feedback
      */
     getOpeningIdentifier(): string {
-        return FeedbackCommand.identifier;
+        return FeedbackCommand.IDENTIFIER;
     }
 
     /**

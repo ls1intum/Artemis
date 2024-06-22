@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { IrisBaseChatbotComponent } from 'app/iris/base-chatbot/iris-base-chatbot.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -21,6 +21,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { FormsModule } from 'app/forms/forms.module';
 import {
+    mockClientMessage,
     mockServerMessage,
     mockServerSessionHttpResponse,
     mockServerSessionHttpResponseWithEmptyConversation,
@@ -28,7 +29,7 @@ import {
     mockUserMessageWithContent,
     mockWebsocketServerMessage,
 } from '../../../helpers/sample/iris-sample-data';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
@@ -61,7 +62,7 @@ describe('IrisBaseChatbotComponent', () => {
         } as any;
 
         await TestBed.configureTestingModule({
-            imports: [FormsModule, FontAwesomeModule, RouterModule, BrowserAnimationsModule],
+            imports: [FormsModule, FontAwesomeModule, RouterModule, NoopAnimationsModule],
             declarations: [
                 IrisBaseChatbotComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -133,7 +134,7 @@ describe('IrisBaseChatbotComponent', () => {
         expect(component.userAccepted).toBeTrue();
     });
 
-    it('should add user message on send', waitForAsync(async () => {
+    it('should add user message on send', async () => {
         // given
         jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
         jest.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
@@ -156,9 +157,9 @@ describe('IrisBaseChatbotComponent', () => {
         // then
         expect(component.messages).toContain(createdMessage);
         expect(stub).toHaveBeenCalledWith(content);
-    }));
+    });
 
-    it('should resend message', waitForAsync(async () => {
+    it('should resend message', async () => {
         // given
         jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
         jest.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
@@ -169,7 +170,7 @@ describe('IrisBaseChatbotComponent', () => {
         jest.spyOn(httpService, 'resendMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisUserMessage>));
         jest.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
 
-        const stub = jest.spyOn(chatService, 'sendMessage');
+        const stub = jest.spyOn(chatService, 'resendMessage');
         component.newMessageTextContent = content;
         chatService.switchTo(ChatServiceMode.COURSE, 123);
 
@@ -180,10 +181,10 @@ describe('IrisBaseChatbotComponent', () => {
 
         // then
         expect(component.messages).toContain(createdMessage);
-        expect(stub).toHaveBeenCalledWith(content);
-    }));
+        expect(stub).toHaveBeenCalledWith(createdMessage);
+    });
 
-    it('should rate message', waitForAsync(async () => {
+    it('should rate message', async () => {
         // given
         const id = 123;
         jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
@@ -198,10 +199,12 @@ describe('IrisBaseChatbotComponent', () => {
         // when
         component.rateMessage(message, true);
 
+        await fixture.whenStable();
+
         //then
         expect(stub).toHaveBeenCalledWith(message, true);
         expect(httpService.rateMessage).toHaveBeenCalledWith(id, message.id, true);
-    }));
+    });
 
     it('should clear newMessage on send', async () => {
         // given
@@ -408,6 +411,73 @@ describe('IrisBaseChatbotComponent', () => {
         const sendButton = fixture.debugElement.query(By.css('#irisSendButton')).componentInstance;
 
         expect(sendButton.disabled).toBeFalsy();
+    });
+
+    it('should set suggestions correctly', () => {
+        const expectedSuggestions = ['suggestion1', 'suggestion2', 'suggestion3'];
+        jest.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(expectedSuggestions));
+
+        component.ngOnInit();
+
+        expect(component.suggestions).toEqual(expectedSuggestions);
+    });
+
+    it('should handle suggestion click correctly', () => {
+        const suggestion = 'test suggestion';
+        jest.spyOn(component, 'onSend');
+        jest.spyOn(chatService, 'sendMessage');
+
+        component.onSuggestionClick(suggestion);
+
+        expect(chatService.sendMessage).toHaveBeenCalledWith(suggestion);
+        expect(component.onSend).toHaveBeenCalled();
+    });
+
+    it('should clear suggestions after clicking on a suggestion', () => {
+        const suggestion = 'test suggestion';
+        jest.spyOn(component, 'onSend');
+
+        component.onSuggestionClick(suggestion);
+
+        expect(component.suggestions).toEqual([]);
+    });
+
+    it('should render suggestions when suggestions array is not empty', () => {
+        // Arrange
+        const expectedSuggestions = ['suggestion1', 'suggestion2', 'suggestion3'];
+        const mockMessages = [mockClientMessage, mockServerMessage];
+
+        jest.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(expectedSuggestions));
+        jest.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+
+        // Act
+        component.ngOnInit();
+        fixture.detectChanges();
+
+        // Assert
+        const suggestionsElement: HTMLElement = fixture.nativeElement.querySelector('.suggestions-container');
+        const suggestionButtons = suggestionsElement.querySelectorAll('.suggestion-button');
+        expect(suggestionButtons).toHaveLength(expectedSuggestions.length);
+        suggestionButtons.forEach((button, index) => {
+            expect(button.textContent).toBe(expectedSuggestions[index]);
+        });
+    });
+
+    it('should not render suggestions when suggestions array is empty', () => {
+        // Arrange
+        const expectedSuggestions: string[] = [];
+        const mockMessages = [mockClientMessage, mockServerMessage];
+
+        jest.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(expectedSuggestions));
+        jest.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+
+        // Act
+        component.ngOnInit();
+        fixture.detectChanges();
+
+        // Assert
+        const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
+        expect(suggestionButtons).toHaveLength(0);
     });
 
     describe('clear chat session', () => {

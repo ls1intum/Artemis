@@ -21,7 +21,6 @@ import java.util.Set;
 import jakarta.annotation.Nullable;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -33,13 +32,14 @@ import de.tum.in.www1.artemis.domain.enumeration.SpanType;
 import de.tum.in.www1.artemis.domain.enumeration.StatisticsView;
 import de.tum.in.www1.artemis.domain.statistics.CourseStatisticsAverageScore;
 import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data JPA repository for the statistics pages
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface StatisticsRepository extends JpaRepository<User, Long> {
+public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(

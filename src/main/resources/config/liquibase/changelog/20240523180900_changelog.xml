@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20240523180900_1" author="rstief">
+        <addColumn tableName="competency">
+            <column name="discriminator" type="varchar(1)"/>
+        </addColumn>
+        <addColumn tableName="competency">
+            <column name="linked_course_competency_id" type="bigint"/>
+        </addColumn>
+        <addForeignKeyConstraint baseColumnNames="linked_course_competency_id" baseTableName="competency" constraintName="fk_competency_linked_competency" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="competency" validate="true"/>
+
+        <sql>UPDATE competency SET discriminator = 'C'</sql>
+        <addNotNullConstraint tableName="competency" columnName="discriminator" columnDataType="varchar(1)"/>
+
+        <sql>UPDATE competency SET mastery_threshold = 100 WHERE mastery_threshold IS NULL</sql>
+        <addNotNullConstraint tableName="competency" columnName="mastery_threshold" columnDataType="int"/>
+    </changeSet>
+
+    <!--
+    Prerequisites were previously only a reference of an existing competency to another course in the 'competency_course' table.
+    We now want to "import" all referenced competencies as 'P' (prerequisite) type competencies into the referenced course:
+        - We right join 'competency' to 'competency_course' (to only get the competencies that are used as prerequisites)
+        - We set the course_id to the one referenced in the 'competency_course' table
+        - We set the discriminator to 'P'
+        - The rest of the fields remain the same
+    We must use a separate changeset for postgres and mysql as we need to calculate the new id differently.
+    -->
+    <changeSet id="20240523180900_2_postgres" author="rstief">
+        <preConditions onFail="CONTINUE">
+            <dbms type="postgresql"/>
+        </preConditions>
+        <!-- (Postgres) To get a new id, we add the row_number of the 'competency_course' table to the maximum id of the 'competency' table for each inserted row -->
+        <sql dbms="postgresql" splitStatements="false">
+            DO $$
+                DECLARE max_id BIGINT;
+            BEGIN
+                max_id := (SELECT (MAX(id)) as id FROM competency);
+                INSERT INTO competency (id, description, title, course_id, taxonomy, mastery_threshold, soft_due_date, optional, linked_standardized_competency_id, discriminator, linked_course_competency_id)
+                SELECT (max_id + row_number() over ()) as id, description, title, competency_course.course_id AS course_id, taxonomy, mastery_threshold, soft_due_date, optional, linked_standardized_competency_id, 'P', competency.id as linked_competency_id
+                FROM competency
+                     RIGHT JOIN competency_course ON competency.id = competency_course.competency_id;
+            END $$;
+        </sql>
+    </changeSet>
+    <changeSet id="20240523180900_2_mysql" author="rstief">
+        <preConditions onFail="CONTINUE">
+            <dbms type="mysql"/>
+        </preConditions>
+        <!-- (MySQL) To get a new id, we set a variable to the maximum id of the 'competency' table and increment it on every inserted row -->
+        <sql dbms="mysql">
+            SELECT @max_id := MAX(id) FROM competency;
+            INSERT INTO competency (id, description, title, course_id, taxonomy, mastery_threshold, soft_due_date, optional, linked_standardized_competency_id, discriminator, linked_course_competency_id)
+            SELECT (@max_id := @max_id + 1) as id, description, title, competency_course.course_id as course_id, taxonomy, mastery_threshold, soft_due_date, optional, linked_standardized_competency_id, 'P', competency.id as linked_competency_id
+            FROM competency
+                RIGHT JOIN competency_course on competency.id = competency_course.competency_id;
+        </sql>
+    </changeSet>
+    <changeSet id="20240523180900_3" author="rstief">
+        <dropTable tableName="competency_course" cascadeConstraints="true" />
+    </changeSet>
+</databaseChangeLog>

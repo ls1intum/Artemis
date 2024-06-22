@@ -54,7 +54,7 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
 
         competencyNotInCourse = competencyUtilService.createCompetency(null);
         student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        competencyProgress = competencyProgressUtilService.createCompetencyProgress(competency[0], student, 0.25, 0.25);
+        competencyProgress = competencyProgressUtilService.createCompetencyProgress(competency[0], student, 25, 1);
 
         userUtilService.addStudent(TEST_PREFIX + "otherstudents", TEST_PREFIX + "otherstudent1");
     }

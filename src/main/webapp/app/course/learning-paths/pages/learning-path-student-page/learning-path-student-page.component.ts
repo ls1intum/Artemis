@@ -10,15 +10,24 @@ import { CourseExerciseDetailsModule } from 'app/overview/exercise-details/cours
 import { LearningPathLectureUnitComponent } from 'app/course/learning-paths/components/learning-path-lecture-unit/learning-path-lecture-unit.component';
 import { LearningPathExerciseComponent } from 'app/course/learning-paths/components/learning-path-exercise/learning-path-exercise.component';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
-import { EntityNotFoundError } from 'app/course/learning-paths/exceptions/entity-not-found.error';
 import { LearningPathNavigationService } from 'app/course/learning-paths/services/learning-path-navigation.service';
+import { EntityNotFoundError } from 'app/course/learning-paths/exceptions/entity-not-found.error';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @Component({
     selector: 'jhi-learning-path-student-page',
     templateUrl: './learning-path-student-page.component.html',
     styleUrl: './learning-path-student-page.component.scss',
     standalone: true,
-    imports: [CommonModule, RouterModule, LearningPathStudentNavComponent, CourseExerciseDetailsModule, LearningPathLectureUnitComponent, LearningPathExerciseComponent],
+    imports: [
+        CommonModule,
+        RouterModule,
+        LearningPathStudentNavComponent,
+        CourseExerciseDetailsModule,
+        LearningPathLectureUnitComponent,
+        LearningPathExerciseComponent,
+        ArtemisSharedModule,
+    ],
 })
 export class LearningPathStudentPageComponent implements OnInit {
     protected readonly LearningObjectType = LearningObjectType;
@@ -38,25 +47,29 @@ export class LearningPathStudentPageComponent implements OnInit {
     }
 
     private async loadLearningPathId(courseId: number): Promise<void> {
-        this.isLoading.set(true);
         try {
+            this.isLoading.set(true);
             const learningPathId = await this.learningApiService.getLearningPathId(courseId);
             this.learningPathId.set(learningPathId);
         } catch (error) {
-            if (error instanceof EntityNotFoundError) {
-                await this.generateLearningPath(courseId);
+            // If learning path does not exist (404) ignore the error
+            if (!(error instanceof EntityNotFoundError)) {
+                this.alertService.error(error);
             }
-            this.alertService.error(error);
+        } finally {
+            this.isLoading.set(false);
         }
-        this.isLoading.set(false);
     }
 
-    private async generateLearningPath(courseId: number): Promise<void> {
+    async generateLearningPath(courseId: number): Promise<void> {
         try {
+            this.isLoading.set(true);
             const learningPathId = await this.learningApiService.generateLearningPath(courseId);
             this.learningPathId.set(learningPathId);
         } catch (error) {
             this.alertService.error(error);
+        } finally {
+            this.isLoading.set(false);
         }
     }
 }
