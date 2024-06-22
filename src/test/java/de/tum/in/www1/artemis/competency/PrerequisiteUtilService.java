@@ -67,7 +67,7 @@ public class PrerequisiteUtilService {
     /**
      * Creates a PrerequisiteRequestDTO from a prerequisite
      *
-     * @param prerequisite the prerequisite to conver
+     * @param prerequisite the prerequisite to convert
      * @return the created PrerequisiteRequestDTO
      */
     public PrerequisiteRequestDTO prerequisiteToRequestDTO(Prerequisite prerequisite) {
