@@ -149,6 +149,17 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         this.initializeAchievablePointsAndAchievedScoreFilters();
     }
 
+    private initializeCategoryFilter() {
+        if (this.possibleCategories) {
+            return;
+        }
+
+        this.possibleCategories =
+            this.sidebarData?.ungroupedData
+                ?.filter((sidebarElement: SidebarCardElement) => sidebarElement.exercise?.categories !== undefined)
+                .flatMap((sidebarElement: SidebarCardElement) => sidebarElement.exercise?.categories || []) ?? [];
+    }
+
     private initializeExerciseTypeFilter() {
         if (this.exerciseTypesFilter) {
             return;
@@ -172,17 +183,6 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
             .map((sidebarElement: SidebarCardElement) => sidebarElement.difficulty);
 
         this.difficultyFilters = DEFAULT_DIFFICULTIES_FILTER?.filter((difficulty) => existingDifficulties?.includes(difficulty.value));
-    }
-
-    private initializeCategoryFilter() {
-        if (this.possibleCategories) {
-            return;
-        }
-
-        this.possibleCategories =
-            this.sidebarData?.ungroupedData
-                ?.filter((sidebarElement: SidebarCardElement) => sidebarElement.exercise?.categories !== undefined)
-                .flatMap((sidebarElement: SidebarCardElement) => sidebarElement.exercise?.categories || []) ?? [];
     }
 
     private initializeAchievablePointsAndAchievedScoreFilters() {
