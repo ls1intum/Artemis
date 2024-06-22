@@ -24,6 +24,7 @@ import { MonacoFullscreenAction } from 'app/shared/monaco-editor/model/actions/m
 import { MonacoColorAction } from 'app/shared/monaco-editor/model/actions/monaco-color.action';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { CdkDragMove, Point } from '@angular/cdk/drag-drop';
+import { MonacoEditorDomainAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action.model';
 
 // TODO: Once the old markdown editor is gone, remove the style url.
 @Component({
@@ -90,7 +91,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     colorAction?: MonacoColorAction = new MonacoColorAction();
 
     @Input()
-    domainActions: MonacoEditorAction[] = [];
+    domainActions: MonacoEditorDomainAction[] = [];
 
     @Output()
     markdownChange = new EventEmitter<string>();

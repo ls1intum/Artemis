@@ -1,13 +1,13 @@
 import { TranslateService } from '@ngx-translate/core';
 import * as monaco from 'monaco-editor';
-import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { MonacoEditorDomainAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action.model';
 
 const INSERT_TEST_CASE_TEXT = 'testCaseName()';
 interface TestCaseValue {
     value: string;
     id: string;
 }
-export class MonacoTestCaseAction extends MonacoEditorAction {
+export class MonacoTestCaseAction extends MonacoEditorDomainAction {
     possibleValues: TestCaseValue[] = [];
     disposableCompletionProvider?: monaco.IDisposable;
 

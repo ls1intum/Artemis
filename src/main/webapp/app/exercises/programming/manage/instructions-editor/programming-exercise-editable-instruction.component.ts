@@ -19,10 +19,10 @@ import { Result } from 'app/entities/result.model';
 import { faCheckCircle, faCircleNotch, faExclamationTriangle, faGripLines, faSave } from '@fortawesome/free-solid-svg-icons';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
-import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
 import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/monaco-formula.action';
 import { MonacoTaskAction } from 'app/shared/monaco-editor/model/actions/monaco-task.action';
 import { MonacoTestCaseAction } from 'app/shared/monaco-editor/model/actions/monaco-test-case.action';
+import { MonacoEditorDomainAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action.model';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -42,7 +42,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     katexCommand = new KatexCommand();
     domainCommands: DomainCommand[] = [this.katexCommand, this.taskCommand, this.testCaseCommand];
     testCaseAction = new MonacoTestCaseAction();
-    domainActions: MonacoEditorAction[] = [new MonacoFormulaAction(), new MonacoTaskAction(), this.testCaseAction];
+    domainActions: MonacoEditorDomainAction[] = [new MonacoFormulaAction(), new MonacoTaskAction(), this.testCaseAction];
 
     savingInstructions = false;
     unsavedChangesValue = false;
