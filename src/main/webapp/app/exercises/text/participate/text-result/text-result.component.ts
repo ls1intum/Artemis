@@ -25,7 +25,7 @@ export class TextResultComponent {
 
     readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
 
-    private readonly sha1Regex = /^[a-f0-9]{40}$/i;
+    private readonly SHA1_REGEX = /^[a-f0-9]{40}$/i;
 
     @Input()
     public set result(result: Result) {
@@ -49,7 +49,7 @@ export class TextResultComponent {
         checkSubsequentFeedbackInAssessment(feedbacks);
 
         const [referenceBasedFeedback, blockBasedFeedback]: [Feedback[], Feedback[]] = feedbacks.reduce(
-            ([refBased, blockBased], elem) => (this.sha1Regex.test(elem.reference!) ? [refBased, [...blockBased, elem]] : [[...refBased, elem], blockBased]),
+            ([refBased, blockBased], elem) => (this.SHA1_REGEX.test(elem.reference!) ? [refBased, [...blockBased, elem]] : [[...refBased, elem], blockBased]),
             [[], []],
         );
 

@@ -19,7 +19,6 @@ describe('VirtualScrollComponent', () => {
     let fixture: ComponentFixture<VirtualScrollComponent<Post>>;
 
     let originalWindow: any;
-    let windowSpy: jest.SpyInstance;
     let windowScrollToSpy: jest.SpyInstance;
     let prepareDataItemsSpy: jest.SpyInstance;
     let forceReloadChangeSpy: jest.SpyInstance;
@@ -40,7 +39,6 @@ describe('VirtualScrollComponent', () => {
                 fixture = TestBed.createComponent(VirtualScrollComponent);
                 comp = fixture.componentInstance;
 
-                windowSpy = jest.spyOn(global, 'window', 'get');
                 windowScrollToSpy = jest.spyOn(window, 'scrollTo');
                 prepareDataItemsSpy = jest.spyOn(comp, 'prepareDataItems');
                 forceReloadChangeSpy = jest.spyOn(comp.forceReloadChange, 'emit');
@@ -54,7 +52,6 @@ describe('VirtualScrollComponent', () => {
 
     afterEach(() => {
         originalWindow.scrollY = 0;
-        windowSpy.mockReturnValue(originalWindow);
 
         jest.restoreAllMocks();
     });
@@ -138,7 +135,6 @@ describe('VirtualScrollComponent', () => {
         comp.ngOnChanges(changes);
 
         originalWindow.scrollY = 1500;
-        windowSpy.mockReturnValue(originalWindow);
         global.window.dispatchEvent(new Event('scroll'));
 
         tick();
@@ -146,7 +142,6 @@ describe('VirtualScrollComponent', () => {
 
         // simulate unintended scrolling that occurs on focus
         originalWindow.scrollY = 1000;
-        windowSpy.mockReturnValue(originalWindow);
         global.window.dispatchEvent(new Event('focusin'));
 
         expect(windowScrollToSpy).toHaveBeenCalledOnce();
@@ -162,7 +157,6 @@ describe('VirtualScrollComponent', () => {
         expect(comp.domTreeItems[2].id).toBe(3);
 
         originalWindow.scrollY = comp.minItemHeight * 7;
-        windowSpy.mockReturnValue(originalWindow);
         global.window.dispatchEvent(new Event('scroll'));
 
         tick();
@@ -176,7 +170,6 @@ describe('VirtualScrollComponent', () => {
         expect(comp.domTreeItems[2].id).toBe(5);
 
         originalWindow.scrollY = comp.minItemHeight * 10;
-        windowSpy.mockReturnValue(originalWindow);
         global.window.dispatchEvent(new Event('scroll'));
 
         tick();

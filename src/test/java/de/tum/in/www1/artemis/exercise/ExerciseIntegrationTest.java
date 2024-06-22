@@ -59,6 +59,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.TestResourceUtils;
+import de.tum.in.www1.artemis.web.rest.dto.ExerciseDetailsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -373,7 +374,8 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, NUMBER_OF_TUTORS);
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
-                Exercise exerciseWithDetails = request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.OK, Exercise.class);
+                ExerciseDetailsDTO exerciseWithDetailsWrapper = request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
+                Exercise exerciseWithDetails = exerciseWithDetailsWrapper.exercise();
 
                 if (exerciseWithDetails instanceof FileUploadExercise fileUploadExercise) {
                     assertFileUploadExercise(fileUploadExercise, "png", null);
@@ -459,8 +461,8 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L),
                         exercise.getStudentParticipations().iterator().next());
             }
-            Exercise exerciseWithDetails = request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.OK, Exercise.class);
-            for (StudentParticipation participation : exerciseWithDetails.getStudentParticipations()) {
+            ExerciseDetailsDTO exerciseWithDetails = request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
+            for (StudentParticipation participation : exerciseWithDetails.exercise().getStudentParticipations()) {
                 // Programming exercises should only have one automatic result
                 if (exercise instanceof ProgrammingExercise) {
                     assertThat(participation.getResults()).hasSize(1);
@@ -484,8 +486,8 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L),
                         exercise.getStudentParticipations().iterator().next());
             }
-            Exercise exerciseWithDetails = request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.OK, Exercise.class);
-            for (StudentParticipation participation : exerciseWithDetails.getStudentParticipations()) {
+            ExerciseDetailsDTO exerciseWithDetails = request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
+            for (StudentParticipation participation : exerciseWithDetails.exercise().getStudentParticipations()) {
                 // Programming exercises should now how two results and the latest one is the manual result.
                 if (exercise instanceof ProgrammingExercise) {
                     assertThat(participation.getResults()).hasSize(2);
@@ -511,7 +513,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetExerciseDetails_withExamExercise_asTutor() throws Exception {
         Exercise exercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
-        request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.OK, Exercise.class);
+        request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
     }
 
     @Test

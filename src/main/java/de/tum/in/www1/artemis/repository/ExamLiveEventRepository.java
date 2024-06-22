@@ -5,20 +5,20 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.util.List;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.exam.event.ExamLiveEvent;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data JPA repository for the ExamLiveEvent entity.
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface ExamLiveEventRepository extends JpaRepository<ExamLiveEvent, Long> {
+public interface ExamLiveEventRepository extends ArtemisJpaRepository<ExamLiveEvent, Long> {
 
     /**
      * Find all events for the given student exam plus all global events for the exam in reverse creation order.
