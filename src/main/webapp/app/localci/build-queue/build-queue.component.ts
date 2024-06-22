@@ -152,7 +152,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
         this.buildStatusFilterValues = Object.values(BuildJobStatusFilter);
         this.loadQueue();
         this.interval = setInterval(() => {
-            this.updateBuildJobDuration();
+            this.runningBuildJobs = this.updateBuildJobDuration(this.runningBuildJobs);
         }, 1000);
         this.initWebsocketSubscription();
         this.loadFilterFromLocalStorage();
@@ -203,7 +203,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
                     this.queuedBuildJobs = queuedBuildJobs;
                 });
                 this.websocketService.receive(`/topic/courses/${courseId}/running-jobs`).subscribe((runningBuildJobs) => {
-                    this.runningBuildJobs = runningBuildJobs;
+                    this.runningBuildJobs = this.updateBuildJobDuration(runningBuildJobs);
                 });
                 this.courseChannels.push(`/topic/courses/${courseId}/queued-jobs`);
                 this.courseChannels.push(`/topic/courses/${courseId}/running-jobs`);
@@ -214,7 +214,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
                     this.queuedBuildJobs = queuedBuildJobs;
                 });
                 this.websocketService.receive(`/topic/admin/running-jobs`).subscribe((runningBuildJobs) => {
-                    this.runningBuildJobs = runningBuildJobs;
+                    this.runningBuildJobs = this.updateBuildJobDuration(runningBuildJobs);
                 });
             }
         });
@@ -233,14 +233,14 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
                     this.queuedBuildJobs = queuedBuildJobs;
                 });
                 this.buildQueueService.getRunningBuildJobsByCourseId(courseId).subscribe((runningBuildJobs) => {
-                    this.runningBuildJobs = runningBuildJobs;
+                    this.runningBuildJobs = this.updateBuildJobDuration(runningBuildJobs);
                 });
             } else {
                 this.buildQueueService.getQueuedBuildJobs().subscribe((queuedBuildJobs) => {
                     this.queuedBuildJobs = queuedBuildJobs;
                 });
                 this.buildQueueService.getRunningBuildJobs().subscribe((runningBuildJobs) => {
-                    this.runningBuildJobs = runningBuildJobs;
+                    this.runningBuildJobs = this.updateBuildJobDuration(runningBuildJobs);
                 });
             }
         });
@@ -402,12 +402,8 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     /**
      * Update the build jobs duration
      */
-    updateBuildJobDuration() {
-        if (!this.runningBuildJobs) {
-            return;
-        }
-
-        for (const buildJob of this.runningBuildJobs) {
+    updateBuildJobDuration(buildJobs: BuildJob[]) {
+        for (const buildJob of buildJobs) {
             if (buildJob.jobTimingInfo && buildJob.jobTimingInfo?.buildStartDate) {
                 const start = dayjs(buildJob.jobTimingInfo?.buildStartDate);
                 const now = dayjs();
@@ -415,7 +411,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
             }
         }
         // This is necessary to update the view when the build job duration is updated
-        this.runningBuildJobs = JSON.parse(JSON.stringify(this.runningBuildJobs));
+        return buildJobs.map((buildJob) => ({ ...buildJob }));
     }
 
     /**
