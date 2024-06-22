@@ -11,8 +11,12 @@ import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.serv
 import { ArtemisTestModule } from '../test.module';
 import * as downloadUtil from 'app/shared/util/download.util';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
+import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
+import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
+import { FileService } from 'app/shared/http/file.service';
 import dayjs from 'dayjs/esm';
 import { firstValueFrom } from 'rxjs';
+import JSZip from 'jszip';
 
 /**
  * create a QuizExercise that when used as an HTTP response can be deserialized as an equal object
@@ -35,6 +39,7 @@ describe('QuizExercise Service', () => {
     let service: QuizExerciseService;
     let httpMock: HttpTestingController;
     let elemDefault: QuizExercise;
+    let mockFileService: jest.Mocked<FileService>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -46,7 +51,6 @@ describe('QuizExercise Service', () => {
         });
         service = TestBed.inject(QuizExerciseService);
         httpMock = TestBed.inject(HttpTestingController);
-
         elemDefault = makeQuiz();
     });
 
@@ -234,7 +238,6 @@ describe('QuizExercise Service', () => {
         ],
     ])('should export a quiz (%#)', async (questions, exportAll, filename, count) => {
         const spy = jest.spyOn(downloadUtil, 'downloadFile').mockReturnValue();
-
         service.exportQuiz(questions, exportAll, filename);
 
         if (count === 0) {
@@ -253,6 +256,55 @@ describe('QuizExercise Service', () => {
             expect(data).toBeArrayOfSize(count);
             expect(file).toEndWith('.json');
         }
+    });
+
+    it('should fetch correct image names and paths from drag and drop questions', async () => {
+        const spy = jest.spyOn(service, 'fetchFilePromise').mockReturnValue();
+
+        const questions: QuizQuestion[] = [
+            {
+                type: QuizQuestionType.DRAG_AND_DROP,
+                text: '![image](path/to/image.png)',
+                backgroundFilePath: 'path/to/background.png',
+                dragItems: [{ pictureFilePath: 'path/to/dragItem1.png' }, { pictureFilePath: 'path/to/dragItem2.png' }],
+            } as DragAndDropQuestion,
+        ];
+        service.exportAssetsFromAllQuestions(questions, 'output.zip');
+        expect(spy).toHaveBeenCalledTimes(4);
+        expect(spy).toHaveBeenNthCalledWith(1, 'q0_background.png', expect.anything(), 'path/to/background.png', expect.anything(), expect.anything());
+        expect(spy).toHaveBeenNthCalledWith(2, 'q0_dragItem-0.png', expect.anything(), 'path/to/dragItem1.png', expect.anything(), expect.anything());
+        expect(spy).toHaveBeenNthCalledWith(3, 'q0_dragItem-1.png', expect.anything(), 'path/to/dragItem2.png', expect.anything(), expect.anything());
+        expect(spy).toHaveBeenNthCalledWith(4, 'q0_image', expect.anything(), 'path/to/image.png', expect.anything(), expect.anything());
+    });
+
+    it('should handle markdown without images', async () => {
+        const spy = jest.spyOn(service, 'fetchFilePromise').mockReturnValue();
+
+        const mockJSZip = new JSZip() as jest.Mocked<JSZip>;
+        const description = 'No images here, just text';
+
+        service.exportImageFromMarkdown(description, 1, mockJSZip, [], mockFileService);
+
+        expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('should export images from multiple choice options', async () => {
+        const spy = jest.spyOn(service, 'fetchFilePromise').mockReturnValue();
+        const questions: QuizQuestion[] = [
+            {
+                type: QuizQuestionType.MULTIPLE_CHOICE,
+                answerOptions: [
+                    { text: ' text ![option1](path/to/option1.png)', invalid: false },
+                    { text: '![option2](path/to/option2.png)random', invalid: false },
+                ],
+                randomizeOrder: true,
+                invalid: false,
+                exportQuiz: false,
+            } as MultipleChoiceQuestion,
+        ];
+
+        service.exportAssetsFromAllQuestions(questions, 'output.zip');
+        expect(spy).toHaveBeenCalledTimes(2);
     });
 
     function validateFormData(req: TestRequest) {
