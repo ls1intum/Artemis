@@ -105,7 +105,7 @@ export class CompetencyAccordionComponent implements OnChanges {
             }),
         );
 
-        const completionThreshold = 80;
+        const completionThreshold = MIN_SCORE_GREEN;
         this.nextExercises = activeCompetencyExercises
             .filter((exercise) => exercise.id && exerciseIdToMaxScore[exercise.id] <= completionThreshold)
             .sort((a, b) => {
