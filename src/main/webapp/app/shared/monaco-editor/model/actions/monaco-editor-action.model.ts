@@ -51,7 +51,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
         this.disposableAction = editor.addAction(this);
     }
 
-    toggleDelimiterAroundSelection(editor: monaco.editor.ICodeEditor, openDelimiter: string, closeDelimiter: string): void {
+    toggleDelimiterAroundSelection(editor: monaco.editor.ICodeEditor, openDelimiter: string, closeDelimiter: string, textToInsert: string = ''): void {
         const selection = editor.getSelection();
         const selectedText = selection ? this.getTextAtRange(editor, selection)?.trim() : undefined;
         const position = editor.getPosition();
@@ -61,9 +61,9 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
                 : `${openDelimiter}${selectedText}${closeDelimiter}`;
             this.replaceTextAtRange(editor, selection, textToInsert);
         } else if (position) {
-            this.insertTextAtPosition(editor, position, `${openDelimiter}${closeDelimiter}`);
-            // Move cursor to the middle of the delimiters
-            editor.setPosition(position.delta(0, openDelimiter.length));
+            this.insertTextAtPosition(editor, position, `${openDelimiter}${textToInsert}${closeDelimiter}`);
+            // Move the cursor to the end of the inserted text.
+            editor.setPosition(position.delta(0, openDelimiter.length + textToInsert.length));
         }
         editor.focus();
     }
