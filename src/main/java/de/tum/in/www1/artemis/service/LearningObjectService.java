@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.MIN_SCORE_GREEN;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.Set;
@@ -13,7 +14,6 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.LearningObject;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
-import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
 
 /**
  * Service implementation for interactions with learning objects.
@@ -42,12 +42,10 @@ public class LearningObjectService {
      * @return true if the user completed the lecture unit or has at least one result for the exercise, false otherwise
      */
     public boolean isCompletedByUser(@NotNull LearningObject learningObject, @NotNull User user) {
-        if (learningObject instanceof LectureUnit lectureUnit) {
-            return lectureUnit.getCompletedUsers().stream().map(LectureUnitCompletion::getUser).anyMatch(user1 -> user1.getId().equals(user.getId()));
-        }
-        else if (learningObject instanceof Exercise exercise) {
-            return participantScoreService.getStudentAndTeamParticipations(user, Set.of(exercise)).findAny().isPresent();
-        }
-        throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
+        return switch (learningObject) {
+            case LectureUnit lectureUnit -> lectureUnit.isCompletedFor(user);
+            case Exercise exercise -> participantScoreService.getStudentAndTeamParticipations(user, Set.of(exercise)).anyMatch(score -> score.getLastScore() >= MIN_SCORE_GREEN);
+            default -> throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
+        };
     }
 }
