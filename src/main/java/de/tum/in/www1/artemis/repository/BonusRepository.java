@@ -5,24 +5,19 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Bonus;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data JPA repository for the Bonus entity
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface BonusRepository extends JpaRepository<Bonus, Long> {
-
-    default Bonus findByIdElseThrow(long bonusId) throws EntityNotFoundException {
-        return findById(bonusId).orElseThrow(() -> new EntityNotFoundException("Bonus", bonusId));
-    }
+public interface BonusRepository extends ArtemisJpaRepository<Bonus, Long> {
 
     @Query("""
             SELECT gs.bonusFrom

@@ -4,7 +4,6 @@ import java.util.Comparator;
 import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -12,17 +11,19 @@ import de.tum.in.www1.artemis.domain.iris.settings.IrisCourseSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisExerciseSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisGlobalSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSettings;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data repository for the IrisSettings entity.
  */
-public interface IrisSettingsRepository extends JpaRepository<IrisSettings, Long> {
+public interface IrisSettingsRepository extends ArtemisJpaRepository<IrisSettings, Long> {
 
     @Query("""
             SELECT irisSettings
             FROM IrisGlobalSettings irisSettings
                 LEFT JOIN FETCH irisSettings.irisChatSettings
+                LEFT JOIN FETCH irisSettings.irisLectureIngestionSettings
                 LEFT JOIN FETCH irisSettings.irisHestiaSettings
                 LEFT JOIN FETCH irisSettings.irisCompetencyGenerationSettings
             """)
@@ -36,6 +37,7 @@ public interface IrisSettingsRepository extends JpaRepository<IrisSettings, Long
             SELECT irisSettings
             FROM IrisCourseSettings irisSettings
                 LEFT JOIN FETCH irisSettings.irisChatSettings
+                LEFT JOIN FETCH irisSettings.irisLectureIngestionSettings
                 LEFT JOIN FETCH irisSettings.irisHestiaSettings
                 LEFT JOIN FETCH irisSettings.irisCompetencyGenerationSettings
             WHERE irisSettings.course.id = :courseId
@@ -55,8 +57,4 @@ public interface IrisSettingsRepository extends JpaRepository<IrisSettings, Long
             WHERE irisSettings.exercise.id = :exerciseId
             """)
     Optional<IrisExerciseSettings> findExerciseSettings(@Param("exerciseId") long exerciseId);
-
-    default IrisSettings findByIdElseThrow(long existingSettingsId) {
-        return findById(existingSettingsId).orElseThrow(() -> new EntityNotFoundException("Iris Settings", existingSettingsId));
-    }
 }

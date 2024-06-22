@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Competency, CompetencyJol } from 'app/entities/competency.model';
+import { Competency, CompetencyJol, getMastery } from 'app/entities/competency.model';
 import { Observable, Subscription, forkJoin } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
@@ -69,12 +69,7 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
     }
 
     get countMasteredCompetencies() {
-        return this.competencies.filter((competency) => {
-            if (competency.userProgress?.length && competency.masteryThreshold) {
-                return competency.userProgress.first()!.progress == 100 && competency.userProgress.first()!.confidence! >= competency.masteryThreshold!;
-            }
-            return false;
-        }).length;
+        return this.competencies.filter((competency) => getMastery(competency.userProgress?.first()) >= (competency.masteryThreshold ?? 100)).length;
     }
 
     get countPrerequisites() {
@@ -109,7 +104,7 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
                     this.judgementOfLearningMap = Object.fromEntries(
                         Object.entries((judgementOfLearningMap?.body ?? {}) as { [key: number]: { current: CompetencyJol; prior?: CompetencyJol } }).filter(([key, value]) => {
                             const progress = competenciesMap[Number(key)]?.userProgress?.first();
-                            return value.current.competencyProgress === (progress?.progress ?? 0) && value.current.competencyConfidence === (progress?.confidence ?? 0);
+                            return value.current.competencyProgress === (progress?.progress ?? 0) && value.current.competencyConfidence === (progress?.confidence ?? 1);
                         }),
                     );
                     this.promptForJolRatingMap = Object.fromEntries(

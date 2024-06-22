@@ -3,8 +3,8 @@ import { addTextAtCursor } from 'app/shared/util/markdown.util';
 import { GradingInstructionCommand } from 'app/shared/markdown-editor/domainCommands/gradingInstruction.command';
 
 export class GradingCriterionCommand extends DomainTagCommand {
-    public static readonly identifier = '[criterion]';
-    public static readonly text = ' Add criteria title (only visible for tutors)';
+    public static readonly IDENTIFIER = '[criterion]';
+    public static readonly TEXT = ' Add criteria title (only visible for tutors)';
 
     buttonTranslationString = 'artemisApp.assessmentInstructions.instructions.editor.addCriterion';
     displayCommandButton = true;
@@ -15,7 +15,7 @@ export class GradingCriterionCommand extends DomainTagCommand {
      * @desc Add a new criterion for the corresponding exercise in the editor at the location of the cursor
      */
     execute(): void {
-        const text = '\n' + this.getOpeningIdentifier() + GradingCriterionCommand.text + '\n' + this.gradingInstructionCommand.instructionText();
+        const text = '\n' + this.getOpeningIdentifier() + GradingCriterionCommand.TEXT + '\n' + this.gradingInstructionCommand.instructionText();
         addTextAtCursor(text, this.aceEditor);
     }
 
@@ -24,7 +24,7 @@ export class GradingCriterionCommand extends DomainTagCommand {
      * @desc identify the start of the criterion
      */
     getOpeningIdentifier(): string {
-        return GradingCriterionCommand.identifier;
+        return GradingCriterionCommand.IDENTIFIER;
     }
 
     /**
