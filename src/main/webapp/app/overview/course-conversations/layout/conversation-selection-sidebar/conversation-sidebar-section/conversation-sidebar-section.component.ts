@@ -46,7 +46,7 @@ export class ConversationSidebarSectionComponent implements OnInit {
 
     @ContentChild(TemplateRef) sectionButtons: TemplateRef<any>;
 
-    readonly prefix = 'collapsed.';
+    readonly PREFIX = 'collapsed.';
 
     isCollapsed: boolean;
     isHiddenConversationListPresented = false;
@@ -72,7 +72,7 @@ export class ConversationSidebarSectionComponent implements OnInit {
     }
 
     get storageKey() {
-        return this.prefix + this.headerKey;
+        return this.PREFIX + this.headerKey;
     }
 
     get anyConversationUnread(): boolean {

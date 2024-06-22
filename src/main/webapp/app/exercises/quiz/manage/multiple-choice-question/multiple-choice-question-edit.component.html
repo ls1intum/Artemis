@@ -26,7 +26,7 @@
                     title="score"
                     type="number"
                     min="1"
-                    [max]="maxPoints"
+                    [max]="MAX_POINTS"
                     [(ngModel)]="question.points"
                     (ngModelChange)="questionUpdated.emit()"
                 />
