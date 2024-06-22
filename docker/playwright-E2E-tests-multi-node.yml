@@ -5,10 +5,10 @@
 services:
   artemis-app-node-1:
     &artemis-app-base
+    image: ghcr.io/ls1intum/artemis:${ARTEMIS_DOCKER_TAG:-latest}
     extends:
       file: ./artemis.yml
       service: artemis-app
-    pull_policy: always
     restart: always
     user: 0:0
     depends_on:

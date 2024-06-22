@@ -12,7 +12,6 @@ services:
         extends:
             file: ./artemis.yml
             service: artemis-app
-        pull_policy: always
         user: 0:0
         depends_on:
             mysql:
