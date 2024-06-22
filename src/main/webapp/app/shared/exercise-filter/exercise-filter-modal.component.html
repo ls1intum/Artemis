@@ -8,7 +8,7 @@
     </div>
     <div class="modal-body">
         <div #firstCheckbox class="form-group">
-            <label for="exercise-categories-filter-selection" class="form-control-label" jhiTranslate="artemisApp.exercise.categories"></label>
+            <label for="exercise-categories-filter-selection" class="form-control-label h6" jhiTranslate="artemisApp.exercise.categories"></label>
 
             <input
                 id="exercise-categories-filter-selection"
@@ -39,7 +39,7 @@
 
         @if (typeFilters?.length ?? 0 > 1) {
             <div class="form-group">
-                <label for="exercise-type-filter-selection" class="form-control-label" jhiTranslate="artemisApp.courseStatistics.exerciseType"></label>
+                <label for="exercise-type-filter-selection" class="form-control-label h6" jhiTranslate="artemisApp.courseStatistics.exerciseType"></label>
                 <div id="exercise-type-filter-selection">
                     @for (typeFilter of typeFilters; track typeFilter) {
                         <div class="form-check form-check-inline">
@@ -55,13 +55,13 @@
         }
 
         <div class="form-group">
-            <label class="form-control-label" jhiTranslate="artemisApp.courseOverview.exerciseFilter.dueDateRange"> </label>
+            <label class="form-control-label h6" jhiTranslate="artemisApp.courseOverview.exerciseFilter.dueDateRange"> </label>
             TODO: Implement Date Range Picker
         </div>
 
         @if (difficultyFilters?.length) {
             <div class="form-group">
-                <label for="difficulty-filter-selection" class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty"></label>
+                <label for="difficulty-filter-selection" class="form-control-label h6" jhiTranslate="artemisApp.exercise.difficulty"></label>
                 <div id="difficulty-filter-selection">
                     @for (difficultyFilter of difficultyFilters; track difficultyFilter) {
                         <div class="form-check form-check-inline">
@@ -77,7 +77,7 @@
 
         @if (achievedScore && achievedScore.generalMin && achievedScore.generalMax && achievedScore.generalMin < achievedScore.generalMax) {
             <div class="form-group">
-                <label class="form-control-label" for="achieved-score-range-slider" jhiTranslate="artemisApp.courseOverview.exerciseFilter.achievedScore"></label>
+                <label class="form-control-label h6" for="achieved-score-range-slider" jhiTranslate="artemisApp.courseOverview.exerciseFilter.achievedScore"></label>
                 <jhi-range-slider
                     id="achieved-score-range-slider"
                     [generalMinValue]="achievedScore.generalMin"
@@ -90,7 +90,7 @@
 
         @if (achievablePoints && achievablePoints.generalMin && achievablePoints.generalMax && achievablePoints.generalMin < achievablePoints.generalMax) {
             <div class="form-group">
-                <label class="form-control-label" for="achieved-points-range-slider" jhiTranslate="artemisApp.courseOverview.exerciseFilter.achievablePoints"></label>
+                <label class="form-control-label h6" for="achieved-points-range-slider" jhiTranslate="artemisApp.courseOverview.exerciseFilter.achievablePoints"></label>
                 <jhi-range-slider
                     id="achieved-points-range-slider"
                     [generalMinValue]="achievablePoints.generalMin"
