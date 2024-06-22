@@ -1,10 +1,15 @@
+import * as monaco from 'monaco-editor';
 import { faCode } from '@fortawesome/free-solid-svg-icons';
-import { MonacoEditorDelimiterAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-delimiter-action.model';
+import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
 
 const CODE_DELIMITER = '`';
-export class MonacoCodeAction extends MonacoEditorDelimiterAction {
+export class MonacoCodeAction extends MonacoEditorAction {
     static readonly ID = 'monaco-code.action';
     constructor() {
-        super(MonacoCodeAction.ID, 'artemisApp.multipleChoiceQuestion.editor.code', faCode, undefined, CODE_DELIMITER, CODE_DELIMITER);
+        super(MonacoCodeAction.ID, 'artemisApp.multipleChoiceQuestion.editor.code', faCode, undefined);
+    }
+
+    run(editor: monaco.editor.ICodeEditor) {
+        this.toggleDelimiterAroundSelection(editor, CODE_DELIMITER, CODE_DELIMITER);
     }
 }
