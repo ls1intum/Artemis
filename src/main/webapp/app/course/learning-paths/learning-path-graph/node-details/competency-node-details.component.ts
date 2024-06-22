@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { CompetencyService } from 'app/course/competencies/competency.service';
-import { Competency, CompetencyProgress, getConfidence, getIcon, getMastery, getProgress } from 'app/entities/competency.model';
+import { Competency, CompetencyProgress, getIcon, getMastery, getProgress } from 'app/entities/competency.model';
 import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
@@ -46,11 +46,7 @@ export class CompetencyNodeDetailsComponent implements OnInit {
         return getProgress(this.competencyProgress!);
     }
 
-    get confidence(): number {
-        return getConfidence(this.competencyProgress!, this.competency!.masteryThreshold!);
-    }
-
     get mastery(): number {
-        return getMastery(this.competencyProgress!, this.competency!.masteryThreshold!);
+        return getMastery(this.competencyProgress);
     }
 }

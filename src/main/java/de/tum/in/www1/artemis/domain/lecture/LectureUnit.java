@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.domain.lecture;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 
 import jakarta.persistence.CascadeType;
@@ -108,6 +107,7 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
         this.releaseDate = releaseDate;
     }
 
+    @Override
     public Set<Competency> getCompetencies() {
         return competencies;
     }
@@ -145,11 +145,6 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
     @Override
     public boolean isCompletedFor(User user) {
         return getCompletedUsers().stream().map(LectureUnitCompletion::getUser).anyMatch(user1 -> user1.getId().equals(user.getId()));
-    }
-
-    @Override
-    public Optional<ZonedDateTime> getCompletionDate(User user) {
-        return getCompletedUsers().stream().filter(completion -> completion.getUser().getId().equals(user.getId())).map(LectureUnitCompletion::getCompletedAt).findFirst();
     }
 
     // Used to distinguish the type when used in a DTO, e.g., LectureUnitForLearningPathNodeDetailsDTO.

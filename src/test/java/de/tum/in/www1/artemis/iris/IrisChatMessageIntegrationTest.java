@@ -114,10 +114,10 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void sendOneMessageWithSuggestions() throws Exception {
+    void sendSuggestions() throws Exception {
         var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var messageToSend = createDefaultMockMessage(irisSession);
-        messageToSend.setMessageDifferentiator(1453);
+        messageToSend.setMessageDifferentiator(1454);
 
         setupExercise();
 
@@ -126,7 +126,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
             List<String> suggestions = List.of("suggestion1", "suggestion2", "suggestion3");
 
-            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages(), suggestions));
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), null, dto.initialStages(), suggestions));
 
             pipelineDone.set(true);
         });
@@ -412,7 +412,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
                 if (!(argument instanceof IrisWebsocketDTO websocketDTO)) {
                     return false;
                 }
-                if (websocketDTO.type() != IrisWebsocketDTO.IrisWebsocketMessageType.MESSAGE) {
+                if (websocketDTO.type() != IrisWebsocketDTO.IrisWebsocketMessageType.STATUS) {
                     return false;
                 }
                 if (websocketDTO.suggestions() == null) {

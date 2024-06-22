@@ -192,11 +192,8 @@ export class IrisChatService implements OnDestroy {
             this.suggestions.next([]);
             return;
         }
-        // Split on "||" but use a regex to match only non-escaped "||"
-        const splitRegex = /(?<!\\)\|\|/;
 
-        // Replace the escaped "||" back to "||" in each part
-        const suggestions = s.split(splitRegex).map((s) => s.replace(/\\\|\|/g, '||'));
+        const suggestions = JSON.parse(s);
         this.suggestions.next(suggestions);
     }
 
@@ -220,12 +217,12 @@ export class IrisChatService implements OnDestroy {
                 if (payload.stages) {
                     this.stages.next(payload.stages);
                 }
-                if (payload.suggestions) {
-                    this.suggestions.next(payload.suggestions);
-                }
                 break;
             case IrisChatWebsocketPayloadType.STATUS:
                 this.stages.next(payload.stages || []);
+                if (payload.suggestions) {
+                    this.suggestions.next(payload.suggestions);
+                }
                 break;
         }
     }

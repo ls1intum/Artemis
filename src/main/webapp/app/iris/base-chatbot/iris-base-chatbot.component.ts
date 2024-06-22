@@ -12,7 +12,7 @@ import { IrisRateLimitInformation } from 'app/entities/iris/iris-ratelimit-info.
 import { IrisStatusService } from 'app/iris/iris-status.service';
 import { IrisMessageContentType, IrisTextMessageContent } from 'app/entities/iris/iris-content-type.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { animate, group, query, stagger, style, transition, trigger } from '@angular/animations';
+import { animate, group, style, transition, trigger } from '@angular/animations';
 import { IrisChatService } from 'app/iris/iris-chat.service';
 
 @Component({
@@ -42,16 +42,30 @@ import { IrisChatService } from 'app/iris/iris-chat.service';
                 ]),
             ]),
         ]),
-        trigger('listAnimation', [
-            transition('* => *', [
-                query(
-                    ':enter',
-                    [
-                        style({ transform: 'translateY(100%)', opacity: 0 }),
-                        stagger('100ms', [animate('0.3s 0.3s cubic-bezier(.2,1.22,.64,1)', style({ transform: 'translateY(0)', opacity: 1 }))]),
-                    ],
-                    { optional: true },
-                ),
+        trigger('suggestionAnimation', [
+            transition(':enter', [
+                style({ height: 0, opacity: 0 }),
+                group([
+                    animate(
+                        '0.3s 0.5s ease-in-out',
+                        style({
+                            height: '*',
+                            opacity: 1,
+                        }),
+                    ),
+                ]),
+            ]),
+            transition(':leave', [
+                style({ height: '*', opacity: 1 }),
+                group([
+                    animate(
+                        '0.3s ease-in-out',
+                        style({
+                            height: 0,
+                            opacity: 0,
+                        }),
+                    ),
+                ]),
             ]),
         ]),
     ],
@@ -183,6 +197,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         this.numNewMessageSubscription.unsubscribe();
         this.rateLimitSubscription.unsubscribe();
         this.activeStatusSubscription.unsubscribe();
+        this.suggestionsSubscription.unsubscribe();
     }
 
     checkIfUserAcceptedIris(): void {

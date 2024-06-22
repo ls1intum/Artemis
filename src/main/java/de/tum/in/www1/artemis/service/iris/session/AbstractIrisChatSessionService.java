@@ -1,23 +1,27 @@
 package de.tum.in.www1.artemis.service.iris.session;
 
 import java.util.List;
-import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 
 public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> implements IrisChatBasedFeatureInterface<S>, IrisRateLimitedFeatureInterface {
 
-    protected IrisSessionRepository irisSessionRepository;
+    private final IrisSessionRepository irisSessionRepository;
 
-    public AbstractIrisChatSessionService(IrisSessionRepository irisSessionRepository) {
+    private final ObjectMapper objectMapper;
+
+    public AbstractIrisChatSessionService(IrisSessionRepository irisSessionRepository, ObjectMapper objectMapper) {
         this.irisSessionRepository = irisSessionRepository;
+        this.objectMapper = objectMapper;
     }
 
     /**
      * Updates the latest suggestions of the session.
-     * Concatenates the suggestions with "||" as separator.
-     * If a suggestion already contains "||", they are replaced with "\\||", before joining.
+     * Converts the list of latest suggestions to a JSON string.
      * The updated suggestions are then saved to the session in the database.
      *
      * @param session           The session to update
@@ -27,8 +31,13 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
         if (latestSuggestions == null || latestSuggestions.isEmpty()) {
             return;
         }
-        var suggestions = latestSuggestions.stream().map(s -> s.replace("||", "\\||")).collect(Collectors.joining("||"));
-        session.setLatestSuggestions(suggestions);
-        irisSessionRepository.save(session);
+        try {
+            var suggestions = objectMapper.writeValueAsString(latestSuggestions);
+            session.setLatestSuggestions(suggestions);
+            irisSessionRepository.save(session);
+        }
+        catch (JsonProcessingException e) {
+            throw new RuntimeException("Could not update latest suggestions for session " + session.getId(), e);
+        }
     }
 }

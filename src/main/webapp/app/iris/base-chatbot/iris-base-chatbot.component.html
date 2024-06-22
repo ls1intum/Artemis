@@ -61,12 +61,10 @@
     @if (messages?.length) {
         <div class="messages" #messagesElement (scroll)="checkChatScroll()">
             @if (suggestions?.length) {
-                <div style="width: fit-content">
-                    <div [@listAnimation]="suggestions?.length" class="suggestions-container">
-                        @for (suggestion of suggestions; track suggestion) {
-                            <button class="suggestion-button" (click)="onSuggestionClick(suggestion)" [innerHTML]="suggestion"></button>
-                        }
-                    </div>
+                <div @suggestionAnimation class="suggestions-container">
+                    @for (suggestion of suggestions; track suggestion) {
+                        <button class="suggestion-button" (click)="onSuggestionClick(suggestion)" [innerHTML]="suggestion"></button>
+                    }
                 </div>
             }
             @for (message of messages; track message.id; let i = $index) {
