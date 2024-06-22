@@ -1,20 +1,20 @@
 import { TranslateService } from '@ngx-translate/core';
-import { MonacoEditorInsertAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-insert-action.model';
 import * as monaco from 'monaco-editor';
+import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
 
 const INSERT_TEST_CASE_TEXT = 'testCaseName()';
 interface TestCaseValue {
     value: string;
     id: string;
 }
-export class MonacoTestCaseAction extends MonacoEditorInsertAction {
+export class MonacoTestCaseAction extends MonacoEditorAction {
     possibleValues: TestCaseValue[] = [];
     disposableCompletionProvider?: monaco.IDisposable;
 
     static readonly ID = 'monaco-test-case.action';
 
     constructor() {
-        super(MonacoTestCaseAction.ID, 'artemisApp.programmingExercise.problemStatement.testCaseCommand', undefined, undefined, INSERT_TEST_CASE_TEXT);
+        super(MonacoTestCaseAction.ID, 'artemisApp.programmingExercise.problemStatement.testCaseCommand', undefined, undefined);
     }
 
     /**
@@ -66,11 +66,7 @@ export class MonacoTestCaseAction extends MonacoEditorInsertAction {
     }
 
     run(editor: monaco.editor.ICodeEditor, args?: string) {
-        if (!args) {
-            super.run(editor);
-        } else {
-            this.replaceTextAtCurrentSelection(editor, args);
-            editor.focus();
-        }
+        this.replaceTextAtCurrentSelection(editor, args ?? INSERT_TEST_CASE_TEXT);
+        editor.focus();
     }
 }
