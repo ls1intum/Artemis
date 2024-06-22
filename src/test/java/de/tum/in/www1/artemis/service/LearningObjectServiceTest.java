@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilServic
 import de.tum.in.www1.artemis.lecture.LectureFactory;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
 
-public class LearningObjectServiceTest extends AbstractSpringIntegrationIndependentTest {
+class LearningObjectServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "learningobjectservice";
 

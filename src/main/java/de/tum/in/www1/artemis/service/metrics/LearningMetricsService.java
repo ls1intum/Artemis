@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.metrics;
 
+import static de.tum.in.www1.artemis.config.Constants.MIN_SCORE_GREEN;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.util.TimeUtil.toRelativeTime;
 import static java.util.function.Function.identity;
@@ -100,7 +101,7 @@ public class LearningMetricsService {
         final var latestSubmissionOfUser = exerciseMetricsRepository.findLatestSubmissionDatesForUser(exerciseIdsWithDueDate, userId);
         final var latestSubmissionMap = latestSubmissionOfUser.stream().collect(toMap(ResourceTimestampDTO::id, relativeTime::applyAsDouble));
 
-        final var completedExerciseIds = exerciseMetricsRepository.findAllCompletedExerciseIdsForUserByExerciseIds(userId, exerciseIds);
+        final var completedExerciseIds = exerciseMetricsRepository.findAllCompletedExerciseIdsForUserByExerciseIds(userId, exerciseIds, MIN_SCORE_GREEN);
 
         final var teamIds = exerciseMetricsRepository.findTeamIdsForUserByExerciseIds(userId, exerciseIds);
         final var teamIdMap = teamIds.stream().collect(toMap(MapEntryLongLong::key, MapEntryLongLong::value));

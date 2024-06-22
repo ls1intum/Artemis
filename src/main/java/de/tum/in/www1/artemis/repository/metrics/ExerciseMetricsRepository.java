@@ -148,9 +148,9 @@ public interface ExerciseMetricsRepository extends ArtemisJpaRepository<Exercise
                 LEFT JOIN TREAT (p AS TeamScore).team.students s
             WHERE (u.id = :userId OR s.id = :userId)
                 AND p.exercise.id IN :exerciseIds
-                AND COALESCE(p.lastRatedScore, p.lastScore, 0) >= 80
+                AND COALESCE(p.lastRatedScore, p.lastScore, 0) >= :minScore
             """)
-    Set<Long> findAllCompletedExerciseIdsForUserByExerciseIds(@Param("userId") long userId, @Param("exerciseIds") Set<Long> exerciseIds);
+    Set<Long> findAllCompletedExerciseIdsForUserByExerciseIds(@Param("userId") long userId, @Param("exerciseIds") Set<Long> exerciseIds, @Param("minScore") double minScore);
 
     /**
      * Get the ids of the teams the user is in for a set of exercises.
