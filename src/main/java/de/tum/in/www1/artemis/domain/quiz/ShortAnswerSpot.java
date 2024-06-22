@@ -90,6 +90,7 @@ public class ShortAnswerSpot extends TempIdObject implements QuizQuestionCompone
         return question;
     }
 
+    @Override
     public void setQuestion(ShortAnswerQuestion shortAnswerQuestion) {
         this.question = shortAnswerQuestion;
     }

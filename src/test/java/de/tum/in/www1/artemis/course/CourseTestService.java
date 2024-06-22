@@ -301,13 +301,13 @@ public class CourseTestService {
     @Autowired
     private PageableSearchUtilService pageableSearchUtilService;
 
-    private static final int numberOfStudents = 8;
+    private static final int NUMBER_OF_STUDENTS = 8;
 
-    private static final int numberOfTutors = 5;
+    private static final int NUMBER_OF_TUTORS = 5;
 
-    private static final int numberOfEditors = 1;
+    private static final int NUMBER_OF_EDITORS = 1;
 
-    private static final int numberOfInstructors = 1;
+    private static final int NUMBER_OF_INSTRUCTORS = 1;
 
     private MockDelegate mockDelegate;
 
@@ -317,7 +317,7 @@ public class CourseTestService {
         this.userPrefix = userPrefix;
         this.mockDelegate = mockDelegate;
 
-        userUtilService.addUsers(userPrefix, numberOfStudents, numberOfTutors, numberOfEditors, numberOfInstructors);
+        userUtilService.addUsers(userPrefix, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, NUMBER_OF_EDITORS, NUMBER_OF_INSTRUCTORS);
 
         // Add users that are not in the course
         userUtilService.createAndSaveUser(userPrefix + "tutor6");
@@ -329,7 +329,7 @@ public class CourseTestService {
     }
 
     private void adjustUserGroupsToCustomGroups(String suffix) {
-        userUtilService.adjustUserGroupsToCustomGroups(userPrefix, suffix, numberOfStudents, numberOfTutors, numberOfEditors, numberOfInstructors);
+        userUtilService.adjustUserGroupsToCustomGroups(userPrefix, suffix, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, NUMBER_OF_EDITORS, NUMBER_OF_INSTRUCTORS);
     }
 
     public void adjustUserGroupsToCustomGroups() {
@@ -851,7 +851,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseForDashboard(boolean userRefresh) throws Exception {
-        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, numberOfTutors);
+        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
         CourseForDashboardDTO receivedCourseForDashboard = request.get("/api/courses/" + courses.getFirst().getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK,
                 CourseForDashboardDTO.class);
         Course receivedCourse = receivedCourseForDashboard.course();
@@ -894,7 +894,7 @@ public class CourseTestService {
     }
 
     private Course createCourseWithEnrollmentEnabled(boolean enrollmentEnabled) throws Exception {
-        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, numberOfTutors);
+        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
         Course course = courses.getFirst();
         course.setEnrollmentEnabled(enrollmentEnabled);
         courseRepo.save(course);
@@ -1066,7 +1066,7 @@ public class CourseTestService {
         String suffix = "getall";
         adjustUserGroupsToCustomGroups(suffix);
         // Note: with the suffix, we reduce the amount of courses loaded below to prevent test issues
-        List<Course> coursesCreated = lectureUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, true, false, numberOfTutors);
+        List<Course> coursesCreated = lectureUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, true, false, NUMBER_OF_TUTORS);
         for (var course : coursesCreated) {
             courseUtilService.updateCourseGroups(userPrefix, course, suffix);
         }
@@ -1193,9 +1193,9 @@ public class CourseTestService {
         assertThat(optionalCourse).as("Course is returned").isPresent();
         Course returnedCourse = optionalCourse.orElseThrow();
 
-        assertThat(returnedCourse.getNumberOfStudents()).isEqualTo(numberOfStudents);
-        assertThat(returnedCourse.getNumberOfTeachingAssistants()).isEqualTo(numberOfTutors);
-        assertThat(returnedCourse.getNumberOfInstructors()).isEqualTo(numberOfInstructors);
+        assertThat(returnedCourse.getNumberOfStudents()).isEqualTo(NUMBER_OF_STUDENTS);
+        assertThat(returnedCourse.getNumberOfTeachingAssistants()).isEqualTo(NUMBER_OF_TUTORS);
+        assertThat(returnedCourse.getNumberOfInstructors()).isEqualTo(NUMBER_OF_INSTRUCTORS);
     }
 
     // Test
@@ -1706,15 +1706,15 @@ public class CourseTestService {
 
         // Get all students for course
         List<User> students = request.getList("/api/courses/" + course.getId() + "/students", HttpStatus.OK, User.class);
-        assertThat(students).as("All students in course found").hasSize(numberOfStudents);
+        assertThat(students).as("All students in course found").hasSize(NUMBER_OF_STUDENTS);
 
         // Get all tutors for course
         List<User> tutors = request.getList("/api/courses/" + course.getId() + "/tutors", HttpStatus.OK, User.class);
-        assertThat(tutors).as("All tutors in course found").hasSize(numberOfTutors);
+        assertThat(tutors).as("All tutors in course found").hasSize(NUMBER_OF_TUTORS);
 
         // Get all instructors for course
         List<User> instructors = request.getList("/api/courses/" + course.getId() + "/instructors", HttpStatus.OK, User.class);
-        assertThat(instructors).as("All instructors in course found").hasSize(numberOfInstructors);
+        assertThat(instructors).as("All instructors in course found").hasSize(NUMBER_OF_INSTRUCTORS);
     }
 
     /**
@@ -1772,7 +1772,7 @@ public class CourseTestService {
 
         // Get all editors for course
         List<User> editors = request.getList("/api/courses/" + course.getId() + "/editors", HttpStatus.OK, User.class);
-        assertThat(editors).as("All editors in course found").hasSize(numberOfEditors);
+        assertThat(editors).as("All editors in course found").hasSize(NUMBER_OF_EDITORS);
     }
 
     // Test
@@ -2134,9 +2134,9 @@ public class CourseTestService {
     public void searchUsersInCourse_searchForAllTutors_shouldReturnAllTutorsAndEditors() throws Exception {
         Course course = createCourseForUserSearchTest();
         // Test: search for all (no login or name) tutors (tutors includes also editors)
-        var result = searchUsersTest(course, List.of("tutors"), Optional.empty(), numberOfTutors + numberOfEditors, true);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsEditor)).hasSize(numberOfEditors);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant)).hasSize(numberOfTutors);
+        var result = searchUsersTest(course, List.of("tutors"), Optional.empty(), NUMBER_OF_TUTORS + NUMBER_OF_EDITORS, true);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsEditor)).hasSize(NUMBER_OF_EDITORS);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant)).hasSize(NUMBER_OF_TUTORS);
     }
 
     /**
@@ -2145,8 +2145,8 @@ public class CourseTestService {
     public void searchUsersInCourse_searchForAllInstructor_shouldReturnAllInstructors() throws Exception {
         var course = createCourseForUserSearchTest();
         // Test: search for all (no login or name) instructors
-        var result = searchUsersTest(course, List.of("instructors"), Optional.empty(), numberOfInstructors, true);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsInstructor)).hasSize(numberOfInstructors);
+        var result = searchUsersTest(course, List.of("instructors"), Optional.empty(), NUMBER_OF_INSTRUCTORS, true);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsInstructor)).hasSize(NUMBER_OF_INSTRUCTORS);
     }
 
     /**
@@ -2174,8 +2174,8 @@ public class CourseTestService {
         var course = createCourseForUserSearchTest();
         // Test: Try to search for students with a long enough search term (at least 3 as students are included)
         // Note: -1 as student1 is the requesting user and will not be returned
-        var result = searchUsersTest(course, List.of("students"), Optional.of(userPrefix + "student"), numberOfStudents - 1, true);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsStudent)).hasSize(numberOfStudents - 1);
+        var result = searchUsersTest(course, List.of("students"), Optional.of(userPrefix + "student"), NUMBER_OF_STUDENTS - 1, true);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsStudent)).hasSize(NUMBER_OF_STUDENTS - 1);
     }
 
     /**
@@ -2184,10 +2184,10 @@ public class CourseTestService {
     public void searchUsersInCourse_searchForAllTutorsAndInstructors_shouldReturnAllTutorsEditorsAndInstructors() throws Exception {
         var course = createCourseForUserSearchTest();
         // Test: Try to search for all tutors (tutors includes also editors) and instructors
-        var result = searchUsersTest(course, List.of("tutors", "instructors"), Optional.empty(), numberOfTutors + numberOfEditors + numberOfInstructors, true);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsEditor)).hasSize(numberOfEditors);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant)).hasSize(numberOfTutors);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsInstructor)).hasSize(numberOfInstructors);
+        var result = searchUsersTest(course, List.of("tutors", "instructors"), Optional.empty(), NUMBER_OF_TUTORS + NUMBER_OF_EDITORS + NUMBER_OF_INSTRUCTORS, true);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsEditor)).hasSize(NUMBER_OF_EDITORS);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant)).hasSize(NUMBER_OF_TUTORS);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsInstructor)).hasSize(NUMBER_OF_INSTRUCTORS);
     }
 
     /**
@@ -2196,9 +2196,9 @@ public class CourseTestService {
     public void searchUsersInCourse_searchForTutorsAndInstructors_shouldReturnUsersMatchingSearchTerm() throws Exception {
         var course = createCourseForUserSearchTest();
         // Test : Try to search for all tutors (tutors includes also editors) and instructors with search term
-        var result = searchUsersTest(course, List.of("tutors", "instructors"), Optional.of(userPrefix + "tutor"), numberOfTutors, true);
+        var result = searchUsersTest(course, List.of("tutors", "instructors"), Optional.of(userPrefix + "tutor"), NUMBER_OF_TUTORS, true);
         assertThat(result.stream().filter(UserPublicInfoDTO::getIsEditor)).isEmpty();
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant)).hasSize(numberOfTutors);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant)).hasSize(NUMBER_OF_TUTORS);
         assertThat(result.stream().filter(UserPublicInfoDTO::getIsInstructor)).isEmpty();
     }
 
@@ -2220,9 +2220,9 @@ public class CourseTestService {
 
         // Test: Try to search or all students, tutors (tutors includes also editors)
         // and instructors with a long enough search term (at least 3 as students are included)
-        var result = searchUsersTest(course, List.of("students", "tutors", "instructors"), Optional.of(userPrefix + "tutor"), numberOfTutors, true);
+        var result = searchUsersTest(course, List.of("students", "tutors", "instructors"), Optional.of(userPrefix + "tutor"), NUMBER_OF_TUTORS, true);
         assertThat(result.stream().filter(UserPublicInfoDTO::getIsEditor)).isEmpty();
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant)).hasSize(numberOfTutors);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant)).hasSize(NUMBER_OF_TUTORS);
         assertThat(result.stream().filter(UserPublicInfoDTO::getIsInstructor)).isEmpty();
         assertThat(result.stream().filter(UserPublicInfoDTO::getIsStudent)).isEmpty();
     }
@@ -2237,7 +2237,7 @@ public class CourseTestService {
         queryParameter.add("loginOrName", userPrefix + "tutor");
         var result = request.getList("/api/courses/" + course.getId() + "/members/search", HttpStatus.OK, UserNameAndLoginDTO.class, queryParameter);
 
-        assertThat(result).hasSize(numberOfTutors);
+        assertThat(result).hasSize(NUMBER_OF_TUTORS);
         result.forEach(dto -> assertThat(dto.name().contains(userPrefix + "tutor")).isTrue());
     }
 
@@ -2252,7 +2252,7 @@ public class CourseTestService {
         var result = request.getList("/api/courses/" + course.getId() + "/members/search", HttpStatus.OK, UserNameAndLoginDTO.class, queryParameter);
 
         assertThat(result).hasSize(10);
-        assertThat(numberOfStudents + numberOfTutors + numberOfEditors + numberOfInstructors).isGreaterThan(10);
+        assertThat(NUMBER_OF_STUDENTS + NUMBER_OF_TUTORS + NUMBER_OF_EDITORS + NUMBER_OF_INSTRUCTORS).isGreaterThan(10);
     }
 
     /**

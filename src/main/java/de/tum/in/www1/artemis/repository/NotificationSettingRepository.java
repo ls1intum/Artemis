@@ -7,20 +7,20 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.NotificationSetting;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data repository for the NotificationSetting entity.
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface NotificationSettingRepository extends JpaRepository<NotificationSetting, Long> {
+public interface NotificationSettingRepository extends ArtemisJpaRepository<NotificationSetting, Long> {
 
     @Query("""
             SELECT notificationSetting

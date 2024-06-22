@@ -24,7 +24,7 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
     readonly ActionType = ActionType;
-    readonly missingImage = '/content/images/missing_image.png';
+    readonly MISSING_IMAGE = '/content/images/missing_image.png';
 
     courseId: number;
     exam: Exam;

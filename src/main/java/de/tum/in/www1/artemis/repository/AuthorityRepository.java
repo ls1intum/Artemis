@@ -2,14 +2,13 @@ package de.tum.in.www1.artemis.repository;
 
 import java.util.List;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-
 import de.tum.in.www1.artemis.domain.Authority;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data JPA repository for the Authority entity.
  */
-public interface AuthorityRepository extends JpaRepository<Authority, String> {
+public interface AuthorityRepository extends ArtemisJpaRepository<Authority, String> {
 
     /**
      * @return an unmodifiable list of all the authorities
