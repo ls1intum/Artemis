@@ -22,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.in.www1.artemis.StudentScoreUtilService;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.GradingCriterion;
@@ -38,7 +39,6 @@ import de.tum.in.www1.artemis.domain.lecture.TextUnit;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
-import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.CompetencyProgressRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -94,9 +94,6 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private TextExerciseUtilService textExerciseUtilService;
 
     @Autowired
-    private ParticipationUtilService participationUtilService;
-
-    @Autowired
     private LectureRepository lectureRepository;
 
     @Autowired
@@ -119,6 +116,9 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Autowired
     private CompetencyRelationRepository competencyRelationRepository;
+
+    @Autowired
+    private StudentScoreUtilService studentScoreUtilService;
 
     private Course course;
 
@@ -164,7 +164,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
             competencyRelationRepository.save(relation);
         }
 
-        textExercise = createAndLinkTextExercise(competencies[0], true);
+        textExercise = createAndLinkTextExercise(competencies[0], false);
 
         lecture = new Lecture();
         lecture.setDescription("Test Lecture");
@@ -287,7 +287,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         request.put("/api/courses/" + course.getId() + "/learning-paths/generate-missing", null, HttpStatus.OK);
         students.forEach(user -> {
             user = userRepository.findWithLearningPathsByIdElseThrow(user.getId());
-            assertThat(user.getLearningPaths().size()).isEqualTo(1);
+            assertThat(user.getLearningPaths()).hasSize(1);
         });
 
     }
@@ -391,7 +391,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         final var learningPathOptional = learningPathRepository.findWithEagerCompetenciesByCourseIdAndUserId(course.getId(), student.getId());
 
-        assertThat(newCompetencies.size()).isEqualTo(numberOfNewCompetencies);
+        assertThat(newCompetencies).hasSize(numberOfNewCompetencies);
         assertThat(learningPathOptional).isPresent();
         assertThat(learningPathOptional.get().getCompetencies()).as("should contain new competencies").containsAll(newCompetencies);
         assertThat(learningPathOptional.get().getCompetencies().size()).as("should not remove old competencies").isEqualTo(competencies.length + newCompetencies.size());
@@ -728,8 +728,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         // TODO: currently learning objects connected to more than one competency are provided twice in the learning path
         // TODO: this is not a problem for the navigation overview as the duplicates are filtered out
 
-        assertThat(result.learningObjects()).isNotEmpty();
-        assertThat(result.learningObjects().size()).isEqualTo(2);
+        assertThat(result.learningObjects()).hasSize(2);
     }
 
     @Test
@@ -751,7 +750,6 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(result).containsExactlyElementsOf(Arrays.stream(competencies).map(CompetencyNameDTO::of).toList());
     }
 
-    // TODO: Fix once #8791 is merged and merge conflicts are resolved
     @Test
     @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
     void testGetLearningObjectsForCompetency() throws Exception {
@@ -761,12 +759,12 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         var result = request.getList("/api/learning-path/" + learningPath.getId() + "/competencies/" + competencies[0].getId() + "/learning-objects", HttpStatus.OK,
                 LearningPathNavigationObjectDTO.class);
 
-        assertThat(result).containsExactly(LearningPathNavigationObjectDTO.of(textExercise, student));
+        assertThat(result).containsExactly(LearningPathNavigationObjectDTO.of(textExercise, false));
 
         result = request.getList("/api/learning-path/" + learningPath.getId() + "/competencies/" + competencies[1].getId() + "/learning-objects", HttpStatus.OK,
                 LearningPathNavigationObjectDTO.class);
 
-        assertThat(result).containsExactly(LearningPathNavigationObjectDTO.of(textUnit, student));
+        assertThat(result).containsExactly(LearningPathNavigationObjectDTO.of(textUnit, true));
     }
 
     @Test
@@ -793,13 +791,13 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         assertThat(result).hasSize(d);
         assertThat(result.subList(0, a))
-                .containsExactlyInAnyOrderElementsOf(completedLectureUnits.stream().map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, student)).toList());
+                .containsExactlyInAnyOrderElementsOf(completedLectureUnits.stream().map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, true)).toList());
         assertThat(result.subList(a, b))
-                .containsExactlyInAnyOrderElementsOf(finishedExercises.stream().map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, student)).toList());
+                .containsExactlyInAnyOrderElementsOf(finishedExercises.stream().map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, true)).toList());
         assertThat(result.subList(b, c))
-                .containsExactlyInAnyOrderElementsOf(uncompletedLectureUnits.stream().map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, student)).toList());
+                .containsExactlyInAnyOrderElementsOf(uncompletedLectureUnits.stream().map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, false)).toList());
         assertThat(result.subList(c, d))
-                .containsExactlyInAnyOrderElementsOf(unfinishedExercises.stream().map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, student)).toList());
+                .containsExactlyInAnyOrderElementsOf(unfinishedExercises.stream().map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, false)).toList());
     }
 
     void testGetCompetencyProgressForLearningPath() throws Exception {
@@ -815,7 +813,8 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         Set<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(textExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
         if (withAssessment) {
-            participationUtilService.addAssessmentWithFeedbackWithGradingInstructionsForExercise(textExercise, STUDENT_OF_COURSE);
+            var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+            studentScoreUtilService.createStudentScore(textExercise, student, 100.0);
         }
         competencyUtilService.linkExerciseToCompetency(competency, textExercise);
 

@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAt
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
+import de.tum.in.www1.artemis.service.LearningObjectService;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -77,9 +78,11 @@ public class LearningPathResource {
 
     private final LearningPathRecommendationService learningPathRecommendationService;
 
+    private final LearningObjectService learningObjectService;
+
     public LearningPathResource(CourseService courseService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService,
             LearningPathService learningPathService, LearningPathRepository learningPathRepository, UserRepository userRepository,
-            CompetencyProgressService competencyProgressService, LearningPathRecommendationService learningPathRecommendationService) {
+            CompetencyProgressService competencyProgressService, LearningPathRecommendationService learningPathRecommendationService, LearningObjectService learningObjectService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -88,6 +91,7 @@ public class LearningPathResource {
         this.userRepository = userRepository;
         this.competencyProgressService = competencyProgressService;
         this.learningPathRecommendationService = learningPathRecommendationService;
+        this.learningObjectService = learningObjectService;
     }
 
     /**
@@ -360,9 +364,9 @@ public class LearningPathResource {
 
         checkLearningPathAccessElseThrow(learningPath.getCourse(), learningPath, user);
 
-        List<LearningPathNavigationObjectDTO> competencyNames = learningPathRecommendationService.getOrderOfLearningObjectsForCompetency(competencyId, user).stream()
-                .map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, user)).toList();
-        return ResponseEntity.ok(competencyNames);
+        List<LearningPathNavigationObjectDTO> learningObjects = learningPathRecommendationService.getOrderOfLearningObjectsForCompetency(competencyId, user).stream()
+                .map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, learningObjectService.isCompletedByUser(learningObject, user))).toList();
+        return ResponseEntity.ok(learningObjects);
     }
 
     private void checkLearningPathAccessElseThrow(Course course, LearningPath learningPath, User user) {

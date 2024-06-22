@@ -46,8 +46,8 @@ public class LearningPathNavigationService {
      */
     private LearningPathNavigationDTO mapLearningObjectsToNavigationDto(User learningPathUser, int progress, LearningObject predecessorLearningObject,
             LearningObject currentLearningObject, LearningObject successorLearningObject) {
-        return new LearningPathNavigationDTO(LearningPathNavigationObjectDTO.of(predecessorLearningObject, learningPathUser),
-                LearningPathNavigationObjectDTO.of(currentLearningObject, learningPathUser), LearningPathNavigationObjectDTO.of(successorLearningObject, learningPathUser),
+        return new LearningPathNavigationDTO(createLearningPathNavigationObjectDTO(predecessorLearningObject, learningPathUser),
+                createLearningPathNavigationObjectDTO(currentLearningObject, learningPathUser), createLearningPathNavigationObjectDTO(successorLearningObject, learningPathUser),
                 progress);
     }
 
@@ -137,7 +137,15 @@ public class LearningPathNavigationService {
         var learningObjects = Stream
                 .concat(learningObjectService.getCompletedLearningObjectsForUserAndCompetencies(learningPath.getUser(), learningPath.getCompetencies()),
                         learningPathRecommendationService.getUncompletedLearningObjects(learningPath))
-                .map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, learningPathUser)).distinct().toList();
+                .map(learningObject -> createLearningPathNavigationObjectDTO(learningObject, learningPathUser)).distinct().toList();
         return new LearningPathNavigationOverviewDTO(learningObjects);
+    }
+
+    private LearningPathNavigationObjectDTO createLearningPathNavigationObjectDTO(LearningObject learningObject, User user) {
+        if (learningObject == null) {
+            return null;
+        }
+
+        return LearningPathNavigationObjectDTO.of(learningObject, learningObjectService.isCompletedByUser(learningObject, user));
     }
 }

@@ -19,7 +19,9 @@ import de.tum.in.www1.artemis.domain.LearningObject;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationObjectDTO.LearningObjectType;
 
@@ -42,10 +44,14 @@ public class LearningObjectService {
 
     private final LectureUnitRepository lectureUnitRepository;
 
-    public LearningObjectService(ParticipantScoreService participantScoreService, ExerciseRepository exerciseRepository, LectureUnitRepository lectureUnitRepository) {
+    private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
+
+    public LearningObjectService(ParticipantScoreService participantScoreService, ExerciseRepository exerciseRepository, LectureUnitRepository lectureUnitRepository,
+            LectureUnitCompletionRepository lectureUnitCompletionRepository) {
         this.participantScoreService = participantScoreService;
         this.exerciseRepository = exerciseRepository;
         this.lectureUnitRepository = lectureUnitRepository;
+        this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
     }
 
     /**
@@ -120,5 +126,20 @@ public class LearningObjectService {
             case EXERCISE -> exerciseRepository.findByIdWithStudentParticipationsElseThrow(learningObjectId);
             case null -> throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
         };
+    }
+
+    /**
+     * Set the lecture unit completions for the given lecture units and user.
+     *
+     * @param lectureUnits the lecture units for which to set the completions
+     * @param user         the user for which to set the completions
+     */
+    public void setLectureUnitCompletions(Set<LectureUnit> lectureUnits, User user) {
+        Set<LectureUnitCompletion> lectureUnitCompletions = lectureUnitCompletionRepository.findByLectureUnitsAndUserId(lectureUnits, user.getId());
+        lectureUnits.forEach(lectureUnit -> {
+            Optional<LectureUnitCompletion> completion = lectureUnitCompletions.stream().filter(lectureUnitCompletion -> lectureUnitCompletion.getLectureUnit().equals(lectureUnit))
+                    .findFirst();
+            lectureUnit.setCompletedUsers(completion.map(Set::of).orElse(Set.of()));
+        });
     }
 }

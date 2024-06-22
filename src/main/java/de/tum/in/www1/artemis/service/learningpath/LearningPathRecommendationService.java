@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.AtomicDouble;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.LearningObject;
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
@@ -526,21 +527,12 @@ public class LearningPathRecommendationService {
             return recommendedOrder;
         }
 
-        final var combinedPriorConfidence = computeCombinedPriorConfidence(competency, state);
         final var optionalCompetencyProgress = competency.getUserProgress().stream().findAny();
-        final double weightedConfidence;
-        if (optionalCompetencyProgress.isPresent()) {
-            final var competencyProgress = optionalCompetencyProgress.get();
-            weightedConfidence = (competencyProgress.getProgress() * competencyProgress.getConfidence()) + (1 - competencyProgress.getProgress()) * combinedPriorConfidence;
-        }
-        else {
-            weightedConfidence = combinedPriorConfidence;
-        }
+        final double weightedConfidence = computeWeightedConfidence(combinedPriorConfidence, optionalCompetencyProgress);
 
-        final var numberOfRequiredExercisePointsToMaster = calculateNumberOfExercisePointsRequiredToMaster(learningPath, competency, weightedConfidence);
+        final var numberOfRequiredExercisePointsToMaster = calculateNumberOfExercisePointsRequiredToMaster(user, competency, weightedConfidence);
 
-        final var pendingExercises = competency.getExercises().stream().filter(exercise -> !learningObjectService.isCompletedByUser(exercise, learningPath.getUser()))
-                .collect(Collectors.toSet());
+        final var pendingExercises = competency.getExercises().stream().filter(exercise -> !learningObjectService.isCompletedByUser(exercise, user)).collect(Collectors.toSet());
         final var pendingExercisePoints = pendingExercises.stream().mapToDouble(Exercise::getMaxPoints).sum();
 
         Map<DifficultyLevel, Set<Exercise>> difficultyLevelMap = generateDifficultyLevelMap(pendingExercises);
@@ -733,12 +725,14 @@ public class LearningPathRecommendationService {
     }
 
     public List<LearningObject> getOrderOfLearningObjectsForCompetency(long competencyId, User user) {
-        Competency competency = competencyRepository.findByIdWithExercisesAndLectureUnitsAndCompletionsElseThrow(competencyId);
+        Competency competency = competencyRepository.findByIdWithExercisesAndLectureUnitsElseThrow(competencyId);
+        Optional<CompetencyProgress> optionalCompetencyProgress = competencyProgressRepository.findByCompetencyIdAndUserId(competencyId, user.getId());
+        competency.setUserProgress(optionalCompetencyProgress.map(Set::of).orElse(Set.of()));
+        learningObjectService.setLectureUnitCompletions(competency.getLectureUnits(), user);
 
         Set<CompetencyProgress> priorCompetencyProgresses = competencyProgressRepository.findAllPriorByCompetencyId(competency, user);
-        Optional<CompetencyProgress> currentCompetencyProgress = competencyProgressRepository.findByCompetencyIdAndUserId(competency.getId(), user.getId());
         double combinedPriorConfidence = priorCompetencyProgresses.stream().mapToDouble(CompetencyProgress::getConfidence).average().orElse(0);
-        double weightedConfidence = computeWeightedConfidence(combinedPriorConfidence, currentCompetencyProgress);
+        double weightedConfidence = computeWeightedConfidence(combinedPriorConfidence, optionalCompetencyProgress);
         Stream<LectureUnit> completedLectureUnits = competency.getLectureUnits().stream().filter(lectureUnit -> lectureUnit.isCompletedFor(user));
         Stream<Exercise> completedExercises = competency.getExercises().stream().filter(exercise -> learningObjectService.isCompletedByUser(exercise, user));
         Stream<LearningObject> pendingLearningObjects = getRecommendedOrderOfLearningObjects(user, competency, weightedConfidence).stream();

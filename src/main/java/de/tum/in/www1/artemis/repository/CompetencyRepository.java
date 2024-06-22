@@ -177,6 +177,15 @@ public interface CompetencyRepository extends ArtemisJpaRepository<Competency, L
             """)
     Set<Competency> findAllByLearningPath(@Param("learningPath") LearningPath learningPath);
 
+    @Query("""
+            SELECT c
+            FROM Competency c
+                LEFT JOIN FETCH c.lectureUnits lu
+                LEFT JOIN FETCH c.exercises ex
+            WHERE c.id = :competencyId
+            """)
+    Optional<Competency> findByIdWithExercisesAndLectureUnits(long competencyId);
+
     default Competency findByIdWithLectureUnitsAndCompletionsElseThrow(long competencyId) {
         return findByIdWithLectureUnitsAndCompletions(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
     }
@@ -201,8 +210,8 @@ public interface CompetencyRepository extends ArtemisJpaRepository<Competency, L
         return findByIdWithLectureUnits(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
     }
 
-    default Competency findByIdWithExercisesAndLectureUnitsAndCompletionsElseThrow(long competencyId) {
-        return findByIdWithExercisesAndLectureUnitsAndCompletions(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
+    default Competency findByIdWithExercisesAndLectureUnitsElseThrow(long competencyId) {
+        return findByIdWithExercisesAndLectureUnits(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
     }
 
     long countByCourse(Course course);

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.LearningObject;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 
 /**
@@ -22,18 +21,13 @@ public record LearningPathNavigationObjectDTO(Long id, boolean completed, String
      * Create a navigation object DTO from a learning object.
      *
      * @param learningObject the learning object
-     * @param user           the user
+     * @param completed      whether the learning object is completed by the user
      * @return the navigation object DTO
      */
-    public static LearningPathNavigationObjectDTO of(LearningObject learningObject, User user) {
-        if (learningObject == null) {
-            return null;
-        }
+    public static LearningPathNavigationObjectDTO of(LearningObject learningObject, boolean completed) {
         return switch (learningObject) {
-            case LectureUnit lectureUnit ->
-                new LearningPathNavigationObjectDTO(lectureUnit.getId(), learningObject.isCompletedFor(user), lectureUnit.getName(), LearningObjectType.LECTURE);
-            case Exercise exercise ->
-                new LearningPathNavigationObjectDTO(learningObject.getId(), learningObject.isCompletedFor(user), exercise.getTitle(), LearningObjectType.EXERCISE);
+            case LectureUnit lectureUnit -> new LearningPathNavigationObjectDTO(lectureUnit.getId(), completed, lectureUnit.getName(), LearningObjectType.LECTURE);
+            case Exercise exercise -> new LearningPathNavigationObjectDTO(learningObject.getId(), completed, exercise.getTitle(), LearningObjectType.EXERCISE);
             default -> throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
         };
     }
