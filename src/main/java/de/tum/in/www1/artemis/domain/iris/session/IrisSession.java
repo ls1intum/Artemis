@@ -56,7 +56,7 @@ public abstract class IrisSession extends DomainObject {
 
     /**
      * The latest suggestions that were sent to the user.
-     * This column holds the list of latest suggestions as a concatenated string delimited by a double pipe (||).
+     * This column holds the list of latest suggestions as a JSON array.
      */
     @Column(name = "latest_suggestions")
     private String latestSuggestions;
