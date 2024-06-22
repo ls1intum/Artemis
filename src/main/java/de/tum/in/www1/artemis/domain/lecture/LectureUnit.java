@@ -107,6 +107,7 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
         this.releaseDate = releaseDate;
     }
 
+    @Override
     public Set<Competency> getCompetencies() {
         return competencies;
     }

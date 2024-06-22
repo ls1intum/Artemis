@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -21,7 +21,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -68,9 +67,10 @@ describe('DiscussionSectionComponent', () => {
     let getChannelOfExerciseSpy: jest.SpyInstance;
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(NgbTooltipModule)],
+        TestBed.configureTestingModule({
+            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(NgbTooltipModule)],
             providers: [
+                provideHttpClient(),
                 FormBuilder,
                 MockProvider(SessionStorageService),
                 MockProvider(ChannelService),
@@ -323,16 +323,6 @@ describe('DiscussionSectionComponent', () => {
         expect(fetchNextPageSpy).toHaveBeenCalledOnce();
     }));
 
-    it('fetches new messages on scroll up if more messages are available', fakeAsync(() => {
-        component.posts = [];
-        const commandMetisToFetchPostsSpy = jest.spyOn(component, 'fetchNextPage');
-
-        const scrolledUp = new CustomEvent('scrolledUp');
-        component.content.nativeElement.dispatchEvent(scrolledUp);
-
-        expect(commandMetisToFetchPostsSpy).toHaveBeenCalledOnce();
-    }));
-
     it('should toggle send message', () => {
         component.shouldSendMessage = true;
         component.toggleSendMessage();
@@ -348,4 +338,14 @@ describe('DiscussionSectionComponent', () => {
         component.onChangeSortDir();
         expect(component.currentSortDirection).toBe(SortDirection.ASCENDING);
     });
+
+    it('fetches new messages on scroll up if more messages are available', fakeAsync(() => {
+        component.posts = [];
+        const commandMetisToFetchPostsSpy = jest.spyOn(component, 'fetchNextPage');
+
+        const scrolledUp = new CustomEvent('scrolledUp');
+        component.content.nativeElement.dispatchEvent(scrolledUp);
+
+        expect(commandMetisToFetchPostsSpy).toHaveBeenCalledOnce();
+    }));
 });

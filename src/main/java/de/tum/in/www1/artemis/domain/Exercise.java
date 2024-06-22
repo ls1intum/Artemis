@@ -368,6 +368,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     @JsonIgnore
+    @Override
     public boolean isExamExercise() {
         return this.exerciseGroup != null;
     }
@@ -454,6 +455,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
+    @Override
     public Set<Competency> getCompetencies() {
         return competencies;
     }

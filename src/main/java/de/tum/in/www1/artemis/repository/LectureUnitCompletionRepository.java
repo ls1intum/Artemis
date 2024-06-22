@@ -7,17 +7,17 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 @Profile(PROFILE_CORE)
 @Repository
-public interface LectureUnitCompletionRepository extends JpaRepository<LectureUnitCompletion, Long> {
+public interface LectureUnitCompletionRepository extends ArtemisJpaRepository<LectureUnitCompletion, Long> {
 
     @Query("""
             SELECT lectureUnitCompletion

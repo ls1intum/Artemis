@@ -6,12 +6,12 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ExerciseInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.MapEntryLongLong;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ResourceTimestampDTO;
@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.web.rest.dto.metrics.ScoreDTO;
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface ExerciseMetricsRepository extends JpaRepository<Exercise, Long> {
+public interface ExerciseMetricsRepository extends ArtemisJpaRepository<Exercise, Long> {
 
     /**
      * Get the exercise information for all exercises in a course.
