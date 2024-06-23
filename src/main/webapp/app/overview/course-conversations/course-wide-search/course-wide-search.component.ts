@@ -13,7 +13,8 @@ import {
     ViewChildren,
     ViewEncapsulation,
 } from '@angular/core';
-import { faCircleNotch, faEnvelope, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faEnvelope, faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
@@ -46,9 +47,16 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     // as set for the css class '.posting-infinite-scroll-container'
     messagesContainerHeight = 700;
 
+    faPlus = faPlus;
+    faFilter = faFilter;
+    faLongArrowAltUp = faLongArrowAltUp;
+    faLongArrowAltDown = faLongArrowAltDown;
     faTimes = faTimes;
     faEnvelope = faEnvelope;
     faCircleNotch = faCircleNotch;
+
+    readonly SortDirection = SortDirection;
+    sortingOrder = SortDirection.ASCENDING;
 
     private ngUnsubscribe = new Subject<void>();
     public isFetchingPosts = true;
@@ -57,16 +65,20 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     previousScrollDistanceFromTop: number;
     page = 1;
 
+    formGroup: FormGroup;
+
     getAsChannel = getAsChannelDTO;
 
     constructor(
         public metisService: MetisService, // instance from course-conversations.component
         public metisConversationService: MetisConversationService, // instance from course-conversations.component
+        private formBuilder: FormBuilder,
         public cdr: ChangeDetectorRef,
     ) {}
 
     ngOnInit() {
         this.subscribeToMetis();
+        this.resetFormGroup();
         this.cdr.detectChanges();
         this.onSearch();
     }
@@ -150,6 +162,27 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
 
     onSearch() {
         this.commandMetisToFetchPosts(true);
+    }
+
+    resetFormGroup(): void {
+        this.formGroup = this.formBuilder.group({
+            filterToUnresolved: false,
+            filterToOwn: false,
+            filterToAnsweredOrReacted: false,
+        });
+    }
+
+    onChangeSortDir(): void {
+        this.sortingOrder = this.sortingOrder === SortDirection.DESCENDING ? SortDirection.ASCENDING : SortDirection.DESCENDING;
+        this.onSelectContext();
+    }
+
+    onSelectContext(): void {
+        this.courseWideSearchConfig.filterToUnresolved = this.formGroup.get('filterToUnresolved')?.value;
+        this.courseWideSearchConfig.filterToOwn = this.formGroup.get('filterToOwn')?.value;
+        this.courseWideSearchConfig.filterToAnsweredOrReacted = this.formGroup.get('filterToAnsweredOrReacted')?.value;
+        this.courseWideSearchConfig.sortingOrder = this.sortingOrder;
+        this.onSearch();
     }
 }
 

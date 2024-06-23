@@ -33,6 +33,7 @@ import { GroupChatIconComponent } from './other/group-chat-icon/group-chat-icon.
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { CourseConversationsCodeOfConductComponent } from 'app/overview/course-conversations/code-of-conduct/course-conversations-code-of-conduct.component';
 import { CourseWideSearchComponent } from 'app/overview/course-conversations/course-wide-search/course-wide-search.component';
+import { ArtemisSidebarModule } from 'app/shared/sidebar/sidebar.module';
 
 const routes: Routes = [
     {
@@ -53,6 +54,7 @@ const routes: Routes = [
         ArtemisSharedModule,
         ArtemisSharedComponentModule,
         ArtemisDataTableModule,
+        ArtemisSidebarModule,
         InfiniteScrollModule,
         CourseUsersSelectorModule,
     ],
