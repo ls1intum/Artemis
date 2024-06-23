@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
@@ -9,12 +9,17 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
     imports: [FormsModule, ReactiveFormsModule],
 })
 export class RangeSliderComponent implements OnInit, OnDestroy {
-    @Input() selectedMinValue: number;
-    @Input() selectedMaxValue: number;
-
     @Input() generalMaxValue: number;
     @Input() generalMinValue: number;
     @Input() stepWidth: number = 1;
+
+    @Input() selectedMinValue: number;
+    @Input() selectedMaxValue: number;
+    @Output() selectedMinValueChange: EventEmitter<number> = new EventEmitter<number>();
+    @Output() selectedMaxValueChange: EventEmitter<number> = new EventEmitter<number>();
+
+    rangeInputElements?: NodeList;
+    eventListeners: { element: any; listener: any }[] = [];
 
     get sliderMinPercentage(): number {
         return ((this.selectedMinValue - this.generalMinValue) / (this.generalMaxValue - this.generalMinValue)) * 100;
@@ -23,9 +28,6 @@ export class RangeSliderComponent implements OnInit, OnDestroy {
     get sliderMaxPercentage(): number {
         return 100 - ((this.selectedMaxValue - this.generalMinValue) / (this.generalMaxValue - this.generalMinValue)) * 100;
     }
-
-    rangeInputElements?: NodeList;
-    eventListeners: { element: any; listener: any }[] = [];
 
     ngOnInit() {
         this.rangeInputElements = document.querySelectorAll('.range-input input');
@@ -43,6 +45,16 @@ export class RangeSliderComponent implements OnInit, OnDestroy {
         this.eventListeners.forEach(({ element, listener }) => {
             element.removeEventListener('input', listener);
         });
+    }
+
+    onSelectedMinValueChanged(event: any): void {
+        this.selectedMinValue = event.target.value;
+        this.selectedMinValueChange.emit(this.selectedMinValue);
+    }
+
+    onSelectedMaxValueChanged(event: any): void {
+        this.selectedMaxValue = event.target.value;
+        this.selectedMaxValueChange.emit(this.selectedMaxValue);
     }
 
     private ensureMinValueIsSmallerThanMaxValueViceVersa(event: any) {
