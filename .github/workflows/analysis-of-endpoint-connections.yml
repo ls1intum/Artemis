@@ -64,9 +64,10 @@ jobs:
           distribution: 'adopt'
 
       - name: Download JSON files
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: json-files
+          path: supporting_scripts/analysis-of-endpoint-connections/
 
       - name: Analyze Endpoints
         run:
