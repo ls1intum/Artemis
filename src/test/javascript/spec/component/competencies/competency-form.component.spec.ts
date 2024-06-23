@@ -65,7 +65,6 @@ describe('CompetencyFormComponent', () => {
                 id: 1,
                 title: 'test',
         };
-        competencyOfResponse.title = 'test';
 
         const response: HttpResponse<Competency[]> = new HttpResponse({
             body: [competencyOfResponse],
