@@ -43,6 +43,7 @@ public class DataExportScienceEventService {
         try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(workingDirectory.resolve("science_events" + CSV_FILE_EXTENSION)), csvFormat)) {
             for (var scienceEvent : scienceEvents) {
                 printer.printRecord(scienceEvent.getTimestamp(), scienceEvent.getType(), scienceEvent.getResourceId());
+                printer.flush();
             }
         }
     }
