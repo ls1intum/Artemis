@@ -37,7 +37,7 @@ Offline Mode
 - The exam mode in Artemis tolerates issues with the Internet connection.
 - If you lose your connection, you can continue working on text-, quiz- and modeling exercises, but you might get warnings that your solutions cannot be saved.
 - If your Internet connection recovers, Artemis will save your solution.
-- Artemis tries to save your solution every 30 seconds, when you navigate between exercises, and when you click |save| or |save_continue|.
+- Artemis tries to save your solution every 30 seconds and whenever you navigate between exercises.
 - Programming exercises have 2 modes.
 
     1. **Online code editor:** can only be used when you are online.
@@ -91,7 +91,7 @@ Welcome Screen
 ^^^^^^^^^^^^^^
 - The welcome screen gives you an overview of all the important information you need about the exam.
 - Carefully read through the instructions.
-- Once you have read them, confirm that you will follow the rules by ticking the corresponding checkbox, sign with your full name and click |start|.
+- Once you have read them, confirm that you will follow the rules by ticking the corresponding checkbox, sign with your full name and click |start_exam|.
 
     .. note::
         Your full name represents your signature. You can find your full name as registered on Artemis below the input field.
@@ -99,7 +99,7 @@ Welcome Screen
 - After you confirm, if the exam working time has started, the `Exam Conduction`_ screen will automatically appear.
 - Otherwise, you must wait until the exam begins. This wont be longer than 5 minutes. A popup will appear which will notify you how much time is left before the planned start.
 
-.. figure:: student/welcome_screen.png
+.. figure:: student/welcome_page.png
    :alt: Welcome Screen
    :align: center
 
@@ -109,28 +109,33 @@ Exam Conduction
 ^^^^^^^^^^^^^^^
 - Once the exam working time starts and you have confirmed your participation, the *Exercise Overview* screen will appear. This screen lists all exercises that are part of your exam with their respective amount of points, title and exercise type. The status column indicates the status of each exercise and whether you have a submission in them or not.
 
-.. figure:: student/exercise_overview_after_start.png
+.. figure:: student/exam_overview.png
    :alt: Exercise Overview Screen
    :align: center
 
-- On the header, you will find the *Exam Navigation Bar*. You can use this bar to navigate between different exercises. For each exercise an icon will display your current status.
+- On the left side of the page, you will find the *Exam Navigation Sidebar*. You can use this sidebar to navigate between different exercises. For each exercise, an icon will display your current status. You can also find the number of saved and submitted exercises next to the *Overview* in the navigation sidebar.
 
-    - When there are unsaved **or** unsubmitted changes, the exercise representation on the navigation bar becomes |unsaved|.
-    - When your changes are saved **and** submitted, the exercise representation on the navigation bar becomes |saved|.
-    - |started| indicates that you have not started this exercise.
+    - When there are unsaved **or** unsubmitted changes, the exercise representation in the navigation sidebar becomes |exam_unsaved|.
+    - When your changes are saved **and** submitted, the exercise representation in the navigation sidebar becomes |exam_saved|.
+    - |exam_started| indicates that you have not started this exercise.
 
-- You can also navigate through the exercises when you are done with one by clicking |save_continue|. This action will save and submit your changes and move to the next exercise.
+- Once you click on another exercise in the navigation sidebar, your changes will be saved and submitted automatically. 
+- You can also collapse the navigation sidebar to maximize the size of the exercises by clicking on |collapse_sidebar|. When the sidebar is collapsed, you can still see the exercise type and current status of the exercise.
 
     .. warning::
         For programming exercises, there is no save button. You must manually press |submit| otherwise your solution will **not** be graded!
 
-- On the header, you will also find the |hand_in_early| button. If you press this, you will be sent to the exam `End Screen`_.
-- The *time left* until the end of the exam is also shown next to the action buttons, or below, depending on your screen size.
+.. figure:: student/exam_navigation_sidebar.png
+   :alt: Exam Navigation
+   :align: center
+
+- On the header, you will find the exam bar that includes remaining time and the |hand_in_early| button. If you press on this button, you will be sent to the exam `End Screen`_.
+- The *time left* until the end of the exam is also shown next to the button.
 
     .. note::
         When the time is about to run out, the background of the timer will turn yellow to warn you.
 
-.. figure:: student/exam_navigation.png
+.. figure:: student/exam_bar.png
    :alt: Exam Navigation
    :align: center
 
@@ -145,13 +150,13 @@ Participating in Quiz Exercises
     3. Drag and Drop questions
 
 - All questions are listed in the main screen below one another.
-- To navigate between them you can either scroll or use the ``question overview`` on the left. When you click on one of the question representations, your view will automatically scroll to the respective question.
-- To submit your solution, press |save_continue|.
+- To navigate between them you can scroll.
+- To submit your solution, click on another exercise in the navigation sidebar.
 
     .. note::
         Your submission will automatically be saved every 30 seconds.
 
-.. figure:: student/quiz_exercises.png
+.. figure:: student/exam_quiz_exercises.png
    :alt: Participating in Quiz Exercises
    :align: center
 
@@ -171,7 +176,7 @@ Participating in Text Exercises
 
 - Within the editor you can type out your solution. The editor will automatically track your number of words and number of characters.
 
-.. figure:: student/text_exercises.png
+.. figure:: student/exam_text_exercises.png
    :alt: Participating in Text Exercises
    :align: center
 
@@ -197,7 +202,7 @@ Participating in Modeling Exercises
     .. note::
         If you need more space, you can work in fullscreen by clicking on |fullscreen|. This mode will use your whole screen for the modeling exercise thereby giving you more space to model your solution. To exit the fullscreen mode, click |exit_fullscreen|.
 
-.. figure:: student/modeling_exercises.png
+.. figure:: student/exam_modeling_exercises.png
    :alt: Participating in Modeling Exercises
    :align: center
 
@@ -231,12 +236,12 @@ Participating in Programming Exercises
 
 - When you press |refresh_files| all unsaved changes are overwritten in the online code editor. Your changes are auto-saved every 30 seconds by Artemis in the code editor.
 
-- When you press |submit|, your changes are pushed to the version control (VC) server and a build is started on the continuous integration (CI) server. This is indicated by the results changing from |no_results_found| to |building_and_testing|. You need to first press |submit| to get feedback on your submissions build status.
+- When you press |submit|, your changes are pushed to the version control (VC) server and a build is started on the continuous integration (CI) server. This is indicated by the results changing from |exam_no_results_found| to |building_and_testing|. You need to first press |submit| to get feedback on your submissions build status.
 
     .. warning::
         There is no auto-submit!
 
-.. figure:: student/programming_exercises.png
+.. figure:: student/exam_programming_exercises.png
    :alt: Participating in Programming Exercises
    :align: center
 
@@ -255,7 +260,7 @@ Participating in Programming Exercises
     3. Work on the code
     4. Commit and push the code. A push is equivalent to pressing the |submit| button.
 
-.. figure:: student/clone_repository.png
+.. figure:: student/exam_clone_repository.png
    :alt: Clone Repository
    :align: center
 
@@ -302,13 +307,13 @@ If your instructor updates the problem statement for an exercise during the exam
     - **None** You can submit as many times as you want without any consequences.
     - **Lock Repository** There's a limit on the number of allowed submissions. Once you exceed the limit, your repository will be locked and further submissions will not be allowed.
 
-        .. figure:: student/submission_policy_lock.png
+        .. figure:: student/exam_submission_policy_lock.png
             :alt: Effect of the Lock Repository Policy
             :align: center
 
     - **Submission Penalty** There's a limit on the number of allowed submissions. Once you exceed the limit, you will be penalized for each additional submission.
 
-        .. figure:: student/submission_policy_penalty.png
+        .. figure:: student/exam_submission_policy_penalty.png
             :alt: Effect of the Submission Penalty Policy
             :align: center
 
@@ -328,7 +333,7 @@ End Screen
 
 - Once you submit your exam, no further changes can be made to any exercise.
 
-.. figure:: student/end_screen.png
+.. figure:: student/exam_end_screen.png
    :alt: End Screen
    :align: center
 
@@ -339,11 +344,11 @@ End Screen
 Summary
 ^^^^^^^
 - After you hand in, you can view the summary of your exam.
-- You always have access to the summary. You can find it by following the steps displayed in: `Accessing the Exam`_.
+- You always have access to the summary. You can find it by following the steps displayed in: `Accessing the Exam`_. After the exam is officially finished, you can navigate to the summary using the sidebar by selecting the respective exam.
 - Further you have the opportunity to export the summary as a PDF file by clicking on |export_pdf|.
 - The summary contains an aggregated view of all your submissions. For programming exercises, it also contains the latest commit hash and repository URI so you can review your code.
 
-.. figure:: student/summary.png
+.. figure:: student/exam_summary.png
    :alt: Summary
    :align: center
 
