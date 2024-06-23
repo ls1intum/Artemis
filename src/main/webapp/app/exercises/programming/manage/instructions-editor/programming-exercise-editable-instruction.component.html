@@ -1,26 +1,5 @@
 <div class="editable-instruction-container">
     <!-- The position of the markdown-editor in the html should not be changed, as it is used for resizing!-->
-    @if (exercise && false) {
-        <jhi-markdown-editor
-            class="editable-instruction-container__editor"
-            [showLineNumbers]="true"
-            [domainCommands]="domainCommands"
-            [markdown]="exercise.problemStatement"
-            (markdownChange)="updateProblemStatement($event)"
-            (onPreviewSelect)="generateHtml()"
-            [showDefaultPreview]="false"
-            [minHeightEditor]="500"
-        >
-            <jhi-programming-exercise-instructions
-                id="preview"
-                class="editable-instruction-container__instructions"
-                [participation]="participation"
-                [exercise]="exercise"
-                [generateHtmlEvents]="generateHtmlSubject.asObservable()"
-                [personalParticipation]="false"
-            />
-        </jhi-markdown-editor>
-    }
     @if (exercise) {
         <jhi-markdown-editor-monaco
             class="overflow-auto flex-grow-1"

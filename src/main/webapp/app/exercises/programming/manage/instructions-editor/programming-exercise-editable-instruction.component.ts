@@ -10,7 +10,7 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { hasExerciseChanged } from 'app/exercises/shared/exercise/exercise.utils';
-import { MarkdownEditorComponent, MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
+import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
@@ -50,11 +50,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     testCaseSubscription: Subscription;
     forceRenderSubscription: Subscription;
 
-    @ViewChild(MarkdownEditorComponent, { static: false }) markdownEditor?: MarkdownEditorComponent;
     @ViewChild(MarkdownEditorMonacoComponent, { static: false }) markdownEditorMonaco?: MarkdownEditorMonacoComponent;
     @ViewChild('statusFooter', { static: false }) statusFooter: ElementRef<HTMLDivElement>;
-
-    editorHeight: number | undefined;
 
     @Input() showStatus = true;
     // If the programming exercise is being created, some features have to be disabled (saving the problemStatement & querying test cases).
@@ -106,6 +103,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     faExclamationTriangle = faExclamationTriangle;
     faCircleNotch = faCircleNotch;
     faGripLines = faGripLines;
+
+    protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
@@ -249,14 +248,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      */
     onAnalysisUpdate = (analysis: ProblemStatementAnalysis) => {
         const lineWarnings = this.mapAnalysisToWarnings(analysis);
-        // TODO: Add a method to the markdownEditorMonaco to set annotations; also remove the type assertion
         this.markdownEditorMonaco?.monacoEditor?.setAnnotations(lineWarnings as Annotation[]);
-        this.markdownEditor?.aceEditorContainer?.getEditor().getSession().clearAnnotations();
-        // We need to wait for the annotations to be removed before we can set the new annotations.
-        // Otherwise changes in the editor will trigger the update of the existing annotations.
-        setTimeout(() => {
-            this.markdownEditor?.aceEditorContainer?.getEditor().getSession().setAnnotations(lineWarnings);
-        }, 0);
     };
 
     private mapAnalysisToWarnings = (analysis: ProblemStatementAnalysis) => {
@@ -281,11 +273,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     };
 
     resizeHeight() {
-        /*const footerHeight = this.statusFooter.nativeElement.getBoundingClientRect().height;
-        this.editorHeight = height - footerHeight - 42; // TODO: 42 is the height of the header, should be calculated dynamically
-        this.statusFooter.nativeElement.style.height = footerHeight + 'px'; */
         this.markdownEditorMonaco?.adjustEditorDimensions();
     }
-
-    protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 }
