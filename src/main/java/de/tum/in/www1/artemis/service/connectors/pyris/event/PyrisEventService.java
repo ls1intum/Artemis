@@ -29,6 +29,9 @@ public class PyrisEventService {
             case CompetencyJolSetEvent competencyJolSetEvent -> {
                 competencyJolSetEvent.handleEvent(irisCourseChatSessionService);
             }
+            case SubmissionFailedEvent submissionFailedEvent -> {
+                submissionFailedEvent.handleEvent(irisExerciseChatSessionService);
+            }
             default -> throw new UnsupportedOperationException("Unsupported event: " + event);
         }
     }
