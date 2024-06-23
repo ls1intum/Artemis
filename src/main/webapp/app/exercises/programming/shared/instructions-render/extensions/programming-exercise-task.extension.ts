@@ -82,54 +82,6 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
     }
 
     /**
-     * For each task, inject a ProgrammingExerciseInstructionTaskStatusComponent into the container div.
-     */
-    private injectTasksIntoDocument = () => {
-        this.testsForTask.forEach(({ id, taskName, testIds }) => {
-            const taskHtmlContainers = document.getElementsByClassName(`pe-task-${id}`);
-
-            for (let i = 0; i < taskHtmlContainers.length; i++) {
-                const taskHtmlContainer = taskHtmlContainers[i];
-                this.createTaskComponent(taskHtmlContainer, taskName, testIds);
-            }
-        });
-    };
-
-    /**
-     * For each task, inject a ProgrammingExerciseInstructionTaskStatusComponent into the container div.
-     * This method injects the tasks into HTML which is needed for the HTML diff function
-     * instead of injecting them directly into the document
-     */
-    public injectTasksIntoHTML(html: string): string {
-        const container = document.createElement('div');
-        container.innerHTML = html;
-
-        this.testsForTask.forEach(({ id, taskName, testIds }) => {
-            const taskHtmlContainers = container.getElementsByClassName(`pe-task-${id}`);
-
-            // The same task could appear multiple times in the instructions (edge case).
-            for (let i = 0; i < taskHtmlContainers.length; i++) {
-                const taskHtmlContainer = taskHtmlContainers[i];
-                this.createTaskComponent(taskHtmlContainer, taskName, testIds);
-            }
-        });
-        return container.innerHTML;
-    }
-
-    private createTaskComponent(taskHtmlContainer: Element, taskName: string, testIds: number[]) {
-        const componentRef = createComponent(ProgrammingExerciseInstructionTaskStatusComponent, {
-            hostElement: taskHtmlContainer,
-            environmentInjector: this.injector,
-        });
-        componentRef.instance.exercise = this.exercise;
-        componentRef.instance.taskName = taskName;
-        componentRef.instance.latestResult = this.latestResult;
-        componentRef.instance.testIds = testIds;
-        this.appRef.attachView(componentRef.hostView);
-        componentRef.changeDetectorRef.detectChanges();
-    }
-
-    /**
      * Creates and returns an extension to current exercise.
      * The task regex is coupled to the value used in ProgrammingExerciseTaskService in the server and
      * `TaskCommand` in the client
@@ -146,39 +98,12 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
     }
 
     public createTasks(problemStatement: string): string {
-        const tasks = Array.from(problemStatement.matchAll(taskRegex));
-        if (!tasks) {
-            return problemStatement;
-        }
-        this.testsForTask = tasks
-            // check that all groups (full match, name, tests) are present
-            .filter((testMatch) => testMatch?.length === 3)
-            .map((testMatch: RegExpMatchArray | null) => {
-                const nextIndex = this.taskIndex;
-                this.taskIndex++;
-                return {
-                    id: nextIndex,
-                    completeString: testMatch![0],
-                    taskName: testMatch![1],
-                    testIds: testMatch![2] ? this.programmingExerciseInstructionService.convertTestListToIds(testMatch![2], this.testCases) : [],
-                };
-            });
-        const tasksWithParticipationId: TaskArrayWithExercise = {
-            exerciseId: this.exercise.id!,
-            tasks: this.testsForTask,
-        };
-        this.testsForTaskSubject.next(tasksWithParticipationId);
-        // Emit new-found elements that need to be injected into html after it is rendered.
-        this.injectableElementsFoundSubject.next(() => {
-            this.injectTasksIntoDocument();
+        return problemStatement.replace(taskRegex, (match) => {
+            return this.escapeTaskSpecialCharactersForMarkdown(match);
         });
-        return this.testsForTask.reduce(
-            (acc: string, { completeString: task, id }): string =>
-                // Insert anchor divs into the text so that injectable elements can be inserted into them.
-                // Without class="d-flex" the injected components height would be 0.
-                // Added zero-width space as content so the div actually consumes a line to prevent a <ol> display bug in Safari
-                acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), `<div class="pe-task-${id.toString()} d-flex">&#8203;</div>`),
-            problemStatement,
-        );
     }
+
+    private escapeTaskSpecialCharactersForMarkdown = (text: string) => {
+        return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    };
 }
