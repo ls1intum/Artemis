@@ -6,4 +6,5 @@ export class IrisSession implements BaseEntity {
     id: number;
     user?: User;
     messages?: IrisMessage[];
+    latestSuggestions?: string;
 }
