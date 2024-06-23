@@ -131,6 +131,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     readonly markdownColors = ['#ca2024', '#3ea119', '#ffffff', '#000000', '#fffa5c', '#0d3cc2', '#b05db8', '#d86b1f'];
     readonly markdownColorNames = ['red', 'green', 'white', 'black', 'yellow', 'blue', 'lila', 'orange'];
+    readonly colorPickerMarginTop = 35;
+    readonly colorPickerHeight = 110;
 
     constructor(
         private alertService: AlertService,
@@ -182,7 +184,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     }
 
     /**
-     * Constrain the drag position of the resize handle.
+     * Constrains the drag position of the resize handle.
      * @param pointerPosition The current mouse position while dragging.
      */
     constrainDragPosition(pointerPosition: Point): Point {
@@ -205,6 +207,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.markdownChange.emit(text);
     }
 
+    /**
+     * Called when the user moves the resize handle.
+     * @param event The drag event caused by the user moving the resize handle.
+     */
     onResizeMoved(event: CdkDragMove) {
         // The editor's bottom edge becomes the top edge of the handle.
         this.targetWrapperHeight =
@@ -213,26 +219,44 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             this.getElementClientHeight(this.resizePlaceholder);
     }
 
-    getEditorHeight(targetHeight?: number): number {
+    /**
+     * Computes the height of the editor based on the other elements displayed. We compute this directly to avoid layout issues with the Monaco editor.
+     * The height of the editor is the height of the wrapper minus the height of the file upload footer, action palette, and resize placeholder.
+     */
+    getEditorHeight(): number {
         const wrapperHeight = this.getElementClientHeight(this.wrapper);
         const fileUploadFooterHeight = this.getElementClientHeight(this.fileUploadFooter);
         const actionPaletteHeight = this.getElementClientHeight(this.actionPalette);
         const resizePlaceholderHeight = this.getElementClientHeight(this.resizePlaceholder);
-        return (targetHeight ?? wrapperHeight) - fileUploadFooterHeight - actionPaletteHeight - resizePlaceholderHeight;
+        return wrapperHeight - fileUploadFooterHeight - actionPaletteHeight - resizePlaceholderHeight;
     }
 
+    /**
+     * Get the client height of the given element. If no element is provided, 0 is returned.
+     * @param element The element to get the client height of.
+     */
     getElementClientHeight(element?: ElementRef): number {
         return element?.nativeElement?.clientHeight ?? 0;
     }
 
+    /**
+     * Computes the width the editor can take up.
+     */
     getEditorWidth(): number {
         return this.wrapper?.nativeElement?.clientWidth ?? 0;
     }
 
-    adjustEditorDimensions(t?: number): void {
-        this.monacoEditor.layoutWithFixedSize(this.getEditorWidth(), this.getEditorHeight(t));
+    /**
+     * Adjust the dimensions of the editor to fit the available space.
+     */
+    adjustEditorDimensions(): void {
+        this.monacoEditor.layoutWithFixedSize(this.getEditorWidth(), this.getEditorHeight());
     }
 
+    /**
+     * Called when the user changes the active tab. If the preview tab is selected, emits the onPreviewSelect event.
+     * @param event The event that contains the new active tab.
+     */
     onNavChanged(event: NgbNavChangeEvent) {
         this.inPreviewMode = event.nextId === 'editor_preview';
         if (!this.inPreviewMode) {
@@ -243,12 +267,20 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         }
     }
 
+    /**
+     * Called when the user selects a file to upload.
+     * @param event The event that contains the files to upload (typed as any to avoid compilation errors).
+     */
     onFileUpload(event: any): void {
         if (event.target.files.length >= 1) {
             this.embedFiles(Array.from(event.target.files));
         }
     }
 
+    /**
+     * Called when the user drops files into the editor.
+     * @param event The drag event that contains the files.
+     */
     onFileDrop(event: DragEvent): void {
         event.preventDefault();
         if (event.dataTransfer?.files.length) {
@@ -256,6 +288,11 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         }
     }
 
+    /**
+     * Embed the given files into the editor by uploading them and inserting the appropriate markdown.
+     * For PDFs, a link to the file is inserted. For other files, the file is embedded as an image.
+     * @param files
+     */
     embedFiles(files: File[]): void {
         files.forEach((file) => {
             this.fileUploaderService.uploadMarkdownFile(file).then(
@@ -287,13 +324,21 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         });
     }
 
-    openColorSelector(event: MouseEvent) {
-        const marginTop = 35;
-        const height = 110;
+    /**
+     * Open the color selector at the current cursor position.
+     * @param event The mouse event that triggered the color selector.
+     */
+    openColorSelector(event: MouseEvent): void {
+        const marginTop = this.colorPickerMarginTop;
+        const height = this.colorPickerHeight;
         this.colorSelector.openColorSelector(event, marginTop, height);
     }
 
-    onSelectedColor(color: string) {
+    /**
+     * Callback when a color is selected in the color picker.
+     * @param color The hex code of the selected color.
+     */
+    onSelectedColor(color: string): void {
         // Map the hex code to the color name.
         const index = this.markdownColors.indexOf(color);
         const colorName = this.markdownColorNames[index];
