@@ -16,6 +16,11 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * The disposable action that is returned by `editor.addAction`. This is required to unregister the action from the editor.
      */
     disposableAction?: monaco.IDisposable;
+    /**
+     * The editor (if any) this action is registered in.
+     * @private
+     */
+    private _editor?: monaco.editor.IStandaloneCodeEditor;
 
     constructor(id: string, translationKey: string, icon?: IconDefinition, keybindings?: number[]) {
         this.id = id;
@@ -24,32 +29,47 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
         this.keybindings = keybindings;
     }
 
-    // TODO: might be required to support e.g. color picker
-    runWithArguments(editor: monaco.editor.ICodeEditor, args: any): void {
-        editor.trigger(this.id, this.id, args);
-    }
-
+    /**
+     * The actual implementation of the action. This method is called by Monaco when the action is triggered in the editor.
+     * @param editor The editor in which the action was triggered.
+     * @param args Optional arguments that can be passed to the action. To ensure this is an object, you can use {@link executeInCurrentEditor}.
+     */
     abstract run(editor: monaco.editor.ICodeEditor, args?: unknown): void;
 
     /**
-     * Dispose the action if it has been registered with an editor.
+     * Execute the action in the current editor. This is a convenience method to trigger the action in the editor without having to pass the editor instance.
+     * Furthermore, it keeps the argument handling consistent between the real editor (which passes undefined for no arguments) and the test environment (which passes {} for no arguments).
+     * Override this method to define type-safe arguments.
+     * @param args Optional arguments that can be passed to the action.
      */
-    dispose(): void {
-        this.disposableAction?.dispose();
+    executeInCurrentEditor(args: object = {}): void {
+        if (!this._editor) {
+            throw new Error('Action is not registered in an editor.');
+        }
+        this._editor.trigger(`${this.id}::executeInCurrentEditor`, this.id, args);
     }
 
     /**
-     * Register this action with the given editor. This is required to make the action available in the editor. Note that the action can only be registered with one editor at a time.
-     * @param editor The editor to register this action with. Note that its type has to be `monaco.editor.IStandaloneCodeEditor` to ensure it supports the `addAction` method.
+     * Dispose the action if it has been registered in an editor.
+     */
+    dispose(): void {
+        this.disposableAction?.dispose();
+        this._editor = undefined;
+    }
+
+    /**
+     * Register this action in the given editor. This is required to make the action available in the editor. Note that the action can only be registered in one editor at a time.
+     * @param editor The editor to register this action in. Note that its type has to be `monaco.editor.IStandaloneCodeEditor` to ensure it supports the `addAction` method.
      * @param translateService The translation service to use for translating the action label.
-     * @throws error if the action has already been registered with an editor.
+     * @throws error if the action has already been registered in an editor.
      */
     register(editor: monaco.editor.IStandaloneCodeEditor, translateService: TranslateService): void {
         if (this.disposableAction) {
-            throw new Error(`Action (id ${this.id}) already belongs to an editor. Dispose it first before registering it with another editor.`);
+            throw new Error(`Action (id ${this.id}) already belongs to an editor. Dispose it first before registering it in another editor.`);
         }
         this.label = translateService.instant(this.translationKey);
         this.disposableAction = editor.addAction(this);
+        this._editor = editor;
     }
 
     toggleDelimiterAroundSelection(editor: monaco.editor.ICodeEditor, openDelimiter: string, closeDelimiter: string, textToInsert: string = ''): void {
