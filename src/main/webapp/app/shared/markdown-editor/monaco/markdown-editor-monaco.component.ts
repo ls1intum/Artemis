@@ -25,6 +25,18 @@ import { MonacoColorAction } from 'app/shared/monaco-editor/model/actions/monaco
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { CdkDragMove, Point } from '@angular/cdk/drag-drop';
 import { MonacoEditorDomainAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action.model';
+import { MonacoEditorDomainActionWithOptions } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action-with-options.model';
+
+interface MarkdownActionsByGroup {
+    standard: MonacoEditorAction[];
+    header: MonacoHeadingAction[];
+    color?: MonacoColorAction;
+    domain: {
+        withoutOptions: MonacoEditorDomainAction[];
+        withOptions: MonacoEditorDomainActionWithOptions[];
+    };
+    meta: MonacoEditorAction[];
+}
 
 // TODO: Once the old markdown editor is gone, remove the style url.
 @Component({
@@ -77,7 +89,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         new MonacoOrderedListAction(),
         new MonacoUnorderedListAction(),
         new MonacoFormulaAction(),
-        new MonacoFullscreenAction(),
     ];
 
     @Input()
@@ -93,6 +104,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     @Input()
     domainActions: MonacoEditorDomainAction[] = [];
 
+    @Input()
+    metaActions: MonacoEditorAction[] = [new MonacoFullscreenAction()];
+
     @Output()
     markdownChange = new EventEmitter<string>();
 
@@ -107,6 +121,13 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     targetWrapperHeight?: number;
     constrainDragPositionFn?: (pointerPosition: Point) => Point;
     isResizing = false;
+    displayedActions: MarkdownActionsByGroup = {
+        standard: [],
+        header: [],
+        color: undefined,
+        domain: { withoutOptions: [], withOptions: [] },
+        meta: [],
+    };
 
     readonly markdownColors = ['#ca2024', '#3ea119', '#ffffff', '#000000', '#fffa5c', '#0d3cc2', '#b05db8', '#d86b1f'];
     readonly markdownColorNames = ['red', 'green', 'white', 'black', 'yellow', 'blue', 'lila', 'orange'];
@@ -135,12 +156,23 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         if (this.fileUploadFooter?.nativeElement) {
             this.resizeObserver.observe(this.fileUploadFooter.nativeElement);
         }
-        [this.defaultActions, this.headerActions.actions, this.domainActions, ...(this.colorAction ? [this.colorAction] : [])].flat().forEach((action) => {
-            if (action.id === MonacoFullscreenAction.ID) {
-                (<MonacoFullscreenAction>action).element = this.wrapper.nativeElement;
+        [this.defaultActions, this.headerActions.actions, this.domainActions, ...(this.colorAction ? [this.colorAction] : []), this.metaActions].flat().forEach((action) => {
+            if (action instanceof MonacoFullscreenAction) {
+                action.element = this.wrapper.nativeElement;
             }
             this.monacoEditor.registerAction(action);
         });
+
+        this.displayedActions = {
+            standard: this.defaultActions,
+            header: this.headerActions.actions,
+            color: this.colorAction,
+            domain: {
+                withoutOptions: this.domainActions.filter((action) => !(action instanceof MonacoEditorDomainActionWithOptions)),
+                withOptions: <MonacoEditorDomainActionWithOptions[]>this.domainActions.filter((action) => action instanceof MonacoEditorDomainActionWithOptions),
+            },
+            meta: this.metaActions,
+        };
 
         if (this.resizeHandle && this.resizePlaceholder && this.enableResize) {
             const resizeHandleHeight = this.getElementClientHeight(this.resizeHandle);

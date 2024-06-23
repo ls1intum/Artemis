@@ -58,10 +58,10 @@
         </ng-container>
         @if (!inPreviewMode) {
             <ng-container ngbNavItem>
-                <div class="markdown-editor__commands">
+                <div class="d-flex align-items-center">
                     <div class="markdown-editor__commands-default">
-                        <!-- Default -->
-                        @for (action of defaultActions; track action.id) {
+                        <!-- Standard -->
+                        @for (action of displayedActions.standard; track action.id) {
                             <button
                                 type="button"
                                 class="btn btn-sm py-0"
@@ -76,7 +76,7 @@
                             </button>
                         }
                         <!-- Headers -->
-                        @if (headerActions.actions.length > 0) {
+                        @if (displayedActions.header.length > 0) {
                             <div class="btn-group" ngbDropdown role="group" aria-label="Button group with nested dropdown">
                                 <button class="btn btn-sm px-2 py-0" type="button" id="dropdownBasic1" ngbDropdownToggle>
                                     <span [jhiTranslate]="headerActions.translationKey"></span>
@@ -90,34 +90,57 @@
                                 </div>
                             </div>
                         }
-                        <!-- Color -->
-                        @if (colorAction) {
+                        @if (displayedActions.color) {
                             <div class="btn-group col-xs-6">
-                                <div class="color-preview btn btn-sm px-2 py-0" (click)="openColorSelector($event)" [jhiTranslate]="colorAction.translationKey"></div>
+                                <div class="color-preview btn btn-sm px-2 py-0" (click)="openColorSelector($event)" [jhiTranslate]="displayedActions.color.translationKey"></div>
                                 <jhi-color-selector [tagColors]="markdownColors" (selectedColor)="onSelectedColor($event)" />
                             </div>
                         }
-                        <!-- Domain -->
-                        @if (domainActions?.length) {
-                            <div class="d-inline-flex">
-                                @for (action of domainActions; track action.id) {
-                                    @if (action['possibleValues']) {
-                                        <!-- dropdown -->
-                                        <div class="btn-group" ngbDropdown role="group" aria-label="Button group with nested dropdown">
-                                            <button class="btn btn-sm px-2 py-0" type="button" ngbDropdownToggle>
-                                                <span [jhiTranslate]="action.translationKey"></span>
-                                            </button>
-                                            <div class="dropdown-menu" ngbDropdownMenu>
-                                                @for (value of action['possibleValues']; track value.value) {
-                                                    <button type="button" class="dropdown-item" (click)="triggerAction(action.id, value.value)">
-                                                        <span>{{ value.value }}</span>
-                                                    </button>
-                                                }
-                                            </div>
-                                        </div>
-                                    }
+                        <!-- Domain (without options) TODO d-inline-flex? -->
+
+                        @for (action of displayedActions.domain.withoutOptions; track action.id) {
+                            <button
+                                type="button"
+                                class="btn btn-sm py-0"
+                                [ngbTooltip]="action.icon ? (action.translationKey | artemisTranslate) : undefined"
+                                (click)="triggerAction(action.id)"
+                            >
+                                @if (action.icon) {
+                                    <fa-icon [icon]="action.icon" />
+                                } @else {
+                                    <span [jhiTranslate]="action.translationKey"></span>
                                 }
+                            </button>
+                        }
+                        <!-- Domain (with options) -->
+                        @for (action of displayedActions.domain.withOptions; track action.id) {
+                            <div class="btn-group" ngbDropdown role="group" aria-label="Button group with nested dropdown">
+                                <button class="btn btn-sm px-2 py-0" type="button" ngbDropdownToggle>
+                                    <span [jhiTranslate]="action.translationKey"></span>
+                                </button>
+                                <div class="dropdown-menu" ngbDropdownMenu>
+                                    @for (value of action.values; track value.id) {
+                                        <button type="button" class="dropdown-item" (click)="triggerAction(action.id, value.value)">
+                                            <span>{{ value.value }}</span>
+                                        </button>
+                                    }
+                                </div>
                             </div>
+                        }
+                        <!-- Meta -->
+                        @for (action of displayedActions.meta; track action.id) {
+                            <button
+                                type="button"
+                                class="btn btn-sm py-0"
+                                [ngbTooltip]="action.icon ? (action.translationKey | artemisTranslate) : undefined"
+                                (click)="triggerAction(action.id)"
+                            >
+                                @if (action.icon) {
+                                    <fa-icon [icon]="action.icon" />
+                                } @else {
+                                    <span [jhiTranslate]="action.translationKey"></span>
+                                }
+                            </button>
                         }
                     </div>
                 </div>
