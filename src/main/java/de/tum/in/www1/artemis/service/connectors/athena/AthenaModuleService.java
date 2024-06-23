@@ -108,16 +108,16 @@ public class AthenaModuleService {
      * @param exercise The exercise for which the URL to Athena should be returned
      * @return The URL prefix to access the Athena module. Example: <a href="http://athena.example.com/modules/text/module_text_cofee"></a>
      */
-    public String getAthenaModuleUrl(Exercise exercise) {
+    public String getAthenaModuleUrl(Exercise exercise, boolean isGraded) {
         switch (exercise.getExerciseType()) {
             case TEXT -> {
-                return athenaUrl + "/modules/text/" + exercise.getFeedbackSuggestionModule();
+                return athenaUrl + "/modules/text/" + exercise.getGradedFeedbackSuggestionModule();
             }
             case PROGRAMMING -> {
-                return athenaUrl + "/modules/programming/" + exercise.getFeedbackSuggestionModule();
+                return athenaUrl + "/modules/programming/" + (isGraded ? exercise.getGradedFeedbackSuggestionModule() : exercise.getNonGradedFeedbackSuggestionModule());
             }
             case MODELING -> {
-                return athenaUrl + "/modules/modeling/" + exercise.getFeedbackSuggestionModule();
+                return athenaUrl + "/modules/modeling/" + exercise.getGradedFeedbackSuggestionModule();
             }
             default -> throw new IllegalArgumentException("Exercise type not supported: " + exercise.getExerciseType());
         }
@@ -132,10 +132,10 @@ public class AthenaModuleService {
      * @throws BadRequestAlertException when the exercise has no access to the exercise's provided module.
      */
     public void checkHasAccessToAthenaModule(Exercise exercise, Course course, String entityName) throws BadRequestAlertException {
-        if (exercise.isExamExercise() && exercise.getFeedbackSuggestionModule() != null) {
+        if (exercise.isExamExercise() && exercise.getGradedFeedbackSuggestionModule() != null) {
             throw new BadRequestAlertException("The exam exercise has no access to Athena", entityName, "examExerciseNoAccessToAthena");
         }
-        if (!course.getRestrictedAthenaModulesAccess() && restrictedModules.contains(exercise.getFeedbackSuggestionModule())) {
+        if (!course.getRestrictedAthenaModulesAccess() && restrictedModules.contains(exercise.getGradedFeedbackSuggestionModule())) {
             // Course does not have access to the restricted Athena modules
             throw new BadRequestAlertException("The exercise has no access to the selected Athena module", entityName, "noAccessToAthenaModule");
         }
@@ -152,7 +152,7 @@ public class AthenaModuleService {
      */
     public void checkValidAthenaModuleChange(Exercise originalExercise, Exercise updatedExercise, String entityName) throws BadRequestAlertException {
         var dueDate = originalExercise.getDueDate();
-        if (!Objects.equals(originalExercise.getFeedbackSuggestionModule(), updatedExercise.getFeedbackSuggestionModule()) && dueDate != null
+        if (!Objects.equals(originalExercise.getGradedFeedbackSuggestionModule(), updatedExercise.getGradedFeedbackSuggestionModule()) && dueDate != null
                 && dueDate.isBefore(ZonedDateTime.now())) {
             throw new BadRequestAlertException("Athena module can't be changed after due date has passed", entityName, "athenaModuleChangeAfterDueDate");
         }

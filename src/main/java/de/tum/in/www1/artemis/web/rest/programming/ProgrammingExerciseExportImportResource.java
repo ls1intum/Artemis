@@ -194,7 +194,7 @@ public class ProgrammingExerciseExportImportResource {
         log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         newExercise.validateGeneralSettings();
         newExercise.validateProgrammingSettings();
-        newExercise.validateSettingsForFeedbackRequest();
+        newExercise.validateSettingsForManualFeedbackRequest();
         validateStaticCodeAnalysisSettings(newExercise);
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -236,10 +236,11 @@ public class ProgrammingExerciseExportImportResource {
         // Athena: Check that only allowed athena modules are used, if not we catch the exception and disable feedback suggestions for the imported exercise
         // If Athena is disabled and the service is not present, we also disable feedback suggestions
         try {
-            athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(newExercise, course, ENTITY_NAME), () -> newExercise.setFeedbackSuggestionModule(null));
+            athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(newExercise, course, ENTITY_NAME),
+                    () -> newExercise.setGradedFeedbackSuggestionModule(null));
         }
         catch (BadRequestAlertException e) {
-            newExercise.setFeedbackSuggestionModule(null);
+            newExercise.setGradedFeedbackSuggestionModule(null);
         }
 
         try {

@@ -574,7 +574,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      * @param dueDate - filter by due date
      * @return Set of Exercises
      */
-    Set<Exercise> findByFeedbackSuggestionModuleNotNullAndDueDateIsAfter(ZonedDateTime dueDate);
+    Set<Exercise> findByGradedFeedbackSuggestionModuleNotNullAndDueDateIsAfter(ZonedDateTime dueDate);
 
     /**
      * Find all exercises feedback suggestions (Athena) and with *Due Date* in the future.
@@ -582,7 +582,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      * @return Set of Exercises
      */
     default Set<Exercise> findAllFeedbackSuggestionsEnabledExercisesWithFutureDueDate() {
-        return findByFeedbackSuggestionModuleNotNullAndDueDateIsAfter(ZonedDateTime.now());
+        return findByGradedFeedbackSuggestionModuleNotNullAndDueDateIsAfter(ZonedDateTime.now());
     }
 
     /**
@@ -595,9 +595,9 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     @Modifying
     @Query("""
             UPDATE Exercise e
-            SET e.feedbackSuggestionModule = NULL
+            SET e.gradedFeedbackSuggestionModule = NULL
             WHERE e.course.id = :courseId
-                  AND e.feedbackSuggestionModule IN :restrictedFeedbackSuggestionModule
+                  AND e.gradedFeedbackSuggestionModule IN :restrictedFeedbackSuggestionModule
             """)
     void revokeAccessToRestrictedFeedbackSuggestionModulesByCourseId(@Param("courseId") Long courseId,
             @Param("restrictedFeedbackSuggestionModule") Collection<String> restrictedFeedbackSuggestionModule);

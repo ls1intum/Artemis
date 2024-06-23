@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20240623140000" author="undernagruzez">
+        <addColumn tableName="exercise">
+            <column name="non_graded_feedback_suggestion_module" type="text">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        <renameColumn tableName="exercise" oldColumnName="feedback_suggestion_module" newColumnName="graded_feedback_suggestion_module" columnDataType="text"/>
+    </changeSet>
+
+</databaseChangeLog>

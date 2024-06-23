@@ -119,8 +119,12 @@ export class CourseExerciseService {
         );
     }
 
-    requestFeedback(exerciseId: number): Observable<StudentParticipation> {
-        return this.http.put<StudentParticipation>(`api/exercises/${exerciseId}/request-feedback`, {}).pipe(map((participation: StudentParticipation) => participation));
+    requestManualFeedback(exerciseId: number): Observable<StudentParticipation> {
+        return this.http.put<StudentParticipation>(`api/exercises/${exerciseId}/request-feedback/manual`, {}).pipe(map((participation: StudentParticipation) => participation));
+    }
+
+    requestNonGradedFeedback(exerciseId: number): Observable<StudentParticipation> {
+        return this.http.put<StudentParticipation>(`api/exercises/${exerciseId}/request-feedback/nonGraded`, {}).pipe(map((participation: StudentParticipation) => participation));
     }
 
     /**

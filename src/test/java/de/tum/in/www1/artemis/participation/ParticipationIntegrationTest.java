@@ -547,7 +547,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         result.setCompletionDate(ZonedDateTime.now());
         resultRepository.save(result);
 
-        request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, ProgrammingExerciseStudentParticipation.class,
+        request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback/manual", null, ProgrammingExerciseStudentParticipation.class,
                 HttpStatus.BAD_REQUEST);
         localRepo.resetLocalRepo();
     }
@@ -562,7 +562,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         participationRepo.save(participation);
 
-        request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, ProgrammingExerciseStudentParticipation.class,
+        request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback/nonGraded", null, ProgrammingExerciseStudentParticipation.class,
                 HttpStatus.BAD_REQUEST);
     }
 
@@ -574,7 +574,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participation.setIndividualDueDate(ZonedDateTime.now().minusMinutes(20));
         participationRepo.save(participation);
 
-        request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, ProgrammingExerciseStudentParticipation.class,
+        request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback/nonGraded", null, ProgrammingExerciseStudentParticipation.class,
                 HttpStatus.BAD_REQUEST);
     }
 
@@ -586,7 +586,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         course.setRestrictedAthenaModulesAccess(true);
         this.courseRepo.save(course);
 
-        this.programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
+        this.programmingExercise.setGradedFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
         this.exerciseRepo.save(programmingExercise);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming");
@@ -611,7 +611,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         doNothing().when(programmingExerciseParticipationService).lockStudentRepositoryAndParticipation(eq(programmingExercise), any());
         doNothing().when(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(any());
 
-        request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback/nonGraded", null, ProgrammingExerciseStudentParticipation.class,
+                HttpStatus.OK);
 
         verify(programmingMessagingService, timeout(2000).times(2)).notifyUserAboutNewResult(resultCaptor.capture(), any());
 
@@ -633,7 +634,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         course.setRestrictedAthenaModulesAccess(true);
         this.courseRepo.save(course);
 
-        this.programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
+        this.programmingExercise.setGradedFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
         this.exerciseRepo.save(programmingExercise);
         this.athenaRequestMockProvider.mockGetFeedbackSuggestionsWithFailure("programming");
 
@@ -657,7 +658,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         doNothing().when(programmingExerciseParticipationService).lockStudentRepositoryAndParticipation(any(), any());
         doNothing().when(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(any());
 
-        request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback/nonGraded", null, ProgrammingExerciseStudentParticipation.class,
+                HttpStatus.OK);
 
         verify(programmingMessagingService, timeout(2000).times(2)).notifyUserAboutNewResult(resultCaptor.capture(), any());
 

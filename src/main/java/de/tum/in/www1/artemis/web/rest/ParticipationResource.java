@@ -345,14 +345,15 @@ public class ParticipationResource {
     /**
      * PUT exercises/:exerciseId/request-feedback: Requests feedback for the latest participation
      *
-     * @param exerciseId of the exercise for which to resume participation
-     * @param principal  current user principal
+     * @param exerciseId   of the exercise for which to resume participation
+     * @param feedbackType of the feedback request
+     * @param principal    current user principal
      * @return ResponseEntity with status 200 (OK)
      */
-    @PutMapping("exercises/{exerciseId}/request-feedback")
+    @PutMapping("exercises/{exerciseId}/request-feedback/{feedbackType:manual|nonGraded}")
     @EnforceAtLeastStudent
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<ProgrammingExerciseStudentParticipation> requestFeedback(@PathVariable Long exerciseId, Principal principal) {
+    public ResponseEntity<ProgrammingExerciseStudentParticipation> requestFeedback(@PathVariable Long exerciseId, @PathVariable String feedbackType, Principal principal) {
         log.debug("REST request for feedback request: {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
 
@@ -368,7 +369,10 @@ public class ParticipationResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         checkAccessPermissionOwner(participation, user);
-        programmingExercise.validateSettingsForFeedbackRequest();
+
+        if (feedbackType.equals("manual")) {
+            programmingExercise.validateSettingsForManualFeedbackRequest();
+        }
 
         var studentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
         var result = studentParticipation.findLatestLegalResult();
@@ -382,7 +386,8 @@ public class ParticipationResource {
             throw new BadRequestAlertException("Request has already been sent", "participation", "already sent");
         }
 
-        participation = this.programmingExerciseCodeReviewFeedbackService.handleNonGradedFeedbackRequest(exerciseId, studentParticipation, programmingExercise);
+        participation = this.programmingExerciseCodeReviewFeedbackService.handleFeedbackRequest(feedbackType.equals("manual"), exerciseId, studentParticipation,
+                programmingExercise);
 
         return ResponseEntity.ok().body(participation);
     }

@@ -36,13 +36,13 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
             this.modulesAvailable = modules.length > 0;
         });
         this.isAthenaEnabled$ = this.athenaService.isEnabled();
-        this.initialAthenaModule = this.exercise.feedbackSuggestionModule;
+        this.initialAthenaModule = this.exercise.gradedFeedbackSuggestionModule;
     }
 
     ngOnChanges(changes: any) {
         if (!changes['dueDate'].isFirstChange()) {
             if (this.inputControlsDisabled()) {
-                this.exercise.feedbackSuggestionModule = this.initialAthenaModule;
+                this.exercise.gradedFeedbackSuggestionModule = this.initialAthenaModule;
             }
         }
     }
@@ -70,9 +70,9 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
 
     toggleFeedbackSuggestions(event: any) {
         if (event.target.checked) {
-            this.exercise.feedbackSuggestionModule = this.availableAthenaModules.first();
+            this.exercise.gradedFeedbackSuggestionModule = this.availableAthenaModules.first();
         } else {
-            this.exercise.feedbackSuggestionModule = undefined;
+            this.exercise.gradedFeedbackSuggestionModule = undefined;
         }
     }
 

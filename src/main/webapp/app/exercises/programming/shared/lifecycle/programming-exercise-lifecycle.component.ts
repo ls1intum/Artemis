@@ -132,11 +132,19 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
         }
     }
 
-    toggleFeedbackRequests() {
-        this.exercise.allowFeedbackRequests = !this.exercise.allowFeedbackRequests;
-        if (this.exercise.allowFeedbackRequests) {
+    toggleManualFeedbackRequests() {
+        this.exercise.allowManualFeedbackRequests = !this.exercise.allowManualFeedbackRequests;
+        if (this.exercise.allowManualFeedbackRequests) {
             this.exercise.assessmentDueDate = undefined;
             this.exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
+        }
+    }
+
+    toggleNonGradedFeedbackRequests() {
+        if (!this.exercise.nonGradedFeedbackSuggestionModule) {
+            this.exercise.nonGradedFeedbackSuggestionModule = 'module_programming_llm'; // hard-code for now, as no other module supports this kind of feedback
+        } else {
+            this.exercise.nonGradedFeedbackSuggestionModule = undefined;
         }
     }
 
@@ -150,11 +158,11 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
             this.exercise.assessmentType = AssessmentType.AUTOMATIC;
             this.exercise.assessmentDueDate = undefined;
             this.exercise.allowComplaintsForAutomaticAssessments = false;
-            this.exercise.feedbackSuggestionModule = undefined;
+            this.exercise.gradedFeedbackSuggestionModule = undefined;
         } else {
             this.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
             this.exercise.allowComplaintsForAutomaticAssessments = false;
-            this.exercise.allowFeedbackRequests = false;
+            this.exercise.allowManualFeedbackRequests = false;
         }
     }
 

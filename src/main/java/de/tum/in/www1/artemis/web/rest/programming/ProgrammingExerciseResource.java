@@ -240,7 +240,11 @@ public class ProgrammingExerciseResource {
 
         // Check that only allowed athena modules are used
         athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(programmingExercise, course, ENTITY_NAME),
-                () -> programmingExercise.setFeedbackSuggestionModule(null));
+                () -> programmingExercise.setGradedFeedbackSuggestionModule(null));
+
+        if (!programmingExercise.getNonGradedFeedbackSuggestionModule().equals("module_programming_llm")) {
+            throw new BadRequestAlertException("Artemis supports only module_programming_llm for non-graded feedback requests now.", ENTITY_NAME, "nonGradedFeedbackRequestModule");
+        }
 
         try {
             // Setup all repositories etc
@@ -315,7 +319,7 @@ public class ProgrammingExerciseResource {
 
         // Check that only allowed Athena modules are used
         athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, ENTITY_NAME),
-                () -> updatedProgrammingExercise.setFeedbackSuggestionModule(null));
+                () -> updatedProgrammingExercise.setGradedFeedbackSuggestionModule(null));
         // Changing Athena module after the due date has passed is not allowed
         athenaModuleService.ifPresent(ams -> ams.checkValidAthenaModuleChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise, ENTITY_NAME));
 
@@ -332,6 +336,10 @@ public class ProgrammingExerciseResource {
         if (updatedProgrammingExercise.getBonusPoints() == null) {
             // make sure the default value is set properly
             updatedProgrammingExercise.setBonusPoints(0.0);
+        }
+
+        if (!updatedProgrammingExercise.getNonGradedFeedbackSuggestionModule().equals("module_programming_llm")) {
+            throw new BadRequestAlertException("Artemis supports only module_programming_llm for non-graded feedback requests now.", ENTITY_NAME, "nonGradedFeedbackRequestModule");
         }
 
         // Only save after checking for errors

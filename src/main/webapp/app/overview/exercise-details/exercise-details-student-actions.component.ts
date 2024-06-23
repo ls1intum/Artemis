@@ -218,7 +218,22 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             });
     }
 
-    requestFeedback() {
+    requestFeedback(manual: boolean) {
+        if (manual) {
+            this.courseExerciseService.requestManualFeedback(this.exercise.id!).subscribe({
+                next: (participation: StudentParticipation) => {
+                    if (participation) {
+                        this.feedbackSent = true;
+                        this.alertService.success('artemisApp.exercise.feedbackRequestSent');
+                    }
+                },
+                error: (error) => {
+                    this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
+                },
+            });
+            return;
+        }
+        // non-graded automatic feedback here
         if (!this.assureConditionsSatisfied()) return;
 
         const confirmLockRepository = this.translateService.instant('artemisApp.exercise.lockRepositoryWarning');
@@ -226,7 +241,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             return;
         }
 
-        this.courseExerciseService.requestFeedback(this.exercise.id!).subscribe({
+        this.courseExerciseService.requestNonGradedFeedback(this.exercise.id!).subscribe({
             next: (participation: StudentParticipation) => {
                 if (participation) {
                     this.feedbackSent = true;

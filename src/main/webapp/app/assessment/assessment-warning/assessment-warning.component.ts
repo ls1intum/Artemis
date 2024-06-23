@@ -44,7 +44,7 @@ export class AssessmentWarningComponent implements OnChanges {
         if (this.exercise.dueDate) {
             const now = dayjs();
             this.isBeforeExerciseDueDate = now.isBefore(this.exercise.dueDate);
-            this.showWarning = now.isBefore(this.getLatestDueDate()) && !this.exercise.allowFeedbackRequests;
+            this.showWarning = now.isBefore(this.getLatestDueDate()) && !this.exercise.allowManualFeedbackRequests;
         }
     }
 

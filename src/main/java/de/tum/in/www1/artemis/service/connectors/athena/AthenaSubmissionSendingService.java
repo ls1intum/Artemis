@@ -79,7 +79,7 @@ public class AthenaSubmissionSendingService {
      * @param maxRetries number of retries before the request will be canceled
      */
     public void sendSubmissions(Exercise exercise, int maxRetries) {
-        if (!exercise.areFeedbackSuggestionsEnabled()) {
+        if (!exercise.areGradedFeedbackSuggestionsEnabled()) {
             throw new IllegalArgumentException("The Exercise does not have feedback suggestions enabled.");
         }
 
@@ -124,7 +124,7 @@ public class AthenaSubmissionSendingService {
         try {
             final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise),
                     filteredSubmissions.stream().map((submission) -> athenaDTOConverterService.ofSubmission(exercise.getId(), submission)).toList());
-            ResponseDTO response = connector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/submissions", request, maxRetries);
+            ResponseDTO response = connector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise, false) + "/submissions", request, maxRetries);
             log.info("Athena (calculating automatic feedback) responded: {}", response.data);
         }
         catch (NetworkingException error) {

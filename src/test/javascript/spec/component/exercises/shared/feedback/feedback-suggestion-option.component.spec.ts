@@ -38,7 +38,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
     it('should initialize with available modules', async () => {
         const modules = ['Module1', 'Module2'];
         jest.spyOn(athenaService, 'getAvailableModules').mockReturnValue(of(modules));
-        component.exercise = { type: ExerciseType.TEXT, dueDate: futureDueDate, feedbackSuggestionModule: undefined } as Exercise;
+        component.exercise = { type: ExerciseType.TEXT, dueDate: futureDueDate, gradedFeedbackSuggestionModule: undefined } as Exercise;
 
         await component.ngOnInit();
 
@@ -49,7 +49,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
     it('should set isAthenaEnabled$ with the result from athenaService', async () => {
         jest.spyOn(athenaService, 'getAvailableModules').mockReturnValue(of());
         jest.spyOn(athenaService, 'isEnabled').mockReturnValue(of(true));
-        component.exercise = { type: ExerciseType.TEXT, dueDate: futureDueDate, feedbackSuggestionModule: undefined } as Exercise;
+        component.exercise = { type: ExerciseType.TEXT, dueDate: futureDueDate, gradedFeedbackSuggestionModule: undefined } as Exercise;
 
         await component.ngOnInit();
 
@@ -105,11 +105,11 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
         const event = { target: { checked: true } };
         component.toggleFeedbackSuggestions(event);
 
-        expect(component.exercise.feedbackSuggestionModule).toBe('Module1');
+        expect(component.exercise.gradedFeedbackSuggestionModule).toBe('Module1');
 
         event.target.checked = false;
         component.toggleFeedbackSuggestions(event);
 
-        expect(component.exercise.feedbackSuggestionModule).toBeUndefined();
+        expect(component.exercise.gradedFeedbackSuggestionModule).toBeUndefined();
     });
 });

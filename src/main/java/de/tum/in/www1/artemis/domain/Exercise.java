@@ -95,9 +95,8 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Column(name = "allow_complaints_for_automatic_assessments")
     private boolean allowComplaintsForAutomaticAssessments;
 
-    // TODO: rename in a follow up
     @Column(name = "allow_manual_feedback_requests")
-    private boolean allowFeedbackRequests;
+    private boolean allowManualFeedbackRequests;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "included_in_overall_score")
@@ -139,8 +138,11 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Column(name = "second_correction_enabled")
     private Boolean secondCorrectionEnabled = false;
 
-    @Column(name = "feedback_suggestion_module") // Athena module name (Athena enabled) or null
-    private String feedbackSuggestionModule;
+    @Column(name = "graded_feedback_suggestion_module") // Athena module name (Athena enabled) or null
+    private String gradedFeedbackSuggestionModule;
+
+    @Column(name = "non_graded_feedback_suggestion_module") // Athena module name (Athena enabled) or null
+    private String nonGradedFeedbackSuggestionModule;
 
     @ManyToOne
     @JsonView(QuizView.Before.class)
@@ -246,12 +248,12 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         return latestResult.map(result -> result.getScore() >= MIN_SCORE_GREEN).orElse(false);
     }
 
-    public boolean getAllowFeedbackRequests() {
-        return allowFeedbackRequests;
+    public boolean getAllowManualRequests() {
+        return allowManualFeedbackRequests;
     }
 
-    public void setAllowFeedbackRequests(boolean allowFeedbackRequests) {
-        this.allowFeedbackRequests = allowFeedbackRequests;
+    public void setAllowManualFeedbackRequests(boolean allowFeedbackRequests) {
+        this.allowManualFeedbackRequests = allowFeedbackRequests;
     }
 
     public boolean getAllowComplaintsForAutomaticAssessments() {
@@ -819,16 +821,28 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         this.secondCorrectionEnabled = secondCorrectionEnabled;
     }
 
-    public String getFeedbackSuggestionModule() {
-        return feedbackSuggestionModule;
+    public String getGradedFeedbackSuggestionModule() {
+        return gradedFeedbackSuggestionModule;
     }
 
-    public void setFeedbackSuggestionModule(String feedbackSuggestionModule) {
-        this.feedbackSuggestionModule = feedbackSuggestionModule;
+    public void setGradedFeedbackSuggestionModule(String gradedFeedbackSuggestionModule) {
+        this.gradedFeedbackSuggestionModule = gradedFeedbackSuggestionModule;
     }
 
-    public boolean areFeedbackSuggestionsEnabled() {
-        return feedbackSuggestionModule != null;
+    public boolean areGradedFeedbackSuggestionsEnabled() {
+        return gradedFeedbackSuggestionModule != null;
+    }
+
+    public String getNonGradedFeedbackSuggestionModule() {
+        return nonGradedFeedbackSuggestionModule;
+    }
+
+    public void setNonGradedFeedbackSuggestionModule(String nonGradedFeedbackSuggestionModule) {
+        this.nonGradedFeedbackSuggestionModule = nonGradedFeedbackSuggestionModule;
+    }
+
+    public boolean areNonGradedFeedbackSuggestionsEnabled() {
+        return nonGradedFeedbackSuggestionModule != null;
     }
 
     public Set<GradingCriterion> getGradingCriteria() {

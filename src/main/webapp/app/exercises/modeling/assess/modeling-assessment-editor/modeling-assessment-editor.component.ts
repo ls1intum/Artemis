@@ -116,7 +116,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      * current modeling exercise.
      */
     get isFeedbackSuggestionsEnabled(): boolean {
-        return Boolean(this.modelingExercise?.feedbackSuggestionModule);
+        return Boolean(this.modelingExercise?.gradedFeedbackSuggestionModule);
     }
 
     ngOnInit() {
@@ -243,7 +243,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
         // Only load suggestions for new assessments, they don't make sense later.
         // The assessment is new if it only contains automatic feedback.
-        if (this.modelingExercise.feedbackSuggestionModule && (this.result?.feedbacks?.length ?? 0) === this.automaticFeedback.length) {
+        if (this.modelingExercise.gradedFeedbackSuggestionModule && (this.result?.feedbacks?.length ?? 0) === this.automaticFeedback.length) {
             this.feedbackSuggestions = await this.loadFeedbackSuggestions(this.modelingExercise, this.submission);
 
             if (this.result) {

@@ -141,14 +141,14 @@ public class ProgrammingAssessmentService extends AssessmentService {
      * Send feedback to Athena (if enabled for both the Artemis instance and the exercise).
      */
     private void sendFeedbackToAthena(final ProgrammingExercise exercise, final ProgrammingSubmission programmingSubmission, final List<Feedback> feedbacks) {
-        if (athenaFeedbackSendingService.isPresent() && exercise.areFeedbackSuggestionsEnabled()) {
+        if (athenaFeedbackSendingService.isPresent() && exercise.areGradedFeedbackSuggestionsEnabled()) {
             athenaFeedbackSendingService.get().sendFeedback(exercise, programmingSubmission, feedbacks);
         }
     }
 
     private void handleResolvedFeedbackRequest(StudentParticipation participation) {
         var exercise = participation.getExercise();
-        var isManualFeedbackRequest = exercise.getAllowFeedbackRequests() && participation.getIndividualDueDate() != null
+        var isManualFeedbackRequest = exercise.getAllowManualRequests() && participation.getIndividualDueDate() != null
                 && participation.getIndividualDueDate().isBefore(ZonedDateTime.now());
         // We need to use the general exercise due date here and not the individual participation due date.
         // This feature temporarily locks the repository by setting the individual due date to the past.

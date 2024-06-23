@@ -86,7 +86,7 @@
                             }}
                         </div>
                     </div>
-                    @if (exercise.assessmentType === assessmentType.SEMI_AUTOMATIC && !isExamMode && !exercise.allowFeedbackRequests) {
+                    @if (exercise.assessmentType === assessmentType.SEMI_AUTOMATIC && !isExamMode && !exercise.allowManualFeedbackRequests) {
                         <jhi-programming-exercise-test-schedule-date-picker
                             class="test-schedule-date"
                             [(ngModel)]="exercise.assessmentDueDate"
@@ -117,6 +117,27 @@
         </div>
     </div>
     @if (!readOnly) {
+        @if (!isExamMode && (isAthenaEnabled$ | async)) {
+            <!--            if there will be another options for this category, pull the header out-->
+            <h6 jhiTranslate="artemisApp.beforeTheDueDate.beforeTheDueDate"></h6>
+            <div class="form-check">
+                <input
+                    type="checkbox"
+                    class="form-check-input"
+                    name="allowNonGradedFeedbackRequests"
+                    [checked]="!!exercise.nonGradedFeedbackSuggestionModule"
+                    id="allowNonGradedFeedbackRequests"
+                    (change)="toggleNonGradedFeedbackRequests()"
+                />
+                <label
+                    class="form-control-label"
+                    for="allowNonGradedFeedbackRequests"
+                    jhiTranslate="artemisApp.programmingExercise.timeline.allowNonGradedFeedbackRequests"
+                ></label>
+                <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.allowNonGradedFeedbackRequestsTooltip'" />
+            </div>
+            <br />
+        }
         <h6 jhiTranslate="artemisApp.assessment.assessment"></h6>
         @if (isExamMode || exercise.course?.complaintsEnabled) {
             <div class="form-check">
@@ -161,25 +182,25 @@
                 <input
                     type="checkbox"
                     class="form-check-input"
-                    name="allowFeedbackRequests"
-                    [checked]="exercise.allowFeedbackRequests"
+                    name="allowManualFeedbackRequests"
+                    [checked]="exercise.allowManualFeedbackRequests"
                     [disabled]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC"
-                    id="allowFeedbackRequests"
-                    (change)="toggleFeedbackRequests()"
+                    id="allowManualFeedbackRequests"
+                    (change)="toggleManualFeedbackRequests()"
                 />
                 @if (isAthenaEnabled$ | async) {
                     <label
                         [ngStyle]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC ? { color: 'grey' } : {}"
                         class="form-control-label"
-                        for="allowFeedbackRequests"
-                        jhiTranslate="artemisApp.programmingExercise.timeline.allowFeedbackRequests"
+                        for="allowManualFeedbackRequests"
+                        jhiTranslate="artemisApp.programmingExercise.timeline.allowManualFeedbackRequests"
                     ></label>
-                    <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.allowFeedbackRequestsTooltip'" />
+                    <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.allowManualFeedbackRequestsTooltip'" />
                 } @else {
                     <label
                         [ngStyle]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC ? { color: 'grey' } : {}"
                         class="form-control-label"
-                        for="allowFeedbackRequests"
+                        for="allowManualFeedbackRequests"
                         jhiTranslate="artemisApp.programmingExercise.timeline.manualFeedbackRequests"
                     ></label>
                     <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.manualFeedbackRequestsTooltip'" />
