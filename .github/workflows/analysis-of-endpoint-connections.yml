@@ -39,6 +39,14 @@ jobs:
       - name: parse server sided Endpoints
         run: ./gradlew :supporting_scripts:analysis-of-endpoint-connections:parser:run
 
+      - name: Upload JSON files
+        uses: actions/upload-artifact@v2
+        with:
+          name: json-files
+          path: |
+            supporting_scripts/analysis-of-endpoint-connections/endpoints.json
+            supporting_scripts/analysis-of-endpoint-connections/restCalls.json
+
   analysis-of-endpoint-connections:
     needs: parse-rest-calls-and-endpoints
     timeout-minutes: 10
@@ -54,6 +62,12 @@ jobs:
         with:
           java-version: '${{ env.java }}'
           distribution: 'adopt'
+
+      - name: Download JSON files
+        uses: actions/download-artifact@v2
+        with:
+          name: json-files
+          path: supporting_scripts/analysis-of-endpoint-connections/
 
       - name: Analyze Endpoints
         run:
