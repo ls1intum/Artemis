@@ -320,7 +320,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
         @BeforeEach
         void setup() {
             final var users = userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
-            user = users.get(0);
+            user = users.getFirst();
             course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusDays(8), new HashSet<>(), TEST_PREFIX + "tumuser",
                     TEST_PREFIX + "tutor", TEST_PREFIX + "editor", TEST_PREFIX + "instructor");
             course = courseRepository.save(course);
@@ -369,7 +369,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
         @BeforeEach
         void setup() {
             final var users = userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
-            user = users.get(0);
+            user = users.getFirst();
             course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusDays(8), new HashSet<>(), TEST_PREFIX + "tumuser",
                     TEST_PREFIX + "tutor", TEST_PREFIX + "editor", TEST_PREFIX + "instructor");
             course = courseRepository.save(course);
@@ -474,8 +474,8 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
             competency2.setMasteryThreshold(100);
             competency2 = competencyRepository.save(competency2);
 
-            competencyProgressUtilService.createCompetencyProgress(competency1, user, 30, 30);
-            competencyProgressUtilService.createCompetencyProgress(competency2, user, 10, 10);
+            competencyProgressUtilService.createCompetencyProgress(competency1, user, 30, 1.1);
+            competencyProgressUtilService.createCompetencyProgress(competency2, user, 10, 0.9);
 
             var sourceNodeId = LearningPathNgxService.getCompetencyEndNodeId(competency1.getId());
             var targetNodeId = LearningPathNgxService.getCompetencyStartNodeId(competency2.getId());
@@ -486,7 +486,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         private void masterCompetencies(Competency... competencies) {
             for (var competency : competencies) {
-                competencyProgressUtilService.createCompetencyProgress(competency, user, 100, 100);
+                competencyProgressUtilService.createCompetencyProgress(competency, user, 100, 1);
             }
         }
     }
@@ -509,7 +509,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
         @BeforeEach
         void setup() {
             final var users = userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
-            user = users.get(0);
+            user = users.getFirst();
             course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusDays(8), new HashSet<>(), TEST_PREFIX + "tumuser",
                     TEST_PREFIX + "tutor", TEST_PREFIX + "editor", TEST_PREFIX + "instructor");
             course = courseRepository.save(course);
@@ -517,7 +517,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
             lecture = lectureUtilService.createLecture(course, ZonedDateTime.now());
 
             competency = competencyUtilService.createCompetency(course);
-            competency.setMasteryThreshold(90);
+            competency.setMasteryThreshold(100);
             competency = competencyRepository.save(competency);
             expectedNodes = new HashSet<>(getExpectedNodesOfEmptyCompetency(competency));
             expectedEdges = new HashSet<>();
@@ -574,11 +574,11 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         @Test
         void testRecommendCorrectAmountOfLearningObjects() {
-            competency.setMasteryThreshold(55);
+            competency.setMasteryThreshold(40);
             competency = competencyRepository.save(competency);
 
             generateLectureUnits(1);
-            generateExercises(10);
+            generateExercises(9);
             exercises[0].setDifficulty(DifficultyLevel.EASY);
             exercises[1].setDifficulty(DifficultyLevel.MEDIUM);
             exercises[2].setDifficulty(DifficultyLevel.HARD);

@@ -172,22 +172,6 @@ export class CompetencyService {
         return this.httpClient.post<Competency[]>(`${this.resourceURL}/courses/${courseId}/competencies/generate-from-description`, courseDescription, { observe: 'response' });
     }
 
-    //prerequisites
-
-    getAllPrerequisitesForCourse(courseId: number): Observable<EntityArrayResponseType> {
-        return this.httpClient
-            .get<Competency[]>(`${this.resourceURL}/courses/${courseId}/prerequisites`, { observe: 'response' })
-            .pipe(tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))));
-    }
-
-    addPrerequisite(competencyId: number, courseId: number): Observable<EntityResponseType> {
-        return this.httpClient.post(`${this.resourceURL}/courses/${courseId}/prerequisites/${competencyId}`, null, { observe: 'response' });
-    }
-
-    removePrerequisite(competencyId: number, courseId: number) {
-        return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/prerequisites/${competencyId}`, { observe: 'response' });
-    }
-
     //relations
 
     createCompetencyRelation(relation: CompetencyRelation, courseId: number) {

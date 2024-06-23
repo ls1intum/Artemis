@@ -63,7 +63,17 @@ function getFilePaths(directoryPath: string): string[] {
     return filePaths;
 }
 
-// This function will be called for each node in the AST
+/**
+ * This function is used to visit each node in the Abstract Syntax Tree (AST) of a TypeScript file.
+ * It checks if the node is a class declaration or a call expression and processes it accordingly.
+ * It also recursively visits all child nodes of the current node.
+ *
+ * @param node - The current node in the AST.
+ * @param classProperties - An object that maps class property names to their values.
+ * @param parameterTypes - An object that maps parameter names to their types.
+ * @param sourceFile - The TypeScript source file being analyzed.
+ * @param fileName - The name of the TypeScript file.
+ */
 function visit(node: Node, classProperties: { [key: string]: string }, parameterTypes: { [key: string]: string }, sourceFile: SourceFile, fileName: string, restCalls: Array<{method: string, url: string, line: number, filePath: string}>) {
     if (isClassDeclaration(node)) {
         processClassDeclaration(node, classProperties, parameterTypes);
@@ -77,6 +87,16 @@ function visit(node: Node, classProperties: { [key: string]: string }, parameter
     forEachChild(node, (childNode) => visit(childNode, classProperties, parameterTypes, sourceFile, fileName, restCalls));
 }
 
+/**
+ * Processes a TypeScript class declaration node in the Abstract Syntax Tree (AST).
+ * It iterates over the members of the class declaration. If a member is a constructor declaration,
+ * it processes the constructor declaration. If a member is a property declaration with a string literal initializer,
+ * it adds the property to the classProperties object.
+ *
+ * @param classDeclaration - The class declaration node to process.
+ * @param classProperties - An object that maps class property names to their values.
+ * @param parameterTypes - An object that maps parameter names to their types.
+ */
 function processClassDeclaration(classDeclaration: ClassDeclaration, classProperties: { [key: string]: string }, parameterTypes: { [key: string]: string }) {
     for (const member of classDeclaration.members) {
         if (isConstructorDeclaration(member)) {
@@ -91,6 +111,14 @@ function processClassDeclaration(classDeclaration: ClassDeclaration, classProper
     }
 }
 
+/**
+ * Processes a TypeScript constructor declaration node in the Abstract Syntax Tree (AST).
+ * It iterates over the parameters of the constructor declaration. If a parameter is a type reference,
+ * it adds the parameter to the parameterTypes object.
+ *
+ * @param constructorDeclaration - The constructor declaration node to process.
+ * @param parameterTypes - An object that maps parameter names to their types.
+ */
 function processConstructorDeclaration(constructorDeclaration: ConstructorDeclaration, parameterTypes: { [key: string]: string }) {
     for (const param of constructorDeclaration.parameters) {
         if (isParameter(param) && param.type && isTypeReferenceNode(param.type)) {
@@ -101,6 +129,18 @@ function processConstructorDeclaration(constructorDeclaration: ConstructorDeclar
     }
 }
 
+/**
+ * Processes a TypeScript call expression node in the Abstract Syntax Tree (AST).
+ * It checks if the expression is a property access expression (e.g. httpClient.get).
+ * If the property name is one of the httpClient methods and the object is of type HttpClient,
+ * it logs the REST call.
+ *
+ * @param callExpression - The call expression node to process.
+ * @param classProperties - An object that maps class property names to their values.
+ * @param parameterTypes - An object that maps parameter names to their types.
+ * @param sourceFile - The TypeScript source file being analyzed.
+ * @param fileName - The name of the TypeScript file.
+ */
 function processCallExpression(callExpression: CallExpression, classProperties: { [key: string]: string }, parameterTypes: { [key: string]: string }, sourceFile: SourceFile, fileName: string, restCalls: Array<{method: string, url: string, line: number, filePath: string}>) {
     const expression = callExpression.expression;
     // Check if the expression is a property access expression (e.g. httpClient.get)
@@ -114,6 +154,18 @@ function processCallExpression(callExpression: CallExpression, classProperties: 
     }
 }
 
+/**
+ * Logs the details of a REST call found in the TypeScript file.
+ * It logs the method name, URL, and arguments of the REST call.
+ * If it's the first REST call found in the file, it also logs the file name.
+ * It replaces class properties in the URL with their actual values.
+ *
+ * @param restCall - The call expression node representing the REST call.
+ * @param methodName - The name of the REST method (e.g. 'get', 'post', etc.).
+ * @param classProperties - An object that maps class property names to their values.
+ * @param sourceFile - The TypeScript source file being analyzed.
+ * @param fileName - The name of the TypeScript file.
+ */
 function logRestCall(restCall: CallExpression, methodName: string, classProperties: { [key: string]: string }, sourceFile: SourceFile, fileName: string, restCalls: Array<{method: string, url: string, line: number, filePath: string}>) {
     if (isFirstRestCall) {
         console.log('===================================');
