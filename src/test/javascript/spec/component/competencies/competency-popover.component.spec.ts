@@ -6,7 +6,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterTestingModule } from '@angular/router/testing';
 import { CompetenciesPopoverComponent } from 'app/course/competencies/competencies-popover/competencies-popover.component';
 import { By } from '@angular/platform-browser';
-import { Competency } from 'app/entities/competency.model';
 import { Component } from '@angular/core';
 import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
 
@@ -58,7 +57,7 @@ describe('CompetencyPopoverComponent', () => {
     it('should navigate to course competencies', fakeAsync(() => {
         const location: Location = TestBed.inject(Location);
         competencyPopoverComponent.navigateTo = 'courseCompetencies';
-        competencyPopoverComponent.competencies = [new Competency()];
+        competencyPopoverComponent.competencies = [{}];
         competencyPopoverComponent.courseId = 1;
         competencyPopoverComponentFixture.detectChanges();
         const popoverButton = competencyPopoverComponentFixture.debugElement.nativeElement.querySelector('button');
@@ -73,7 +72,7 @@ describe('CompetencyPopoverComponent', () => {
     it('should navigate to competency management', fakeAsync(() => {
         const location: Location = TestBed.inject(Location);
         competencyPopoverComponent.navigateTo = 'competencyManagement';
-        competencyPopoverComponent.competencies = [new Competency()];
+        competencyPopoverComponent.competencies = [{}];
         competencyPopoverComponent.courseId = 1;
         competencyPopoverComponentFixture.detectChanges();
         const popoverButton = competencyPopoverComponentFixture.debugElement.nativeElement.querySelector('button');
