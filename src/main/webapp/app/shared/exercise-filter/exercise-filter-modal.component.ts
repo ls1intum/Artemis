@@ -99,9 +99,10 @@ export class ExerciseFilterModalComponent {
     resultFormatter = (exerciseCategory: ExerciseCategoryFilterOption) => exerciseCategory.category.category ?? '';
 
     onSelectItem(event: any) {
+        event.preventDefault(); // otherwise clearing the input field will not work https://stackoverflow.com/questions/39783936/how-to-clear-the-typeahead-input-after-a-result-is-selected
         const filterOption: ExerciseCategoryFilterOption = event.item;
         filterOption.searched = true;
-        this.model = ''; // Clear the input field after selection
+        this.model = undefined; // Clear the input field after selection
     }
 
     removeItem(item: ExerciseCategoryFilterOption) {
