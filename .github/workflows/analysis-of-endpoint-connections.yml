@@ -9,6 +9,12 @@ on:
       - 'src/main/java/**'
       - 'src/main/webapp/**'
 
+# Keep in sync with build.yml and test.yml and codeql-analysis.yml
+env:
+  CI: true
+  node: 20
+  java: 21
+
 jobs:
   analysis-of-endpoint-connections:
     timeout-minutes: 10
@@ -27,7 +33,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20.8.0'
+          node-version: '${{ env.node }}'
 
       - name: Install and compile TypeScript
         run: |
@@ -43,7 +49,7 @@ jobs:
       - name: Set up JDK 21
         uses: actions/setup-java@v2
         with:
-          java-version: '21'
+          java-version: '${{ env.java }}'
           distribution: 'adopt'
 
       - name: Run analysis-of-endpoint-connections
