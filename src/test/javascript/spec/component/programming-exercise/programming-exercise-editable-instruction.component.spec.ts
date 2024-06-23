@@ -121,6 +121,12 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(subscribeForTestCaseSpy).toHaveBeenNthCalledWith(1, exercise.id);
         expect(comp.exerciseTestCases).toHaveLength(2);
         expect(comp.exerciseTestCases).toEqual(['test1', 'test2']);
+        const testCaseValues = comp.testCaseAction.getValues();
+        expect(testCaseValues).toHaveLength(2);
+        expect(testCaseValues).toEqual([
+            { value: 'test1', id: 'test1' },
+            { value: 'test2', id: 'test2' },
+        ]);
 
         fixture.destroy();
         flush();
