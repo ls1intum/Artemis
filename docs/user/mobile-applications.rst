@@ -16,8 +16,10 @@ Both apps use native user interface components and are adapted to their associat
 
 The mobile applications have been designed to be compatible with all Artemis instances. Therefore, users of all Artemis instances can use the mobile application provided by us. Nevertheless, it is possible to fork our repositories and release your own versions of the mobile applications.
 
-Below, we only explain the functionalities of the mobile applications that differ or are not present in the web application. For all other features, which are supported by both the mobile applications and the web application, please refer to their associated documentation.
+.. note::
 
+    Below, we only explain the functionalities of the mobile applications that differ or are not present in the web application.
+    For all other features, which are supported by both the mobile applications and the web application, please refer to their associated documentation.
 
 Android Application
 -------------------
@@ -144,6 +146,10 @@ The iOS application supports the following features:
     <iframe src="https://live.rbg.tum.de/w/artemisintro/35219?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
         Video tutorial of the Messaging features on TUM-Live.
     </iframe>
+
+.. note::
+
+    The iOS app caches messages drafts for up to one day.
 
 #. Receive push notifications:
     #. Optionally opt in and out of push notifications
