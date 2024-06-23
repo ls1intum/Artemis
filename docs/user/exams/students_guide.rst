@@ -113,11 +113,12 @@ Exam Conduction
    :alt: Exercise Overview Screen
    :align: center
 
-- On the left side of the page, you will find the *Exam Navigation Sidebar*. You can use this sidebar to navigate between different exercises. For each exercise, an icon will display your current status. You can also find the number of saved and submitted exercises next to the *Overview* in the navigation sidebar.
+- On the left side of the page, you will find the *Exam Navigation Sidebar*. You can use this sidebar to navigate between different exercises. For each exercise, an icon will display your current status.
 
     - When there are unsaved **or** unsubmitted changes, the exercise representation in the navigation sidebar becomes |exam_unsaved|.
     - When your changes are saved **and** submitted, the exercise representation in the navigation sidebar becomes |exam_saved|.
     - |exam_started| indicates that you have not started this exercise.
+    - |saved_exercises| indicates the number of saved **and** submitted exercises out of the total number of exercises. Here, there are 5 exercises in total, and 2 out of the 5 have been saved and submitted. 
 
 - Once you click on another exercise in the navigation sidebar, your changes will be saved and submitted automatically. 
 - You can also collapse the navigation sidebar to maximize the size of the exercises by clicking on |collapse_sidebar|. When the sidebar is collapsed, you can still see the exercise type and current status of the exercise.
@@ -129,7 +130,9 @@ Exam Conduction
    :alt: Exam Navigation
    :align: center
 
-- On the header, you will find the exam bar that includes remaining time and the |hand_in_early| button. If you press on this button, you will be sent to the exam `End Screen`_.
+   Exam Navigation Sidebar
+
+- On the header, you will find the exam bar that includes remaining time and the |exam_hand_in_early| button. If you press on this button, you will be sent to the exam `End Screen`_.
 - The *time left* until the end of the exam is also shown next to the button.
 
     .. note::
@@ -139,7 +142,7 @@ Exam Conduction
    :alt: Exam Navigation
    :align: center
 
-   Exam Navigation Bar
+   Exam Bar
 
 Participating in Quiz Exercises
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -320,10 +323,10 @@ If your instructor updates the problem statement for an exercise during the exam
 End Screen
 ^^^^^^^^^^
 - When you are finished with the exercises, or the time runs out you navigate to the *End Screen*.
-- This is done either by clicking on |hand_in_early| or automatically when the exam conduction time is over.
+- This is done either by clicking on |exam_hand_in_early| or automatically when the exam conduction time is over.
 
     .. note::
-        If you navigated to this screen via |hand_in_early|, you have the option to return to the conduction by clicking on |continue|.
+        If you navigated to this screen via |exam_hand_in_early|, you have the option to return to the conduction by clicking on |continue|.
 
 - In this screen you should confirm that you followed all the rules and sign with your full name, similar to the `Welcome Screen`_.
 - You are given an additional ``grace period`` to submit the exam after the conduction is over. This additional time is added to the timer shown on the top right.
@@ -472,3 +475,5 @@ Grades
 .. |exam_started| image:: student/buttons/exam_started.png
 .. |collapse_sidebar| image:: student/buttons/collapse_sidebar.png
 .. |exam_no_results_found| image:: student/buttons/exam_no_results_found.png
+.. |exam_hand_in_early| image:: student/buttons/exam_hand_in_early.png
+.. |saved_exercises| image:: student/buttons/saved_exercises.png
