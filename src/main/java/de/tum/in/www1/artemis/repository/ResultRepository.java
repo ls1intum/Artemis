@@ -87,7 +87,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     List<Result> findLatestResultsForExercise(@Param("exerciseId") long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "feedbacks, testCase")
-    List<Result> findResultsWithFeedbacksAndTestCaseByIdIn(@Param("ids") List<Long> ids);
+    List<Result> findResultsWithFeedbacksAndTestCaseByIdIn(List<Long> ids);
 
     /**
      * Get the latest results for each programming exercise student participation in an exercise from the database together with the list of feedback items.
