@@ -25,7 +25,7 @@ export class MonacoTestCaseAction extends MonacoEditorDomainActionWithOptions {
             const languageId = model.getLanguageId();
             const modelId = model.id;
             this.disposableCompletionProvider = monaco.languages.registerCompletionItemProvider(languageId, {
-                provideCompletionItems: (model: monaco.editor.ITextModel, position: monaco.Position) => {
+                provideCompletionItems: (model: monaco.editor.ITextModel, position: monaco.Position): monaco.languages.CompletionList | undefined => {
                     if (model.id !== modelId) {
                         return undefined;
                     }

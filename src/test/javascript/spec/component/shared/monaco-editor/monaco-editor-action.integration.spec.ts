@@ -21,6 +21,7 @@ import { MonacoUrlAction } from 'app/shared/monaco-editor/model/actions/monaco-u
 import { MonacoAttachmentAction } from 'app/shared/monaco-editor/model/actions/monaco-attachment.action';
 import { MonacoOrderedListAction } from 'app/shared/monaco-editor/model/actions/monaco-ordered-list.action';
 import { MonacoUnorderedListAction } from 'app/shared/monaco-editor/model/actions/monaco-unordered-list.action';
+import * as monaco from 'monaco-editor';
 
 describe('MonacoEditorActionIntegration', () => {
     let fixture: ComponentFixture<MonacoEditorComponent>;
@@ -131,6 +132,41 @@ describe('MonacoEditorActionIntegration', () => {
         comp.setText('');
         action.executeInCurrentEditor();
         expect(comp.getText()).toBe(MonacoTestCaseAction.DEFAULT_INSERT_TEXT);
+    });
+
+    it('should throw when trying to register a completer without a model', () => {
+        const action = new MonacoTestCaseAction();
+        const registerAction = () => comp.registerAction(action);
+        // Detach model (should not happen in practice)
+        comp['_editor'].setModel(null);
+        expect(registerAction).toThrow(Error);
+    });
+
+    it('should provide test case completions', () => {
+        comp.changeModel('testCase', '', 'custom-md');
+        const model = comp.models[0];
+        const action = new MonacoTestCaseAction();
+        action.values = [
+            { value: 'testCase1', id: '1' },
+            { value: 'testCase2', id: '2' },
+        ];
+        const registerCompletionProviderSpy = jest.spyOn(monaco.languages, 'registerCompletionItemProvider').mockImplementation();
+        comp.registerAction(action);
+        expect(registerCompletionProviderSpy).toHaveBeenCalledOnce();
+        const completionFunction = registerCompletionProviderSpy.mock.calls[0][1].provideCompletionItems;
+        expect(completionFunction).toBeDefined();
+        // We do not use completionContext and cancellationToken, but they are required by the function signature. Therefore, we pass empty objects.
+        const completionList = completionFunction(model, new monaco.Position(1, 1), {} as monaco.languages.CompletionContext, {} as monaco.CancellationToken);
+        const suggestions = (completionList as monaco.languages.CompletionList)!.suggestions;
+        expect(suggestions).toHaveLength(2);
+        expect(suggestions[0].label).toBe(action.values[0].value);
+        expect(suggestions[1].label).toBe(action.values[1].value);
+
+        // The completion provider should only provide completions for the current model.
+        comp.changeModel('other', '', 'custom-md');
+        const otherModel = comp.models[1];
+        const completionListOther = completionFunction(otherModel, new monaco.Position(1, 1), {} as monaco.languages.CompletionContext, {} as monaco.CancellationToken);
+        expect(completionListOther).toBeUndefined();
     });
 
     it('should insert tasks', () => {
