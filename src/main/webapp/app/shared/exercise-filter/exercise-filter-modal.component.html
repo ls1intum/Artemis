@@ -12,7 +12,7 @@
             <input
                 id="exercise-categories-filter-selection"
                 type="text"
-                class="form-control"
+                class="form-control mb-2"
                 name="category-filter-selection"
                 [(ngModel)]="model"
                 [ngbTypeahead]="search"
@@ -25,19 +25,19 @@
                 [resultFormatter]="resultFormatter"
             />
 
-            @if (selectedCategoryOptions.length) {
-                <ul>
+            <div class="row">
+                <div class="d-flex flex-row flex-wrap">
                     @for (categoryFilterOption of selectedCategoryOptions; track categoryFilterOption) {
-                        <li>
+                        <div class="p-1">
                             <jhi-custom-exercise-category-badge
                                 [category]="categoryFilterOption.category"
                                 [displayRemoveButton]="true"
                                 [onClick]="getRemoveItemFunction(categoryFilterOption)"
                             />
-                        </li>
+                        </div>
                     }
-                </ul>
-            }
+                </div>
+            </div>
         </div>
 
         @if (typeFilters?.length ?? 0 > 1) {
