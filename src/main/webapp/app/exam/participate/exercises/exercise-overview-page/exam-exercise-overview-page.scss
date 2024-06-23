@@ -1,9 +1,7 @@
 .synced {
-    color: #3e8acc;
-}
-
-.notSynced {
-    color: #e8bf48;
+    --fa-secondary-color: var(--bs-body-color);
+    --fa-secondary-opacity: 1;
+    --fa-primary-color: var(--success);
 }
 
 .exercise-table {

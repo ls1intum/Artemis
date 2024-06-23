@@ -4,7 +4,8 @@ import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.comp
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamExerciseOverviewItem } from 'app/entities/exam-exercise-overview-item.model';
 import { ButtonTooltipType, ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
+import { faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
+import { facSaveSuccess } from '../../../../../content/icons/icons';
 
 @Component({
     selector: 'jhi-exam-exercise-overview-page',
@@ -30,7 +31,7 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
         this.studentExam.exercises?.forEach((exercise) => {
             const item = new ExamExerciseOverviewItem();
             item.exercise = exercise;
-            item.icon = faEdit;
+            item.icon = faHourglassHalf;
             this.examExerciseOverviewItems.push(item);
         });
     }
@@ -58,24 +59,24 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
      * @param item the item for which the exercise status should be calculated
      * @return the sync status of the exercise (whether the corresponding submission is saved on the server or not)
      */
-    setExerciseIconStatus(item: ExamExerciseOverviewItem): 'synced' | 'notSynced' {
+    setExerciseIconStatus(item: ExamExerciseOverviewItem): 'synced' | '' {
         // start with a yellow status (edit icon)
-        item.icon = faEdit;
+        item.icon = faHourglassHalf;
         const submission = ExamParticipationService.getSubmissionForExercise(item.exercise);
         if (!submission) {
             // in case no participation/submission yet exists -> display synced
             return 'synced';
         }
         if (submission.submitted) {
-            item.icon = faCheck;
+            item.icon = facSaveSuccess;
         }
         if (submission.isSynced) {
             // make status blue
             return 'synced';
         } else {
             // make status yellow
-            item.icon = faEdit;
-            return 'notSynced';
+            item.icon = faHourglassHalf;
+            return '';
         }
     }
 
