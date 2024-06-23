@@ -56,6 +56,14 @@ public interface CoverageReportRepository extends ArtemisJpaRepository<CoverageR
     @EntityGraph(type = LOAD, attributePaths = "submission")
     List<CoverageReport> findCoverageReportsWithSubmissionByIdIn(List<Long> ids);
 
+    /**
+     * Retrieves the latest coverage reports with legal submissions for a specific programming exercise, with pagination support.
+     * This method avoids in-memory paging by retrieving the coverage report IDs directly from the database.
+     *
+     * @param programmingExerciseId the ID of the programming exercise to retrieve the coverage reports for
+     * @param pageable              the pagination information
+     * @return a list of {@code CoverageReport} with legal submissions, or an empty list if no reports are found
+     */
     default List<CoverageReport> getLatestCoverageReportsWithLegalSubmissionsForProgrammingExercise(Long programmingExerciseId, Pageable pageable) {
         List<Long> ids = findCoverageReportsByProgrammingExerciseId(programmingExerciseId, pageable).stream().map(CoverageReportAndSubmissionDate::coverageReport)
                 .map(DomainObject::getId).toList();
@@ -68,6 +76,15 @@ public interface CoverageReportRepository extends ArtemisJpaRepository<CoverageR
     @EntityGraph(type = LOAD, attributePaths = "submission, fileReports, testwiseCoverageEntries")
     List<CoverageReport> findDistinctCoverageReportsWithEagerRelationshipsByIdIn(List<Long> ids);
 
+    /**
+     * Retrieves the latest coverage reports with legal submissions for a specific programming exercise, including eager loading of file reports and entries, with pagination
+     * support.
+     * This method avoids in-memory paging by retrieving the coverage report IDs directly from the database.
+     *
+     * @param programmingExerciseId the ID of the programming exercise to retrieve the coverage reports for
+     * @param pageable              the pagination information
+     * @return a list of distinct {@code CoverageReport} with eager relationships, or an empty list if no reports are found
+     */
     default List<CoverageReport> getLatestCoverageReportsForLegalSubmissionsForProgrammingExerciseWithEagerFileReportsAndEntries(Long programmingExerciseId, Pageable pageable) {
         List<Long> ids = findCoverageReportsByProgrammingExerciseId(programmingExerciseId, pageable).stream().map(CoverageReportAndSubmissionDate::coverageReport)
                 .map(DomainObject::getId).toList();

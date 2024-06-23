@@ -45,6 +45,15 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface ProgrammingExerciseRepository extends DynamicSpecificationRepository<ProgrammingExercise, Long, ProgrammingExerciseFetchOptions> {
 
+    /**
+     * Finds a programming exercise by its ID using the provided specification. If the exercise is not found, an {@code EntityNotFoundException} is thrown.
+     * This method ensures that the exercise is retrieved directly from the database without in-memory paging.
+     *
+     * @param specification the specification to apply for finding the programming exercise
+     * @param exerciseId    the ID of the programming exercise to find
+     * @return the found {@code ProgrammingExercise}
+     * @throws EntityNotFoundException if no programming exercise is found with the given ID
+     */
     default ProgrammingExercise findOneByIdElseThrow(final Specification<ProgrammingExercise> specification, long exerciseId) {
         final Specification<ProgrammingExercise> hasIdSpec = (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get(DomainObject_.ID), exerciseId);
 

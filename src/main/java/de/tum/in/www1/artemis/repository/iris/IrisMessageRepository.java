@@ -52,6 +52,15 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
     @EntityGraph(type = LOAD, attributePaths = { "content" })
     IrisMessage findIrisMessageById(long irisMessageId);
 
+    /**
+     * Finds the first message with content by session ID and sender, ordered by the sent date in descending order.
+     * This method avoids in-memory paging by retrieving the message directly from the database.
+     *
+     * @param sessionId the ID of the session to find the message for
+     * @param sender    the sender of the message
+     * @return the first {@code IrisMessage} with content, ordered by sent date in descending order,
+     *         or null if no message is found
+     */
     default IrisMessage findFirstWithContentBySessionIdAndSenderOrderBySentAtDesc(long sessionId, @NotNull IrisMessageSender sender) {
         var irisMessage = findFirstBySessionIdAndSenderOrderBySentAtDesc(sessionId, sender);
         if (irisMessage.isEmpty()) {

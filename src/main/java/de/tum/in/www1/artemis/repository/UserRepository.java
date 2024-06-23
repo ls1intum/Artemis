@@ -633,6 +633,15 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             """)
     long countUsersByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId);
 
+    /**
+     * Searches for users by login or name within a course and returns a list of distinct users along with their groups.
+     * This method avoids in-memory paging by retrieving the user IDs directly from the database.
+     *
+     * @param pageable    the pagination information
+     * @param loginOrName the login or name of the users to search for
+     * @param courseId    the ID of the course to search within
+     * @return a list of distinct users with their groups, or an empty list if no users are found
+     */
     default List<User> searchAllWithGroupsByLoginOrNameInCourseAndReturnList(Pageable pageable, String loginOrName, long courseId) {
         List<Long> userIds = findUserIdsByLoginOrNameInCourse(loginOrName, courseId, pageable);
 
@@ -643,6 +652,15 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         return findDistinctUsersWithGroupsByIdIn(userIds);
     }
 
+    /**
+     * Searches for users by login or name within a course and returns a paginated list of distinct users along with their groups.
+     * This method avoids in-memory paging by retrieving the user IDs directly from the database.
+     *
+     * @param pageable    the pagination information
+     * @param loginOrName the login or name of the users to search for
+     * @param courseId    the ID of the course to search within
+     * @return a {@code Page} containing a list of distinct users with their groups, or an empty page if no users are found
+     */
     default Page<User> searchAllWithGroupsByLoginOrNameInCourseAndReturnPage(Pageable pageable, String loginOrName, long courseId) {
         List<Long> userIds = findUserIdsByLoginOrNameInCourse(loginOrName, courseId, pageable);
 

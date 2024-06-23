@@ -61,6 +61,14 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
     @EntityGraph(type = LOAD, attributePaths = { "results" })
     Optional<ProgrammingSubmission> findProgrammingSubmissionWithResultsById(long programmingSubmissionId);
 
+    /**
+     * Finds the first programming submission by participation ID, including its results, ordered by submission date in descending order. To avoid in-memory paging by retrieving
+     * the first submission directly from the database.
+     *
+     * @param programmingSubmissionId the ID of the participation to find the submission for
+     * @return an {@code Optional} containing the first {@code ProgrammingSubmission} with results, ordered by submission date in descending order,
+     *         or an empty {@code Optional} if no submission is found
+     */
     default Optional<ProgrammingSubmission> findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(long programmingSubmissionId) {
         var programmingSubmissionOptional = findFirstByParticipationIdOrderBySubmissionDateDesc(programmingSubmissionId);
         if (programmingSubmissionOptional.isEmpty()) {

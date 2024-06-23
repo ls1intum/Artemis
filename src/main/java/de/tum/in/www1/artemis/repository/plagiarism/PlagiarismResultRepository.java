@@ -28,6 +28,14 @@ public interface PlagiarismResultRepository extends ArtemisJpaRepository<Plagiar
     @EntityGraph(type = LOAD, attributePaths = "comparisons")
     PlagiarismResult<?> findPlagiarismResultById(long plagiarismResultId);
 
+    /**
+     * Finds the first plagiarism result by exercise ID, including its comparisons, ordered by last modified date in descending order.
+     * If no plagiarism result is found, this method returns null. This method avoids in-memory paging by retrieving the result directly from the database.
+     *
+     * @param exerciseId the ID of the exercise to find the plagiarism result for
+     * @return the first {@code PlagiarismResult} with comparisons, ordered by last modified date in descending order,
+     *         or null if no result is found
+     */
     @Nullable
     default PlagiarismResult<?> findFirstWithComparisonsByExerciseIdOrderByLastModifiedDateDescOrNull(long exerciseId) {
         var plagiarismResultIdOrEmpty = findFirstByExerciseIdOrderByLastModifiedDateDesc(exerciseId);

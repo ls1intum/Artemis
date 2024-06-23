@@ -110,6 +110,14 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     @EntityGraph(type = LOAD, attributePaths = "feedbacks, testCase")
     Optional<Result> findResultWithFeedbacksAndTestCasesById(long resultId);
 
+    /**
+     * Finds the first result by participation ID, including its feedback and test cases, ordered by completion date in descending order.
+     * This method avoids in-memory paging by retrieving the first result directly from the database.
+     *
+     * @param participationId the ID of the participation to find the result for
+     * @return an {@code Optional} containing the first {@code Result} with feedback and test cases, ordered by completion date in descending order,
+     *         or an empty {@code Optional} if no result is found
+     */
     default Optional<Result> findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(long participationId) {
         var resultOptional = findFirstByParticipationIdOrderByCompletionDateDesc(participationId);
         if (resultOptional.isEmpty()) {
@@ -122,6 +130,14 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     @EntityGraph(type = LOAD, attributePaths = "submission, testCase, feedbacks")
     Optional<Result> findResultWithSubmissionAndFeedbacksTestCasesById(long resultId);
 
+    /**
+     * Finds the first result by participation ID, including its submission, feedback, and test cases, ordered by completion date in descending order.
+     * This method avoids in-memory paging by retrieving the first result directly from the database.
+     *
+     * @param participationId the ID of the participation to find the result for
+     * @return an {@code Optional} containing the first {@code Result} with submission, feedback, and test cases, ordered by completion date in descending order,
+     *         or an empty {@code Optional} if no result is found
+     */
     default Optional<Result> findFirstWithSubmissionAndFeedbacksAndTestCasesByParticipationIdOrderByCompletionDateDesc(long participationId) {
         var resultOptional = findFirstByParticipationIdOrderByCompletionDateDesc(participationId);
         if (resultOptional.isEmpty()) {
@@ -134,6 +150,14 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     @EntityGraph(type = LOAD, attributePaths = "submission")
     Optional<Result> findResultWithSubmissionsById(long resultId);
 
+    /**
+     * Finds the first result by participation ID, including its submissions, ordered by completion date in descending order.
+     * This method avoids in-memory paging by retrieving the first result directly from the database.
+     *
+     * @param participationId the ID of the participation to find the result for
+     * @return an {@code Optional} containing the first {@code Result} with submissions, ordered by completion date in descending order,
+     *         or an empty {@code Optional} if no result is found
+     */
     default Optional<Result> findFirstWithSubmissionsByParticipationIdOrderByCompletionDateDesc(long participationId) {
         var resultOptional = findFirstByParticipationIdOrderByCompletionDateDesc(participationId);
         if (resultOptional.isEmpty()) {
@@ -145,6 +169,15 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
 
     Optional<Result> findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(long participationId, boolean rated);
 
+    /**
+     * Finds the first rated or unrated result by participation ID, including its submission, ordered by completion date in descending order.
+     * This method avoids in-memory paging by retrieving the first result directly from the database.
+     *
+     * @param participationId the ID of the participation to find the result for
+     * @param rated           a boolean indicating whether to find a rated or unrated result
+     * @return an {@code Optional} containing the first {@code Result} with submissions, ordered by completion date in descending order,
+     *         or an empty {@code Optional} if no result is found
+     */
     default Optional<Result> findFirstByParticipationIdAndRatedWithSubmissionOrderByCompletionDateDesc(long participationId, boolean rated) {
         var resultOptional = findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participationId, rated);
         if (resultOptional.isEmpty()) {

@@ -52,6 +52,15 @@ public interface IrisExerciseChatSessionRepository extends ArtemisJpaRepository<
     @EntityGraph(type = LOAD, attributePaths = "messages")
     List<IrisExerciseChatSession> findSessionsWithMessagesByIdIn(List<Long> ids);
 
+    /**
+     * Finds the latest chat sessions by exercise ID and user ID, including their messages, with pagination support.
+     * This method avoids in-memory paging by retrieving the session IDs directly from the database.
+     *
+     * @param exerciseId the ID of the exercise to find the chat sessions for
+     * @param userId     the ID of the user to find the chat sessions for
+     * @param pageable   the pagination information
+     * @return a list of {@code IrisExerciseChatSession} with messages, or an empty list if no sessions are found
+     */
     default List<IrisExerciseChatSession> findLatestByExerciseIdAndUserIdWithMessages(Long exerciseId, Long userId, Pageable pageable) {
         List<Long> ids = findSessionsByExerciseIdAndUserId(exerciseId, userId, pageable).stream().map(DomainObject::getId).toList();
 
