@@ -21,10 +21,9 @@ import { catchError, filter, map, mergeMap, switchMap, tap } from 'rxjs/operator
 import { Observable, Subscription, merge, of } from 'rxjs';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { ProgrammingExerciseTaskExtensionWrapper } from './extensions/programming-exercise-task.extension';
+import { ProgrammingExerciseTaskExtensionWrapper, taskRegex } from './extensions/programming-exercise-task.extension';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/exercises/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
-import { TaskArray, TaskArrayWithExercise } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
+import { TaskArray } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
@@ -65,8 +64,11 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     public isInitial = true;
     public isLoading: boolean;
     public latestResultValue?: Result;
+    // unique index, even if multiple tasks are shown from different problem statements on the same page (in different tabs)
     private taskIndex = 0;
     private testsForTask: TaskArray;
+    // Prevents sanitizer from deleting <testid>id</testid>
+    private allowedHtmlTags = ['testid'];
 
     get latestResult() {
         return this.latestResultValue;
@@ -74,10 +76,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
 
     set latestResult(result: Result | undefined) {
         this.latestResultValue = result;
-        this.programmingExerciseTaskWrapper.setExercise(this.exercise);
-        this.programmingExerciseTaskWrapper.setLatestResult(this.latestResult);
         this.programmingExercisePlantUmlWrapper.setLatestResult(this.latestResult);
-        this.programmingExerciseTaskWrapper.setTestCases(this.testCases);
         this.programmingExercisePlantUmlWrapper.setTestCases(this.testCases);
     }
 
@@ -100,7 +99,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private resultService: ResultService,
         private repositoryFileService: RepositoryFileService,
         private participationWebsocketService: ParticipationWebsocketService,
-        private markdownService: ArtemisMarkdownService,
         private programmingExerciseTaskWrapper: ProgrammingExerciseTaskExtensionWrapper,
         private programmingExercisePlantUmlWrapper: ProgrammingExercisePlantUmlExtensionWrapper,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
@@ -209,21 +207,12 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         if (this.injectableContentFoundSubscription) {
             this.injectableContentFoundSubscription.unsubscribe();
         }
-        this.injectableContentFoundSubscription = merge(
-            this.programmingExerciseTaskWrapper.subscribeForInjectableElementsFound(),
-            this.programmingExercisePlantUmlWrapper.subscribeForInjectableElementsFound(),
-        ).subscribe((injectableCallback) => {
+        this.injectableContentFoundSubscription = merge(this.programmingExercisePlantUmlWrapper.subscribeForInjectableElementsFound()).subscribe((injectableCallback) => {
             this.injectableContentForMarkdownCallbacks = [...this.injectableContentForMarkdownCallbacks, injectableCallback];
         });
         if (this.tasksSubscription) {
             this.tasksSubscription.unsubscribe();
         }
-        this.tasksSubscription = this.programmingExerciseTaskWrapper.subscribeForFoundTestsInTasks().subscribe((tasks: TaskArrayWithExercise) => {
-            // Multiple instances of the code editor use the TaskWrapperService. We have to check, that the returned tasks belong to this exercise
-            if (tasks.exerciseId === this.exercise.id) {
-                this.tasks = tasks.tasks;
-            }
-        });
     }
 
     /**
@@ -239,7 +228,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             .pipe(filter((result) => !!result))
             .subscribe((result: Result) => {
                 this.latestResult = result;
-                this.programmingExerciseTaskWrapper.setLatestResult(this.latestResult);
                 this.programmingExercisePlantUmlWrapper.setLatestResult(this.latestResult);
                 this.updateMarkdown();
             });
@@ -337,8 +325,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             this.examExerciseUpdateHighlighterComponent.outdatedProblemStatement &&
             this.examExerciseUpdateHighlighterComponent.updatedProblemStatement
         ) {
-            const outdatedMarkdown = htmlForMarkdown(this.examExerciseUpdateHighlighterComponent.outdatedProblemStatement, this.markdownExtensions, ['testid']);
-            const updatedMarkdown = htmlForMarkdown(this.examExerciseUpdateHighlighterComponent.updatedProblemStatement, this.markdownExtensions, ['testid']);
+            const outdatedMarkdown = htmlForMarkdown(this.examExerciseUpdateHighlighterComponent.outdatedProblemStatement, this.markdownExtensions, this.allowedHtmlTags);
+            const updatedMarkdown = htmlForMarkdown(this.examExerciseUpdateHighlighterComponent.updatedProblemStatement, this.markdownExtensions, this.allowedHtmlTags);
             const diffedMarkdown = diff(outdatedMarkdown, updatedMarkdown);
             const markdownWithoutTasks = this.prepareTasks(diffedMarkdown);
             this.renderedMarkdown = this.sanitizer.bypassSecurityTrustHtml(markdownWithoutTasks);
@@ -350,11 +338,11 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 }
                 this.injectTasksIntoDocument();
             }, 0);
-        } else {
+        } else if (this.exercise.problemStatement) {
             this.injectableContentForMarkdownCallbacks = [];
-            const renderedProblemStatement = htmlForMarkdown(this.exercise.problemStatement, this.markdownExtensions, ['testid']);
-            const test = this.prepareTasks(renderedProblemStatement);
-            this.renderedMarkdown = this.sanitizer.bypassSecurityTrustHtml(test);
+            const renderedProblemStatement = htmlForMarkdown(this.exercise.problemStatement, this.markdownExtensions, this.allowedHtmlTags);
+            const markdownWithoutTasks = this.prepareTasks(renderedProblemStatement);
+            this.renderedMarkdown = this.sanitizer.bypassSecurityTrustHtml(markdownWithoutTasks);
             setTimeout(() => {
                 this.injectableContentForMarkdownCallbacks.forEach((callback) => {
                     callback();
@@ -365,7 +353,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     }
 
     prepareTasks(problemStatementHtml: string) {
-        const taskRegex = /\[task]\[([^[\]]+)]\(((?:[^(),]+(?:\([^()]*\)[^(),]*)?(?:,[^(),]+(?:\([^()]*\)[^(),]*)?)*)?)\)/g;
         const tasks = Array.from(problemStatementHtml.matchAll(taskRegex));
         if (!tasks) {
             return problemStatementHtml;
