@@ -50,14 +50,14 @@ describe('MonacoEditorActionIntegration', () => {
     it.each([
         { action: new MonacoAttachmentAction(), text: 'Attachment', url: 'https://test.invalid/img.png', defaultText: MonacoAttachmentAction.DEFAULT_INSERT_TEXT },
         { action: new MonacoUrlAction(), text: 'Link', url: 'https://test.invalid/', defaultText: MonacoUrlAction.DEFAULT_INSERT_TEXT },
-    ])('should insert $text', ({ action, text, url, defaultText }) => {
+    ])('should insert $text', ({ action, text, url, defaultText }: { action: MonacoUrlAction | MonacoAttachmentAction; text: string; url: string; defaultText: string }) => {
         const prefix = text === 'Attachment' ? '!' : '';
         comp.registerAction(action);
-        comp.triggerAction(action.id, { text, url });
+        action.executeInCurrentEditor({ text, url });
         expect(comp.getText()).toBe(`${prefix}[${text}](${url})`);
         // No arguments -> insert default text
         comp.setText('');
-        comp.triggerAction(action.id);
+        action.executeInCurrentEditor();
         expect(comp.getText()).toBe(defaultText);
     });
 
@@ -69,10 +69,10 @@ describe('MonacoEditorActionIntegration', () => {
         comp.setText(lines.join('\n'));
         comp.setSelection({ startLineNumber: 1, startColumn: 1, endLineNumber: lines.length, endColumn: lines[lines.length - 1].length + 1 });
         // Introduce list
-        comp.triggerAction(action.id);
+        action.executeInCurrentEditor();
         expect(comp.getText()).toBe(bulletedLines.join('\n'));
         // Remove list
-        comp.triggerAction(action.id);
+        action.executeInCurrentEditor();
         expect(comp.getText()).toBe(lines.join('\n'));
     });
 
@@ -84,10 +84,10 @@ describe('MonacoEditorActionIntegration', () => {
         comp.setText(lines.join('\n'));
         comp.setSelection({ startLineNumber: 1, startColumn: 1, endLineNumber: lines.length, endColumn: lines[lines.length - 1].length + 1 });
         // Introduce list
-        comp.triggerAction(action.id);
+        action.executeInCurrentEditor();
         expect(comp.getText()).toBe(numberedLines.join('\n'));
         // Remove list
-        comp.triggerAction(action.id);
+        action.executeInCurrentEditor();
         expect(comp.getText()).toBe(lines.join('\n'));
     });
 
@@ -95,13 +95,13 @@ describe('MonacoEditorActionIntegration', () => {
         const action = new MonacoHeadingAction(headingLevel);
         comp.registerAction(action);
         // No selection -> insert heading
-        comp.triggerAction(action.id);
+        action.executeInCurrentEditor();
         expect(comp.getText()).toBe(`${'#'.repeat(headingLevel)} Heading ${headingLevel}`);
         // Selection -> toggle heading
         comp.setSelection({ startLineNumber: 1, startColumn: 1, endLineNumber: 1, endColumn: comp.getText().length + 1 });
-        comp.triggerAction(action.id);
+        action.executeInCurrentEditor();
         expect(comp.getText()).toBe(`Heading ${headingLevel}`);
-        comp.triggerAction(action.id);
+        action.executeInCurrentEditor();
         expect(comp.getText()).toBe(`${'#'.repeat(headingLevel)} Heading ${headingLevel}`);
     });
 
@@ -109,20 +109,20 @@ describe('MonacoEditorActionIntegration', () => {
         const action = new MonacoTestCaseAction();
         const testCaseName = 'testCase()';
         action.values = [{ value: testCaseName, id: '1' }];
-        // With specified test case name
+        // With specified test case
         comp.registerAction(action);
-        comp.triggerAction(action.id, testCaseName);
+        action.executeInCurrentEditor({ selectedItem: action.values[0] });
         expect(comp.getText()).toBe(testCaseName);
-        // Without specified test case name
+        // Without specified test case
         comp.setText('');
-        comp.triggerAction(action.id);
+        action.executeInCurrentEditor();
         expect(comp.getText()).toBe(MonacoTestCaseAction.DEFAULT_INSERT_TEXT);
     });
 
     it('should insert tasks', () => {
         const action = new MonacoTaskAction();
         comp.registerAction(action);
-        comp.triggerAction(action.id);
+        action.executeInCurrentEditor();
         expect(comp.getText()).toBe(MonacoTaskAction.INSERT_TASK_TEXT);
     });
 
@@ -133,12 +133,12 @@ describe('MonacoEditorActionIntegration', () => {
         jest.spyOn(FullscreenUtil, 'isFullScreen').mockReturnValue(false);
         const dummyElement = document.createElement('div');
         action.element = dummyElement;
-        comp.triggerAction(action.id);
+        action.executeInCurrentEditor();
         expect(enterFullscreenStub).toHaveBeenCalledExactlyOnceWith(dummyElement);
 
         // Without a specified element, it should use the editor's DOM node
         action.element = undefined;
-        comp.triggerAction(action.id);
+        action.executeInCurrentEditor();
         const editorElement = document.querySelector<HTMLDivElement>('.monaco-editor');
         expect(enterFullscreenStub).toHaveBeenCalledTimes(2);
         expect(enterFullscreenStub).toHaveBeenNthCalledWith(2, editorElement);
@@ -149,7 +149,7 @@ describe('MonacoEditorActionIntegration', () => {
         comp.registerAction(action);
         const exitFullscreenStub = jest.spyOn(FullscreenUtil, 'exitFullscreen').mockImplementation();
         jest.spyOn(FullscreenUtil, 'isFullScreen').mockReturnValue(true);
-        comp.triggerAction(action.id);
+        action.executeInCurrentEditor();
         expect(exitFullscreenStub).toHaveBeenCalledOnce();
     });
 
@@ -158,7 +158,17 @@ describe('MonacoEditorActionIntegration', () => {
         { action: new MonacoItalicAction(), textWithoutDelimiters: 'Here is some italic text.', textWithDelimiters: '*Here is some italic text.*' },
         { action: new MonacoUnderlineAction(), textWithoutDelimiters: 'Here is some underlined text.', textWithDelimiters: '<ins>Here is some underlined text.</ins>' },
         { action: new MonacoCodeAction(), textWithoutDelimiters: 'Here is some code.', textWithDelimiters: '`Here is some code.`' },
-        { action: new MonacoColorAction(), textWithoutDelimiters: 'Here is some red.', textWithDelimiters: '<span class="red">Here is some red.</span>', actionArgs: 'red' },
+        {
+            action: new MonacoColorAction(),
+            textWithoutDelimiters: 'Here is some blue.',
+            textWithDelimiters: '<span class="blue">Here is some blue.</span>',
+            actionArgs: { color: 'blue' },
+        },
+        {
+            action: new MonacoColorAction(),
+            textWithoutDelimiters: 'Here is some red.',
+            textWithDelimiters: '<span class="red">Here is some red.</span>', // No argument -> default color is red
+        },
         { action: new MonacoCodeBlockAction(), textWithoutDelimiters: 'public void main() { }', textWithDelimiters: '```java\npublic void main() { }\n```' },
         {
             action: new MonacoQuoteAction(),
@@ -187,7 +197,7 @@ describe('MonacoEditorActionIntegration', () => {
             action: MonacoEditorAction;
             textWithoutDelimiters: string;
             textWithDelimiters: string;
-            actionArgs?: string;
+            actionArgs?: object;
             textToType?: string;
             initialText?: string;
         }) => {
@@ -208,14 +218,14 @@ describe('MonacoEditorActionIntegration', () => {
         action: MonacoEditorAction,
         textWithoutDelimiters: string,
         textWithDelimiters: string,
-        actionArgs?: string,
+        actionArgs?: object,
         textToType?: string,
         initialText?: string,
     ): void {
         const runSpy = jest.spyOn(action, 'run');
         comp.registerAction(action);
         // Position
-        comp.triggerAction(action.id, actionArgs);
+        action.executeInCurrentEditor(actionArgs);
         if (initialText) {
             expect(comp.getText()).toBe(initialText);
         }
@@ -226,9 +236,9 @@ describe('MonacoEditorActionIntegration', () => {
         const textLines = text.split('\n');
         const fullSelection = { startLineNumber: 1, startColumn: 1, endLineNumber: textLines.length, endColumn: textLines[textLines.length - 1].length + 1 };
         comp.setSelection(fullSelection);
-        comp.triggerAction(action.id, actionArgs);
+        action.executeInCurrentEditor(actionArgs);
         expect(comp.getText()).toBe(textWithoutDelimiters);
-        comp.triggerAction(action.id, actionArgs);
+        action.executeInCurrentEditor(actionArgs);
         expect(comp.getText()).toBe(textWithDelimiters);
         expect(runSpy).toHaveBeenCalledTimes(3);
     }
