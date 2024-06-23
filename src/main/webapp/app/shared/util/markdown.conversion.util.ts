@@ -52,10 +52,10 @@ export function htmlForMarkdown(
     const html = converter.makeHtml(markdownText);
     const purifyParameters = {};
     if (allowedHtmlTags) {
-        purifyParameters['ALLOWED_TAGS'] = allowedHtmlTags;
+        purifyParameters['ADD_TAGS'] = allowedHtmlTags;
     }
     if (allowedHtmlAttributes) {
-        purifyParameters['ALLOWED_ATTR'] = allowedHtmlAttributes;
+        purifyParameters['ADD_ATTR'] = allowedHtmlAttributes;
     }
     return DOMPurify.sanitize(html, purifyParameters);
 }
