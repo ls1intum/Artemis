@@ -4,7 +4,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
-import { LearningPathStudentNavComponent } from 'app/course/learning-paths/components/learning-path-student-nav/learning-path-student-nav.component';
+import { LearningPathNavComponent } from 'app/course/learning-paths/components/learning-path-student-nav/learning-path-student-nav.component';
 import { By } from '@angular/platform-browser';
 import { LearningPathExerciseComponent } from 'app/course/learning-paths/components/learning-path-exercise/learning-path-exercise.component';
 import { LearningPathLectureUnitComponent } from 'app/course/learning-paths/components/learning-path-lecture-unit/learning-path-lecture-unit.component';
@@ -48,7 +48,7 @@ describe('LearningPathStudentPageComponent', () => {
                     imports: [LearningPathExerciseComponent, LearningPathLectureUnitComponent],
                 },
                 add: {
-                    imports: [LearningPathStudentNavComponent],
+                    imports: [LearningPathNavComponent],
                 },
             })
             .compileComponents();
@@ -86,7 +86,7 @@ describe('LearningPathStudentPageComponent', () => {
         await fixture.whenStable();
         fixture.detectChanges();
 
-        const navComponent = fixture.debugElement.query(By.directive(LearningPathStudentNavComponent));
+        const navComponent = fixture.debugElement.query(By.directive(LearningPathNavComponent));
         expect(navComponent).toBeTruthy();
     });
 

@@ -15,7 +15,7 @@ import { LearningPathNavigationService } from 'app/course/learning-paths/service
     templateUrl: './learning-path-student-nav.component.html',
     styleUrl: './learning-path-student-nav.component.scss',
 })
-export class LearningPathStudentNavComponent implements OnInit {
+export class LearningPathNavComponent implements OnInit {
     protected readonly faChevronDown: IconDefinition = faChevronDown;
     protected readonly faCheckCircle: IconDefinition = faCheckCircle;
 

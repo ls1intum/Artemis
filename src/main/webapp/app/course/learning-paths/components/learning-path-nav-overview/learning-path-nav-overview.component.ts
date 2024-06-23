@@ -1,4 +1,4 @@
-import { Component, InputSignal, inject, input, output, signal, viewChildren } from '@angular/core';
+import { Component, inject, input, output, signal, viewChildren } from '@angular/core';
 import { NgbAccordionModule, NgbDropdownModule, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -24,7 +24,7 @@ export class LearningPathNavOverviewComponent {
     private readonly modalService: NgbModal = inject(NgbModal);
     private readonly learningPathApiService: LearningPathApiService = inject(LearningPathApiService);
 
-    readonly learningPathId: InputSignal<number> = input.required();
+    readonly learningPathId = input.required<number>();
 
     readonly onLearningObjectSelected = output<void>();
     readonly isLoading = signal(false);

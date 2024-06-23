@@ -3,7 +3,7 @@ import { LearningObjectType } from 'app/entities/competency/learning-path.model'
 import { map } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { LearningPathStudentNavComponent } from 'app/course/learning-paths/components/learning-path-student-nav/learning-path-student-nav.component';
+import { LearningPathNavComponent } from 'app/course/learning-paths/components/learning-path-student-nav/learning-path-student-nav.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { CourseExerciseDetailsModule } from 'app/overview/exercise-details/course-exercise-details.module';
@@ -18,7 +18,7 @@ import { LearningPathNavigationService } from 'app/course/learning-paths/service
     templateUrl: './learning-path-student-page.component.html',
     styleUrl: './learning-path-student-page.component.scss',
     standalone: true,
-    imports: [CommonModule, RouterModule, LearningPathStudentNavComponent, CourseExerciseDetailsModule, LearningPathLectureUnitComponent, LearningPathExerciseComponent],
+    imports: [CommonModule, RouterModule, LearningPathNavComponent, CourseExerciseDetailsModule, LearningPathLectureUnitComponent, LearningPathExerciseComponent],
 })
 export class LearningPathStudentPageComponent implements OnInit {
     protected readonly LearningObjectType = LearningObjectType;

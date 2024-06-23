@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { LearningPathStudentNavComponent } from 'app/course/learning-paths/components/learning-path-student-nav/learning-path-student-nav.component';
+import { LearningPathNavComponent } from 'app/course/learning-paths/components/learning-path-student-nav/learning-path-student-nav.component';
 import { LearningObjectType, LearningPathNavigationDTO } from 'app/entities/competency/learning-path.model';
 import { By } from '@angular/platform-browser';
 import { LearningPathNavOverviewComponent } from 'app/course/learning-paths/components/learning-path-nav-overview/learning-path-nav-overview.component';
@@ -9,8 +9,8 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 
 describe('LearningPathStudentNavComponent', () => {
-    let component: LearningPathStudentNavComponent;
-    let fixture: ComponentFixture<LearningPathStudentNavComponent>;
+    let component: LearningPathNavComponent;
+    let fixture: ComponentFixture<LearningPathNavComponent>;
     let learningPathApiService: LearningPathApiService;
     let getLearningPathNavigationSpy: jest.SpyInstance;
 
@@ -40,7 +40,7 @@ describe('LearningPathStudentNavComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [LearningPathStudentNavComponent],
+            imports: [LearningPathNavComponent],
             providers: [
                 provideHttpClient(),
                 {
@@ -49,7 +49,7 @@ describe('LearningPathStudentNavComponent', () => {
                 },
             ],
         })
-            .overrideComponent(LearningPathStudentNavComponent, {
+            .overrideComponent(LearningPathNavComponent, {
                 add: {
                     imports: [LearningPathNavOverviewComponent],
                 },
@@ -59,7 +59,7 @@ describe('LearningPathStudentNavComponent', () => {
         learningPathApiService = TestBed.inject(LearningPathApiService);
         getLearningPathNavigationSpy = jest.spyOn(learningPathApiService, 'getLearningPathNavigation').mockResolvedValue(navigationDto);
 
-        fixture = TestBed.createComponent(LearningPathStudentNavComponent);
+        fixture = TestBed.createComponent(LearningPathNavComponent);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('learningPathId', learningPathId);
     });
