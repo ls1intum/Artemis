@@ -78,7 +78,7 @@
             </div>
         }
 
-        @if (achievedScore && achievedScore.generalMin && achievedScore.generalMax && achievedScore.generalMin < achievedScore.generalMax) {
+        @if (achievedScore && achievedScore.generalMin < achievedScore.generalMax) {
             <div class="form-group">
                 <label class="form-control-label h6" for="achieved-score-range-slider" jhiTranslate="artemisApp.courseOverview.exerciseFilter.achievedScore"></label>
                 <jhi-range-slider
@@ -91,7 +91,7 @@
             </div>
         }
 
-        @if (achievablePoints && achievablePoints.generalMin && achievablePoints.generalMax && achievablePoints.generalMin < achievablePoints.generalMax) {
+        @if (achievablePoints && achievablePoints.generalMin < achievablePoints.generalMax) {
             <div class="form-group">
                 <label class="form-control-label h6" for="achieved-points-range-slider" jhiTranslate="artemisApp.courseOverview.exerciseFilter.achievablePoints"></label>
                 <jhi-range-slider

@@ -244,7 +244,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
                 }
 
                 if (sidebarElement.studentParticipation) {
-                    const currentExerciseAchievedScore = getLatestResultOfStudentParticipation(sidebarElement.studentParticipation, false)?.score;
+                    const currentExerciseAchievedScore = getLatestResultOfStudentParticipation(sidebarElement.studentParticipation, true)?.score;
 
                     if (currentExerciseAchievedScore !== undefined) {
                         if (currentExerciseAchievedScore > maxAchievedScore) {
