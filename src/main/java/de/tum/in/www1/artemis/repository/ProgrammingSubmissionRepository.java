@@ -59,7 +59,7 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
     Optional<ProgrammingSubmission> findFirstByParticipationIdOrderBySubmissionDateDesc(long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = { "results" })
-    Optional<ProgrammingSubmission> findProgrammingSubmissionById(long programmingSubmissionId);
+    Optional<ProgrammingSubmission> findProgrammingSubmissionWithResultsById(long programmingSubmissionId);
 
     default Optional<ProgrammingSubmission> findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(long programmingSubmissionId) {
         var programmingSubmissionOptional = findFirstByParticipationIdOrderBySubmissionDateDesc(programmingSubmissionId);
@@ -67,7 +67,7 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
             return Optional.empty();
         }
         var id = programmingSubmissionOptional.get().getId();
-        return findProgrammingSubmissionById(id);
+        return findProgrammingSubmissionWithResultsById(id);
     }
 
     @Query("""
@@ -84,13 +84,8 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
             """)
     List<ProgrammingSubmissionAndSubmissionDate> findSubmissionIdsAndDatesByParticipationId(@Param("participationId") long participationId, Pageable pageable);
 
-    @Query("""
-            SELECT s
-            FROM ProgrammingSubmission s
-            LEFT JOIN FETCH s.results r
-            WHERE s.id IN :ids
-            """)
-    List<ProgrammingSubmission> findSubmissionsByIds(@Param("ids") List<Long> ids);
+    @EntityGraph(type = LOAD, attributePaths = { "results" })
+    List<ProgrammingSubmission> findSubmissionsWithResultsByIdIn(List<Long> ids);
 
     /**
      * Provide a list of graded submissions. To be graded a submission must:
@@ -102,7 +97,7 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
      * @param pageable        Pageable
      * @return ProgrammingSubmission list (can be empty!)
      */
-    default List<ProgrammingSubmission> findGradedByParticipationIdOrderBySubmissionDateDesc(long participationId, Pageable pageable) {
+    default List<ProgrammingSubmission> findGradedByParticipationIdWithResultsOrderBySubmissionDateDesc(long participationId, Pageable pageable) {
         List<Long> ids = findSubmissionIdsAndDatesByParticipationId(participationId, pageable).stream().map(ProgrammingSubmissionAndSubmissionDate::programmingSubmission)
                 .map(DomainObject::getId).toList();
 
@@ -110,7 +105,7 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
             return Collections.emptyList();
         }
 
-        return findSubmissionsByIds(ids);
+        return findSubmissionsWithResultsByIdIn(ids);
     }
 
     @EntityGraph(type = LOAD, attributePaths = "results.feedbacks")

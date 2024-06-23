@@ -29,7 +29,7 @@ public interface PlagiarismResultRepository extends ArtemisJpaRepository<Plagiar
     PlagiarismResult<?> findPlagiarismResultById(long plagiarismResultId);
 
     @Nullable
-    default PlagiarismResult<?> findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(long exerciseId) {
+    default PlagiarismResult<?> findFirstWithComparisonsByExerciseIdOrderByLastModifiedDateDescOrNull(long exerciseId) {
         var plagiarismResultIdOrEmpty = findFirstByExerciseIdOrderByLastModifiedDateDesc(exerciseId);
         if (plagiarismResultIdOrEmpty.isEmpty()) {
             return null;
@@ -45,7 +45,8 @@ public interface PlagiarismResultRepository extends ArtemisJpaRepository<Plagiar
      * @return the saved result
      */
     default PlagiarismResult<?> savePlagiarismResultAndRemovePrevious(PlagiarismResult<?> result) {
-        Optional<PlagiarismResult<?>> optionalPreviousResult = Optional.ofNullable(findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(result.getExercise().getId()));
+        Optional<PlagiarismResult<?>> optionalPreviousResult = Optional
+                .ofNullable(findFirstWithComparisonsByExerciseIdOrderByLastModifiedDateDescOrNull(result.getExercise().getId()));
         result = save(result);
         optionalPreviousResult.ifPresent(this::delete);
         return result;

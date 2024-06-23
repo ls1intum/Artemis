@@ -1,11 +1,14 @@
 package de.tum.in.www1.artemis.repository.iris;
 
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
 import java.util.Collections;
 import java.util.List;
 
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -45,13 +48,8 @@ public interface IrisCourseChatSessionRepository extends ArtemisJpaRepository<Ir
             """)
     List<IrisCourseChatSession> findSessionsByCourseIdAndUserId(@Param("courseId") long courseId, @Param("userId") long userId, Pageable pageable);
 
-    @Query("""
-            SELECT s
-            FROM IrisCourseChatSession s
-            LEFT JOIN FETCH s.messages
-            WHERE s.id IN :ids
-            """)
-    List<IrisCourseChatSession> findSessionsWithMessagesByIds(@Param("ids") List<Long> ids);
+    @EntityGraph(type = LOAD, attributePaths = "messages")
+    List<IrisCourseChatSession> findSessionsWithMessagesByIdIn(List<Long> ids);
 
     default List<IrisCourseChatSession> findLatestByCourseIdAndUserIdWithMessages(long courseId, long userId, Pageable pageable) {
         List<Long> ids = findSessionsByCourseIdAndUserId(courseId, userId, pageable).stream().map(DomainObject::getId).toList();
@@ -60,7 +58,7 @@ public interface IrisCourseChatSessionRepository extends ArtemisJpaRepository<Ir
             return Collections.emptyList();
         }
 
-        return findSessionsWithMessagesByIds(ids);
+        return findSessionsWithMessagesByIdIn(ids);
     }
 
     /**

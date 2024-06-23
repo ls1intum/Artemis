@@ -12,7 +12,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -34,13 +33,8 @@ public interface PersistenceAuditEventRepository extends ArtemisJpaRepository<Pe
             """)
     List<Long> findIdsByAuditEventDateBetween(@Param("fromDate") Instant fromDate, @Param("toDate") Instant toDate, Pageable pageable);
 
-    @Query("""
-            SELECT p
-            FROM PersistentAuditEvent p
-            LEFT JOIN FETCH p.data
-            WHERE p.id IN :ids
-            """)
-    List<PersistentAuditEvent> findByIdsWithAssociations(@Param("ids") List<Long> ids);
+    @EntityGraph(type = LOAD, attributePaths = "data")
+    List<PersistentAuditEvent> findWithAssociationsByIdIn(List<Long> ids);
 
     @Query("""
             SELECT COUNT(p)
@@ -57,12 +51,12 @@ public interface PersistenceAuditEventRepository extends ArtemisJpaRepository<Pe
      * @param pageable the pagination information.
      * @return a paginated list of {@link PersistentAuditEvent} entities within the specified date range. If no entities are found, returns an empty page.
      */
-    default Page<PersistentAuditEvent> findAllByAuditEventDateBetween(Instant fromDate, Instant toDate, Pageable pageable) {
+    default Page<PersistentAuditEvent> findAllWithDataByAuditEventDateBetween(Instant fromDate, Instant toDate, Pageable pageable) {
         List<Long> ids = findIdsByAuditEventDateBetween(fromDate, toDate, pageable);
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }
-        List<PersistentAuditEvent> result = findByIdsWithAssociations(ids);
+        List<PersistentAuditEvent> result = findWithAssociationsByIdIn(ids);
         return new PageImpl<>(result, pageable, countByAuditEventDateBetween(fromDate, toDate));
     }
 
@@ -84,12 +78,12 @@ public interface PersistenceAuditEventRepository extends ArtemisJpaRepository<Pe
      * @param pageable the pagination information.
      * @return a paginated list of {@link PersistentAuditEvent} entities. If no entities are found, returns an empty page.
      */
-    default Page<PersistentAuditEvent> findAll(@NotNull Pageable pageable) {
+    default Page<PersistentAuditEvent> findAllWithData(@NotNull Pageable pageable) {
         List<Long> ids = findAllIds(pageable);
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }
-        List<PersistentAuditEvent> result = findByIdsWithAssociations(ids);
+        List<PersistentAuditEvent> result = findWithAssociationsByIdIn(ids);
         return new PageImpl<>(result, pageable, countAll());
     }
 

@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -12,7 +13,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -40,16 +40,8 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             """)
     List<Long> findAllIds(Pageable pageable);
 
-    @Query("""
-            SELECT b
-            FROM BuildJob b
-            LEFT JOIN FETCH b.result r
-            LEFT JOIN FETCH r.participation p
-            LEFT JOIN FETCH p.exercise e
-            LEFT JOIN FETCH r.submission s
-            WHERE b.id IN :ids
-            """)
-    List<BuildJob> findByIdsWithAssociations(@Param("ids") List<Long> ids);
+    @EntityGraph(type = LOAD, attributePaths = "results, participation, exercise, submission")
+    List<BuildJob> findWithDataByIdIn(List<Long> ids);
 
     /**
      * Retrieves a paginated list of all {@link BuildJob} entities.
@@ -57,12 +49,12 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
      * @param pageable the pagination information.
      * @return a paginated list of {@link BuildJob} entities. If no entities are found, returns an empty page.
      */
-    default Page<BuildJob> findAll(Pageable pageable) {
+    default Page<BuildJob> findAllWithData(Pageable pageable) {
         List<Long> ids = findAllIds(pageable);
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }
-        List<BuildJob> result = findByIdsWithAssociations(ids);
+        List<BuildJob> result = findWithDataByIdIn(ids);
         return new PageImpl<>(result, pageable, countAllBuildJobs());
     }
 
@@ -90,17 +82,6 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     Page<Long> findAllByFilterCriteria(@Param("buildStatus") BuildStatus buildStatus, @Param("buildAgentAddress") String buildAgentAddress,
             @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("searchTerm") String searchTerm, @Param("courseId") Long courseId,
             @Param("durationLower") Duration durationLower, @Param("durationUpper") Duration durationUpper, Pageable pageable);
-
-    @Query("""
-            SELECT b
-            FROM BuildJob b
-                LEFT JOIN FETCH b.result r
-                LEFT JOIN FETCH r.participation p
-                LEFT JOIN FETCH p.exercise
-                LEFT JOIN FETCH r.submission
-            WHERE b.id IN :buildJobIds
-            """)
-    List<BuildJob> findAllByIdWithResults(@Param("buildJobIds") List<Long> buildJobIds);
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild(
@@ -133,12 +114,12 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
      * @param pageable the pagination information.
      * @return a paginated list of {@link BuildJob} entities. If no entities are found, returns an empty page.
      */
-    default Page<BuildJob> findAllByCourseId(long courseId, Pageable pageable) {
+    default Page<BuildJob> findAllWithDataByCourseId(long courseId, Pageable pageable) {
         List<Long> ids = findIdsByCourseId(courseId, pageable);
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }
-        List<BuildJob> result = findByIdsWithAssociations(ids);
+        List<BuildJob> result = findWithDataByIdIn(ids);
         return new PageImpl<>(result, pageable, countBuildJobsByCourseId(courseId));
     }
 

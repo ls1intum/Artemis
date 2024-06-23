@@ -660,14 +660,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     List<Long> findIdsByExerciseIdAndStudentName(@Param("exerciseId") long exerciseId, @Param("partialStudentName") String partialStudentName, Pageable pageable);
 
-    @Query("""
-            SELECT p
-            FROM StudentParticipation p
-            LEFT JOIN FETCH p.submissions s
-            LEFT JOIN FETCH p.results r
-            WHERE p.id IN :ids
-            """)
-    List<StudentParticipation> findByIdsWithAssociations(@Param("ids") List<Long> ids);
+    @EntityGraph(type = LOAD, attributePaths = "submissions, results")
+    List<StudentParticipation> findsWithAssociationsByIdIn(List<Long> ids);
 
     @Query("""
             SELECT COUNT(p)
@@ -695,12 +689,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * @return a paginated list of {@link StudentParticipation} entities associated with the specified exercise and student name filter.
      *         If no entities are found, returns an empty page.
      */
-    default Page<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsByExerciseId(long exerciseId, String partialStudentName, Pageable pageable) {
+    default Page<StudentParticipation> findAllWithEagerSubmissionsAndResultsByExerciseId(long exerciseId, String partialStudentName, Pageable pageable) {
         List<Long> ids = findIdsByExerciseIdAndStudentName(exerciseId, partialStudentName, pageable);
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }
-        List<StudentParticipation> result = findByIdsWithAssociations(ids);
+        List<StudentParticipation> result = findsWithAssociationsByIdIn(ids);
         return new PageImpl<>(result, pageable, countByExerciseIdAndStudentName(exerciseId, partialStudentName));
     }
 

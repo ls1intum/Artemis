@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.repository.hestia;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -8,6 +9,7 @@ import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -51,32 +53,20 @@ public interface CoverageReportRepository extends ArtemisJpaRepository<CoverageR
             """)
     List<CoverageReportAndSubmissionDate> findCoverageReportsByProgrammingExerciseId(@Param("programmingExerciseId") Long programmingExerciseId, Pageable pageable);
 
-    @Query("""
-            SELECT r
-            FROM CoverageReport r
-            LEFT JOIN FETCH r.submission s
-            WHERE r.id IN :ids
-            """)
-    List<CoverageReport> findCoverageReportsByIds(@Param("ids") List<Long> ids);
+    @EntityGraph(type = LOAD, attributePaths = "submission")
+    List<CoverageReport> findCoverageReportsWithSubmissionByIdIn(List<Long> ids);
 
-    default List<CoverageReport> getLatestCoverageReportsForLegalSubmissionsForProgrammingExercise(Long programmingExerciseId, Pageable pageable) {
+    default List<CoverageReport> getLatestCoverageReportsWithLegalSubmissionsForProgrammingExercise(Long programmingExerciseId, Pageable pageable) {
         List<Long> ids = findCoverageReportsByProgrammingExerciseId(programmingExerciseId, pageable).stream().map(CoverageReportAndSubmissionDate::coverageReport)
                 .map(DomainObject::getId).toList();
         if (ids.isEmpty()) {
             return List.of();
         }
-        return findCoverageReportsByIds(ids);
+        return findCoverageReportsWithSubmissionByIdIn(ids);
     }
 
-    @Query("""
-            SELECT DISTINCT r
-            FROM CoverageReport r
-            LEFT JOIN FETCH r.submission s
-            LEFT JOIN FETCH r.fileReports f
-            LEFT JOIN FETCH f.testwiseCoverageEntries
-            WHERE r.id IN :ids
-            """)
-    List<CoverageReport> findCoverageReportsWithEagerRelationshipsByIds(@Param("ids") List<Long> ids);
+    @EntityGraph(type = LOAD, attributePaths = "submission, fileReports, testwiseCoverageEntries")
+    List<CoverageReport> findDistinctCoverageReportsWithEagerRelationshipsByIdIn(List<Long> ids);
 
     default List<CoverageReport> getLatestCoverageReportsForLegalSubmissionsForProgrammingExerciseWithEagerFileReportsAndEntries(Long programmingExerciseId, Pageable pageable) {
         List<Long> ids = findCoverageReportsByProgrammingExerciseId(programmingExerciseId, pageable).stream().map(CoverageReportAndSubmissionDate::coverageReport)
@@ -84,7 +74,7 @@ public interface CoverageReportRepository extends ArtemisJpaRepository<CoverageR
         if (ids.isEmpty()) {
             return List.of();
         }
-        return findCoverageReportsWithEagerRelationshipsByIds(ids);
+        return findDistinctCoverageReportsWithEagerRelationshipsByIdIn(ids);
     }
 
     @Query("""

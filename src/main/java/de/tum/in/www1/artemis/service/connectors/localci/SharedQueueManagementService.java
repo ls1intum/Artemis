@@ -300,7 +300,7 @@ public class SharedQueueManagementService {
                 search.pageable().getSearchTerm(), courseId, buildDurationLower, buildDurationUpper,
                 PageUtil.createDefaultPageRequest(search.pageable(), PageUtil.ColumnMapping.BUILD_JOB));
 
-        List<BuildJob> buildJobs = buildJobRepository.findAllByIdWithResults(buildJobIdsPage.toList());
+        List<BuildJob> buildJobs = buildJobRepository.findWithDataByIdIn(buildJobIdsPage.toList());
 
         return new PageImpl<>(buildJobs, buildJobIdsPage.getPageable(), buildJobIdsPage.getTotalElements());
     }

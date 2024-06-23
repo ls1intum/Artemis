@@ -374,9 +374,9 @@ public class ConversationService {
             Optional<ConversationMemberSearchFilters> filter) {
         if (filter.isEmpty()) {
             if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
-                return userRepository.searchAllByLoginOrNameInCourseAndReturnPage(pageable, searchTerm, course.getId());
+                return userRepository.searchAllWithGroupsByLoginOrNameInCourseAndReturnPage(pageable, searchTerm, course.getId());
             }
-            return userRepository.searchAllByLoginOrNameInConversation(pageable, searchTerm, conversation.getId());
+            return userRepository.searchAllWithGroupsByLoginOrNameInConversation(pageable, searchTerm, conversation.getId());
         }
         else {
             var groups = new HashSet<String>();
@@ -392,16 +392,16 @@ public class ConversationService {
                     if (!(conversation instanceof Channel)) {
                         throw new IllegalArgumentException("The filter CHANNEL_MODERATOR is only allowed for channels!");
                     }
-                    return userRepository.searchChannelModeratorsByLoginOrNameInConversation(pageable, searchTerm, conversation.getId());
+                    return userRepository.searchChannelModeratorsWithGroupsByLoginOrNameInConversation(pageable, searchTerm, conversation.getId());
                 }
                 default -> throw new IllegalArgumentException("The filter is not supported.");
             }
 
             if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
-                return userRepository.searchAllByLoginOrNameInGroups(pageable, searchTerm, groups);
+                return userRepository.searchAllWithGroupsByLoginOrNameInGroups(pageable, searchTerm, groups);
             }
 
-            return userRepository.searchAllByLoginOrNameInConversationWithCourseGroups(pageable, searchTerm, conversation.getId(), groups);
+            return userRepository.searchAllWithCourseGroupsByLoginOrNameInConversation(pageable, searchTerm, conversation.getId(), groups);
         }
 
     }

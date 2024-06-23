@@ -269,13 +269,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             """)
     List<Long> findUserIdsByLoginOrNameInGroup(@Param("loginOrName") String loginOrName, @Param("groupName") String groupName, Pageable pageable);
 
-    @Query("""
-            SELECT user
-            FROM User user
-            LEFT JOIN FETCH user.groups userGroup
-            WHERE user.id IN :ids
-            """)
-    List<User> findUsersByIdsWithGroups(@Param("ids") List<Long> ids);
+    @EntityGraph(type = LOAD, attributePaths = "groups")
+    List<User> findUsersWithGroupsByIdIn(List<Long> ids);
 
     @Query("""
             SELECT COUNT(user)
@@ -298,12 +293,12 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param groupName   Name of group in which to search for users
      * @return all users matching search criteria in the group converted to DTOs
      */
-    default Page<User> searchAllByLoginOrNameInGroup(Pageable pageable, String loginOrName, String groupName) {
+    default Page<User> searchAllWithGroupsByLoginOrNameInGroup(Pageable pageable, String loginOrName, String groupName) {
         List<Long> ids = findUserIdsByLoginOrNameInGroup(loginOrName, groupName, pageable);
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }
-        List<User> users = findUsersByIdsWithGroups(ids);
+        List<User> users = findUsersWithGroupsByIdIn(ids);
         return new PageImpl<>(users, pageable, countUsersByLoginOrNameInGroup(loginOrName, groupName));
     }
 
@@ -353,7 +348,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param idOfUser    the ID of the user to exclude from the search results.
      * @return a paginated list of {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
      */
-    default Page<User> searchAllByLoginOrNameInGroupsNotUserId(Pageable pageable, String loginOrName, Set<String> groupNames, long idOfUser) {
+    default Page<User> searchAllWithGroupsByLoginOrNameInGroupsNotUserId(Pageable pageable, String loginOrName, Set<String> groupNames, long idOfUser) {
         List<Long> ids = findUserIdsByLoginOrNameInGroupsNotUserId(loginOrName, groupNames, idOfUser, pageable);
         if (ids.isEmpty()) {
             return Page.empty(pageable);
@@ -396,12 +391,12 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param groupNames  Names of groups in which to search for users
      * @return All users matching search criteria
      */
-    default Page<User> searchAllByLoginOrNameInGroups(Pageable pageable, String loginOrName, Set<String> groupNames) {
+    default Page<User> searchAllWithGroupsByLoginOrNameInGroups(Pageable pageable, String loginOrName, Set<String> groupNames) {
         List<Long> ids = findUserIdsByLoginOrNameInGroups(loginOrName, groupNames, pageable);
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }
-        List<User> users = findUsersByIdsWithGroups(ids);
+        List<User> users = findUsersWithGroupsByIdIn(ids);
         return new PageImpl<>(users, pageable, countUsersByLoginOrNameInGroups(loginOrName, groupNames));
     }
 
@@ -444,12 +439,12 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param conversationId the ID of the conversation to limit the search within.
      * @return a paginated list of {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
      */
-    default Page<User> searchAllByLoginOrNameInConversation(Pageable pageable, String loginOrName, long conversationId) {
+    default Page<User> searchAllWithGroupsByLoginOrNameInConversation(Pageable pageable, String loginOrName, long conversationId) {
         List<Long> ids = findUsersByLoginOrNameInConversation(loginOrName, conversationId, pageable).stream().map(DomainObject::getId).toList();
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }
-        List<User> users = findUsersByIdsWithGroups(ids);
+        List<User> users = findUsersWithGroupsByIdIn(ids);
         long total = countUsersByLoginOrNameInConversation(loginOrName, conversationId);
         return new PageImpl<>(users, pageable, total);
     }
@@ -498,12 +493,12 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param groupNames     the set of course group names to limit the search within.
      * @return a paginated list of {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
      */
-    default Page<User> searchAllByLoginOrNameInConversationWithCourseGroups(Pageable pageable, String loginOrName, long conversationId, Set<String> groupNames) {
+    default Page<User> searchAllWithCourseGroupsByLoginOrNameInConversation(Pageable pageable, String loginOrName, long conversationId, Set<String> groupNames) {
         List<Long> ids = findUsersByLoginOrNameInConversationWithCourseGroups(loginOrName, conversationId, groupNames, pageable).stream().map(DomainObject::getId).toList();
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }
-        List<User> users = findUsersByIdsWithGroups(ids);
+        List<User> users = findUsersWithGroupsByIdIn(ids);
         long total = countUsersByLoginOrNameInConversationWithCourseGroups(loginOrName, conversationId, groupNames);
         return new PageImpl<>(users, pageable, total);
     }
@@ -523,14 +518,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
               ) AND conversationParticipant.isModerator = TRUE
             """)
     List<User> findModeratorsByLoginOrNameInConversation(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId, Pageable pageable);
-
-    @Query("""
-            SELECT DISTINCT user
-            FROM User user
-            LEFT JOIN FETCH user.groups userGroup
-            WHERE user.id IN :ids
-            """)
-    List<User> findModeratorsByIdsWithGroups(@Param("ids") List<Long> ids);
 
     @Query("""
             SELECT COUNT(DISTINCT user)
@@ -557,12 +544,12 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param conversationId the ID of the conversation to limit the search within.
      * @return a paginated list of channel moderator {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
      */
-    default Page<User> searchChannelModeratorsByLoginOrNameInConversation(Pageable pageable, String loginOrName, long conversationId) {
+    default Page<User> searchChannelModeratorsWithGroupsByLoginOrNameInConversation(Pageable pageable, String loginOrName, long conversationId) {
         List<Long> ids = findModeratorsByLoginOrNameInConversation(loginOrName, conversationId, pageable).stream().map(DomainObject::getId).toList();
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }
-        List<User> users = findModeratorsByIdsWithGroups(ids);
+        List<User> users = findDistinctUsersWithGroupsByIdIn(ids); // these users are moderators
         long total = countModeratorsByLoginOrNameInConversation(loginOrName, conversationId);
         return new PageImpl<>(users, pageable, total);
     }
@@ -576,7 +563,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return all users matching search criteria in the group converted to {@link UserDTO}
      */
     default Page<UserDTO> searchAllUsersByLoginOrNameInGroupAndConvertToDTO(Pageable pageable, String loginOrName, String groupName) {
-        Page<User> users = searchAllByLoginOrNameInGroup(pageable, loginOrName, groupName);
+        Page<User> users = searchAllWithGroupsByLoginOrNameInGroup(pageable, loginOrName, groupName);
         return users.map(UserDTO::new);
     }
 
@@ -625,13 +612,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             """)
     List<Long> findUserIdsByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, Pageable pageable);
 
-    @Query("""
-            SELECT DISTINCT user
-            FROM User user
-            LEFT JOIN FETCH user.groups userGroup
-            WHERE user.id IN :ids
-            """)
-    List<User> findUsersWithGroupsByIds(@Param("ids") List<Long> ids);
+    @EntityGraph(type = LOAD, attributePaths = "groups")
+    List<User> findDistinctUsersWithGroupsByIdIn(List<Long> ids);
 
     @Query("""
             SELECT COUNT(DISTINCT user)
@@ -651,24 +633,24 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             """)
     long countUsersByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId);
 
-    default List<User> searchAllByLoginOrNameInCourseAndReturnList(Pageable pageable, String loginOrName, long courseId) {
+    default List<User> searchAllWithGroupsByLoginOrNameInCourseAndReturnList(Pageable pageable, String loginOrName, long courseId) {
         List<Long> userIds = findUserIdsByLoginOrNameInCourse(loginOrName, courseId, pageable);
 
         if (userIds.isEmpty()) {
             return Collections.emptyList();
         }
 
-        return findUsersWithGroupsByIds(userIds);
+        return findDistinctUsersWithGroupsByIdIn(userIds);
     }
 
-    default Page<User> searchAllByLoginOrNameInCourseAndReturnPage(Pageable pageable, String loginOrName, long courseId) {
+    default Page<User> searchAllWithGroupsByLoginOrNameInCourseAndReturnPage(Pageable pageable, String loginOrName, long courseId) {
         List<Long> userIds = findUserIdsByLoginOrNameInCourse(loginOrName, courseId, pageable);
 
         if (userIds.isEmpty()) {
             return new PageImpl<>(Collections.emptyList(), pageable, 0);
         }
 
-        List<User> users = findUsersWithGroupsByIds(userIds);
+        List<User> users = findDistinctUsersWithGroupsByIdIn(userIds);
         long total = countUsersByLoginOrNameInCourse(loginOrName, courseId);
 
         return new PageImpl<>(users, pageable, total);
@@ -700,7 +682,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }
-        List<User> users = findUsersByIdsWithGroups(ids);
+        List<User> users = findUsersWithGroupsByIdIn(ids);
         long total = countUsersByIsDeletedIsFalse();
         return new PageImpl<>(users, pageable, total);
     }
