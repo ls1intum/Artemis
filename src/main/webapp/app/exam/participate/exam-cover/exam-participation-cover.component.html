@@ -4,18 +4,23 @@
     </div>
     @if (!startView) {
         <h2 class="col-md-6" style="text-align: center; font-weight: normal" id="exam-finished-title">
-            <span
-                jhiTranslate="artemisApp.examParticipation.finish"
-                [translateValues]="{
-                    title: exam.title
-                }"
-            ></span>
+            <span>
+                {{
+                    'artemisApp.examParticipation.finish'
+                        | artemisTranslate
+                            : {
+                                  title: exam.title
+                              }
+                }}
+            </span>
             <br />
         </h2>
     }
     @if (startView) {
         <h2 class="col-md-6" style="text-align: center; font-weight: normal">
-            <span jhiTranslate="artemisApp.examParticipation.greeting" [translateValues]="{ title: exam.title }"></span>
+            <span>
+                {{ 'artemisApp.examParticipation.greeting' | artemisTranslate: { title: exam.title } }}
+            </span>
             <br />
         </h2>
     }
@@ -40,7 +45,9 @@
     }
     <div><span style="display: table; margin-left: auto; margin-right: auto" [innerHTML]="formattedGeneralInformation"></span></div>
     @if (studentFailedToSubmit) {
-        <div class="mb-2 font-weight-bold text-danger" jhiTranslate="artemisApp.studentExam.submissionNotInTime"></div>
+        <div class="mb-2 font-weight-bold text-danger">
+            {{ 'artemisApp.studentExam.submissionNotInTime' | artemisTranslate }}
+        </div>
     }
     @if (!studentFailedToSubmit) {
         <div class="form-check mt-1 ps-0">
@@ -105,7 +112,7 @@
             @if (startView) {
                 <ng-container #startButton>
                     @if (!startButtonEnabled) {
-                        <div jhiTranslate="artemisApp.exam.startExamToolTip"></div>
+                        <div>{{ 'artemisApp.exam.startExamToolTip' | artemisTranslate }}</div>
                     }
                     <button id="start-exam" [disabled]="!startButtonEnabled || waitingForExamStart" type="submit" (click)="startExam()" class="btn btn-primary">
                         <span jhiTranslate="artemisApp.exam.startExam"></span>
@@ -133,14 +140,16 @@
                 }
                 <button id="end-exam" [disabled]="!endButtonEnabled" type="submit" (click)="submitExam()" class="btn btn-primary">
                     @if (submitInProgress) {
-                        <fa-icon [icon]="faSpinner" [spin]="true" />
+                        <fa-icon [icon]="faSpinner" animation="spin" />
                     }
                     <span jhiTranslate="artemisApp.exam.endExam"></span>
                 </button>
             }
             @if (handInEarly) {
                 <div class="mt-5">
-                    <div class="mb-2 font-weight-bold" jhiTranslate="artemisApp.examParticipation.continueAfterHandInEarlyDescription"></div>
+                    <div class="mb-2 font-weight-bold">
+                        {{ 'artemisApp.examParticipation.continueAfterHandInEarlyDescription' | artemisTranslate }}
+                    </div>
                     <button [disabled]="submitInProgress" id="continue" class="btn btn-secondary mt-2" (click)="continueAfterHandInEarly()">
                         <fa-icon [icon]="faArrowLeft" />
                         {{ 'artemisApp.examParticipation.continueAfterHandInEarly' | artemisTranslate }}
@@ -150,7 +159,7 @@
         </div>
         @if (waitingForExamStart) {
             <div class="exam-waiting-for-start-overlay alert alert-info">
-                <span jhiTranslate="artemisApp.examParticipation.waitForStart" [translateValues]="{ title: exam.title }"></span>
+                <span>{{ 'artemisApp.examParticipation.waitForStart' | artemisTranslate: { title: exam.title } }}</span>
                 @if (exam.startDate) {
                     <div>
                         <hr />

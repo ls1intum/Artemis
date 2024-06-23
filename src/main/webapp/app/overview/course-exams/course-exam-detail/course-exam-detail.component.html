@@ -54,7 +54,7 @@
                     @switch (examState) {
                         @case ('UPCOMING') {
                             <div>
-                                <h5 class="text-center" jhiTranslate="artemisApp.exam.overview.{{ exam.testExam ? 'testExam.' : '' }}upcoming"></h5>
+                                <h5 class="text-center">{{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'upcoming' | artemisTranslate }}</h5>
                                 <div class="text-center">
                                     {{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'imminent' | artemisTranslate }}
                                     {{ timeLeftToStart | artemisDurationFromSeconds }}
@@ -67,35 +67,35 @@
                                     {{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'imminent' | artemisTranslate }}
                                     {{ timeLeftToStart | artemisDurationFromSeconds }}
                                 </h5>
-                                <div class="text-center" jhiTranslate="artemisApp.exam.overview.{{ exam.testExam ? 'testExam.' : '' }}imminentExplanation"></div>
+                                <div class="text-center">{{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'imminentExplanation' | artemisTranslate }}</div>
                             </div>
                         }
                         @case ('CONDUCTING') {
                             <div>
-                                <h5 class="text-center" jhiTranslate="artemisApp.exam.overview.{{ exam.testExam ? 'testExam.' : '' }}conducting"></h5>
+                                <h5 class="text-center">{{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'conducting' | artemisTranslate }}</h5>
                             </div>
                         }
                         @case ('TIMEEXTENSION') {
                             <div>
-                                <h5 class="text-center" jhiTranslate="artemisApp.exam.overview.timeExtension"></h5>
-                                <div class="text-center" jhiTranslate="artemisApp.exam.overview.timeExtensionExplanation"></div>
+                                <h5 class="text-center">{{ 'artemisApp.exam.overview.timeExtension' | artemisTranslate }}</h5>
+                                <div class="text-center">{{ 'artemisApp.exam.overview.timeExtensionExplanation' | artemisTranslate }}</div>
                             </div>
                         }
                         @case ('CLOSED') {
                             <div>
-                                <h5 class="text-center" jhiTranslate="artemisApp.exam.overview.{{ exam.testExam ? 'testExam.' : '' }}closed"></h5>
+                                <h5 class="text-center">{{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'closed' | artemisTranslate }}</h5>
                             </div>
                         }
                         @case ('STUDENTREVIEW') {
                             <div>
-                                <h5 class="text-center" jhiTranslate="artemisApp.exam.overview.review"></h5>
+                                <h5 class="text-center">{{ 'artemisApp.exam.overview.review' | artemisTranslate }}</h5>
                                 <div class="text-center">{{ 'artemisApp.exam.overview.reviewExplanation' | artemisTranslate }} {{ exam.examStudentReviewEnd | artemisDate }}</div>
                             </div>
                         }
                         @case ('NO_MORE_ATTEMPTS') {
                             <div>
-                                <h5 class="text-center" jhiTranslate="artemisApp.exam.overview.testExam.noMoreAttempts"></h5>
-                                <div class="text-center" jhiTranslate="artemisApp.exam.overview.testExam.noMoreAttemptsExplanation"></div>
+                                <h5 class="text-center">{{ 'artemisApp.exam.overview.testExam.noMoreAttempts' | artemisTranslate }}</h5>
+                                <div class="text-center">{{ 'artemisApp.exam.overview.testExam.noMoreAttemptsExplanation' | artemisTranslate }}</div>
                             </div>
                         }
                     }
@@ -106,23 +106,25 @@
         <div class="card-footer row">
             <!-- For real exams, the start date is shown. For test exams, the working window is shown to the students -->
             @if (!exam.testExam && exam.startDate) {
-                <div class="col-sm" jhiTranslate="artemisApp.exam.overview.start" [translateValues]="{ start: exam.startDate | artemisDate }"></div>
+                <div class="col-sm">{{ 'artemisApp.exam.overview.start' | artemisTranslate: { start: exam.startDate | artemisDate } }}</div>
             }
             @if (exam.testExam && exam.startDate && exam.endDate) {
-                <div
-                    class="col-12"
-                    jhiTranslate="artemisApp.exam.overview.testExam.available"
-                    [translateValues]="{
-                        startDate: exam.startDate | artemisDate,
-                        endDate: exam.endDate | artemisDate
-                    }"
-                ></div>
+                <div class="col-12">
+                    {{
+                        'artemisApp.exam.overview.testExam.available'
+                            | artemisTranslate
+                                : {
+                                      startDate: exam.startDate | artemisDate,
+                                      endDate: exam.endDate | artemisDate
+                                  }
+                    }}
+                </div>
             }
             @if (exam.startDate && exam.endDate) {
                 <div class="col-12">{{ 'artemisApp.exam.overview.duration' | artemisTranslate }} {{ exam.workingTime! | artemisDurationFromSeconds: true }}</div>
             }
             @if (exam.examMaxPoints) {
-                <div class="col-sm" jhiTranslate="artemisApp.exam.overview.maxPoints" [translateValues]="{ points: exam.examMaxPoints }"></div>
+                <div class="col-sm">{{ 'artemisApp.exam.overview.maxPoints' | artemisTranslate: { points: exam.examMaxPoints } }}</div>
             }
         </div>
     </div>

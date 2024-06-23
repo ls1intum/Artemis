@@ -6,23 +6,23 @@
         <h3 class="mb-3 ms-2 font-weight-bold" jhiTranslate="artemisApp.aboutUsOverview.getInTouch"></h3>
         <ul>
             <li>
-                <a [href]="bugReportUrl" rel="noreferrer noopener" class="footer-text ms-3" target="_blank">{{ 'bug' | artemisTranslate }}</a>
+                <a [href]="BUG_REPORT_URL" rel="noreferrer noopener" class="footer-text ms-3" target="_blank">{{ 'bug' | artemisTranslate }}</a>
             </li>
             <li>
-                <a [href]="featureRequestUrl" class="footer-text ms-3" target="_blank"> {{ 'feature' | artemisTranslate }}</a>
+                <a [href]="FEATURE_REQUEST_URL" class="footer-text ms-3" target="_blank"> {{ 'feature' | artemisTranslate }}</a>
             </li>
             <li>
                 <a [href]="email" class="footer-text ms-3" target="_top"> {{ 'contact' | artemisTranslate }}</a>
             </li>
             <li>
-                <a [href]="releaseNotesUrl" class="footer-text ms-3" target="_blank">{{ 'releaseNotes' | artemisTranslate }}</a>
+                <a [href]="RELEASE_NOTES_URL" class="footer-text ms-3" target="_blank">{{ 'releaseNotes' | artemisTranslate }}</a>
             </li>
         </ul>
     </div>
     <div class="mb-5 ms-2">
         <h3 class="mb-3 font-weight-bold" jhiTranslate="artemisApp.aboutUsOverview.feature"></h3>
         <ol>
-            @for (section of sections; track section) {
+            @for (section of SECTIONS; track section) {
                 <li>
                     <span [jhiTranslate]="'artemisApp.aboutUsOverview.' + section[0] + '.text'" [translateValues]="section[1]"></span>
                 </li>

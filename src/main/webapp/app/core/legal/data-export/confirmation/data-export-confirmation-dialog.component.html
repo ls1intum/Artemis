@@ -49,7 +49,7 @@
             [disabled]="dataExportConfirmationForm.invalid || submitDisabled"
         >
             @if (submitDisabled) {
-                <span><fa-icon [icon]="faSpinner" [spin]="true" />&nbsp;</span>
+                <span><fa-icon [icon]="faSpinner" animation="spin" />&nbsp;</span>
             }
             <fa-icon [icon]="faCheck" />&nbsp;
             <span [jhiTranslate]="'artemisApp.dataExport.request'"> Request</span>

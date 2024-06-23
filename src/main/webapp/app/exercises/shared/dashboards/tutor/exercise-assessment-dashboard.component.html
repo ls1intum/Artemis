@@ -443,7 +443,7 @@
                                                                     [ngStyle]="exercise === exerciseForGuidedTour ? { cursor: 'not-allowed' } : {}"
                                                                 >
                                                                     @if (openingAssessmentEditorForNewSubmission) {
-                                                                        <fa-icon [icon]="faSpinner" [spin]="true" />
+                                                                        <fa-icon [icon]="faSpinner" animation="spin" />
                                                                     }
                                                                     <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
                                                                     {{ 'artemisApp.exerciseAssessmentDashboard.startAssessment' | artemisTranslate }}

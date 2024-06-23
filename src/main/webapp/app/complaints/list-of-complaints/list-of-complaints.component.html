@@ -3,10 +3,10 @@
         <div class="col-md-8">
             <h2>
                 @if (complaintType === ComplaintType.COMPLAINT) {
-                    <span jhiTranslate="artemisApp.complaint.listOfComplaints.title"></span>
+                    <span>{{ 'artemisApp.complaint.listOfComplaints.title' | artemisTranslate }}</span>
                 }
                 @if (complaintType === ComplaintType.MORE_FEEDBACK) {
-                    <span jhiTranslate="artemisApp.moreFeedback.list.title"></span>
+                    <span>{{ 'artemisApp.moreFeedback.list.title' | artemisTranslate }}</span>
                 }
             </h2>
         </div>
@@ -15,16 +15,16 @@
 <div class="col-12 mt-4">
     <div class="alert alert-info" [hidden]="!course || course.isAtLeastInstructor">
         @if (!allComplaintsForTutorLoaded && complaintType === ComplaintType.COMPLAINT) {
-            <span jhiTranslate="artemisApp.complaint.listOfComplaints.loadAllComplaintsExplanation"></span>
+            <span>{{ 'artemisApp.complaint.listOfComplaints.loadAllComplaintsExplanation' | artemisTranslate }}</span>
         }
         @if (!allComplaintsForTutorLoaded && complaintType === ComplaintType.MORE_FEEDBACK) {
-            <span jhiTranslate="artemisApp.moreFeedback.list.loadAllRequestsExplanation"></span>
+            <span>{{ 'artemisApp.moreFeedback.list.loadAllRequestsExplanation' | artemisTranslate }}</span>
         }
         @if (allComplaintsForTutorLoaded && complaintType === ComplaintType.COMPLAINT) {
-            <span jhiTranslate="artemisApp.complaint.listOfComplaints.allComplaintsLoaded"></span>
+            <span> {{ 'artemisApp.complaint.listOfComplaints.allComplaintsLoaded' | artemisTranslate }}</span>
         }
         @if (allComplaintsForTutorLoaded && complaintType === ComplaintType.MORE_FEEDBACK) {
-            <span jhiTranslate="artemisApp.moreFeedback.list.allRequestsLoaded"></span>
+            <span>{{ 'artemisApp.moreFeedback.list.allRequestsLoaded' | artemisTranslate }}</span>
         }
         @if (!allComplaintsForTutorLoaded) {
             <button
@@ -38,10 +38,10 @@
                     <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                 }
                 @if (complaintType === ComplaintType.COMPLAINT) {
-                    <span jhiTranslate="artemisApp.complaint.listOfComplaints.loadAllComplaints"></span>
+                    <span>{{ 'artemisApp.complaint.listOfComplaints.loadAllComplaints' | artemisTranslate }}</span>
                 }
                 @if (complaintType === ComplaintType.MORE_FEEDBACK) {
-                    <span jhiTranslate="artemisApp.moreFeedback.list.loadAllRequests"></span>
+                    <span>{{ 'artemisApp.moreFeedback.list.loadAllRequests' | artemisTranslate }}</span>
                 }
             </button>
         }
@@ -59,12 +59,13 @@
                 />
                 <label class="form-check-label" for="field_showAddressedComplaint">
                     @if (complaintType === ComplaintType.COMPLAINT) {
-                        <span
-                            jhiTranslate="artemisApp.complaint.listOfComplaints.show{{ filterOption === FilterOptionAddressedComplaints ? 'Only' : '' }}AddressedComplaints"
-                        ></span>
+                        <span>{{
+                            'artemisApp.complaint.listOfComplaints.show' + (filterOption === FILTER_OPTION_ADDRESSED_COMPLAINTS ? 'Only' : '') + 'AddressedComplaints'
+                                | artemisTranslate
+                        }}</span>
                     }
                     @if (complaintType === ComplaintType.MORE_FEEDBACK) {
-                        <span jhiTranslate="artemisApp.moreFeedback.list.showAnsweredRequests"></span>
+                        <span>{{ 'artemisApp.moreFeedback.list.showAnsweredRequests' | artemisTranslate }}</span>
                     }
                 </label>
             </div>
@@ -79,48 +80,48 @@
                         <fa-icon [icon]="faSort" />
                     </th>
                     <th jhiSortBy="result.participation.exercise.title">
-                        <a class="th-link" jhiTranslate="artemisApp.complaint.listOfComplaints.exercise"></a>
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.exercise' | artemisTranslate }}</a>
                         <fa-icon [icon]="faSort" />
                     </th>
                     <th jhiSortBy="result.submission.id">
-                        <a class="th-link" jhiTranslate="artemisApp.complaint.listOfComplaints.submissionId"></a>
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.submissionId' | artemisTranslate }}</a>
                         <fa-icon [icon]="faSort" />
                     </th>
                     <th jhiSortBy="result.assessor.name">
-                        <a class="th-link" jhiTranslate="artemisApp.complaint.listOfComplaints.assessorName"></a>
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.assessorName' | artemisTranslate }}</a>
                         <fa-icon [icon]="faSort" />
                     </th>
                     @if (course?.isAtLeastInstructor) {
                         <th jhiSortBy="student.login">
-                            <a class="th-link" jhiTranslate="artemisApp.complaint.listOfComplaints.studentLogin"></a>
+                            <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.studentLogin' | artemisTranslate }}</a>
                             <fa-icon [icon]="faSort" />
                         </th>
                         <th jhiSortBy="student.name">
-                            <a class="th-link" jhiTranslate="artemisApp.complaint.listOfComplaints.studentName"></a>
+                            <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.studentName' | artemisTranslate }}</a>
                             <fa-icon [icon]="faSort" />
                         </th>
                         <th jhiSortBy="complaintResponse.reviewer.name">
-                            <a class="th-link" jhiTranslate="artemisApp.complaint.listOfComplaints.reviewerName"></a>
+                            <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.reviewerName' | artemisTranslate }}</a>
                             <fa-icon [icon]="faSort" />
                         </th>
                     }
                     <th jhiSortBy="submittedTime">
-                        <a class="th-link" jhiTranslate="artemisApp.complaint.listOfComplaints.dateAndTime"></a>
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.dateAndTime' | artemisTranslate }}</a>
                         <fa-icon [icon]="faSort" />
                     </th>
                     <th jhiSortBy="responseTime">
-                        <a class="th-link" jhiTranslate="artemisApp.complaint.listOfComplaints.responseTime"></a>
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.responseTime' | artemisTranslate }}</a>
                         <fa-icon [icon]="faSort" />
                     </th>
                     <th jhiSortBy="accepted">
-                        <a class="th-link" jhiTranslate="artemisApp.complaint.listOfComplaints.status"></a>
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.status' | artemisTranslate }}</a>
                         <fa-icon [icon]="faSort" />
                     </th>
                     <th jhiSortBy="lockStatus">
-                        <a class="th-link" jhiTranslate="artemisApp.locks.lockStatus"></a>
+                        <a class="th-link">{{ 'artemisApp.locks.lockStatus' | artemisTranslate }}</a>
                         <fa-icon [icon]="faSort" />
                     </th>
-                    <th jhiTranslate="artemisApp.complaint.listOfComplaints.actions"></th>
+                    <th>{{ 'artemisApp.complaint.listOfComplaints.actions' | artemisTranslate }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -165,16 +166,16 @@
                         </td>
                         <td>
                             @if (complaint.accepted === undefined) {
-                                <span class="text-warning" jhiTranslate="artemisApp.complaint.listOfComplaints.noReply"></span>
+                                <span class="text-warning">{{ 'artemisApp.complaint.listOfComplaints.noReply' | artemisTranslate }}</span>
                             }
                             @if (complaint.accepted === true && complaintType === ComplaintType.COMPLAINT) {
-                                <span class="text-success" jhiTranslate="artemisApp.complaint.listOfComplaints.accepted"></span>
+                                <span class="text-success">{{ 'artemisApp.complaint.listOfComplaints.accepted' | artemisTranslate }}</span>
                             }
                             @if (complaint.accepted === true && complaintType === ComplaintType.MORE_FEEDBACK) {
-                                <span class="text-success" jhiTranslate="artemisApp.moreFeedback.accepted"></span>
+                                <span class="text-success">{{ 'artemisApp.moreFeedback.accepted' | artemisTranslate }}</span>
                             }
                             @if (complaint.accepted === false) {
-                                <span class="text-danger" jhiTranslate="artemisApp.complaint.listOfComplaints.rejected"></span>
+                                <span class="text-danger">{{ 'artemisApp.complaint.listOfComplaints.rejected' | artemisTranslate }}</span>
                             }
                         </td>
                         <td>
@@ -184,10 +185,10 @@
                             <button class="btn btn-primary btn-sm" (click)="openAssessmentEditor(complaint)" id="show-complaint">
                                 <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
                                 @if (complaintType === ComplaintType.COMPLAINT) {
-                                    <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.showComplaint"></span>
+                                    <span>{{ 'artemisApp.exerciseAssessmentDashboard.showComplaint' | artemisTranslate }}</span>
                                 }
                                 @if (complaintType === ComplaintType.MORE_FEEDBACK) {
-                                    <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.showMoreFeedbackRequests"></span>
+                                    <span>{{ 'artemisApp.exerciseAssessmentDashboard.showMoreFeedbackRequests' | artemisTranslate }}</span>
                                 }
                             </button>
                         </td>
@@ -198,10 +199,10 @@
     </div>
     <div class="alert alert-info" [hidden]="complaints.length !== 0">
         @if (complaintType === ComplaintType.COMPLAINT) {
-            <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.noComplaints"></span>
+            <span>{{ 'artemisApp.exerciseAssessmentDashboard.noComplaints' | artemisTranslate }}</span>
         }
         @if (complaintType === ComplaintType.MORE_FEEDBACK) {
-            <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.noMoreFeedbackRequests"></span>
+            <span>{{ 'artemisApp.exerciseAssessmentDashboard.noMoreFeedbackRequests' | artemisTranslate }}</span>
         }
     </div>
 </div>

@@ -8,34 +8,34 @@
             @if (irisCompetencyGenerationEnabled) {
                 <a class="btn btn-primary" id="generateButton" [routerLink]="['/course-management', courseId, 'competency-management', 'generate']">
                     <fa-icon [icon]="faRobot" />
-                    <span jhiTranslate="artemisApp.competency.manageCompetencies.generateButton"></span>
+                    <span>{{ 'artemisApp.competency.manageCompetencies.generateButton' | artemisTranslate }}</span>
                 </a>
             }
             <div ngbDropdown class="d-inline">
-                <button id="importDropdown" class="btn btn-primary" ngbDropdownToggle>
+                <button id="importCompetenciesDropdown" class="btn btn-primary" ngbDropdownToggle>
                     <fa-icon [icon]="faFileImport" />
                     {{ 'artemisApp.competency.manageCompetencies.importButton' | artemisTranslate }}
                 </button>
-                <div ngbDropdownMenu aria-labelledby="importDropdown">
+                <div ngbDropdownMenu aria-labelledby="importCompetenciesDropdown">
                     <button class="btn" id="competencyImportAllButton" (click)="openImportAllModal()" ngbDropdownItem>
                         <fa-icon [icon]="faFileImport" />
-                        <span jhiTranslate="artemisApp.competency.manageCompetencies.importAllButton"></span>
+                        <span>{{ 'artemisApp.competency.manageCompetencies.importAllButton' | artemisTranslate }}</span>
                     </button>
                     <a class="btn" [routerLink]="['/course-management', courseId, 'competency-management', 'import']" ngbDropdownItem>
                         <fa-icon [icon]="faFileImport" />
-                        <span jhiTranslate="artemisApp.competency.manageCompetencies.importFromCoursesButton"></span>
+                        <span>{{ 'artemisApp.competency.manageCompetencies.importFromCoursesButton' | artemisTranslate }}</span>
                     </a>
                     @if (standardizedCompetenciesEnabled) {
                         <a class="btn" [routerLink]="['/course-management', courseId, 'competency-management', 'import-standardized']" ngbDropdownItem>
                             <fa-icon [icon]="faFileImport" />
-                            <span jhiTranslate="artemisApp.competency.manageCompetencies.importStandardizedButton"></span>
+                            <span>{{ 'artemisApp.competency.manageCompetencies.importStandardizedButton' | artemisTranslate }}</span>
                         </a>
                     }
                 </div>
             </div>
             <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'competency-management', 'create']">
                 <fa-icon [icon]="faPlus" />
-                <span jhiTranslate="artemisApp.competency.manageCompetencies.createButton"></span>
+                <span>{{ 'artemisApp.competency.manageCompetencies.createButton' | artemisTranslate }}</span>
             </a>
         </div>
     </div>
@@ -52,7 +52,7 @@
         (onCreateRelation)="createRelation($event)"
         (onRemoveRelation)="onRemoveRelation($event)"
     />
-    <h2 jhiTranslate="artemisApp.competency.competencies"></h2>
+    <h2>{{ 'artemisApp.competency.competencies' | artemisTranslate }}</h2>
     <div class="container-fluid overflow-auto">
         @if (competencies.length) {
             <table class="table table-striped">
@@ -139,14 +139,15 @@
         }
     </div>
     <div class="d-flex flex-wrap mt-4">
-        <h2 jhiTranslate="artemisApp.competency.prerequisite.title"></h2>
+        <h2 jhiTranslate="artemisApp.prerequisite.title"></h2>
         <div class="ms-auto text-truncate justify-content-end">
-            <button id="prerequisiteImportButton" class="btn btn-primary" (click)="openPrerequisiteSelectionModal()">
-                <fa-icon [icon]="faPlus" />
-                <span jhiTranslate="artemisApp.competency.prerequisite.select"></span>
-            </button>
+            <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'competency-management', 'import-prerequisites']">
+                <fa-icon [icon]="faFileImport" />
+                <span jhiTranslate="artemisApp.prerequisite.manage.importButton"></span>
+            </a>
         </div>
     </div>
+    <!-- TODO: new table will be added when create/edit will be added -->
     <div class="container-fluid overflow-auto">
         @if (prerequisites.length) {
             <table class="table table-striped">
@@ -183,16 +184,24 @@
                                 </div>
                             </td>
                             <td class="col">
-                                @if (prerequisite.course) {
+                                @if (prerequisite.linkedCourseCompetency?.course?.id) {
                                     <div>
-                                        <a [routerLink]="['/course-management', prerequisite.course.id, 'competency-management']">{{ prerequisite.course.title }}</a>
+                                        <a [routerLink]="['/course-management', prerequisite.linkedCourseCompetency!.course!.id!, 'competency-management']">{{
+                                            prerequisite.linkedCourseCompetency!.course!.title ?? ('artemisApp.competency.course' | artemisTranslate)
+                                        }}</a>
                                     </div>
                                 }
                             </td>
                             <td class="col text-end">
-                                <button class="btn btn-secondary btn-sm" (click)="removePrerequisite(prerequisite.id!)">
+                                <button
+                                    jhiDeleteButton
+                                    [entityTitle]="prerequisite.title ?? ''"
+                                    [deleteQuestion]="'artemisApp.prerequisite.manage.delete.question'"
+                                    [deleteConfirmationText]="'artemisApp.prerequisite.manage.delete.typeNameToConfirm'"
+                                    (delete)="deletePrerequisite(prerequisite.id!)"
+                                    [dialogError]="dialogError"
+                                >
                                     <fa-icon [icon]="faTrash" />
-                                    {{ 'entity.action.remove' | artemisTranslate }}
                                 </button>
                             </td>
                         </tr>
@@ -200,7 +209,7 @@
                 </tbody>
             </table>
         } @else {
-            <span jhiTranslate="artemisApp.competency.prerequisite.empty"></span>
+            <span jhiTranslate="artemisApp.prerequisite.empty"></span>
         }
     </div>
 </div>

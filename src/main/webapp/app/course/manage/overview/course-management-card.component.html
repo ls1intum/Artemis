@@ -99,7 +99,7 @@
             <div class="col-md-8 section-card p-0">
                 @if (!courseWithExercises) {
                     <div class="loading-spinner">
-                        <fa-icon [icon]="faSpinner" [spin]="true" />
+                        <fa-icon [icon]="faSpinner" animation="spin" />
                     </div>
                 }
                 @if (courseWithExercises) {
@@ -216,7 +216,7 @@
                     }
                     @if (!courseStatistics) {
                         <div class="loading-spinner">
-                            <fa-icon [icon]="faSpinner" [spin]="true" />
+                            <fa-icon [icon]="faSpinner" animation="spin" />
                         </div>
                     }
                 </div>

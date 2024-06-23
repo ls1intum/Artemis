@@ -1,13 +1,13 @@
 @if (exam?.course?.isAtLeastInstructor) {
     <div>
         <h2>
-            <span jhiTranslate="artemisApp.examManagement.checklist.{{ isTestExam ? 'testExam.' : '' }}title"></span>
+            <span>{{ 'artemisApp.examManagement.checklist.' + (isTestExam ? 'testExam.' : '') + 'title' | artemisTranslate }}</span>
         </h2>
         @if (!isTestExam) {
             <p>
                 <span>
                     {{ 'artemisApp.examManagement.checklist.introduction' | artemisTranslate }}
-                    <a href="https://docs.artemis.cit.tum.de/user/exams/instructors_guide/" jhiTranslate="artemisApp.examManagement.checklist.linkDescription"></a>
+                    <a href="https://docs.artemis.cit.tum.de/user/exams/instructors_guide/">{{ 'artemisApp.examManagement.checklist.linkDescription' | artemisTranslate }}</a>
                     {{ 'artemisApp.examManagement.checklist.introductionPart2' | artemisTranslate }}
                 </span>
             </p>
@@ -15,11 +15,13 @@
         @if (isTestExam) {
             <p>
                 <!-- documentation currently missing. -->
-                <span jhiTranslate="artemisApp.examManagement.checklist.testExam.introduction"></span>
+                <span> {{ 'artemisApp.examManagement.checklist.testExam.introduction' | artemisTranslate }}</span>
             </p>
         }
         <br />
-        <h3 jhiTranslate="artemisApp.examStatus.preparation.{{ isTestExam ? 'testExam.' : '' }}examPreparation"></h3>
+        <h3>
+            {{ 'artemisApp.examStatus.preparation.' + (isTestExam ? 'testExam.' : '') + 'examPreparation' | artemisTranslate }}
+        </h3>
         <div class="table-responsive">
             <table class="table table-striped">
                 <thead>
@@ -28,13 +30,13 @@
                             <span>#</span>
                         </th>
                         <th>
-                            <span jhiTranslate="artemisApp.examManagement.checklist.checklistItem"></span>
+                            <span>{{ 'artemisApp.examManagement.checklist.checklistItem' | artemisTranslate }}</span>
                         </th>
                         <th>
-                            <span jhiTranslate="artemisApp.examManagement.checklist.description"></span>
+                            <span>{{ 'artemisApp.examManagement.checklist.description' | artemisTranslate }}</span>
                         </th>
                         <th>
-                            <span jhiTranslate="artemisApp.examManagement.checklist.goTo"></span>
+                            <span>{{ 'artemisApp.examManagement.checklist.goTo' | artemisTranslate }}</span>
                         </th>
                     </tr>
                 </thead>
@@ -42,16 +44,16 @@
                     <tr>
                         <td>1</td>
                         <td>
-                            <span jhiTranslate="artemisApp.examManagement.checklist.tableItem.exerciseGroups"></span>
+                            <span>{{ 'artemisApp.examManagement.checklist.tableItem.exerciseGroups' | artemisTranslate }}</span>
                         </td>
                         <td>
-                            <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.exerciseGroups"></span>
+                            <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.exerciseGroups' | artemisTranslate }}</span>
                             <hr />
                             <ul class="list-unstyled">
                                 <li class="list-group-item border-1">
                                     <span>
                                         <jhi-checklist-check [checkAttribute]="exam.exerciseGroups && exam.exerciseGroups.length > 0" />
-                                        <span jhiTranslate="artemisApp.examManagement.checklist.textitems.leastoneexercisegroup"></span>
+                                        <span>{{ 'artemisApp.examManagement.checklist.textitems.leastoneexercisegroup' | artemisTranslate }}</span>
                                     </span>
                                 </li>
                                 <li class="list-group-item border-1">
@@ -75,19 +77,19 @@
                                 <li class="list-group-item border-1">
                                     <span>
                                         <jhi-checklist-check [checkAttribute]="allGroupsContainExercise" />
-                                        <span jhiTranslate="artemisApp.examManagement.checklist.textitems.eachexercisegroup"></span>
+                                        <span>{{ 'artemisApp.examManagement.checklist.textitems.eachexercisegroup' | artemisTranslate }}</span>
                                     </span>
                                 </li>
                                 <li class="list-group-item border-1">
                                     <span>
                                         <jhi-checklist-check [checkAttribute]="pointsExercisesEqual" />
-                                        <span jhiTranslate="artemisApp.examManagement.checklist.textitems.pointsexercisegroupequal"></span>
+                                        <span>{{ 'artemisApp.examManagement.checklist.textitems.pointsexercisegroupequal' | artemisTranslate }}</span>
                                     </span>
                                 </li>
                                 <li class="list-group-item border-1">
                                     <span>
                                         <jhi-checklist-check [checkAttribute]="totalPoints" />
-                                        <span jhiTranslate="artemisApp.examManagement.checklist.textitems.totalpointspossible"></span>
+                                        <span>{{ 'artemisApp.examManagement.checklist.textitems.totalpointspossible' | artemisTranslate }}</span>
                                     </span>
                                 </li>
                             </ul>
@@ -98,22 +100,22 @@
                         <td>
                             <a type="submit" [routerLink]="getExamRoutesByIdentifier('exercise-groups')" class="btn btn-primary" id="exercises-button-groups-table">
                                 <fa-icon [icon]="faListAlt" />
-                                <span jhiTranslate="artemisApp.examManagement.exerciseGroups"></span>
+                                <span>{{ 'artemisApp.examManagement.exerciseGroups' | artemisTranslate }}</span>
                             </a>
                         </td>
                     </tr>
                     <tr>
                         <td>2</td>
                         <td>
-                            <span jhiTranslate="artemisApp.examManagement.checklist.tableItem.testRun"></span>
+                            <span>{{ 'artemisApp.examManagement.checklist.tableItem.testRun' | artemisTranslate }}</span>
                         </td>
                         <td>
-                            <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.testRun"></span>
+                            <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.testRun' | artemisTranslate }}</span>
                             <hr />
                             <ul class="list-unstyled">
                                 @if (examChecklist) {
                                     <li class="list-group-item border-1">
-                                        <span jhiTranslate="artemisApp.examManagement.checklist.textitems.testruns"></span>
+                                        <span>{{ 'artemisApp.examManagement.checklist.textitems.testruns' | artemisTranslate }}</span>
                                         {{ examChecklist.numberOfTestRuns }}
                                     </li>
                                 }
@@ -122,7 +124,7 @@
                         <td>
                             <a [routerLink]="getExamRoutesByIdentifier('test-runs')" class="btn btn-info">
                                 <fa-icon [icon]="faUser" />
-                                <span jhiTranslate="artemisApp.examManagement.testRun.testRun"></span>
+                                <span>{{ 'artemisApp.examManagement.testRun.testRun' | artemisTranslate }}</span>
                             </a>
                         </td>
                     </tr>
@@ -130,20 +132,20 @@
                         <tr>
                             <td>3</td>
                             <td>
-                                <span jhiTranslate="artemisApp.examManagement.checklist.tableItem.register"></span>
+                                <span>{{ 'artemisApp.examManagement.checklist.tableItem.register' | artemisTranslate }}</span>
                             </td>
                             <td>
-                                <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.register"></span>
+                                <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.register' | artemisTranslate }}</span>
                                 <hr />
                                 <ul class="list-unstyled">
                                     <li class="list-group-item border-1">
                                         <span>
                                             <jhi-checklist-check [checkAttribute]="!!exam.numberOfExamUsers && exam.numberOfExamUsers! > 0" />
-                                            <span jhiTranslate="artemisApp.examManagement.checklist.textitems.leastonestudent"></span>
+                                            <span>{{ 'artemisApp.examManagement.checklist.textitems.leastonestudent' | artemisTranslate }}</span>
                                         </span>
                                     </li>
                                     <li class="list-group-item border-1">
-                                        <span jhiTranslate="artemisApp.examManagement.checklist.textitems.studentsregistered"></span>
+                                        <span>{{ 'artemisApp.examManagement.checklist.textitems.studentsregistered' | artemisTranslate }}</span>
                                         <span> {{ exam.numberOfExamUsers }} </span>
                                     </li>
                                 </ul>
@@ -151,23 +153,23 @@
                             <td>
                                 <a [routerLink]="getExamRoutesByIdentifier('students')" class="btn btn-info">
                                     <fa-icon [icon]="faUser" />
-                                    <span jhiTranslate="artemisApp.examManagement.students"></span>
+                                    <span>{{ 'artemisApp.examManagement.students' | artemisTranslate }}</span>
                                 </a>
                             </td>
                         </tr>
                         <tr>
                             <td>4</td>
                             <td>
-                                <span jhiTranslate="artemisApp.examManagement.checklist.tableItem.generateStudentExams"></span>
+                                <span>{{ 'artemisApp.examManagement.checklist.tableItem.generateStudentExams' | artemisTranslate }}</span>
                             </td>
                             <td>
-                                <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.generateStudentExams"></span>
+                                <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.generateStudentExams' | artemisTranslate }}</span>
                                 <hr />
                                 <ul class="list-unstyled">
                                     <li class="list-group-item border-1">
                                         <span>
                                             <jhi-checklist-check [checkAttribute]="allExamsGenerated" />
-                                            <span jhiTranslate="artemisApp.examManagement.checklist.textitems.allexamsgenerated"></span>
+                                            <span>{{ 'artemisApp.examManagement.checklist.textitems.allexamsgenerated' | artemisTranslate }}</span>
                                         </span>
                                     </li>
                                 </ul>
@@ -175,23 +177,23 @@
                             <td>
                                 <a [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-primary">
                                     <fa-icon [icon]="faEye" />
-                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.studentExams"></span>
+                                    <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | artemisTranslate }}</span>
                                 </a>
                             </td>
                         </tr>
                         <tr>
                             <td>5</td>
                             <td>
-                                <span jhiTranslate="artemisApp.examManagement.checklist.tableItem.prepareExerciseStart"></span>
+                                <span>{{ 'artemisApp.examManagement.checklist.tableItem.prepareExerciseStart' | artemisTranslate }}</span>
                             </td>
                             <td>
-                                <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.prepareExerciseStart"></span>
+                                <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.prepareExerciseStart' | artemisTranslate }} </span>
                                 <hr />
                                 <ul class="list-unstyled">
                                     @if (examChecklist) {
                                         <li class="list-group-item border-1">
                                             <jhi-checklist-check [checkAttribute]="!!examChecklist.allExamExercisesAllStudentsPrepared && this.allExamsGenerated" />
-                                            <span jhiTranslate="artemisApp.examManagement.checklist.textitems.allExercisesPrepared"></span>
+                                            <span>{{ 'artemisApp.examManagement.checklist.textitems.allExercisesPrepared' | artemisTranslate }}</span>
                                         </li>
                                     }
                                 </ul>
@@ -199,7 +201,7 @@
                             <td>
                                 <a [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-primary">
                                     <fa-icon [icon]="faEye" />
-                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.studentExams"></span>
+                                    <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | artemisTranslate }}</span>
                                 </a>
                             </td>
                         </tr>
@@ -207,10 +209,10 @@
                     <tr>
                         <td>{{ isTestExam ? 3 : 6 }}</td>
                         <td>
-                            <span jhiTranslate="artemisApp.examManagement.checklist.tableItem.examDetails"></span>
+                            <span>{{ 'artemisApp.examManagement.checklist.tableItem.examDetails' | artemisTranslate }}</span>
                         </td>
                         <td>
-                            <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.examDetails"></span>
+                            <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.examDetails' | artemisTranslate }}</span>
                             @if (isTestExam) {
                                 <hr />
                                 <span>{{ 'artemisApp.examManagement.checklist.testExam.detailsHintForTestExams' | artemisTranslate }} :</span>
@@ -219,19 +221,19 @@
                                     <li class="list-group-item border-1">
                                         <span>
                                             <jhi-checklist-check [checkAttribute]="true" />
-                                            <span jhiTranslate="artemisApp.examManagement.checklist.testExam.studentRegistration"></span>
+                                            <span>{{ 'artemisApp.examManagement.checklist.testExam.studentRegistration' | artemisTranslate }}</span>
                                         </span>
                                     </li>
                                     <li class="list-group-item border-1">
                                         <span>
                                             <jhi-checklist-check [checkAttribute]="true" />
-                                            <span jhiTranslate="artemisApp.studentExams.studentExamStatusTestExam"></span>
+                                            <span>{{ 'artemisApp.studentExams.studentExamStatusTestExam' | artemisTranslate }}</span>
                                         </span>
                                     </li>
                                     <li class="list-group-item border-1">
                                         <span>
                                             <jhi-checklist-check [checkAttribute]="true" />
-                                            <span jhiTranslate="artemisApp.examManagement.checklist.testExam.instantResults"></span>
+                                            <span>{{ 'artemisApp.examManagement.checklist.testExam.instantResults' | artemisTranslate }}</span>
                                         </span>
                                     </li>
                                 </ul>
@@ -247,14 +249,15 @@
             </table>
         </div>
         <hr />
-        <h3 jhiTranslate="artemisApp.examStatus.conduction.{{ isTestExam ? 'testExam.' : '' }}examConduction"></h3>
-        <b
-            jhiTranslate="artemisApp.examManagement.checklist.conductionPlannedFromTo"
-            [translateValues]="{
-                from: exam.startDate! | artemisDate,
-                to: exam.endDate! | artemisDate
-            }"
-        ></b>
+        <h3>{{ 'artemisApp.examStatus.conduction.' + (isTestExam ? 'testExam.' : '') + 'examConduction' | artemisTranslate }}</h3>
+        <b>{{
+            'artemisApp.examManagement.checklist.conductionPlannedFromTo'
+                | artemisTranslate
+                    : {
+                          from: exam.startDate! | artemisDate,
+                          to: exam.endDate! | artemisDate
+                      }
+        }}</b>
         <div class="table-responsive">
             <table class="table table-striped">
                 <thead>
@@ -263,13 +266,13 @@
                             <span>#</span>
                         </th>
                         <th>
-                            <span jhiTranslate="artemisApp.examManagement.checklist.checklistItem"></span>
+                            <span>{{ 'artemisApp.examManagement.checklist.checklistItem' | artemisTranslate }}</span>
                         </th>
                         <th>
-                            <span jhiTranslate="artemisApp.examManagement.checklist.description"></span>
+                            <span>{{ 'artemisApp.examManagement.checklist.description' | artemisTranslate }}</span>
                         </th>
                         <th>
-                            <span jhiTranslate="artemisApp.examManagement.checklist.goTo"></span>
+                            <span>{{ 'artemisApp.examManagement.checklist.goTo' | artemisTranslate }}</span>
                         </th>
                     </tr>
                 </thead>
@@ -277,10 +280,10 @@
                     <tr>
                         <td>1</td>
                         <td>
-                            <span jhiTranslate="artemisApp.examManagement.checklist.tableItem.conductExam"></span>
+                            <span>{{ 'artemisApp.examManagement.checklist.tableItem.conductExam' | artemisTranslate }}</span>
                         </td>
                         <td>
-                            <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.conductExam"></span>
+                            <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.conductExam' | artemisTranslate }}</span>
                             <hr />
                             <!-- Display number of registered students -->
                             @if (exam.numberOfExamUsers) {
@@ -323,24 +326,24 @@
                             }
                             @if (examChecklist && numberOfSubmitted! === 0) {
                                 <div>
-                                    <span jhiTranslate="artemisApp.examManagement.checklist.textitems.noSubmissions"></span>
+                                    <span>{{ 'artemisApp.examManagement.checklist.textitems.noSubmissions' | artemisTranslate }}</span>
                                 </div>
                             }
                         </td>
                         <td>
                             <a [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-primary">
                                 <fa-icon [icon]="faEye" />
-                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.studentExams"></span>
+                                <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | artemisTranslate }}</span>
                             </a>
                         </td>
                     </tr>
                     <tr>
                         <td>2</td>
                         <td>
-                            <span jhiTranslate="artemisApp.examManagement.checklist.tableItem.editWorkingTime"></span>
+                            <span>{{ 'artemisApp.examManagement.checklist.tableItem.editWorkingTime' | artemisTranslate }}</span>
                         </td>
                         <td>
-                            <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.editWorkingTime"></span>
+                            <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.editWorkingTime' | artemisTranslate }}</span>
                         </td>
                         <td>
                             <jhi-exam-edit-working-time [(exam)]="exam" />
@@ -365,7 +368,7 @@
         </div>
         <hr />
         @if (!isTestExam) {
-            <h3 jhiTranslate="artemisApp.examStatus.correction.examCorrection"></h3>
+            <h3>{{ 'artemisApp.examStatus.correction.examCorrection' | artemisTranslate }}</h3>
             <div class="table-responsive">
                 <table class="table table-striped">
                     <thead>
@@ -374,13 +377,13 @@
                                 <span>#</span>
                             </th>
                             <th>
-                                <span jhiTranslate="artemisApp.examManagement.checklist.checklistItem"></span>
+                                <span>{{ 'artemisApp.examManagement.checklist.checklistItem' | artemisTranslate }}</span>
                             </th>
                             <th>
-                                <span jhiTranslate="artemisApp.examManagement.checklist.description"></span>
+                                <span>{{ 'artemisApp.examManagement.checklist.description' | artemisTranslate }}</span>
                             </th>
                             <th>
-                                <span jhiTranslate="artemisApp.examManagement.checklist.goTo"></span>
+                                <span>{{ 'artemisApp.examManagement.checklist.goTo' | artemisTranslate }}</span>
                             </th>
                         </tr>
                     </thead>
@@ -388,27 +391,27 @@
                         <tr>
                             <td>1</td>
                             <td>
-                                <span jhiTranslate="artemisApp.examManagement.checklist.tableItem.suspiciousBehavior"></span>
+                                <span>{{ 'artemisApp.examManagement.checklist.tableItem.suspiciousBehavior' | artemisTranslate }}</span>
                             </td>
                             <td>
-                                <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.suspiciousBehavior"></span>
+                                <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.suspiciousBehavior' | artemisTranslate }}</span>
                                 <hr />
                                 <br />
                             </td>
                             <td>
                                 <a [routerLink]="['suspicious-behavior']" class="btn btn-info">
                                     <fa-icon [icon]="faChartBar" />
-                                    <span jhiTranslate="artemisApp.examManagement.suspiciousBehavior.title"></span>
+                                    <span>{{ 'artemisApp.examManagement.suspiciousBehavior.title' | artemisTranslate }}</span>
                                 </a>
                             </td>
                         </tr>
                         <tr>
                             <td>2</td>
                             <td>
-                                <span jhiTranslate="artemisApp.examManagement.checklist.tableItem.assessAllSubmissions"></span>
+                                <span>{{ 'artemisApp.examManagement.checklist.tableItem.assessAllSubmissions' | artemisTranslate }}</span>
                             </td>
                             <td>
-                                <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.assessAllSubmissions"></span>
+                                <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.assessAllSubmissions' | artemisTranslate }}</span>
                                 <hr />
                                 <!-- Display assessment progress summed up over all exercises, by correction round -->
                                 @if (examChecklist && examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound !== null && numberOfSubmitted !== 0) {
@@ -436,7 +439,7 @@
                                 }
                                 @if (examChecklist && numberOfSubmitted === 0) {
                                     <div>
-                                        <span jhiTranslate="artemisApp.examManagement.checklist.textitems.noSubmissions"></span>
+                                        <span>{{ 'artemisApp.examManagement.checklist.textitems.noSubmissions' | artemisTranslate }}</span>
                                     </div>
                                 }
                                 <br />
@@ -444,24 +447,24 @@
                             <td>
                                 <a [routerLink]="getExamRoutesByIdentifier('assessment-dashboard')" class="btn btn-primary">
                                     <fa-icon [icon]="faThList" />
-                                    <span jhiTranslate="artemisApp.examManagement.assessmentDashboard"></span>
+                                    <span>{{ 'artemisApp.examManagement.assessmentDashboard' | artemisTranslate }}</span>
                                 </a>
                             </td>
                         </tr>
                         <tr>
                             <td>3</td>
                             <td>
-                                <span jhiTranslate="artemisApp.examManagement.checklist.tableItem.publishResults"></span>
+                                <span>{{ 'artemisApp.examManagement.checklist.tableItem.publishResults' | artemisTranslate }}</span>
                             </td>
                             <td>
-                                <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.publishResults"></span>
+                                <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.publishResults' | artemisTranslate }}</span>
                                 <hr />
                                 <ul class="list-unstyled">
                                     <li class="list-group-item border-1">
                                         <span>
                                             <li class="list-group-item border-1">
                                                 <jhi-checklist-check [checkAttribute]="!!exam.publishResultsDate" />
-                                                <span jhiTranslate="artemisApp.examManagement.checklist.textitems.pulishingdateset"></span>
+                                                <span>{{ 'artemisApp.examManagement.checklist.textitems.pulishingdateset' | artemisTranslate }}</span>
                                             </li>
                                             @if (exam.publishResultsDate) {
                                                 <hr />
@@ -571,22 +574,22 @@
                         <tr>
                             <td>4</td>
                             <td>
-                                <span jhiTranslate="artemisApp.examManagement.checklist.tableItem.examReview"></span>
+                                <span>{{ 'artemisApp.examManagement.checklist.tableItem.examReview' | artemisTranslate }}</span>
                             </td>
                             <td>
-                                <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.examReview"></span>
+                                <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.examReview' | artemisTranslate }}</span>
                                 <hr />
                                 <ul class="list-unstyled">
                                     <li class="list-group-item border-1">
                                         <span>
                                             <jhi-checklist-check [checkAttribute]="!!exam.examStudentReviewStart" />
-                                            <span jhiTranslate="artemisApp.examManagement.checklist.textitems.startdatereviewset"></span>
+                                            <span>{{ 'artemisApp.examManagement.checklist.textitems.startdatereviewset' | artemisTranslate }}</span>
                                         </span>
                                     </li>
                                     <li class="list-group-item border-1">
                                         <span>
                                             <jhi-checklist-check [checkAttribute]="!!exam.examStudentReviewEnd" />
-                                            <span jhiTranslate="artemisApp.examManagement.checklist.textitems.enddatereviewset"></span>
+                                            <span>{{ 'artemisApp.examManagement.checklist.textitems.enddatereviewset' | artemisTranslate }}</span>
                                         </span>
                                     </li>
                                 </ul>
@@ -600,10 +603,10 @@
                         <tr>
                             <td>5</td>
                             <td>
-                                <span jhiTranslate="artemisApp.examManagement.checklist.tableItem.resolveComplaints"></span>
+                                <span>{{ 'artemisApp.examManagement.checklist.tableItem.resolveComplaints' | artemisTranslate }}</span>
                             </td>
                             <td>
-                                <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.resolveComplaints"></span>
+                                <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.resolveComplaints' | artemisTranslate }}</span>
                                 <hr />
                                 @if (examChecklist && examChecklist.numberOfAllComplaintsDone !== null && examChecklist.numberOfAllComplaints !== 0) {
                                     <div>
@@ -618,7 +621,7 @@
                                 }
                                 @if (examChecklist && examChecklist.numberOfAllComplaints === 0) {
                                     <div>
-                                        <span jhiTranslate="artemisApp.examManagement.checklist.textitems.noComplaints"></span>
+                                        <span>{{ 'artemisApp.examManagement.checklist.textitems.noComplaints' | artemisTranslate }}</span>
                                     </div>
                                 }
                                 <br />
@@ -626,17 +629,17 @@
                             <td>
                                 <a [routerLink]="getExamRoutesByIdentifier('assessment-dashboard')" class="btn btn-primary" id="tutor-exam-dashboard-button_table_complaints">
                                     <fa-icon [icon]="faThList" />
-                                    <span jhiTranslate="artemisApp.examManagement.assessmentDashboard"></span>
+                                    <span>{{ 'artemisApp.examManagement.assessmentDashboard' | artemisTranslate }}</span>
                                 </a>
                             </td>
                         </tr>
                         <tr>
                             <td>6</td>
                             <td>
-                                <span jhiTranslate="artemisApp.examManagement.checklist.tableItem.exportResults"></span>
+                                <span>{{ 'artemisApp.examManagement.checklist.tableItem.exportResults' | artemisTranslate }}</span>
                             </td>
                             <td>
-                                <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.exportResults"></span>
+                                <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.exportResults' | artemisTranslate }}</span>
                             </td>
                             <td>
                                 <a [routerLink]="getExamRoutesByIdentifier('scores')" class="btn btn-info" id="scores-button_publish_result">

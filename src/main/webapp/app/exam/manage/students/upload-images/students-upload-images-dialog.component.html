@@ -20,7 +20,7 @@
                     <jhi-help-icon text="artemisApp.exam.examUsers.pdfFile.tooltip" class="me-1" />
                 </div>
                 @if (isParsing) {
-                    <fa-icon class="loading-spinner ms-1" [icon]="faSpinner" [spin]="true" />
+                    <fa-icon class="loading-spinner ms-1" [icon]="faSpinner" animation="spin" />
                 }
             </div>
             <div class="mt-2">
@@ -70,7 +70,7 @@
                 <button type="submit" id="import" name="importButton" class="btn btn-primary" [disabled]="!file || isParsing" (click)="parsePDFFile()">
                     <fa-icon [icon]="faUpload" class="me-2" />
                     <span jhiTranslate="artemisApp.exam.examUsers.saveImages"></span>
-                    <fa-icon class="ms-1" [hidden]="!isParsing" [spin]="true" [icon]="faCircleNotch" />
+                    <fa-icon class="ms-1" [hidden]="!isParsing" animation="spin" [icon]="faCircleNotch" />
                 </button>
             } @else {
                 <button [ngClass]="hasParsed && notFoundUsers?.numberOfUsersNotFound === 0 ? 'btn btn-success' : 'btn btn-danger'" id="finish-button" (click)="onFinish()">

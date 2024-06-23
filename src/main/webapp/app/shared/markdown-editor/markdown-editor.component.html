@@ -73,7 +73,7 @@
                 <div class="markdown-editor__commands">
                     <div class="markdown-editor__commands-default">
                         <!--default commands (e.g. bold)-->
-                        @for (command of defaultCommands | negatedTypeCheck: MultiOptionCommand; track command) {
+                        @for (command of defaultCommands | negatedTypeCheck: MultiOptionCommand; track defaultCommands.indexOf(command)) {
                             <button type="button" class="btn btn-sm py-0" (click)="command.execute()" [ngbTooltip]="command.buttonTranslationString | artemisTranslate">
                                 <fa-icon [icon]="command.buttonIcon" />
                             </button>
@@ -97,10 +97,10 @@
                                 </div>
                             </div>
                         }
-                        @for (command of defaultCommands | typeCheck: InteractiveSearchCommand; track command) {
+                        @for (command of defaultCommands | typeCheck: InteractiveSearchCommand; track defaultCommands.indexOf(command)) {
                             <jhi-select-with-search [command]="command" [editorContentString]="editorContentString" />
                         }
-                        @for (command of defaultCommands | typeCheck: MultiOptionCommand | negatedTypeCheck: InteractiveSearchCommand; track command) {
+                        @for (command of defaultCommands | typeCheck: MultiOptionCommand | negatedTypeCheck: InteractiveSearchCommand; track defaultCommands.indexOf(command)) {
                             <div>
                                 <button
                                     mat-button
@@ -125,7 +125,7 @@
                                     @if (!command.getValues() || command.getValues().length === 0) {
                                         <button mat-button [disabled]="true" jhiTranslate="global.generic.emptyList" type="button"></button>
                                     }
-                                    @for (lecture of command.getValues(); track lecture) {
+                                    @for (lecture of command.getValues(); track lecture.id) {
                                         @if (lecture.type === 'LECTURE') {
                                             <button mat-menu-item [matMenuTriggerFor]="lectureMenuUnits" type="button">
                                                 {{ lecture.value }}
@@ -137,7 +137,7 @@
                                                     {{ lecture.value }}
                                                 </button>
                                             }
-                                            @for (unit of lecture.attachmentUnits; track unit) {
+                                            @for (unit of lecture.attachmentUnits; track unit.id) {
                                                 @if (unit.courseArtifactType === 'ATTACHMENT_UNITS') {
                                                     <button mat-menu-item [matMenuTriggerFor]="lectureMenuUnitsSlide" type="button">
                                                         <span>{{ unit.value }}</span>
@@ -155,14 +155,14 @@
                                                     @if (!unit.slides || unit.slides.length === 0) {
                                                         <button mat-button [disabled]="true" jhiTranslate="global.generic.emptyList" type="button"></button>
                                                     }
-                                                    @for (slide of unit.slides; track slide) {
+                                                    @for (slide of unit.slides; track slide.id) {
                                                         <button mat-menu-item (click)="command.execute(lecture.id, lecture.type, undefined, unit.id, slide.id)" type="button">
                                                             <span>Slide {{ slide.slideNumber }}</span>
                                                         </button>
                                                     }
                                                 </mat-menu>
                                             }
-                                            @for (attachment of lecture.elements; track attachment) {
+                                            @for (attachment of lecture.elements; track attachment.id) {
                                                 <button mat-menu-item type="button" (click)="command.execute(lecture.id, attachment.type, attachment.id)">
                                                     <span>{{ attachment.value }}</span>
                                                 </button>
@@ -182,14 +182,14 @@
                         <!-- domain commands -->
                         @if (domainCommands && domainCommands.length !== 0) {
                             <div class="markdown-editor__commands-domain">
-                                @for (command of domainCommands | typeCheck: DomainTagCommand; track command) {
+                                @for (command of domainCommands | typeCheck: DomainTagCommand; track domainCommands.indexOf(command)) {
                                     @if (command.displayCommandButton) {
                                         <div class="btn btn-sm px-2 py-0" (click)="command.execute()">
                                             {{ command.buttonTranslationString | artemisTranslate }}
                                         </div>
                                     }
                                 }
-                                @for (command of domainCommands | typeCheck: DomainMultiOptionCommand; track command) {
+                                @for (command of domainCommands | typeCheck: DomainMultiOptionCommand; track domainCommands.indexOf(command)) {
                                     <div ngbDropdown class="btn-group">
                                         <button class="btn btn-sm px-2 py-0" type="button" ngbDropdownToggle>
                                             {{ command.buttonTranslationString | artemisTranslate }}
@@ -209,7 +209,7 @@
                             </div>
                         }
                         <div class="ms-auto">
-                            @for (command of metaCommands; track command) {
+                            @for (command of metaCommands; track metaCommands.indexOf(command)) {
                                 <button type="button" class="btn btn-sm px-2 py-0" (click)="command.execute()" [ngbTooltip]="command.buttonTranslationString | artemisTranslate">
                                     <fa-icon [icon]="command.buttonIcon" />
                                 </button>
