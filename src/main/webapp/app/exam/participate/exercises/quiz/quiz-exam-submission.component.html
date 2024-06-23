@@ -1,3 +1,16 @@
+<h3 style="text-align: left; font-weight: normal">
+    <span>
+        {{ quizConfiguration.title }}
+    </span>
+    <span
+        >({{ quizConfiguration.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }})
+        @if (quizConfiguration.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+            <jhi-included-in-score-badge [includedInOverallScore]="quizConfiguration.includedInOverallScore" />
+        }
+    </span>
+</h3>
+<hr />
+
 <div class="w-auto m-0 pb-5">
     @if (quizConfiguration.quizQuestions && !examTimeline) {
         <div class="position-fixed d-flex align-items-center justify-content-center">
@@ -45,15 +58,6 @@
     }
     @if (quizConfiguration.quizQuestions) {
         <div class="ms-5">
-            <h4 class="exercise-title">
-                {{ examTimeline ? quizConfiguration.title : quizConfiguration?.exerciseGroup?.title ?? '-' }}
-                <span
-                    >[{{ quizConfiguration.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}]
-                    @if (quizConfiguration.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                        <jhi-included-in-score-badge [includedInOverallScore]="quizConfiguration.includedInOverallScore" />
-                    }
-                </span>
-            </h4>
             @for (question of quizConfiguration.quizQuestions; track question; let i = $index) {
                 <div>
                     <!-- TODO: Map vs Array consistency -->

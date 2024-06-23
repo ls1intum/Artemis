@@ -44,6 +44,7 @@ import {
 } from 'app/exam/participate/exam-participation-live-events.service';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { SidebarCardElement, SidebarData } from 'app/types/sidebar';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -103,6 +104,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     isProduction = true;
     isTestServer = false;
+
+    sidebarData: SidebarData;
+    sidebarExercises: SidebarCardElement[] = [];
+    exerciseSelected = true;
 
     // Icons
     faCheckCircle = faCheckCircle;
@@ -269,8 +274,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // Keep working time
             studentExam.workingTime = this.studentExam?.workingTime ?? studentExam.workingTime;
             this.studentExam = studentExam;
-            // no need to change the page layout for test runs
-            if (!this.testRunId) {
+            // no need to change the whole page layout for test runs
+            if (this.testRunId) {
+                this.examParticipationService.setExamLayout(false, true);
+            } else {
                 this.examParticipationService.setExamLayout();
             }
             // provide exam-participation.service with exerciseId information (e.g. needed for exam notifications)
@@ -286,6 +293,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             }
             // initializes array which manages submission component and exam overview initialization
             this.pageComponentVisited = new Array(studentExam.exercises!.length).fill(false);
+            this.prepareSidebarData();
             // TODO: move to exam-participation.service after studentExam was retrieved
             // initialize all submissions as synced
             this.studentExam.exercises!.forEach((exercise) => {
@@ -542,6 +550,15 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         return this.exam.startDate ? this.exam.startDate.isBefore(this.serverDateService.now()) : false;
     }
 
+    checkVerticalOverflow(): boolean {
+        // Get the sidebar-content element
+        const sidebarContent = document.querySelector('.content-exam-height');
+        if (sidebarContent) {
+            return sidebarContent.scrollHeight > sidebarContent.clientHeight;
+        }
+        return false;
+    }
+
     ngOnDestroy(): void {
         this.programmingSubmissionSubscriptions.forEach((subscription) => {
             subscription.unsubscribe();
@@ -708,6 +725,24 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (activeComponent) {
             activeComponent.onActivate();
         }
+    }
+
+    updateSidebarData() {
+        this.sidebarData = {
+            groupByCategory: false,
+            sidebarType: 'inExam',
+            ungroupedData: this.sidebarExercises,
+        };
+    }
+
+    prepareSidebarData() {
+        if (!this.studentExam.exercises) {
+            return;
+        }
+
+        const sidebarCardExercises = this.examParticipationService.mapExercisesToSidebarCardElements(this.studentExam.exercises!);
+        this.sidebarExercises = [...sidebarCardExercises];
+        this.updateSidebarData();
     }
 
     /**

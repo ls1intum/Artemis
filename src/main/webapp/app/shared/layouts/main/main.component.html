@@ -1,5 +1,11 @@
 <jhi-alert-overlay />
-<div id="page-wrapper" class="page-wrapper" [ngClass]="{ 'footer-height-dev': !isProduction || isTestServer }" cdkScrollable>
+<div
+    id="page-wrapper"
+    class="page-wrapper"
+    [ngClass]="{ 'footer-height-dev': (!isProduction || isTestServer) && !isExamStarted }"
+    [ngStyle]="{ 'overflow-y': isTestRunExam ? 'hidden' : 'auto' }"
+    cdkScrollable
+>
     <jhi-page-ribbon />
     @if (showSkeleton) {
         <div class="sticky-top">

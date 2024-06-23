@@ -7,6 +7,11 @@
         color: var(--connection-status-disconnected);
     }
 
+    .connectedExam {
+        font-size: 16px;
+        color: var(--white);
+    }
+
     i {
         font-size: 0.8em;
         vertical-align: 10%;

@@ -1,6 +1,6 @@
 $menu-width-closed: 64px;
 $menu-width-open: 220px;
-$breadcrumb-height: 40px; // needed to make the exam fullscreen
+$breadcrumb-height: 45px; // needed to make the exam fullscreen
 
 .sidebar-container {
     width: $menu-width-open;
@@ -103,7 +103,7 @@ $breadcrumb-height: 40px; // needed to make the exam fullscreen
         .mat-drawer-content {
             width: 100vw;
             margin-left: 0px !important;
-            overflow: auto;
+            //overflow: auto;
         }
     }
 

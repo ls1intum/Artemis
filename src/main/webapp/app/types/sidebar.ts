@@ -8,7 +8,7 @@ export type SidebarCardSize = 'S' | 'M' | 'L';
 export type TimeGroupCategory = 'past' | 'current' | 'future' | 'noDate';
 export type ExamGroupCategory = 'real' | 'test';
 export type TutorialGroupCategory = 'all' | 'registered' | 'further';
-export type SidebarTypes = 'exercise' | 'exam' | 'conversation' | 'default';
+export type SidebarTypes = 'exercise' | 'exam' | 'inExam' | 'conversation' | 'default';
 export type AccordionGroups = Record<TimeGroupCategory | TutorialGroupCategory | ExamGroupCategory | ChannelGroupCategory | string, { entityData: SidebarCardElement[] }>;
 export type ExerciseCollapseState = Record<TimeGroupCategory, boolean>;
 export type ChannelGroupCategory =
@@ -117,7 +117,10 @@ export interface SidebarCardElement {
      * Set for exam, shows the maximum attainable Points
      */
     attainablePoints?: number;
-
+    /**
+     * Set for exam, indetifies the current status of an exam exercise for exam sidebar
+     */
+    rightIcon?: IconProp;
     // TODO Extra Conversation Part
     /**
      * Set for Conversation. Will be removed after refactoring

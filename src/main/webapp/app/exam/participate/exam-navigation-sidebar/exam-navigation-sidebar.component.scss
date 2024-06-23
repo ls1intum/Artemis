@@ -1,0 +1,85 @@
+$search-height: 97px;
+$breadcrumb-height: 38px;
+$sidebar-width-open: 275px;
+$sidebar-width-closed: 100px;
+
+.scrollable-item-content {
+    height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height) - $search-height);
+    &.content-height-dev {
+        height: calc(100vh - var(--sidebar-footer-height-dev) - var(--header-height) - $search-height);
+    }
+    &.sidebar-height-testRun {
+        height: calc(100vh - 360px - $search-height);
+    }
+    @media (max-width: 768px) {
+        height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height) - $search-height) !important;
+    }
+
+    overflow-y: auto;
+}
+
+.sidebar {
+    background-color: var(--module-bg);
+    height: calc(100vh - var(--sidebar-footer-height-prod) - $breadcrumb-height);
+    width: $sidebar-width-open;
+    transition: width 0.2s ease-in-out !important;
+
+    &.collapsed {
+        width: $sidebar-width-closed !important;
+    }
+    &.sidebar-height-dev {
+        height: calc(100vh - var(--sidebar-footer-height-dev) - $breadcrumb-height);
+    }
+    &.sidebar-height-testRun {
+        height: calc(100vh - 360px);
+    }
+    @media (max-width: 768px) {
+        height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height)) !important;
+    }
+}
+
+.notSynced {
+    --fa-secondary-color: var(--bs-body-color);
+    --fa-secondary-opacity: 1;
+    --fa-primary-color: var(--warning);
+}
+
+.saved {
+    --fa-secondary-color: var(--bs-body-color);
+    --fa-secondary-opacity: 1;
+    --fa-primary-color: var(--success);
+}
+
+.bg-module {
+    background-color: var(--module-bg);
+}
+
+.border-module {
+    border-color: var(--module-bg) !important;
+}
+
+.bg-selected {
+    background-color: var(--sidebar-card-selected-bg);
+
+    &.border-module {
+        border-color: var(--sidebar-card-selected-bg) !important;
+    }
+}
+
+.double-arrow.menu-closed {
+    transform: translate(35px) rotate(0deg);
+}
+
+.double-arrow {
+    transform: translate(235px) rotate(180deg);
+    transition: all ease 0.3s;
+    cursor: pointer;
+    width: 30px;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+}
+
+.me-negative {
+    margin-right: -5px;
+}

@@ -10,11 +10,13 @@ import { Exam } from 'app/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { Submission, getLatestSubmissionResult } from 'app/entities/submission.model';
 import { cloneDeep } from 'lodash-es';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { captureException } from '@sentry/angular-ivy';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { SidebarCardElement } from 'app/types/sidebar';
+import { faLightbulb } from '@fortawesome/free-solid-svg-icons';
 
 export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted';
 
@@ -24,6 +26,9 @@ export class ExamParticipationService {
 
     private examIsStartedSubject = new BehaviorSubject<boolean>(false);
     examIsStarted$ = this.examIsStartedSubject.asObservable();
+
+    private testRunSubject = new BehaviorSubject<boolean>(false);
+    testRunStarted$ = this.testRunSubject.asObservable();
 
     private examExerciseIds: number[];
 
@@ -342,12 +347,29 @@ export class ExamParticipationService {
         this.examExerciseIds = examExerciseIds;
     }
 
-    setExamLayout() {
-        this.examIsStartedSubject.next(true);
+    setExamLayout(isExamStarted: boolean = true, isTestRun: boolean = false) {
+        this.examIsStartedSubject.next(isExamStarted);
+        this.testRunSubject.next(isTestRun);
     }
 
     resetExamLayout() {
         this.examIsStartedSubject.next(false);
+        this.testRunSubject.next(false);
         document.documentElement.style.setProperty('--header-height', '68px'); // Set back to default value, because exam nav bar changes this property within the exam
+    }
+
+    mapExercisesToSidebarCardElements(exercises: Exercise[]) {
+        return exercises.map((exercise) => this.mapExerciseToSidebarCardElement(exercise));
+    }
+
+    mapExerciseToSidebarCardElement(exercise: Exercise): SidebarCardElement {
+        const exerciseCardItem: SidebarCardElement = {
+            title: exercise.title ?? '',
+            id: exercise.id ?? '',
+            icon: getIcon(exercise.type),
+            rightIcon: faLightbulb,
+            size: 'M',
+        };
+        return exerciseCardItem;
     }
 }

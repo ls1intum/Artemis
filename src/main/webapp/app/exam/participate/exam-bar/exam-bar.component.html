@@ -1,0 +1,22 @@
+<div class="h5 module-bg m-3 mt-0 px-3 py-2 rounded rounded-3 sticky-top">
+    <div class="d-flex justify-content-between">
+        <div class="align-self-center">
+            <h3 class="align-self-center mb-0">{{ examTitle }}</h3>
+        </div>
+        @if (!examTimeLineView) {
+            <div class="align-self-center">
+                <div class="d-flex justify-content-between">
+                    <jhi-exam-timer [criticalTime]="criticalTime" [endDate]="endDate" (timerAboutToEnd)="triggerExamAboutToEnd()" />
+                    <button id="hand-in-early" class="btn btn-danger ms-2" (click)="handInEarly()">
+                        <div class="d-flex justify-content-between">
+                            <span>
+                                <fa-icon [fixedWidth]="true" [icon]="icon" />
+                                {{ 'artemisApp.examParticipation.handInEarly' | artemisTranslate }}
+                            </span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+</div>

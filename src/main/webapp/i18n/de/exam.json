@@ -341,6 +341,7 @@
             "attendanceNotVerifiedWarningFirstSentence": "Deine Anwesenheit wurde noch nicht kontrolliert.",
             "attendanceNotVerifiedWarningSecondSentence": "Bitte warte, bis deine Anwesenheit kontrolliert wurde, oder kontaktiere die Hörsaalaufsicht wenn du denkst dass ein Fehler aufgetreten ist.",
             "namePlaceholder": "Trage deinen vollen Namen hier ein",
+            "numberOfSavedExercises": "Anzahl der eingereichten Aufgaben",
             "submissionSuccessful": {
                 "title": "Deine Klausur wurde erfolgreich abgegeben!",
                 "noActionRequired": "Artemis erfordert keine weitere Aktion, das Fenster kann geschlossen werden.",
@@ -766,6 +767,7 @@
             "studentExam": "Klausur ({{ examTitle }})",
             "testRun": "Testlauf ({{ examTitle }})",
             "exercises": "Aufgaben",
+            "overview": "Überblick",
             "downloadPDF": " PDF herunterladen",
             "student": "Student",
             "name": "Name: ",
