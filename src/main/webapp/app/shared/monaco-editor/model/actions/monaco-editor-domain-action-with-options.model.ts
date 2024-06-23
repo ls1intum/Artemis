@@ -5,6 +5,9 @@ export interface DomainActionWithOptionsArguments {
     selectedItem: ValueItem;
 }
 
+/**
+ * Class representing domain actions for Artemis-specific use cases with options. The user can select an item from a list of options.
+ */
 export abstract class MonacoEditorDomainActionWithOptions extends MonacoEditorDomainAction {
     values: ValueItem[] = [];
 
