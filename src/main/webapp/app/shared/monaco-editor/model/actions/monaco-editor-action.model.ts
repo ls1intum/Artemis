@@ -22,6 +22,13 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      */
     private _editor?: monaco.editor.IStandaloneCodeEditor;
 
+    /**
+     * Create a new action with the given id, translation key, icon, and keybindings.
+     * @param id The unique identifier of the action.
+     * @param translationKey The translation key of the action label.
+     * @param icon The icon to display in the editor toolbar, if any.
+     * @param keybindings The keybindings to trigger the action, if any.
+     */
     constructor(id: string, translationKey: string, icon?: IconDefinition, keybindings?: number[]) {
         this.id = id;
         this.translationKey = translationKey;
@@ -72,6 +79,14 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
         this._editor = editor;
     }
 
+    /**
+     * Toggles the given delimiter around the current selection or inserts it at the current cursor position if there is no selection.
+     * In the latter case, textToInsert is inserted between the delimiters.
+     * @param editor The editor to toggle the delimiter in.
+     * @param openDelimiter The opening delimiter, e.g. <ins>.
+     * @param closeDelimiter The closing delimiter, e.g. </ins>.
+     * @param textToInsert The text to insert between the delimiters if there is no selection. Defaults to an empty string.
+     */
     toggleDelimiterAroundSelection(editor: monaco.editor.ICodeEditor, openDelimiter: string, closeDelimiter: string, textToInsert: string = ''): void {
         const selection = editor.getSelection();
         const selectedText = selection ? this.getTextAtRange(editor, selection)?.trim() : undefined;
@@ -93,10 +108,21 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
         }
     }
 
+    /**
+     * Checks if the given text is surrounded by the given delimiters. This requires that the text is long enough to contain both delimiters.
+     * @param text The text to check.
+     * @param openDelimiter The opening delimiter.
+     * @param closeDelimiter The closing delimiter.
+     */
     isTextSurroundedByDelimiters(text: string, openDelimiter: string, closeDelimiter: string): boolean {
         return text.startsWith(openDelimiter) && text.endsWith(closeDelimiter) && text.length >= openDelimiter.length + closeDelimiter.length;
     }
 
+    /**
+     * Replaces the text at the current selection with the given text. If there is no selection, the text is inserted at the current cursor position.
+     * @param editor The editor to replace the text in.
+     * @param text The text to replace the current selection with.
+     */
     replaceTextAtCurrentSelection(editor: monaco.editor.ICodeEditor, text: string): void {
         const selection = editor.getSelection();
         const selectedText = selection ? this.getTextAtRange(editor, selection)?.trim() : undefined;
@@ -105,27 +131,59 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
         }
     }
 
+    /**
+     * Inserts the given text at the current cursor position.
+     * @param editor The editor to insert the text in.
+     * @param position The position to insert the text at.
+     * @param text The text to insert.
+     */
     insertTextAtPosition(editor: monaco.editor.ICodeEditor, position: monaco.IPosition, text: string): void {
         this.replaceTextAtRange(editor, new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column), text);
     }
 
+    /**
+     * Replaces the text at the given range with the given text.
+     * @param editor The editor to replace the text in.
+     * @param range The range to replace the text at.
+     * @param text The text to replace the range with.
+     */
     replaceTextAtRange(editor: monaco.editor.ICodeEditor, range: monaco.IRange, text: string): void {
         editor.executeEdits(this.id, [{ range, text }]);
     }
 
+    /**
+     * Deletes the text at the given range.
+     * @param editor The editor to delete the text in.
+     * @param range The range to delete the text at.
+     */
     deleteTextAtRange(editor: monaco.editor.ICodeEditor, range: monaco.IRange): void {
         this.replaceTextAtRange(editor, range, '');
     }
 
+    /**
+     * Gets the text at the given range. If the range is empty, undefined is returned.
+     * @param editor The editor to get the text from.
+     * @param range The range to get the text from.
+     */
     getTextAtRange(editor: monaco.editor.ICodeEditor, range: monaco.IRange): string | undefined {
         // End of line preference is important here. Otherwise, Windows may use CRLF line endings.
         return editor.getModel()?.getValueInRange(range, monaco.editor.EndOfLinePreference.LF);
     }
 
+    /**
+     * Gets the text of the line at the given line number.
+     * @param editor The editor to get the text from.
+     * @param lineNumber The line number to get the text from. Line numbers start at 1.
+     */
     getLineText(editor: monaco.editor.ICodeEditor, lineNumber: number): string | undefined {
         return editor.getModel()?.getLineContent(lineNumber);
     }
 
+    /**
+     * Toggles the fullscreen mode of the given element. If no element is provided, the editor's DOM node is used.
+     * @param editor The editor to toggle the fullscreen mode for.
+     * @param element The element to toggle the fullscreen mode for.
+     */
     toggleFullscreen(editor: monaco.editor.ICodeEditor, element?: HTMLElement): void {
         const fullscreenElement = element ?? editor.getDomNode();
         if (isFullScreen()) {
