@@ -271,8 +271,4 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
         return annotations;
     };
-
-    resizeHeight() {
-        this.markdownEditorMonaco?.adjustEditorDimensions();
-    }
 }
