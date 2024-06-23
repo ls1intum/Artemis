@@ -16,6 +16,11 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.science.ScienceEvent;
 import de.tum.in.www1.artemis.repository.science.ScienceEventRepository;
 
+/**
+ * A Service to create the science event export data for users.
+ * This includes the timestamps for every lecture, lecture unit and exercise opened.
+ * All science event data is exported into a single CSV file.
+ */
 @Profile(PROFILE_CORE)
 @Service
 public class DataExportScienceEventService {
@@ -26,11 +31,25 @@ public class DataExportScienceEventService {
         this.scienceEventRepository = scienceEventRepository;
     }
 
+    /**
+     * Creates the science event data export containing timestamps for every lecture, lecture unit and exercise opened.
+     *
+     * @param login            the login of the user for which the science event data should be exported
+     * @param workingDirectory the directory where the export file should be created
+     * @throws IOException if the file cannot be created
+     */
     public void createScienceEventExport(String login, Path workingDirectory) throws IOException {
         var scienceEvents = scienceEventRepository.findAllByIdentity(login);
         createScienceEventExportFile(workingDirectory, scienceEvents);
     }
 
+    /**
+     * Creates a CSV file containing the science event data from a given set of science events.
+     *
+     * @param workingDirectory the directory where the export file should be created
+     * @param scienceEvents    the set of science events to be exported
+     * @throws IOException if the file cannot be created
+     */
     private void createScienceEventExportFile(Path workingDirectory, Set<ScienceEvent> scienceEvents) throws IOException {
 
         if (scienceEvents == null || scienceEvents.isEmpty()) {

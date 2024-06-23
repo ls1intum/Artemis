@@ -479,6 +479,13 @@ public class ExerciseUtilService {
         plagiarismCaseRepository.save(plagiarismCase);
     }
 
+    /**
+     * Creates a science event with the passed type and resource id.
+     *
+     * @param principal  The login of the user associated with the event.
+     * @param type       The type of the event.
+     * @param resourceId The id of the resource associated with the event.
+     */
     public void createScienceEvent(String principal, ScienceEventType type, Long resourceId) {
         ScienceEvent event = new ScienceEvent();
         event.setIdentity(principal);
