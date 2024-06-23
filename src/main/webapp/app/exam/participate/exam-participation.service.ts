@@ -18,7 +18,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { SidebarCardElement } from 'app/types/sidebar';
 import { faLightbulb } from '@fortawesome/free-solid-svg-icons';
 
-export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted';
+export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted' | 'notStarted';
 
 @Injectable({ providedIn: 'root' })
 export class ExamParticipationService {
@@ -328,7 +328,11 @@ export class ExamParticipationService {
             return 'synced';
         }
         if (exercise.type !== ExerciseType.PROGRAMMING) {
-            return submission.isSynced ? 'synced' : 'notSynced';
+            if (submission.submitted) {
+                return submission.isSynced ? 'synced' : 'notSynced';
+            } else {
+                return submission.isSynced ? 'notStarted' : 'notSynced';
+            }
         }
         if (submission.submitted && submission.isSynced) {
             return 'submitted'; // You have submitted an exercise. You can submit again
