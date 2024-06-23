@@ -661,7 +661,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     List<Long> findIdsByExerciseIdAndStudentName(@Param("exerciseId") long exerciseId, @Param("partialStudentName") String partialStudentName, Pageable pageable);
 
     @EntityGraph(type = LOAD, attributePaths = "submissions, results")
-    List<StudentParticipation> findsWithAssociationsByIdIn(List<Long> ids);
+    List<StudentParticipation> findStudentParticipationWithAssociationsByIdIn(List<Long> ids);
 
     @Query("""
             SELECT COUNT(p)
@@ -694,7 +694,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }
-        List<StudentParticipation> result = findsWithAssociationsByIdIn(ids);
+        List<StudentParticipation> result = findStudentParticipationWithAssociationsByIdIn(ids);
         return new PageImpl<>(result, pageable, countByExerciseIdAndStudentName(exerciseId, partialStudentName));
     }
 
