@@ -32,7 +32,7 @@ import com.github.javaparser.ast.expr.SingleMemberAnnotationExpr;
 public class EndpointParser {
 
     public static void main(String[] args) {
-        final String directoryPath = "src/main/java/de/tum/in/www1/artemis";
+        final String directoryPath = "../../src/main/java/de/tum/in/www1/artemis";
 
         StaticJavaParser.getParserConfiguration().setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_21);
 
