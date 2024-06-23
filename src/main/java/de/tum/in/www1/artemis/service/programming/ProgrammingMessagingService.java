@@ -179,21 +179,33 @@ public class ProgrammingMessagingService {
             if (ltiNewResultService.isPresent()) {
                 ltiNewResultService.get().onNewResult(studentParticipation);
             }
-            if (studentParticipation.getParticipant() instanceof User) {
-                pyrisEventService.ifPresent(service -> {
-                    // Inform Iris so it can send a message to the user
-                    try {
-                        // TODO: Make this more intelligent. Check the recent submission and only answer when the
-                        // last 3 subsequent submissions failed. Failure criteria: Score < 80.0
-                        if (result.getScore() < 80.0) {
-                            service.trigger(new SubmissionFailedEvent(result));
+            // Inform Iris about the submission status
+            notifyIrisAboutSubmissionStatus(result, studentParticipation);
+        }
+    }
+
+    private void notifyIrisAboutSubmissionStatus(Result result, ProgrammingExerciseStudentParticipation studentParticipation) {
+        if (studentParticipation.getParticipant() instanceof User) {
+            pyrisEventService.ifPresent(eventService -> {
+                // Inform Iris so it can send a message to the user
+                try {
+                    if (result.getScore() < 80.0) {
+                        // Check the recent submission and only answer when the last 3 subsequent submissions failed. Failure criteria: Score < 80.0
+                        var recentSubmissions = studentParticipation.getSubmissions().stream().toList();
+                        if (recentSubmissions.size() >= 3) {
+                            var lastThreeSubmissions = recentSubmissions.subList(recentSubmissions.size() - 3, recentSubmissions.size());
+                            var allFailed = lastThreeSubmissions.stream()
+                                    .allMatch(submission -> submission.getLatestResult() != null && submission.getLatestResult().getScore() < 80.0);
+                            if (allFailed) {
+                                eventService.trigger(new SubmissionFailedEvent(result));
+                            }
                         }
                     }
-                    catch (Exception e) {
-                        log.error("Could not trigger submission failed event for result " + result.getId(), e);
-                    }
-                });
-            }
+                }
+                catch (Exception e) {
+                    log.error("Could not trigger submission failed event for result " + result.getId(), e);
+                }
+            });
         }
     }
 }
