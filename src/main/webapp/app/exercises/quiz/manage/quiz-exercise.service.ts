@@ -7,7 +7,6 @@ import { createRequestOption } from 'app/shared/util/request.util';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
-import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { downloadFile, downloadZipFromFilePromises } from 'app/shared/util/download.util';
 import { objectToJsonBlob } from 'app/utils/blob-util';
 import { FileService } from 'app/shared/http/file.service';
@@ -247,7 +246,7 @@ export class QuizExerciseService {
         const quizJson = JSON.stringify(questions);
         const blob = new Blob([quizJson], { type: 'application/json' });
         downloadFile(blob, (fileName ?? 'quiz') + '.json');
-        this.exportAssetsFromAllQuestions(questions, fileName);
+        this.exportAssetsFromAllQuestions(questions, fileName ?? 'quiz');
     }
 
     /**
@@ -255,52 +254,34 @@ export class QuizExerciseService {
      * @param questions list of questions which will be exported
      * @param fileName name of the output zip file
      */
-    exportAssetsFromAllQuestions(questions: QuizQuestion[], fileName?: string) {
+    exportAssetsFromAllQuestions(questions: QuizQuestion[], fileName: string) {
         const zip: JSZip = new JSZip();
         const filePromises: any[] = [];
-        const fileService = new FileService(this.http);
         questions.forEach((question, questionIndex) => {
             if (question.type === QuizQuestionType.DRAG_AND_DROP) {
-                this.fetchFilePromise('q' + questionIndex + '_background.png', zip, <string>(<DragAndDropQuestion>question).backgroundFilePath, filePromises, fileService);
+                filePromises.push(this.fetchFilePromise('q' + questionIndex + '_background.png', zip, <string>(<DragAndDropQuestion>question).backgroundFilePath));
                 if ((<DragAndDropQuestion>question).dragItems) {
                     (<DragAndDropQuestion>question).dragItems!.forEach((dragItem, drag_index) => {
                         if (dragItem.pictureFilePath) {
-                            this.fetchFilePromise(
-                                'q' + questionIndex + '_dragItem-' + drag_index + '.png',
-                                zip,
-                                <string>(<string>dragItem.pictureFilePath),
-                                filePromises,
-                                fileService,
-                            );
+                            filePromises.push(this.fetchFilePromise('q' + questionIndex + '_dragItem-' + drag_index + '.png', zip, <string>(<string>dragItem.pictureFilePath)));
                         }
                     });
                 }
             }
-            if (question.text) {
-                this.exportImageFromMarkdown(question.text, questionIndex, zip, filePromises, fileService);
-            }
-            if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                (<MultipleChoiceQuestion>question).answerOptions?.forEach((option) => {
-                    if (option.text) {
-                        this.exportImageFromMarkdown(option.text, questionIndex, zip, filePromises, fileService);
-                    }
-                });
-            }
+            this.findImagesInMarkdown(JSON.stringify(question)).forEach((embeddedImage) => {
+                filePromises.push(this.fetchFilePromise('q' + questionIndex + '_' + embeddedImage[1], zip, embeddedImage[2]));
+            });
         });
         if (filePromises.length === 0) {
             return;
         }
-        downloadZipFromFilePromises(zip, filePromises, fileName ?? 'quiz');
+        downloadZipFromFilePromises(zip, filePromises, fileName);
     }
 
-    exportImageFromMarkdown(description: string, questionIndex: number, zip: JSZip, filePromises: Promise<void | File>[], fileService: FileService) {
+    findImagesInMarkdown(description: string) {
         // Will return all matches of ![file_name](path), will group file_name and path
         const embeddedImageRegex = /!\[(.+?)\]\((.+?)\)/g;
-        const embeddedImagesOption = [...description.matchAll(embeddedImageRegex)];
-
-        embeddedImagesOption.forEach((embeddedImage) => {
-            this.fetchFilePromise('q' + questionIndex + '_' + embeddedImage[1], zip, embeddedImage[2], filePromises, fileService);
-        });
+        return [...description.matchAll(embeddedImageRegex)];
     }
 
     /**
@@ -308,21 +289,17 @@ export class QuizExerciseService {
      * @param fileName the name of the file to be zipped
      * @param zip a JSZip instance
      * @param filePath the internal path of the file to be fetched
-     * @param filePromises a list of File Promises, is used to download
-     * @param fileService fileService instance
      */
-    fetchFilePromise(fileName: string, zip: JSZip, filePath: string, filePromises: Promise<void | File>[], fileService: FileService) {
-        filePromises.push(
-            fileService
-                .getFile(filePath)
-                .then((fileResult) => {
-                    zip.file(fileName, fileResult);
-                })
-                .catch((error) => {
-                    console.error('Error fetching the file:', error);
-                    throw error;
-                }),
-        );
+    async fetchFilePromise(fileName: string, zip: JSZip, filePath: string) {
+        const fileService = new FileService(this.http);
+        return fileService
+            .getFile(filePath)
+            .then((fileResult) => {
+                zip.file(fileName, fileResult);
+            })
+            .catch((error) => {
+                throw new Error('File with name: ' + fileName + ' at path: ' + filePath + ' could not be fetched', error);
+            });
     }
 
     /**
