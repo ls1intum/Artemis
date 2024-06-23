@@ -91,6 +91,7 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @AfterEach
+    @Override
     protected void resetSpyBeans() {
         super.resetSpyBeans();
     }

@@ -1,13 +1,13 @@
 package de.tum.in.www1.artemis.service.util;
 
-import static de.tum.in.www1.artemis.service.util.ZonedDateTimeUtil.toRelativeTime;
+import static de.tum.in.www1.artemis.service.util.TimeUtil.toRelativeTime;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.Test;
 
-class ZonedDateTimeUtilTest {
+class TimeUtilTest {
 
     @Test
     void testToRelativeTimeAtStartTime() {
