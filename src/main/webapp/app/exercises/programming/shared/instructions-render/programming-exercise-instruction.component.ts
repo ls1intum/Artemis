@@ -332,7 +332,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 }
                 this.injectTasksIntoDocument();
             }, 0);
-        } else if (this.exercise.problemStatement) {
+        } else if (this.exercise?.problemStatement) {
             this.injectableContentForMarkdownCallbacks = [];
             const renderedProblemStatement = htmlForMarkdown(this.exercise.problemStatement, this.markdownExtensions);
             const markdownWithoutTasks = this.prepareTasks(renderedProblemStatement);
