@@ -86,7 +86,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             """)
     List<Result> findLatestResultsForExercise(@Param("exerciseId") long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = "feedbacks, testCase")
+    @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "feedbacks.testCase" })
     List<Result> findResultsWithFeedbacksAndTestCaseByIdIn(List<Long> ids);
 
     /**
@@ -107,7 +107,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
 
     Optional<Result> findFirstByParticipationIdOrderByCompletionDateDesc(long participationId);
 
-    @EntityGraph(type = LOAD, attributePaths = "feedbacks, testCase")
+    @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "feedbacks.testCase" })
     Optional<Result> findResultWithFeedbacksAndTestCasesById(long resultId);
 
     /**
@@ -127,7 +127,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         return findResultWithFeedbacksAndTestCasesById(id);
     }
 
-    @EntityGraph(type = LOAD, attributePaths = "submission, testCase, feedbacks")
+    @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "feedbacks.testCase", "submission" })
     Optional<Result> findResultWithSubmissionAndFeedbacksTestCasesById(long resultId);
 
     /**

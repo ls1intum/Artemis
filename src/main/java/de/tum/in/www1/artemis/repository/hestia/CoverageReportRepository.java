@@ -73,7 +73,7 @@ public interface CoverageReportRepository extends ArtemisJpaRepository<CoverageR
         return findCoverageReportsWithSubmissionByIdIn(ids);
     }
 
-    @EntityGraph(type = LOAD, attributePaths = "submission, fileReports, testwiseCoverageEntries")
+    @EntityGraph(type = LOAD, attributePaths = { "submission", "fileReports", "fileReports.testwiseCoverageEntries" })
     List<CoverageReport> findDistinctCoverageReportsWithEagerRelationshipsByIdIn(List<Long> ids);
 
     /**

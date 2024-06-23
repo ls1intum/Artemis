@@ -33,7 +33,7 @@ public class AuditEventService {
     }
 
     public Page<AuditEvent> findAll(Pageable pageable) {
-        return persistenceAuditEventRepository.findAll(pageable).map(auditEventConverter::convertToAuditEvent);
+        return persistenceAuditEventRepository.findAllWithData(pageable).map(auditEventConverter::convertToAuditEvent);
     }
 
     public Page<AuditEvent> findByDates(Instant fromDate, Instant toDate, Pageable pageable) {

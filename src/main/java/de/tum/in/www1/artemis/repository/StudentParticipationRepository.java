@@ -660,7 +660,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     List<Long> findIdsByExerciseIdAndStudentName(@Param("exerciseId") long exerciseId, @Param("partialStudentName") String partialStudentName, Pageable pageable);
 
-    @EntityGraph(type = LOAD, attributePaths = "submissions, results")
+    @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.results" })
     List<StudentParticipation> findStudentParticipationWithAssociationsByIdIn(List<Long> ids);
 
     @Query("""

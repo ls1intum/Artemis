@@ -3,8 +3,10 @@ package de.tum.in.www1.artemis.repository.base;
 import java.util.Optional;
 
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.support.JpaEntityInformation;
 import org.springframework.data.jpa.repository.support.JpaEntityInformationSupport;
@@ -95,5 +97,16 @@ public class RepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID> {
     @NotNull
     public T findByIdElseThrow(ID id) {
         return getValueElseThrow(findById(id), id);
+    }
+
+    @Override
+    @NotNull
+    public Optional<T> findOne(Specification<T> spec) {
+        try {
+            return Optional.of(this.getQuery(spec, Sort.unsorted()).getSingleResult());
+        }
+        catch (NoResultException noResultException) {
+            return Optional.empty();
+        }
     }
 }

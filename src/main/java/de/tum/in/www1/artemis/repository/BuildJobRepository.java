@@ -40,7 +40,7 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             """)
     List<Long> findAllIds(Pageable pageable);
 
-    @EntityGraph(type = LOAD, attributePaths = "results, participation, exercise, submission")
+    @EntityGraph(type = LOAD, attributePaths = { "result", "result.participation", "result.participation.exercise", "result.submission" })
     List<BuildJob> findWithDataByIdIn(List<Long> ids);
 
     /**
