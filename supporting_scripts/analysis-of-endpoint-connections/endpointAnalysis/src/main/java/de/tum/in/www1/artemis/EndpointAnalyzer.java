@@ -11,17 +11,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class EndpointAnalyzer {
 
     public static void main(String[] args) {
-        System.out.println("working directory: " + System.getProperty("user.dir"));
-
         analyzeEndpoints();
         printEndpointAnalysisResult();
     }
 
     private static void analyzeEndpoints() {
+        final String endpointsJsonPath = "../endpoints.json";
         ObjectMapper mapper = new ObjectMapper();
 
         try {
-            List<EndpointClassInformation> endpointClasses = mapper.readValue(new File("../endpoints.json"),
+            List<EndpointClassInformation> endpointClasses = mapper.readValue(new File(endpointsJsonPath),
                     new TypeReference<List<EndpointClassInformation>>() {
                     });
             List<RestCallFileInformation> restCallFiles = mapper.readValue(new File("../restCalls.json"),

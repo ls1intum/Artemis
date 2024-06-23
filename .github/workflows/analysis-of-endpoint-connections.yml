@@ -40,7 +40,7 @@ jobs:
         run: ./gradlew :supporting_scripts:analysis-of-endpoint-connections:parser:run
 
       - name: Upload JSON files
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: json-files
           path: |
@@ -58,7 +58,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up JDK
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v4
         with:
           java-version: '${{ env.java }}'
           distribution: 'adopt'

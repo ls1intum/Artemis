@@ -126,10 +126,11 @@ public class EndpointParser {
 
         ObjectMapper mapper = new ObjectMapper();
         try {
-            mapper.writeValue(new File("../supporting_scripts/analysis-of-endpoint-connections/endpoints.json"), endpointClasses);
+            mapper.writeValue(new File("../endpoints.json"), endpointClasses);
         }
         catch (IOException e) {
             e.printStackTrace();
+
         }
     }
 }
