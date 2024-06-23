@@ -17,6 +17,8 @@ import * as FullscreenUtil from 'app/shared/util/fullscreen.util';
 import { MonacoTaskAction } from 'app/shared/monaco-editor/model/actions/monaco-task.action';
 import { MonacoTestCaseAction } from 'app/shared/monaco-editor/model/actions/monaco-test-case.action';
 import { MonacoHeadingAction } from 'app/shared/monaco-editor/model/actions/monaco-heading.action';
+import { MonacoUrlAction } from 'app/shared/monaco-editor/model/actions/monaco-url.action';
+import { MonacoAttachmentAction } from 'app/shared/monaco-editor/model/actions/monaco-attachment.action';
 
 describe('MonacoEditorActionIntegration', () => {
     let fixture: ComponentFixture<MonacoEditorComponent>;
@@ -41,6 +43,20 @@ describe('MonacoEditorActionIntegration', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+    });
+
+    it.each([
+        { action: new MonacoAttachmentAction(), text: 'Attachment', url: 'https://test.invalid/img.png', defaultText: MonacoAttachmentAction.DEFAULT_INSERT_TEXT },
+        { action: new MonacoUrlAction(), text: 'Link', url: 'https://test.invalid/', defaultText: MonacoUrlAction.DEFAULT_INSERT_TEXT },
+    ])('should insert $text', ({ action, text, url, defaultText }) => {
+        const prefix = text === 'Attachment' ? '!' : '';
+        comp.registerAction(action);
+        comp.triggerAction(action.id, { text, url });
+        expect(comp.getText()).toBe(`${prefix}[${text}](${url})`);
+        // No arguments -> insert default text
+        comp.setText('');
+        comp.triggerAction(action.id);
+        expect(comp.getText()).toBe(defaultText);
     });
 
     it.each([1, 2, 3])('Should toggle heading %i on selected line', (headingLevel) => {
