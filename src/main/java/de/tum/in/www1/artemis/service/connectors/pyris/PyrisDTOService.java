@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -55,8 +56,8 @@ public class PyrisDTOService {
      * @return the converted PyrisProgrammingExerciseDTO
      */
     public PyrisProgrammingExerciseDTO toPyrisProgrammingExerciseDTO(ProgrammingExercise exercise) {
-        var templateRepositoryContents = getRepositoryContents(exercise.getTemplateParticipation());
-        var solutionRepositoryContents = getRepositoryContents(exercise.getSolutionParticipation());
+        var templateRepositoryContents = getFilteredRepositoryContents(exercise.getTemplateParticipation());
+        var solutionRepositoryContents = getFilteredRepositoryContents(exercise.getSolutionParticipation());
         Optional<Repository> testRepo = Optional.empty();
         try {
             testRepo = Optional.ofNullable(gitService.getOrCheckoutRepository(exercise.getVcsTestRepositoryUri(), true));
@@ -80,7 +81,7 @@ public class PyrisDTOService {
     public PyrisSubmissionDTO toPyrisSubmissionDTO(ProgrammingSubmission submission) {
         var buildLogEntries = submission.getBuildLogEntries().stream().map(buildLogEntry -> new PyrisBuildLogEntryDTO(toInstant(buildLogEntry.getTime()), buildLogEntry.getLog()))
                 .toList();
-        var studentRepositoryContents = getRepositoryContents((ProgrammingExerciseParticipation) submission.getParticipation());
+        var studentRepositoryContents = getFilteredRepositoryContents((ProgrammingExerciseParticipation) submission.getParticipation());
         return new PyrisSubmissionDTO(submission.getId(), toInstant(submission.getSubmissionDate()), studentRepositoryContents, submission.getParticipation().isPracticeMode(),
                 submission.isBuildFailed(), buildLogEntries, getLatestResult(submission));
     }
@@ -117,6 +118,14 @@ public class PyrisDTOService {
         }).toList();
 
         return new PyrisResultDTO(toInstant(latestResult.getCompletionDate()), latestResult.isSuccessful(), feedbacks);
+    }
+
+    private Map<String, String> getFilteredRepositoryContents(ProgrammingExerciseParticipation participation) {
+        var language = participation.getProgrammingExercise().getProgrammingLanguage();
+
+        var repositoryContents = getRepositoryContents(participation);
+        return repositoryContents.entrySet().stream().filter(entry -> language == null || language.matchesFileExtension(entry.getKey()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     /**
