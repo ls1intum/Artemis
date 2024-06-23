@@ -126,6 +126,7 @@ public class EndpointParser {
 
         ObjectMapper mapper = new ObjectMapper();
         try {
+            System.out.println("PathName: " + System.getProperty("user.dir"));
             mapper.writeValue(new File("../endpoints.json"), endpointClasses);
         }
         catch (IOException e) {
