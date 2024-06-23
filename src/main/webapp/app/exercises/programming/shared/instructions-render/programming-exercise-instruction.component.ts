@@ -1,4 +1,17 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewContainerRef } from '@angular/core';
+import {
+    ApplicationRef,
+    Component,
+    EnvironmentInjector,
+    EventEmitter,
+    Input,
+    OnChanges,
+    OnDestroy,
+    Output,
+    SimpleChanges,
+    ViewChild,
+    ViewContainerRef,
+    createComponent,
+} from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
@@ -25,6 +38,9 @@ import { hasParticipationChanged } from 'app/exercises/shared/participation/part
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import diff from 'html-diff-ts';
+import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
+import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
+import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions',
@@ -49,6 +65,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     public isInitial = true;
     public isLoading: boolean;
     public latestResultValue?: Result;
+    private taskIndex = 0;
+    private testsForTask: TaskArray;
 
     get latestResult() {
         return this.latestResultValue;
@@ -89,6 +107,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private programmingExerciseGradingService: ProgrammingExerciseGradingService,
         themeService: ThemeService,
         private sanitizer: DomSanitizer,
+        private programmingExerciseInstructionService: ProgrammingExerciseInstructionService,
+        private appRef: ApplicationRef,
+        private injector: EnvironmentInjector,
     ) {
         this.programmingExerciseTaskWrapper.viewContainerRef = this.viewContainerRef;
         this.themeChangeSubscription = themeService.getCurrentThemeObservable().subscribe(() => {
@@ -316,30 +337,86 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             this.examExerciseUpdateHighlighterComponent.outdatedProblemStatement &&
             this.examExerciseUpdateHighlighterComponent.updatedProblemStatement
         ) {
-            let outdatedMarkdown = htmlForMarkdown(this.examExerciseUpdateHighlighterComponent.outdatedProblemStatement, this.markdownExtensions);
-            outdatedMarkdown = this.programmingExerciseTaskWrapper.injectTasksIntoHTML(outdatedMarkdown);
-            let updatedMarkdown = htmlForMarkdown(this.examExerciseUpdateHighlighterComponent.updatedProblemStatement, this.markdownExtensions);
-            updatedMarkdown = this.programmingExerciseTaskWrapper.injectTasksIntoHTML(updatedMarkdown);
+            const outdatedMarkdown = htmlForMarkdown(this.examExerciseUpdateHighlighterComponent.outdatedProblemStatement, this.markdownExtensions, ['testid']);
+            const updatedMarkdown = htmlForMarkdown(this.examExerciseUpdateHighlighterComponent.updatedProblemStatement, this.markdownExtensions, ['testid']);
             const diffedMarkdown = diff(outdatedMarkdown, updatedMarkdown);
-            this.renderedMarkdown = this.sanitizer.bypassSecurityTrustHtml(diffedMarkdown);
+            const markdownWithoutTasks = this.prepareTasks(diffedMarkdown);
+            this.renderedMarkdown = this.sanitizer.bypassSecurityTrustHtml(markdownWithoutTasks);
             // Differences between UMLs are ignored, and we only inject the current one
             setTimeout(() => {
                 const injectUML = this.injectableContentForMarkdownCallbacks[this.injectableContentForMarkdownCallbacks.length - 1];
                 if (injectUML) {
                     injectUML();
                 }
+                this.injectTasksIntoDocument();
             }, 0);
         } else {
             this.injectableContentForMarkdownCallbacks = [];
-            this.renderedMarkdown = this.markdownService.safeHtmlForMarkdown(this.exercise.problemStatement, this.markdownExtensions);
-            setTimeout(
-                () =>
-                    this.injectableContentForMarkdownCallbacks.forEach((callback) => {
-                        callback();
-                    }),
-                0,
-            );
+            const renderedProblemStatement = htmlForMarkdown(this.exercise.problemStatement, this.markdownExtensions, ['testid']);
+            const test = this.prepareTasks(renderedProblemStatement);
+            this.renderedMarkdown = this.sanitizer.bypassSecurityTrustHtml(test);
+            setTimeout(() => {
+                this.injectableContentForMarkdownCallbacks.forEach((callback) => {
+                    callback();
+                });
+                this.injectTasksIntoDocument();
+            }, 0);
         }
+    }
+
+    prepareTasks(problemStatementHtml: string) {
+        const taskRegex = /\[task]\[([^[\]]+)]\(((?:[^(),]+(?:\([^()]*\)[^(),]*)?(?:,[^(),]+(?:\([^()]*\)[^(),]*)?)*)?)\)/g;
+        const tasks = Array.from(problemStatementHtml.matchAll(taskRegex));
+        if (!tasks) {
+            return problemStatementHtml;
+        }
+
+        this.testsForTask = tasks
+            // check that all groups (full match, name, tests) are present
+            .filter((testMatch) => testMatch?.length === 3)
+            .map((testMatch: RegExpMatchArray | null) => {
+                const nextIndex = this.taskIndex;
+                this.taskIndex++;
+                return {
+                    id: nextIndex,
+                    completeString: testMatch![0],
+                    taskName: testMatch![1],
+                    testIds: testMatch![2] ? this.programmingExerciseInstructionService.convertTestListToIds(testMatch![2], this.testCases) : [],
+                };
+            });
+
+        return this.testsForTask.reduce(
+            (acc: string, { completeString: task, id }): string =>
+                // Insert anchor divs into the text so that injectable elements can be inserted into them.
+                // Without class="d-flex" the injected components height would be 0.
+                // Added zero-width space as content so the div actually consumes a line to prevent a <ol> display bug in Safari
+                acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), `<div class="pe-task-${id.toString()} d-flex">&#8203;</div>`),
+            problemStatementHtml,
+        );
+    }
+
+    private injectTasksIntoDocument = () => {
+        this.testsForTask.forEach(({ id, taskName, testIds }) => {
+            const taskHtmlContainers = document.getElementsByClassName(`pe-task-${id}`);
+
+            for (let i = 0; i < taskHtmlContainers.length; i++) {
+                const taskHtmlContainer = taskHtmlContainers[i];
+                this.createTaskComponent(taskHtmlContainer, taskName, testIds);
+            }
+        });
+    };
+
+    private createTaskComponent(taskHtmlContainer: Element, taskName: string, testIds: number[]) {
+        const componentRef = createComponent(ProgrammingExerciseInstructionTaskStatusComponent, {
+            hostElement: taskHtmlContainer,
+            environmentInjector: this.injector,
+        });
+        componentRef.instance.exercise = this.exercise;
+        componentRef.instance.taskName = taskName;
+        componentRef.instance.latestResult = this.latestResult;
+        componentRef.instance.testIds = testIds;
+        this.appRef.attachView(componentRef.hostView);
+        componentRef.changeDetectorRef.detectChanges();
     }
 
     /**
