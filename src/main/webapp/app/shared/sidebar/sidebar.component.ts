@@ -270,6 +270,9 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
             }
         });
 
+        minAchievablePoints = this.roundToMultiple(minAchievablePoints, POINTS_STEP);
+        maxAchievablePoints = this.roundToMultiple(maxAchievablePoints, POINTS_STEP);
+
         minAchievedScore = this.roundToMultiple(minAchievedScore, SMALL_SCORE_STEP);
         maxAchievedScore = this.roundToMultiple(maxAchievedScore, SMALL_SCORE_STEP);
 
