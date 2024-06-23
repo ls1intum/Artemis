@@ -259,17 +259,19 @@ export class QuizExerciseService {
         const filePromises: any[] = [];
         questions.forEach((question, questionIndex) => {
             if (question.type === QuizQuestionType.DRAG_AND_DROP) {
-                filePromises.push(this.fetchFilePromise('q' + questionIndex + '_background.png', zip, <string>(<DragAndDropQuestion>question).backgroundFilePath));
-                if ((<DragAndDropQuestion>question).dragItems) {
-                    (<DragAndDropQuestion>question).dragItems!.forEach((dragItem, drag_index) => {
+                if ((question as DragAndDropQuestion).backgroundFilePath) {
+                    filePromises.push(this.fetchFilePromise(`q${questionIndex}_background.png`, zip, (question as DragAndDropQuestion).backgroundFilePath!));
+                }
+                if ((question as DragAndDropQuestion).dragItems) {
+                    (question as DragAndDropQuestion).dragItems?.forEach((dragItem, drag_index) => {
                         if (dragItem.pictureFilePath) {
-                            filePromises.push(this.fetchFilePromise('q' + questionIndex + '_dragItem-' + drag_index + '.png', zip, <string>(<string>dragItem.pictureFilePath)));
+                            filePromises.push(this.fetchFilePromise(`q${questionIndex}_dragItem-${drag_index}.png`, zip, dragItem.pictureFilePath));
                         }
                     });
                 }
             }
             this.findImagesInMarkdown(JSON.stringify(question)).forEach((embeddedImage) => {
-                filePromises.push(this.fetchFilePromise('q' + questionIndex + '_' + embeddedImage[1], zip, embeddedImage[2]));
+                filePromises.push(this.fetchFilePromise(`q${questionIndex}_${embeddedImage[1]}`, zip, embeddedImage[2]));
             });
         });
         if (filePromises.length === 0) {
@@ -298,7 +300,7 @@ export class QuizExerciseService {
                 zip.file(fileName, fileResult);
             })
             .catch((error) => {
-                throw new Error('File with name: ' + fileName + ' at path: ' + filePath + ' could not be fetched', error);
+                throw new Error(`File with name: ${fileName} at path: ${filePath} could not be fetched`, error);
             });
     }
 

@@ -35,10 +35,10 @@ export function downloadZipFromFilePromises(zip: JSZip, filePromises: Promise<vo
     Promise.allSettled(filePromises).then(() => {
         zip.generateAsync({ type: 'blob' })
             .then((zipBlob) => {
-                downloadFile(zipBlob, zipFileName + '.zip');
+                downloadFile(zipBlob, `${zipFileName}.zip`);
             })
             .catch((error) => {
-                throw new Error('Failed to create Zip File', error);
+                throw new Error(`Failed to create Zip File`, error);
             });
     });
 }
