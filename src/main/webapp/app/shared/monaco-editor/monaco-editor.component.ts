@@ -155,10 +155,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this._editor.trigger('MonacoEditorComponent::triggerKeySequence', 'type', { text });
     }
 
-    triggerAction(id: string, args?: unknown): void {
-        this._editor.trigger('MonacoEditorComponent::triggerAction', id, args);
-    }
-
     focus(): void {
         this._editor.focus();
     }
