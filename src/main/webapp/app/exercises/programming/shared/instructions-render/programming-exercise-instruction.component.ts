@@ -66,9 +66,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     public latestResultValue?: Result;
     // unique index, even if multiple tasks are shown from different problem statements on the same page (in different tabs)
     private taskIndex = 0;
-    private testsForTask: TaskArray;
-    // Prevents sanitizer from deleting <testid>id</testid>
-    private allowedHtmlTags = ['testid'];
+    public tasks: TaskArray;
 
     get latestResult() {
         return this.latestResultValue;
@@ -80,7 +78,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         this.programmingExercisePlantUmlWrapper.setTestCases(this.testCases);
     }
 
-    public tasks: TaskArray;
     public renderedMarkdown: SafeHtml;
     private injectableContentForMarkdownCallbacks: Array<() => void> = [];
 
@@ -210,9 +207,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         this.injectableContentFoundSubscription = merge(this.programmingExercisePlantUmlWrapper.subscribeForInjectableElementsFound()).subscribe((injectableCallback) => {
             this.injectableContentForMarkdownCallbacks = [...this.injectableContentForMarkdownCallbacks, injectableCallback];
         });
-        if (this.tasksSubscription) {
-            this.tasksSubscription.unsubscribe();
-        }
     }
 
     /**
@@ -325,8 +319,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             this.examExerciseUpdateHighlighterComponent.outdatedProblemStatement &&
             this.examExerciseUpdateHighlighterComponent.updatedProblemStatement
         ) {
-            const outdatedMarkdown = htmlForMarkdown(this.examExerciseUpdateHighlighterComponent.outdatedProblemStatement, this.markdownExtensions, this.allowedHtmlTags);
-            const updatedMarkdown = htmlForMarkdown(this.examExerciseUpdateHighlighterComponent.updatedProblemStatement, this.markdownExtensions, this.allowedHtmlTags);
+            const outdatedMarkdown = htmlForMarkdown(this.examExerciseUpdateHighlighterComponent.outdatedProblemStatement, this.markdownExtensions);
+            const updatedMarkdown = htmlForMarkdown(this.examExerciseUpdateHighlighterComponent.updatedProblemStatement, this.markdownExtensions);
             const diffedMarkdown = diff(outdatedMarkdown, updatedMarkdown);
             const markdownWithoutTasks = this.prepareTasks(diffedMarkdown);
             this.renderedMarkdown = this.sanitizer.bypassSecurityTrustHtml(markdownWithoutTasks);
@@ -340,7 +334,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             }, 0);
         } else if (this.exercise.problemStatement) {
             this.injectableContentForMarkdownCallbacks = [];
-            const renderedProblemStatement = htmlForMarkdown(this.exercise.problemStatement, this.markdownExtensions, this.allowedHtmlTags);
+            const renderedProblemStatement = htmlForMarkdown(this.exercise.problemStatement, this.markdownExtensions);
             const markdownWithoutTasks = this.prepareTasks(renderedProblemStatement);
             this.renderedMarkdown = this.sanitizer.bypassSecurityTrustHtml(markdownWithoutTasks);
             setTimeout(() => {
@@ -358,7 +352,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             return problemStatementHtml;
         }
 
-        this.testsForTask = tasks
+        this.tasks = tasks
             // check that all groups (full match, name, tests) are present
             .filter((testMatch) => testMatch?.length === 3)
             .map((testMatch: RegExpMatchArray | null) => {
@@ -372,7 +366,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 };
             });
 
-        return this.testsForTask.reduce(
+        return this.tasks.reduce(
             (acc: string, { completeString: task, id }): string =>
                 // Insert anchor divs into the text so that injectable elements can be inserted into them.
                 // Without class="d-flex" the injected components height would be 0.
@@ -383,7 +377,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     }
 
     private injectTasksIntoDocument = () => {
-        this.testsForTask.forEach(({ id, taskName, testIds }) => {
+        this.tasks.forEach(({ id, taskName, testIds }) => {
             const taskHtmlContainers = document.getElementsByClassName(`pe-task-${id}`);
 
             for (let i = 0; i < taskHtmlContainers.length; i++) {
@@ -418,9 +412,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         }
         if (this.injectableContentFoundSubscription) {
             this.injectableContentFoundSubscription.unsubscribe();
-        }
-        if (this.tasksSubscription) {
-            this.tasksSubscription.unsubscribe();
         }
         if (this.testCasesSubscription) {
             this.testCasesSubscription.unsubscribe();

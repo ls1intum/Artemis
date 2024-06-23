@@ -51,11 +51,13 @@ export function htmlForMarkdown(
     });
     const html = converter.makeHtml(markdownText);
     const purifyParameters = {};
+    // Prevents sanitizer from deleting <testid>id</testid>
+    purifyParameters['ADD_TAGS'] = ['testid'];
     if (allowedHtmlTags) {
-        purifyParameters['ADD_TAGS'] = allowedHtmlTags;
+        purifyParameters['ALLOWED_TAGS'] = allowedHtmlTags;
     }
     if (allowedHtmlAttributes) {
-        purifyParameters['ADD_ATTR'] = allowedHtmlAttributes;
+        purifyParameters['ALLOWED_ATTR'] = allowedHtmlAttributes;
     }
     return DOMPurify.sanitize(html, purifyParameters);
 }
