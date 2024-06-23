@@ -341,7 +341,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * Callback when a color is selected in the color picker.
      * @param color The hex code of the selected color.
      */
-    onSelectedColor(color: string): void {
+    onSelectColor(color: string): void {
         // Map the hex code to the color name.
         const index = this.markdownColors.indexOf(color);
         const colorName = this.markdownColorNames[index];
