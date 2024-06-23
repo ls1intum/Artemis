@@ -22,11 +22,11 @@ export interface SearchTermPageableSearch extends PageableSearch {
     searchTerm: string;
 }
 
-export interface CompetencyFilter {
+export interface CourseCompetencyFilter {
     title: string;
     description: string;
     courseTitle: string;
     semester: string;
 }
 
-export interface CompetencyPageableSearch extends PageableSearch, CompetencyFilter {}
+export interface CompetencyPageableSearch extends PageableSearch, CourseCompetencyFilter {}
