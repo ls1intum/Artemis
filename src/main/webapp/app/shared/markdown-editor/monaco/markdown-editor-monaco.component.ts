@@ -140,9 +140,19 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     }
 
     ngAfterContentInit(): void {
-        // Setting the desired height is done here to avoid an ExpressionChangedAfterItHasBeenCheckedError.
+        // Affects the template - done in this method to avoid ExpressionChangedAfterItHasBeenCheckedErrors.
         this.targetWrapperHeight = this.initialEditorHeight?.valueOf();
         this.constrainDragPositionFn = this.constrainDragPosition.bind(this);
+        this.displayedActions = {
+            standard: this.defaultActions,
+            header: this.headerActions.actions,
+            color: this.colorAction,
+            domain: {
+                withoutOptions: this.domainActions.filter((action) => !(action instanceof MonacoEditorDomainActionWithOptions)),
+                withOptions: <MonacoEditorDomainActionWithOptions[]>this.domainActions.filter((action) => action instanceof MonacoEditorDomainActionWithOptions),
+            },
+            meta: this.metaActions,
+        };
     }
 
     ngAfterViewInit(): void {
@@ -162,17 +172,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             }
             this.monacoEditor.registerAction(action);
         });
-
-        this.displayedActions = {
-            standard: this.defaultActions,
-            header: this.headerActions.actions,
-            color: this.colorAction,
-            domain: {
-                withoutOptions: this.domainActions.filter((action) => !(action instanceof MonacoEditorDomainActionWithOptions)),
-                withOptions: <MonacoEditorDomainActionWithOptions[]>this.domainActions.filter((action) => action instanceof MonacoEditorDomainActionWithOptions),
-            },
-            meta: this.metaActions,
-        };
 
         if (this.resizeHandle && this.resizePlaceholder && this.enableResize) {
             const resizeHandleHeight = this.getElementClientHeight(this.resizeHandle);
