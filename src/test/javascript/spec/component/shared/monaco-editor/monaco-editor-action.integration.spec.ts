@@ -293,8 +293,10 @@ describe('MonacoEditorActionIntegration', () => {
         const textLines = text.split('\n');
         const fullSelection = { startLineNumber: 1, startColumn: 1, endLineNumber: textLines.length, endColumn: textLines[textLines.length - 1].length + 1 };
         comp.setSelection(fullSelection);
+        // Toggle off
         action.executeInCurrentEditor(actionArgs);
         expect(comp.getText()).toBe(textWithoutDelimiters);
+        // Toggle on
         action.executeInCurrentEditor(actionArgs);
         expect(comp.getText()).toBe(textWithDelimiters);
         expect(runSpy).toHaveBeenCalledTimes(3);
