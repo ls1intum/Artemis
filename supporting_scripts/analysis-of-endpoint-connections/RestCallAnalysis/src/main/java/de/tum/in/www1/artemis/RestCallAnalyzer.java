@@ -53,7 +53,7 @@ public class RestCallAnalyzer {
                 }
             }
             RestCallAnalysis restCallAnalysis = new RestCallAnalysis(restCallsWithMatchingEndpoint, restCallsWithoutMatchingEndpoint);
-            mapper.writeValue(new File("supporting_scripts/analysis-of-endpoint-connections/restCallsAndMatchingEndpoints.json"), restCallAnalysis);
+            mapper.writeValue(new File("../restCallsAndMatchingEndpoints.json"), restCallAnalysis);
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -66,7 +66,7 @@ public class RestCallAnalyzer {
         RestCallAnalysis restCallsAndMatchingEndpoints = null;
 
         try {
-            restCallsAndMatchingEndpoints = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/restCallsAndMatchingEndpoints.json"),
+            restCallsAndMatchingEndpoints = mapper.readValue(new File("../restCallsAndMatchingEndpoints.json"),
                     new TypeReference<RestCallAnalysis>() {
                     });
         }
