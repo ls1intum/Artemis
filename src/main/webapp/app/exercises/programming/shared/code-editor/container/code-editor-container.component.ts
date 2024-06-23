@@ -78,8 +78,6 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     useMonacoEditor = false;
 
     @Output()
-    onResizeEditorHeight = new EventEmitter<number>();
-    @Output()
     onCommitStateChange = new EventEmitter<CommitState>();
     @Output()
     onFileChanged = new EventEmitter<void>();
@@ -310,10 +308,6 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         if (this.aceEditor && (type === ResizeType.SIDEBAR_LEFT || type === ResizeType.SIDEBAR_RIGHT || type === ResizeType.MAIN_BOTTOM)) {
             this.aceEditor.editor.getEditor().resize();
         }
-    }
-
-    onResizeHeight(height: number) {
-        this.onResizeEditorHeight.emit(height);
     }
 
     /**

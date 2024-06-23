@@ -45,9 +45,4 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     ) {
         super(router, exerciseService, courseExerciseService, domainService, programmingExerciseParticipationService, location, participationService, route, alertService);
     }
-
-    onResizeHeight(height: number) {
-        console.log(height);
-        this.editableInstructions.resizeHeight();
-    }
 }
