@@ -57,8 +57,9 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
         const selectedText = selection ? this.getTextAtRange(editor, selection)?.trim() : undefined;
         const position = editor.getPosition();
         if (selection && selectedText) {
+            // If the selected text is already surrounded by the delimiters, remove them. Note that the closeDelimiter may be empty, in which case we pass undefined to preserve the text.
             const textToInsert = this.isTextSurroundedByDelimiters(selectedText, openDelimiter, closeDelimiter)
-                ? selectedText.slice(openDelimiter.length, -closeDelimiter.length)
+                ? selectedText.slice(openDelimiter.length, -closeDelimiter.length || undefined)
                 : `${openDelimiter}${selectedText}${closeDelimiter}`;
             this.replaceTextAtRange(editor, selection, textToInsert);
         } else if (position) {
