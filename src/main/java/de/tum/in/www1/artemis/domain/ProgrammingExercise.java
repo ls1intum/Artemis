@@ -73,6 +73,7 @@ public class ProgrammingExercise extends Exercise {
     // TODO: delete publish_build_plan_url from exercise using liquibase
 
     // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
+    @Override
     public String getType() {
         return "programming";
     }
