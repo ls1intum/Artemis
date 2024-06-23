@@ -73,7 +73,6 @@ describe('LearningPathStudentNavComponent', () => {
 
         expect(component).toBeTruthy();
         expect(component.learningPathId()).toBe(learningPathId);
-        expect(component.showNavigationOverview()).toBeFalse();
     });
 
     it('should show progress bar percentage', async () => {
@@ -167,6 +166,7 @@ describe('LearningPathStudentNavComponent', () => {
 
     it('should show navigation overview on click', async () => {
         const setShowNavigationOverviewSpy = jest.spyOn(component, 'setShowNavigationOverview');
+        const loadCompetenciesSpy = jest.spyOn(component.navOverview(), 'loadCompetencies');
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -178,7 +178,7 @@ describe('LearningPathStudentNavComponent', () => {
         const navOverview = fixture.debugElement.query(By.directive(LearningPathNavOverviewComponent));
         expect(navOverview).toBeTruthy();
         expect(setShowNavigationOverviewSpy).toHaveBeenCalledWith(true);
-        expect(component.showNavigationOverview()).toBeTrue();
+        expect(loadCompetenciesSpy).toHaveBeenCalledWith(learningPathId);
     });
 
     it('should call select learning object on previous click', async () => {
