@@ -14,6 +14,7 @@ export class ProgrammingExerciseProblemComponent {
     readonly ProgrammingLanguage = ProgrammingLanguage;
     readonly ProjectType = ProjectType;
     readonly AssessmentType = AssessmentType;
+    readonly MarkdownEditorHeight = MarkdownEditorHeight;
 
     programmingExercise: ProgrammingExercise;
 
@@ -32,5 +33,4 @@ export class ProgrammingExerciseProblemComponent {
     }
 
     faQuestionCircle = faQuestionCircle;
-    protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 }
