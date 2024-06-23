@@ -13,9 +13,12 @@
                 </a>
             }
             @if (!isOneToOneChat(conversation)) {
-                <button class="setting" ngbDropdownItem (click)="openConversationDetailDialog($event)">
-                    {{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.settings' | artemisTranslate }}
-                </button>
+                <button
+                    class="setting"
+                    ngbDropdownItem
+                    (click)="openConversationDetailDialog($event)"
+                    jhiTranslate="artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.settings"
+                ></button>
             }
             <button class="mute" ngbDropdownItem (click)="onMuteClicked($event)">
                 {{

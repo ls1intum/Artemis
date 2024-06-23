@@ -40,26 +40,22 @@
                         <div class="d-flex justify-content-between align-items-start">
                             <h4>
                                 @if (result.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
-                                    <span>
-                                        {{ 'artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip' | artemisTranslate }}
-                                    </span>
+                                    <span jhiTranslate="artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip"></span>
                                 } @else {
                                     @if (!exercise?.maxPoints) {
-                                        <span>
-                                            {{ 'artemisApp.result.score' | artemisTranslate: { score: roundValueSpecifiedByCourseSettings(result.score, course) } }}
-                                        </span>
+                                        <span
+                                            jhiTranslate="artemisApp.result.score"
+                                            [translateValues]="{ score: roundValueSpecifiedByCourseSettings(result.score, course) }"
+                                        ></span>
                                     } @else {
                                         @if (exercise && exercise.maxPoints) {
-                                            <span>
-                                                {{
-                                                    'artemisApp.result.scoreWithPoints'
-                                                        | artemisTranslate
-                                                            : {
-                                                                  score: roundValueSpecifiedByCourseSettings(result.score ?? 0, course),
-                                                                  points: roundValueSpecifiedByCourseSettings(((result.score ?? 0) * exercise.maxPoints) / 100, course)
-                                                              }
-                                                }}
-                                            </span>
+                                            <span
+                                                jhiTranslate="artemisApp.result.scoreWithPoints"
+                                                [translateValues]="{
+                                                    score: roundValueSpecifiedByCourseSettings(result.score ?? 0, course),
+                                                    points: roundValueSpecifiedByCourseSettings(((result.score ?? 0) * exercise.maxPoints) / 100, course)
+                                                }"
+                                            ></span>
                                         }
                                     }
                                 }

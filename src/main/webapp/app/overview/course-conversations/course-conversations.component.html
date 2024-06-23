@@ -16,9 +16,7 @@
     @if (course && isCodeOfConductAccepted === false) {
         <div class="module-bg px-3 py-3">
             <jhi-course-conversations-code-of-conduct [course]="course!" />
-            <button id="acceptCodeOfConductButton" class="btn btn-primary" type="button" (click)="acceptCodeOfConduct()">
-                {{ 'artemisApp.codeOfConduct.accept' | artemisTranslate }}
-            </button>
+            <button id="acceptCodeOfConductButton" class="btn btn-primary" type="button" (click)="acceptCodeOfConduct()" jhiTranslate="artemisApp.codeOfConduct.accept"></button>
         </div>
     }
     @if (isCodeOfConductAccepted && isServiceSetUp && course) {
