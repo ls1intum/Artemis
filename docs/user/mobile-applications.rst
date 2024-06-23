@@ -159,7 +159,8 @@ The iOS application supports the following features:
 Installation
 ^^^^^^^^^^^^
 
-The iOS application is currently only available in beta state and can be downloaded over `TestFlight <https://testflight.apple.com/join/WTwsKbjr>`_. Make sure to follow the steps described by TestFlight to install the application.
+The iOS application is available in the `App Store <https://apps.apple.com/de/app/artemis-learning/id6478965616>`_ and as a beta via `TestFlight <https://testflight.apple.com/join/WTwsKbjr>`_.
+Make sure to follow the steps described by TestFlight to install the application.
 
 Server Selection
 ^^^^^^^^^^^^^^^^
