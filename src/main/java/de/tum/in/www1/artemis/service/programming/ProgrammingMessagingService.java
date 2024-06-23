@@ -183,6 +183,8 @@ public class ProgrammingMessagingService {
                 pyrisEventService.ifPresent(service -> {
                     // Inform Iris so it can send a message to the user
                     try {
+                        // TODO: Make this more intelligent. Check the recent submission and only answer when the
+                        // last 3 subsequent submissions failed. Failure criteria: Score < 80.0
                         if (result.getScore() < 80.0) {
                             service.trigger(new SubmissionFailedEvent(result));
                         }
