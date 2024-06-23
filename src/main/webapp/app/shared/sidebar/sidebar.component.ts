@@ -161,6 +161,22 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
                 ?.filter((sidebarElement: SidebarCardElement) => sidebarElement.exercise?.categories !== undefined)
                 .flatMap((sidebarElement: SidebarCardElement) => sidebarElement.exercise?.categories || [])
                 .map((category: ExerciseCategory) => ({ category: category, searched: false })) ?? [];
+
+        this.sortCategoriesAlphanumerically(this.categoryFilters);
+    }
+
+    private sortCategoriesAlphanumerically(categoryFilters: ExerciseCategoryFilterOption[]) {
+        categoryFilters.sort((categoryA, categoryB) => {
+            const categoryADisplayText = categoryA.category.category?.toLowerCase() ?? '';
+            const categoryBDisplayText = categoryB.category.category?.toLowerCase() ?? '';
+            if (categoryADisplayText < categoryBDisplayText) {
+                return -1;
+            }
+            if (categoryADisplayText > categoryBDisplayText) {
+                return 1;
+            }
+            return 0;
+        });
     }
 
     private initializeExerciseTypeFilter() {
