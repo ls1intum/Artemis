@@ -42,7 +42,7 @@ for (const fileName of fileNames.filter(fileName => fileName.endsWith('.ts')))  
         restCallFiles.push({fileName: fileName, restCalls: restCalls});
 };
 
-const filePath = '../../../../../supporting_scripts/analysis-of-endpoint-connections/restCalls.json';
+const filePath = 'supporting_scripts/analysis-of-endpoint-connections/restCalls.json';
 
 // // Ensure the directory exists
 // mkdirSync(dirname(filePath), { recursive: true });
