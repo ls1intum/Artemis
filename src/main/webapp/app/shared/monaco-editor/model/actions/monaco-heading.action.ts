@@ -18,13 +18,13 @@ export class MonacoHeadingAction extends MonacoEditorAction {
     }
 
     run(editor: monaco.editor.ICodeEditor) {
-        // TODO: toggle lines instead. define abstract class for toggle action
         const selection = editor.getSelection();
         const selectedText = selection ? this.getTextAtRange(editor, selection) : undefined;
         if (selection && selectedText !== undefined) {
             const headingText = this.getTextWithToggledHeading(selectedText || `${HEADING_TEXT} ${this.level}`, this.level);
             this.replaceTextAtRange(editor, selection, headingText);
         }
+        editor.focus();
     }
 
     private getTextWithToggledHeading(selectedText: string, level: number): string {
