@@ -32,14 +32,13 @@ export function downloadStream(data: any, type: string, filename: string) {
 }
 
 export function downloadZipFromFilePromises(zip: JSZip, filePromises: Promise<void | File>[], zipFileName: string) {
-    Promise.all(filePromises).then(() => {
+    Promise.allSettled(filePromises).then(() => {
         zip.generateAsync({ type: 'blob' })
             .then((zipBlob) => {
                 downloadFile(zipBlob, zipFileName + '.zip');
             })
             .catch((error) => {
-                console.error('Error generating ZIP:', error);
-                throw error;
+                throw new Error('Failed to create Zip File', error);
             });
     });
 }
