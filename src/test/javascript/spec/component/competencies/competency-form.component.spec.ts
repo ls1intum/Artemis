@@ -61,10 +61,7 @@ describe('CompetencyFormComponent', () => {
         const competencyService = TestBed.inject(CompetencyService);
         const getAllTitlesSpy = jest.spyOn(competencyService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: ['test'], status: 200 })));
 
-        const competencyOfResponse: Competency = {
-                id: 1,
-                title: 'test',
-        };
+        const competencyOfResponse: Competency = { id: 1, title: 'test' };
 
         const response: HttpResponse<Competency[]> = new HttpResponse({
             body: [competencyOfResponse],
