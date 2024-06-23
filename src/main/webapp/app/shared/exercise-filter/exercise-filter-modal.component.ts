@@ -1,11 +1,11 @@
-import { Component, ElementRef, EventEmitter, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Output, ViewChild } from '@angular/core';
 import { NgbActiveModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { SidebarCardElement, SidebarData } from 'app/types/sidebar';
+import { SidebarData } from 'app/types/sidebar';
 import { DifficultyLevel, ExerciseType } from 'app/entities/exercise.model';
 import { DifficultyFilterOptions, ExerciseCategoryFilterOption, ExerciseTypeFilterOptions, RangeFilter } from 'app/shared/sidebar/sidebar.component';
 import { Observable, OperatorFunction, Subject, merge } from 'rxjs';
@@ -32,24 +32,24 @@ export class ExerciseFilterModalComponent {
 
     @Output() filterApplied = new EventEmitter<SidebarData>();
 
-    @ViewChild('firstCheckbox') firstCheckbox: ElementRef;
-
     @ViewChild('categoriesFilterSelection', { static: true }) instance: NgbTypeahead;
 
     get selectedCategoryOptions(): ExerciseCategoryFilterOption[] {
         return this.categoryFilters.filter((categoryFilter) => categoryFilter.searched);
     }
 
+    get selectableCategoryOptions(): ExerciseCategoryFilterOption[] {
+        return this.categoryFilters.filter((categoryFilter) => !categoryFilter.searched);
+    }
+
     focus$ = new Subject<string>();
     click$ = new Subject<string>();
-
-    // @ViewChild('exerciseCategorySelectionInput', { static: true }) campusTypeAhead: NgbTypeahead;
 
     // TODO x has a light blue border when opening the modal (the first item in the modal is auto focussed)
 
     form: FormGroup;
 
-    model: any;
+    model?: string;
 
     sidebarData?: SidebarData;
 
@@ -63,8 +63,6 @@ export class ExerciseFilterModalComponent {
     constructor(private activeModal: NgbActiveModal) {}
 
     // TODO reset filter state when closing the modal without saving
-
-    // TODO move to parent component
 
     // TODO filter exercise types to exercise types that are used
 
@@ -87,8 +85,8 @@ export class ExerciseFilterModalComponent {
         return merge(debouncedText$, inputFocus$, clicksWithClosedPopup$).pipe(
             map((term) =>
                 (term === ''
-                    ? this.categoryFilters
-                    : this.categoryFilters.filter(
+                    ? this.selectableCategoryOptions
+                    : this.selectableCategoryOptions.filter(
                           (categoryFilter: ExerciseCategoryFilterOption) => categoryFilter.category.category!.toLowerCase().indexOf(term.toLowerCase()) > -1,
                       )
                 ).slice(0, 10),
@@ -169,19 +167,13 @@ export class ExerciseFilterModalComponent {
             return;
         }
 
+        // TODO do we need to filter the ungrouped data as well?
         if (this.sidebarData?.groupedData) {
             for (const groupedDataKey in this.sidebarData.groupedData) {
                 this.sidebarData.groupedData[groupedDataKey].entityData = this.sidebarData.groupedData[groupedDataKey].entityData.filter(
                     (sidebarElement) => sidebarElement.difficulty && searchedDifficulties.includes(sidebarElement.difficulty),
                 );
             }
-        }
-
-        // TODO do we need to filter the ungrouped data as well?
-        if (this.sidebarData?.ungroupedData) {
-            this.sidebarData.ungroupedData = this.sidebarData?.ungroupedData.filter(
-                (sidebarElement: SidebarCardElement) => sidebarElement.difficulty && searchedDifficulties.includes(sidebarElement.difficulty),
-            );
         }
     }
 }
