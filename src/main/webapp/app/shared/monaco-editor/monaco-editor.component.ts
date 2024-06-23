@@ -245,7 +245,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     changeTheme(artemisTheme: Theme): void {
         this._editor.updateOptions({
-            theme: artemisTheme === Theme.DARK ? 'custom-dark' : 'vs-light',
+            theme: artemisTheme === Theme.DARK ? 'vs-dark' : 'vs-light',
         });
     }
 

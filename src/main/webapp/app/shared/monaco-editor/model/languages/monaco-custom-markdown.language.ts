@@ -1,11 +1,13 @@
 import { languages } from 'monaco-editor';
 import { taskRegex } from 'app/exercises/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
+
+export const CUSTOM_MARKDOWN_LANGUAGE_ID = 'custom-md';
 /*
  * Language definition taken from monaco-editor/esm/vs/basic-languages/markdown/markdown
  */
 
 // src/basic-languages/markdown/markdown.ts
-const conf: languages.LanguageConfiguration = {
+export const CUSTOM_MARKDOWN_CONFIG: languages.LanguageConfiguration = {
     comments: {
         blockComment: ['<!--', '-->'],
     },
@@ -32,7 +34,7 @@ const conf: languages.LanguageConfiguration = {
         },
     },
 };
-const language: languages.IMonarchLanguage = {
+export const CUSTOM_MARKDOWN_LANGUAGE: languages.IMonarchLanguage = {
     defaultToken: '',
     tokenPostfix: '.custom-md',
     // escape codes
@@ -46,7 +48,7 @@ const language: languages.IMonarchLanguage = {
     tokenizer: {
         root: [
             [/^[@]startuml$/, { token: 'task', next: '@uml' }],
-            // Programming exercise tasks are malformed in the Markdown syntax. We parse them immediately to prevent problems with the bracket matching.
+            // We parse tasks immediately to prevent problems with the bracket matching
             [taskRegex, 'task'],
             // Katex formula
             [/\$\$.*\$\$/, 'variable.source'],
@@ -205,4 +207,3 @@ const language: languages.IMonarchLanguage = {
         ],
     },
 };
-export { conf, language };
