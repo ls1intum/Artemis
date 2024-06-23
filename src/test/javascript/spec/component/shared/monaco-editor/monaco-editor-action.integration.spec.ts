@@ -61,6 +61,13 @@ describe('MonacoEditorActionIntegration', () => {
         expect(comp.getText()).toBe(defaultText);
     });
 
+    it('should insert unordered list', () => {
+        const action = new MonacoUnorderedListAction();
+        comp.registerAction(action);
+        action.executeInCurrentEditor();
+        expect(comp.getText()).toBe('- ');
+    });
+
     it('should toggle unordered list, skipping empty lines', () => {
         const action = new MonacoUnorderedListAction();
         comp.registerAction(action);
@@ -74,6 +81,13 @@ describe('MonacoEditorActionIntegration', () => {
         // Remove list
         action.executeInCurrentEditor();
         expect(comp.getText()).toBe(lines.join('\n'));
+    });
+
+    it('should insert ordered list', () => {
+        const action = new MonacoOrderedListAction();
+        comp.registerAction(action);
+        action.executeInCurrentEditor();
+        expect(comp.getText()).toBe('1. ');
     });
 
     it('should toggle ordered list, skipping empty lines', () => {

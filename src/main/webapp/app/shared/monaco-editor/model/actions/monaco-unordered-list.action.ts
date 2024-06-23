@@ -14,12 +14,23 @@ export class MonacoUnorderedListAction extends MonacoEditorAction {
         if (!selection) return;
 
         let isUnorderedList = true;
+        let allLinesEmpty = true;
         for (let lineNumber = selection.startLineNumber; lineNumber <= selection.endLineNumber; lineNumber++) {
             const lineContent = this.getLineText(editor, lineNumber);
-            if (lineContent && !lineContent.startsWith(LIST_BULLET)) {
-                isUnorderedList = false;
-                break;
+            if (lineContent) {
+                allLinesEmpty = false;
+                if (!lineContent.startsWith(LIST_BULLET)) {
+                    isUnorderedList = false;
+                    break;
+                }
             }
+        }
+
+        if (allLinesEmpty) {
+            this.insertTextAtPosition(editor, new monaco.Position(selection.startLineNumber, 1), LIST_BULLET);
+            editor.setPosition(new monaco.Position(selection.startLineNumber, 1 + LIST_BULLET.length));
+            editor.focus();
+            return;
         }
 
         for (let lineNumber = selection.startLineNumber; lineNumber <= selection.endLineNumber; lineNumber++) {

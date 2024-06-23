@@ -14,12 +14,23 @@ export class MonacoOrderedListAction extends MonacoEditorAction {
         if (!selection) return;
 
         let isOrderedList = true;
+        let allLinesEmpty = true;
         for (let lineNumber = selection.startLineNumber; lineNumber <= selection.endLineNumber; lineNumber++) {
             const lineContent = this.getLineText(editor, lineNumber);
-            if (lineContent && !NUMBER_REGEX.test(lineContent)) {
-                isOrderedList = false;
-                break;
+            if (lineContent) {
+                allLinesEmpty = false;
+                if (!NUMBER_REGEX.test(lineContent)) {
+                    isOrderedList = false;
+                    break;
+                }
             }
+        }
+
+        if (allLinesEmpty) {
+            this.insertTextAtPosition(editor, new monaco.Position(selection.startLineNumber, 1), '1. ');
+            editor.setPosition(new monaco.Position(selection.startLineNumber, 1 + 3));
+            editor.focus();
+            return;
         }
 
         for (let lineNumber = selection.startLineNumber; lineNumber <= selection.endLineNumber; lineNumber++) {
