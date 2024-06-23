@@ -15,7 +15,7 @@ export class TutorialGroupFreePeriodDTO {
 
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupFreePeriodService {
-    private resourceURL = 'api';
+    private resourceURL = 'api'; // testChange
 
     constructor(private httpClient: HttpClient) {}
 
