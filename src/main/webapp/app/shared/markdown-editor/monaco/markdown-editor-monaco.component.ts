@@ -167,18 +167,20 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             this.adjustEditorDimensions();
         });
         this.resizeObserver.observe(this.wrapper.nativeElement);
-        // Fixes a bug where the footer would disappear after switching to the preview tab
+        // Prevents the file upload footer from disappearing when switching between preview and editor.
         if (this.fileUploadFooter?.nativeElement) {
             this.resizeObserver.observe(this.fileUploadFooter.nativeElement);
         }
         [this.defaultActions, this.headerActions.actions, this.domainActions, ...(this.colorAction ? [this.colorAction] : []), this.metaActions].flat().forEach((action) => {
             if (action instanceof MonacoFullscreenAction) {
+                // Include the entire wrapper to allow using actions in fullscreen mode.
                 action.element = this.wrapper.nativeElement;
             }
             this.monacoEditor.registerAction(action);
         });
 
         if (this.resizeHandle && this.resizePlaceholder && this.enableResize) {
+            // The resize handle is positioned absolutely. We move it to its place in the placeholder, from where it can be dragged.
             const resizeHandleHeight = this.getElementClientHeight(this.resizeHandle);
             this.resizePlaceholder.nativeElement.style.height = resizeHandleHeight + 'px';
             this.resizeHandle.nativeElement.style.top =

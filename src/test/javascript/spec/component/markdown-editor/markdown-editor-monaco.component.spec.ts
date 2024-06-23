@@ -15,6 +15,7 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MonacoUrlAction } from 'app/shared/monaco-editor/model/actions/monaco-url.action';
 import { MonacoAttachmentAction } from 'app/shared/monaco-editor/model/actions/monaco-attachment.action';
+import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 
 describe('MarkdownEditorMonacoComponent', () => {
     let fixture: ComponentFixture<MarkdownEditorMonacoComponent>;
@@ -44,6 +45,28 @@ describe('MarkdownEditorMonacoComponent', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+    });
+
+    it('should limit the vertical drag position based on the input values', () => {
+        comp.initialEditorHeight = MarkdownEditorHeight.MEDIUM;
+        comp.resizableMinHeight = MarkdownEditorHeight.SMALL;
+        comp.resizableMaxHeight = MarkdownEditorHeight.LARGE;
+        comp.enableResize = true;
+        fixture.detectChanges();
+        const wrapperTop = comp.wrapper.nativeElement.getBoundingClientRect().top;
+        const minPoint = comp.constrainDragPosition({ x: 0, y: wrapperTop - 10000 });
+        expect(minPoint.y).toBe(wrapperTop + comp.resizableMinHeight);
+        const maxPoint = comp.constrainDragPosition({ x: 0, y: wrapperTop + 10000 });
+        expect(maxPoint.y).toBe(wrapperTop + comp.resizableMaxHeight);
+    });
+
+    it('should emit and update on markdown change', () => {
+        const text = 'test';
+        const textChangeSpy = jest.spyOn(comp.markdownChange, 'emit');
+        fixture.detectChanges();
+        comp.onTextChanged(text);
+        expect(textChangeSpy).toHaveBeenCalledWith(text);
+        expect(comp._markdown).toBe(text);
     });
 
     it('should embed manually uploaded files', () => {
