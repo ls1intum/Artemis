@@ -131,6 +131,7 @@ export class ExerciseFilterModalComponent {
         this.applyTypeFilter();
         this.applyDifficultyFilter();
         this.applyExerciseCategoryFilter();
+        this.applyPointsFilter();
 
         this.filterApplied.emit({ filteredSidebarData: this.sidebarData!, appliedExerciseFilters: this.exerciseFilters });
 
@@ -189,6 +190,22 @@ export class ExerciseFilterModalComponent {
             for (const groupedDataKey in this.sidebarData.groupedData) {
                 this.sidebarData.groupedData[groupedDataKey].entityData = this.sidebarData.groupedData[groupedDataKey].entityData.filter(
                     (sidebarElement) => sidebarElement.difficulty && searchedDifficulties.includes(sidebarElement.difficulty),
+                );
+            }
+        }
+    }
+
+    private applyPointsFilter() {
+        if (!this.achievablePoints) {
+            return;
+        }
+
+        if (this.sidebarData?.groupedData) {
+            for (const groupedDataKey in this.sidebarData.groupedData) {
+                this.sidebarData.groupedData[groupedDataKey].entityData = this.sidebarData.groupedData[groupedDataKey].entityData.filter(
+                    (sidebarElement) =>
+                        (sidebarElement?.exercise?.maxPoints ?? 0) <= (this.achievablePoints?.selectedMax ?? Number.MAX_SAFE_INTEGER) &&
+                        (sidebarElement?.exercise?.maxPoints ?? 0) >= (this.achievablePoints?.selectedMin ?? Number.MIN_SAFE_INTEGER),
                 );
             }
         }
