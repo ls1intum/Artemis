@@ -74,12 +74,6 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
 
     exerciseFilters?: ExerciseFilterOptions;
 
-    categoryFilters?: ExerciseCategoryFilterOption[];
-    difficultyFilters?: DifficultyFilterOptions;
-    exerciseTypesFilter?: ExerciseTypeFilterOptions;
-    achievablePoints?: RangeFilter;
-    achievedScore?: RangeFilter;
-
     constructor(
         private route: ActivatedRoute,
         private profileService: ProfileService,
@@ -161,32 +155,31 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
             return;
         }
 
-        this.initializeCategoryFilter();
-        this.initializeExerciseTypeFilter();
-        this.initializeDifficultyFilter();
-        this.initializeAchievablePointsAndAchievedScoreFilters();
+        const scoreAndPointsFilterOptions = this.getAchievablePointsAndAchievedScoreFilterOptions();
 
         this.exerciseFilters = {
-            categoryFilters: this.categoryFilters,
-            exerciseTypesFilter: this.exerciseTypesFilter,
-            difficultyFilters: this.difficultyFilters,
-            achievedScore: this.achievedScore,
-            achievablePoints: this.achievablePoints,
+            categoryFilters: this.getExerciseCategoryFilterOptions(),
+            exerciseTypesFilter: this.getExerciseTypeFilterOptions(),
+            difficultyFilters: this.getExerciseDifficultyFilterOptions(),
+            achievedScore: scoreAndPointsFilterOptions?.achievedScore,
+            achievablePoints: scoreAndPointsFilterOptions?.achievablePoints,
         };
     }
 
-    private initializeCategoryFilter() {
-        if (this.categoryFilters) {
-            return;
+    private getExerciseCategoryFilterOptions() {
+        if (this.exerciseFilters?.categoryFilters) {
+            return this.exerciseFilters?.categoryFilters;
         }
 
-        this.categoryFilters =
+        const categoryFilters =
             this.sidebarData?.ungroupedData
                 ?.filter((sidebarElement: SidebarCardElement) => sidebarElement.exercise?.categories !== undefined)
                 .flatMap((sidebarElement: SidebarCardElement) => sidebarElement.exercise?.categories || [])
                 .map((category: ExerciseCategory) => ({ category: category, searched: false })) ?? [];
 
-        this.sortCategoriesAlphanumerically(this.categoryFilters);
+        this.sortCategoriesAlphanumerically(categoryFilters);
+
+        return categoryFilters;
     }
 
     private sortCategoriesAlphanumerically(categoryFilters: ExerciseCategoryFilterOption[]) {
@@ -203,21 +196,21 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         });
     }
 
-    private initializeExerciseTypeFilter() {
-        if (this.exerciseTypesFilter) {
-            return;
+    private getExerciseTypeFilterOptions() {
+        if (this.exerciseFilters?.exerciseTypesFilter) {
+            return this.exerciseFilters?.exerciseTypesFilter;
         }
 
         const existingExerciseTypes = this.sidebarData?.ungroupedData
             ?.filter((sidebarElement: SidebarCardElement) => sidebarElement.type !== undefined)
             .map((sidebarElement: SidebarCardElement) => sidebarElement.type);
 
-        this.exerciseTypesFilter = DEFAULT_EXERCISE_TYPES_FILTER?.filter((exerciseType) => existingExerciseTypes?.includes(exerciseType.value));
+        return DEFAULT_EXERCISE_TYPES_FILTER?.filter((exerciseType) => existingExerciseTypes?.includes(exerciseType.value));
     }
 
-    private initializeDifficultyFilter() {
-        if (this.difficultyFilters) {
-            return;
+    private getExerciseDifficultyFilterOptions() {
+        if (this.exerciseFilters?.difficultyFilters) {
+            return this.exerciseFilters.difficultyFilters;
         }
         // TODO handle noLevel difficulty
 
@@ -225,11 +218,11 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
             ?.filter((sidebarElement: SidebarCardElement) => sidebarElement.difficulty !== undefined)
             .map((sidebarElement: SidebarCardElement) => sidebarElement.difficulty);
 
-        this.difficultyFilters = DEFAULT_DIFFICULTIES_FILTER?.filter((difficulty) => existingDifficulties?.includes(difficulty.value));
+        return DEFAULT_DIFFICULTIES_FILTER?.filter((difficulty) => existingDifficulties?.includes(difficulty.value));
     }
 
-    private initializeAchievablePointsAndAchievedScoreFilters() {
-        if ((this.achievablePoints && this.achievedScore) || !this.sidebarData?.ungroupedData) {
+    private getAchievablePointsAndAchievedScoreFilterOptions() {
+        if ((this.exerciseFilters?.achievablePoints && this.exerciseFilters.achievedScore) || !this.sidebarData?.ungroupedData) {
             return;
         }
 
@@ -265,7 +258,9 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
             }
         });
 
-        this.achievablePoints = { generalMin: minAchievablePoints, generalMax: maxAchievablePoints, selectedMin: minAchievablePoints, selectedMax: maxAchievablePoints };
-        this.achievedScore = { generalMin: minAchievedScore, generalMax: maxAchievedScore, selectedMin: minAchievedScore, selectedMax: maxAchievedScore };
+        return {
+            achievablePoints: { generalMin: minAchievablePoints, generalMax: maxAchievablePoints, selectedMin: minAchievablePoints, selectedMax: maxAchievablePoints },
+            achievedScore: { generalMin: minAchievedScore, generalMax: maxAchievedScore, selectedMin: minAchievedScore, selectedMax: maxAchievedScore },
+        };
     }
 }
