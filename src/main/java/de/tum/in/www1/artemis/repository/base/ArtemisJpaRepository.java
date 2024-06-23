@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository.base;
 
 import java.util.Optional;
 
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.NoRepositoryBean;
 
@@ -40,4 +41,21 @@ public interface ArtemisJpaRepository<T, ID> extends JpaRepository<T, ID> {
      * @return the entity with the given id
      */
     T findByIdElseThrow(ID id);
+
+    /**
+     * Find an entity by its id and given specification without using limiting internally.
+     *
+     * @param spec the specification to apply
+     * @param id   the id of the entity to find
+     * @return the entity with the given id
+     */
+    Optional<T> findOneById(Specification<T> spec, ID id);
+
+    /**
+     * Find an entity by given specification without using limiting internally.
+     *
+     * @param spec the specification to apply
+     * @return the entity that satisfies the given specification
+     */
+    Optional<T> findOneBySpec(Specification<T> spec);
 }

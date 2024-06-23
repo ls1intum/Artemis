@@ -90,7 +90,7 @@ public class RepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID> {
      * Find an entity by its id and given specification without using limiting internally.
      *
      * @param spec the specification to apply
-     * @param id   the id of the entity to find
+     * @param id   the id of the base entity to find
      * @return the entity with the given id
      */
     @NotNull
@@ -98,6 +98,22 @@ public class RepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID> {
         try {
             final Specification<T> hasIdSpec = (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get(DomainObject_.ID), id);
             return Optional.of(this.getQuery(spec.and(hasIdSpec), Sort.unsorted()).getSingleResult());
+        }
+        catch (NoResultException noResultException) {
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Find an entity by given specification without using limiting internally.
+     *
+     * @param spec the specification to apply
+     * @return the entity that satisfies the given specification
+     */
+    @NotNull
+    public Optional<T> findOneBySpec(Specification<T> spec) {
+        try {
+            return Optional.of(this.getQuery(spec, Sort.unsorted()).getSingleResult());
         }
         catch (NoResultException noResultException) {
             return Optional.empty();
