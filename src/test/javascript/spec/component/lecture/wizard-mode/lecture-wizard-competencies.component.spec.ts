@@ -71,7 +71,7 @@ describe('LectureWizardCompetenciesComponent', () => {
         });
         const lectureStub = jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(of(lectureResponse));
 
-        const competencies = [new Competency()];
+        const competencies: Competency[] = [{}];
         const competenciesResponse: HttpResponse<Competency[]> = new HttpResponse({
             body: competencies,
             status: 201,
@@ -102,7 +102,7 @@ describe('LectureWizardCompetenciesComponent', () => {
         });
         const lectureStub = jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(of(lectureResponse));
 
-        const competencies = [new Competency()];
+        const competencies: Competency[] = [{}];
         const competenciesResponse: HttpResponse<Competency[]> = new HttpResponse({
             body: competencies,
             status: 201,
@@ -128,7 +128,7 @@ describe('LectureWizardCompetenciesComponent', () => {
 
         const lectureStub = jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
 
-        const competencies = [new Competency()];
+        const competencies: Competency[] = [{}];
         const competenciesResponse: HttpResponse<Competency[]> = new HttpResponse({
             body: competencies,
             status: 201,
@@ -153,7 +153,7 @@ describe('LectureWizardCompetenciesComponent', () => {
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
         const createStub = jest.spyOn(competencyService, 'create').mockReturnValue(throwError(() => ({ status: 404 })));
 
-        const competencies = [new Competency()];
+        const competencies: Competency[] = [{}];
         const competenciesResponse: HttpResponse<Competency[]> = new HttpResponse({
             body: competencies,
             status: 201,
@@ -182,7 +182,7 @@ describe('LectureWizardCompetenciesComponent', () => {
 
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
 
-        const competencies = [new Competency()];
+        const competencies: Competency[] = [{}];
         const competenciesResponse: HttpResponse<Competency[]> = new HttpResponse({
             body: competencies,
             status: 201,
@@ -210,7 +210,7 @@ describe('LectureWizardCompetenciesComponent', () => {
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
         const editStub = jest.spyOn(competencyService, 'update').mockReturnValue(throwError(() => ({ status: 404 })));
 
-        const competencies = [new Competency()];
+        const competencies: Competency[] = [{}];
         const competenciesResponse: HttpResponse<Competency[]> = new HttpResponse({
             body: competencies,
             status: 201,
@@ -222,7 +222,7 @@ describe('LectureWizardCompetenciesComponent', () => {
         wizardCompetenciesComponentFixture.detectChanges();
 
         wizardCompetenciesComponentFixture.whenStable().then(() => {
-            wizardCompetenciesComponent.currentlyProcessedCompetency = new Competency();
+            wizardCompetenciesComponent.currentlyProcessedCompetency = {};
             wizardCompetenciesComponent.editCompetency({
                 id: 1,
                 title: 'Competency',
@@ -240,7 +240,7 @@ describe('LectureWizardCompetenciesComponent', () => {
 
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
 
-        const competencies = [new Competency()];
+        const competencies: Competency[] = [{}];
         const competenciesResponse: HttpResponse<Competency[]> = new HttpResponse({
             body: competencies,
             status: 201,
@@ -264,7 +264,7 @@ describe('LectureWizardCompetenciesComponent', () => {
 
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
 
-        const competencies = [new Competency()];
+        const competencies: Competency[] = [{}];
         const competenciesResponse: HttpResponse<Competency[]> = new HttpResponse({
             body: competencies,
             status: 201,
@@ -290,7 +290,7 @@ describe('LectureWizardCompetenciesComponent', () => {
 
         wizardCompetenciesComponentFixture.detectChanges();
 
-        const competency = new Competency();
+        const competency: Competency = {};
         competency.id = 12;
         wizardCompetenciesComponent.startEditCompetency(competency);
 
@@ -315,7 +315,7 @@ describe('LectureWizardCompetenciesComponent', () => {
 
         wizardCompetenciesComponent.lecture.lectureUnits = [lectureUnit];
 
-        const competency = new Competency();
+        const competency: Competency = {};
         competency.id = 12;
         competency.lectureUnits = [lectureUnit];
         const result = wizardCompetenciesComponent.getConnectedUnitsForCompetency(competency);
@@ -332,7 +332,7 @@ describe('LectureWizardCompetenciesComponent', () => {
 
         wizardCompetenciesComponentFixture.detectChanges();
 
-        const competency = new Competency();
+        const competency: Competency = {};
         competency.id = 12;
         const result = wizardCompetenciesComponent.getConnectedUnitsForCompetency(competency);
 
@@ -347,7 +347,7 @@ describe('LectureWizardCompetenciesComponent', () => {
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
         jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(throwError(() => ({ status: 404 })));
 
-        const createStub = jest.spyOn(competencyService, 'create').mockReturnValue(of(new HttpResponse<any>({ status: 201, body: new Competency() })));
+        const createStub = jest.spyOn(competencyService, 'create').mockReturnValue(of(new HttpResponse<any>({ status: 201, body: {} })));
         const alertStub = jest.spyOn(alertService, 'success');
 
         wizardCompetenciesComponentFixture.detectChanges();
@@ -377,7 +377,7 @@ describe('LectureWizardCompetenciesComponent', () => {
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
         jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(throwError(() => ({ status: 404 })));
 
-        const competency = new Competency();
+        const competency: Competency = {};
         const exercise = new TextExercise(undefined, undefined);
         exercise.id = 2;
         competency.exercises = [exercise];
@@ -422,7 +422,7 @@ describe('LectureWizardCompetenciesComponent', () => {
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
         jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(throwError(() => ({ status: 404 })));
 
-        const createStub = jest.spyOn(competencyService, 'create').mockReturnValue(of(new HttpResponse<any>({ status: 201, body: new Competency() })));
+        const createStub = jest.spyOn(competencyService, 'create').mockReturnValue(of(new HttpResponse<any>({ status: 201, body: {} })));
         const alertStub = jest.spyOn(alertService, 'success');
 
         wizardCompetenciesComponentFixture.detectChanges();
@@ -447,7 +447,7 @@ describe('LectureWizardCompetenciesComponent', () => {
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
         jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(throwError(() => ({ status: 404 })));
 
-        const editStub = jest.spyOn(competencyService, 'update').mockReturnValue(of(new HttpResponse<any>({ status: 201, body: new Competency() })));
+        const editStub = jest.spyOn(competencyService, 'update').mockReturnValue(of(new HttpResponse<any>({ status: 201, body: {} })));
         const alertStub = jest.spyOn(alertService, 'success');
 
         wizardCompetenciesComponentFixture.detectChanges();
@@ -458,7 +458,7 @@ describe('LectureWizardCompetenciesComponent', () => {
         };
 
         wizardCompetenciesComponentFixture.whenStable().then(() => {
-            wizardCompetenciesComponent.currentlyProcessedCompetency = new Competency();
+            wizardCompetenciesComponent.currentlyProcessedCompetency = {};
             wizardCompetenciesComponent.isEditingCompetency = true;
             wizardCompetenciesComponent.onCompetencyFormSubmitted(formData);
 
@@ -478,7 +478,7 @@ describe('LectureWizardCompetenciesComponent', () => {
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
         jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(throwError(() => ({ status: 404 })));
 
-        const competency = new Competency();
+        const competency: Competency = {};
         const exercise = new TextExercise(undefined, undefined);
         exercise.id = 2;
         competency.exercises = [exercise];
@@ -500,7 +500,7 @@ describe('LectureWizardCompetenciesComponent', () => {
         };
 
         wizardCompetenciesComponentFixture.whenStable().then(() => {
-            wizardCompetenciesComponent.currentlyProcessedCompetency = new Competency();
+            wizardCompetenciesComponent.currentlyProcessedCompetency = {};
             wizardCompetenciesComponent.lecture.lectureUnits = [unit];
             wizardCompetenciesComponent.isEditingCompetency = true;
             wizardCompetenciesComponent.onCompetencyFormSubmitted(formData);

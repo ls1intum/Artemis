@@ -6,9 +6,15 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { AccordionGroups, SidebarCardElement, TimeGroupCategory } from 'app/types/sidebar';
+import { AccordionGroups, ChannelGroupCategory, SidebarCardElement, TimeGroupCategory } from 'app/types/sidebar';
 import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { faBullhorn, faHashtag } from '@fortawesome/free-solid-svg-icons';
+import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
+import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -45,6 +51,17 @@ const GROUP_DECISION_MATRIX: Record<StartDateGroup, Record<EndDateGroup, TimeGro
     },
 };
 
+const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
+    favoriteChannels: { entityData: [] },
+    generalChannels: { entityData: [] },
+    exerciseChannels: { entityData: [] },
+    lectureChannels: { entityData: [] },
+    examChannels: { entityData: [] },
+    groupChats: { entityData: [] },
+    directMessages: { entityData: [] },
+    hiddenChannels: { entityData: [] },
+};
+
 @Injectable({
     providedIn: 'root',
 })
@@ -52,7 +69,11 @@ export class CourseOverviewService {
     constructor(
         private participationService: ParticipationService,
         private translate: TranslateService,
+        private conversationService: ConversationService,
     ) {}
+
+    faBullhorn = faBullhorn;
+    faHashtag = faHashtag;
 
     getUpcomingTutorialGroup(tutorialGroups: TutorialGroup[] | undefined): TutorialGroup | undefined {
         if (tutorialGroups && tutorialGroups.length) {
@@ -135,6 +156,32 @@ export class CourseOverviewService {
         return 'future';
     }
 
+    getConversationGroup(conversation: ConversationDTO): ChannelGroupCategory {
+        if (conversation.isFavorite) {
+            return 'favoriteChannels';
+        }
+        if (conversation.isHidden) {
+            return 'hiddenChannels';
+        }
+        if (isGroupChatDTO(conversation)) {
+            return 'groupChats';
+        }
+        if (isOneToOneChatDTO(conversation)) {
+            return 'directMessages';
+        }
+        return this.getCorrespondingChannelSubType(getAsChannelDTO(conversation)?.subType);
+    }
+
+    getCorrespondingChannelSubType(channelSubType: ChannelSubType | undefined): ChannelGroupCategory {
+        const channelSubTypeMap: { [key in ChannelSubType]: ChannelGroupCategory } = {
+            [ChannelSubType.EXERCISE]: 'exerciseChannels',
+            [ChannelSubType.GENERAL]: 'generalChannels',
+            [ChannelSubType.LECTURE]: 'lectureChannels',
+            [ChannelSubType.EXAM]: 'examChannels',
+        };
+        return channelSubType ? channelSubTypeMap[channelSubType] : 'generalChannels';
+    }
+
     groupExercisesByDueDate(sortedExercises: Exercise[]): AccordionGroups {
         const groupedExerciseGroups = cloneDeep(DEFAULT_UNIT_GROUPS) as AccordionGroups;
 
@@ -159,6 +206,18 @@ export class CourseOverviewService {
         return groupedLectureGroups;
     }
 
+    groupConversationsByChannelType(conversations: ConversationDTO[]): AccordionGroups {
+        const groupedConversationGroups = cloneDeep(DEFAULT_CHANNEL_GROUPS) as AccordionGroups;
+
+        for (const conversation of conversations) {
+            const conversationGroup = this.getConversationGroup(conversation);
+            const conversationCardItem = this.mapConversationToSidebarCardElement(conversation);
+            groupedConversationGroups[conversationGroup].entityData.push(conversationCardItem);
+        }
+
+        return groupedConversationGroups;
+    }
+
     mapLecturesToSidebarCardElements(lectures: Lecture[]) {
         return lectures.map((lecture) => this.mapLectureToSidebarCardElement(lecture));
     }
@@ -168,6 +227,10 @@ export class CourseOverviewService {
 
     mapExercisesToSidebarCardElements(exercises: Exercise[]) {
         return exercises.map((exercise) => this.mapExerciseToSidebarCardElement(exercise));
+    }
+
+    mapConversationsToSidebarCardElements(conversations: ConversationDTO[]) {
+        return conversations.map((conversation) => this.mapConversationToSidebarCardElement(conversation));
     }
 
     mapLectureToSidebarCardElement(lecture: Lecture): SidebarCardElement {
@@ -214,6 +277,18 @@ export class CourseOverviewService {
             size: 'M',
         };
         return exerciseCardItem;
+    }
+
+    mapConversationToSidebarCardElement(conversation: ConversationDTO): SidebarCardElement {
+        const conversationCardItem: SidebarCardElement = {
+            title: this.conversationService.getConversationName(conversation) ?? '',
+            id: conversation.id ?? '',
+            type: conversation.type,
+            icon: getAsChannelDTO(conversation)?.name === 'announcement' ? this.faBullhorn : this.faHashtag,
+            conversation: conversation,
+            size: 'S',
+        };
+        return conversationCardItem;
     }
 
     sortLectures(lectures: Lecture[]): Lecture[] {

@@ -33,7 +33,6 @@ import { By } from '@angular/platform-browser';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { Exam } from 'app/entities/exam.model';
 import { CompetencyService } from 'app/course/competencies/competency.service';
-import { Competency } from 'app/entities/competency.model';
 import { CourseOverviewComponent } from 'app/overview/course-overview.component';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
@@ -101,9 +100,9 @@ const course2: Course = {
     exams: [exam2],
     description: 'Short description of course 2',
     shortName: 'shortName2',
-    competencies: [new Competency()],
+    competencies: [{}],
     tutorialGroups: [new TutorialGroup()],
-    prerequisites: [new Competency()],
+    prerequisites: [{}],
     numberOfCompetencies: 1,
     numberOfPrerequisites: 1,
     numberOfTutorialGroups: 1,

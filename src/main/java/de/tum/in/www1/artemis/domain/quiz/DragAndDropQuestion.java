@@ -258,6 +258,7 @@ public class DragAndDropQuestion extends QuizQuestion {
      *
      * @param originalQuizQuestion the original QuizQuestion-object, which will be compared with this question
      */
+    @Override
     public void undoUnallowedChanges(QuizQuestion originalQuizQuestion) {
         if (originalQuizQuestion instanceof DragAndDropQuestion dndOriginalQuestion) {
             backgroundFilePath = dndOriginalQuestion.getBackgroundFilePath();
@@ -335,6 +336,7 @@ public class DragAndDropQuestion extends QuizQuestion {
      * @param originalQuizQuestion the original QuizQuestion-object, which will be compared with this question
      * @return a boolean which is true if the dragItem and dropLocation-changes make an update necessary and false if not
      */
+    @Override
     public boolean isUpdateOfResultsAndStatisticsNecessary(QuizQuestion originalQuizQuestion) {
         if (originalQuizQuestion instanceof DragAndDropQuestion dndOriginalQuestion) {
             return checkDragItemsIfRecalculationIsNecessary(dndOriginalQuestion) || checkDropLocationsIfRecalculationIsNecessary(dndOriginalQuestion)
