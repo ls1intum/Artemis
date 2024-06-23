@@ -3,12 +3,7 @@ import * as monaco from 'monaco-editor';
 import { MonacoEditorDomainActionWithOptions } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action-with-options.model';
 
 const INSERT_TEST_CASE_TEXT = 'testCaseName()';
-interface TestCaseValue {
-    value: string;
-    id: string;
-}
 export class MonacoTestCaseAction extends MonacoEditorDomainActionWithOptions {
-    possibleValues: TestCaseValue[] = [];
     disposableCompletionProvider?: monaco.IDisposable;
 
     static readonly ID = 'monaco-test-case.action';
@@ -45,7 +40,7 @@ export class MonacoTestCaseAction extends MonacoEditorDomainActionWithOptions {
 
                     // We can simply map all possible values here. The Monaco editor filters the items based on the user input.
                     return {
-                        suggestions: this.possibleValues.map((value) => ({
+                        suggestions: this.values.map((value) => ({
                             label: value.value,
                             kind: monaco.languages.CompletionItemKind.Constant,
                             insertText: value.value,

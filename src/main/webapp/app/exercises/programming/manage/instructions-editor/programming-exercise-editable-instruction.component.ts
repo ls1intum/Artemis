@@ -218,7 +218,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                         this.exerciseTestCases = testCaseNames;
                         const cases = this.exerciseTestCases.map((value) => ({ value, id: value }));
                         this.testCaseCommand.setValues(cases);
-                        this.testCaseAction.possibleValues = cases;
+                        this.testCaseAction.setValues(cases);
                     }),
                     catchError(() => of()),
                 )
