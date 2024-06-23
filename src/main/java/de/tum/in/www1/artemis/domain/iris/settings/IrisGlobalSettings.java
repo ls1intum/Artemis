@@ -31,12 +31,19 @@ public class IrisGlobalSettings extends IrisSettings {
     @Column(name = "enable_auto_update_hestia")
     private boolean enableAutoUpdateHestia;
 
+    @Column(name = "enable_auto_update_lecture_ingestion")
+    private boolean enableAutoUpdateLectureIngestion;
+
     @Column(name = "enable_auto_update_competency_generation")
     private boolean enableAutoUpdateCompetencyGeneration;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "iris_chat_settings_id")
     private IrisChatSubSettings irisChatSettings;
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "iris_lecture_ingestion_settings_id")
+    private IrisLectureIngestionSubSettings irisLectureIngestionSettings;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "iris_hestia_settings_id")
@@ -74,6 +81,14 @@ public class IrisGlobalSettings extends IrisSettings {
         this.enableAutoUpdateChat = enableAutoUpdateChat;
     }
 
+    public boolean isEnableAutoUpdateLectureIngestion() {
+        return enableAutoUpdateLectureIngestion;
+    }
+
+    public void setEnableAutoUpdateLectureIngestion(boolean enableAutoUpdateLectureIngestion) {
+        this.enableAutoUpdateLectureIngestion = enableAutoUpdateLectureIngestion;
+    }
+
     public boolean isEnableAutoUpdateHestia() {
         return enableAutoUpdateHestia;
     }
@@ -88,6 +103,16 @@ public class IrisGlobalSettings extends IrisSettings {
 
     public void setEnableAutoUpdateCompetencyGeneration(boolean enableAutoUpdateCompetencyGeneration) {
         this.enableAutoUpdateCompetencyGeneration = enableAutoUpdateCompetencyGeneration;
+    }
+
+    @Override
+    public IrisLectureIngestionSubSettings getIrisLectureIngestionSettings() {
+        return irisLectureIngestionSettings;
+    }
+
+    @Override
+    public void setIrisLectureIngestionSettings(IrisLectureIngestionSubSettings irisLectureIngestionSettings) {
+        this.irisLectureIngestionSettings = irisLectureIngestionSettings;
     }
 
     @Override
