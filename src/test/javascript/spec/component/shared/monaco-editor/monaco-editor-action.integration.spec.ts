@@ -19,6 +19,8 @@ import { MonacoTestCaseAction } from 'app/shared/monaco-editor/model/actions/mon
 import { MonacoHeadingAction } from 'app/shared/monaco-editor/model/actions/monaco-heading.action';
 import { MonacoUrlAction } from 'app/shared/monaco-editor/model/actions/monaco-url.action';
 import { MonacoAttachmentAction } from 'app/shared/monaco-editor/model/actions/monaco-attachment.action';
+import { MonacoOrderedListAction } from 'app/shared/monaco-editor/model/actions/monaco-ordered-list.action';
+import { MonacoUnorderedListAction } from 'app/shared/monaco-editor/model/actions/monaco-unordered-list.action';
 
 describe('MonacoEditorActionIntegration', () => {
     let fixture: ComponentFixture<MonacoEditorComponent>;
@@ -57,6 +59,36 @@ describe('MonacoEditorActionIntegration', () => {
         comp.setText('');
         comp.triggerAction(action.id);
         expect(comp.getText()).toBe(defaultText);
+    });
+
+    it('should toggle unordered list, skipping empty lines', () => {
+        const action = new MonacoUnorderedListAction();
+        comp.registerAction(action);
+        const lines = ['One', '', 'Two', 'Three'];
+        const bulletedLines = lines.map((line) => (line ? `- ${line}` : ''));
+        comp.setText(lines.join('\n'));
+        comp.setSelection({ startLineNumber: 1, startColumn: 1, endLineNumber: lines.length, endColumn: lines[lines.length - 1].length + 1 });
+        // Introduce list
+        comp.triggerAction(action.id);
+        expect(comp.getText()).toBe(bulletedLines.join('\n'));
+        // Remove list
+        comp.triggerAction(action.id);
+        expect(comp.getText()).toBe(lines.join('\n'));
+    });
+
+    it('should toggle ordered list, skipping empty lines', () => {
+        const action = new MonacoOrderedListAction();
+        comp.registerAction(action);
+        const lines = ['One', '', 'Two', 'Three'];
+        const numberedLines = lines.map((line, index) => (line ? `${index + 1}. ${line}` : ''));
+        comp.setText(lines.join('\n'));
+        comp.setSelection({ startLineNumber: 1, startColumn: 1, endLineNumber: lines.length, endColumn: lines[lines.length - 1].length + 1 });
+        // Introduce list
+        comp.triggerAction(action.id);
+        expect(comp.getText()).toBe(numberedLines.join('\n'));
+        // Remove list
+        comp.triggerAction(action.id);
+        expect(comp.getText()).toBe(lines.join('\n'));
     });
 
     it.each([1, 2, 3])('Should toggle heading %i on selected line', (headingLevel) => {
