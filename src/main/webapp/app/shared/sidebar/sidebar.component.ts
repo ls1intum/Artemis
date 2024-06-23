@@ -17,6 +17,17 @@ export type ExerciseTypeFilterOptions = { name: string; value: ExerciseType; che
 export type DifficultyFilterOptions = { name: string; value: DifficultyLevel; checked: boolean }[];
 export type RangeFilter = { generalMin: number; generalMax: number; selectedMin: number; selectedMax: number };
 
+export type ExerciseFilterOptions = {
+    categoryFilters?: ExerciseCategoryFilterOption[];
+    exerciseTypesFilter?: ExerciseTypeFilterOptions;
+    // dueDateRange: RangeFilter;
+    difficultyFilters?: DifficultyFilterOptions;
+    achievedScore?: RangeFilter;
+    achievablePoints?: RangeFilter;
+};
+
+export type ExerciseFilterResults = { filteredSidebarData?: SidebarData; appliedExerciseFilters?: ExerciseFilterOptions };
+
 // TODO allow to filter for no difficulty?
 const DEFAULT_DIFFICULTIES_FILTER: DifficultyFilterOptions = [
     { name: 'artemisApp.exercise.easy', value: DifficultyLevel.EASY, checked: false },
@@ -60,6 +71,8 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     readonly faFilter = faFilter;
 
     sidebarDataBeforeFiltering: SidebarData;
+
+    exerciseFilters?: ExerciseFilterOptions;
 
     categoryFilters?: ExerciseCategoryFilterOption[];
     difficultyFilters?: DifficultyFilterOptions;
@@ -129,14 +142,13 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         });
 
         this.modalRef.componentInstance.sidebarData = cloneDeep(this.sidebarDataBeforeFiltering);
-        this.modalRef.componentInstance.categoryFilters = this.categoryFilters;
-        this.modalRef.componentInstance.difficultyFilters = this.difficultyFilters;
-        this.modalRef.componentInstance.typeFilters = this.exerciseTypesFilter;
-        this.modalRef.componentInstance.achievablePoints = this.achievablePoints;
-        this.modalRef.componentInstance.achievedScore = this.achievedScore;
+        this.modalRef.componentInstance.exerciseFilters = cloneDeep(this.exerciseFilters);
 
-        this.modalRef.componentInstance.filterApplied.subscribe((filteredSidebarData: SidebarData) => {
-            this.sidebarData = filteredSidebarData;
+        this.modalRef.componentInstance.filterApplied.subscribe((exerciseFilterResults: ExerciseFilterResults) => {
+            this.sidebarData = exerciseFilterResults.filteredSidebarData!;
+            this.exerciseFilters = exerciseFilterResults.appliedExerciseFilters;
+
+            console.log('Filter applied', exerciseFilterResults);
         });
     }
 
@@ -145,10 +157,22 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     // TODO dont display the filter option if no filter option is reasonable
 
     private initializeFilterOptions() {
+        if (this.exerciseFilters) {
+            return;
+        }
+
         this.initializeCategoryFilter();
         this.initializeExerciseTypeFilter();
         this.initializeDifficultyFilter();
         this.initializeAchievablePointsAndAchievedScoreFilters();
+
+        this.exerciseFilters = {
+            categoryFilters: this.categoryFilters,
+            exerciseTypesFilter: this.exerciseTypesFilter,
+            difficultyFilters: this.difficultyFilters,
+            achievedScore: this.achievedScore,
+            achievablePoints: this.achievablePoints,
+        };
     }
 
     private initializeCategoryFilter() {

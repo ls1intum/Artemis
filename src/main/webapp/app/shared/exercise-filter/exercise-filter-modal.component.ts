@@ -7,7 +7,14 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { SidebarData } from 'app/types/sidebar';
 import { DifficultyLevel, ExerciseType } from 'app/entities/exercise.model';
-import { DifficultyFilterOptions, ExerciseCategoryFilterOption, ExerciseTypeFilterOptions, RangeFilter } from 'app/shared/sidebar/sidebar.component';
+import {
+    DifficultyFilterOptions,
+    ExerciseCategoryFilterOption,
+    ExerciseFilterOptions,
+    ExerciseFilterResults,
+    ExerciseTypeFilterOptions,
+    RangeFilter,
+} from 'app/shared/sidebar/sidebar.component';
 import { Observable, OperatorFunction, Subject, merge } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge.component';
@@ -30,7 +37,7 @@ import { RangeSliderComponent } from 'app/shared/range-slider/range-slider.compo
 export class ExerciseFilterModalComponent {
     readonly faFilter = faFilter;
 
-    @Output() filterApplied = new EventEmitter<SidebarData>();
+    @Output() filterApplied = new EventEmitter<ExerciseFilterResults>();
 
     @ViewChild('categoriesFilterSelection', { static: true }) instance: NgbTypeahead;
 
@@ -56,11 +63,20 @@ export class ExerciseFilterModalComponent {
     categoryFilters: ExerciseCategoryFilterOption[] = [];
     typeFilters?: ExerciseTypeFilterOptions;
     difficultyFilters?: DifficultyFilterOptions;
-
     achievablePoints?: RangeFilter;
     achievedScore?: RangeFilter;
 
+    exerciseFilters?: ExerciseFilterOptions;
+
     constructor(private activeModal: NgbActiveModal) {}
+
+    ngOnInit() {
+        this.categoryFilters = this.exerciseFilters?.categoryFilters ?? [];
+        this.typeFilters = this.exerciseFilters?.exerciseTypesFilter;
+        this.difficultyFilters = this.exerciseFilters?.difficultyFilters;
+        this.achievablePoints = this.exerciseFilters?.achievablePoints;
+        this.achievedScore = this.exerciseFilters?.achievedScore;
+    }
 
     // TODO reset filter state when closing the modal without saving
 
@@ -116,7 +132,8 @@ export class ExerciseFilterModalComponent {
         this.applyDifficultyFilter();
         this.applyExerciseCategoryFilter();
 
-        this.filterApplied.emit(this.sidebarData);
+        this.filterApplied.emit({ filteredSidebarData: this.sidebarData!, appliedExerciseFilters: this.exerciseFilters });
+
         this.closeModal();
     }
 
