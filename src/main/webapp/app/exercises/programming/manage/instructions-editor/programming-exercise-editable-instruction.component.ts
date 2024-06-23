@@ -57,7 +57,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     // If the programming exercise is being created, some features have to be disabled (saving the problemStatement & querying test cases).
     @Input() editMode = true;
     @Input() enableResize = true;
-    @Input() initialEditorHeight?: MarkdownEditorHeight;
+    @Input({ required: true }) initialEditorHeight: MarkdownEditorHeight | 'external';
     @Input() showSaveButton = false;
     @Input() templateParticipation: Participation;
     @Input() forceRender: Observable<void>;

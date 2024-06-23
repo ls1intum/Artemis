@@ -67,8 +67,11 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     @Input()
     enableResize = true;
 
-    @Input()
-    initialEditorHeight?: MarkdownEditorHeight;
+    /**
+     * The initial height the editor should have. If set to 'external', the editor will try to grow to the available space.
+     */
+    @Input({ required: true })
+    initialEditorHeight: MarkdownEditorHeight | 'external';
 
     @Input()
     resizableMaxHeight = MarkdownEditorHeight.LARGE;
@@ -143,7 +146,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     ngAfterContentInit(): void {
         // Affects the template - done in this method to avoid ExpressionChangedAfterItHasBeenCheckedErrors.
-        this.targetWrapperHeight = this.initialEditorHeight?.valueOf();
+        this.targetWrapperHeight = this.initialEditorHeight !== 'external' ? this.initialEditorHeight.valueOf() : undefined;
         this.constrainDragPositionFn = this.constrainDragPosition.bind(this);
         this.displayedActions = {
             standard: this.defaultActions,
