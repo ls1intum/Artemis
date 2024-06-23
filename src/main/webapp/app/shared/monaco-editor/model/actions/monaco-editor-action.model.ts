@@ -110,7 +110,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
         const fullscreenElement = element ?? editor.getDomNode();
         if (isFullScreen()) {
             exitFullscreen();
-        } else if (element) {
+        } else if (fullscreenElement) {
             enterFullscreen(fullscreenElement);
         }
         editor.layout();

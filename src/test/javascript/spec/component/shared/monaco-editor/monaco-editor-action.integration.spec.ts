@@ -12,6 +12,11 @@ import { MonacoUnderlineAction } from 'app/shared/monaco-editor/model/actions/mo
 import { MonacoCodeBlockAction } from 'app/shared/monaco-editor/model/actions/monaco-code-block.action';
 import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/monaco-formula.action';
 import { MonacoQuoteAction } from 'app/shared/monaco-editor/model/actions/monaco-quote.action';
+import { MonacoFullscreenAction } from 'app/shared/monaco-editor/model/actions/monaco-fullscreen.action';
+import * as FullscreenUtil from 'app/shared/util/fullscreen.util';
+import { MonacoTaskAction } from 'app/shared/monaco-editor/model/actions/monaco-task.action';
+import { MonacoTestCaseAction } from 'app/shared/monaco-editor/model/actions/monaco-test-case.action';
+import { MonacoHeadingAction } from 'app/shared/monaco-editor/model/actions/monaco-heading.action';
 
 describe('MonacoEditorActionIntegration', () => {
     let fixture: ComponentFixture<MonacoEditorComponent>;
@@ -36,6 +41,68 @@ describe('MonacoEditorActionIntegration', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+    });
+
+    it.each([1, 2, 3])('Should toggle heading %i on selected line', (headingLevel) => {
+        const action = new MonacoHeadingAction(headingLevel);
+        comp.registerAction(action);
+        // No selection -> insert heading
+        comp.triggerAction(action.id);
+        expect(comp.getText()).toBe(`${'#'.repeat(headingLevel)} Heading ${headingLevel}`);
+        // Selection -> toggle heading
+        comp.setSelection({ startLineNumber: 1, startColumn: 1, endLineNumber: 1, endColumn: comp.getText().length + 1 });
+        comp.triggerAction(action.id);
+        expect(comp.getText()).toBe(`Heading ${headingLevel}`);
+        comp.triggerAction(action.id);
+        expect(comp.getText()).toBe(`${'#'.repeat(headingLevel)} Heading ${headingLevel}`);
+    });
+
+    it('should insert test case names', () => {
+        const action = new MonacoTestCaseAction();
+        const testCaseName = 'testCase()';
+        action.values = [{ value: testCaseName, id: '1' }];
+        // With specified test case name
+        comp.registerAction(action);
+        comp.triggerAction(action.id, testCaseName);
+        expect(comp.getText()).toBe(testCaseName);
+        // Without specified test case name
+        comp.setText('');
+        comp.triggerAction(action.id);
+        expect(comp.getText()).toBe(MonacoTestCaseAction.DEFAULT_INSERT_TEXT);
+    });
+
+    it('should insert tasks', () => {
+        const action = new MonacoTaskAction();
+        comp.registerAction(action);
+        comp.triggerAction(action.id);
+        expect(comp.getText()).toBe(MonacoTaskAction.INSERT_TASK_TEXT);
+    });
+
+    it('should enter fullscreen', () => {
+        const action = new MonacoFullscreenAction();
+        comp.registerAction(action);
+        const enterFullscreenStub = jest.spyOn(FullscreenUtil, 'enterFullscreen').mockImplementation();
+        jest.spyOn(FullscreenUtil, 'isFullScreen').mockReturnValue(false);
+        const dummyElement = document.createElement('div');
+        action.element = dummyElement;
+        comp.triggerAction(action.id);
+        expect(enterFullscreenStub).toHaveBeenCalledExactlyOnceWith(dummyElement);
+
+        // Without a specified element, it should use the editor's DOM node
+        action.element = undefined;
+        comp.triggerAction(action.id);
+        const editorElement = document.querySelector<HTMLDivElement>('.monaco-editor');
+        expect(enterFullscreenStub).toHaveBeenCalledTimes(2);
+        expect(enterFullscreenStub).toHaveBeenNthCalledWith(2, editorElement);
+    });
+
+    it('should leave fullscreen', () => {
+        const action = new MonacoFullscreenAction();
+        comp.registerAction(action);
+        const exitFullscreenStub = jest.spyOn(FullscreenUtil, 'exitFullscreen').mockImplementation();
+        jest.spyOn(FullscreenUtil, 'isFullScreen').mockReturnValue(true);
+        comp.triggerAction(action.id);
+        expect(exitFullscreenStub).toHaveBeenCalledOnce();
     });
 
     it.each([
