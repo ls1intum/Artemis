@@ -47,7 +47,6 @@ import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission-policy/submission-policy-update.component';
 import { LockRepositoryPolicy, SubmissionPenaltyPolicy } from 'app/entities/submission-policy.model';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import '@angular/localize/init';
 import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';

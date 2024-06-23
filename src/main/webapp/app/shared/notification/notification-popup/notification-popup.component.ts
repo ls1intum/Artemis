@@ -52,7 +52,7 @@ export class NotificationPopupComponent implements OnInit {
     @ViewChild('scrollContainer')
     private scrollContainer: ElementRef;
 
-    private readonly maxNotificationLength = 150;
+    private readonly MAX_NOTIFICATION_LENGTH = 150;
 
     private examRoutePattern = /^\/courses\/\d+\/exams\/\d+$/;
 
@@ -131,7 +131,7 @@ export class NotificationPopupComponent implements OnInit {
      * @param notification {Notification}
      */
     getNotificationTextTranslation(notification: Notification): string {
-        return this.notificationService.getNotificationTextTranslation(notification, this.maxNotificationLength);
+        return this.notificationService.getNotificationTextTranslation(notification, this.MAX_NOTIFICATION_LENGTH);
     }
 
     private notificationTargetRoute(notification: Notification): UrlTree | string {

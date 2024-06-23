@@ -78,7 +78,7 @@ describe('EditCompetencyComponent', () => {
         const lectureUnit = new TextUnit();
         lectureUnit.id = 1;
 
-        const competencyOfResponse = new Competency();
+        const competencyOfResponse: Competency = {};
         competencyOfResponse.id = 1;
         competencyOfResponse.title = 'test';
         competencyOfResponse.description = 'lorem ipsum';
@@ -134,7 +134,7 @@ describe('EditCompetencyComponent', () => {
         const textUnit = new TextUnit();
         textUnit.id = 1;
 
-        const competencyDatabase: Competency = new Competency();
+        const competencyDatabase: Competency = {};
         competencyDatabase.id = 1;
         competencyDatabase.title = 'test';
         competencyDatabase.description = 'lorem ipsum';

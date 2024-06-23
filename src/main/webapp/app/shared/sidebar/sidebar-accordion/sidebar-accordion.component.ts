@@ -1,14 +1,7 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { AccordionGroups, ExerciseCollapseState, SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { faChevronRight, faFile } from '@fortawesome/free-solid-svg-icons';
+import { AccordionGroups, ChannelAccordionShowAdd, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
 import { Params } from '@angular/router';
-
-const DEFAULT_EXERCISE_COLLAPSE_STATE: ExerciseCollapseState = {
-    future: true,
-    current: false,
-    past: true,
-    noDate: true,
-};
 
 @Component({
     selector: 'jhi-sidebar-accordion',
@@ -18,6 +11,7 @@ const DEFAULT_EXERCISE_COLLAPSE_STATE: ExerciseCollapseState = {
 export class SidebarAccordionComponent implements OnChanges, OnInit {
     protected readonly Object = Object;
 
+    @Output() onUpdateSidebar = new EventEmitter<void>();
     @Input() searchValue: string;
     @Input() routeParams: Params;
     @Input() groupedData: AccordionGroups;
@@ -25,11 +19,15 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
     @Input() storageId?: string = '';
     @Input() courseId?: number;
     @Input() itemSelected?: boolean;
-
-    collapseState = DEFAULT_EXERCISE_COLLAPSE_STATE;
+    @Input() showLeadingIcon = false;
+    @Input() showAddOptions = false;
+    @Input() showAddOption?: ChannelAccordionShowAdd;
+    @Input() channelTypeIcon?: ChannelTypeIcons;
+    @Input() collapseState: CollapseState;
 
     //icon
     faChevronRight = faChevronRight;
+    faFile = faFile;
 
     ngOnInit() {
         this.expandGroupWithSelectedItem();

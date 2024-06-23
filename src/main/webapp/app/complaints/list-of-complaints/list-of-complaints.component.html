@@ -60,7 +60,7 @@
                 <label class="form-check-label" for="field_showAddressedComplaint">
                     @if (complaintType === ComplaintType.COMPLAINT) {
                         <span>{{
-                            'artemisApp.complaint.listOfComplaints.show' + (filterOption === FilterOptionAddressedComplaints ? 'Only' : '') + 'AddressedComplaints'
+                            'artemisApp.complaint.listOfComplaints.show' + (filterOption === FILTER_OPTION_ADDRESSED_COMPLAINTS ? 'Only' : '') + 'AddressedComplaints'
                                 | artemisTranslate
                         }}</span>
                     }

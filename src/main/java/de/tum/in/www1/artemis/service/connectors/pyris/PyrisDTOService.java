@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.pyris;
 
-import static de.tum.in.www1.artemis.service.util.ZonedDateTimeUtil.toInstant;
+import static de.tum.in.www1.artemis.service.util.TimeUtil.toInstant;
 
 import java.util.List;
 import java.util.Map;
@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisBuildLogEntryDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisFeedbackDTO;
@@ -37,9 +38,12 @@ public class PyrisDTOService {
 
     private final RepositoryService repositoryService;
 
-    public PyrisDTOService(GitService gitService, RepositoryService repositoryService) {
+    private final ProfileService profileService;
+
+    public PyrisDTOService(GitService gitService, RepositoryService repositoryService, ProfileService profileService) {
         this.gitService = gitService;
         this.repositoryService = repositoryService;
+        this.profileService = profileService;
     }
 
     /**
@@ -125,7 +129,13 @@ public class PyrisDTOService {
      */
     private Optional<Repository> getRepository(ProgrammingExerciseParticipation participation) {
         try {
-            return Optional.ofNullable(gitService.getOrCheckoutRepository(participation.getVcsRepositoryUri(), true));
+            var repositoryUri = participation.getVcsRepositoryUri();
+            if (profileService.isLocalVcsActive()) {
+                return Optional.ofNullable(gitService.getBareRepository(repositoryUri));
+            }
+            else {
+                return Optional.ofNullable(gitService.getOrCheckoutRepository(repositoryUri, true));
+            }
         }
         catch (GitAPIException e) {
             log.error("Could not fetch repository", e);

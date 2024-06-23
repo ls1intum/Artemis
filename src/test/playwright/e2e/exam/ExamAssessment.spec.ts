@@ -302,7 +302,7 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
     const courseList = new CoursesPage(page);
     const courseOverview = new CourseOverviewPage(page);
     const modelingExerciseEditor = new ModelingEditor(page);
-    const programmingExerciseEditor = new OnlineEditorPage(page, courseList, courseOverview);
+    const programmingExerciseEditor = new OnlineEditorPage(page);
     const quizExerciseMultipleChoice = new MultipleChoiceQuiz(page);
     const textExerciseEditor = new TextEditorPage(page);
     const examNavigation = new ExamNavigationBar(page);
