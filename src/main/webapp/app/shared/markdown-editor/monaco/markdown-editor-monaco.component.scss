@@ -1,39 +1,10 @@
-// TODO: Unused?
 .markdown-editor-wrapper {
     height: 100%;
     background-color: var(--md-editor-background);
 }
 
-.markdown-color-picker {
-    .red {
-        background-color: var(--markdown-preview-red);
-    }
-    .green {
-        background-color: var(--markdown-preview-green);
-    }
-    .white {
-        background-color: var(--markdown-preview-white);
-    }
-    .black {
-        background-color: var(--markdown-preview-black);
-    }
-    .yellow {
-        background-color: var(--markdown-preview-yellow);
-    }
-    .blue {
-        background-color: var(--markdown-preview-blue);
-    }
-    .lila {
-        background-color: var(--markdown-preview-lila);
-    }
-    .orange {
-        background-color: var(--markdown-preview-orange);
-    }
-}
-
 .file-upload-footer-input {
-    // cannot be set to 'display: false' or similar
-    // input value would not be sent
+    // Cannot hide input[type=file] with display: none, as this may prevent file uploads entirely.
     width: 0.1px;
     height: 0.1px;
     opacity: 0;
