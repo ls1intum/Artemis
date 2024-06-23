@@ -48,6 +48,13 @@ describe('MonacoEditorActionIntegration', () => {
         jest.restoreAllMocks();
     });
 
+    it('should throw when trying to register an action twice', () => {
+        const action = new MonacoBoldAction();
+        comp.registerAction(action);
+        const registerAction = () => comp.registerAction(action);
+        expect(registerAction).toThrow(Error);
+    });
+
     it.each([
         { action: new MonacoAttachmentAction(), text: 'Attachment', url: 'https://test.invalid/img.png', defaultText: MonacoAttachmentAction.DEFAULT_INSERT_TEXT },
         { action: new MonacoUrlAction(), text: 'Link', url: 'https://test.invalid/', defaultText: MonacoUrlAction.DEFAULT_INSERT_TEXT },
