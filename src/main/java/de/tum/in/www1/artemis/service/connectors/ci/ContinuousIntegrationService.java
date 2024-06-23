@@ -219,7 +219,7 @@ public interface ContinuousIntegrationService {
             @Override
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 return switch (language) {
-                    case JAVA, PYTHON, C, HASKELL, KOTLIN, VHDL, ASSEMBLER, SWIFT, OCAML, EMPTY -> "assignment";
+                    case JAVA, PYTHON, C, HASKELL, KOTLIN, VHDL, ASSEMBLER, SWIFT, OCAML, EMPTY, JAVASCRIPT -> "assignment";
                 };
             }
         },
@@ -228,7 +228,7 @@ public interface ContinuousIntegrationService {
             @Override
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 return switch (language) {
-                    case JAVA, PYTHON, HASKELL, KOTLIN, SWIFT, EMPTY -> "";
+                    case JAVA, PYTHON, HASKELL, KOTLIN, SWIFT, EMPTY, JAVASCRIPT -> "";
                     case C, VHDL, ASSEMBLER, OCAML -> "tests";
                 };
             }
