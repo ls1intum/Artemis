@@ -131,6 +131,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     protected readonly IrisAssistantMessage = IrisAssistantMessage;
     protected readonly IrisTextMessageContent = IrisTextMessageContent;
     protected readonly IrisSender = IrisSender;
+    protected readonly IrisErrorMessageKey = IrisErrorMessageKey;
 
     constructor(
         protected accountService: AccountService,
