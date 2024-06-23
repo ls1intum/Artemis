@@ -54,6 +54,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
+import de.tum.in.www1.artemis.domain.science.ScienceEventType;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseTestService;
@@ -182,6 +183,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         boolean assessmentDueDateInTheFuture = false;
         var course = prepareCourseDataForDataExportCreation(assessmentDueDateInTheFuture, "short");
         createCommunicationData(TEST_PREFIX + "student1", course);
+        createScienceEvents(TEST_PREFIX + "student1", course);
         var dataExport = initDataExport();
         dataExportCreationService.createDataExport(dataExport);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
@@ -193,7 +195,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         Predicate<Path> generalUserInformationCsv = path -> "general_user_information.csv".equals(path.getFileName().toString());
         Predicate<Path> readmeMd = path -> "README.md".equals(path.getFileName().toString());
         Predicate<Path> courseDir = path -> path.getFileName().toString().startsWith("course_short");
-        assertThat(extractedZipDirPath).isDirectoryContaining(generalUserInformationCsv).isDirectoryContaining(readmeMd).isDirectoryContaining(courseDir);
+        Predicate<Path> scienceEventsCsv = path -> "science_events.csv".equals(path.getFileName().toString());
+        assertThat(extractedZipDirPath).isDirectoryContaining(generalUserInformationCsv).isDirectoryContaining(readmeMd).isDirectoryContaining(courseDir)
+                .isDirectoryContaining(scienceEventsCsv);
         var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, "short");
         var exercisesDirPath = courseDirPath.resolve("exercises");
         assertThat(courseDirPath).isDirectoryContaining(exercisesDirPath::equals);
@@ -284,6 +288,12 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         exerciseUtilService.createPlagiarismCaseForUserForExercise(programmingExercise, userUtilService.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.PLAGIARISM);
         exerciseUtilService.createPlagiarismCaseForUserForExercise(exercises.get(0), userUtilService.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.POINT_DEDUCTION);
         exerciseUtilService.createPlagiarismCaseForUserForExercise(exercises.get(1), userUtilService.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.WARNING);
+    }
+
+    private void createScienceEvents(String userLogin, Course course) {
+        exerciseUtilService.createScienceEvent(userLogin, ScienceEventType.EXERCISE__OPEN, 1L);
+        exerciseUtilService.createScienceEvent(userLogin, ScienceEventType.LECTURE__OPEN, 2L);
+        exerciseUtilService.createScienceEvent(userLogin, ScienceEventType.LECTURE__OPEN_UNIT, 3L);
     }
 
     private Exam prepareExamDataForDataExportCreation(String courseShortName) throws Exception {
