@@ -63,8 +63,12 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
             this.replaceTextAtRange(editor, selection, textToInsert);
         } else if (position) {
             this.insertTextAtPosition(editor, position, `${openDelimiter}${textToInsert}${closeDelimiter}`);
-            // Move the cursor to the end of the inserted text.
-            editor.setPosition(position.delta(0, openDelimiter.length + textToInsert.length));
+            // Move the cursor to the end of the inserted text. Note that the delimiters may have newlines.
+            const textBeforeCursor = `${openDelimiter}${textToInsert}`;
+            const lines = textBeforeCursor.split('\n');
+            const newLineNumber = position.lineNumber + lines.length - 1;
+            const newColumn = lines.length === 1 ? position.column + lines[0].length : lines[lines.length - 1].length + 1;
+            editor.setPosition({ lineNumber: newLineNumber, column: newColumn });
         }
     }
 
