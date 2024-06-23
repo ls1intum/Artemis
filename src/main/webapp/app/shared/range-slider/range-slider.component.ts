@@ -1,6 +1,8 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
+const DEFAULT_STEP = 1;
+
 @Component({
     selector: 'jhi-range-slider',
     templateUrl: './range-slider.component.html',
@@ -11,7 +13,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 export class RangeSliderComponent implements OnInit, OnDestroy {
     @Input() generalMaxValue: number;
     @Input() generalMinValue: number;
-    @Input() stepWidth: number = 1;
+    @Input() step: number = DEFAULT_STEP;
 
     @Input() selectedMinValue: number;
     @Input() selectedMaxValue: number;
@@ -62,13 +64,13 @@ export class RangeSliderComponent implements OnInit, OnDestroy {
 
         if (minSliderIsUpdated) {
             if (this.selectedMinValue >= this.selectedMaxValue) {
-                this.selectedMinValue = this.selectedMaxValue - this.stepWidth;
+                this.selectedMinValue = this.selectedMaxValue - this.step;
             }
             return this.selectedMinValue;
         }
 
         if (this.selectedMaxValue <= this.selectedMinValue) {
-            this.selectedMaxValue = this.selectedMinValue + this.stepWidth;
+            this.selectedMaxValue = this.selectedMinValue + this.step;
         }
         return this.selectedMaxValue;
     }

@@ -132,6 +132,7 @@ export class ExerciseFilterModalComponent {
         this.applyDifficultyFilter();
         this.applyExerciseCategoryFilter();
         this.applyPointsFilter();
+        this.applyScoreFilter();
 
         this.filterApplied.emit({ filteredSidebarData: this.sidebarData!, appliedExerciseFilters: this.exerciseFilters });
 
@@ -193,6 +194,14 @@ export class ExerciseFilterModalComponent {
                 );
             }
         }
+    }
+
+    private applyScoreFilter() {
+        if (!this.achievedScore) {
+            return;
+        }
+
+        // TODO implement filter for achieved score
     }
 
     private applyPointsFilter() {

@@ -15,7 +15,7 @@ import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/part
 export type ExerciseCategoryFilterOption = { category: ExerciseCategory; searched: boolean };
 export type ExerciseTypeFilterOptions = { name: string; value: ExerciseType; checked: boolean; icon: IconDefinition }[];
 export type DifficultyFilterOptions = { name: string; value: DifficultyLevel; checked: boolean }[];
-export type RangeFilter = { generalMin: number; generalMax: number; selectedMin: number; selectedMax: number };
+export type RangeFilter = { generalMin: number; generalMax: number; selectedMin: number; selectedMax: number; step: number };
 
 export type ExerciseFilterOptions = {
     categoryFilters?: ExerciseCategoryFilterOption[];
@@ -27,6 +27,11 @@ export type ExerciseFilterOptions = {
 };
 
 export type ExerciseFilterResults = { filteredSidebarData?: SidebarData; appliedExerciseFilters?: ExerciseFilterOptions };
+
+const POINTS_STEP = 1;
+const SCORE_THRESHOLD_TO_INCREASE_STEP = 20;
+const SMALL_SCORE_STEP = 1;
+const SCORE_STEP = 5;
 
 // TODO allow to filter for no difficulty?
 const DEFAULT_DIFFICULTIES_FILTER: DifficultyFilterOptions = [
@@ -221,7 +226,14 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         return DEFAULT_DIFFICULTIES_FILTER?.filter((difficulty) => existingDifficulties?.includes(difficulty.value));
     }
 
-    private getAchievablePointsAndAchievedScoreFilterOptions() {
+    private getAchievablePointsAndAchievedScoreFilterOptions():
+        | {
+              achievablePoints: RangeFilter;
+              achievedScore: RangeFilter;
+          }
+        | undefined {
+        // TODO re caluclate the scores, they might have changed since the last filter application
+
         if ((this.exerciseFilters?.achievablePoints && this.exerciseFilters.achievedScore) || !this.sidebarData?.ungroupedData) {
             return;
         }
@@ -258,9 +270,33 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
             }
         });
 
+        minAchievedScore = this.roundToMultiple(minAchievedScore, SMALL_SCORE_STEP);
+        maxAchievedScore = this.roundToMultiple(maxAchievedScore, SMALL_SCORE_STEP);
+
+        if (maxAchievedScore > SCORE_THRESHOLD_TO_INCREASE_STEP) {
+            minAchievedScore = this.roundToMultiple(minAchievedScore, SCORE_STEP);
+            maxAchievedScore = this.roundToMultiple(maxAchievedScore, SCORE_STEP);
+        }
+
         return {
-            achievablePoints: { generalMin: minAchievablePoints, generalMax: maxAchievablePoints, selectedMin: minAchievablePoints, selectedMax: maxAchievablePoints },
-            achievedScore: { generalMin: minAchievedScore, generalMax: maxAchievedScore, selectedMin: minAchievedScore, selectedMax: maxAchievedScore },
+            achievablePoints: {
+                generalMin: minAchievablePoints,
+                generalMax: maxAchievablePoints,
+                selectedMin: minAchievablePoints,
+                selectedMax: maxAchievablePoints,
+                step: POINTS_STEP,
+            },
+            achievedScore: {
+                generalMin: minAchievedScore,
+                generalMax: maxAchievedScore,
+                selectedMin: minAchievedScore,
+                selectedMax: maxAchievedScore,
+                step: maxAchievedScore <= SCORE_THRESHOLD_TO_INCREASE_STEP ? SMALL_SCORE_STEP : SCORE_STEP,
+            },
         };
+    }
+
+    private roundToMultiple(value: number, multiple: number) {
+        return Math.round(value / multiple) * multiple;
     }
 }

@@ -10,7 +10,7 @@
             [max]="generalMaxValue"
             [(ngModel)]="selectedMinValue"
             class="range-min"
-            [step]="stepWidth"
+            [step]="step"
             (change)="onSelectedMinValueChanged($event)"
         />
         <input
@@ -19,7 +19,7 @@
             [max]="generalMaxValue"
             [(ngModel)]="selectedMaxValue"
             class="range-max"
-            [step]="stepWidth"
+            [step]="step"
             (change)="onSelectedMaxValueChanged($event)"
         />
     </div>
