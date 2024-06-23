@@ -3,9 +3,15 @@
 }
 @if (exam) {
     @if (isVisible() && !isGracePeriodOver() && !this.studentExam?.submitted && !examStartConfirmed) {
-        <div [ngClass]="{ 'content-height-dev': (!isProduction || isTestServer) && !testRunId, 'px-3 py-3 scrollable-content': !testRunId }">
-            <jhi-exam-participation-cover [startView]="true" [exam]="exam" [studentExam]="studentExam" [testRunStartTime]="testStartTime" (onExamStarted)="examStarted($event)" />
-        </div>
+        <jhi-exam-participation-cover
+            [startView]="true"
+            [exam]="exam"
+            [studentExam]="studentExam"
+            [testRunStartTime]="testStartTime"
+            (onExamStarted)="examStarted($event)"
+            [isProduction]="isProduction"
+            [isTestServer]="isTestServer"
+        />
     }
     @if (studentExam) {
         <!-- exam participation -->
@@ -109,7 +115,7 @@
             </div>
         }
         @if (!studentExam.submitted && ((isOver() && examStartConfirmed) || isGracePeriodOver())) {
-            <div class="px-3 py-3">
+            <div class="p-3">
                 <jhi-exam-participation-cover
                     [startView]="false"
                     [exam]="exam"
@@ -141,7 +147,7 @@
             </div>
         }
         @if (showExamSummary) {
-            <div [ngClass]="{ 'content-height-dev': (!isProduction || isTestServer) && !testRunId, 'px-3 py-3 scrollable-content': !testRunId }">
+            <div [ngClass]="{ 'content-height-dev': (!isProduction || isTestServer) && !testRunId, 'p-3 scrollable-content': !testRunId }">
                 <jhi-exam-participation-summary [studentExam]="studentExam" />
             </div>
         }

@@ -115,12 +115,13 @@
                 "resultTable": "Ergebnistabelle"
             },
             "title": "Klausur",
-            "startExam": "Starten",
+            "startExam": "Klausur Starten",
             "endExam": "Beenden",
             "date": "Datum",
             "time": "Zeit",
             "workingTime": "Bearbeitungszeit",
             "examinedStudent": "Prüfungsteilnehmer:in",
+            "moduleNumber": "Modulnummer",
             "resultInformation": "Dein Ergebnis wird nach Abschluss der Korrektur an dieser Stelle für dich veröffentlicht. Du kommst zu dieser Seite, indem du in der Klausurenübersicht des Kurses auf diese Klausur klickst.",
             "course": "Kurs",
             "exercises": "Aufgaben",
@@ -141,12 +142,26 @@
             "updated": "Klausur bearbeitet",
             "imported": "Klausur importiert",
             "deleted": "Klausur \"{{ param }}\" gelöscht",
+            "startCheckBoxText": "Ich bestätige, dass ich die obigen Regeln gelesen habe und dass ich mich während der Prüfung an diese Regeln halten werde.",
             "startConsentText": "Hiermit bestätige ich mit meinem vollen Namen stellvertretend für meine Unterschrift, dass ich die Teilnahmebedingungen gelesen habe und diese für die Dauer der Klausur einhalten werde.",
             "endConsentText": "Hiermit bestätige ich mit meinem vollen Namen stellvertretend für meine Unterschrift, dass ich die Klausur eigenständig und nur mithilfe der angegebenen Hilfsmittel bearbeitet habe.",
             "notConfirmed": "Bitte setze einen Haken in das Kästchen, um fortzufahren.",
             "falseName": "Der angegebene Name ist nicht korrekt. Bitte versuche es erneut!",
             "notSet": "Nicht gesetzt",
             "startExamToolTip": "Button wird 5 Minuten vor der Klausur aktiviert.",
+            "welcomePageText": {
+                "readCarefully": "Bitte lese die folgenden Informationen sorgfältig!",
+                "workOnYourOwn": "Du musst die Klausur eigenständig bearbeiten. Diese Klausur ist eine Open-Book-Klausur (einschließlich der Nutzung des Internets), aber du <span class='fw-bold text-primary'>darfst in keiner Weise</span> Unterstützung von anderen Personen erhalten (persönlich, per Chat, Forum, Diskussionsgruppe, künstliche Intelligenz, etc.). Andernfalls gilt dies als <span class='fw-bold text-primary'>Täuschung</span> (\"Unterschleif\") und führt zu den in der APSO (\"Allgemeine Prüfungs- und Studienordnung\") genannten Konsequenzen. Insbesondere wird das entsprechende Modul in TUMonline als <span class='fw-bold text-primary'>nicht bestanden (w. Täuschung)</span> markiert, und dur darfst nur noch einen letzten Versuch unternehmen, das Modul zu bestehen (vgl. APSO §24).",
+                "checkForPlagiarism": "Alle deine Einreichungen werden auf Plagiate überprüft. Wenn du beispielsweise Code aus einem Buch oder einer Website kopierst, musst du die Quelle durch eine Anmerkung an den entsprechenden Stellen zitieren, z.B. <span class='fw-bold text-primary'>adaptiert von https://sourcemaking.com/design_patterns/bridge</span>. Andernfalls gilt dies als Plagiat. Das Kopieren von Code von anderen Studierenden ist nicht erlaubt und wird als Plagiat gewertet.",
+                "programmingSubmission": "Beachte, dass die Ergebnisse in den Programmierübungen nur anzeigen, ob deine Einreichung kompiliert oder nicht. Es werden keine tatsächlichen Tests gegen deiner Einreichung ausgeführt. Alle tatsächlichen Tests werden erst nach Abschluss der Klausur durchgeführt. Du kannst nur Punkte für Programmierübungen erhalten, wenn deine Einreichung kompiliert. <span class='fw-bold text-primary'>Kompilierungsfehler führen zu 0 Punkten</span>.",
+                "submissionPeriod": "Um potenzielle technische Probleme zu kompensieren, wird der Abgabezeitraum <span>{{ gracePeriodInMinutes }} Minuten</span> nach dem offiziellen Ende der Klausur geschlossen. Wir empfehlen dir, deine Einreichungen regelmäßig und frühzeitig hochzuladen. <span class='fw-bold text-primary'>Nur deine letzte Einreichung wird bewertet und verspätete Einreichungen werden nicht akzeptiert</span>."
+            },
+            "workingInstruction": {
+                "workingInstructions": "Arbeitsanweisungen:",
+                "important": "<span class='fw-bold text-primary'>Wichtig</span>: Bevor du mit der Lösung einer Aufgabe beginnst, lese die Aufgabenstellung sorgfältig durch.",
+                "totalPoints": "Die Klausur besteht aus <span class='fw-bold text-primary'>{{ totalPoints }} Punkten</span> und dauert <span class='fw-bold text-primary'>{{ totalWorkingTime }} Minuten</span>. Nutze die Punkteanzahl, um die angemessene Bearbeitungszeit für eine Aufgabe zu bestimmen.",
+                "notAllowed": "Es ist <span class='fw-bold text-primary'>nicht</span> erlaubt, künstliche Intelligenz zur Lösung der Klausuraufgaben zu verwenden. Insbesondere ist die Nutzung von OpenAI, ChatGPT, GitHub Copilot oder ähnlichen Systemen <span class='fw-bold text-primary'>verboten</span>!"
+            },
             "cleanup": {
                 "title": "Aufräumen",
                 "question": "Möchtest du die Prüfung <strong>{{title}}</strong> wirklich bereinigen? Dadurch werden alle Studierenden-Repositories in der Prüfung gelöscht. Diese Aktion kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!"
