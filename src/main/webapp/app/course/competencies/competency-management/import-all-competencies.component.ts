@@ -34,10 +34,10 @@ export type ImportAllFromCourseResult = {
 };
 
 @Component({
-    selector: 'jhi-competency-import-course',
-    templateUrl: './competency-import-course.component.html',
+    selector: 'jhi-import-all-competencies',
+    templateUrl: './import-all-competencies.component.html',
 })
-export class CompetencyImportCourseComponent extends ImportComponent<CourseForImportDTO> {
+export class ImportAllCompetenciesComponent extends ImportComponent<CourseForImportDTO> {
     //import relations by default
     protected importRelations = true;
 

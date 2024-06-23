@@ -12,10 +12,10 @@ import { ContributorModel } from 'app/core/about-us/models/contributor-model';
     styleUrls: ['./about-us.component.scss'],
 })
 export class AboutUsComponent implements OnInit {
-    private readonly issueBaseUrl = 'https://github.com/ls1intum/Artemis/issues/new?projects=ls1intum/1';
-    readonly bugReportUrl = `${this.issueBaseUrl}&labels=bug&template=bug-report.yml`;
-    readonly featureRequestUrl = `${this.issueBaseUrl}&labels=feature&template=feature-request.yml`;
-    readonly releaseNotesUrl = `https://github.com/ls1intum/Artemis/releases/tag/${VERSION}`;
+    private readonly ISSUE_BASE_URL = 'https://github.com/ls1intum/Artemis/issues/new?projects=ls1intum/1';
+    readonly BUG_REPORT_URL = `${this.ISSUE_BASE_URL}&labels=bug&template=bug-report.yml`;
+    readonly FEATURE_REQUEST_URL = `${this.ISSUE_BASE_URL}&labels=feature&template=feature-request.yml`;
+    readonly RELEASE_NOTES_URL = `https://github.com/ls1intum/Artemis/releases/tag/${VERSION}`;
 
     email: string;
     data: AboutUsModel;
@@ -23,7 +23,7 @@ export class AboutUsComponent implements OnInit {
     gitBranchName: string;
 
     // Array of tuple containing translation keys and translation values
-    readonly sections: [string, { [key: string]: string }][] = [
+    readonly SECTIONS: [string, { [key: string]: string }][] = [
         ['exercises.programming', { programmingUrl: 'https://docs.artemis.cit.tum.de/user/exercises/programming/' }],
         ['exercises.quiz', { quizUrl: 'https://docs.artemis.cit.tum.de/user/exercises/quiz/' }],
         ['exercises.modeling', { modelingUrl: 'https://docs.artemis.cit.tum.de/user/exercises/modeling/', apollonUrl: 'https://apollon.ase.in.tum.de/' }],

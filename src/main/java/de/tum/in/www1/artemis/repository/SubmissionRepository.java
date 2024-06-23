@@ -11,7 +11,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -32,6 +31,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -40,7 +40,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface SubmissionRepository extends JpaRepository<Submission, Long> {
+public interface SubmissionRepository extends ArtemisJpaRepository<Submission, Long> {
 
     /**
      * Load submission with eager Results
@@ -552,10 +552,6 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return Set of Submissions
      */
     Set<Submission> findByParticipation_ExerciseIdAndSubmittedIsTrue(long exerciseId);
-
-    default Submission findByIdElseThrow(long submissionId) {
-        return findById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission", submissionId));
-    }
 
     /**
      * GChecks if unassessed Quiz Submissions exist for the given exam

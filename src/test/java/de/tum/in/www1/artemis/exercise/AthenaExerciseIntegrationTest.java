@@ -76,6 +76,7 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
     private ProgrammingExercise programmingExercise;
 
     @BeforeEach
+    @Override
     protected void initTestCase() {
         super.initTestCase();
 

@@ -38,6 +38,7 @@ public class ArtemisGitServletService extends GitServlet {
      * Initialize the ArtemisGitServlet by setting the repository resolver and adding filters for fetch and push requests.
      */
     @PostConstruct
+    @Override
     public void init() {
         this.setRepositoryResolver((request, name) -> {
             // request – the current request, may be used to inspect session state including cookies or user authentication.
