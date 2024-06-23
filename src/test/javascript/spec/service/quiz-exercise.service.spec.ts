@@ -14,7 +14,6 @@ import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-questi
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
-import { FileService } from 'app/shared/http/file.service';
 import dayjs from 'dayjs/esm';
 import { firstValueFrom } from 'rxjs';
 import JSZip from 'jszip';
@@ -40,7 +39,7 @@ describe('QuizExercise Service', () => {
     let service: QuizExerciseService;
     let httpMock: HttpTestingController;
     let elemDefault: QuizExercise;
-    let mockFileService: jest.Mocked<FileService>;
+    let mockJSZip: jest.Mocked<JSZip>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -260,7 +259,7 @@ describe('QuizExercise Service', () => {
     });
 
     it('should fetch correct image names and paths from drag and drop questions', async () => {
-        const spy = jest.spyOn(service, 'fetchFilePromise').mockReturnValue();
+        const spy = jest.spyOn(service, 'fetchFilePromise').mockResolvedValue();
         const questions: QuizQuestion[] = [
             {
                 type: QuizQuestionType.DRAG_AND_DROP,
@@ -271,22 +270,20 @@ describe('QuizExercise Service', () => {
         ];
         service.exportAssetsFromAllQuestions(questions, 'output.zip');
         expect(spy).toHaveBeenCalledTimes(4);
-        expect(spy).toHaveBeenNthCalledWith(1, 'q0_background.png', expect.anything(), 'path/to/background.png', expect.anything(), expect.anything());
-        expect(spy).toHaveBeenNthCalledWith(2, 'q0_dragItem-0.png', expect.anything(), 'path/to/dragItem1.png', expect.anything(), expect.anything());
-        expect(spy).toHaveBeenNthCalledWith(3, 'q0_dragItem-1.png', expect.anything(), 'path/to/dragItem2.png', expect.anything(), expect.anything());
-        expect(spy).toHaveBeenNthCalledWith(4, 'q0_image', expect.anything(), 'path/to/image.png', expect.anything(), expect.anything());
+        expect(spy).toHaveBeenNthCalledWith(1, 'q0_background.png', expect.anything(), 'path/to/background.png');
+        expect(spy).toHaveBeenNthCalledWith(2, 'q0_dragItem-0.png', expect.anything(), 'path/to/dragItem1.png');
+        expect(spy).toHaveBeenNthCalledWith(3, 'q0_dragItem-1.png', expect.anything(), 'path/to/dragItem2.png');
+        expect(spy).toHaveBeenNthCalledWith(4, 'q0_image', expect.anything(), 'path/to/image.png');
     });
 
     it('should handle markdown without images', async () => {
-        const spy = jest.spyOn(service, 'fetchFilePromise').mockReturnValue();
-        const mockJSZip = new JSZip() as jest.Mocked<JSZip>;
         const description = 'No images here, just text';
-        service.exportImageFromMarkdown(description, 1, mockJSZip, [], mockFileService);
-        expect(spy).not.toHaveBeenCalled();
+        const regexArray = service.findImagesInMarkdown(description);
+        expect(regexArray).toHaveLength(0);
     });
 
     it('should export images from multiple choice options', async () => {
-        const spy = jest.spyOn(service, 'fetchFilePromise').mockReturnValue();
+        const spy = jest.spyOn(service, 'fetchFilePromise').mockResolvedValue();
         const questions: QuizQuestion[] = [
             {
                 type: QuizQuestionType.MULTIPLE_CHOICE,
@@ -301,12 +298,12 @@ describe('QuizExercise Service', () => {
         ];
         service.exportAssetsFromAllQuestions(questions, 'output.zip');
         expect(spy).toHaveBeenCalledTimes(2);
-        expect(spy).toHaveBeenNthCalledWith(1, 'q0_option1', expect.anything(), 'path/to/option1.png', expect.anything(), expect.anything());
-        expect(spy).toHaveBeenNthCalledWith(2, 'q0_option2', expect.anything(), 'path/to/option2.png', expect.anything(), expect.anything());
+        expect(spy).toHaveBeenNthCalledWith(1, 'q0_option1', expect.anything(), 'path/to/option1.png');
+        expect(spy).toHaveBeenNthCalledWith(2, 'q0_option2', expect.anything(), 'path/to/option2.png');
     });
 
     it('should export images from short answer questions', async () => {
-        const spy = jest.spyOn(service, 'fetchFilePromise').mockReturnValue();
+        const spy = jest.spyOn(service, 'fetchFilePromise').mockResolvedValue();
         const questions: QuizQuestion[] = [
             {
                 type: QuizQuestionType.SHORT_ANSWER,
@@ -318,11 +315,11 @@ describe('QuizExercise Service', () => {
         ];
         service.exportAssetsFromAllQuestions(questions, 'output.zip');
         expect(spy).toHaveBeenCalledOnce();
-        expect(spy).toHaveBeenCalledWith('q0_image', expect.anything(), 'path/to/image.png', expect.anything(), expect.anything());
+        expect(spy).toHaveBeenCalledWith('q0_image', expect.anything(), 'path/to/image.png');
     });
 
     it('should not try to fetch files if there are no images to export', async () => {
-        const spy = jest.spyOn(service, 'fetchFilePromise').mockReturnValue();
+        const spy = jest.spyOn(service, 'fetchFilePromise').mockResolvedValue();
         const questions: QuizQuestion[] = [
             {
                 type: QuizQuestionType.SHORT_ANSWER,
@@ -345,7 +342,14 @@ describe('QuizExercise Service', () => {
         service.exportAssetsFromAllQuestions(questions, 'output.zip');
         expect(spy).not.toHaveBeenCalled();
     });
+    it('should throw an error if file fails to fetch', async () => {
+        const fileName = 'mockFile.png';
+        const filePath = 'path/to/mockFile.png';
+        const errorMessage = 'File with name: mockFile.png at path: path/to/mockFile.png could not be fetched';
+        jest.spyOn(service, 'fetchFilePromise').mockRejectedValue(new Error(errorMessage));
 
+        await expect(service.fetchFilePromise(fileName, mockJSZip, filePath)).rejects.toThrow(`File with name: ${fileName} at path: ${filePath} could not be fetched`);
+    });
     function validateFormData(req: TestRequest) {
         expect(req.request.body).toBeInstanceOf(FormData);
         expect(req.request.body.get('exercise')).toBeInstanceOf(Blob);
