@@ -27,13 +27,9 @@
                         </span>
                     </th>
                     <th [colSpan]="2">
-                        <span>
-                            {{
-                                this.gradingScale.gradeType === GradeType.GRADE
-                                    ? ('artemisApp.gradingSystem.gradeName' | artemisTranslate)
-                                    : ('artemisApp.gradingSystem.bonusPoints' | artemisTranslate)
-                            }}
-                        </span>
+                        <span
+                            [jhiTranslate]="this.gradingScale.gradeType === GradeType.GRADE ? 'artemisApp.gradingSystem.gradeName' : 'artemisApp.gradingSystem.bonusPoints'"
+                        ></span>
                     </th>
                 </tr>
             </thead>

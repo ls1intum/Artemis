@@ -44,13 +44,15 @@
 
                 <!-- Date -->
                 <div>
-                    <label class="form-label" for="startDate">
-                        {{
+                    <label
+                        class="form-label"
+                        for="startDate"
+                        [jhiTranslate]="
                             timeFrame !== TimeFrame.Period
-                                ? ('artemisApp.forms.tutorialFreePeriodForm.dateInput.label' | artemisTranslate)
-                                : ('artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStart' | artemisTranslate)
-                        }}
-                    </label>
+                                ? 'artemisApp.forms.tutorialFreePeriodForm.dateInput.label'
+                                : 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStart'
+                        "
+                    ></label>
                     <div class="input-group">
                         <input
                             name="startDate"

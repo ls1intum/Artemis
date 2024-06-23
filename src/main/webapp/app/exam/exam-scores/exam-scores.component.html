@@ -576,11 +576,9 @@
                                     </th>
                                 }
                                 <th jhiSortBy="gradeWithBonus.bonusGrade">
-                                    <span>{{
-                                        hasBonus === BonusStrategy.POINTS
-                                            ? ('artemisApp.examScores.bonusPointsColumn' | artemisTranslate)
-                                            : ('artemisApp.examScores.bonusGradeColumn' | artemisTranslate)
-                                    }}</span>
+                                    <span
+                                        [jhiTranslate]="hasBonus === BonusStrategy.POINTS ? 'artemisApp.examScores.bonusPointsColumn' : 'artemisApp.examScores.bonusGradeColumn'"
+                                    ></span>
                                     <fa-icon [icon]="faSort" />
                                 </th>
                                 <th jhiSortBy="gradeWithBonus.finalGrade">
