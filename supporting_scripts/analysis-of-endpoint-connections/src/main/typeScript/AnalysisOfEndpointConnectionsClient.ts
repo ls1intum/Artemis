@@ -38,11 +38,11 @@ for (const fileName of fileNames.filter(fileName => fileName.endsWith('.ts')))  
  * It checks if the node is a class declaration or a call expression and processes it accordingly.
  * It also recursively visits all child nodes of the current node.
  *
- * @param {Node} node - The current node in the AST.
- * @param {{ [key: string]: string }} classProperties - An object that maps class property names to their values.
- * @param {{ [key: string]: string }} parameterTypes - An object that maps parameter names to their types.
- * @param {SourceFile} sourceFile - The TypeScript source file being analyzed.
- * @param {string} fileName - The name of the TypeScript file.
+ * @param node - The current node in the AST.
+ * @param classProperties - An object that maps class property names to their values.
+ * @param parameterTypes - An object that maps parameter names to their types.
+ * @param sourceFile - The TypeScript source file being analyzed.
+ * @param fileName - The name of the TypeScript file.
  */
 function visit(node: Node, classProperties: { [key: string]: string }, parameterTypes: { [key: string]: string }, sourceFile: SourceFile, fileName: string) {
     if (isClassDeclaration(node)) {
@@ -63,9 +63,9 @@ function visit(node: Node, classProperties: { [key: string]: string }, parameter
  * it processes the constructor declaration. If a member is a property declaration with a string literal initializer,
  * it adds the property to the classProperties object.
  *
- * @param {ClassDeclaration} classDeclaration - The class declaration node to process.
- * @param {{ [key: string]: string }} classProperties - An object that maps class property names to their values.
- * @param {{ [key: string]: string }} parameterTypes - An object that maps parameter names to their types.
+ * @param classDeclaration - The class declaration node to process.
+ * @param classProperties - An object that maps class property names to their values.
+ * @param parameterTypes - An object that maps parameter names to their types.
  */
 function processClassDeclaration(classDeclaration: ClassDeclaration, classProperties: { [key: string]: string }, parameterTypes: { [key: string]: string }) {
     for (const member of classDeclaration.members) {
@@ -86,8 +86,8 @@ function processClassDeclaration(classDeclaration: ClassDeclaration, classProper
  * It iterates over the parameters of the constructor declaration. If a parameter is a type reference,
  * it adds the parameter to the parameterTypes object.
  *
- * @param {ConstructorDeclaration} constructorDeclaration - The constructor declaration node to process.
- * @param {{ [key: string]: string }} parameterTypes - An object that maps parameter names to their types.
+ * @param constructorDeclaration - The constructor declaration node to process.
+ * @param parameterTypes - An object that maps parameter names to their types.
  */
 function processConstructorDeclaration(constructorDeclaration: ConstructorDeclaration, parameterTypes: { [key: string]: string }) {
     for (const param of constructorDeclaration.parameters) {
@@ -105,11 +105,11 @@ function processConstructorDeclaration(constructorDeclaration: ConstructorDeclar
  * If the property name is one of the httpClient methods and the object is of type HttpClient,
  * it logs the REST call.
  *
- * @param {CallExpression} callExpression - The call expression node to process.
- * @param {{ [key: string]: string }} classProperties - An object that maps class property names to their values.
- * @param {{ [key: string]: string }} parameterTypes - An object that maps parameter names to their types.
- * @param {SourceFile} sourceFile - The TypeScript source file being analyzed.
- * @param {string} fileName - The name of the TypeScript file.
+ * @param callExpression - The call expression node to process.
+ * @param classProperties - An object that maps class property names to their values.
+ * @param parameterTypes - An object that maps parameter names to their types.
+ * @param sourceFile - The TypeScript source file being analyzed.
+ * @param fileName - The name of the TypeScript file.
  */
 function processCallExpression(callExpression: CallExpression, classProperties: { [key: string]: string }, parameterTypes: { [key: string]: string }, sourceFile: SourceFile, fileName: string) {
     const expression = callExpression.expression;
@@ -130,11 +130,11 @@ function processCallExpression(callExpression: CallExpression, classProperties: 
  * If it's the first REST call found in the file, it also logs the file name.
  * It replaces class properties in the URL with their actual values.
  *
- * @param {CallExpression} restCall - The call expression node representing the REST call.
- * @param {string} methodName - The name of the REST method (e.g. 'get', 'post', etc.).
- * @param {{ [key: string]: string }} classProperties - An object that maps class property names to their values.
- * @param {SourceFile} sourceFile - The TypeScript source file being analyzed.
- * @param {string} fileName - The name of the TypeScript file.
+ * @param restCall - The call expression node representing the REST call.
+ * @param methodName - The name of the REST method (e.g. 'get', 'post', etc.).
+ * @param classProperties - An object that maps class property names to their values.
+ * @param sourceFile - The TypeScript source file being analyzed.
+ * @param fileName - The name of the TypeScript file.
  */
 function logRestCall(restCall: CallExpression, methodName: string, classProperties: { [key: string]: string }, sourceFile: SourceFile, fileName: string) {
     if (isFirstRestCall) {
