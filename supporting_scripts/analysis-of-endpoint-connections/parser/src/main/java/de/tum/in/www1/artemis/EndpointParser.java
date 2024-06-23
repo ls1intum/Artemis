@@ -117,13 +117,16 @@ public class EndpointParser {
             }
         }
 
-        System.out.println("Files failed to Parse:");
-        for (String file : filesFailedToParse) {
-            System.out.println(file);
+        if (!filesFailedToParse.isEmpty()) {
+            System.out.println("Files failed to Parse:");
+            for (String file : filesFailedToParse) {
+                System.out.println(file);
+            }
         }
 
         ObjectMapper mapper = new ObjectMapper();
         try {
+            System.out.println(new File(".").getAbsolutePath());
             mapper.writeValue(new File("supporting_scripts/analysis-of-endpoint-connections/endpoints.json"), endpointClasses);
         }
         catch (IOException e) {
