@@ -243,10 +243,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         }
     }
 
-    triggerAction(id: string, args?: unknown): void {
-        this.monacoEditor.triggerAction(id, args);
-    }
-
     onFileUpload(event: any): void {
         if (event.target.files.length >= 1) {
             this.embedFiles(Array.from(event.target.files));
@@ -266,15 +262,19 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                 (response) => {
                     const extension = file.name.split('.').last()?.toLocaleLowerCase();
 
-                    let actionData: { id: string; payload: unknown };
+                    const attachmentAction: MonacoAttachmentAction | undefined = this.defaultActions.find((action) => action instanceof MonacoAttachmentAction);
+                    const urlAction: MonacoUrlAction | undefined = this.defaultActions.find((action) => action instanceof MonacoUrlAction);
+                    if (!attachmentAction || !urlAction || !response.path) {
+                        throw new Error('Cannot process file upload.');
+                    }
+                    const payload = { text: file.name, url: response.path };
                     if (extension !== 'pdf') {
-                        // Mode: embedded image
-                        actionData = { id: MonacoAttachmentAction.ID, payload: { text: file.name, url: response.path } };
+                        // Embedded image
+                        attachmentAction?.executeInCurrentEditor(payload);
                     } else {
                         // For PDFs, just link to the file
-                        actionData = { id: MonacoUrlAction.ID, payload: { text: file.name, url: response.path } };
+                        urlAction?.executeInCurrentEditor(payload);
                     }
-                    this.triggerAction(actionData.id, actionData.payload);
                 },
                 (error) => {
                     this.alertService.addAlert({
@@ -298,7 +298,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         const index = this.markdownColors.indexOf(color);
         const colorName = this.markdownColorNames[index];
         if (colorName) {
-            this.triggerAction(MonacoColorAction.ID, colorName);
+            this.colorAction?.executeInCurrentEditor({ color: colorName });
         }
     }
 }
