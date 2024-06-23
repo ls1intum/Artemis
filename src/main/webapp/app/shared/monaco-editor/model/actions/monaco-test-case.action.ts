@@ -2,6 +2,10 @@ import { TranslateService } from '@ngx-translate/core';
 import * as monaco from 'monaco-editor';
 import { MonacoEditorDomainActionWithOptions } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action-with-options.model';
 
+interface TestCaseArguments {
+    testCaseName: string;
+}
+
 export class MonacoTestCaseAction extends MonacoEditorDomainActionWithOptions {
     disposableCompletionProvider?: monaco.IDisposable;
 
@@ -60,8 +64,12 @@ export class MonacoTestCaseAction extends MonacoEditorDomainActionWithOptions {
         this.disposableCompletionProvider?.dispose();
     }
 
-    run(editor: monaco.editor.ICodeEditor, args?: string) {
-        this.replaceTextAtCurrentSelection(editor, typeof args === 'string' ? args : MonacoTestCaseAction.DEFAULT_INSERT_TEXT);
+    executeInCurrentEditor(args?: TestCaseArguments): void {
+        super.executeInCurrentEditor(args);
+    }
+
+    run(editor: monaco.editor.ICodeEditor, args?: TestCaseArguments) {
+        this.replaceTextAtCurrentSelection(editor, args?.testCaseName ?? MonacoTestCaseAction.DEFAULT_INSERT_TEXT);
         editor.focus();
     }
 }
