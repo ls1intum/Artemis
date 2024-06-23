@@ -50,9 +50,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             lineNumbersMinChars: 4,
             scrollBeyondLastLine: false,
             scrollbar: {
-                alwaysConsumeMouseWheel: false, // Allows scrolling past the editor once the editor is at the end.
+                alwaysConsumeMouseWheel: false, // Prevents the editor from consuming the mouse wheel event, allowing the parent element to scroll.
             },
-            wordWrap: 'on', // TODO make this a setting
         });
         this._editor.getModel()?.setEOL(monaco.editor.EndOfLineSequence.LF);
         renderer.appendChild(elementRef.nativeElement, this.monacoEditorContainerElement);
@@ -135,6 +134,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     setPosition(position: EditorPosition) {
         this._editor.setPosition({ lineNumber: position.row, column: position.column });
+    }
+
+    setSelection(range: monaco.IRange): void {
+        this._editor.setSelection(range);
     }
 
     getText(): string {
@@ -322,12 +325,18 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         return this.lineHighlights;
     }
 
+    /**
+     * Registers an action to be available in the editor. The action will be disposed when the editor is disposed.
+     * @param action The action to register.
+     */
     registerAction(action: MonacoEditorAction): void {
         action.register(this._editor, this.translateService);
         this.actions.push(action);
     }
 
-    setSelection(range: monaco.IRange): void {
-        this._editor.setSelection(range);
+    setWordWrap(value: boolean): void {
+        this._editor.updateOptions({
+            wordWrap: value ? 'on' : 'off',
+        });
     }
 }

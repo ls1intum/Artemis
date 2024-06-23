@@ -162,6 +162,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     ngAfterViewInit(): void {
         this.adjustEditorDimensions();
+        this.monacoEditor.setWordWrap(true);
         this.monacoEditor.changeModel('markdown-content.custom-md', this._markdown, 'custom-md');
         this.resizeObserver = new ResizeObserver(() => {
             this.adjustEditorDimensions();
