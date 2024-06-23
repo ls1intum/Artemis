@@ -72,13 +72,13 @@ describe('ExamStartInformationComponent', () => {
     });
 
     it('should return undefined if the exam is not set', () => {
-        exam.endDate = undefined;
+        exam.startDate = undefined;
         component.exam = exam;
         component.studentExam = studentExam;
         fixture.detectChanges();
         component.ngOnInit();
         expect(fixture).toBeDefined();
-        expect(component.endDate).toBeUndefined();
+        expect(component.startDate).toBeUndefined();
     });
 
     it('should initialize total points of the exam correctly', () => {

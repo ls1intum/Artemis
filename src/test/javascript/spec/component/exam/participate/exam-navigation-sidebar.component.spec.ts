@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import dayjs from 'dayjs/esm';
 import { MockComponent, MockModule } from 'ng-mocks';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExamSession } from 'app/entities/exam-session.model';
@@ -50,7 +49,6 @@ describe('Exam Navigation Sidebar Component', () => {
         repositoryService = fixture.debugElement.injector.get(CodeEditorRepositoryService);
         TestBed.inject(ExamParticipationService);
 
-        comp.endDate = dayjs();
         comp.exercises = [
             {
                 id: 0,
