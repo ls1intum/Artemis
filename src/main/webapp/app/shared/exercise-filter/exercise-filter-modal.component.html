@@ -30,8 +30,11 @@
                 <ul>
                     @for (categoryFilterOption of selectedCategoryOptions; track categoryFilterOption) {
                         <li>
-                            <jhi-custom-exercise-category-badge [category]="categoryFilterOption.category" [displayRemoveButton]="true" />
-                            <button (click)="removeItem(categoryFilterOption)">Remove</button>
+                            <jhi-custom-exercise-category-badge
+                                [category]="categoryFilterOption.category"
+                                [displayRemoveButton]="true"
+                                [onClick]="getRemoveItemFunction(categoryFilterOption)"
+                            />
                         </li>
                     }
                 </ul>

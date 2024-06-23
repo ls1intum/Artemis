@@ -108,6 +108,10 @@ export class ExerciseFilterModalComponent {
         item.searched = false;
     }
 
+    getRemoveItemFunction(item: ExerciseCategoryFilterOption): () => void {
+        return () => this.removeItem(item);
+    }
+
     applyFilter(): void {
         this.applyTypeFilter();
         this.applyDifficultyFilter();

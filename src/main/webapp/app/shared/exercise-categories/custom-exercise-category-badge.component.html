@@ -2,7 +2,7 @@
     <div class="badge" [ngStyle]="{ backgroundColor: category.color }">
         {{ category.category }}
         @if (displayRemoveButton) {
-            <button class="remove-button">
+            <button class="remove-button" (click)="onClick()">
                 <fa-icon [icon]="faTimes" class="category-chip-remove" />
             </button>
         }
