@@ -11,14 +11,25 @@ export class MonacoUnorderedListAction extends MonacoEditorAction {
 
     run(editor: monaco.editor.ICodeEditor): void {
         const selection = editor.getSelection();
-        if (selection) {
-            for (let lineNumber = selection.startLineNumber; lineNumber <= selection.endLineNumber; lineNumber++) {
-                const lineContent = this.getLineText(editor, lineNumber);
-                if (lineContent?.startsWith(LIST_BULLET)) {
-                    this.deleteTextAtRange(editor, new monaco.Range(lineNumber, 1, lineNumber, 1 + LIST_BULLET.length));
-                } else {
-                    this.insertTextAtPosition(editor, new monaco.Position(lineNumber, 1), LIST_BULLET);
-                }
+        if (!selection) return;
+
+        let isUnorderedList = true;
+        for (let lineNumber = selection.startLineNumber; lineNumber <= selection.endLineNumber; lineNumber++) {
+            const lineContent = this.getLineText(editor, lineNumber);
+            if (lineContent && !lineContent.startsWith(LIST_BULLET)) {
+                isUnorderedList = false;
+                break;
+            }
+        }
+
+        for (let lineNumber = selection.startLineNumber; lineNumber <= selection.endLineNumber; lineNumber++) {
+            const lineContent = this.getLineText(editor, lineNumber);
+            if (!lineContent) continue;
+
+            if (isUnorderedList) {
+                this.deleteTextAtRange(editor, new monaco.Range(lineNumber, 1, lineNumber, 1 + LIST_BULLET.length));
+            } else {
+                this.insertTextAtPosition(editor, new monaco.Position(lineNumber, 1), LIST_BULLET);
             }
         }
     }

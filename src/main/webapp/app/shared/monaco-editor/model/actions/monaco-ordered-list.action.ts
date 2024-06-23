@@ -11,16 +11,26 @@ export class MonacoOrderedListAction extends MonacoEditorAction {
 
     run(editor: monaco.editor.ICodeEditor): void {
         const selection = editor.getSelection();
-        if (selection) {
-            for (let lineNumber = selection.startLineNumber; lineNumber <= selection.endLineNumber; lineNumber++) {
-                const bulletNumber = lineNumber - selection.startLineNumber + 1;
-                const lineContent = this.getLineText(editor, lineNumber);
-                if (lineContent && NUMBER_REGEX.test(lineContent)) {
-                    const offset = 3; // Delete the dot and the space after the number as well. Columns in Monaco are 1-based.
-                    this.deleteTextAtRange(editor, new monaco.Range(lineNumber, 1, lineNumber, lineContent.indexOf('. ') + offset));
-                } else {
-                    this.insertTextAtPosition(editor, new monaco.Position(lineNumber, 1), `${bulletNumber}. `);
-                }
+        if (!selection) return;
+
+        let isOrderedList = true;
+        for (let lineNumber = selection.startLineNumber; lineNumber <= selection.endLineNumber; lineNumber++) {
+            const lineContent = this.getLineText(editor, lineNumber);
+            if (lineContent && !NUMBER_REGEX.test(lineContent)) {
+                isOrderedList = false;
+                break;
+            }
+        }
+
+        for (let lineNumber = selection.startLineNumber; lineNumber <= selection.endLineNumber; lineNumber++) {
+            const lineContent = this.getLineText(editor, lineNumber);
+            if (!lineContent) continue;
+
+            if (isOrderedList) {
+                const idx = lineContent.indexOf('. ');
+                if (idx >= 0) this.deleteTextAtRange(editor, new monaco.Range(lineNumber, 1, lineNumber, idx + 3));
+            } else {
+                this.replaceTextAtRange(editor, new monaco.Range(lineNumber, 1, lineNumber, 1), `${lineNumber - selection.startLineNumber + 1}. `);
             }
         }
     }
