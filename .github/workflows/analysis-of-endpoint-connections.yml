@@ -67,7 +67,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: json-files
-          path: supporting_scripts/analysis-of-endpoint-connections/
+          path: supporting_scripts/analysis-of-endpoint-connections/json-files
 
       - name: Analyze Endpoints
         run:
