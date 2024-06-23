@@ -11,6 +11,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class EndpointAnalyzer {
 
     public static void main(String[] args) {
+        System.out.println("working directory: " + System.getProperty("user.dir"));
+
         analyzeEndpoints();
         printEndpointAnalysisResult();
     }
