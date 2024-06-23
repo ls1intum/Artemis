@@ -157,10 +157,10 @@ describe('MonacoEditorActionIntegration', () => {
             { value: 'testCase1', id: '1' },
             { value: 'testCase2', id: '2' },
         ];
-        const registerCompletionProviderSpy = jest.spyOn(monaco.languages, 'registerCompletionItemProvider').mockImplementation();
+        const registerCompletionProviderStub = jest.spyOn(monaco.languages, 'registerCompletionItemProvider').mockImplementation();
         comp.registerAction(action);
-        expect(registerCompletionProviderSpy).toHaveBeenCalledOnce();
-        const completionFunction = registerCompletionProviderSpy.mock.calls[0][1].provideCompletionItems;
+        expect(registerCompletionProviderStub).toHaveBeenCalledOnce();
+        const completionFunction = registerCompletionProviderStub.mock.calls[0][1].provideCompletionItems;
         expect(completionFunction).toBeDefined();
         // We do not use completionContext and cancellationToken, but they are required by the function signature. Therefore, we pass empty objects.
         const completionList = completionFunction(model, new monaco.Position(1, 1), {} as monaco.languages.CompletionContext, {} as monaco.CancellationToken);
