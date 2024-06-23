@@ -48,6 +48,8 @@ const language: languages.IMonarchLanguage = {
             [/^[@]startuml$/, { token: 'task', next: '@uml' }],
             // Programming exercise tasks are malformed in the Markdown syntax. We parse them immediately to prevent problems with the bracket matching.
             [taskRegex, 'task'],
+            // Katex formula
+            [/\$\$.*\$\$/, 'variable.source'],
             // markdown tables
             [/^\s*\|/, '@rematch', '@table_header'],
             // headers (with #)
