@@ -86,19 +86,6 @@ describe('Exam Navigation Sidebar Component', () => {
         expect(ExamParticipationService.getSubmissionForExercise(exerciseToBeSynced)!.isSynced).toBeFalse();
     });
 
-    /*
-    it('trigger when the exam is about to end', () => {
-        jest.spyOn(comp, 'saveExercise');
-        jest.spyOn(comp.examAboutToEnd, 'emit');
-
-        comp.triggerExamAboutToEnd();
-
-        expect(comp.saveExercise).toHaveBeenCalledOnce();
-        expect(comp.examAboutToEnd.emit).toHaveBeenCalledOnce();
-    });
-
-     */
-
     it('should change the exercise', () => {
         jest.spyOn(comp.onPageChanged, 'emit');
         jest.spyOn(comp, 'setExerciseButtonStatus');
@@ -131,59 +118,18 @@ describe('Exam Navigation Sidebar Component', () => {
         expect(comp.setExerciseButtonStatus).not.toHaveBeenCalledWith(exerciseIndex);
     });
 
-    /*
-    it('should tell the type of the selected programming exercise', () => {
-        comp.exerciseIndex = 0;
-
-        expect(comp.isProgrammingExercise()).toBeTrue();
-    });
-
-    it('should tell the type of the selected text exercise', () => {
-        comp.exerciseIndex = 1;
-
-        expect(comp.isProgrammingExercise()).toBeFalse();
-    });
-
-    it('should tell the type of the selected modeling exercise', () => {
-        comp.exerciseIndex = 2;
-
-        expect(comp.isProgrammingExercise()).toBeFalse();
-    });
-    */
-
-    /*
-    it('save the exercise with changeExercise', () => {
-        jest.spyOn(comp, 'changePage');
-        const changeExercise = true;
-
-        comp.saveExercise();
-
-        expect(comp.changePage).toHaveBeenCalledOnce();
-    });
-
-    it('save the exercise without changeExercise', () => {
-        jest.spyOn(comp, 'changePage');
-        const changeExercise = false;
-
-        comp.saveExercise(changeExercise);
-
-        expect(comp.changePage).not.toHaveBeenCalled();
-    });
-
-    it('should hand in the exam early', () => {
-        jest.spyOn(comp.onExamHandInEarly, 'emit');
-
-        comp.handInEarly();
-
-        expect(comp.onExamHandInEarly.emit).toHaveBeenCalledOnce();
-    });
-
-     */
-
     it('should set the exercise button status for undefined submission', () => {
         const result = comp.setExerciseButtonStatus(1);
 
         expect(result).toBe('synced');
+    });
+
+    it('should set the exercise button status for submitted and synced submission active', () => {
+        comp.exercises[0].studentParticipations![0].submissions![0] = { submitted: true, isSynced: true };
+
+        const result = comp.setExerciseButtonStatus(0);
+
+        expect(result).toBe('synced saved');
     });
 
     it('should set the exercise button status for submitted submission', () => {

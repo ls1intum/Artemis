@@ -333,7 +333,7 @@
             "notSavedOrSubmitted": "Du hast Änderungen, die nicht abgesendet sind.",
             "saveSubmissionError": "Die Änderungen konnten nicht gespeichert werden! Bitte stelle sicher, dass du online bist und speichere nochmal.",
             "pendingChanges": "Alle ungespeicherten Änderungen gehen beim Verlassen der Klausur verloren. Bist du sicher, dass du fortfahren möchtest?",
-            "handInEarly": "Vorzeitig abgeben",
+            "handInEarly": "Vorzeitig Abgeben",
             "continueAfterHandInEarly": "Weitermachen",
             "attendanceCheck": "Anwesenheitskontrolle",
             "continueAfterHandInEarlyDescription": "Du willst doch nicht vorzeitig abgeben?",

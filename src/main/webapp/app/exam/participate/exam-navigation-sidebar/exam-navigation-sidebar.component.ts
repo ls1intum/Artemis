@@ -202,7 +202,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
             return this.exerciseIndex === exerciseIndex ? 'synced saved' : 'synced';
         }
 
-        // start with a yellow status (edit icon)
+        // start with a yellow status (save warning icon)
         // TODO: it's a bit weird, that it works that multiple icons (one per exercise) are hold in the same instance variable of the component
         //  we should definitely refactor this and e.g. use the same ExamExerciseOverviewItem as in exam-exercise-overview-page.component.ts !
         this.icon = faHourglassHalf;
@@ -219,10 +219,10 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
             return 'synced saved';
         }
         if (submission.isSynced || this.isOnlyOfflineIDE(exercise)) {
-            // make button blue (except for the current page)
+            // make save icon green
             return 'synced';
         } else {
-            // make button yellow except for programming exercises with only offline IDE
+            // make save icon yellow except for programming exercises with only offline IDE
             this.icon = facSaveWarning;
             return 'notSynced';
         }

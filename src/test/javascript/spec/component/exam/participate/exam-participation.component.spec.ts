@@ -56,6 +56,8 @@ import { InitializationState } from 'app/entities/participation/participation.mo
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
+import { ExamBarComponent } from 'app/exam/participate/exam-bar/exam-bar.component';
+import { ExamNavigationSidebarComponent } from 'app/exam/participate/exam-navigation-sidebar/exam-navigation-sidebar.component';
 
 describe('ExamParticipationComponent', () => {
     let fixture: ComponentFixture<ExamParticipationComponent>;
@@ -98,6 +100,8 @@ describe('ExamParticipationComponent', () => {
                 ExamParticipationComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(ExamParticipationCoverComponent),
+                MockComponent(ExamBarComponent),
+                MockComponent(ExamNavigationSidebarComponent),
                 MockComponent(ExamNavigationBarComponent),
                 MockComponent(QuizExamSubmissionComponent),
                 MockComponent(TextExamSubmissionComponent),

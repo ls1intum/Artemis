@@ -740,8 +740,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             return;
         }
 
-        const sidebarCardExercises = this.examParticipationService.mapExercisesToSidebarCardElements(this.studentExam.exercises!);
-        this.sidebarExercises = [...sidebarCardExercises];
+        this.sidebarExercises = this.examParticipationService.mapExercisesToSidebarCardElements(this.studentExam.exercises!);
         this.updateSidebarData();
     }
 
