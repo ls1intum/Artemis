@@ -41,19 +41,6 @@ public class RepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID> {
     }
 
     /**
-     * Find an entity by its id and given specification.
-     *
-     * @param specification the specification to apply
-     * @param id            the id of the entity to find
-     * @return the entity with the given id
-     */
-    @NotNull
-    Optional<T> findOneById(Specification<T> specification, ID id) {
-        final Specification<T> hasIdSpec = (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get(DomainObject_.ID), id);
-        return findOne(specification.and(hasIdSpec));
-    }
-
-    /**
      * Find an entity by its id and given specification or throw an EntityNotFoundException if it does not exist.
      *
      * @param specification the specification to apply
@@ -99,11 +86,18 @@ public class RepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID> {
         return getValueElseThrow(findById(id), id);
     }
 
-    @Override
+    /**
+     * Find an entity by its id and given specification without using limiting internally.
+     *
+     * @param spec the specification to apply
+     * @param id   the id of the entity to find
+     * @return the entity with the given id
+     */
     @NotNull
-    public Optional<T> findOne(Specification<T> spec) {
+    public Optional<T> findOneById(Specification<T> spec, ID id) {
         try {
-            return Optional.of(this.getQuery(spec, Sort.unsorted()).getSingleResult());
+            final Specification<T> hasIdSpec = (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get(DomainObject_.ID), id);
+            return Optional.of(this.getQuery(spec.and(hasIdSpec), Sort.unsorted()).getSingleResult());
         }
         catch (NoResultException noResultException) {
             return Optional.empty();
