@@ -43,6 +43,7 @@ import {
     WorkingTimeUpdateEvent,
 } from 'app/exam/participate/exam-participation-live-events.service';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -98,6 +99,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     websocketSubscription?: Subscription;
     workingTimeUpdateEventsSubscription?: Subscription;
     problemStatementUpdateEventsSubscription?: Subscription;
+    profileSubscription?: Subscription;
+
+    isProduction = true;
+    isTestServer = false;
 
     // Icons
     faCheckCircle = faCheckCircle;
@@ -150,6 +155,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         private courseStorageService: CourseStorageService,
         private examExerciseUpdateService: ExamExerciseUpdateService,
         private examManagementService: ExamManagementService,
+        private profileService: ProfileService,
     ) {
         // show only one synchronization error every 5s
         this.errorSubscription = this.synchronizationAlert.pipe(throttleTime(5000)).subscribe(() => {
@@ -161,8 +167,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * loads the exam from the server and initializes the view
      */
     ngOnInit(): void {
-        this.route.params.subscribe((params) => {
+        this.route.parent?.parent?.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
+        });
+        this.route.params.subscribe((params) => {
             this.examId = parseInt(params['examId'], 10);
             this.testRunId = parseInt(params['testRunId'], 10);
             // As a student can have multiple test exams, the studentExamId is passed as a parameter.
@@ -202,6 +210,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.websocketSubscription = this.websocketService.connectionState.subscribe((status) => {
             this.connected = status.connected;
         });
+
+        this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
+            this.isProduction = profileInfo?.inProduction;
+            this.isTestServer = profileInfo.testServer ?? false;
+        });
     }
 
     loadAndDisplaySummary() {
@@ -213,6 +226,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             },
             error: () => (this.loadingExam = false),
         });
+        if (!this.testExam) {
+            this.examParticipationService.resetExamLayout();
+        }
     }
 
     canDeactivate() {
@@ -253,7 +269,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // Keep working time
             studentExam.workingTime = this.studentExam?.workingTime ?? studentExam.workingTime;
             this.studentExam = studentExam;
-
+            // no need to change the page layout for test runs
+            if (!this.testRunId) {
+                this.examParticipationService.setExamLayout();
+            }
             // provide exam-participation.service with exerciseId information (e.g. needed for exam notifications)
             const exercises: Exercise[] = this.studentExam.exercises!;
             const exerciseIds = exercises.map((exercise) => exercise.id).filter(Number) as number[];
@@ -373,6 +392,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     if (this.testRunId) {
                         // If this is a test run, forward the user directly to the exam summary
                         this.router.navigate(['course-management', this.courseId, 'exams', this.examId, 'test-runs', this.testRunId, 'summary']);
+                    }
+
+                    if (this.testExam) {
+                        this.examParticipationService.resetExamLayout();
                     }
 
                     this.examSummaryButtonTimer = setInterval(() => {
@@ -527,6 +550,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.websocketSubscription?.unsubscribe();
         this.workingTimeUpdateEventsSubscription?.unsubscribe();
         this.problemStatementUpdateEventsSubscription?.unsubscribe();
+        this.examParticipationService.resetExamLayout();
+        this.profileSubscription?.unsubscribe();
         window.clearInterval(this.autoSaveInterval);
     }
 

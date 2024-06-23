@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { Exam } from 'app/entities/exam.model';
 import dayjs from 'dayjs/esm';
@@ -9,18 +9,32 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { faAngleDown, faAngleUp, faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/types/sidebar';
+import { CourseOverviewService } from '../course-overview.service';
+import { cloneDeep } from 'lodash-es';
+
+const DEFAULT_UNIT_GROUPS: AccordionGroups = {
+    real: { entityData: [] },
+    test: { entityData: [] },
+};
+
+const DEFAULT_COLLAPSE_STATE: CollapseState = {
+    real: false,
+    test: false,
+};
 
 @Component({
     selector: 'jhi-course-exams',
     templateUrl: './course-exams.component.html',
-    styleUrls: ['./course-exams.component.scss'],
+    styleUrls: ['./course-exams.component.scss', '../course-overview.scss'],
 })
 export class CourseExamsComponent implements OnInit, OnDestroy {
     courseId: number;
     public course?: Course;
-    private paramSubscription?: Subscription;
+    private parentParamSubscription?: Subscription;
     private courseUpdatesSubscription?: Subscription;
     private studentExamTestExamUpdateSubscription?: Subscription;
+    private examStartedSubscription?: Subscription;
     private studentExams: StudentExam[];
     public expandAttemptsMap = new Map<number, boolean>();
     public realExamsOfCourse: Exam[] = [];
@@ -31,26 +45,46 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     faAngleDown = faAngleDown;
     faListAlt = faListAlt;
 
+    sortedRealExams?: Exam[];
+    sortedTestExams?: Exam[];
+    examSelected = true;
+    accordionExamGroups: AccordionGroups = DEFAULT_UNIT_GROUPS;
+    sidebarData: SidebarData;
+    sidebarExams: SidebarCardElement[] = [];
+    isCollapsed = false;
+    isExamStarted = false;
+
+    readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
+
     constructor(
         private route: ActivatedRoute,
         private courseStorageService: CourseStorageService,
         private serverDateService: ArtemisServerDateService,
         private examParticipationService: ExamParticipationService,
+        private courseOverviewService: CourseOverviewService,
+        private router: Router,
     ) {}
 
     /**
      * subscribe to changes in the course and fetch course by the path parameter
      */
     ngOnInit(): void {
-        this.paramSubscription = this.route.parent!.parent!.params.subscribe((params) => {
-            this.courseId = parseInt(params['courseId'], 10);
+        this.isCollapsed = this.courseOverviewService.getSidebarCollapseStateFromStorage('exam');
+        this.parentParamSubscription = this.route.parent?.params.subscribe((params) => {
+            this.courseId = Number(params.courseId);
+        });
+
+        this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted) => {
+            this.isExamStarted = isStarted;
         });
 
         this.course = this.courseStorageService.getCourse(this.courseId);
+        this.prepareSidebarData();
 
         this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId).subscribe((course: Course) => {
             this.course = course;
             this.updateExams();
+            this.prepareSidebarData();
         });
 
         this.studentExamTestExamUpdateSubscription = this.examParticipationService
@@ -63,6 +97,23 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             // The Map is ued to store the boolean value, if the attempt-List for one Exam has been expanded or collapsed
             this.expandAttemptsMap = new Map(this.course.exams.filter((exam) => exam.testExam && this.isVisible(exam)).map((exam) => [exam.id!, false]));
             this.updateExams();
+            this.prepareSidebarData();
+        }
+
+        // If no exam is selected navigate to the last selected or upcoming Exam
+        this.navigateToExam();
+    }
+
+    navigateToExam() {
+        const upcomingExam = this.courseOverviewService.getUpcomingExam([...this.realExamsOfCourse, ...this.testExamsOfCourse]);
+        const lastSelectedExam = this.getLastSelectedExam();
+        const examId = this.route.firstChild?.snapshot.params.examId;
+        if (!examId && lastSelectedExam) {
+            this.router.navigate([lastSelectedExam], { relativeTo: this.route, replaceUrl: true });
+        } else if (!examId && upcomingExam) {
+            this.router.navigate([upcomingExam.id], { relativeTo: this.route, replaceUrl: true });
+        } else {
+            this.examSelected = examId ? true : false;
         }
     }
 
@@ -82,13 +133,14 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
      * unsubscribe from all subscriptions
      */
     ngOnDestroy(): void {
-        if (this.paramSubscription) {
-            this.paramSubscription.unsubscribe();
+        if (this.parentParamSubscription) {
+            this.parentParamSubscription.unsubscribe();
         }
         if (this.courseUpdatesSubscription) {
             this.courseUpdatesSubscription.unsubscribe();
         }
         this.studentExamTestExamUpdateSubscription?.unsubscribe();
+        this.examStartedSubscription?.unsubscribe();
     }
 
     /**
@@ -138,5 +190,63 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             return 1;
         }
         return 0;
+    }
+
+    groupExamsByRealOrTest(realExams: Exam[], testExams: Exam[]): AccordionGroups {
+        const groupedExamGroups = cloneDeep(DEFAULT_UNIT_GROUPS) as AccordionGroups;
+
+        for (const realExam of realExams) {
+            const examCardItem = this.courseOverviewService.mapExamToSidebarCardElement(realExam);
+            groupedExamGroups['real'].entityData.push(examCardItem);
+        }
+        for (const testExam of testExams) {
+            const examCardItem = this.courseOverviewService.mapExamToSidebarCardElement(testExam);
+            groupedExamGroups['test'].entityData.push(examCardItem);
+        }
+
+        return groupedExamGroups;
+    }
+
+    getLastSelectedExam(): string | null {
+        return sessionStorage.getItem('sidebar.lastSelectedItem.exam.byCourse.' + this.courseId);
+    }
+
+    toggleSidebar() {
+        this.isCollapsed = !this.isCollapsed;
+        this.courseOverviewService.setSidebarCollapseState('exam', this.isCollapsed);
+    }
+
+    updateSidebarData() {
+        this.sidebarData = {
+            groupByCategory: true,
+            sidebarType: 'exam',
+            storageId: 'exam',
+            groupedData: this.accordionExamGroups,
+            ungroupedData: this.sidebarExams,
+        };
+    }
+
+    prepareSidebarData() {
+        if (!this.course?.exams) {
+            return;
+        }
+
+        this.sortedRealExams = this.realExamsOfCourse.sort((a, b) => this.sortExamsByStartDate(a, b));
+        this.sortedTestExams = this.testExamsOfCourse.sort((a, b) => this.sortExamsByStartDate(a, b));
+
+        const sidebarRealExams = this.courseOverviewService.mapExamsToSidebarCardElements(this.sortedRealExams);
+        const sidebarTestExams = this.courseOverviewService.mapExamsToSidebarCardElements(this.sortedTestExams);
+
+        this.sidebarExams = [...sidebarRealExams, ...sidebarTestExams];
+
+        this.accordionExamGroups = this.groupExamsByRealOrTest(this.sortedRealExams, this.sortedTestExams);
+        this.updateSidebarData();
+    }
+
+    onSubRouteDeactivate() {
+        if (this.route.firstChild) {
+            return;
+        }
+        this.navigateToExam();
     }
 }

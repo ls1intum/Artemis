@@ -296,6 +296,7 @@
             "noFurtherAttempts": "Derzeit sind keine weiteren Versuche für die Testklausur möglich. Um deine Abgabe zu betrachten, navigiere zur Klausurseite ",
             "atLeastTutorStudentExam": "Da du nicht Studierende:r bist, kannst du nicht an der Klausur teilnehmen:",
             "goToExamManagement": "Zur Klausurverwaltung gehen",
+            "goToExamBack": "Gehe zurück, um die Prüfung weiterzumachen",
             "submitProgrammingExercise": "Weiter",
             "submitOtherExercise": "Speichern & Weiter",
             "submitLastExercise": "Speichern",

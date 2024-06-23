@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, Subject, of, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -21,6 +21,9 @@ export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' 
 @Injectable({ providedIn: 'root' })
 export class ExamParticipationService {
     public currentlyLoadedStudentExam = new Subject<StudentExam>();
+
+    private examIsStartedSubject = new BehaviorSubject<boolean>(false);
+    examIsStarted$ = this.examIsStartedSubject.asObservable();
 
     private examExerciseIds: number[];
 
@@ -337,5 +340,14 @@ export class ExamParticipationService {
 
     public setExamExerciseIds(examExerciseIds: number[]) {
         this.examExerciseIds = examExerciseIds;
+    }
+
+    setExamLayout() {
+        this.examIsStartedSubject.next(true);
+    }
+
+    resetExamLayout() {
+        this.examIsStartedSubject.next(false);
+        document.documentElement.style.setProperty('--header-height', '68px'); // Set back to default value, because exam nav bar changes this property within the exam
     }
 }

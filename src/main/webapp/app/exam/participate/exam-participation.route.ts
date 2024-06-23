@@ -19,7 +19,6 @@ export const examParticipationRoute: Routes = [
             pageTitle: 'artemisApp.exam.title',
         },
         canActivate: [UserRouteAccessService],
-        canDeactivate: [PendingChangesGuard],
     },
     {
         path: 'overview/grading-key',

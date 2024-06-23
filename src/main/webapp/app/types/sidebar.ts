@@ -1,11 +1,16 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { DifficultyLevel, Exercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import dayjs from 'dayjs/esm';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 
 export type SidebarCardSize = 'S' | 'M' | 'L';
 export type TimeGroupCategory = 'past' | 'current' | 'future' | 'noDate';
+export type ExamGroupCategory = 'real' | 'test';
 export type TutorialGroupCategory = 'all' | 'registered' | 'further';
+export type SidebarTypes = 'exercise' | 'exam' | 'conversation' | 'default';
+export type AccordionGroups = Record<TimeGroupCategory | TutorialGroupCategory | ExamGroupCategory | ChannelGroupCategory | string, { entityData: SidebarCardElement[] }>;
+export type ExerciseCollapseState = Record<TimeGroupCategory, boolean>;
 export type ChannelGroupCategory =
     | 'favoriteChannels'
     | 'generalChannels'
@@ -15,10 +20,8 @@ export type ChannelGroupCategory =
     | 'directMessages'
     | 'examChannels'
     | 'hiddenChannels';
-export type SidebarTypes = 'exercise' | 'conversation' | 'default';
 
-export type AccordionGroups = Record<TimeGroupCategory | TutorialGroupCategory | ChannelGroupCategory | string, { entityData: SidebarCardElement[] }>;
-export type CollapseState = Record<TimeGroupCategory, boolean> | Record<ChannelGroupCategory, boolean>;
+export type CollapseState = Record<TimeGroupCategory, boolean> | Record<ChannelGroupCategory, boolean> | Record<ExamGroupCategory, boolean>;
 export type ChannelAccordionShowAdd = Record<ChannelGroupCategory, boolean>;
 export type ChannelTypeIcons = Record<ChannelGroupCategory, IconProp>;
 
@@ -91,6 +94,31 @@ export interface SidebarCardElement {
      * Set for Exercises. Will be removed after refactoring
      */
     exercise?: Exercise;
+    // TODO Extra Exam Part
+    /**
+     * This is a string which may define an icon for the status of the exam.
+     * It has to be a valid FontAwesome icon name and will be displayed in the
+     * 'regular' style. Needed for future implementation
+     */
+    statusIcon?: IconProp;
+    /**
+     * Set for Exam, identifies the color of the status icon. Needed for future implementation
+     */
+    statusIconColor?: string;
+    /**
+     * Set for Exam, shows the start date and time
+     */
+    startDateWithTime?: dayjs.Dayjs;
+    /**
+     * Set for Exam, shows the working time
+     */
+    workingTime?: number;
+    /**
+     * Set for exam, shows the maximum attainable Points
+     */
+    attainablePoints?: number;
+
+    // TODO Extra Conversation Part
     /**
      * Set for Conversation. Will be removed after refactoring
      */

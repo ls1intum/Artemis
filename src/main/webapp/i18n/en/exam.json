@@ -296,6 +296,7 @@
             "noFurtherAttempts": "Currently no further attempts for the Test Exam are possible. To review your submission, navigate back to the Exam page",
             "atLeastTutorStudentExam": "Since you are not a student, you cannot participate in this exam:",
             "goToExamManagement": "Go to exam management page",
+            "goToExamBack": "Go back to continue the exam",
             "submitProgrammingExercise": "Continue",
             "submitOtherExercise": "Save & continue",
             "submitLastExercise": "Save",
