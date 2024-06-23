@@ -19,7 +19,7 @@
             [ngTemplateOutletContext]="{
                 key: 'artemisApp.courseOverview.exerciseDetails.submissionDue',
                 value: dueDate ? dueDate : 'artemisApp.courseOverview.exerciseList.noDueDate',
-                isDate: !!dueDate
+                isDate: !!dueDate,
             }"
         />
         @if (exercise.exampleSolutionPublicationDate) {
@@ -28,7 +28,7 @@
                 [ngTemplateOutletContext]="{
                     key: 'artemisApp.courseOverview.exerciseDetails.exampleSolutionPublicationDate',
                     value: exercise.exampleSolutionPublicationDate,
-                    isDate: true
+                    isDate: true,
                 }"
             />
         }
@@ -50,7 +50,7 @@
                 [ngTemplateOutletContext]="{
                     key: 'artemisApp.courseOverview.exerciseDetails.complaintPossible',
                     value: canComplainLaterOn ? 'global.generic.yes' : 'global.generic.no',
-                    isDate: false
+                    isDate: false,
                 }"
             />
         }

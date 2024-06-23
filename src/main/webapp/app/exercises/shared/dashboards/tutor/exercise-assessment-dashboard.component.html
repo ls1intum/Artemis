@@ -261,7 +261,7 @@
                                 [translateValues]="{
                                     total: stats.toReview.total + stats.toAssess.total,
                                     toRead: stats.toReview.total,
-                                    toAssess: stats.toAssess.total
+                                    toAssess: stats.toAssess.total,
                                 }"
                             ></span>
                         </div>
@@ -431,7 +431,7 @@
                                                                         context: {
                                                                             submission: 'new',
                                                                             queryParams: getAssessmentQueryParams(correctionRound),
-                                                                            buttonLabel: 'startAssessment'
+                                                                            buttonLabel: 'startAssessment',
                                                                         }
                                                                     "
                                                                     id="start-new-assessment"
@@ -478,7 +478,7 @@
                                                                                 buttonLabel:
                                                                                     submission && calculateSubmissionStatusIsDraft(submission, correctionRound)
                                                                                         ? 'continueAssessment'
-                                                                                        : 'openAssessment'
+                                                                                        : 'openAssessment',
                                                                             }
                                                                         "
                                                                     >
@@ -531,7 +531,7 @@
                                                     jhiTranslate="artemisApp.exerciseAssessmentDashboard.noSubmissionsInfo"
                                                     [translateValues]="{
                                                         notYetAssessed: notYetAssessed[correctionRound],
-                                                        lockedSubmissionsByOtherTutor: lockedSubmissionsByOtherTutor[correctionRound]
+                                                        lockedSubmissionsByOtherTutor: lockedSubmissionsByOtherTutor[correctionRound],
                                                     }"
                                                 ></span>
                                                 @if (correctionRound === 1) {
@@ -623,7 +623,7 @@
                                                                 submission: submissionWithComplaint.submission,
                                                                 queryParams: getComplaintQueryParams(submissionWithComplaint.complaint),
                                                                 disabled: isComplaintLocked(submissionWithComplaint.complaint),
-                                                                buttonLabel: submissionWithComplaint.complaint.accepted === undefined ? 'evaluateComplaint' : 'showComplaint'
+                                                                buttonLabel: submissionWithComplaint.complaint.accepted === undefined ? 'evaluateComplaint' : 'showComplaint',
                                                             }
                                                         "
                                                     >
@@ -737,7 +737,7 @@
                                                                 buttonLabel:
                                                                     moreFeedbackRequest.complaint.accepted === undefined
                                                                         ? 'evaluateMoreFeedbackRequest'
-                                                                        : 'showMoreFeedbackRequests'
+                                                                        : 'showMoreFeedbackRequests',
                                                             }
                                                         "
                                                     >

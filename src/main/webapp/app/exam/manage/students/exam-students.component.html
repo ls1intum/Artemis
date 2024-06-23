@@ -55,7 +55,7 @@
                     (delete)="removeAllStudents($event)"
                     [dialogError]="dialogError$"
                     [additionalChecks]="{
-                        deleteParticipationsAndSubmission: 'artemisApp.examManagement.examStudents.removeFromExam.deleteParticipationsAndSubmission'
+                        deleteParticipationsAndSubmission: 'artemisApp.examManagement.examStudents.removeFromExam.deleteParticipationsAndSubmission',
                     }"
                     deleteConfirmationText="artemisApp.studentExams.removeAllStudents.confirmationText"
                 >
@@ -258,7 +258,7 @@
                                     deleteConfirmationText="artemisApp.examManagement.examStudents.removeFromExam.typeNameToConfirm"
                                     (delete)="removeFromExam(value, $event)"
                                     [additionalChecks]="{
-                                        deleteParticipationsAndSubmission: 'artemisApp.examManagement.examStudents.removeFromExam.deleteParticipationsAndSubmission'
+                                        deleteParticipationsAndSubmission: 'artemisApp.examManagement.examStudents.removeFromExam.deleteParticipationsAndSubmission',
                                     }"
                                     [dialogError]="dialogError$"
                                     [requireConfirmationOnlyForAdditionalChecks]="true"

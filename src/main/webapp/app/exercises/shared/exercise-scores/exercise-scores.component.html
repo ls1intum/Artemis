@@ -51,7 +51,7 @@
                         [translateValues]="{
                             filtered: participationsPerFilter.get(resultCriteria.filterProp),
                             total: filteredParticipations.length,
-                            percent: ((participationsPerFilter.get(resultCriteria.filterProp) ?? 0) * 100) / filteredParticipations.length | number: '1.0-1'
+                            percent: ((participationsPerFilter.get(resultCriteria.filterProp) ?? 0) * 100) / filteredParticipations.length | number: '1.0-1',
                         }"
                     ></span>
                 }
@@ -75,7 +75,7 @@
                                 exercise.exerciseGroup!.id!,
                                 exercise.type + '-exercises',
                                 exercise.id,
-                                'participations'
+                                'participations',
                             ]"
                             class="btn btn-primary btn-sm me-1"
                         >

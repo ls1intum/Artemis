@@ -5,7 +5,7 @@
             [ngClass]="{
                 'row card-header': true,
                 'bg-primary': exam.testExam,
-                'bg-success': !exam.testExam
+                'bg-success': !exam.testExam,
             }"
         >
             <h5 class="text-center text-white">{{ exam.title }}</h5>
@@ -114,7 +114,7 @@
                     jhiTranslate="artemisApp.exam.overview.testExam.available"
                     [translateValues]="{
                         startDate: exam.startDate | artemisDate,
-                        endDate: exam.endDate | artemisDate
+                        endDate: exam.endDate | artemisDate,
                     }"
                 ></div>
             }
