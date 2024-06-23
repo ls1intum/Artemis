@@ -54,6 +54,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             },
             wordWrap: 'on', // TODO make this a setting
         });
+        this._editor.getModel()?.setEOL(monaco.editor.EndOfLineSequence.LF);
         renderer.appendChild(elementRef.nativeElement, this.monacoEditorContainerElement);
     }
 
@@ -192,6 +193,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.disposeEditorElements();
 
         monaco.editor.setModelLanguage(model, languageId !== undefined ? languageId : model.getLanguageId());
+        model.setEOL(monaco.editor.EndOfLineSequence.LF);
         this._editor.setModel(model);
     }
 
@@ -327,5 +329,9 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     registerAction(action: MonacoEditorAction): void {
         action.register(this._editor, this.translateService);
         this.actions.push(action);
+    }
+
+    setSelection(range: monaco.IRange): void {
+        this._editor.setSelection(range);
     }
 }
