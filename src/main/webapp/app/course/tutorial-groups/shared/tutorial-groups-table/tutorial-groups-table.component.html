@@ -11,7 +11,7 @@
             <tr jhiSort [(predicate)]="sortingPredicate" [(ascending)]="ascending" (sortChange)="sortRows()">
                 @if (showIdColumn) {
                     <th jhiSortBy="id">
-                        <a class="th-link">{{ 'global.field.id' | artemisTranslate }}</a>
+                        <a class="th-link" jhiTranslate="global.field.id"></a>
                         <fa-icon [icon]="faSort" />
                     </th>
                 }

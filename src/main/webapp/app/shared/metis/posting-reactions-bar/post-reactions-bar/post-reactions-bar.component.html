@@ -77,7 +77,7 @@
                     }}</span>
                 </button>
                 @if (isCourseMessagesPage && getShowNewMessageIcon()) {
-                    <span class="badge bg-secondary hideAfter5Seconds">{{ 'global.generic.new' | artemisTranslate }}</span>
+                    <span class="badge bg-secondary hideAfter5Seconds" jhiTranslate="global.generic.new"></span>
                 }
             </div>
         }
@@ -113,7 +113,7 @@
                         }}</span>
                     </button>
                     @if (getShowNewMessageIcon()) {
-                        <span class="badge bg-secondary hideAfter5Seconds">{{ 'global.generic.new' | artemisTranslate }}</span>
+                        <span class="badge bg-secondary hideAfter5Seconds" jhiTranslate="global.generic.new"></span>
                     }
                 </div>
             }

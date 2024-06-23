@@ -15,9 +15,7 @@
     }
     <form [formGroup]="form" (ngSubmit)="onSubmit()">
         @if (!competencies.length && !isLoading) {
-            <div class="mb-1">
-                {{ 'global.generic.emptyList' | artemisTranslate }}
-            </div>
+            <div class="mb-1" jhiTranslate="global.generic.emptyList"></div>
         }
         <div class="border-0" formArrayName="competencies">
             @for (competencies of competencies.controls; track competencies; let i = $index) {
