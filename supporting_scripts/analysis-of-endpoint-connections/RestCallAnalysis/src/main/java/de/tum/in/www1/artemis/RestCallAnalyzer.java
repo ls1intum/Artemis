@@ -20,10 +20,10 @@ public class RestCallAnalyzer {
         ObjectMapper mapper = new ObjectMapper();
 
         try {
-            List<EndpointClassInformation> endpointClasses = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/endpoints.json"),
+            List<EndpointClassInformation> endpointClasses = mapper.readValue(new File("../endpoints.json"),
                     new TypeReference<List<EndpointClassInformation>>() {
                     });
-            List<RestCallFileInformation> restCalls = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/restCalls.json"),
+            List<RestCallFileInformation> restCalls = mapper.readValue(new File("../restCalls.json"),
                     new TypeReference<List<RestCallFileInformation>>() {
                     });
 
