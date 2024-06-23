@@ -17,14 +17,12 @@ import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.DomainObject_;
 import de.tum.in.www1.artemis.domain.Exercise_;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise_;
@@ -44,27 +42,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Profile(PROFILE_CORE)
 @Repository
 public interface ProgrammingExerciseRepository extends DynamicSpecificationRepository<ProgrammingExercise, Long, ProgrammingExerciseFetchOptions> {
-
-    /**
-     * Finds a programming exercise by its ID using the provided specification. If the exercise is not found, an {@code EntityNotFoundException} is thrown.
-     * This method ensures that the exercise is retrieved directly from the database without in-memory paging.
-     *
-     * @param specification the specification to apply for finding the programming exercise
-     * @param exerciseId    the ID of the programming exercise to find
-     * @return the found {@code ProgrammingExercise}
-     * @throws EntityNotFoundException if no programming exercise is found with the given ID
-     */
-    default ProgrammingExercise findOneByIdElseThrow(final Specification<ProgrammingExercise> specification, long exerciseId) {
-        final Specification<ProgrammingExercise> hasIdSpec = (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get(DomainObject_.ID), exerciseId);
-
-        Optional<ProgrammingExercise> exerciseOptional = findOne(hasIdSpec);
-
-        if (exerciseOptional.isEmpty()) {
-            throw new EntityNotFoundException("Programming Exercise", exerciseId);
-        }
-
-        return findAll(specification.and(hasIdSpec)).getFirst();
-    }
 
     /**
      * Does a max join on the result table for each participation by result id (the newer the result id, the newer the result).
