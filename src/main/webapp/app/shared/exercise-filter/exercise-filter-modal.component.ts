@@ -19,6 +19,7 @@ import { Observable, OperatorFunction, Subject, merge } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge.component';
 import { RangeSliderComponent } from 'app/shared/range-slider/range-slider.component';
+import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/participation/participation.utils';
 
 @Component({
     selector: 'jhi-exercise-filter-modal',
@@ -201,7 +202,21 @@ export class ExerciseFilterModalComponent {
             return;
         }
 
-        // TODO implement filter for achieved score
+        if (this.sidebarData?.groupedData) {
+            for (const groupedDataKey in this.sidebarData.groupedData) {
+                this.sidebarData.groupedData[groupedDataKey].entityData = this.sidebarData.groupedData[groupedDataKey].entityData.filter((sidebarElement) => {
+                    if (!sidebarElement.studentParticipation) {
+                        return false;
+                    }
+
+                    const latestResult = getLatestResultOfStudentParticipation(sidebarElement.studentParticipation, true);
+                    if (!latestResult?.score) {
+                        return false;
+                    }
+                    return latestResult.score <= this.achievedScore!.selectedMax && latestResult.score >= this.achievedScore!.selectedMin;
+                });
+            }
+        }
     }
 
     private applyPointsFilter() {
