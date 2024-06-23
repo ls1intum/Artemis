@@ -466,3 +466,9 @@ Grades
 .. |export_pdf| image:: student/buttons/export_pdf.png
 .. |conflict_state| image:: student/conflict_state.png
 .. |view_grade_key| image:: student/buttons/view_grade_key.png
+.. |start_exam| image:: student/buttons/start_exam.png
+.. |exam_unsaved| image:: student/buttons/exam_unsaved.png
+.. |exam_saved| image:: student/buttons/exam_saved.png
+.. |exam_started| image:: student/buttons/exam_started.png
+.. |collapse_sidebar| image:: student/buttons/collapse_sidebar.png
+.. |exam_no_results_found| image:: student/buttons/exam_no_results_found.png
