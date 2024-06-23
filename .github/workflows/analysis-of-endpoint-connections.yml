@@ -30,7 +30,7 @@ jobs:
         with:
           node-version: '${{ env.node }}'
 
-      - name: parse client sided REST-API calls
+      - name: parse client sided Endpoints
         run: |
           npm install
           tsc -p supporting_scripts/analysis-of-endpoint-connections/parser/src/main/typeScript/tsconfig.analysisOfEndpointConnections.json
