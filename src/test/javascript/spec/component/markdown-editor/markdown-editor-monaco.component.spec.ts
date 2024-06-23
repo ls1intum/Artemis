@@ -16,6 +16,9 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MonacoUrlAction } from 'app/shared/monaco-editor/model/actions/monaco-url.action';
 import { MonacoAttachmentAction } from 'app/shared/monaco-editor/model/actions/monaco-attachment.action';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
+import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/monaco-formula.action';
+import { MonacoTestCaseAction } from 'app/shared/monaco-editor/model/actions/monaco-test-case.action';
+import { MonacoTaskAction } from 'app/shared/monaco-editor/model/actions/monaco-task.action';
 
 describe('MarkdownEditorMonacoComponent', () => {
     let fixture: ComponentFixture<MarkdownEditorMonacoComponent>;
@@ -40,6 +43,7 @@ describe('MarkdownEditorMonacoComponent', () => {
         fixture = TestBed.createComponent(MarkdownEditorMonacoComponent);
         comp = fixture.componentInstance;
         comp.initialEditorHeight = 'external';
+        comp.domainActions = [new MonacoFormulaAction(), new MonacoTaskAction(), new MonacoTestCaseAction()];
         fileUploaderService = fixture.debugElement.injector.get(FileUploaderService);
     });
 
@@ -69,12 +73,35 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(comp._markdown).toBe(text);
     });
 
+    it('should notify when switching to preview mode', () => {
+        const emitSpy = jest.spyOn(comp.onPreviewSelect, 'emit');
+        fixture.detectChanges();
+        comp.onNavChanged({ nextId: 'editor_preview', activeId: 'editor', preventDefault: jest.fn() });
+        expect(emitSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should layout and focus the editor when switching to editor mode', () => {
+        fixture.detectChanges();
+        const adjustEditorDimensionsSpy = jest.spyOn(comp, 'adjustEditorDimensions');
+        const focusSpy = jest.spyOn(comp.monacoEditor, 'focus');
+        comp.onNavChanged({ nextId: 'editor', activeId: 'editor_preview', preventDefault: jest.fn() });
+        expect(adjustEditorDimensionsSpy).toHaveBeenCalledOnce();
+        expect(focusSpy).toHaveBeenCalledOnce();
+    });
+
     it('should embed manually uploaded files', () => {
         const embedFilesStub = jest.spyOn(comp, 'embedFiles').mockImplementation();
         fixture.detectChanges();
         const files = [new File([''], 'test.png')];
         comp.onFileUpload({ target: { files } });
         expect(embedFilesStub).toHaveBeenCalledExactlyOnceWith(files);
+    });
+
+    it('should not embed via manual upload if the event contains no files', () => {
+        const embedFilesStub = jest.spyOn(comp, 'embedFiles').mockImplementation();
+        fixture.detectChanges();
+        comp.onFileUpload({ target: { files: [] } } as any);
+        expect(embedFilesStub).not.toHaveBeenCalled();
     });
 
     it('should embed dropped files', () => {
@@ -86,12 +113,24 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(embedFilesStub).toHaveBeenCalledExactlyOnceWith(files);
     });
 
-    it('should throw on upload if the actions are not available', () => {
-        comp.defaultActions = [];
-        const files = [new File([''], 'test.png')];
+    it('should not try to embed via drop if the event contains no files', () => {
+        const embedFilesStub = jest.spyOn(comp, 'embedFiles').mockImplementation();
         fixture.detectChanges();
-        expect(() => comp.embedFiles(files)).toThrow(Error);
+        comp.onFileDrop({ dataTransfer: { files: [] }, preventDefault: jest.fn() } as any);
+        expect(embedFilesStub).not.toHaveBeenCalled();
     });
+
+    it('should notify if the upload of a markdown file failed', fakeAsync(() => {
+        const alertService = fixture.debugElement.injector.get(AlertService);
+        const alertSpy = jest.spyOn(alertService, 'addAlert');
+        const files = [new File([''], 'test.png')];
+        const uploadMarkdownFileStub = jest.spyOn(fileUploaderService, 'uploadMarkdownFile').mockRejectedValue(new Error('Test error'));
+        fixture.detectChanges();
+        comp.embedFiles(files);
+        flush();
+        expect(uploadMarkdownFileStub).toHaveBeenCalledOnce();
+        expect(alertSpy).toHaveBeenCalledOnce();
+    }));
 
     it('should embed image and .pdf files', fakeAsync(() => {
         const urlAction = new MonacoUrlAction();
@@ -119,6 +158,14 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(attachmentStub).toHaveBeenCalledExactlyOnceWith({ url: fileInformation[0].url, text: fileInformation[0].file.name });
         expect(urlStub).toHaveBeenCalledExactlyOnceWith({ url: fileInformation[1].url, text: fileInformation[1].file.name });
     }));
+
+    it('should open the color selector', () => {
+        fixture.detectChanges();
+        const openColorSelectorSpy = jest.spyOn(comp.colorSelector, 'openColorSelector');
+        const event = new MouseEvent('click');
+        comp.openColorSelector(event);
+        expect(openColorSelectorSpy).toHaveBeenCalledExactlyOnceWith(event, comp.colorPickerMarginTop, comp.colorPickerHeight);
+    });
 
     it('should pass the correct color as argument to the color action', () => {
         comp.colorAction = new MonacoColorAction();
