@@ -34,29 +34,14 @@ svg {
         fill: none;
     }
 
-    .ring1 {
-        transform: scale(1) rotate(-90deg);
+    .mastery-ring {
+        transform: scale(0.75) rotate(-90deg);
 
         .background {
             stroke: var(--competency-rings-red-bg);
         }
         .progressbar {
-            &-anim {
-                animation-duration: 1.6s;
-                transition-duration: 1.6s;
-            }
             stroke: var(--competency-rings-red);
-        }
-    }
-
-    .ring2 {
-        transform: scale(0.75) rotate(-90deg);
-
-        .background {
-            stroke: var(--competency-rings-green-bg);
-        }
-        .progressbar {
-            stroke: var(--competency-rings-green);
             &-anim {
                 animation-duration: 1.3s;
                 transition-duration: 1.3s;
@@ -64,18 +49,18 @@ svg {
         }
     }
 
-    .ring3 {
+    .progress-ring {
         transform: scale(0.5) rotate(-90deg);
 
         .background {
-            stroke: var(--competency-rings-blue-bg);
+            stroke: var(--competency-rings-green-bg);
         }
         .progressbar {
             &-anim {
                 animation-duration: 1s;
                 transition-duration: 1s;
             }
-            stroke: var(--competency-rings-blue);
+            stroke: var(--competency-rings-green);
         }
     }
 }

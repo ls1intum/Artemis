@@ -26,6 +26,6 @@ public record UserRoleDTO(Long userId, String username, UserRole role) {
 
     @SuppressWarnings("unused")
     UserRoleDTO(Long userId, String username, String role) {
-        this(userId, username, UserRole.valueOf(role));
+        this(userId, username, role != null ? UserRole.valueOf(role) : null);
     }
 }
