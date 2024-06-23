@@ -140,7 +140,7 @@
                 }
                 <button id="end-exam" [disabled]="!endButtonEnabled" type="submit" (click)="submitExam()" class="btn btn-primary">
                     @if (submitInProgress) {
-                        <fa-icon [icon]="faSpinner" [spin]="true" />
+                        <fa-icon [icon]="faSpinner" animation="spin" />
                     }
                     <span jhiTranslate="artemisApp.exam.endExam"></span>
                 </button>

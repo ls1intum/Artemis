@@ -60,7 +60,7 @@ describe('CompetencyFormComponent', () => {
         // stubbing competency service for asynchronous validator
         const competencyService = TestBed.inject(CompetencyService);
 
-        const competencyOfResponse = new Competency();
+        const competencyOfResponse: Competency = {};
         competencyOfResponse.id = 1;
         competencyOfResponse.title = 'test';
 

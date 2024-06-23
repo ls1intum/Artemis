@@ -6,7 +6,7 @@
         @if (loadingState !== 'error') {
             <h2>
                 <span style="color: grey"
-                    ><fa-icon [icon]="faSpinner" [spin]="true" />&nbsp;<span>{{ 'artemisApp.quizQuestion.loading' | artemisTranslate }}</span></span
+                    ><fa-icon [icon]="faSpinner" animation="spin" />&nbsp;<span>{{ 'artemisApp.quizQuestion.loading' | artemisTranslate }}</span></span
                 >
             </h2>
         }

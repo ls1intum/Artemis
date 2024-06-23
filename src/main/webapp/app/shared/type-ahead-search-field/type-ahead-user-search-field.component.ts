@@ -19,7 +19,7 @@ export class TypeAheadUserSearchFieldComponent {
     searchQueryTooShort = true;
 
     readonly faCircleNotch = faCircleNotch;
-    readonly minSearchQueryLength = 3;
+    readonly MIN_SEARCH_QUERY_LENGTH = 3;
 
     constructor(private userService: UserService) {}
 
@@ -27,7 +27,7 @@ export class TypeAheadUserSearchFieldComponent {
         this.searchFailed = false;
         return login.pipe(
             switchMap((loginOrName: string) => {
-                if (loginOrName.length < this.minSearchQueryLength) {
+                if (loginOrName.length < this.MIN_SEARCH_QUERY_LENGTH) {
                     this.searchQueryTooShort = true;
                     this.searching = false;
                     return of([]);
@@ -62,7 +62,7 @@ export class TypeAheadUserSearchFieldComponent {
         } else {
             this.loginOrNameChange.emit(this.loginOrName);
         }
-        this.searchQueryTooShort = this.loginOrName.length < this.minSearchQueryLength;
+        this.searchQueryTooShort = this.loginOrName.length < this.MIN_SEARCH_QUERY_LENGTH;
     }
 
     resultFormatter = (result: User) => result.name! + ' (' + result.login! + ')';

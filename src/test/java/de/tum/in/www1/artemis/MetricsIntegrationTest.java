@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis;
 
-import static de.tum.in.www1.artemis.service.util.ZonedDateTimeUtil.toRelativeTime;
+import static de.tum.in.www1.artemis.service.util.TimeUtil.toRelativeTime;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 

@@ -239,7 +239,7 @@ public class FileResource {
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getDragItemFile(@PathVariable Long dragItemId) {
         log.debug("REST request to get file for drag item : {}", dragItemId);
-        DragItem dragItem = dragItemRepository.findByIdElseThrow(dragItemId);
+        DragItem dragItem = dragItemRepository.findWithEagerQuestionByIdElseThrow(dragItemId);
         Course course = dragItem.getQuestion().getExercise().getCourseViaExerciseGroupOrCourseMember();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         if (dragItem.getPictureFilePath() == null) {

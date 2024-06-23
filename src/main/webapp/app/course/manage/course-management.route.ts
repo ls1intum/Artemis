@@ -29,6 +29,7 @@ import { ImportCompetenciesComponent } from 'app/course/competencies/import-comp
 import { LocalCIGuard } from 'app/localci/localci-guard.service';
 import { IrisGuard } from 'app/iris/iris-guard.service';
 import { CourseImportStandardizedCompetenciesComponent } from 'app/course/competencies/import-standardized-competencies/course-import-standardized-competencies.component';
+import { ImportPrerequisitesComponent } from 'app/course/competencies/import-competencies/import-prerequisites.component';
 
 export const courseManagementState: Routes = [
     {
@@ -257,6 +258,16 @@ export const courseManagementState: Routes = [
                                     pageTitle: 'artemisApp.competency.generate.title',
                                 },
                                 canActivate: [UserRouteAccessService, IrisGuard],
+                                canDeactivate: [PendingChangesGuard],
+                            },
+                            {
+                                path: 'import-prerequisites',
+                                component: ImportPrerequisitesComponent,
+                                data: {
+                                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                                    pageTitle: 'artemisApp.prerequisite.import.title',
+                                },
+                                canActivate: [UserRouteAccessService],
                                 canDeactivate: [PendingChangesGuard],
                             },
                         ],

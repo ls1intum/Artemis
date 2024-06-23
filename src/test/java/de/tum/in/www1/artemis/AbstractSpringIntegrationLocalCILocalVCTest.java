@@ -149,6 +149,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     protected static final Path PMD_RESULTS_PATH = SCA_REPORTS_PATH.resolve("pmd.xml");
 
     @AfterEach
+    @Override
     protected void resetSpyBeans() {
         Mockito.reset(versionControlService, continuousIntegrationService, resourceLoaderService, programmingMessagingService);
         super.resetSpyBeans();
