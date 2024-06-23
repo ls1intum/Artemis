@@ -1,6 +1,7 @@
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { TranslateService } from '@ngx-translate/core';
 import * as monaco from 'monaco-editor';
+import { enterFullscreen, exitFullscreen, isFullScreen } from 'app/shared/util/fullscreen.util';
 
 export abstract class MonacoEditorAction implements monaco.editor.IActionDescriptor, monaco.IDisposable {
     // IActionDescriptor
@@ -98,5 +99,15 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
 
     getLineText(editor: monaco.editor.ICodeEditor, lineNumber: number): string | undefined {
         return editor.getModel()?.getLineContent(lineNumber);
+    }
+
+    toggleFullscreen(editor: monaco.editor.ICodeEditor, element?: HTMLElement): void {
+        const fullscreenElement = element ?? editor.getDomNode();
+        if (isFullScreen()) {
+            exitFullscreen();
+        } else if (element) {
+            enterFullscreen(fullscreenElement);
+        }
+        editor.layout();
     }
 }
