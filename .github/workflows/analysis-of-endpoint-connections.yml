@@ -30,16 +30,17 @@ jobs:
         with:
           node-version: '${{ env.node }}'
 
-      - name: parse client sided Endpoints
+      - name: parse client sided REST-API calls
         run: |
           npm install
           tsc -p supporting_scripts/analysis-of-endpoint-connections/parser/src/main/typeScript/tsconfig.analysisOfEndpointConnections.json
           node supporting_scripts/analysis-of-endpoint-connections/parser/src/main/typeScript/AnalysisOfEndpointConnectionsClient.js
 
-      - name: parse server sided REST-API calls
+      - name: parse server sided Endpoints
         run: ./gradlew :supporting_scripts:analysis-of-endpoint-connections:parser:run
 
   analysis-of-endpoint-connections:
+    needs: parse-rest-calls-and-endpoints
     timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
