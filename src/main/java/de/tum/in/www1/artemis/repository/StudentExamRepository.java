@@ -238,7 +238,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      * @return the student exam
      * @throws EntityNotFoundException if no student exams could be found
      */
-    default StudentExam findOneByExamIdAndUserId(long examId, long userId, boolean testExam) {
+    default StudentExam findOneByExamIdAndUserIdElseThrow(long examId, long userId, boolean testExam) {
         Optional<StudentExam> studentExam;
         if (testExam) {
             studentExam = this.findFirstByExamIdAndUserIdOrderByIdDesc(examId, userId);

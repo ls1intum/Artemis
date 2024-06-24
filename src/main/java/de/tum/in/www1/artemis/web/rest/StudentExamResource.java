@@ -564,7 +564,7 @@ public class StudentExamResource {
 
         boolean testExam = examRepository.isTestExam(examId);
 
-        StudentExam studentExam = studentExamRepository.findOneByExamIdAndUserId(examId, currentUser.getId(), testExam);
+        StudentExam studentExam = studentExamRepository.findOneByExamIdAndUserIdElseThrow(examId, currentUser.getId(), testExam);
 
         if (studentExam.isTestRun()) {
             throw new BadRequestAlertException("Test runs do not have live events", ENTITY_NAME, "testRunNoLiveEvents");
