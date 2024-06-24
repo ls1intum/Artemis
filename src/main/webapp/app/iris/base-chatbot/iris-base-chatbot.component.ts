@@ -14,6 +14,7 @@ import { IrisMessageContentType, IrisTextMessageContent } from 'app/entities/iri
 import { AccountService } from 'app/core/auth/account.service';
 import { animate, group, style, transition, trigger } from '@angular/animations';
 import { IrisChatService } from 'app/iris/iris-chat.service';
+import * as _ from 'lodash';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -130,6 +131,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     protected readonly IrisAssistantMessage = IrisAssistantMessage;
     protected readonly IrisTextMessageContent = IrisTextMessageContent;
     protected readonly IrisSender = IrisSender;
+    protected readonly IrisErrorMessageKey = IrisErrorMessageKey;
 
     constructor(
         protected accountService: AccountService,
@@ -144,7 +146,16 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
             if (messages.length !== this.messages?.length) {
                 this.scrollToBottom('auto');
             }
-            this.messages = [...messages].reverse();
+            this.messages = _.cloneDeep(messages).reverse();
+            this.messages.forEach((message) => {
+                // @ts-expect-error - TS doesn't get that I'm checking for the type
+                if (message.content?.[0]?.textContent) {
+                    // Double all \n
+                    const cnt = message.content[0] as IrisTextMessageContent;
+                    cnt.textContent = cnt.textContent.replace(/\n\n/g, '\n\u00A0\n');
+                    cnt.textContent = cnt.textContent.replace(/\n/g, '\n\n');
+                }
+            });
         });
         this.stagesSubscription = this.chatService.currentStages().subscribe((stages) => {
             this.stages = stages;
