@@ -11,12 +11,7 @@
         <ng-container ngbNavItem="editor_edit">
             <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0"><span jhiTranslate="entity.action.edit"></span></a>
             <ng-template ngbNavContent>
-                <div
-                    class="markdown-editor-wrapper d-grid"
-                    [style.grid-template-columns]="'auto'"
-                    style="overflow: clip !important"
-                    class="height-100 markdown-editor d-flex flex-column"
-                >
+                <div class="markdown-editor markdown-editor-wrapper d-flex flex-column">
                     <jhi-monaco-editor class="h-100" [shrinkToFit]="false" [stickyScroll]="false" (textChanged)="onTextChanged($event)" (drop)="onFileDrop($event)" />
                     @if (enableFileUpload) {
                         <div class="d-flex" #fileUploadFooter>
