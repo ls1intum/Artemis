@@ -32,8 +32,6 @@ export class LearningPathNavComponent implements OnInit {
 
     readonly navOverview = viewChild.required(LearningPathNavOverviewComponent);
 
-    readonly isCurrentLearningObjectCompleted = this.learningPathNavigationService.isCurrentLearningObjectCompleted;
-
     ngOnInit(): void {
         this.learningPathNavigationService.loadInitialLearningPathNavigation(this.learningPathId());
     }
