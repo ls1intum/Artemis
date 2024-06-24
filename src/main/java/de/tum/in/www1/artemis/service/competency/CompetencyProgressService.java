@@ -428,11 +428,6 @@ public class CompetencyProgressService {
      */
     public static double getMasteryProgress(@NotNull CompetencyProgress competencyProgress) {
         final double mastery = getMastery(competencyProgress);
-
-        if (competencyProgress.getCompetency().getMasteryThreshold() == 0) {
-            return mastery == 0 ? 0 : 1;
-        }
-
         return mastery / competencyProgress.getCompetency().getMasteryThreshold();
     }
 

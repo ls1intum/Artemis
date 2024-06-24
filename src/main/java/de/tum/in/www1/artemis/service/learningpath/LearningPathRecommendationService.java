@@ -507,7 +507,7 @@ public class LearningPathRecommendationService {
     }
 
     /**
-     * Analyzes the current progress within the learning path and generates a recommended ordering of learning objects in a competency.
+     * Analyzes the current progress within the learning path and generates a recommended ordering of uncompleted learning objects in a competency.
      *
      * @param user       the user that should be analyzed
      * @param competency the competency
@@ -520,7 +520,7 @@ public class LearningPathRecommendationService {
     }
 
     /**
-     * Analyzes the current progress within the learning path and generates a recommended ordering of learning objects in a competency.
+     * Analyzes the current progress within the learning path and generates a recommended ordering of uncompleted learning objects in a competency.
      *
      * @param user                    the user that should be analyzed
      * @param competency              the competency
@@ -734,8 +734,8 @@ public class LearningPathRecommendationService {
     }
 
     /**
-     * Gets the recommended order of learning objects for a competency. The finished lecture units and exercises are at the beginning of the list. After that all pending lecture
-     * units and exercises needed to master the competency are added.
+     * Gets the recommended order of learning objects for a competency. The finished lecture units and exercises are at the beginning of the list.
+     * After that all pending lecture units and exercises needed to master the competency are added.
      *
      * @param competencyId the id of the competency
      * @param user         the user for which the recommendation should be generated
@@ -759,6 +759,7 @@ public class LearningPathRecommendationService {
 
     /**
      * Computes the weighted confidence of a competency based on the progress of the user and the confidence of the prior competencies.
+     * With a higher progress in the current competency, the confidence of the prior competencies is weighted less.
      *
      * @param combinedPriorConfidence    the average confidence of all prior competencies
      * @param optionalCompetencyProgress the progress of the user within the competency
