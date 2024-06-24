@@ -1,13 +1,7 @@
 name: Analysis-of-Endpoint-Connections
 
 on:
-  pull_request:
-    types:
-      - opened
-      - synchronize
-    paths:
-      - 'src/main/java/**'
-      - 'src/main/webapp/**'
+  push:
 
 # Keep in sync with build.yml and test.yml and codeql-analysis.yml
 env:
@@ -16,7 +10,7 @@ env:
   java: 21
 
 jobs:
-  analysis-of-endpoint-connections:
+  parse-rest-calls-and-endpoints:
     timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
@@ -25,33 +19,60 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get list of modified files
-        run: |
-          git diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD > modified_files.txt
-
-      # Analyze the client sided REST-API calls
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '${{ env.node }}'
-
-      - name: Install and compile TypeScript
-        run: |
-          cd supporting_scripts/analysis-of-endpoint-connections/src/main/typeScript/
-          npm install
-          tsc -p tsconfig.analysisOfEndpointConnections.json
-
-      - name: Run analysis-of-endpoint-connections-client
-        run: |
-          node supporting_scripts/analysis-of-endpoint-connections/src/main/typeScript/AnalysisOfEndpointConnectionsClient.js $(cat modified_files.txt)
-
-      # Analyze the server sided endpoints
       - name: Set up JDK 21
         uses: actions/setup-java@v2
         with:
           java-version: '${{ env.java }}'
           distribution: 'adopt'
 
-      - name: Run analysis-of-endpoint-connections
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '${{ env.node }}'
+
+      - name: parse client sided REST-API calls
         run: |
-          ./gradlew :supporting_scripts:analysis-of-endpoint-connections:run --args="$(cat modified_files.txt)"
+          npm install
+          tsc -p supporting_scripts/analysis-of-endpoint-connections/parser/src/main/typeScript/tsconfig.analysisOfEndpointConnections.json
+          node supporting_scripts/analysis-of-endpoint-connections/parser/src/main/typeScript/AnalysisOfEndpointConnectionsClient.js
+
+      - name: parse server sided Endpoints
+        run: ./gradlew :supporting_scripts:analysis-of-endpoint-connections:parser:run
+
+      - name: Upload JSON files
+        uses: actions/upload-artifact@v4
+        with:
+          name: json-files
+          path: |
+            supporting_scripts/analysis-of-endpoint-connections/endpoints.json
+            supporting_scripts/analysis-of-endpoint-connections/restCalls.json
+
+  analysis-of-endpoint-connections:
+    needs: parse-rest-calls-and-endpoints
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '${{ env.java }}'
+          distribution: 'adopt'
+
+      - name: Download JSON files
+        uses: actions/download-artifact@v4
+        with:
+          name: json-files
+          path: supporting_scripts/analysis-of-endpoint-connections/
+
+      - name: Analyze Endpoints
+        run:
+          ./gradlew :supporting_scripts:analysis-of-endpoint-connections:endpointAnalysis:run
+
+      - name: Analyze Rest Calls
+        run:
+          ./gradlew :supporting_scripts:analysis-of-endpoint-connections:RestCallAnalysis:run

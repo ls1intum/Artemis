@@ -11,11 +11,11 @@ import {
     isParameter,
     isTypeReferenceNode, SyntaxKind, ClassDeclaration, CallExpression, ConstructorDeclaration,
 } from 'typescript';
-import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
 
 // Get the file names from the command line arguments
-const clientDirectory = '../../../../../src/main/webapp/app/';
+const clientDirectory = 'src/main/webapp/app/';
 const fileNames = getFilePaths(clientDirectory);
 
 let restCallFiles: Array<{fileName: string, restCalls: {method: string, url: string, line: number, filePath: string}[]}> = [];
@@ -42,8 +42,14 @@ for (const fileName of fileNames.filter(fileName => fileName.endsWith('.ts')))  
         restCallFiles.push({fileName: fileName, restCalls: restCalls});
 };
 
+const filePath = 'supporting_scripts/analysis-of-endpoint-connections/restCalls.json';
+
+// // Ensure the directory exists
+// mkdirSync(dirname(filePath), { recursive: true });
+
 // Write the restCalls array to a JSON file
-writeFileSync('../../../../../supporting_scripts/analysis-of-endpoint-connections/restCalls.json', JSON.stringify(restCallFiles, null, 2));
+writeFileSync(filePath, JSON.stringify(restCallFiles, null, 2));
+// writeFileSync('../../../../../supporting_scripts/analysis-of-endpoint-connections/restCalls.json', JSON.stringify(restCallFiles, null, 2));
 
 function getFilePaths(directoryPath: string): string[] {
     let filePaths: string[] = [];
@@ -167,13 +173,13 @@ function processCallExpression(callExpression: CallExpression, classProperties: 
  * @param fileName - The name of the TypeScript file.
  */
 function logRestCall(restCall: CallExpression, methodName: string, classProperties: { [key: string]: string }, sourceFile: SourceFile, fileName: string, restCalls: Array<{method: string, url: string, line: number, filePath: string}>) {
-    if (isFirstRestCall) {
-        console.log('===================================');
-        console.log('REST calls found in the following file: ' + fileName);
-        console.log('===================================');
-        isFirstRestCall = false;
-    }
-    console.log(`Found REST call: ${methodName}`);
+    // if (isFirstRestCall) {
+    //     console.log('===================================');
+    //     console.log('REST calls found in the following file: ' + fileName);
+    //     console.log('===================================');
+    //     isFirstRestCall = false;
+    // }
+    // console.log(`Found REST call: ${methodName}`);
     let url = '';
     if (restCall.arguments.length > 0) {
         url = restCall.arguments[0].getText();
@@ -181,17 +187,17 @@ function logRestCall(restCall: CallExpression, methodName: string, classProperti
         for (const prop in classProperties) {
             url = url.replace(new RegExp(`\\$\\{this.${prop}\\}`, 'g'), classProperties[prop]);
         }
-        console.log(`with URL: ${url}`);
-
-        // Log the other arguments
-        for (let i = 1; i < restCall.arguments.length; i++) {
-            console.log(`Argument ${i}: ${restCall.arguments[i].getText()}`);
-        }
+        // console.log(`with URL: ${url}`);
+        //
+        // // Log the other arguments
+        // for (let i = 1; i < restCall.arguments.length; i++) {
+        //     console.log(`Argument ${i}: ${restCall.arguments[i].getText()}`);
+        // }
     } else {
-        console.log('No arguments provided for this REST call');
+        // console.log('No arguments provided for this REST call');
     }
-    console.log(`At line: ${sourceFile.getLineAndCharacterOfPosition(restCall.getStart()).line + 1}`);
-    console.log('-----------------------------------');
+    // console.log(`At line: ${sourceFile.getLineAndCharacterOfPosition(restCall.getStart()).line + 1}`);
+    // console.log('-----------------------------------');
 
     let restCallInformation  = {
         method: methodName,
