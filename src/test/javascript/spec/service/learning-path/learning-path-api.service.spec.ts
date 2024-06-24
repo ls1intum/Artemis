@@ -1,5 +1,5 @@
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
-import { TestBed, waitForAsync } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { LearningObjectType } from 'app/entities/competency/learning-path.model';
 
@@ -26,41 +26,64 @@ describe('LearningPathApiService', () => {
         httpClient.verify();
     });
 
-    it('should get learning path id', waitForAsync(async () => {
+    it('should get learning path id', async () => {
         const courseId = 1;
 
         const methodCall = learningPathApiService.getLearningPathId(courseId);
-        httpClient.expectOne({ method: 'GET', url: `${baseUrl}/courses/${courseId}/learning-path-id` });
+        const response = httpClient.expectOne({ method: 'GET', url: `${baseUrl}/courses/${courseId}/learning-path-id` });
+        response.flush({});
         await methodCall;
-    }));
+    });
 
-    it('should get learning path navigation', waitForAsync(async () => {
+    it('should get learning path navigation', async () => {
         const learningObjectId = 2;
 
         const learningObjectType = LearningObjectType.LECTURE;
         const methodCall = learningPathApiService.getLearningPathNavigation(learningPathId, learningObjectId, learningObjectType);
-        httpClient.expectOne({
+        const response = httpClient.expectOne({
             method: 'GET',
             url: `${baseUrl}/learning-path/${learningPathId}/navigation?learningObjectId=${learningObjectId}&learningObjectType=${learningObjectType}`,
         });
+        response.flush({});
         await methodCall;
-    }));
+    });
 
-    it('should get learning path navigation overview', waitForAsync(async () => {
+    it('should get learning path navigation overview', async () => {
         const methodCall = learningPathApiService.getLearningPathNavigationOverview(learningPathId);
-        httpClient.expectOne({ method: 'GET', url: `${baseUrl}/learning-path/${learningPathId}/navigation-overview` });
+        const response = httpClient.expectOne({ method: 'GET', url: `${baseUrl}/learning-path/${learningPathId}/navigation-overview` });
+        response.flush({});
         await methodCall;
-    }));
+    });
 
-    it('should generate learning path', waitForAsync(async () => {
+    it('should generate learning path', async () => {
         const methodCall = learningPathApiService.generateLearningPath(courseId);
-        httpClient.expectOne({ method: 'POST', url: `${baseUrl}/courses/${courseId}/learning-path` });
+        const response = httpClient.expectOne({ method: 'POST', url: `${baseUrl}/courses/${courseId}/learning-path` });
+        response.flush({});
         await methodCall;
-    }));
+    });
 
-    it('should get learning path competency graph', waitForAsync(async () => {
+    it('should get learning path competency graph', async () => {
         const methodCall = learningPathApiService.getLearningPathCompetencyGraph(learningPathId);
-        httpClient.expectOne({ method: 'GET', url: `${baseUrl}/learning-path/${learningPathId}/competency-graph` });
+        const response = httpClient.expectOne({ method: 'GET', url: `${baseUrl}/learning-path/${learningPathId}/competency-graph` });
+        response.flush({});
         await methodCall;
-    }));
+    });
+
+    it('should get learning path competencies', async () => {
+        const methodCall = learningPathApiService.getLearningPathCompetencies(learningPathId);
+        const response = httpClient.expectOne({ method: 'GET', url: `${baseUrl}/learning-path/${learningPathId}/competencies` });
+        response.flush([]);
+        await methodCall;
+    });
+
+    it('should get learning path competency learning objects', async () => {
+        const competencyId = 3;
+        const methodCall = learningPathApiService.getLearningPathCompetencyLearningObjects(learningPathId, competencyId);
+        const response = httpClient.expectOne({
+            method: 'GET',
+            url: `${baseUrl}/learning-path/${learningPathId}/competencies/${competencyId}/learning-objects`,
+        });
+        response.flush([]);
+        await methodCall;
+    });
 });
