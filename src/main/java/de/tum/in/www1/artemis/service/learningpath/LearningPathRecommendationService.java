@@ -103,7 +103,7 @@ public class LearningPathRecommendationService {
     }
 
     /**
-     * Analyzes the current progress within the learning path and generates a recommended ordering of competencies.
+     * Analyzes the current progress within the learning path and generates a recommended ordering of the not yet mastered competencies.
      *
      * @param learningPath the learning path that should be analyzed
      * @return the state of the simulation including the recommended ordering of competencies
@@ -115,6 +115,12 @@ public class LearningPathRecommendationService {
         return state;
     }
 
+    /**
+     * Analyzes the current progress within the learning path and generates a recommended ordering of all competencies. The mastered competencies are at the start of the list.
+     *
+     * @param learningPath the learning path that should be analyzed
+     * @return the state of the simulation including the recommended ordering of competencies
+     */
     public List<Competency> getRecommendedOrderOfAllCompetencies(LearningPath learningPath) {
         RecommendationState state = generateInitialRecommendationState(learningPath);
         var masteredCompetencies = state.masteredCompetencies.stream().map(state.competencyIdMap::get).collect(Collectors.toSet());
