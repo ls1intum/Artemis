@@ -26,6 +26,7 @@ import { MockProfileService } from '../../helpers/mocks/service/mock-profile.ser
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('CloneRepoButtonComponent', () => {
     let component: CloneRepoButtonComponent;
@@ -89,6 +90,7 @@ describe('CloneRepoButtonComponent', () => {
                 MockPipe(SafeUrlPipe),
                 MockDirective(FeatureToggleDirective),
                 MockComponent(HelpIconComponent),
+                MockDirective(TranslateDirective),
             ],
             providers: [
                 MockProvider(AlertService),

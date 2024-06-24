@@ -7,7 +7,7 @@ import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.se
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -25,6 +25,7 @@ import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 
 import { of } from 'rxjs';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 const mockExercise: Exercise = {
     id: 1,
@@ -84,7 +85,7 @@ describe('ResultComponent', () => {
 
         await TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgbTooltipMocksModule],
-            declarations: [ResultComponent, TranslatePipeMock, MockPipe(ArtemisDatePipe), MockPipe(ArtemisTimeAgoPipe)],
+            declarations: [ResultComponent, TranslatePipeMock, MockPipe(ArtemisDatePipe), MockPipe(ArtemisTimeAgoPipe), MockDirective(TranslateDirective)],
             providers: [
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: ParticipationService, useValue: participationServiceMock },
