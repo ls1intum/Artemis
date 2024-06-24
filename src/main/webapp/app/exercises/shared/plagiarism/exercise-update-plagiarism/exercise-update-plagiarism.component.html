@@ -1,12 +1,11 @@
 <div class="form-group col-auto border border-warning p-3">
     <!-- Toggle Button -->
-    <button type="button" class="btn btn-secondary me-1" (click)="isCPCCollapsed = !isCPCCollapsed">
-        {{
-            isCPCCollapsed
-                ? ('artemisApp.plagiarism.showContinuousPlagiarismControl' | artemisTranslate)
-                : ('artemisApp.plagiarism.hideContinuousPlagiarismControl' | artemisTranslate)
-        }}
-    </button>
+    <button
+        type="button"
+        class="btn btn-secondary me-1"
+        (click)="isCPCCollapsed = !isCPCCollapsed"
+        jhiTranslate="{{ isCPCCollapsed ? 'artemisApp.plagiarism.showContinuousPlagiarismControl' : 'artemisApp.plagiarism.hideContinuousPlagiarismControl' }}"
+    ></button>
     <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.continuousPlagiarismControlTooltip' | artemisTranslate" />
     <span class="badge rounded-pill text-bg-warning ms-1">BETA</span>
     <div class="row" [hidden]="isCPCCollapsed">

@@ -39,27 +39,36 @@
                             jhiTranslate="artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.settings"
                         ></button>
                     }
-                    <button class="favorite" ngbDropdownItem (click)="onFavoriteClicked($event)">
-                        {{
+                    <button
+                        class="favorite"
+                        ngbDropdownItem
+                        (click)="onFavoriteClicked($event)"
+                        jhiTranslate="{{
                             conversation.isFavorite
-                                ? ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.unfavorite' | artemisTranslate)
-                                : ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.favorite' | artemisTranslate)
-                        }}
-                    </button>
-                    <button class="mute" ngbDropdownItem (click)="onMuteClicked($event)">
-                        {{
+                                ? 'artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.unfavorite'
+                                : 'artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.favorite'
+                        }}"
+                    ></button>
+                    <button
+                        class="mute"
+                        ngbDropdownItem
+                        (click)="onMuteClicked($event)"
+                        jhiTranslate="{{
                             conversation.isMuted
-                                ? ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.unmute' | artemisTranslate)
-                                : ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.mute' | artemisTranslate)
-                        }}
-                    </button>
-                    <button class="hide" ngbDropdownItem (click)="onHiddenClicked($event)">
-                        {{
+                                ? 'artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.unmute'
+                                : 'artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.mute'
+                        }}"
+                    ></button>
+                    <button
+                        class="hide"
+                        ngbDropdownItem
+                        (click)="onHiddenClicked($event)"
+                        jhiTranslate="{{
                             conversation.isHidden
-                                ? ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.show' | artemisTranslate)
-                                : ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.hide' | artemisTranslate)
-                        }}
-                    </button>
+                                ? 'artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.show'
+                                : 'artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.hide'
+                        }}"
+                    ></button>
                 </div>
             </div>
         </div>

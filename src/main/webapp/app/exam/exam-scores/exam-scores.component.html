@@ -180,9 +180,7 @@
                     </tr>
                     @if (gradingScaleExists) {
                         <tr>
-                            <th scope="row">
-                                {{ isBonus ? ('artemisApp.examScores.averageBonusColumn' | artemisTranslate) : ('artemisApp.examScores.averageGradeColumn' | artemisTranslate) }}
-                            </th>
+                            <th scope="row" jhiTranslate="{{ isBonus ? 'artemisApp.examScores.averageBonusColumn' : 'artemisApp.examScores.averageGradeColumn' }}"></th>
                             @if (!isBonus) {
                                 <td>{{ aggregatedExamResults.meanGradePassed !== null ? aggregatedExamResults.meanGradePassed : '-' }}</td>
                             }
@@ -252,9 +250,7 @@
                     </tr>
                     @if (gradingScaleExists) {
                         <tr>
-                            <th scope="row">
-                                {{ isBonus ? ('artemisApp.examScores.medianBonusColumn' | artemisTranslate) : ('artemisApp.examScores.medianGradeColumn' | artemisTranslate) }}
-                            </th>
+                            <th scope="row" jhiTranslate="{{ isBonus ? 'artemisApp.examScores.medianBonusColumn' : 'artemisApp.examScores.medianGradeColumn' }}"></th>
                             @if (!isBonus) {
                                 <td>{{ aggregatedExamResults.medianGradePassed !== null ? aggregatedExamResults.medianGradePassed : '-' }}</td>
                             }

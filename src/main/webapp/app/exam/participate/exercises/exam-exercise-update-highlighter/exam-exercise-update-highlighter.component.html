@@ -3,8 +3,5 @@
     class="btn py-0 px-2 mt-0 mb-0 ms-2"
     [hidden]="previousProblemStatementUpdate === undefined || isHidden"
     (click)="toggleHighlightedProblemStatement($event)"
->
-    {{
-        showHighlightedDifferences ? ('artemisApp.exam.problemStatementUpdate.showNew' | artemisTranslate) : ('artemisApp.exam.problemStatementUpdate.showDiff' | artemisTranslate)
-    }}
-</button>
+    jhiTranslate="{{ showHighlightedDifferences ? 'artemisApp.exam.problemStatementUpdate.showNew' : 'artemisApp.exam.problemStatementUpdate.showDiff' }}"
+></button>
