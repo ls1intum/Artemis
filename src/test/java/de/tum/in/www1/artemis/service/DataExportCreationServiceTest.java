@@ -68,6 +68,7 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.science.ScienceUtilService;
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
 import de.tum.in.www1.artemis.service.export.DataExportCreationService;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -103,6 +104,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
 
     @Autowired
     private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ScienceUtilService scienceUtilService;
 
     @Autowired
     private ExamRepository examRepository;
@@ -183,7 +187,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         boolean assessmentDueDateInTheFuture = false;
         var course = prepareCourseDataForDataExportCreation(assessmentDueDateInTheFuture, "short");
         createCommunicationData(TEST_PREFIX + "student1", course);
-        createScienceEvents(TEST_PREFIX + "student1", course);
+        createScienceEvents(TEST_PREFIX + "student1");
         var dataExport = initDataExport();
         dataExportCreationService.createDataExport(dataExport);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
@@ -290,10 +294,10 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         exerciseUtilService.createPlagiarismCaseForUserForExercise(exercises.get(1), userUtilService.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.WARNING);
     }
 
-    private void createScienceEvents(String userLogin, Course course) {
-        exerciseUtilService.createScienceEvent(userLogin, ScienceEventType.EXERCISE__OPEN, 1L);
-        exerciseUtilService.createScienceEvent(userLogin, ScienceEventType.LECTURE__OPEN, 2L);
-        exerciseUtilService.createScienceEvent(userLogin, ScienceEventType.LECTURE__OPEN_UNIT, 3L);
+    private void createScienceEvents(String userLogin) {
+        scienceUtilService.createScienceEvent(userLogin, ScienceEventType.EXERCISE__OPEN, 1L);
+        scienceUtilService.createScienceEvent(userLogin, ScienceEventType.LECTURE__OPEN, 2L);
+        scienceUtilService.createScienceEvent(userLogin, ScienceEventType.LECTURE__OPEN_UNIT, 3L);
     }
 
     private Exam prepareExamDataForDataExportCreation(String courseShortName) throws Exception {

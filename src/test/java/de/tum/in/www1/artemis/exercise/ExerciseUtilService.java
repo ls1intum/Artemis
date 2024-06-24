@@ -39,8 +39,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
-import de.tum.in.www1.artemis.domain.science.ScienceEvent;
-import de.tum.in.www1.artemis.domain.science.ScienceEventType;
 import de.tum.in.www1.artemis.exercise.fileupload.FileUploadExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.modeling.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
@@ -57,7 +55,6 @@ import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
-import de.tum.in.www1.artemis.repository.science.ScienceEventRepository;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
@@ -114,9 +111,6 @@ public class ExerciseUtilService {
 
     @Autowired
     private ConversationUtilService conversationUtilService;
-
-    @Autowired
-    private ScienceEventRepository scienceEventRepository;
 
     /**
      * Sets the max points of an exercise to 100 and sets bonus points to 10. IncludedInOverallScore of the exercise is set to INCLUDED_COMPLETELY.
@@ -477,22 +471,6 @@ public class ExerciseUtilService {
             plagiarismCase.setVerdictPointDeduction(1);
         }
         plagiarismCaseRepository.save(plagiarismCase);
-    }
-
-    /**
-     * Creates a science event with the passed type and resource id.
-     *
-     * @param principal  The login of the user associated with the event.
-     * @param type       The type of the event.
-     * @param resourceId The id of the resource associated with the event.
-     */
-    public void createScienceEvent(String principal, ScienceEventType type, Long resourceId) {
-        ScienceEvent event = new ScienceEvent();
-        event.setIdentity(principal);
-        event.setTimestamp(ZonedDateTime.now());
-        event.setType(type);
-        event.setResourceId(resourceId);
-        scienceEventRepository.save(event);
     }
 
     /**
