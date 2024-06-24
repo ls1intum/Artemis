@@ -1,4 +1,4 @@
-import { AfterContentInit, AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
+import { AfterContentInit, AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, Output, Signal, ViewChild, computed } from '@angular/core';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { NgbNavChangeEvent } from '@ng-bootstrap/ng-bootstrap';
@@ -132,8 +132,19 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         meta: [],
     };
 
-    readonly markdownColors = ['#ca2024', '#3ea119', '#ffffff', '#000000', '#fffa5c', '#0d3cc2', '#b05db8', '#d86b1f'];
-    readonly markdownColorNames = ['red', 'green', 'white', 'black', 'yellow', 'blue', 'lila', 'orange'];
+    readonly colorToClassMap = new Map<string, string>([
+        ['#ca2024', 'red'],
+        ['#3ea119', 'green'],
+        ['#ffffff', 'white'],
+        ['#000000', 'black'],
+        ['#fffa5c', 'yellow'],
+        ['#0d3cc2', 'blue'],
+        ['#b05db8', 'lila'],
+        ['#d86b1f', 'orange'],
+    ]);
+
+    colorSignal: Signal<string[]> = computed(() => [...this.colorToClassMap.keys()]);
+
     readonly colorPickerMarginTop = 35;
     readonly colorPickerHeight = 110;
 
@@ -345,9 +356,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * @param color The hex code of the selected color.
      */
     onSelectColor(color: string): void {
-        // Map the hex code to the color name.
-        const index = this.markdownColors.indexOf(color);
-        const colorName = this.markdownColorNames[index];
+        const colorName = this.colorToClassMap.get(color);
         if (colorName) {
             this.colorAction?.executeInCurrentEditor({ color: colorName });
         }

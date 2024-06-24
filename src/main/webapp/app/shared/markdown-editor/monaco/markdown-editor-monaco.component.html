@@ -76,7 +76,7 @@
                     @if (displayedActions.color) {
                         <div class="btn-group col-xs-6">
                             <div class="color-preview btn btn-sm px-2 py-0" (click)="openColorSelector($event)" [jhiTranslate]="displayedActions.color.translationKey"></div>
-                            <jhi-color-selector [tagColors]="markdownColors" (selectedColor)="onSelectColor($event)" />
+                            <jhi-color-selector [tagColors]="colorSignal()" (selectedColor)="onSelectColor($event)" />
                         </div>
                     }
                     <!-- Domain (without options) -->

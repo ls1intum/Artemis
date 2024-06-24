@@ -171,9 +171,11 @@ describe('MarkdownEditorMonacoComponent', () => {
         comp.colorAction = new MonacoColorAction();
         fixture.detectChanges();
         const executeInCurrentEditorStub = jest.spyOn(comp.colorAction, 'executeInCurrentEditor').mockImplementation();
-        for (let i = 0; i < comp.markdownColors.length; i++) {
-            comp.onSelectColor(comp.markdownColors[i]);
-            expect(executeInCurrentEditorStub).toHaveBeenNthCalledWith(i + 1, { color: comp.markdownColorNames[i] });
+        const markdownColors = comp.colorSignal();
+        for (let i = 0; i < markdownColors.length; i++) {
+            const color = markdownColors[i];
+            comp.onSelectColor(color);
+            expect(executeInCurrentEditorStub).toHaveBeenNthCalledWith(i + 1, { color: comp.colorToClassMap.get(color) });
         }
     });
 });
