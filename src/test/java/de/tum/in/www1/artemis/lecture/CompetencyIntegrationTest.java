@@ -688,7 +688,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
             User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
             lectureUnitService.setLectureUnitCompletion(textUnitRepository.findById(idOfTextUnitOfLectureOne).orElseThrow(), student1, true);
 
-            createTextExerciseParticipationSubmissionAndResult(textExercise, student1, 10.0, 0.0, 90, true);  // will be ignored in favor of last submission from team
+            createTextExerciseParticipationSubmissionAndResult(textExercise, student1, 10.0, 0.0, 90, true);
             createTextExerciseParticipationSubmissionAndResult(textExercise, student1, 10.0, 0.0, 85, false);
 
             await().until(() -> participantScoreScheduleService.isIdle());
