@@ -91,10 +91,10 @@
                                 }
                             </td>
                             <td class="d-md-table-cell">
-                                <span>{{ (examUser?.started ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>
+                                <span jhiTranslate="{{ examUser?.started ? 'global.generic.yes' : 'global.generic.no' }}"></span>
                             </td>
                             <td class="d-md-table-cell">
-                                <span>{{ (examUser?.submitted ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>
+                                <span jhiTranslate="{{ examUser?.submitted ? 'global.generic.yes' : 'global.generic.no' }}"></span>
                             </td>
                         </tr>
                     }

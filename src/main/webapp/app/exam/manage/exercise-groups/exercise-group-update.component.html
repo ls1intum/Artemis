@@ -1,5 +1,5 @@
 <div>
-    <h4>{{ (exerciseGroup.id ? 'artemisApp.examManagement.exerciseGroup.update' : 'artemisApp.examManagement.exerciseGroup.create') | artemisTranslate }}</h4>
+    <h4 jhiTranslate="{{ exerciseGroup.id ? 'artemisApp.examManagement.exerciseGroup.update' : 'artemisApp.examManagement.exerciseGroup.create' }}"></h4>
     <form name="editForm" role="form" #editForm="ngForm" (ngSubmit)="save()">
         <div class="form-group">
             <label class="form-check-label" for="title" jhiTranslate="artemisApp.examManagement.exerciseGroup.title"></label>

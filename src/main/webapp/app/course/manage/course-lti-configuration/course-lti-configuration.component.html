@@ -25,7 +25,7 @@
                     <span jhiTranslate="artemisApp.lti.requireExistingUser"></span>
                 </dt>
                 <dd>
-                    <span>{{ (onlineCourseConfiguration?.requireExistingUser ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>
+                    <span jhiTranslate="{{ onlineCourseConfiguration?.requireExistingUser ? 'global.generic.yes' : 'global.generic.no' }}"></span>
                 </dd>
                 <div class="form-group">
                     <dt>

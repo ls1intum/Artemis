@@ -84,8 +84,8 @@
                                 <a> {{ testRun.user?.name || '--' }}</a>
                             </td>
                             <td class="working-time">{{ testRun.workingTime || 0 | artemisDurationFromSeconds }}</td>
-                            <td class="started">{{ (testRun.started ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
-                            <td class="submitted">{{ (testRun.submitted ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
+                            <td class="started" jhiTranslate="{{ testRun.started ? 'global.generic.yes' : 'global.generic.no' }}"></td>
+                            <td class="submitted" jhiTranslate="{{ testRun.submitted ? 'global.generic.yes' : 'global.generic.no' }}"></td>
                             <td>{{ testRun.submissionDate | artemisDate }}</td>
                             <td [width]="350">
                                 <div class="w-100 text-end">

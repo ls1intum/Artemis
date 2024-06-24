@@ -34,9 +34,9 @@
         <div class="d-flex flex-row justify-content-center">
             <div id="toggleAdvancedSearch" class="clickable" (click)="toggleAdvancedSearch()">
                 <fa-icon [icon]="advancedSearchEnabled ? faChevronUp : faChevronDown" />
-                <span>{{
-                    (advancedSearchEnabled ? 'artemisApp.competency.import.search.hideAdvancedSearch' : 'artemisApp.competency.import.search.showAdvancedSearch') | artemisTranslate
-                }}</span>
+                <span
+                    jhiTranslate="{{ advancedSearchEnabled ? 'artemisApp.competency.import.search.hideAdvancedSearch' : 'artemisApp.competency.import.search.showAdvancedSearch' }}"
+                ></span>
             </div>
         </div>
     </div>

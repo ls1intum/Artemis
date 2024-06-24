@@ -14,10 +14,11 @@
                 }
                 <th jhiTranslate="artemisApp.entities.tutorialGroupSession.date"></th>
                 <th>
-                    <span>{{
-                        (tutorialGroup.isOnline ? 'artemisApp.forms.scheduleForm.locationInput.labelOnline' : 'artemisApp.forms.scheduleForm.locationInput.labelOffline')
-                            | artemisTranslate
-                    }}</span>
+                    <span
+                        jhiTranslate="{{
+                            tutorialGroup.isOnline ? 'artemisApp.forms.scheduleForm.locationInput.labelOnline' : 'artemisApp.forms.scheduleForm.locationInput.labelOffline'
+                        }}"
+                    ></span>
                 </th>
                 <th class="attendance-column" id="attendanceHeader" jhiTranslate="artemisApp.entities.tutorialGroupSession.attendance"></th>
                 @if (tutorialGroup.tutorialGroupSchedule) {

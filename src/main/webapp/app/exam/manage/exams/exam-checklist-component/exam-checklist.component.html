@@ -64,12 +64,13 @@
                                                 (exam.numberOfExercisesInExam ?? 0) <= exam.exerciseGroups.length
                                             "
                                         />
-                                        <span>{{
-                                            (!hasOptionalExercises
-                                                ? 'artemisApp.examManagement.checklist.textitems.numberofexercisegroupsequal'
-                                                : 'artemisApp.examManagement.checklist.textitems.numberofexercisegroupsinbetween'
-                                            ) | artemisTranslate
-                                        }}</span>
+                                        <span
+                                            jhiTranslate="{{
+                                                !hasOptionalExercises
+                                                    ? 'artemisApp.examManagement.checklist.textitems.numberofexercisegroupsequal'
+                                                    : 'artemisApp.examManagement.checklist.textitems.numberofexercisegroupsinbetween'
+                                            }}"
+                                        ></span>
                                     </span>
                                 </li>
                                 <li class="list-group-item border-1">
