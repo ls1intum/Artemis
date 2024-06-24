@@ -67,12 +67,8 @@
 <!-- ngIf Offline IDE clone button start -->
 @if (!exercise.allowOnlineEditor && exercise.allowOfflineIde) {
     <div>
-        <jhi-exercise-details-student-actions [exercise]="exercise" [courseId]="courseId" [examMode]="true" />
         <div class="d-flex gap-3 my-3 ms-1 align-items-center">
-            <jhi-programming-submission-policy-status [exercise]="exercise" [submissionCount]="submissionCount" class="flex-grow-1" />
-            @if (repositoryIsLocked) {
-                <jhi-code-editor-repository-is-locked class="me-3" />
-            }
+            <jhi-exercise-details-student-actions [exercise]="exercise" [courseId]="courseId" [examMode]="true" />
             @if (studentParticipation) {
                 <jhi-updating-result
                     [exercise]="exercise"
@@ -82,6 +78,12 @@
                     [personalParticipation]="true"
                     class="me-2"
                 />
+            }
+        </div>
+        <div class="d-flex gap-3 my-3 ms-1 align-items-center">
+            <jhi-programming-submission-policy-status [exercise]="exercise" [submissionCount]="submissionCount" class="flex-grow-1" />
+            @if (repositoryIsLocked) {
+                <jhi-code-editor-repository-is-locked class="me-3" />
             }
         </div>
         @if (exercise) {
