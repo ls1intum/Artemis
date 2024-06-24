@@ -162,7 +162,5 @@ Bamboo will ask you again to confirm, similarly to the create release workflow. 
     a) Have another PR to test? Start over with step 1. Obviously leave out the slack part as you already reserved the test server for you.
 
     b) Are you done? Release the test server so it can be used by others by **striking through** your previous lock message.
-        For example, edit your "ts1" message to :strike:`"ts1"`.
-
 
 
