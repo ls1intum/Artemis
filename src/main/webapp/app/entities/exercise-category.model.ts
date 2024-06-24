@@ -5,4 +5,8 @@ export class ExerciseCategory {
     public category?: string;
 
     constructor() {}
+
+    // TODO add compare function here to be used for sort
+
+    // TODO add equals function
 }
