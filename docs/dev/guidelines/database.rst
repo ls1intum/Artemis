@@ -226,48 +226,49 @@ An example implementation could look like this:
     }
 
     @Query("""
-                SELECT DISTINCT user
-                FROM User user
-                JOIN user.groups userGroup
-                JOIN Course course ON course.id = :courseId
-                WHERE user.isDeleted = FALSE
-                  AND (
-                      user.login LIKE :#{#loginOrName}%
-                      OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-                  )
-                  AND (course.studentGroupName = userGroup
-                       OR course.teachingAssistantGroupName = userGroup
-                       OR course.editorGroupName = userGroup
-                       OR course.instructorGroupName = userGroup
-                  )
-                """)
+            SELECT DISTINCT user
+            FROM User user
+            JOIN user.groups userGroup
+            JOIN Course course ON course.id = :courseId
+            WHERE user.isDeleted = FALSE
+                AND (
+                    user.login LIKE :#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                 )
+                AND (course.studentGroupName = userGroup
+                    OR course.teachingAssistantGroupName = userGroup
+                    OR course.editorGroupName = userGroup
+                    OR course.instructorGroupName = userGroup
+                 )
+            """)
         List<User> findUserIdsByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, Pageable pageable);
 
     @Query("""
-                SELECT DISTINCT user
-                FROM User user
-                LEFT JOIN FETCH user.groups userGroup
-                WHERE user.id IN :ids
-                """)
+            SELECT DISTINCT user
+            FROM User user
+            LEFT JOIN FETCH user.groups userGroup
+            WHERE user.id IN :ids
+            """)
         List<User> findUsersWithGroupsByIds(@Param("ids") List<Long> ids);
 
-        @Query("""
-                    SELECT COUNT(DISTINCT user)
-                    FROM User user
-                    JOIN user.groups userGroup
-                    JOIN Course course ON course.id = :courseId
-                    WHERE user.isDeleted = FALSE
-                      AND (
-                          user.login LIKE :#{#loginOrName}%
-                          OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-                      )
-                      AND (course.studentGroupName = userGroup
-                           OR course.teachingAssistantGroupName = userGroup
-                           OR course.editorGroupName = userGroup
-                           OR course.instructorGroupName = userGroup
-                      )
-                    """)
-            long countUsersByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId);
+    @Query("""
+            SELECT COUNT(DISTINCT user)
+            FROM User user
+            JOIN user.groups userGroup
+            JOIN Course course ON course.id = :courseId
+            WHERE user.isDeleted = FALSE
+                AND (
+                    user.login LIKE :#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                 )
+                AND (
+                    course.studentGroupName = userGroup
+                    OR course.teachingAssistantGroupName = userGroup
+                    OR course.editorGroupName = userGroup
+                    OR course.instructorGroupName = userGroup
+                 )
+            """)
+        long countUsersByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId);
 
 
 

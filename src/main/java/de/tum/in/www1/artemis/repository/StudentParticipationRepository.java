@@ -648,15 +648,15 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             SELECT p.id
             FROM StudentParticipation p
             WHERE p.exercise.id = :exerciseId
-              AND (
-                  p.student.firstName LIKE %:partialStudentName%
-                  OR p.student.lastName LIKE %:partialStudentName%
-              ) AND EXISTS (
-                  SELECT 1
-                  FROM Result r
-                  WHERE r.participation.id = p.id
+                AND (
+                    p.student.firstName LIKE %:partialStudentName%
+                    OR p.student.lastName LIKE %:partialStudentName%
+                 ) AND EXISTS (
+                    SELECT 1
+                    FROM Result r
+                    WHERE r.participation.id = p.id
                     AND r.completionDate IS NOT NULL
-              )
+                 )
             """)
     List<Long> findIdsByExerciseIdAndStudentName(@Param("exerciseId") long exerciseId, @Param("partialStudentName") String partialStudentName, Pageable pageable);
 
@@ -667,15 +667,15 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             SELECT COUNT(p)
             FROM StudentParticipation p
             WHERE p.exercise.id = :exerciseId
-              AND (
-                  p.student.firstName LIKE %:partialStudentName%
-                  OR p.student.lastName LIKE %:partialStudentName%
-              ) AND EXISTS (
-                  SELECT 1
-                  FROM Result r
-                  WHERE r.participation.id = p.id
+                AND (
+                    p.student.firstName LIKE %:partialStudentName%
+                    OR p.student.lastName LIKE %:partialStudentName%
+                 ) AND EXISTS (
+                    SELECT 1
+                    FROM Result r
+                    WHERE r.participation.id = p.id
                     AND r.completionDate IS NOT NULL
-              )
+             )
             """)
     long countByExerciseIdAndStudentName(@Param("exerciseId") long exerciseId, @Param("partialStudentName") String partialStudentName);
 

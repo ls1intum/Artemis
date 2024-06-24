@@ -79,10 +79,10 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
             JOIN s.participation p
             JOIN p.exercise e
             WHERE p.id = :participationId
-              AND (s.type = de.tum.in.www1.artemis.domain.enumeration.SubmissionType.INSTRUCTOR
-                   OR s.type = de.tum.in.www1.artemis.domain.enumeration.SubmissionType.TEST
-                   OR e.dueDate IS NULL
-                   OR s.submissionDate <= e.dueDate)
+                AND (s.type = de.tum.in.www1.artemis.domain.enumeration.SubmissionType.INSTRUCTOR
+                    OR s.type = de.tum.in.www1.artemis.domain.enumeration.SubmissionType.TEST
+                    OR e.dueDate IS NULL
+                    OR s.submissionDate <= e.dueDate)
             ORDER BY s.submissionDate DESC
             """)
     List<ProgrammingSubmissionAndSubmissionDate> findSubmissionIdsAndDatesByParticipationId(@Param("participationId") long participationId, Pageable pageable);

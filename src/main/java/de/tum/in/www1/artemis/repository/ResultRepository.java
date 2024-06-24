@@ -69,8 +69,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     @Query("""
             SELECT DISTINCT r
             FROM Result r
-                LEFT JOIN r.feedbacks f
-                LEFT JOIN f.testCase
                 LEFT JOIN TREAT (r.participation AS ProgrammingExerciseStudentParticipation) sp
             WHERE r.completionDate = (
                     SELECT MAX(rr.completionDate)
@@ -84,7 +82,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND sp.student IS NOT NULL
             ORDER BY r.completionDate ASC
             """)
-    List<Result> findLatestResultsForExercise(@Param("exerciseId") long exerciseId);
+    List<Result> findLatestAutomaticResultsForExercise(@Param("exerciseId") long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "feedbacks.testCase" })
     List<Result> findResultsWithFeedbacksAndTestCaseByIdIn(List<Long> ids);
@@ -96,7 +94,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      * @return a list of results.
      */
     default List<Result> findLatestAutomaticResultsWithEagerFeedbacksTestCasesForExercise(long exerciseId) {
-        List<Long> ids = findLatestResultsForExercise(exerciseId).stream().map(DomainObject::getId).toList();
+        List<Long> ids = findLatestAutomaticResultsForExercise(exerciseId).stream().map(DomainObject::getId).toList();
 
         if (ids.isEmpty()) {
             return Collections.emptyList();
