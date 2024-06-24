@@ -18,37 +18,37 @@ Test Servers
 |                                            | - Sending E-Mails possible  |                |                     |                |
 |                                            | - MySQL                     |                |                     |                |
 +--------------------------------------------+-----------------------------+----------------+---------------------+----------------+
-| https://artemis-test1.artemis.cit.tum.de           | - Integrated Code Lifecycle |     GitHub     | - TUMonline account |    On Demand   |
+| https://artemis-test1.artemis.cit.tum.de   | - Integrated Code Lifecycle |     GitHub     | - TUMonline account |    On Demand   |
 |                                            | - MySQL                     |                | - Test accounts     |                |
 |                                            | - 3 Nodes                   |                |                     |                |
 |                                            | - Iris                      |                |                     |                |
 |                                            | - LTI                       |                |                     |                |
 +--------------------------------------------+-----------------------------+----------------+---------------------+----------------+
-| https://artemis-test2.artemis.cit.tum.de           | - Integrated Code Lifecycle |     GitHub     | - TUMonline account |    On Demand   |
+| https://artemis-test2.artemis.cit.tum.de   | - Integrated Code Lifecycle |     GitHub     | - TUMonline account |    On Demand   |
 |                                            | - MySQL                     |                | - Test accounts     |                |
 |                                            | - 1 Node                    |                |                     |                |
 |                                            | - LTI                       |                |                     |                |
 +--------------------------------------------+-----------------------------+----------------+---------------------+----------------+
-| https://artemis-test3.artemis.cit.tum.de           | - Integrated Code Lifecycle |     GitHub     | - TUMonline account |    On Demand   |
+| https://artemis-test3.artemis.cit.tum.de   | - Integrated Code Lifecycle |     GitHub     | - TUMonline account |    On Demand   |
 |                                            | - Postgres                  |                | - Test accounts     |                |
 |                                            | - 3 Nodes                   |                |                     |                |
 |                                            | - Iris                      |                |                     |                |
 |                                            | - LTI                       |                |                     |                |
 +--------------------------------------------+-----------------------------+----------------+---------------------+----------------+
-| https://artemis-test4.artemis.cit.tum.de           | - Integrated Code Lifecycle |     GitHub     | - TUMonline account |    On Demand   |
+| https://artemis-test4.artemis.cit.tum.de   | - Integrated Code Lifecycle |     GitHub     | - TUMonline account |    On Demand   |
 |                                            | - LDAP                      |                | - Test accounts     |                |
 |                                            | - LTI                       |                |                     |                |
 |                                            | - Apollon                   |                |                     |                |
 |                                            | - Iris                      |                |                     |                |
 |                                            | - MySQL                     |                |                     |                |
 +--------------------------------------------+-----------------------------+----------------+---------------------+----------------+
-| https://artemis-test5.artemis.cit.tum.de           | - Integrated Code Lifecycle |     GitHub     | - TUMonline account |    On Demand   |
+| https://artemis-test5.artemis.cit.tum.de   | - Integrated Code Lifecycle |     GitHub     | - TUMonline account |    On Demand   |
 |                                            | - Postgres                  |                | - Test accounts     |                |
 |                                            | - 1 Node                    |                |                     |                |
 |                                            | - Iris                      |                |                     |                |
 |                                            | - LTI                       |                |                     |                |
 +--------------------------------------------+-----------------------------+----------------+---------------------+----------------+
-| https://artemis-test6.artemis.cit.tum.de           | - GitlabCI                  |     GitHub     | - TUMonline account |    On Demand   |
+| https://artemis-test6.artemis.cit.tum.de   | - GitlabCI                  |     GitHub     | - TUMonline account |    On Demand   |
 |                                            | - Postgres                  |                | - Test accounts     |                |
 |                                            | - 1 Node                    |                |                     |                |
 |                                            | - LTI                       |                |                     |                |
