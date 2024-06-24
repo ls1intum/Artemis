@@ -53,7 +53,7 @@ Test Servers
 |                                            | - 1 Node                    |                |                     |                |
 |                                            | - LTI                       |                |                     |                |
 +--------------------------------------------+-----------------------------+----------------+---------------------+----------------+
-| **Legacy Testservers**: See on confluence below                                                                                      |
+| **Legacy Testservers**: See on confluence below                                                                                  |
 +--------------------------------------------+-----------------------------+----------------+---------------------+----------------+
 
 Test Accounts can be seen on the `Artemis Test Server Confluence Page`_.
