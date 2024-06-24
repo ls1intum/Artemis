@@ -27,6 +27,8 @@ export class CodeEditorInstructorAndEditorOrionContainerComponent extends CodeEd
     faCircleNotch = faCircleNotch;
     faTimesCircle = faTimesCircle;
 
+    protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
+
     constructor(
         private orionConnectorService: OrionConnectorService,
         private orionBuildAndTestService: OrionBuildAndTestService,
@@ -77,6 +79,4 @@ export class CodeEditorInstructorAndEditorOrionContainerComponent extends CodeEd
         this.orionConnectorService.isBuilding(true);
         this.orionConnectorService.buildAndTestLocally();
     }
-
-    protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 }
