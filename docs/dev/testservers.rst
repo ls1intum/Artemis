@@ -59,7 +59,7 @@ Test Accounts can be seen on the `Artemis Test Server Confluence Page`_.
 ..  _`Artemis Test Server Confluence Page`: https://confluence.ase.in.tum.de/x/lVGBAQ
 
 GitHub Deployment
----------------
+-----------------
 
 1. In your Pull Request on GitHub, scroll all the way down to the build status.
     .. figure:: testservers/pr-build-status.png
@@ -98,7 +98,7 @@ GitHub Deployment
         :alt: GitHub Actions UI: Remove lock label
 
 Bamboo Deployment
----------------
+-----------------
 1. In your Pull Request on GitHub, scroll all the way down to the build status.
     .. figure:: testservers/pr-build-status.png
         :alt: GitHub UI: Build status
