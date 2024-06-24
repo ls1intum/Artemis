@@ -236,7 +236,7 @@ describe('QuizExercise Service', () => {
             'test',
             2,
         ],
-    ])('should export a quiz (%#)', async (questions, exportAll, filename, count) => {
+    ])('should export a quiz with no assets as json (%#)', async (questions, exportAll, filename, count) => {
         const spy = jest.spyOn(downloadUtil, 'downloadFile').mockReturnValue();
         service.exportQuiz(questions, exportAll, filename);
 
@@ -320,6 +320,8 @@ describe('QuizExercise Service', () => {
 
     it('should not try to fetch files if there are no images to export', async () => {
         const spy = jest.spyOn(service, 'fetchFilePromise').mockResolvedValue();
+        const spyDownload = jest.spyOn(downloadUtil, 'downloadFile').mockReturnValue();
+
         const questions: QuizQuestion[] = [
             {
                 type: QuizQuestionType.SHORT_ANSWER,
@@ -341,6 +343,7 @@ describe('QuizExercise Service', () => {
         ];
         service.exportAssetsFromAllQuestions(questions, 'output.zip');
         expect(spy).not.toHaveBeenCalled();
+        expect(spyDownload).toHaveBeenCalled();
     });
     it('should throw an error if file fails to fetch', async () => {
         const fileName = 'mockFile.png';
