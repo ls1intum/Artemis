@@ -67,6 +67,7 @@ public interface CompetencyRepository extends ArtemisJpaRepository<Competency, L
      * The complex grouping by is necessary for postgres
      *
      * @param competencyId the id of the competency for which to fetch the exercise information
+     * @param user         the user for which to fetch the exercise information
      * @return the exercise information for the calculation of the mastery in the competency
      */
     @Query("""
