@@ -47,10 +47,12 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
                     log.debug("Found user {} for public key authentication", user.get().getLogin());
                     session.setAttribute(SshConstants.USER_KEY, user.get());
                     return true;
-                } else {
+                }
+                else {
                     log.warn("Public key mismatch for user {}", user.get().getLogin());
                 }
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 log.error("Failed to convert stored public key string to PublicKey object", e);
             }
         }
