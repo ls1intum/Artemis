@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
-import { IconDefinition, faCheckDouble, faDiagramProject, faFileArrowUp, faFilter, faFont, faKeyboard } from '@fortawesome/free-solid-svg-icons';
+import { faCheckDouble, faDiagramProject, faFileArrowUp, faFilter, faFont, faKeyboard } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Subscription, distinctUntilChanged } from 'rxjs';
 import { ProfileService } from '../layouts/profiles/profile.service';
@@ -11,22 +11,14 @@ import { DifficultyLevel, ExerciseType } from 'app/entities/exercise.model';
 import { cloneDeep } from 'lodash-es';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/participation/participation.utils';
-
-export type ExerciseCategoryFilterOption = { category: ExerciseCategory; searched: boolean };
-export type ExerciseTypeFilterOptions = { name: string; value: ExerciseType; checked: boolean; icon: IconDefinition }[];
-export type DifficultyFilterOptions = { name: string; value: DifficultyLevel; checked: boolean }[];
-export type RangeFilter = { generalMin: number; generalMax: number; selectedMin: number; selectedMax: number; step: number };
-
-export type ExerciseFilterOptions = {
-    categoryFilters?: ExerciseCategoryFilterOption[];
-    exerciseTypesFilter?: ExerciseTypeFilterOptions;
-    // dueDateRange: RangeFilter;
-    difficultyFilters?: DifficultyFilterOptions;
-    achievedScore?: RangeFilter;
-    achievablePoints?: RangeFilter;
-};
-
-export type ExerciseFilterResults = { filteredSidebarData?: SidebarData; appliedExerciseFilters?: ExerciseFilterOptions };
+import {
+    DifficultyFilterOptions,
+    ExerciseCategoryFilterOption,
+    ExerciseFilterOptions,
+    ExerciseFilterResults,
+    ExerciseTypeFilterOptions,
+    RangeFilter,
+} from 'app/types/exercise-filter';
 
 const POINTS_STEP = 1;
 const SCORE_THRESHOLD_TO_INCREASE_STEP = 20;

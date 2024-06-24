@@ -7,6 +7,11 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { SidebarData } from 'app/types/sidebar';
 import { DifficultyLevel, ExerciseType } from 'app/entities/exercise.model';
+import { Observable, OperatorFunction, Subject, merge } from 'rxjs';
+import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
+import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge.component';
+import { RangeSliderComponent } from 'app/shared/range-slider/range-slider.component';
+import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/participation/participation.utils';
 import {
     DifficultyFilterOptions,
     ExerciseCategoryFilterOption,
@@ -14,12 +19,7 @@ import {
     ExerciseFilterResults,
     ExerciseTypeFilterOptions,
     RangeFilter,
-} from 'app/shared/sidebar/sidebar.component';
-import { Observable, OperatorFunction, Subject, merge } from 'rxjs';
-import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
-import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge.component';
-import { RangeSliderComponent } from 'app/shared/range-slider/range-slider.component';
-import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/participation/participation.utils';
+} from 'app/types/exercise-filter';
 
 @Component({
     selector: 'jhi-exercise-filter-modal',
