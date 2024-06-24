@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.within;
 import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
@@ -9,7 +10,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
+import org.glassfish.jersey.internal.util.Producer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -20,14 +24,18 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.in.www1.artemis.StudentScoreUtilService;
 import de.tum.in.www1.artemis.competency.CompetencyProgressUtilService;
 import de.tum.in.www1.artemis.competency.CompetencyUtilService;
+import de.tum.in.www1.artemis.competency.PrerequisiteUtilService;
 import de.tum.in.www1.artemis.competency.StandardizedCompetencyUtilService;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.TextExercise;
@@ -37,24 +45,30 @@ import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.CompetencyTaxonomy;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.competency.RelationType;
+import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.TextUnit;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseFactory;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
+import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseUnitRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
+import de.tum.in.www1.artemis.repository.PrerequisiteRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TextUnitRepository;
@@ -75,9 +89,6 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     private static final String TEST_PREFIX = "competencyintegrationtest";
 
     @Autowired
-    private CourseRepository courseRepository;
-
-    @Autowired
     private LectureRepository lectureRepository;
 
     @Autowired
@@ -85,6 +96,9 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
     @Autowired
     private ParticipationService participationService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
 
     @Autowired
     private UserRepository userRepository;
@@ -99,6 +113,9 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     private TextUnitRepository textUnitRepository;
 
     @Autowired
+    private AttachmentUnitRepository attachmentUnitRepository;
+
+    @Autowired
     private ExerciseUnitRepository exerciseUnitRepository;
 
     @Autowired
@@ -106,6 +123,9 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
     @Autowired
     private CompetencyRelationRepository competencyRelationRepository;
+
+    @Autowired
+    private PrerequisiteRepository prerequisiteRepository;
 
     @Autowired
     private LectureUnitRepository lectureUnitRepository;
@@ -126,6 +146,9 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     private CompetencyUtilService competencyUtilService;
 
     @Autowired
+    private PrerequisiteUtilService prerequisiteUtilService;
+
+    @Autowired
     private PageableSearchUtilService pageableSearchUtilService;
 
     @Autowired
@@ -137,6 +160,9 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     @Autowired
     private StandardizedCompetencyUtilService standardizedCompetencyUtilService;
 
+    @Autowired
+    private StudentScoreUtilService studentScoreUtilService;
+
     private Course course;
 
     private Course course2;
@@ -145,11 +171,13 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
     private Lecture lecture;
 
-    private Long idOfTextUnitOfLectureOne;
+    private long idOfTextUnitOfLectureOne;
 
-    private Exercise teamTextExercise;
+    private long idOfAttachmentUnitOfLectureOne;
 
-    private Exercise textExercise;
+    private TextExercise teamTextExercise;
+
+    private TextExercise textExercise;
 
     @BeforeEach
     void setupTestScenario() {
@@ -168,7 +196,6 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         course2 = courseUtilService.createCourse();
 
         competency = createCompetency(course);
-        createPrerequisiteForCourse2();
         lecture = createLecture(course);
 
         textExercise = createTextExercise(pastTimestamp, pastTimestamp, pastTimestamp, Set.of(competency), false);
@@ -196,12 +223,6 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         return competencyRelationRepository.save(relation);
     }
 
-    private void createPrerequisiteForCourse2() {
-        // Add the first competency as a prerequisite to the other course
-        course2.addPrerequisite(competency);
-        courseRepository.save(course2);
-    }
-
     private void creatingLectureUnitsOfLecture(Competency competency) {
         // creating lecture units for lecture one
 
@@ -211,6 +232,12 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         textUnit = textUnitRepository.save(textUnit);
         idOfTextUnitOfLectureOne = textUnit.getId();
 
+        AttachmentUnit attachmentUnit = new AttachmentUnit();
+        attachmentUnit.setName("AttachmentUnitOfLectureOne");
+        attachmentUnit.setCompetencies(Set.of(competency));
+        attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
+        idOfAttachmentUnitOfLectureOne = attachmentUnit.getId();
+
         ExerciseUnit textExerciseUnit = new ExerciseUnit();
         textExerciseUnit.setExercise(textExercise);
         exerciseUnitRepository.save(textExerciseUnit);
@@ -219,7 +246,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         teamTextExerciseUnit.setExercise(teamTextExercise);
         exerciseUnitRepository.save(teamTextExerciseUnit);
 
-        for (LectureUnit lectureUnit : List.of(textUnit, textExerciseUnit, teamTextExerciseUnit)) {
+        for (LectureUnit lectureUnit : List.of(textUnit, attachmentUnit, textExerciseUnit, teamTextExerciseUnit)) {
             lecture.addLectureUnit(lectureUnit);
         }
 
@@ -235,10 +262,10 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         return lecture;
     }
 
-    private TextExercise createTextExercise(ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp, Set<Competency> competencies,
+    private TextExercise createTextExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assassmentDueDate, Set<Competency> competencies,
             boolean isTeamExercise) {
         // creating text exercise with Result
-        TextExercise textExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+        TextExercise textExercise = TextExerciseFactory.generateTextExercise(releaseDate, dueDate, assassmentDueDate, course);
 
         if (isTeamExercise) {
             textExercise.setMode(ExerciseMode.TEAM);
@@ -247,28 +274,52 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
         textExercise.setCompetencies(competencies);
-        exerciseRepository.save(textExercise);
 
-        return textExercise;
+        return exerciseRepository.save(textExercise);
     }
 
-    private void createTextExerciseParticipationSubmissionAndResult(Exercise exercise, Participant participant, Double pointsOfExercise, Double bonusPointsOfExercise,
+    private ProgrammingExercise createProgrammingExercise(int i, Set<Competency> competencies) {
+        ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(null, null, course);
+
+        programmingExercise.setMaxPoints(i * 10.0);
+        programmingExercise.setCompetencies(competencies);
+        programmingExercise.setDifficulty(i == 1 ? DifficultyLevel.EASY : i == 2 ? DifficultyLevel.MEDIUM : DifficultyLevel.HARD);
+
+        return programmingExerciseRepository.save(programmingExercise);
+    }
+
+    private Result createTextExerciseParticipationSubmissionAndResult(TextExercise exercise, Participant participant, double pointsOfExercise, double bonusPointsOfExercise,
             long scoreAwarded, boolean rated) {
+        StudentParticipation studentParticipation = participationService.startExercise(exercise, participant, false);
+        return createExerciseParticipationSubmissionAndResult(exercise, studentParticipation, participant, pointsOfExercise, bonusPointsOfExercise, scoreAwarded, rated,
+                TextSubmission::new, 1);
+    }
+
+    private Result createProgrammingExerciseParticipationSubmissionAndResult(ProgrammingExercise exercise, Participant participant, long scoreAwarded, boolean rated,
+            int numberOfSubmissions) {
+        StudentParticipation studentParticipation = participationUtilService.createAndSaveParticipationForExercise(exercise, participant.getParticipantIdentifier());
+        return createExerciseParticipationSubmissionAndResult(exercise, studentParticipation, participant, exercise.getMaxPoints(), 0, scoreAwarded, rated,
+                ProgrammingSubmission::new, numberOfSubmissions);
+    }
+
+    private Result createExerciseParticipationSubmissionAndResult(Exercise exercise, StudentParticipation studentParticipation, Participant participant, double pointsOfExercise,
+            double bonusPointsOfExercise, long scoreAwarded, boolean rated, Producer<Submission> submissionConstructor, int numberOfSubmissions) {
         if (!exercise.getMaxPoints().equals(pointsOfExercise)) {
             exercise.setMaxPoints(pointsOfExercise);
         }
         if (!exercise.getBonusPoints().equals(bonusPointsOfExercise)) {
             exercise.setBonusPoints(bonusPointsOfExercise);
         }
-        exercise = exerciseRepository.save(exercise);
+        exerciseRepository.save(exercise);
 
-        StudentParticipation studentParticipation = participationService.startExercise(exercise, participant, false);
+        Submission submission = null;
 
-        Submission submission = new TextSubmission();
-
-        submission.setType(SubmissionType.MANUAL);
-        submission.setParticipation(studentParticipation);
-        submission = submissionRepository.save(submission);
+        for (int i = 0; i < numberOfSubmissions; i++) {
+            submission = submissionConstructor.call();
+            submission.setType(SubmissionType.MANUAL);
+            submission.setParticipation(studentParticipation);
+            submission = submissionRepository.save(submission);
+        }
 
         // result
         Result result = ParticipationFactory.generateResult(rated, scoreAwarded);
@@ -279,6 +330,8 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         submission.addResult(result);
         result.setSubmission(submission);
         submissionRepository.save(submission);
+
+        return result;
     }
 
     @Nested
@@ -299,9 +352,6 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
             // import
             request.post("/api/courses/" + course.getId() + "/competencies/import-all/1", null, HttpStatus.FORBIDDEN);
             request.post("/api/courses/" + course.getId() + "/competencies/import", competency, HttpStatus.FORBIDDEN);
-            // prerequisites
-            request.post("/api/courses/" + course.getId() + "/prerequisites/1", null, HttpStatus.FORBIDDEN);
-            request.delete("/api/courses/" + course.getId() + "/prerequisites/1", HttpStatus.FORBIDDEN);
             // relations
             request.post("/api/courses/" + course.getId() + "/competencies/relations", new CompetencyRelation(), HttpStatus.FORBIDDEN);
             request.getSet("/api/courses/" + course.getId() + "/competencies/relations", HttpStatus.FORBIDDEN, CompetencyRelationDTO.class);
@@ -360,12 +410,11 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testShouldOnlySendUserSpecificData() throws Exception {
-
             User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-            competencyProgressUtilService.createCompetencyProgress(competency, student1, 0, 0);
+            competencyProgressUtilService.createCompetencyProgress(competency, student1, 0, 1);
 
             User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-            competencyProgressUtilService.createCompetencyProgress(competency, student2, 1, 1);
+            competencyProgressUtilService.createCompetencyProgress(competency, student2, 10, 1);
 
             final var textUnit = textUnitRepository.findById(idOfTextUnitOfLectureOne).get();
             lectureUtilService.completeLectureUnitForUser(textUnit, student2);
@@ -459,7 +508,9 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     @WithMockUser(username = "admin", roles = "ADMIN")
     void deleteCourseShouldAlsoDeleteCompetency() throws Exception {
         request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
-        request.get("/api/courses/" + course.getId() + "/competencies/" + competency.getId(), HttpStatus.NOT_FOUND, Competency.class);
+
+        boolean competencyExists = competencyRepository.existsById(competency.getId());
+        assertThat(competencyExists).isFalse();
     }
 
     @Nested
@@ -574,7 +625,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     void deleteLectureUnitShouldUpdateCompetency() throws Exception {
         request.delete("/api/lectures/" + lecture.getId() + "/lecture-units/" + idOfTextUnitOfLectureOne, HttpStatus.OK);
         Competency competency = request.get("/api/courses/" + course.getId() + "/competencies/" + this.competency.getId(), HttpStatus.OK, Competency.class);
-        assertThat(competency.getLectureUnits()).isEmpty();
+        assertThat(competency.getLectureUnits()).map(LectureUnit::getId).containsExactly(idOfAttachmentUnitOfLectureOne);
     }
 
     @Nested
@@ -621,28 +672,68 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         }
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getCompetencyStudentProgressShouldReturnProgress() throws Exception {
-        User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
-        lectureUnitService.setLectureUnitCompletion(textUnitRepository.findById(idOfTextUnitOfLectureOne).orElseThrow(), student1, true);
+    @Nested
+    class GetCompetencyStudentProgress {
 
-        createTextExerciseParticipationSubmissionAndResult(textExercise, student1, 10.0, 0.0, 90, true);  // will be ignored in favor of last submission from team
-        createTextExerciseParticipationSubmissionAndResult(textExercise, student1, 10.0, 0.0, 85, false);
+        private ProgrammingExercise[] programmingExercises;
 
-        await().until(() -> participantScoreScheduleService.isIdle());
+        @BeforeEach
+        void setupTestScenario() {
+            programmingExercises = IntStream.range(1, 4).mapToObj(i -> createProgrammingExercise(i, Set.of(competency))).toArray(ProgrammingExercise[]::new);
+        }
 
-        CompetencyProgress studentCompetencyProgress1 = request.get("/api/courses/" + course.getId() + "/competencies/" + competency.getId() + "/student-progress?refresh=true",
-                HttpStatus.OK, CompetencyProgress.class);
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void getCompetencyStudentProgressShouldReturnProgress() throws Exception {
+            User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+            lectureUnitService.setLectureUnitCompletion(textUnitRepository.findById(idOfTextUnitOfLectureOne).orElseThrow(), student1, true);
 
-        assertThat(studentCompetencyProgress1.getProgress()).isEqualTo(66.7);
-        assertThat(studentCompetencyProgress1.getConfidence()).isEqualTo(85.0);
+            createTextExerciseParticipationSubmissionAndResult(textExercise, student1, 10.0, 0.0, 90, true);
+            createTextExerciseParticipationSubmissionAndResult(textExercise, student1, 10.0, 0.0, 85, false);
 
-        CompetencyProgress studentCompetencyProgress2 = request.get("/api/courses/" + course.getId() + "/competencies/" + competency.getId() + "/student-progress?refresh=false",
-                HttpStatus.OK, CompetencyProgress.class);
+            await().until(() -> participantScoreScheduleService.isIdle());
 
-        assertThat(studentCompetencyProgress2.getProgress()).isEqualTo(66.7);
-        assertThat(studentCompetencyProgress2.getConfidence()).isEqualTo(85.0);
+            CompetencyProgress studentCompetencyProgress1 = request.get("/api/courses/" + course.getId() + "/competencies/" + competency.getId() + "/student-progress?refresh=true",
+                    HttpStatus.OK, CompetencyProgress.class);
+
+            assertThat(studentCompetencyProgress1.getProgress()).isEqualTo(22);
+            assertThat(studentCompetencyProgress1.getConfidence()).isEqualTo(0.75);
+
+            lectureUnitService.setLectureUnitCompletion(attachmentUnitRepository.findById(idOfAttachmentUnitOfLectureOne).orElseThrow(), student1, true);
+
+            CompetencyProgress studentCompetencyProgress2 = request
+                    .get("/api/courses/" + course.getId() + "/competencies/" + competency.getId() + "/student-progress?refresh=false", HttpStatus.OK, CompetencyProgress.class);
+
+            assertThat(studentCompetencyProgress2.getProgress()).isEqualTo(22);
+            assertThat(studentCompetencyProgress2.getConfidence()).isEqualTo(0.75);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void getCompetencyStudentProgressMultipleExercises() throws Exception {
+            // The scheduling for all results interferes with the competency progress calculation, since only one per second is allowed
+            // Therefore creating the participant scores manually
+            participantScoreScheduleService.shutdown();
+
+            User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+            Result textResult = createTextExerciseParticipationSubmissionAndResult(textExercise, student1, textExercise.getMaxPoints(), 0.0, 90, true);
+            Result programming1Result = createProgrammingExerciseParticipationSubmissionAndResult(programmingExercises[0], student1, 85, true, 10);
+            Result programming2Result = createProgrammingExerciseParticipationSubmissionAndResult(programmingExercises[1], student1, 75, false, 1);
+            Result programming3Result = createProgrammingExerciseParticipationSubmissionAndResult(programmingExercises[2], student1, 95, false, 1);
+
+            studentScoreUtilService.createStudentScore(textExercise, student1, textResult);
+            studentScoreUtilService.createStudentScore(programmingExercises[0], student1, programming1Result);
+            studentScoreUtilService.createStudentScore(programmingExercises[1], student1, programming2Result);
+            studentScoreUtilService.createStudentScore(programmingExercises[2], student1, programming3Result);
+
+            CompetencyProgress studentCompetencyProgress = request.get("/api/courses/" + course.getId() + "/competencies/" + competency.getId() + "/student-progress?refresh=true",
+                    HttpStatus.OK, CompetencyProgress.class);
+
+            // No lecture units are completed and no participation in team exercise
+            assertThat(studentCompetencyProgress.getProgress()).isEqualTo(54);
+            // Slightly more points in an easy exercise but solved one programming exercise quickly
+            assertThat(studentCompetencyProgress.getConfidence()).isCloseTo(1.328, within(0.001));
+        }
     }
 
     @Nested
@@ -778,98 +869,6 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     }
 
     @Nested
-    class GetCompetencies {
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
-        void shouldNotGetResultsFromCoursesForInstructorNotInCourses() throws Exception {
-            final var search = pageableSearchUtilService.configureSearch("");
-            final var result = request.getSearchResult("/api/competencies", HttpStatus.OK, Competency.class, pageableSearchUtilService.searchMapping(search));
-            assertThat(result.getResultsOnPage()).isNullOrEmpty();
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldGetResultsFromCoursesForInstructor() throws Exception {
-            final var search = pageableSearchUtilService.configureSearch(competency.getTitle());
-            final var result = request.getSearchResult("/api/competencies", HttpStatus.OK, Competency.class, pageableSearchUtilService.searchMapping(search));
-            assertThat(result.getResultsOnPage()).hasSize(1);
-        }
-
-        @Test
-        @WithMockUser(username = "admin", roles = "ADMIN")
-        void shouldGetResultsFromAllCoursesForAdmin() throws Exception {
-            final var search = pageableSearchUtilService.configureSearch(competency.getTitle());
-            final var result = request.getSearchResult("/api/competencies", HttpStatus.OK, Competency.class, pageableSearchUtilService.searchMapping(search));
-            assertThat(result.getResultsOnPage()).hasSize(1);
-        }
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getPrerequisitesShouldReturnPrerequisites() throws Exception {
-        List<Competency> prerequisites = request.getList("/api/courses/" + course2.getId() + "/prerequisites", HttpStatus.OK, Competency.class);
-        assertThat(prerequisites).containsExactly(competency);
-    }
-
-    @Nested
-    class AddPrerequisite {
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldAddPrerequisite() throws Exception {
-            Competency competency = new Competency();
-            competency.setTitle("CompetencyTwo");
-            competency.setDescription("This is an example competency");
-            competency.setCourse(course2);
-            competency = competencyRepository.save(competency);
-
-            Competency prerequisite = request.postWithResponseBody("/api/courses/" + course.getId() + "/prerequisites/" + competency.getId(), competency, Competency.class,
-                    HttpStatus.OK);
-
-            assertThat(prerequisite).isNotNull();
-            assertThat(prerequisite.getConsecutiveCourses()).contains(course);
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldNotAddPrerequisiteWhenAlreadyCompetencyInCourse() throws Exception {
-            // Test that a competency of a course can not be a prerequisite to the same course
-            request.postWithResponseBody("/api/courses/" + course.getId() + "/prerequisites/" + competency.getId(), competency, Competency.class, HttpStatus.BAD_REQUEST);
-        }
-    }
-
-    @Nested
-    class RemovePrerequisite {
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldRemovePrerequisite() throws Exception {
-            request.delete("/api/courses/" + course2.getId() + "/prerequisites/" + competency.getId(), HttpStatus.OK);
-            Course course = courseRepository.findWithEagerCompetenciesById(course2.getId()).orElseThrow();
-            assertThat(course.getPrerequisites()).doesNotContain(competency);
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldReturnBadRequestWhenPrerequisiteNotExists() throws Exception {
-            request.delete("/api/courses/" + course.getId() + "/prerequisites/" + competency.getId(), HttpStatus.BAD_REQUEST);
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldNotRemovePrerequisiteOfAnotherCourse() throws Exception {
-            Course anotherCourse = courseUtilService.createCourse();
-            anotherCourse.addPrerequisite(competency);
-            anotherCourse = courseRepository.save(anotherCourse);
-
-            request.delete("/api/courses/" + course2.getId() + "/prerequisites/" + competency.getId(), HttpStatus.OK);
-            anotherCourse = courseRepository.findWithEagerCompetenciesById(anotherCourse.getId()).orElseThrow();
-            assertThat(anotherCourse.getPrerequisites()).contains(competency);
-        }
-    }
-
-    @Nested
     class CreateCompetencies {
 
         @Test
@@ -949,11 +948,15 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
                     CompetencyWithTailRelationDTO.class, HttpStatus.CREATED);
 
             assertThat(competencyDTOList).hasSize(2);
-            // competency 2 should be the tail of one relation
-            assertThat(competencyDTOList.get(0).tailRelations()).isNull();
-            assertThat(competencyDTOList.get(1).tailRelations()).hasSize(1);
+            // assert that only one of the DTOs has the relation connected
+            if (competencyDTOList.getFirst().tailRelations() == null) {
+                assertThat(competencyDTOList.get(1).tailRelations()).hasSize(1);
+            }
+            else {
+                assertThat(competencyDTOList.get(1).tailRelations()).isNull();
+            }
 
-            competencyDTOList = request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/import-all/" + course3.getId(), null,
+            competencyDTOList = request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/import-all/" + course3.getId() + "?importRelations=false", null,
                     CompetencyWithTailRelationDTO.class, HttpStatus.CREATED);
             assertThat(competencyDTOList).hasSize(2);
             // relations should be empty when not importing them
@@ -1083,6 +1086,24 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
             final var search = pageableSearchUtilService.configureCompetencySearch(competency.getTitle(), "", "", "");
             final var result = request.getSearchResult("/api/competencies/for-import", HttpStatus.OK, Competency.class, pageableSearchUtilService.searchMapping(search));
             assertThat(result.getResultsOnPage()).hasSize(1);
+        }
+    }
+
+    @Nested
+    class GetCourseCompetencyTitles {
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        void shouldGetCourseCompetencyTitles() throws Exception {
+            competencyUtilService.createCompetencies(course, 5);
+            var competencyTitles = competencyRepository.findAllForCourse(course.getId()).stream().map(CourseCompetency::getTitle).toList();
+            prerequisiteUtilService.createPrerequisites(course, 5);
+            var prerequisiteTitles = prerequisiteRepository.findAllByCourseIdOrderById(course.getId()).stream().map(CourseCompetency::getTitle).toList();
+            var expectedTitles = Stream.concat(competencyTitles.stream(), prerequisiteTitles.stream()).toList();
+
+            final var actualTitles = request.getList("/api/courses/" + course.getId() + "/competencies/titles", HttpStatus.OK, String.class);
+
+            assertThat(actualTitles).containsAll(expectedTitles);
         }
     }
 }

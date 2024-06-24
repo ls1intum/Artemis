@@ -18,7 +18,7 @@ import { SubmissionPatchPayload, isSubmissionPatchPayload } from 'app/entities/s
 })
 export class TeamSubmissionSyncComponent implements OnInit {
     // Sync settings
-    readonly throttleTime = 2000; // ms
+    readonly THROTTLE_TIME = 2000; // ms
 
     @Input() exerciseType: ExerciseType;
     @Input() submissionObservable?: Observable<Submission>;
@@ -70,7 +70,7 @@ export class TeamSubmissionSyncComponent implements OnInit {
      * updated submissions or submission patches based on those own changes via websockets
      */
     private setupSender() {
-        this.submissionObservable?.pipe(throttleTime(this.throttleTime, undefined, { leading: true, trailing: true })).subscribe({
+        this.submissionObservable?.pipe(throttleTime(this.THROTTLE_TIME, undefined, { leading: true, trailing: true })).subscribe({
             next: (submission: Submission) => {
                 if (submission.participation) {
                     submission.participation.exercise = undefined;

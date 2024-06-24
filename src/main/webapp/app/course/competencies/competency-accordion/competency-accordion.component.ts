@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { faFile, faFilePdf, faList } from '@fortawesome/free-solid-svg-icons';
+import { MIN_SCORE_GREEN } from 'app/app.constants';
 import { Competency, CompetencyJol, CompetencyProgress, getConfidence, getIcon, getMastery, getProgress } from 'app/entities/competency.model';
 import { Course } from 'app/entities/course.model';
 import { Router } from '@angular/router';
@@ -8,6 +9,7 @@ import { round } from 'app/shared/util/utils';
 import { Exercise } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
 import { LectureUnitType, lectureUnitIcons, lectureUnitTooltips } from 'app/entities/lecture-unit/lectureUnit.model';
+import { isStartPracticeAvailable } from 'app/exercises/shared/exercise/exercise.utils';
 
 export interface CompetencyAccordionToggleEvent {
     opened: boolean;
@@ -33,7 +35,7 @@ export class CompetencyAccordionComponent implements OnChanges {
     nextLectureUnits: LectureUnitInformation[] = [];
     exercisesProgress?: number;
     lectureUnitsProgress?: number;
-    confidence: number = 0;
+    confidence: number = 1;
     mastery: number = 0;
     progress: number = 0;
     jolRating?: number;
@@ -68,7 +70,7 @@ export class CompetencyAccordionComponent implements OnChanges {
                     userProgress: [
                         {
                             progress: this.metrics.competencyMetrics?.progress?.[competency.id] ?? 0,
-                            confidence: this.metrics.competencyMetrics?.confidence?.[competency.id] ?? 0,
+                            confidence: this.metrics.competencyMetrics?.confidence?.[competency.id] ?? 1,
                         },
                     ],
                 } satisfies Competency;
@@ -89,23 +91,36 @@ export class CompetencyAccordionComponent implements OnChanges {
             this.nextExercises = [];
         }
 
-        const submittedExercises = Object.keys(this.metrics.exerciseMetrics?.latestSubmission ?? {}).map(Number);
-        const competencyExercises = this.metrics.competencyMetrics?.exercises?.[this.competency.id] ?? [];
-        const nextExerciseInformations = competencyExercises
-            .filter((exerciseId) => !submittedExercises.includes(exerciseId))
-            .flatMap((exerciseId) => this.metrics.exerciseMetrics?.exerciseInformation?.[exerciseId] ?? [])
-            .filter((exercise) => exercise.startDate.isBefore(dayjs()) && (!exercise.dueDate || exercise.dueDate.isAfter(dayjs())))
-            .sort((a, b) => (a.dueDate ?? a.startDate).diff(b.dueDate))
-            .slice(0, 5);
+        const courseExercises = this.course?.exercises ?? [];
+        const exerciseIdToExercise = Object.fromEntries(courseExercises.map((exercise) => [exercise.id, exercise] as [number, Exercise]));
+        const activeCompetencyExercises = (this.metrics.competencyMetrics?.exercises?.[this.competency.id] ?? [])
+            .flatMap((exerciseId) => [exerciseIdToExercise[exerciseId]])
+            .filter((exercise) => exercise.releaseDate?.isBefore(dayjs()))
+            .filter((exercise) => exercise.dueDate?.isAfter(dayjs()) || isStartPracticeAvailable(exercise));
 
-        // Workaround to convert ExerciseInformation to Exercise
-        this.nextExercises = nextExerciseInformations.map(
-            (exercise) =>
-                ({
-                    ...exercise,
-                    studentAssignedTeamIdComputed: exercise.studentAssignedTeamId !== undefined,
-                }) as unknown as Exercise,
+        const exerciseIdToMaxScore = Object.fromEntries(
+            activeCompetencyExercises.map((exercise) => {
+                const score =
+                    exercise.studentParticipations?.flatMap((participation) => participation.results ?? []).reduce((max, result) => Math.max(max, result.score ?? 0), -1) ?? 0;
+                return [exercise.id, score] as [number, number];
+            }),
         );
+
+        const completionThreshold = MIN_SCORE_GREEN;
+        this.nextExercises = activeCompetencyExercises
+            .filter((exercise) => exercise.id && exerciseIdToMaxScore[exercise.id] <= completionThreshold)
+            .sort((a, b) => {
+                const scoreA = a.id ? exerciseIdToMaxScore[a.id] ?? 0 : 0;
+                const scoreB = b.id ? exerciseIdToMaxScore[b.id] ?? 0 : 0;
+
+                if (scoreA !== scoreB) {
+                    return scoreA - scoreB;
+                }
+                const dueDateA = a.dueDate ?? a.startDate;
+                const dueDateB = b.dueDate ?? b.startDate;
+                return dueDateA?.diff(dueDateB) ?? 0;
+            })
+            .slice(0, 5);
     }
 
     setNextLessonUnits() {
@@ -131,11 +146,11 @@ export class CompetencyAccordionComponent implements OnChanges {
         const userProgress = this.getUserProgress();
         if (this.jolRating !== undefined) {
             this.progress = this.getProgress(userProgress);
-            this.confidence = this.getConfidence(userProgress, this.competency.masteryThreshold!);
-            this.mastery = this.getMastery(userProgress, this.competency.masteryThreshold!);
+            this.confidence = this.getConfidence(userProgress);
+            this.mastery = this.getMastery(userProgress);
         } else {
             this.progress = 0;
-            this.confidence = 0;
+            this.confidence = 1;
             this.mastery = 0;
         }
     }
@@ -146,11 +161,19 @@ export class CompetencyAccordionComponent implements OnChanges {
         }
 
         const competencyExercises = this.metrics.competencyMetrics?.exercises?.[this.competency.id];
-        const completedExercises = competencyExercises?.filter((exerciseId) => this.metrics.exerciseMetrics?.completed?.includes(exerciseId)).length ?? 0;
+
         if (competencyExercises === undefined || competencyExercises.length === 0) {
             return undefined;
         }
-        const progress = (completedExercises / competencyExercises.length) * 100;
+
+        const competencyPoints = competencyExercises
+            ?.map((exercise) => ((this.metrics.exerciseMetrics?.score?.[exercise] ?? 0) * (this.metrics.exerciseMetrics?.exerciseInformation?.[exercise]?.maxPoints ?? 0)) / 100)
+            .reduce((a, b) => a + b, 0);
+        const competencyMaxPoints = competencyExercises
+            ?.map((exercise) => this.metrics.exerciseMetrics?.exerciseInformation?.[exercise]?.maxPoints ?? 0)
+            .reduce((a, b) => a + b, 0);
+
+        const progress = (competencyPoints / competencyMaxPoints) * 100;
         return round(progress, 1);
     }
 
@@ -163,17 +186,18 @@ export class CompetencyAccordionComponent implements OnChanges {
         const releasedLectureUnits = competencyLectureUnits?.filter((lectureUnitId) =>
             this.metrics.lectureUnitStudentMetricsDTO?.lectureUnitInformation?.[lectureUnitId]?.releaseDate?.isBefore(dayjs()),
         );
-        const completedLectureUnits = releasedLectureUnits?.filter((lectureUnitId) => this.metrics.lectureUnitStudentMetricsDTO?.completed?.includes(lectureUnitId)).length ?? 0;
         if (releasedLectureUnits === undefined || releasedLectureUnits.length === 0) {
             return undefined;
         }
+
+        const completedLectureUnits = releasedLectureUnits?.filter((lectureUnitId) => this.metrics.lectureUnitStudentMetricsDTO?.completed?.includes(lectureUnitId)).length ?? 0;
         const progress = (completedLectureUnits / releasedLectureUnits.length) * 100;
         return round(progress, 1);
     }
 
     getUserProgress(): CompetencyProgress {
         const progress = this.metrics.competencyMetrics?.progress?.[this.competency.id] ?? 0;
-        const confidence = this.metrics.competencyMetrics?.confidence?.[this.competency.id] ?? 0;
+        const confidence = this.metrics.competencyMetrics?.confidence?.[this.competency.id] ?? 1;
         return { progress, confidence };
     }
 

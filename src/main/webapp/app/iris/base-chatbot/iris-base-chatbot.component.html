@@ -60,6 +60,13 @@
 <div class="chat-body" [class.not-accepted]="!userAccepted" #chatBody>
     @if (messages?.length) {
         <div class="messages" #messagesElement (scroll)="checkChatScroll()">
+            @if (suggestions?.length) {
+                <div @suggestionAnimation class="suggestions-container">
+                    @for (suggestion of suggestions; track suggestion) {
+                        <button class="suggestion-button" (click)="onSuggestionClick(suggestion)" [innerHTML]="suggestion"></button>
+                    }
+                </div>
+            }
             @for (message of messages; track message.id; let i = $index) {
                 <div @messageAnimation [@.disabled]="!shouldAnimate" [style.transform-origin]="message.sender === IrisSender.USER ? 'bottom right' : 'bottom left'">
                     @for (content of message.content; track content) {
@@ -136,6 +143,9 @@
         <div class="client-chat-error">
             {{ error | artemisTranslate }}
         </div>
+    }
+    @if (!active) {
+        <div class="client-chat-error" [jhiTranslate]="IrisErrorMessageKey.IRIS_NOT_AVAILABLE"></div>
     }
     @if (userAccepted) {
         <div class="chat-input">
