@@ -10,8 +10,8 @@ describe('CompetencyNodeComponent', () => {
     const competencyNode = {
         id: '1',
         label: 'Competency',
-        confidence: 30,
-        masteryProgress: 71.44,
+        confidence: 1.2,
+        masteryProgress: 0.7144,
         progress: 80,
         softDueDate: new Date(),
     } as CompetencyGraphNodeDTO;
