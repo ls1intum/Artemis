@@ -46,8 +46,6 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
     @Value("${artemis.version-control.local-vcs-repo-path:#{null}}")
     private String localVCBasePath;
 
-    private static final String ERROR_MESSAGE = "Failed to migrate programming exercises within %d hours. Aborting migration.";
-
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;

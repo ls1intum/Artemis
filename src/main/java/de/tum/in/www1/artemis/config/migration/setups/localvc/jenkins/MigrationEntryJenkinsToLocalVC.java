@@ -29,8 +29,6 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 @Profile("jenkins")
 public class MigrationEntryJenkinsToLocalVC extends LocalVCMigrationEntry {
 
-    private static final String ERROR_MESSAGE = "Failed to migrate programming exercises within %d hours. Aborting migration.";
-
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;

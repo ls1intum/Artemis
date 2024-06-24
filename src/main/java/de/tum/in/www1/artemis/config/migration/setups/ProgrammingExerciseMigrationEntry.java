@@ -37,6 +37,8 @@ public abstract class ProgrammingExerciseMigrationEntry {
     @Value("${migration.scaling.estimated-time-per-repository:2}")
     protected int estimatedTimePerRepository;
 
+    protected static final String ERROR_MESSAGE = "Failed to migrate programming exercises within %d hours. Aborting migration.";
+
     protected final Logger log = LoggerFactory.getLogger(getSubclass());
 
     protected final CopyOnWriteArrayList<ProgrammingExerciseParticipation> errorList = new CopyOnWriteArrayList<>();
