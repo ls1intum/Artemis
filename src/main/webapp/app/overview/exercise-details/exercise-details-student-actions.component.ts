@@ -112,17 +112,13 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
                 if (profileInfo.activeProfiles?.includes(PROFILE_THEIA)) {
                     this.theiaEnabled = true;
 
-                    // Set variables now, sanitze later on
+                    // Set variables now, sanitize later on
                     this.theiaPortalURL = profileInfo.theiaPortalURL ?? '';
 
                     // Verify that Theia's portal URL is set
                     if (this.theiaPortalURL === '') {
                         this.theiaEnabled = false;
                     }
-
-                    // Future work: Verify that the course has Theia enabled
-                    // Future work: Verify that the exercise has Theia enabled
-                    // Future work: Verify that Theia has a valid blueprint to start up
                 }
             });
         } else if (this.exercise.type === ExerciseType.MODELING) {
