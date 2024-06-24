@@ -76,14 +76,14 @@
                     [showBadge]="true"
                     [participation]="studentParticipation"
                     [personalParticipation]="true"
-                    class="me-2"
+                    class="me-1"
                 />
             }
         </div>
         <div class="d-flex gap-3 my-3 ms-1 align-items-center">
             <jhi-programming-submission-policy-status [exercise]="exercise" [submissionCount]="submissionCount" class="flex-grow-1" />
             @if (repositoryIsLocked) {
-                <jhi-code-editor-repository-is-locked class="me-3" />
+                <jhi-code-editor-repository-is-locked class="me-1" />
             }
         </div>
         @if (exercise) {
