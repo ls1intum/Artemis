@@ -4,20 +4,17 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.security.GeneralSecurityException;
-import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
-import java.security.spec.ECGenParameterSpec;
-import java.util.Base64;
 import java.util.Optional;
 
-import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
+import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyEncryptionContext;
+import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyPairResourceWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,7 +23,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.config.icl.ssh.HashUtils;
 import de.tum.in.www1.artemis.exception.GitException;
 
 @Service
@@ -43,6 +39,9 @@ public class BuildAgentSSHKeyService {
     @Value("${artemis.version-control.build-agent-use-ssh:false}")
     private boolean useSSHForBuildAgent;
 
+    @Value("${info.contact}")
+    private String sshKeyComment;
+
     @EventListener(ApplicationReadyEvent.class)
     public void applicationReady() {
         if (useSSHForBuildAgent) {
@@ -56,115 +55,64 @@ public class BuildAgentSSHKeyService {
             throw new GitException("No SSH private key folder was set but should use SSH for build agent authentication.");
         }
 
-        KeyPairGenerator generator;
-        try {
-            generator = KeyPairGenerator.getInstance("EC");
-            ECGenParameterSpec ecSpec = new ECGenParameterSpec("secp256r1");
-            generator.initialize(ecSpec);
-        }
-        catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException e) {
-            throw new RuntimeException(e);
-        }
-
-        log.debug("Starting key pair generation");
-        keyPair = generator.generateKeyPair();
-        log.debug("Key pair successfully generated");
+        generateKeyPair();
 
         try {
-            Path privateKeyPath = Path.of(gitSshPrivateKeyPath.orElseThrow(), "id_ecdsa");
-            Files.writeString(privateKeyPath, getPrivateKeyAsString());
-            Files.setPosixFilePermissions(privateKeyPath, PosixFilePermissions.fromString("rw-------"));
-
-            Path publicKeyPath = Path.of(gitSshPrivateKeyPath.orElseThrow(), "id_ecdsa.pub");
-            Files.writeString(publicKeyPath, getPublicKeyAsString());
-        }
-        catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private String getPrivateKeyAsString() {
-        Base64.Encoder encoder = Base64.getEncoder();
-
-        return String.format("""
-                -----BEGIN PRIVATE KEY-----
-                %s
-                -----END PRIVATE KEY-----
-                """, encoder.encodeToString(keyPair.getPrivate().getEncoded()));
-    }
-
-    /**
-     * Returns the fingerprint of the SSH public key
-     *
-     * @return the SHA 512 fingerprint of the SSH public key. null if SSH should not be used for cloning with this build agent.
-     */
-    public String getPublicKeyHash() {
-        if (!shouldUseSSHForBuildAgent()) {
-            return null;
-        }
-
-        // Transform public key into another format used for authentication
-        AuthorizedKeyEntry keyEntry = AuthorizedKeyEntry.parseAuthorizedKeyEntry(getPublicKeyAsString());
-        PublicKey publicKey;
-        try {
-            publicKey = keyEntry.resolvePublicKey(null, null, null);
+            writePrivateKey();
+            writePublicKey();
         }
         catch (IOException | GeneralSecurityException e) {
             throw new RuntimeException(e);
         }
-
-        return HashUtils.getSha512Fingerprint(publicKey);
     }
 
-    private boolean shouldUseSSHForBuildAgent() {
-        return useSSHForBuildAgent;
-    }
-
-    /*
-     * Formats the PublicKey to meet the requirements of the id_ecdsa.pub file
-     */
-    private String getPublicKeyAsString() {
-        byte[] publicKeyBytes = keyPair.getPublic().getEncoded();
-        String publicKeyBase64 = Base64.getEncoder().encodeToString(prepareSshPublicKey(publicKeyBytes));
-        return String.format("ecdsa-sha2-nistp256 %s", publicKeyBase64);
-    }
-
-    private byte[] prepareSshPublicKey(byte[] publicKeyBytes) {
-        int keyLength = 32;
-        byte[] x = new byte[keyLength];
-        byte[] y = new byte[keyLength];
-        System.arraycopy(publicKeyBytes, 27, x, 0, keyLength);
-        System.arraycopy(publicKeyBytes, 27 + keyLength, y, 0, keyLength);
-
+    private void generateKeyPair() {
         try {
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            out.write(sshString("ecdsa-sha2-nistp256"));
-            out.write(sshString("nistp256"));
-            out.write(sshString(x, y));
-            return out.toByteArray();
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+            keyGen.initialize(4096);
+            keyPair = keyGen.generateKeyPair();
         }
-        catch (IOException e) {
+        catch (GeneralSecurityException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private byte[] sshString(String str) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        out.write(intToBytes(str.length()));
-        out.write(str.getBytes());
-        return out.toByteArray();
+    private void writePrivateKey() throws IOException, GeneralSecurityException {
+        Path privateKeyPath = Path.of(gitSshPrivateKeyPath.orElseThrow(), "id_rsa");
+        OpenSSHKeyPairResourceWriter writer = new OpenSSHKeyPairResourceWriter();
+
+        try (OutputStream outputStream = Files.newOutputStream(privateKeyPath)) {
+            writer.writePrivateKey(keyPair, sshKeyComment, new OpenSSHKeyEncryptionContext(), outputStream);
+        }
+
+        Files.setPosixFilePermissions(privateKeyPath, PosixFilePermissions.fromString("rw-------"));
     }
 
-    private byte[] sshString(byte[] x, byte[] y) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        out.write(intToBytes(x.length + y.length + 1));
-        out.write(0x04);
-        out.write(x);
-        out.write(y);
-        return out.toByteArray();
+    private void writePublicKey() throws IOException, GeneralSecurityException {
+        Path publicKeyPath = Path.of(gitSshPrivateKeyPath.orElseThrow(), "id_rsa.pub");
+        OpenSSHKeyPairResourceWriter writer = new OpenSSHKeyPairResourceWriter();
+
+        try (OutputStream outputStream = Files.newOutputStream(publicKeyPath)) {
+            writer.writePublicKey(keyPair, sshKeyComment, outputStream);
+        }
     }
 
-    private byte[] intToBytes(int value) {
-        return new byte[] { (byte) ((value >>> 24) & 0xFF), (byte) ((value >>> 16) & 0xFF), (byte) ((value >>> 8) & 0xFF), (byte) (value & 0xFF) };
+    public String getPublicKeyAsString() {
+        if (!shouldUseSSHForBuildAgent()) {
+            return null;
+        }
+
+        OpenSSHKeyPairResourceWriter writer = new OpenSSHKeyPairResourceWriter();
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            writer.writePublicKey(keyPair, sshKeyComment, outputStream);
+            return outputStream.toString();
+        }
+        catch (IOException | GeneralSecurityException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private boolean shouldUseSSHForBuildAgent() {
+        return useSSHForBuildAgent;
     }
 }

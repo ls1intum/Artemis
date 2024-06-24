@@ -256,9 +256,9 @@ public class SharedQueueProcessingService {
             recentBuildJobs.add(recentBuildJob);
         }
 
-        String sshKeyHash = buildAgentSSHKeyService.getPublicKeyHash();
+        String publicSshKey = buildAgentSSHKeyService.getPublicKeyAsString();
 
-        return new BuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, active, recentBuildJobs, sshKeyHash);
+        return new BuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, active, recentBuildJobs, publicSshKey);
     }
 
     private List<BuildJobQueueItem> getProcessingJobsOfNode(String memberAddress) {

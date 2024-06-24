@@ -2,9 +2,12 @@ package de.tum.in.www1.artemis.service.icl;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.security.PublicKey;
 import java.util.Optional;
 
+import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
 import org.apache.sshd.server.auth.pubkey.PublickeyAuthenticator;
 import org.apache.sshd.server.session.ServerSession;
 import org.slf4j.Logger;
@@ -43,10 +46,20 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
             return true;
         }
         else if (localCIBuildJobQueueService.isPresent() && localCIBuildJobQueueService.orElseThrow().getBuildAgentInformation().stream().anyMatch(agent -> {
-            if (agent.publicSshKeyHash() == null) {
+            if (agent.publicSshKey() == null) {
                 return false;
             }
-            return agent.publicSshKeyHash().equals(keyHash);
+
+            AuthorizedKeyEntry agentKeyEntry = AuthorizedKeyEntry.parseAuthorizedKeyEntry(agent.publicSshKey());
+            PublicKey agentPublicKey;
+            try {
+                agentPublicKey = agentKeyEntry.resolvePublicKey(null, null, null);
+            }
+            catch (IOException | GeneralSecurityException e) {
+                throw new RuntimeException(e);
+            }
+
+            return agentPublicKey.equals(publicKey);
         })) {
             log.info("Authenticating as build agent");
             session.setAttribute(SshConstants.IS_BUILD_AGENT_KEY, true);

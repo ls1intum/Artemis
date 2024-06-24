@@ -10,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record BuildAgentInformation(String name, int maxNumberOfConcurrentBuildJobs, int numberOfCurrentBuildJobs, List<BuildJobQueueItem> runningBuildJobs, boolean status,
-        List<BuildJobQueueItem> recentBuildJobs, String publicSshKeyHash) implements Serializable {
+        List<BuildJobQueueItem> recentBuildJobs, String publicSshKey) implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -23,6 +23,6 @@ public record BuildAgentInformation(String name, int maxNumberOfConcurrentBuildJ
      */
     public BuildAgentInformation(BuildAgentInformation agentInformation, List<BuildJobQueueItem> recentBuildJobs) {
         this(agentInformation.name(), agentInformation.maxNumberOfConcurrentBuildJobs(), agentInformation.numberOfCurrentBuildJobs(), agentInformation.runningBuildJobs,
-                agentInformation.status(), recentBuildJobs, agentInformation.publicSshKeyHash());
+                agentInformation.status(), recentBuildJobs, agentInformation.publicSshKey());
     }
 }
