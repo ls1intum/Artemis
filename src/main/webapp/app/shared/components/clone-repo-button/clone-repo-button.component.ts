@@ -1,6 +1,7 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
+import { ExternalCloningService } from 'app/exercises/programming/shared/service/external-cloning.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
@@ -8,7 +9,6 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { Exercise } from 'app/entities/exercise.model';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { faDownload, faExternalLink } from '@fortawesome/free-solid-svg-icons';
@@ -20,6 +20,7 @@ import { faDownload, faExternalLink } from '@fortawesome/free-solid-svg-icons';
 })
 export class CloneRepoButtonComponent implements OnInit, OnChanges {
     readonly FeatureToggle = FeatureToggle;
+    readonly ProgrammingLanguage = ProgrammingLanguage;
 
     @Input()
     loading = false;
@@ -30,7 +31,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     @Input()
     participations?: ProgrammingExerciseStudentParticipation[];
     @Input()
-    exercise?: Exercise;
+    exercise?: ProgrammingExercise;
 
     useSsh = false;
     sshKeysUrl?: string;
@@ -53,7 +54,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
 
     constructor(
         private translateService: TranslateService,
-        private sourceTreeService: SourceTreeService,
+        private externalCloningService: ExternalCloningService,
         private accountService: AccountService,
         private profileService: ProfileService,
         private localStorage: LocalStorageService,
@@ -189,8 +190,16 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
      * build the sourceTreeUrl from the repository uri
      * @return sourceTreeUrl
      */
-    buildSourceTreeUrl() {
-        return this.sourceTreeService.buildSourceTreeUrl(this.versionControlUrl, this.getHttpOrSshRepositoryUri(false));
+    buildSourceTreeUrl(): string | undefined {
+        return this.externalCloningService.buildSourceTreeUrl(this.versionControlUrl, this.getHttpOrSshRepositoryUri(false));
+    }
+
+    buildJetbrainsUrl(): string | undefined {
+        return this.externalCloningService.buildJetbrainsUrl(this.getHttpOrSshRepositoryUri(false));
+    }
+
+    buildVSCodeUrl(): string | undefined {
+        return this.externalCloningService.buildVSCodeUrl(this.getHttpOrSshRepositoryUri(false));
     }
 
     switchPracticeMode() {

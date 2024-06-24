@@ -145,6 +145,10 @@
                 <fa-icon [icon]="faFileImport" />
                 <span jhiTranslate="artemisApp.prerequisite.manage.importButton"></span>
             </a>
+            <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'competency-management', 'prerequisites', 'create']">
+                <fa-icon [icon]="faPlus" />
+                <span jhiTranslate="artemisApp.prerequisite.manage.createButton"></span>
+            </a>
         </div>
     </div>
     <!-- TODO: new table will be added when create/edit will be added -->
@@ -157,16 +161,19 @@
                             <span jhiTranslate="global.field.id"></span>
                         </th>
                         <th class="col">
-                            <span jhiTranslate="artemisApp.competency.title"></span>
+                            <span jhiTranslate="artemisApp.courseCompetency.title"></span>
                         </th>
                         <th class="col">
-                            <span jhiTranslate="artemisApp.competency.description"></span>
+                            <span jhiTranslate="artemisApp.courseCompetency.description"></span>
                         </th>
                         <th class="col">
-                            <span jhiTranslate="artemisApp.competency.taxonomy"></span>
+                            <span jhiTranslate="artemisApp.courseCompetency.taxonomy"></span>
                         </th>
                         <th class="col">
-                            <span jhiTranslate="artemisApp.competency.course"></span>
+                            <span jhiTranslate="artemisApp.courseCompetency.softDueDate"></span>
+                        </th>
+                        <th class="col">
+                            <span jhiTranslate="artemisApp.courseCompetency.course"></span>
                         </th>
                         <th class="col"></th>
                     </tr>
@@ -183,6 +190,9 @@
                                     {{ 'artemisApp.competency.taxonomies.' + (prerequisite.taxonomy ?? 'none') | artemisTranslate }}
                                 </div>
                             </td>
+                            <td class="d-none col-lg d-lg-table-cell">
+                                {{ prerequisite.softDueDate | artemisDate }}
+                            </td>
                             <td class="col">
                                 @if (prerequisite.linkedCourseCompetency?.course?.id) {
                                     <div>
@@ -192,17 +202,26 @@
                                     </div>
                                 }
                             </td>
-                            <td class="col text-end">
-                                <button
-                                    jhiDeleteButton
-                                    [entityTitle]="prerequisite.title ?? ''"
-                                    [deleteQuestion]="'artemisApp.prerequisite.manage.delete.question'"
-                                    [deleteConfirmationText]="'artemisApp.prerequisite.manage.delete.typeNameToConfirm'"
-                                    (delete)="deletePrerequisite(prerequisite.id!)"
-                                    [dialogError]="dialogError"
-                                >
-                                    <fa-icon [icon]="faTrash" />
-                                </button>
+                            <td class="col">
+                                <div class="d-flex justify-content-end">
+                                    <a
+                                        class="btn btn-sm btn-primary me-1"
+                                        [routerLink]="['/course-management', courseId, 'competency-management', 'prerequisites', prerequisite.id, 'edit']"
+                                    >
+                                        <fa-icon [icon]="faPencilAlt" />
+                                        <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
+                                    </a>
+                                    <button
+                                        jhiDeleteButton
+                                        [entityTitle]="prerequisite.title ?? ''"
+                                        [deleteQuestion]="'artemisApp.prerequisite.manage.delete.question'"
+                                        [deleteConfirmationText]="'artemisApp.prerequisite.manage.delete.typeNameToConfirm'"
+                                        (delete)="deletePrerequisite(prerequisite.id!)"
+                                        [dialogError]="dialogError"
+                                    >
+                                        <fa-icon [icon]="faTrash" />
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     }

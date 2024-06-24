@@ -12,7 +12,6 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
-import java.util.Base64;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.sshd.client.SshClient;

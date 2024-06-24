@@ -20,7 +20,9 @@
         @if (participations && participations.length > 1) {
             <div class="form-check form-switch">
                 <input mdbCheckbox id="switch-practice" class="form-check-input" type="checkbox" [checked]="isPracticeMode" (click)="switchPracticeMode()" />
-                <label class="form-check-label" for="switch-practice" jhiTranslate="artemisApp.exerciseActions.practiceMode.title"></label>
+                <label class="form-check-label" for="switch-practice">
+                    {{ 'artemisApp.exerciseActions.practiceMode.title' | artemisTranslate }}
+                </label>
             </div>
         }
         <h5>{{ cloneHeadline | artemisTranslate }}</h5>
@@ -75,9 +77,15 @@
             class="btn btn-primary btn-sm me-2"
             type="button"
             style="min-width: 100px"
-            jhiTranslate="{{ wasCopied ? 'artemisApp.exerciseActions.copiedUrl' : 'artemisApp.exerciseActions.copyUrl' }}"
-        ></button>
-        <a class="btn btn-primary btn-sm" target="hidden-iframe" [href]="buildSourceTreeUrl() | safeUrl" jhiTranslate="artemisApp.exerciseActions.cloneSourceTree.button"></a>
+        >
+            {{ wasCopied ? ('artemisApp.exerciseActions.copiedUrl' | artemisTranslate) : ('artemisApp.exerciseActions.copyUrl' | artemisTranslate) }}
+        </button>
+        <a class="btn btn-primary btn-sm" [href]="buildVSCodeUrl() | safeUrl" jhiTranslate="artemisApp.exerciseActions.cloneVSCode.button"> </a>
+        <jhi-help-icon placement="right auto" text="artemisApp.exerciseActions.cloneVSCode.helpIcon" />
+        <a class="btn btn-primary btn-sm" target="hidden-iframe" [href]="buildJetbrainsUrl() | safeUrl" jhiTranslate="artemisApp.exerciseActions.cloneIntelliJ.button"> </a>
+        <jhi-help-icon placement="right auto" text="artemisApp.exerciseActions.cloneIntelliJ.helpIcon" />
+        <a class="btn btn-primary btn-sm" target="hidden-iframe" [href]="buildSourceTreeUrl() | safeUrl" jhiTranslate="artemisApp.exerciseActions.cloneSourceTree.button"> </a>
+        <!-- This hidden iframe is used to avoid "Do you want to leave the site" messages in the exam mode -->
         <iframe name="hidden-iframe" style="visibility: hidden; position: absolute"></iframe>
         <jhi-help-icon placement="right auto" text="artemisApp.exerciseActions.cloneSourceTree.helpIcon" />
     </ng-template>
