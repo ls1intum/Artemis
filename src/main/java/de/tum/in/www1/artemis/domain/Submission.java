@@ -100,7 +100,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Column(name = "submission_date")
     private ZonedDateTime submissionDate;
 
-    @OneToMany(mappedBy = "submission")
+    @OneToMany(mappedBy = "submission", cascade = CascadeType.REMOVE, orphanRemoval = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnore
     private Set<SelfLearningFeedbackRequest> selfLearningFeedbackRequests = new HashSet<>();
