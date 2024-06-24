@@ -9,6 +9,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.CompetencyJol;
@@ -35,7 +37,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
  */
 @Service
 @Profile("iris")
-public class IrisCourseChatSessionService implements IrisChatBasedFeatureInterface<IrisCourseChatSession>, IrisRateLimitedFeatureInterface {
+public class IrisCourseChatSessionService extends AbstractIrisChatSessionService<IrisCourseChatSession> {
 
     private final IrisMessageService irisMessageService;
 
@@ -55,7 +57,8 @@ public class IrisCourseChatSessionService implements IrisChatBasedFeatureInterfa
 
     public IrisCourseChatSessionService(IrisMessageService irisMessageService, IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService,
             AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository, IrisRateLimitService rateLimitService,
-            IrisCourseChatSessionRepository irisCourseChatSessionRepository, PyrisPipelineService pyrisPipelineService) {
+            IrisCourseChatSessionRepository irisCourseChatSessionRepository, PyrisPipelineService pyrisPipelineService, ObjectMapper objectMapper) {
+        super(irisSessionRepository, objectMapper);
         this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
         this.irisChatWebsocketService = irisChatWebsocketService;
@@ -95,7 +98,7 @@ public class IrisCourseChatSessionService implements IrisChatBasedFeatureInterfa
 
     @Override
     public void sendOverWebsocket(IrisMessage message) {
-        irisChatWebsocketService.sendMessage(message, null);
+        irisChatWebsocketService.sendMessage(message);
     }
 
     @Override
@@ -135,8 +138,9 @@ public class IrisCourseChatSessionService implements IrisChatBasedFeatureInterfa
             irisChatWebsocketService.sendMessage(savedMessage, statusUpdate.stages());
         }
         else {
-            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages());
+            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), statusUpdate.suggestions());
         }
+        updateLatestSuggestions(session, statusUpdate.suggestions());
     }
 
     /**
