@@ -22,6 +22,15 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 public abstract class ProgrammingExerciseMigrationEntry {
 
+    @Value("${migration.scaling.batch-size:100}")
+    protected int batchSize;
+
+    @Value("${migration.scaling.max-thread-count:32}")
+    protected int maxThreadCount;
+
+    @Value("${migration.scaling.timeout-in-hours:48}")
+    protected int timeoutInHours;
+
     /**
      * Value in seconds
      */

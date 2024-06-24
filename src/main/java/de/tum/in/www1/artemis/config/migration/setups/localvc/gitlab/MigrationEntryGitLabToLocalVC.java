@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.config.migration.setups.localvc.gitlab;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -19,7 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
-import de.tum.in.www1.artemis.config.migration.setups.ProgrammingExerciseMigrationEntry;
+import de.tum.in.www1.artemis.config.migration.setups.localvc.LocalVCMigrationEntry;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
@@ -39,22 +38,10 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 @Component
 @Profile("gitlab")
-public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationEntry {
-
-    @Value("${migration.scaling.batch-size:100}")
-    private int batchSize;
-
-    @Value("${migration.scaling.max-thread-count:32}")
-    private int maxThreadCount;
-
-    @Value("${migration.scaling.timeout-in-hours:48}")
-    private int timeoutInHours;
+public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
-
-    @Value("${server.url}")
-    private URL localVCBaseUrl;
 
     @Value("${artemis.version-control.local-vcs-repo-path:#{null}}")
     private String localVCBasePath;

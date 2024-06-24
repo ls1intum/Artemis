@@ -1,19 +1,17 @@
 package de.tum.in.www1.artemis.config.migration.setups.localvc.jenkins;
 
-import java.net.URL;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
-import de.tum.in.www1.artemis.config.migration.setups.ProgrammingExerciseMigrationEntry;
+import de.tum.in.www1.artemis.config.migration.setups.localvc.LocalVCMigrationEntry;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.JenkinsException;
@@ -29,22 +27,7 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
  */
 @Component
 @Profile("jenkins")
-public class MigrationEntryJenkinsToLocalVC extends ProgrammingExerciseMigrationEntry {
-
-    @Value("${migration.scaling.batch-size:100}")
-    private int batchSize;
-
-    @Value("${migration.scaling.max-thread-count:32}")
-    private int maxThreadCount;
-
-    @Value("${migration.scaling.timeout-in-hours:48}")
-    private int timeoutInHours;
-
-    @Value("${artemis.version-control.default-branch:main}")
-    private String defaultBranch;
-
-    @Value("${server.url}")
-    private URL localVCBaseUrl;
+public class MigrationEntryJenkinsToLocalVC extends LocalVCMigrationEntry {
 
     private static final String ERROR_MESSAGE = "Failed to migrate programming exercises within %d hours. Aborting migration.";
 
