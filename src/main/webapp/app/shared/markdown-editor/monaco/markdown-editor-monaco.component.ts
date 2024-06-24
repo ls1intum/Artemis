@@ -19,7 +19,6 @@ import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { MonacoEditorActionGroup } from 'app/shared/monaco-editor/model/actions/monaco-editor-action-group.model';
 import { MonacoHeadingAction } from 'app/shared/monaco-editor/model/actions/monaco-heading.action';
-import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/monaco-formula.action';
 import { MonacoFullscreenAction } from 'app/shared/monaco-editor/model/actions/monaco-fullscreen.action';
 import { MonacoColorAction } from 'app/shared/monaco-editor/model/actions/monaco-color.action';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
@@ -91,7 +90,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         new MonacoAttachmentAction(),
         new MonacoOrderedListAction(),
         new MonacoUnorderedListAction(),
-        new MonacoFormulaAction(),
     ];
 
     @Input()
