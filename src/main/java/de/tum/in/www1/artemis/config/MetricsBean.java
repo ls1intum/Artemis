@@ -447,7 +447,7 @@ public class MetricsBean {
      * Get all users that currently have the role ADMIN and update the activeAdminsGauge.
      */
     private void updateActiveAdminsMetrics() {
-        var activeAdmins = userRepository.findAllAdminLogins();
+        var activeAdmins = userRepository.findAllActiveAdminLogins();
         var results = new ArrayList<MultiGauge.Row<?>>();
 
         for (var activeAdmin : activeAdmins) {
