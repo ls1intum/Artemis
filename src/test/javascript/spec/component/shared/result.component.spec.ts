@@ -259,13 +259,22 @@ describe('ResultComponent', () => {
 
     it('should display the correct message for FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE and FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE', () => {
         comp.templateStatus = ResultTemplateStatus.MISSING;
+
+        // Test for FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE
         comp.missingResultInfo = MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE;
         fixture.detectChanges();
-        const compiled = fixture.nativeElement;
-        expect(compiled.textContent).toContain('artemisApp.result.missing.programmingFailedSubmission.message');
-        comp.missingResultInfo = MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE;
+        let compiled = fixture.nativeElement;
+        let spanElement = compiled.querySelector('span[jhiTranslate="artemisApp.result.missing.programmingFailedSubmission.message"]');
+        expect(spanElement).not.toBeNull();
+        expect(spanElement.getAttribute('jhiTranslate')).toBe('artemisApp.result.missing.programmingFailedSubmission.message');
+
+        // Test for FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE
+        comp.missingResultInfo = MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE;
         fixture.detectChanges();
-        expect(compiled.textContent).toContain('artemisApp.result.missing.programmingFailedSubmission.message');
+        compiled = fixture.nativeElement;
+        spanElement = compiled.querySelector('span[jhiTranslate="artemisApp.result.missing.programmingFailedSubmission.message"]');
+        expect(spanElement).not.toBeNull();
+        expect(spanElement.getAttribute('jhiTranslate')).toBe('artemisApp.result.missing.programmingFailedSubmission.message');
     });
 
     it('should display the submitted text for SUBMITTED template status', () => {

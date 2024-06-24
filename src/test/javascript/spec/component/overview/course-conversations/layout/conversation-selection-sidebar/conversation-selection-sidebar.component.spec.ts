@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angul
 import { ConversationSelectionSidebarComponent } from 'app/overview/course-conversations/layout/conversation-selection-sidebar/conversation-selection-sidebar.component';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Type } from '@angular/core';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbDropdownMocksModule } from '../../../../../helpers/mocks/directive/ngbDropdownMocks.module';
@@ -34,6 +34,7 @@ import { NgbTooltipMocksModule } from '../../../../../helpers/mocks/directive/ng
 import { MetisService } from 'app/shared/metis/metis.service';
 import { CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { NotificationService } from 'app/shared/notification/notification.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 const examples: (ConversationDTO | undefined)[] = [
     undefined,
@@ -99,6 +100,7 @@ examples.forEach((activeConversation) => {
                         MockPipe(ArtemisTranslatePipe),
                         MockComponent(GroupChatIconComponent),
                         MockComponent(ChannelIconComponent),
+                        MockDirective(TranslateDirective),
                     ],
                     providers: [
                         MockProvider(TranslateService),
