@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.participation.ParticipationInterface;
@@ -17,12 +18,32 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 public abstract class ProgrammingExerciseMigrationEntry {
+
+    /**
+     * Value in seconds
+     */
+    @Value("${migration.scaling.estimated-time-per-repository:2}")
+    protected int estimatedTimePerRepository;
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseMigrationEntry.class);
 
     protected final CopyOnWriteArrayList<ProgrammingExerciseParticipation> errorList = new CopyOnWriteArrayList<>();
+
+    protected void logProgress(long doneCount, long totalCount, long threadCount, long reposPerEntry, String migrationType) {
+        final double percentage = ((double) doneCount / totalCount) * 100;
+        log.info("Migrated {}/{} {} participations ({}%)", doneCount, totalCount, migrationType, String.format("%.2f", percentage));
+        log.info("Estimated time remaining: {} for {} repositories", TimeLogUtil.formatDuration(getRestDurationInSeconds(doneCount, totalCount, reposPerEntry, threadCount)),
+                migrationType);
+    }
+
+    protected long getRestDurationInSeconds(final long done, final long total, final long reposPerEntry, final long threads) {
+        final long stillTodo = total - done;
+        final long timePerEntry = estimatedTimePerRepository * reposPerEntry;
+        return (stillTodo * timePerEntry) / threads;
+    }
 
     protected static void shutdown(ExecutorService executorService, int timeoutInHours, String errorMessage) {
         // Wait for all threads to finish

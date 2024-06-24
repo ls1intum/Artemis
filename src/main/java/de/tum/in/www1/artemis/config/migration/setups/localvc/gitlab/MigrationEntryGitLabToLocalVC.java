@@ -52,12 +52,6 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
     @Value("${migration.scaling.timeout-in-hours:48}")
     private int timeoutInHours;
 
-    /**
-     * Value in seconds
-     */
-    @Value("${migration.scaling.estimated-time-per-repository:2}")
-    private int estimatedTimePerRepository;
-
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
@@ -201,19 +195,6 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
         log.info("Finished migrating programming exercises and student participations");
         evaluateErrorList(programmingExerciseRepository);
         return true;
-    }
-
-    private void logProgress(long doneCount, long totalCount, long threadCount, long reposPerEntry, String migrationType) {
-        final double percentage = ((double) doneCount / totalCount) * 100;
-        log.info("Migrated {}/{} {} participations ({}%)", doneCount, totalCount, migrationType, String.format("%.2f", percentage));
-        log.info("Estimated time remaining: {} for {} repositories", TimeLogUtil.formatDuration(getRestDurationInSeconds(doneCount, totalCount, reposPerEntry, threadCount)),
-                migrationType);
-    }
-
-    private long getRestDurationInSeconds(final long done, final long total, final long reposPerEntry, final long threads) {
-        final long stillTodo = total - done;
-        final long timePerEntry = estimatedTimePerRepository * reposPerEntry;
-        return (stillTodo * timePerEntry) / threads;
     }
 
     private String migrateTestRepo(ProgrammingExercise programmingExercise) throws URISyntaxException {

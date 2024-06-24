@@ -42,12 +42,6 @@ public class MigrationEntryJenkinsToLocalVC extends ProgrammingExerciseMigration
     @Value("${migration.scaling.timeout-in-hours:48}")
     private int timeoutInHours;
 
-    /**
-     * Value in seconds
-     */
-    @Value("${migration.scaling.estimated-time-per-repository:2}")
-    private int estimatedTimePerRepository;
-
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
@@ -168,16 +162,4 @@ public class MigrationEntryJenkinsToLocalVC extends ProgrammingExerciseMigration
         }
     }
 
-    private long getRestDurationInSeconds(final long done, final long total, final long reposPerEntry, final long threads) {
-        final long stillTodo = total - done;
-        final long timePerEntry = estimatedTimePerRepository * reposPerEntry;
-        return (stillTodo * timePerEntry) / threads;
-    }
-
-    private void logProgress(long doneCount, long totalCount, long threadCount, long reposPerEntry, String migrationType) {
-        final double percentage = ((double) doneCount / totalCount) * 100;
-        log.info("Migrated {}/{} {} participations ({}%)", doneCount, totalCount, migrationType, String.format("%.2f", percentage));
-        log.info("Estimated time remaining: {} for {} repositories", TimeLogUtil.formatDuration(getRestDurationInSeconds(doneCount, totalCount, reposPerEntry, threadCount)),
-                migrationType);
-    }
 }
