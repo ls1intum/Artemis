@@ -9,14 +9,26 @@ function getTranslationKeyForLevel(level: number): string {
 
 const HEADING_CHARACTER = '#';
 const HEADING_TEXT = 'Heading';
+
+/**
+ * Action to toggle heading text in the editor. It wraps the selected text with the heading delimiter, e.g. switching between text and # text for level 1.
+ */
 export class MonacoHeadingAction extends MonacoEditorAction {
     level: number;
 
+    /**
+     * Constructor for the heading action. Its ID and translation key are based on the heading level.
+     * @param level The level of the heading, e.g. 1 for "# Heading", 2 for "## Heading", ...
+     */
     constructor(level: number) {
         super(`monaco-heading-${level}.action`, getTranslationKeyForLevel(level), faHeading);
         this.level = level;
     }
 
+    /**
+     * Toggles the heading prefix ("# ", "## ", ...) for the selected text based on the heading level. If the selected text is already a heading, the prefix is removed.
+     * @param editor The editor in which to toggle heading text.
+     */
     run(editor: monaco.editor.ICodeEditor) {
         const selection = editor.getSelection();
         const selectedText = selection ? this.getTextAtRange(editor, selection) : undefined;

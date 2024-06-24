@@ -2,6 +2,9 @@ import { TranslateService } from '@ngx-translate/core';
 import * as monaco from 'monaco-editor';
 import { DomainActionWithOptionsArguments, MonacoEditorDomainActionWithOptions } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action-with-options.model';
 
+/**
+ * Action to insert a test case into the editor. It also registers a completion item provider offers all possible test cases as completion items to the user.
+ */
 export class MonacoTestCaseAction extends MonacoEditorDomainActionWithOptions {
     disposableCompletionProvider?: monaco.IDisposable;
 
@@ -60,6 +63,10 @@ export class MonacoTestCaseAction extends MonacoEditorDomainActionWithOptions {
         this.disposableCompletionProvider?.dispose();
     }
 
+    /**
+     * Executes the action in the current editor with the given arguments (selected item).
+     * @param args
+     */
     executeInCurrentEditor(args?: DomainActionWithOptionsArguments): void {
         super.executeInCurrentEditor(args);
     }

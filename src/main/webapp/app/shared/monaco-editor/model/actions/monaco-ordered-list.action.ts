@@ -3,12 +3,21 @@ import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monac
 import { faListOl } from '@fortawesome/free-solid-svg-icons';
 
 const NUMBER_REGEX = /^\d+\.\s.*/;
+
+/**
+ * Action to toggle unordered list in the editor. It toggles the "1. ", "2. ", ... prefix for the entire selection.
+ */
 export class MonacoOrderedListAction extends MonacoEditorAction {
     static readonly ID = 'monaco-ordered-list.action';
     constructor() {
         super(MonacoOrderedListAction.ID, 'artemisApp.multipleChoiceQuestion.editor.orderedList', faListOl, undefined);
     }
 
+    /**
+     * Toggles the ordered list prefix ("1. ", "2. ", ...) for the entire selection. If the selection is already an ordered list, the prefix is removed from all lines.
+     * If no text is selected, the prefix "1. " is inserted at the current cursor position.
+     * @param editor The editor in which to toggle the ordered list.
+     */
     run(editor: monaco.editor.ICodeEditor): void {
         const selection = editor.getSelection();
         if (!selection) return;

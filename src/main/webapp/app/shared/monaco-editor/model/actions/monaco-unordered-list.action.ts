@@ -3,12 +3,21 @@ import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monac
 import { faListUl } from '@fortawesome/free-solid-svg-icons';
 
 const LIST_BULLET = '- ';
+
+/**
+ * Action to toggle unordered list in the editor. It toggles the "- " prefix for the entire selection.
+ */
 export class MonacoUnorderedListAction extends MonacoEditorAction {
     static readonly ID = 'monaco-unordered-list.action';
     constructor() {
         super(MonacoUnorderedListAction.ID, 'artemisApp.multipleChoiceQuestion.editor.unorderedList', faListUl, undefined);
     }
 
+    /**
+     * Toggles the unordered list prefix ("- ") for the entire selection. If the selection is already an unordered list, the prefix is removed from all lines.
+     * If no text is selected, the prefix is inserted at the current cursor position.
+     * @param editor The editor in which to toggle the unordered list.
+     */
     run(editor: monaco.editor.ICodeEditor): void {
         const selection = editor.getSelection();
         if (!selection) return;
