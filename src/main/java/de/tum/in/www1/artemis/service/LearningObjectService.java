@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.config.Constants.MIN_SCORE_GREEN;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.Set;
@@ -67,37 +66,6 @@ public class LearningObjectService {
             case Exercise exercise -> participantScoreService.getStudentAndTeamParticipations(user, Set.of(exercise)).anyMatch(score -> score.getLastScore() >= MIN_SCORE_GREEN);
             default -> throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
         };
-    }
-
-    /**
-     * Get the last completed learning object of the given competencies related to the given date.
-     *
-     * @param user         the user for which to get the last completed learning object
-     * @param relatedDate  the date to which the completion date of the learning object should be related
-     * @param competencies the competencies for which to get the last completed learning object
-     * @return the last completed learning object of the given competencies related to the given date
-     */
-    public Optional<LearningObject> getCompletedPredecessorOfLearningObjectRelatedToDate(User user, Optional<ZonedDateTime> relatedDate, Set<Competency> competencies) {
-        return getCompletedLearningObjectsForUserAndCompetencies(user, competencies)
-                .filter(learningObject -> learningObject.getCompletionDate(user).orElseThrow().isBefore(relatedDate.orElse(ZonedDateTime.now())))
-                .max(Comparator.comparing(o -> o.getCompletionDate(user).orElseThrow()));
-    }
-
-    /**
-     * Get the next completed learning object of the given competencies related to the given date.
-     *
-     * @param user         the user for which to get the next completed learning object
-     * @param relatedDate  the date to which the completion date of the learning object should be related
-     * @param competencies the competencies for which to get the next completed learning object
-     * @return the next completed learning object of the given competencies related to the given date
-     */
-    public Optional<LearningObject> getCompletedSuccessorOfLearningObjectRelatedToDate(User user, Optional<ZonedDateTime> relatedDate, Set<Competency> competencies) {
-        if (relatedDate.isEmpty()) {
-            throw new RuntimeException("relatedDate must be present to get next completed learning object.");
-        }
-        return getCompletedLearningObjectsForUserAndCompetencies(user, competencies)
-                .filter(learningObject -> learningObject.getCompletionDate(user).orElseThrow().isAfter(relatedDate.get()))
-                .min(Comparator.comparing(o -> o.getCompletionDate(user).orElseThrow()));
     }
 
     /**

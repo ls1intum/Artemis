@@ -356,7 +356,9 @@ public class LearningPathResource {
 
         checkLearningPathAccessElseThrow(learningPath.getCourse(), learningPath, user);
 
-        List<CompetencyNameDTO> competencyNames = learningPathRecommendationService.getRecommendedOrderOfAllCompetencies(learningPath).stream().map(CompetencyNameDTO::of).toList();
+        var recommendationState = learningPathRecommendationService.getRecommendedOrderOfAllCompetencies(learningPath);
+        List<CompetencyNameDTO> competencyNames = recommendationState.recommendedOrderOfCompetencies().stream()
+                .map(competencyId -> recommendationState.competencyIdMap().get(competencyId)).map(CompetencyNameDTO::of).toList();
         return ResponseEntity.ok(competencyNames);
     }
 
