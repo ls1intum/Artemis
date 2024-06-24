@@ -3,7 +3,7 @@ import { Location } from '@angular/common';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ConversationSidebarEntryComponent } from 'app/overview/course-conversations/layout/conversation-selection-sidebar/conversation-sidebar-section/conversation-sidebar-entry/conversation-sidebar-entry.component';
 import { NgbDropdownMocksModule } from '../../../../../../../helpers/mocks/directive/ngbDropdownMocks.module';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
@@ -30,6 +30,7 @@ import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/co
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../../../../../../helpers/mocks/service/mock-notification.service';
 import { Course } from 'app/entities/course.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 const examples: (() => ConversationDTO)[] = [
     () => generateOneToOneChatDTO({}),
@@ -56,6 +57,7 @@ const configureTestBed = () => {
             MockComponent(FaIconComponent),
             MockComponent(ChannelIconComponent),
             MockComponent(GroupChatIconComponent),
+            MockDirective(TranslateDirective),
         ],
         providers: [
             MockProvider(ConversationService),
