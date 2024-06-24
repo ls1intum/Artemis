@@ -61,8 +61,8 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
 
     constructor(
         private channelService: ChannelService,
-        private alertService: AlertService,
         private conversationService: ConversationService,
+        private alertService: AlertService,
         private modalService: NgbModal,
 
         activeModal: NgbActiveModal,
