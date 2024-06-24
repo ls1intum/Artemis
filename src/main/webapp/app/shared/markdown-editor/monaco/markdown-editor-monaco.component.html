@@ -124,10 +124,7 @@
     (cdkDragStarted)="isResizing = true"
     (cdkDragMoved)="onResizeMoved($event)"
     (cdkDragEnded)="isResizing = false"
-    [style.position]="'absolute'"
-    [style.left.%]="50"
-    [style.cursor]="'ns-resize'"
-    ><fa-icon [icon]="faGripLines" class="rg-bottom md-resize-icon"
+    ><fa-icon [icon]="faGripLines" class="rg-bottom md-resize-icon resize-handle"
 /></span>
 
 <ng-template #simpleActionButton let-action="action">

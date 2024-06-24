@@ -25,3 +25,9 @@
         color: var(--bs-secondary);
     }
 }
+
+.resize-handle {
+    position: absolute;
+    left: 50%;
+    cursor: ns-resize;
+}
