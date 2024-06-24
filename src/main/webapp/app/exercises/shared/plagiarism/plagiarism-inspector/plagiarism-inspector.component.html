@@ -23,7 +23,7 @@
                     (click)="checkPlagiarism()"
                     [overwriteDisabled]="detectionInProgress"
                 >
-                    <span>{{ plagiarismResult ? ('artemisApp.plagiarism.rerun' | artemisTranslate) : ('artemisApp.plagiarism.detect' | artemisTranslate) }}</span>
+                    <span jhiTranslate="{{ plagiarismResult ? 'artemisApp.plagiarism.rerun' : 'artemisApp.plagiarism.detect' }}"></span>
                 </button>
                 <ng-template #toggleDeleteModal let-modal>
                     <div class="modal-header">

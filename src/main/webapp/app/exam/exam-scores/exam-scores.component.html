@@ -436,13 +436,7 @@
                                         <jhi-help-icon text="artemisApp.examScores.averageExerciseGroupTooltip" />
                                     </th>
                                     @if (gradingScaleExists) {
-                                        <th>
-                                            {{
-                                                isBonus
-                                                    ? ('artemisApp.examScores.averageBonusColumn' | artemisTranslate)
-                                                    : ('artemisApp.examScores.averageGradeColumn' | artemisTranslate)
-                                            }}
-                                        </th>
+                                        <th jhiTranslate="{{ isBonus ? 'artemisApp.examScores.averageBonusColumn' : 'artemisApp.examScores.averageGradeColumn' }}"></th>
                                     }
                                     <th jhiTranslate="artemisApp.examScores.titleExerciseColumn"></th>
                                     <th>
@@ -559,9 +553,7 @@
                             </th>
                             @if (gradingScaleExists) {
                                 <th jhiSortBy="overallScoreAchieved">
-                                    <span>{{
-                                        isBonus ? ('artemisApp.examScores.overallBonusColumn' | artemisTranslate) : ('artemisApp.examScores.overallGradeColumn' | artemisTranslate)
-                                    }}</span>
+                                    <span jhiTranslate="{{ isBonus ? 'artemisApp.examScores.overallBonusColumn' : 'artemisApp.examScores.overallGradeColumn' }}"></span>
                                     <fa-icon [icon]="faSort" />
                                 </th>
                             }

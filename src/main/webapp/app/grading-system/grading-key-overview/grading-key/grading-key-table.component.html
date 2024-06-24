@@ -6,7 +6,7 @@
         <table class="table table-striped w-auto">
             <thead>
                 <tr>
-                    <th>{{ isBonus ? ('artemisApp.exam.examSummary.bonus' | artemisTranslate) : ('artemisApp.exam.examSummary.grade' | artemisTranslate) }}</th>
+                    <th jhiTranslate="{{ isBonus ? 'artemisApp.exam.examSummary.bonus' : 'artemisApp.exam.examSummary.grade' }}"></th>
                     <th jhiTranslate="artemisApp.exam.examSummary.interval"></th>
                     @if (hasPointsSet) {
                         <th jhiTranslate="artemisApp.exam.examSummary.intervalPoints"></th>

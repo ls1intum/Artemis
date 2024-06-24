@@ -133,13 +133,9 @@
                                     <div class="mt-3">
                                         <a class="btn btn-primary" [routerLink]="['grading-key']" [queryParams]="{ grade: gradeDTO?.gradeName }">
                                             <fa-icon [icon]="faClipboard" />
-                                            <span>
-                                                {{
-                                                    isBonus
-                                                        ? ('artemisApp.exam.examSummary.gradeKeyButtonBonus' | artemisTranslate)
-                                                        : ('artemisApp.exam.examSummary.gradeKeyButton' | artemisTranslate)
-                                                }}
-                                            </span>
+                                            <span
+                                                jhiTranslate="{{ isBonus ? 'artemisApp.exam.examSummary.gradeKeyButtonBonus' : 'artemisApp.exam.examSummary.gradeKeyButton' }}"
+                                            ></span>
                                         </a>
                                     </div>
                                 </div>
