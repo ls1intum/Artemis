@@ -5,17 +5,19 @@ $sidebar-width-closed: 100px;
 
 .scrollable-item-content {
     height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height) - $search-height);
+    overflow-y: auto;
+
     &.content-height-dev {
         height: calc(100vh - var(--sidebar-footer-height-dev) - var(--header-height) - $search-height);
     }
+
     &.sidebar-height-testRun {
         height: calc(100vh - 360px - $search-height);
     }
+
     @media (max-width: 768px) {
         height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height) - $search-height) !important;
     }
-
-    overflow-y: auto;
 }
 
 .sidebar {
@@ -27,12 +29,15 @@ $sidebar-width-closed: 100px;
     &.collapsed {
         width: $sidebar-width-closed !important;
     }
+
     &.sidebar-height-dev {
         height: calc(100vh - var(--sidebar-footer-height-dev) - $breadcrumb-height);
     }
+
     &.sidebar-height-testRun {
         height: calc(100vh - 360px);
     }
+
     @media (max-width: 768px) {
         height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height)) !important;
     }
