@@ -22,7 +22,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
     imports: [
         CommonModule,
         RouterModule,
-        LearningPathStudentNavComponent,
+        LearningPathNavComponent,
         CourseExerciseDetailsModule,
         LearningPathLectureUnitComponent,
         LearningPathExerciseComponent,
