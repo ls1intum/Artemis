@@ -1,4 +1,4 @@
-import { Component, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, InputSignal, OutputEmitterRef, Signal, WritableSignal, inject, input, output, signal, viewChild } from '@angular/core';
 import { NgbAccordionDirective, NgbAccordionModule, NgbDropdownModule, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -24,13 +24,13 @@ export class LearningPathNavOverviewComponent {
     private readonly modalService: NgbModal = inject(NgbModal);
     private readonly learningPathApiService: LearningPathApiService = inject(LearningPathApiService);
 
-    readonly learningPathId = input.required<number>();
+    readonly learningPathId: InputSignal<number> = input.required();
 
-    readonly competencyAccordion = viewChild.required(NgbAccordionDirective);
+    readonly competencyAccordion: Signal<NgbAccordionDirective> = viewChild.required(NgbAccordionDirective);
 
-    readonly onLearningObjectSelected = output<void>();
-    readonly isLoading = signal(false);
-    readonly competencies = signal<LearningPathCompetencyDTO[] | undefined>(undefined);
+    readonly onLearningObjectSelected: OutputEmitterRef<void> = output();
+    readonly isLoading: WritableSignal<boolean> = signal(false);
+    readonly competencies: WritableSignal<LearningPathCompetencyDTO[] | undefined> = signal(undefined);
 
     async loadCompetencies(learningPathId: number): Promise<void> {
         if (this.competencies()) {
@@ -52,7 +52,7 @@ export class LearningPathNavOverviewComponent {
         this.competencyAccordion().collapseAll();
     }
 
-    openCompetencyGraph() {
+    openCompetencyGraph(): void {
         const modalRef = this.modalService.open(CompetencyGraphModalComponent, {
             size: 'xl',
             backdrop: 'static',

@@ -1,7 +1,7 @@
-import { AfterViewInit, Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import { AfterViewInit, Component, InputSignal, OnInit, Signal, WritableSignal, computed, inject, input, signal } from '@angular/core';
 import { Layout, NgxGraphModule, NgxGraphZoomOptions } from '@swimlane/ngx-graph';
 import { Subject } from 'rxjs';
-import { CompetencyGraphDTO, NodeType } from 'app/entities/competency/learning-path.model';
+import { CompetencyGraphDTO, CompetencyGraphEdgeDTO, CompetencyGraphNodeDTO, NodeType } from 'app/entities/competency/learning-path.model';
 import { CompetencyNodeComponent, SizeUpdate } from 'app/course/learning-paths/components/competency-node/competency-node.component';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 import { AlertService } from 'app/core/util/alert.service';
@@ -17,17 +17,17 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 export class CompetencyGraphComponent implements OnInit, AfterViewInit {
     protected readonly NodeType = NodeType;
 
-    private readonly learningPathApiService = inject(LearningPathApiService);
-    private readonly alertService = inject(AlertService);
+    private readonly learningPathApiService: LearningPathApiService = inject(LearningPathApiService);
+    private readonly alertService: AlertService = inject(AlertService);
 
-    learningPathId = input.required<number>();
-    readonly isLoading = signal<boolean>(false);
+    learningPathId: InputSignal<number> = input.required<number>();
+    readonly isLoading: WritableSignal<boolean> = signal<boolean>(false);
 
-    private readonly competencyGraph = signal<CompetencyGraphDTO>({ nodes: [], edges: [] });
-    readonly nodes = computed(() => this.competencyGraph().nodes);
-    readonly edges = computed(() => this.competencyGraph().edges);
+    private readonly competencyGraph: WritableSignal<CompetencyGraphDTO> = signal<CompetencyGraphDTO>({ nodes: [], edges: [] });
+    readonly nodes: Signal<CompetencyGraphNodeDTO[]> = computed(() => this.competencyGraph().nodes);
+    readonly edges: Signal<CompetencyGraphEdgeDTO[]> = computed(() => this.competencyGraph().edges);
 
-    readonly layout = signal<string | Layout>('dagreCluster');
+    readonly layout: WritableSignal<string | Layout> = signal('dagreCluster');
     readonly update$: Subject<boolean> = new Subject<boolean>();
     readonly center$: Subject<boolean> = new Subject<boolean>();
     readonly zoomToFit$: Subject<NgxGraphZoomOptions> = new Subject<NgxGraphZoomOptions>();
@@ -40,7 +40,7 @@ export class CompetencyGraphComponent implements OnInit, AfterViewInit {
         this.zoomToFit$.next({ autoCenter: true });
     }
 
-    async loadCompetencyGraph(learningPathId: number) {
+    async loadCompetencyGraph(learningPathId: number): Promise<void> {
         try {
             this.isLoading.set(true);
             const competencyGraph = await this.learningPathApiService.getLearningPathCompetencyGraph(learningPathId);
@@ -52,7 +52,7 @@ export class CompetencyGraphComponent implements OnInit, AfterViewInit {
         }
     }
 
-    setNodeDimension(sizeUpdate: SizeUpdate) {
+    setNodeDimension(sizeUpdate: SizeUpdate): void {
         this.competencyGraph.update(({ nodes, edges }) => {
             return {
                 nodes: nodes.map((node) => {

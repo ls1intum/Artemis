@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input, output, signal } from '@angular/core';
+import { Component, InputSignal, OnInit, OutputEmitterRef, Signal, WritableSignal, inject, input, output, signal } from '@angular/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { AlertService } from 'app/core/util/alert.service';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
@@ -21,20 +21,20 @@ export class LearningPathNavOverviewLearningObjectsComponent implements OnInit {
     private readonly learningPathApiService: LearningPathApiService = inject(LearningPathApiService);
     private readonly learningPathNavigationService = inject(LearningPathNavigationService);
 
-    readonly learningPathId = input.required<number>();
-    readonly competencyId = input.required<number>();
-    readonly currentLearningObject = this.learningPathNavigationService.currentLearningObject;
+    readonly learningPathId: InputSignal<number> = input.required<number>();
+    readonly competencyId: InputSignal<number> = input.required<number>();
+    readonly currentLearningObject: Signal<LearningPathNavigationObjectDTO | undefined> = this.learningPathNavigationService.currentLearningObject;
 
-    readonly isLoading = signal(false);
-    readonly learningObjects = signal<LearningPathNavigationObjectDTO[] | undefined>(undefined);
+    readonly isLoading: WritableSignal<boolean> = signal(false);
+    readonly learningObjects: WritableSignal<LearningPathNavigationObjectDTO[] | undefined> = signal(undefined);
 
-    readonly onLearningObjectSelected = output();
+    readonly onLearningObjectSelected: OutputEmitterRef<void> = output();
 
     ngOnInit(): void {
         this.loadLearningObjects();
     }
 
-    async loadLearningObjects() {
+    async loadLearningObjects(): Promise<void> {
         if (this.learningObjects()) {
             return;
         }

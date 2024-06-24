@@ -1,4 +1,4 @@
-import { Component, InputSignal, OnInit, computed, inject, input, viewChild } from '@angular/core';
+import { Component, InputSignal, OnInit, Signal, WritableSignal, computed, inject, input, viewChild } from '@angular/core';
 import { LearningPathNavigationObjectDTO } from 'app/entities/competency/learning-path.model';
 import { CommonModule } from '@angular/common';
 import { NgbAccordionModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
@@ -19,18 +19,22 @@ export class LearningPathNavComponent implements OnInit {
     protected readonly faChevronDown: IconDefinition = faChevronDown;
     protected readonly faCheckCircle: IconDefinition = faCheckCircle;
 
-    private learningPathNavigationService = inject(LearningPathNavigationService);
+    private learningPathNavigationService: LearningPathNavigationService = inject(LearningPathNavigationService);
 
     readonly learningPathId: InputSignal<number> = input.required<number>();
 
-    readonly isLoading = this.learningPathNavigationService.isLoading;
+    readonly isLoading: WritableSignal<boolean> = this.learningPathNavigationService.isLoading;
 
-    readonly learningPathProgress = computed(() => this.learningPathNavigationService.learningPathNavigation()?.progress ?? 0);
-    readonly predecessorLearningObject = computed(() => this.learningPathNavigationService.learningPathNavigation()?.predecessorLearningObject);
-    readonly currentLearningObject = computed(() => this.learningPathNavigationService.currentLearningObject());
-    readonly successorLearningObject = computed(() => this.learningPathNavigationService.learningPathNavigation()?.successorLearningObject);
+    readonly learningPathProgress: Signal<number> = computed(() => this.learningPathNavigationService.learningPathNavigation()?.progress ?? 0);
+    readonly predecessorLearningObject: Signal<LearningPathNavigationObjectDTO | undefined> = computed(
+        () => this.learningPathNavigationService.learningPathNavigation()?.predecessorLearningObject,
+    );
+    readonly currentLearningObject: Signal<LearningPathNavigationObjectDTO | undefined> = computed(() => this.learningPathNavigationService.currentLearningObject());
+    readonly successorLearningObject: Signal<LearningPathNavigationObjectDTO | undefined> = computed(
+        () => this.learningPathNavigationService.learningPathNavigation()?.successorLearningObject,
+    );
 
-    readonly navOverview = viewChild.required(LearningPathNavOverviewComponent);
+    readonly navOverview: Signal<LearningPathNavOverviewComponent> = viewChild.required(LearningPathNavOverviewComponent);
 
     ngOnInit(): void {
         this.learningPathNavigationService.loadInitialLearningPathNavigation(this.learningPathId());
