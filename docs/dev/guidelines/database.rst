@@ -213,17 +213,17 @@ An example implementation could look like this:
 
     // Repository interface
     default Page<User> searchAllByLoginOrNameInCourseAndReturnPage(Pageable pageable, String loginOrName, long courseId) {
-            List<Long> userIds = findUserIdsByLoginOrNameInCourse(loginOrName, courseId, pageable).stream().map(DomainObject::getId).toList();;
+        List<Long> userIds = findUserIdsByLoginOrNameInCourse(loginOrName, courseId, pageable).stream().map(DomainObject::getId).toList();;
 
-            if (userIds.isEmpty()) {
-               return new PageImpl<>(Collections.emptyList(), pageable, 0);
-            }
-
-            List<User> users = findUsersWithGroupsByIds(userIds);
-            long total = countUsersByLoginOrNameInCourse(loginOrName, courseId);
-
-            return new PageImpl<>(users, pageable, total);
+        if (userIds.isEmpty()) {
+            return new PageImpl<>(Collections.emptyList(), pageable, 0);
         }
+
+        List<User> users = findUsersWithGroupsByIds(userIds);
+        long total = countUsersByLoginOrNameInCourse(loginOrName, courseId);
+
+        return new PageImpl<>(users, pageable, total);
+    }
 
     @Query("""
                 SELECT DISTINCT user
