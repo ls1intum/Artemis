@@ -15,9 +15,9 @@
             </div>
         </div>
     } @else if (competencies()) {
-        <div ngbAccordion [destroyOnHide]="false" class="nav-overview-competencies accordion-flush">
+        <div ngbAccordion class="nav-overview-competencies accordion-flush">
             @for (competency of competencies(); track competency.id) {
-                <div ngbAccordionItem (shown)="loadLearningObjectsOfCompetencyId(competency.id)">
+                <div ngbAccordionItem>
                     <h2 ngbAccordionHeader>
                         <button ngbAccordionButton class="px-3">{{ competency.title }}</button>
                     </h2>
@@ -25,7 +25,7 @@
                         <div ngbAccordionBody class="p-0">
                             <ng-template>
                                 <jhi-learning-path-nav-overview-learning-objects
-                                    (onLearningObjectSelected)="onLearningObjectSelected.emit()"
+                                    (onLearningObjectSelected)="selectLearningObject()"
                                     [learningPathId]="learningPathId()"
                                     [competencyId]="competency.id"
                                 />

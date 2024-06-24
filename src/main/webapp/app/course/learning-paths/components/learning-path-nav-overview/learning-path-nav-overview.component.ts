@@ -1,5 +1,5 @@
-import { Component, inject, input, output, signal, viewChildren } from '@angular/core';
-import { NgbAccordionModule, NgbDropdownModule, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { Component, inject, input, output, signal, viewChild } from '@angular/core';
+import { NgbAccordionDirective, NgbAccordionModule, NgbDropdownModule, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { IconDefinition, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
@@ -26,11 +26,11 @@ export class LearningPathNavOverviewComponent {
 
     readonly learningPathId = input.required<number>();
 
+    readonly competencyAccordion = viewChild.required(NgbAccordionDirective);
+
     readonly onLearningObjectSelected = output<void>();
     readonly isLoading = signal(false);
     readonly competencies = signal<LearningPathCompetencyDTO[] | undefined>(undefined);
-
-    private readonly competencyDropdowns = viewChildren(LearningPathNavOverviewLearningObjectsComponent);
 
     async loadCompetencies(learningPathId: number): Promise<void> {
         if (this.competencies()) {
@@ -47,12 +47,9 @@ export class LearningPathNavOverviewComponent {
         }
     }
 
-    loadLearningObjectsOfCompetencyId(competencyId: number): void {
-        this.competencyDropdowns().forEach((dropdown) => {
-            if (dropdown.competencyId() === competencyId) {
-                dropdown.loadLearningObjects();
-            }
-        });
+    selectLearningObject(): void {
+        this.onLearningObjectSelected.emit();
+        this.competencyAccordion().collapseAll();
     }
 
     openCompetencyGraph() {

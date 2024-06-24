@@ -1,4 +1,4 @@
-import { Component, inject, input, output, signal } from '@angular/core';
+import { Component, OnInit, inject, input, output, signal } from '@angular/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { AlertService } from 'app/core/util/alert.service';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
@@ -14,7 +14,7 @@ import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
     imports: [NgbAccordionModule, FontAwesomeModule, ArtemisSharedModule],
     templateUrl: './learning-path-nav-overview-learning-objects.component.html',
 })
-export class LearningPathNavOverviewLearningObjectsComponent {
+export class LearningPathNavOverviewLearningObjectsComponent implements OnInit {
     protected readonly faCheckCircle: IconDefinition = faCheckCircle;
 
     private readonly alertService: AlertService = inject(AlertService);
@@ -29,6 +29,10 @@ export class LearningPathNavOverviewLearningObjectsComponent {
     readonly learningObjects = signal<LearningPathNavigationObjectDTO[] | undefined>(undefined);
 
     readonly onLearningObjectSelected = output();
+
+    ngOnInit(): void {
+        this.loadLearningObjects();
+    }
 
     async loadLearningObjects() {
         if (this.learningObjects()) {
