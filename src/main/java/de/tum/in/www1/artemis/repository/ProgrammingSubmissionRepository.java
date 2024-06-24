@@ -23,11 +23,6 @@ import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 record ProgrammingSubmissionAndSubmissionDate(ProgrammingSubmission programmingSubmission, ZonedDateTime submissionDate) {
-
-    public ProgrammingSubmissionAndSubmissionDate(ProgrammingSubmission programmingSubmission, ZonedDateTime submissionDate) {
-        this.programmingSubmission = programmingSubmission;
-        this.submissionDate = submissionDate;
-    }
 }
 
 /**

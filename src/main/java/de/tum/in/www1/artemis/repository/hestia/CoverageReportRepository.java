@@ -22,11 +22,6 @@ import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 record CoverageReportAndSubmissionDate(CoverageReport coverageReport, ZonedDateTime submissionDate) {
-
-    public CoverageReportAndSubmissionDate(CoverageReport coverageReport, ZonedDateTime submissionDate) {
-        this.coverageReport = coverageReport;
-        this.submissionDate = submissionDate;
-    }
 }
 
 /**
