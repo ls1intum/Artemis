@@ -119,4 +119,29 @@ public class RepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID> {
             return Optional.empty();
         }
     }
+
+    /**
+     * Find an entity by its id and given specification without using limiting internally or throw if none found.
+     *
+     * @param spec the specification to apply
+     * @param id   the id of the base entity to find
+     * @return the entity with the given id
+     */
+    @NotNull
+    public T findOneByIdOrElseThrow(Specification<T> spec, ID id) {
+        Optional<T> optional = findOneById(spec, id);
+        return optional.orElseThrow();
+    }
+
+    /**
+     * Find an entity by given specification without using limiting internally or throw if none found.
+     *
+     * @param spec the specification to apply
+     * @return the entity that satisfies the given specification
+     */
+    @NotNull
+    public T findOneBySpecOrElseThrow(Specification<T> spec) {
+        Optional<T> optional = findOneBySpec(spec);
+        return optional.orElseThrow();
+    }
 }
