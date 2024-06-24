@@ -5,7 +5,7 @@
         'border-success': sidebarItem?.difficulty === DifficultyLevel.EASY,
         'border-warning': sidebarItem?.difficulty === DifficultyLevel.MEDIUM,
         'border-danger': sidebarItem?.difficulty === DifficultyLevel.HARD,
-        'border-module': !sidebarItem?.difficulty
+        'border-module': !sidebarItem?.difficulty,
     }"
     [routerLink]="'./' + sidebarItem?.id"
     (click)="emitStoreAndRefresh(sidebarItem.id)"
