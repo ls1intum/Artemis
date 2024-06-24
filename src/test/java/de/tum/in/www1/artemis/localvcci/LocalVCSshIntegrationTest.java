@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
@@ -18,6 +19,8 @@ import org.apache.sshd.client.SshClient;
 import org.apache.sshd.client.future.ConnectFuture;
 import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.SshException;
+import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
+import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyPairResourceWriter;
 import org.apache.sshd.server.SshServer;
 import org.apache.sshd.server.session.ServerSession;
 import org.junit.jupiter.api.Test;
@@ -58,7 +61,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testDirectlyAuthenticateOverSsh() throws IOException {
+    void testDirectlyAuthenticateOverSsh() throws IOException, GeneralSecurityException {
 
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         KeyPair keyPair = setupKeyPairAndAddToUser();
@@ -88,7 +91,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAuthenticationFailure() {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
-        KeyPair keyPair2 = generateKeyPair();
+        KeyPair keyPair = generateKeyPair();
 
         User user = userRepository.getUser();
 
@@ -101,7 +104,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
                 connectFuture.await(10, TimeUnit.SECONDS);
 
                 ClientSession session = connectFuture.getSession();
-                session.addPublicKeyIdentity(keyPair2);
+                session.addPublicKeyIdentity(keyPair);
 
                 session.auth().verify(10, TimeUnit.SECONDS);
             }
@@ -110,7 +113,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testConnectOverSshAndReceivePack() throws IOException {
+    void testConnectOverSshAndReceivePack() throws IOException, GeneralSecurityException {
         try (var client = clientConnectToArtemisSshServer()) {
             assertThat(client).isNotNull();
             var serverSessions = sshServer.getActiveSessions();
@@ -146,7 +149,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
         return command;
     }
 
-    private SshClient clientConnectToArtemisSshServer() {
+    private SshClient clientConnectToArtemisSshServer() throws GeneralSecurityException, IOException {
         var serverSessions = sshServer.getActiveSessions();
         var numberOfSessions = serverSessions.size();
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
@@ -176,26 +179,39 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
         return client;
     }
 
-    private KeyPair setupKeyPairAndAddToUser() {
-        KeyPair rsaKeyPair = generateKeyPair();
-        PublicKey publicKey = rsaKeyPair.getPublic();
-        String publicKeyAsString = Base64.getEncoder().encodeToString(publicKey.getEncoded());
+    private KeyPair setupKeyPairAndAddToUser() throws GeneralSecurityException, IOException {
 
         User user = userRepository.getUser();
 
+        KeyPair rsaKeyPair = generateKeyPair();
+        String sshPublicKey = writePublicKeyToString(rsaKeyPair.getPublic(), user.getLogin() + "@host");
+
+        AuthorizedKeyEntry keyEntry = AuthorizedKeyEntry.parseAuthorizedKeyEntry(sshPublicKey);
+        // Extract the PublicKey object
+        PublicKey publicKey = keyEntry.resolvePublicKey(null, null, null);
         String keyHash = HashUtils.getSha512Fingerprint(publicKey);
-        userRepository.updateUserSshPublicKeyHash(user.getId(), keyHash, publicKeyAsString);
+
+        userRepository.updateUserSshPublicKeyHash(user.getId(), keyHash, sshPublicKey);
         user = userRepository.getUser();
 
-        assertThat(user.getSshPublicKey()).isEqualTo(publicKeyAsString);
+        assertThat(user.getSshPublicKey()).isEqualTo(sshPublicKey);
         return rsaKeyPair;
+    }
+
+    private String writePublicKeyToString(PublicKey publicKey, String comment) throws IOException, GeneralSecurityException {
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            // Assuming you have an instance of a class with the writePublicKey method
+            OpenSSHKeyPairResourceWriter writer = new OpenSSHKeyPairResourceWriter();
+            writer.writePublicKey(publicKey, comment, outputStream);
+            return outputStream.toString();
+        }
     }
 
     private static KeyPair generateKeyPair() {
         try {
-            KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
-            generator.initialize(2048);
-            return generator.generateKeyPair();
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+            keyGen.initialize(2048);
+            return keyGen.generateKeyPair();
         }
         catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
