@@ -7,14 +7,17 @@ import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
+import { LearningPathCompetencyDTO } from 'app/entities/competency/learning-path.model';
+import { AlertService } from 'app/core/util/alert.service';
 
 describe('LearningPathNavOverviewComponent', () => {
     let component: LearningPathNavOverviewComponent;
     let fixture: ComponentFixture<LearningPathNavOverviewComponent>;
     let learningPathApiService: LearningPathApiService;
+    let alertService: AlertService;
 
     const learningPathId = 1;
-    const competencies = [{ id: 1, name: 'Competency 1' }];
+    const competencies = [{ id: 1, title: 'Competency 1', masteryProgress: 10 }] as LearningPathCompetencyDTO[];
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -35,6 +38,7 @@ describe('LearningPathNavOverviewComponent', () => {
             .compileComponents();
 
         learningPathApiService = TestBed.inject(LearningPathApiService);
+        alertService = TestBed.inject(AlertService);
 
         fixture = TestBed.createComponent(LearningPathNavOverviewComponent);
         component = fixture.componentInstance;
@@ -73,7 +77,7 @@ describe('LearningPathNavOverviewComponent', () => {
     it('should show error when loading competencies fails', async () => {
         const error = 'Error loading competencies';
         const getLearningPathCompetenciesSpy = jest.spyOn(learningPathApiService, 'getLearningPathCompetencies').mockRejectedValue(error);
-        const alertServiceErrorSpy = jest.spyOn(component.alertService, 'error');
+        const alertServiceErrorSpy = jest.spyOn(alertService, 'error');
 
         await component.loadCompetencies(learningPathId);
 

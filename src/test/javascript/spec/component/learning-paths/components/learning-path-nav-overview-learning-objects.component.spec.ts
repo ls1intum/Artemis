@@ -4,16 +4,19 @@ import { provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 import { LearningPathNavOverviewLearningObjectsComponent } from 'app/course/learning-paths/components/learning-path-nav-overview-learning-objects/learning-path-nav-overview-learning-objects.component';
+import { LearningObjectType, LearningPathNavigationObjectDTO } from 'app/entities/competency/learning-path.model';
+import { AlertService } from 'app/core/util/alert.service';
 
 describe('LearningPathNavOverviewLearningObjectsComponent', () => {
     let component: LearningPathNavOverviewLearningObjectsComponent;
     let fixture: ComponentFixture<LearningPathNavOverviewLearningObjectsComponent>;
     let learningPathApiService: LearningPathApiService;
+    let alertService: AlertService;
 
     const learningPathId = 1;
     const competencyId = 2;
 
-    const learningObjects = [{ id: 1, name: 'Learning Object 1' }];
+    const learningObjects = [{ id: 1, name: 'Exercise 1', type: LearningObjectType.EXERCISE, completed: true }] as LearningPathNavigationObjectDTO[];
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -28,6 +31,7 @@ describe('LearningPathNavOverviewLearningObjectsComponent', () => {
         }).compileComponents();
 
         learningPathApiService = TestBed.inject(LearningPathApiService);
+        alertService = TestBed.inject(AlertService);
 
         fixture = TestBed.createComponent(LearningPathNavOverviewLearningObjectsComponent);
         component = fixture.componentInstance;
@@ -59,7 +63,7 @@ describe('LearningPathNavOverviewLearningObjectsComponent', () => {
     it('should show error message when loading learning objects fails', async () => {
         const error = 'Failed to load learning objects';
         jest.spyOn(learningPathApiService, 'getLearningPathCompetencyLearningObjects').mockRejectedValue(error);
-        const alertServiceErrorSpy = jest.spyOn(component.alertService, 'error');
+        const alertServiceErrorSpy = jest.spyOn(alertService, 'error');
 
         await component.loadLearningObjects();
 
