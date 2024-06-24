@@ -6,8 +6,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -49,8 +47,6 @@ public class MigrationEntryJenkinsToLocalVC extends ProgrammingExerciseMigration
     private URL localVCBaseUrl;
 
     private static final String ERROR_MESSAGE = "Failed to migrate programming exercises within %d hours. Aborting migration.";
-
-    private final static Logger log = LoggerFactory.getLogger(MigrationEntryJenkinsToLocalVC.class);
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -125,6 +121,11 @@ public class MigrationEntryJenkinsToLocalVC extends ProgrammingExerciseMigration
         log.info("Finished migrating programming exercises and student participations");
         evaluateErrorList(programmingExerciseRepository);
         return true;
+    }
+
+    @Override
+    protected Class<?> getSubclass() {
+        return MigrationEntryJenkinsToLocalVC.class;
     }
 
     private void migrateStudents(List<ProgrammingExerciseStudentParticipation> participations) {

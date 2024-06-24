@@ -12,8 +12,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eclipse.jgit.api.Git;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -62,8 +60,6 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
     private String localVCBasePath;
 
     private static final String ERROR_MESSAGE = "Failed to migrate programming exercises within %d hours. Aborting migration.";
-
-    private final static Logger log = LoggerFactory.getLogger(MigrationEntryGitLabToLocalVC.class);
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -195,6 +191,11 @@ public class MigrationEntryGitLabToLocalVC extends ProgrammingExerciseMigrationE
         log.info("Finished migrating programming exercises and student participations");
         evaluateErrorList(programmingExerciseRepository);
         return true;
+    }
+
+    @Override
+    protected Class<?> getSubclass() {
+        return MigrationEntryGitLabToLocalVC.class;
     }
 
     private String migrateTestRepo(ProgrammingExercise programmingExercise) throws URISyntaxException {

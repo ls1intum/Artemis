@@ -28,9 +28,17 @@ public abstract class ProgrammingExerciseMigrationEntry {
     @Value("${migration.scaling.estimated-time-per-repository:2}")
     protected int estimatedTimePerRepository;
 
-    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseMigrationEntry.class);
+    protected final Logger log = LoggerFactory.getLogger(getSubclass());
 
     protected final CopyOnWriteArrayList<ProgrammingExerciseParticipation> errorList = new CopyOnWriteArrayList<>();
+
+    /**
+     * Returns the type of the concrete subclass.
+     * It is used to make the logging related to the subclass, to make the log more readable.
+     *
+     * @return Class that is the concrete subclass.
+     */
+    protected abstract Class<?> getSubclass();
 
     protected void logProgress(long doneCount, long totalCount, long threadCount, long reposPerEntry, String migrationType) {
         final double percentage = ((double) doneCount / totalCount) * 100;
@@ -45,7 +53,7 @@ public abstract class ProgrammingExerciseMigrationEntry {
         return (stillTodo * timePerEntry) / threads;
     }
 
-    protected static void shutdown(ExecutorService executorService, int timeoutInHours, String errorMessage) {
+    protected void shutdown(ExecutorService executorService, int timeoutInHours, String errorMessage) {
         // Wait for all threads to finish
         executorService.shutdown();
 
