@@ -50,18 +50,11 @@ export class LearningPathNavOverviewLearningObjectsComponent implements OnInit {
     }
 
     selectLearningObject(learningObject: LearningPathNavigationObjectDTO): void {
-        if (this.isLearningObjectSelectable(learningObject)) {
-            this.learningPathNavigationService.loadRelativeLearningPathNavigation(this.learningPathId(), learningObject);
-            this.onLearningObjectSelected.emit();
-        }
+        this.learningPathNavigationService.loadRelativeLearningPathNavigation(this.learningPathId(), learningObject);
+        this.onLearningObjectSelected.emit();
     }
 
     isEqualToCurrentLearningObject(id: number, type: LearningObjectType): boolean {
         return this.currentLearningObject()?.id === id && this.currentLearningObject()?.type === type;
-    }
-
-    isLearningObjectSelectable(learningObject: LearningPathNavigationObjectDTO): boolean {
-        const indexOfLearningObject = this.learningObjects()!.indexOf(learningObject);
-        return indexOfLearningObject > 0 ? this.learningObjects()![indexOfLearningObject - 1].completed : true;
     }
 }
