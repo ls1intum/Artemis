@@ -140,16 +140,13 @@ The iOS application supports the following features:
     #. Add emoji reactions
     #. Create new conversations
     #. Edit conversation settings
+    #. Restore cached messages drafts for up to one day
 
 .. raw:: html
 
     <iframe src="https://live.rbg.tum.de/w/artemisintro/35219?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
         Video tutorial of the Messaging features on TUM-Live.
     </iframe>
-
-.. note::
-
-    The iOS app caches messages drafts for up to one day.
 
 #. Receive push notifications:
     #. Optionally opt in and out of push notifications
@@ -165,7 +162,7 @@ The iOS application supports the following features:
 Installation
 ^^^^^^^^^^^^
 
-The iOS application is available in the `App Store <https://apps.apple.com/de/app/artemis-learning/id6478965616>`_ and as a beta via `TestFlight <https://testflight.apple.com/join/WTwsKbjr>`_.
+The iOS application is available in the `App Store <https://apps.apple.com/de/app/artemis-learning/id6478965616>`_ and as a beta via `TestFlight <https://testflight.apple.com/join/canwoVCk>`_.
 Make sure to follow the steps described by TestFlight to install the application.
 
 Server Selection
