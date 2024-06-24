@@ -242,10 +242,6 @@ export class QuizExerciseService {
         if (questions.length === 0) {
             return;
         }
-        // Make blob from the list of questions and download the file,
-        const quizJson = JSON.stringify(questions);
-        const blob = new Blob([quizJson], { type: 'application/json' });
-        downloadFile(blob, (fileName ?? 'quiz') + '.json');
         this.exportAssetsFromAllQuestions(questions, fileName ?? 'quiz');
     }
 
@@ -256,7 +252,9 @@ export class QuizExerciseService {
      */
     exportAssetsFromAllQuestions(questions: QuizQuestion[], fileName: string) {
         const zip: JSZip = new JSZip();
-        const filePromises: any[] = [];
+        const filePromises: Promise<void | File>[] = [];
+        const quizJson = JSON.stringify(questions);
+        const blob = new Blob([quizJson], { type: 'application/json' });
         questions.forEach((question, questionIndex) => {
             if (question.type === QuizQuestionType.DRAG_AND_DROP) {
                 if ((question as DragAndDropQuestion).backgroundFilePath) {
@@ -275,8 +273,10 @@ export class QuizExerciseService {
             });
         });
         if (filePromises.length === 0) {
+            downloadFile(blob, (fileName ?? 'quiz') + '.json');
             return;
         }
+        zip.file((fileName ?? 'quiz') + '.json', blob);
         downloadZipFromFilePromises(zip, filePromises, fileName);
     }
 
