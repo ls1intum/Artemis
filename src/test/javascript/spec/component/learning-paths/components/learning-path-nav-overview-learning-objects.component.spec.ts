@@ -56,7 +56,9 @@ describe('LearningPathNavOverviewLearningObjectsComponent', () => {
     it('should load learning objects', async () => {
         const getLearningPathCompetencyLearningObjectsSpy = jest.spyOn(learningPathApiService, 'getLearningPathCompetencyLearningObjects').mockResolvedValue(learningObjects);
 
-        await component.loadLearningObjects();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
 
         expect(getLearningPathCompetencyLearningObjectsSpy).toHaveBeenCalledWith(learningPathId, competencyId);
         expect(component.learningObjects()).toEqual(learningObjects);

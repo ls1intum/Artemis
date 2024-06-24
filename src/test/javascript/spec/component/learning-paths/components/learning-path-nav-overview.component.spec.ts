@@ -98,15 +98,4 @@ describe('LearningPathNavOverviewComponent', () => {
 
         expect(openCompetencyGraphSpy).toHaveBeenCalled();
     });
-
-    it('should load learning objects of competency', async () => {
-        const loadLearningObjectsOfCompetencyIdSpy = jest.spyOn(component, 'loadLearningObjectsOfCompetencyId');
-        const competencyId = 1;
-
-        fixture.detectChanges();
-        component.loadLearningObjectsOfCompetencyId(competencyId);
-        fixture.detectChanges();
-
-        expect(loadLearningObjectsOfCompetencyIdSpy).toHaveBeenCalledWith(competencyId);
-    });
 });
