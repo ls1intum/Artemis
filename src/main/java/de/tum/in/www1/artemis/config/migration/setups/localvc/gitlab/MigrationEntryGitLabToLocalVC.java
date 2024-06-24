@@ -6,16 +6,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eclipse.jgit.api.Git;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.config.migration.setups.localvc.LocalVCMigrationEntry;
@@ -34,7 +28,6 @@ import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipatio
 import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
-import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 @Component
 @Profile("gitlab")
@@ -45,14 +38,6 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
 
     @Value("${artemis.version-control.local-vcs-repo-path:#{null}}")
     private String localVCBasePath;
-
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
-    private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
-
-    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
-
-    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
@@ -65,117 +50,27 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             Optional<AbstractVersionControlService> sourceVersionControlService, UriService uriService) {
-        this.programmingExerciseRepository = programmingExerciseRepository;
-        this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
-        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
-        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        super(programmingExerciseRepository, solutionProgrammingExerciseParticipationRepository, templateProgrammingExerciseParticipationRepository,
+                programmingExerciseStudentParticipationRepository);
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.sourceVersionControlService = sourceVersionControlService;
         this.uriService = uriService;
     }
 
-    /**
-     * Executes this migration entry.
-     *
-     * @return False if there is a general configuration error, which blocks the whole execution
-     *         and true otherwise.
-     */
-    public boolean execute() {
-        if (localVCBasePath == null) {
-            log.error("Migration failed because the local VC base path is not configured.");
-            return false;
-        }
-
-        if (localVCBaseUrl == null) {
-            log.error("Migration failed because the local VC base URL is not configured.");
-            return false;
-        }
-
-        if (defaultBranch == null) {
-            log.error("Migration failed because the default branch is not configured.");
-            return false;
-        }
-
-        var programmingExerciseCount = programmingExerciseRepository.count();
-        var studentCount = programmingExerciseStudentParticipationRepository.findAllWithRepositoryUri(Pageable.unpaged()).getTotalElements();
-
-        if (programmingExerciseCount == 0) {
-            log.info("No programming exercises to change");
+    @Override
+    protected boolean areValuesIncomplete() {
+        if (super.areValuesIncomplete()) {
             return true;
         }
-
-        log.info("Will migrate {} programming exercises and {} student repositories now. This might take a while", programmingExerciseCount, studentCount);
-
-        final long totalFullBatchCount = programmingExerciseCount / batchSize;
-        final long threadCount = Math.max(1, Math.min(totalFullBatchCount, maxThreadCount));
-        final long estimatedTimeExercise = getRestDurationInSeconds(0, programmingExerciseCount, 3, threadCount);
-        final long estimatedTimeStudents = getRestDurationInSeconds(0, studentCount, 1, threadCount);
-
-        final long estimatedTime = (estimatedTimeExercise + estimatedTimeStudents);
-        log.info("Using {} threads for migration, and assuming {}s per repository, the migration should take around {}", threadCount, estimatedTimePerRepository,
-                TimeLogUtil.formatDuration(estimatedTime));
-
-        // Use fixed thread pool to prevent loading too many exercises into memory at once
-        ExecutorService executorService = Executors.newFixedThreadPool((int) threadCount);
-
-        /*
-         * migrate the solution participations first, then the template participations, then the student participations
-         */
-        AtomicInteger solutionCounter = new AtomicInteger(0);
-        final var totalNumberOfSolutions = solutionProgrammingExerciseParticipationRepository.count();
-        log.info("Found {} solution participations to migrate.", totalNumberOfSolutions);
-        for (int currentPageStart = 0; currentPageStart < totalNumberOfSolutions; currentPageStart += batchSize) {
-            Pageable pageable = PageRequest.of(currentPageStart / batchSize, batchSize);
-            var solutionParticipationPage = solutionProgrammingExerciseParticipationRepository.findAll(pageable);
-            log.info("Will migrate {} solution participations in batch.", solutionParticipationPage.getNumberOfElements());
-            executorService.submit(() -> {
-                migrateSolutions(solutionParticipationPage.toList());
-                solutionCounter.addAndGet(solutionParticipationPage.getNumberOfElements());
-                logProgress(solutionCounter.get(), totalNumberOfSolutions, threadCount, 2, "solution");
-            });
+        if (localVCBasePath == null) {
+            log.error("Migration failed because the local VC base path is not configured.");
+            return true;
         }
-
-        log.info("Submitted all solution participations to thread pool for migration.");
-        /*
-         * migrate the template participations
-         */
-        AtomicInteger templateCounter = new AtomicInteger(0);
-        var templateCount = templateProgrammingExerciseParticipationRepository.count();
-        log.info("Found {} template participations to migrate", templateCount);
-        for (int currentPageStart = 0; currentPageStart < templateCount; currentPageStart += batchSize) {
-            Pageable pageable = PageRequest.of(currentPageStart / batchSize, batchSize);
-            var templateParticipationPage = templateProgrammingExerciseParticipationRepository.findAll(pageable);
-            log.info("Will migrate {} template programming exercises in batch.", templateParticipationPage.getNumberOfElements());
-            executorService.submit(() -> {
-                migrateTemplates(templateParticipationPage.toList());
-                templateCounter.addAndGet(templateParticipationPage.getNumberOfElements());
-                logProgress(templateCounter.get(), templateCount, threadCount, 1, "template");
-            });
+        if (defaultBranch == null) {
+            log.error("Migration failed because the default branch is not configured.");
+            return true;
         }
-
-        log.info("Submitted all template participations to thread pool for migration.");
-        /*
-         * migrate the student participations
-         */
-        AtomicInteger studentCounter = new AtomicInteger(0);
-        log.info("Found {} student programming exercise participations with build plans to migrate.", studentCount);
-        for (int currentPageStart = 0; currentPageStart < studentCount; currentPageStart += batchSize) {
-            Pageable pageable = PageRequest.of(currentPageStart / batchSize, batchSize);
-            Page<ProgrammingExerciseStudentParticipation> studentParticipationPage = programmingExerciseStudentParticipationRepository.findAllWithRepositoryUri(pageable);
-            log.info("Will migrate {} student programming exercise participations in batch.", studentParticipationPage.getNumberOfElements());
-            executorService.submit(() -> {
-                migrateStudents(studentParticipationPage.toList());
-                studentCounter.addAndGet(studentParticipationPage.getNumberOfElements());
-                logProgress(studentCounter.get(), studentCount, threadCount, 1, "student");
-            });
-        }
-
-        log.info("Submitted all student participations to thread pool for migration.");
-
-        shutdown(executorService, timeoutInHours, ERROR_MESSAGE.formatted(timeoutInHours));
-        log.info("Finished migrating programming exercises and student participations");
-        evaluateErrorList(programmingExerciseRepository);
-        return true;
+        return false;
     }
 
     @Override
@@ -234,7 +129,8 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
      *
      * @param solutionParticipations the solution participations to migrate
      */
-    private void migrateSolutions(List<SolutionProgrammingExerciseParticipation> solutionParticipations) {
+    @Override
+    protected void migrateSolutions(List<SolutionProgrammingExerciseParticipation> solutionParticipations) {
         for (var solutionParticipation : solutionParticipations) {
             try {
                 if (solutionParticipation.getRepositoryUri() == null) {
@@ -283,7 +179,8 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
      *
      * @param templateParticipations list of template participations to migrate
      */
-    private void migrateTemplates(List<TemplateProgrammingExerciseParticipation> templateParticipations) {
+    @Override
+    protected void migrateTemplates(List<TemplateProgrammingExerciseParticipation> templateParticipations) {
         for (var templateParticipation : templateParticipations) {
             try {
                 if (templateParticipation.getRepositoryUri() == null) {
@@ -316,7 +213,8 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
      *
      * @param participations list of student participations to migrate
      */
-    private void migrateStudents(List<ProgrammingExerciseStudentParticipation> participations) {
+    @Override
+    protected void migrateStudents(List<ProgrammingExerciseStudentParticipation> participations) {
         for (var participation : participations) {
             try {
                 if (participation.getRepositoryUri() == null) {
