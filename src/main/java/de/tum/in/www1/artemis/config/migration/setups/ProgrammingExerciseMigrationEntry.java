@@ -190,6 +190,24 @@ public abstract class ProgrammingExerciseMigrationEntry {
         return (stillTodo * timePerEntry) / threads;
     }
 
+    /**
+     * Checks if the repository uri of the given participation is not null
+     * and logs for the case of null.
+     *
+     * @param programmingExerciseParticipation participation which repository uri should be checked.
+     * @param errorMessage                     Message for the error logging, if the uri is null.
+     *                                             Including one parameter for the participation id.
+     * @return False if the repository uri is null and true otherwise
+     */
+    protected boolean isRepositoryUriNotNull(ProgrammingExerciseParticipation programmingExerciseParticipation, String errorMessage) {
+        boolean result = programmingExerciseParticipation.getRepositoryUri() != null;
+        if (!result) {
+            log.error(errorMessage, programmingExerciseParticipation.getId());
+            errorList.add(programmingExerciseParticipation);
+        }
+        return result;
+    }
+
     protected void shutdown(ExecutorService executorService, int timeoutInHours, String errorMessage) {
         // Wait for all threads to finish
         executorService.shutdown();

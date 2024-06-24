@@ -133,39 +133,36 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
     protected void migrateSolutions(List<SolutionProgrammingExerciseParticipation> solutionParticipations) {
         for (var solutionParticipation : solutionParticipations) {
             try {
-                if (solutionParticipation.getRepositoryUri() == null) {
-                    log.error("Repository URI is null for solution participation with id {}, cant migrate", solutionParticipation.getId());
-                    errorList.add(solutionParticipation);
-                    continue;
-                }
-                var programmingExercise = solutionParticipation.getProgrammingExercise();
-                var url = cloneRepositoryFromSourceVCSAndMoveToLocalVC(solutionParticipation.getProgrammingExercise(), solutionParticipation.getRepositoryUri(),
-                        programmingExercise.getBranch());
-                if (url == null) {
-                    log.error("Failed to migrate solution repository for solution participation with id {}, keeping the url in the database", solutionParticipation.getId());
-                    errorList.add(solutionParticipation);
-                }
-                else {
-                    log.debug("Migrated solution participation with id {} to {}", solutionParticipation.getId(), url);
-                }
-                solutionParticipation.setRepositoryUri(url);
-                solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
-                url = migrateTestRepo(solutionParticipation.getProgrammingExercise());
-                var oldBranch = programmingExercise.getBranch();
-                if (url == null) {
-                    log.error("Failed to migrate test repository for solution participation with id {}, keeping the url in the database", solutionParticipation.getId());
-                    errorList.add(solutionParticipation);
-                }
-                else {
-                    log.debug("Migrated test repository for solution participation with id {} to {}", solutionParticipation.getId(), url);
-                    if (!defaultBranch.equals(programmingExercise.getBranch())) {
-                        programmingExercise.setBranch(defaultBranch);
-                        log.debug("Changed branch of programming exercise with id {} to {}", programmingExercise.getId(), programmingExercise.getBranch());
+                if (isRepositoryUriNotNull(solutionParticipation, "Repository URI is null for solution participation with id {}, cant migrate")) {
+                    var programmingExercise = solutionParticipation.getProgrammingExercise();
+                    var url = cloneRepositoryFromSourceVCSAndMoveToLocalVC(solutionParticipation.getProgrammingExercise(), solutionParticipation.getRepositoryUri(),
+                            programmingExercise.getBranch());
+                    if (url == null) {
+                        log.error("Failed to migrate solution repository for solution participation with id {}, keeping the url in the database", solutionParticipation.getId());
+                        errorList.add(solutionParticipation);
                     }
+                    else {
+                        log.debug("Migrated solution participation with id {} to {}", solutionParticipation.getId(), url);
+                    }
+                    solutionParticipation.setRepositoryUri(url);
+                    solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
+                    url = migrateTestRepo(solutionParticipation.getProgrammingExercise());
+                    var oldBranch = programmingExercise.getBranch();
+                    if (url == null) {
+                        log.error("Failed to migrate test repository for solution participation with id {}, keeping the url in the database", solutionParticipation.getId());
+                        errorList.add(solutionParticipation);
+                    }
+                    else {
+                        log.debug("Migrated test repository for solution participation with id {} to {}", solutionParticipation.getId(), url);
+                        if (!defaultBranch.equals(programmingExercise.getBranch())) {
+                            programmingExercise.setBranch(defaultBranch);
+                            log.debug("Changed branch of programming exercise with id {} to {}", programmingExercise.getId(), programmingExercise.getBranch());
+                        }
+                    }
+                    programmingExercise.setTestRepositoryUri(url);
+                    programmingExerciseRepository.save(programmingExercise);
+                    migrateAuxiliaryRepositories(solutionParticipation, programmingExercise, oldBranch);
                 }
-                programmingExercise.setTestRepositoryUri(url);
-                programmingExerciseRepository.save(programmingExercise);
-                migrateAuxiliaryRepositories(solutionParticipation, programmingExercise, oldBranch);
             }
             catch (Exception e) {
                 log.error("Failed to migrate solution participation with id {}", solutionParticipation.getId(), e);
@@ -183,22 +180,19 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
     protected void migrateTemplates(List<TemplateProgrammingExerciseParticipation> templateParticipations) {
         for (var templateParticipation : templateParticipations) {
             try {
-                if (templateParticipation.getRepositoryUri() == null) {
-                    log.error("Repository URI is null for template participation with id {}, cant migrate", templateParticipation.getId());
-                    errorList.add(templateParticipation);
-                    continue;
+                if (isRepositoryUriNotNull(templateParticipation, "Repository URI is null for template participation with id {}, cant migrate")) {
+                    var url = cloneRepositoryFromSourceVCSAndMoveToLocalVC(templateParticipation.getProgrammingExercise(), templateParticipation.getRepositoryUri(),
+                            templateParticipation.getProgrammingExercise().getBranch());
+                    if (url == null) {
+                        log.error("Failed to migrate template repository for template participation with id {}, keeping the url in the database", templateParticipation.getId());
+                        errorList.add(templateParticipation);
+                    }
+                    else {
+                        log.debug("Migrated template participation with id {} to {}", templateParticipation.getId(), url);
+                    }
+                    templateParticipation.setRepositoryUri(url);
+                    templateProgrammingExerciseParticipationRepository.save(templateParticipation);
                 }
-                var url = cloneRepositoryFromSourceVCSAndMoveToLocalVC(templateParticipation.getProgrammingExercise(), templateParticipation.getRepositoryUri(),
-                        templateParticipation.getProgrammingExercise().getBranch());
-                if (url == null) {
-                    log.error("Failed to migrate template repository for template participation with id {}, keeping the url in the database", templateParticipation.getId());
-                    errorList.add(templateParticipation);
-                }
-                else {
-                    log.debug("Migrated template participation with id {} to {}", templateParticipation.getId(), url);
-                }
-                templateParticipation.setRepositoryUri(url);
-                templateProgrammingExerciseParticipationRepository.save(templateParticipation);
             }
             catch (Exception e) {
                 log.error("Failed to migrate template participation with id {}", templateParticipation.getId(), e);
@@ -217,25 +211,22 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
     protected void migrateStudents(List<ProgrammingExerciseStudentParticipation> participations) {
         for (var participation : participations) {
             try {
-                if (participation.getRepositoryUri() == null) {
-                    log.error("Repository URI is null for student participation with id {}, cant migrate", participation.getId());
-                    errorList.add(participation);
-                    continue;
-                }
-                var url = cloneRepositoryFromSourceVCSAndMoveToLocalVC(participation.getProgrammingExercise(), participation.getRepositoryUri(), participation.getBranch());
-                if (url == null) {
-                    log.error("Failed to migrate student repository for student participation with id {}, keeping the url in the database", participation.getId());
-                    errorList.add(participation);
-                }
-                else {
-                    log.debug("Migrated student participation with id {} to {}", participation.getId(), url);
-                    if (participation.getBranch() != null) {
-                        participation.setBranch(defaultBranch);
-                        log.debug("Changed branch of student participation with id {} to {}", participation.getId(), participation.getBranch());
+                if (isRepositoryUriNotNull(participation, "Repository URI is null for student participation with id {}, cant migrate")) {
+                    var url = cloneRepositoryFromSourceVCSAndMoveToLocalVC(participation.getProgrammingExercise(), participation.getRepositoryUri(), participation.getBranch());
+                    if (url == null) {
+                        log.error("Failed to migrate student repository for student participation with id {}, keeping the url in the database", participation.getId());
+                        errorList.add(participation);
                     }
+                    else {
+                        log.debug("Migrated student participation with id {} to {}", participation.getId(), url);
+                        if (participation.getBranch() != null) {
+                            participation.setBranch(defaultBranch);
+                            log.debug("Changed branch of student participation with id {} to {}", participation.getId(), participation.getBranch());
+                        }
+                    }
+                    participation.setRepositoryUri(url);
+                    programmingExerciseStudentParticipationRepository.save(participation);
                 }
-                participation.setRepositoryUri(url);
-                programmingExerciseStudentParticipationRepository.save(participation);
             }
             catch (Exception e) {
                 log.error("Failed to migrate student participation with id {}", participation.getId(), e);

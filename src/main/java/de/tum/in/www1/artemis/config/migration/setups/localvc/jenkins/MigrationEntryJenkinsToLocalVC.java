@@ -60,12 +60,9 @@ public class MigrationEntryJenkinsToLocalVC extends LocalVCMigrationEntry {
     protected void migrateStudents(List<ProgrammingExerciseStudentParticipation> participations) {
         for (var participation : participations) {
             try {
-                if (participation.getRepositoryUri() == null) {
-                    log.error("Repository URI is null for student participation with id {}, cant migrate", participation.getId());
-                    errorList.add(participation);
-                    continue;
+                if (isRepositoryUriNotNull(participation, "Repository URI is null for student participation with id {}, cant migrate")) {
+                    changeRepositoryUriFromSourceVCSToLocalVC(participation.getProgrammingExercise(), participation.getRepositoryUri(), participation.getBuildPlanId());
                 }
-                changeRepositoryUriFromSourceVCSToLocalVC(participation.getProgrammingExercise(), participation.getRepositoryUri(), participation.getBuildPlanId());
             }
             catch (Exception e) {
                 log.error("Failed to migrate student participation with id {}", participation.getId(), e);
