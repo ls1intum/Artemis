@@ -341,12 +341,17 @@ public class LearningPathResource {
         return ResponseEntity.ok(progressDTOs);
     }
 
+    /**
+     * GET learning-path/:learningPathId/competencies : Gets the recommended order of competencies in a learning path
+     *
+     * @param learningPathId the id of the learning path for which to get the competencies
+     * @return the ResponseEntity with status 200 (OK) and with the competencies in the body
+     */
     @GetMapping("learning-path/{learningPathId}/competencies")
     @EnforceAtLeastStudent
     public ResponseEntity<List<CompetencyNameDTO>> getCompetencyOrderForLearningPath(@PathVariable long learningPathId) {
         log.debug("REST request to get competency order for learning path: {}", learningPathId);
         final var learningPath = learningPathService.findWithCompetenciesAndLearningObjectsAndCompletedUsersById(learningPathId);
-        ;
         final var user = userRepository.getUserWithGroupsAndAuthorities();
 
         checkLearningPathAccessElseThrow(learningPath.getCourse(), learningPath, user);
@@ -355,6 +360,15 @@ public class LearningPathResource {
         return ResponseEntity.ok(competencyNames);
     }
 
+    /**
+     * GET learning-path/:learningPathId/competencies/:competencyId/learning-objects : Gets the recommended order of learning objects for a competency in a learning path. The
+     * finished lecture units and exercises are at the beginning of the list. After that all pending lecture
+     * * units and exercises needed to master the competency are added.
+     *
+     * @param learningPathId the id of the learning path for which to get the learning objects
+     * @param competencyId   the id of the competency for which to get the learning objects
+     * @return the ResponseEntity with status 200 (OK) and with the learning objects in the body
+     */
     @GetMapping("learning-path/{learningPathId}/competencies/{competencyId}/learning-objects")
     @EnforceAtLeastStudent
     public ResponseEntity<List<LearningPathNavigationObjectDTO>> getLearningObjectsForCompetency(@PathVariable long learningPathId, @PathVariable long competencyId) {

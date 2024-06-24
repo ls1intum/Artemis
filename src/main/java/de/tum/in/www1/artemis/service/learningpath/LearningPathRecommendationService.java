@@ -724,6 +724,14 @@ public class LearningPathRecommendationService {
             Map<Long, Long> assumesCompetencies) {
     }
 
+    /**
+     * Gets the recommended order of learning objects for a competency. The finished lecture units and exercises are at the beginning of the list. After that all pending lecture
+     * units and exercises needed to master the competency are added.
+     *
+     * @param competencyId the id of the competency
+     * @param user         the user for which the recommendation should be generated
+     * @return the recommended order of learning objects
+     */
     public List<LearningObject> getOrderOfLearningObjectsForCompetency(long competencyId, User user) {
         Competency competency = competencyRepository.findByIdWithExercisesAndLectureUnitsElseThrow(competencyId);
         Optional<CompetencyProgress> optionalCompetencyProgress = competencyProgressRepository.findByCompetencyIdAndUserId(competencyId, user.getId());
