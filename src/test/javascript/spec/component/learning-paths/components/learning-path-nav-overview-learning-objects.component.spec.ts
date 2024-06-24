@@ -6,6 +6,7 @@ import { LearningPathApiService } from 'app/course/learning-paths/services/learn
 import { LearningPathNavOverviewLearningObjectsComponent } from 'app/course/learning-paths/components/learning-path-nav-overview-learning-objects/learning-path-nav-overview-learning-objects.component';
 import { LearningObjectType, LearningPathNavigationObjectDTO } from 'app/entities/competency/learning-path.model';
 import { AlertService } from 'app/core/util/alert.service';
+import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 
 describe('LearningPathNavOverviewLearningObjectsComponent', () => {
     let component: LearningPathNavOverviewLearningObjectsComponent;
@@ -27,6 +28,7 @@ describe('LearningPathNavOverviewLearningObjectsComponent', () => {
                     provide: TranslateService,
                     useClass: MockTranslateService,
                 },
+                { provide: AlertService, useClass: MockAlertService },
             ],
         }).compileComponents();
 
