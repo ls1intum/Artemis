@@ -53,23 +53,13 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationIndepe
     @Autowired
     private ParticipationUtilService participationUtilService;
 
-    Long idOfCourse;
+    private Long idOfCourse;
 
-    Long idOfTeam1;
+    private Long idOfIndividualTextExercise;
 
-    Long idOfTeam2;
+    private Long idOfIndividualTextExerciseWithoutParticipants;
 
-    Long idOfStudent1;
-
-    Long idOfStudent2;
-
-    Long idOfStudent3;
-
-    Long idOfIndividualTextExercise;
-
-    Long idOfIndividualTextExerciseWithoutParticipants;
-
-    Long idOfTeamTextExercise;
+    private Long idOfTeamTextExercise;
 
     @Autowired
     private UserRepository userRepository;
@@ -99,15 +89,12 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationIndepe
         Exercise teamExercise = textExerciseUtilService.createTeamTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         idOfTeamTextExercise = teamExercise.getId();
         User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
-        idOfStudent1 = student1.getId();
         User tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
-        idOfTeam1 = teamUtilService.createTeam(Set.of(student1), tutor1, teamExercise, TEST_PREFIX + "team1").getId();
+        Long idOfTeam1 = teamUtilService.createTeam(Set.of(student1), tutor1, teamExercise, TEST_PREFIX + "team1").getId();
         User student2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
-        idOfStudent2 = student2.getId();
         User student3 = userRepository.findOneByLogin(TEST_PREFIX + "student3").orElseThrow();
-        idOfStudent3 = student3.getId();
         User tutor2 = userRepository.findOneByLogin(TEST_PREFIX + "tutor2").orElseThrow();
-        idOfTeam2 = teamUtilService.createTeam(Set.of(student2, student3), tutor2, teamExercise, TEST_PREFIX + "team2").getId();
+        Long idOfTeam2 = teamUtilService.createTeam(Set.of(student2, student3), tutor2, teamExercise, TEST_PREFIX + "team2").getId();
 
         // Creating result for student1
         participationUtilService.createParticipationSubmissionAndResult(idOfIndividualTextExercise, student1, 10.0, 10.0, 50, true);

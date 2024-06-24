@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
-import de.tum.in.www1.artemis.service.iris.session.IrisChatSessionService;
+import de.tum.in.www1.artemis.service.iris.session.IrisExerciseChatSessionService;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisWebsocketDTO;
 
@@ -31,7 +31,7 @@ class IrisChatWebsocketTest extends AbstractIrisIntegrationTest {
     private IrisChatWebsocketService irisChatWebsocketService;
 
     @Autowired
-    private IrisChatSessionService irisChatSessionService;
+    private IrisExerciseChatSessionService irisExerciseChatSessionService;
 
     @Autowired
     private WebsocketMessagingService websocketMessagingService;
@@ -49,13 +49,13 @@ class IrisChatWebsocketTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendMessage() {
-        var irisSession = irisChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var message = irisSession.newMessage();
         message.addContent(createMockContent(), createMockContent());
         message.setMessageDifferentiator(101010);
         irisChatWebsocketService.sendMessage(message, List.of());
-        verify(websocketMessagingService, times(1)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq("/topic/iris/sessions/" + irisSession.getId()),
-                eq(new IrisWebsocketDTO(message, null, new IrisRateLimitService.IrisRateLimitInformation(0, -1, 0), List.of())));
+        verify(websocketMessagingService, times(1)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq("/topic/iris/" + irisSession.getId()),
+                eq(new IrisWebsocketDTO(message, new IrisRateLimitService.IrisRateLimitInformation(0, -1, 0), List.of(), List.of())));
     }
 
     private IrisTextMessageContent createMockContent() {

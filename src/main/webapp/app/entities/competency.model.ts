@@ -37,24 +37,72 @@ export enum CompetencyValidators {
     DESCRIPTION_MAX = 10000,
 }
 
-export const DEFAULT_MASTERY_THRESHOLD = 50;
+export const DEFAULT_MASTERY_THRESHOLD = 80;
 
-export class Competency implements BaseEntity {
-    public id?: number;
-    public title?: string;
-    public description?: string;
-    public softDueDate?: dayjs.Dayjs;
-    public taxonomy?: CompetencyTaxonomy;
-    public masteryThreshold?: number;
-    public optional?: boolean;
-    public course?: Course;
-    public exercises?: Exercise[];
-    public lectureUnits?: LectureUnit[];
-    public userProgress?: CompetencyProgress[];
-    public courseProgress?: CourseCompetencyProgress;
-    public linkedStandardizedCompetency?: StandardizedCompetency;
+export interface BaseCompetency extends BaseEntity {
+    title?: string;
+    description?: string;
+    taxonomy?: CompetencyTaxonomy;
+}
 
-    constructor() {}
+export interface CourseCompetency extends BaseCompetency {
+    softDueDate?: dayjs.Dayjs;
+    masteryThreshold?: number;
+    optional?: boolean;
+    course?: Course;
+    linkedCourseCompetency?: CourseCompetency;
+}
+
+export interface Competency extends CourseCompetency {
+    exercises?: Exercise[];
+    lectureUnits?: LectureUnit[];
+    userProgress?: CompetencyProgress[];
+    courseProgress?: CourseCompetencyProgress;
+    linkedStandardizedCompetency?: StandardizedCompetency;
+}
+
+export class CompetencyJol {
+    competencyId: number;
+    jolValue: number;
+    judgementTime: string;
+    competencyProgress: number;
+    competencyConfidence: number;
+
+    static shouldPromptForJol(competency: Competency, progress: CompetencyProgress | undefined, courseCompetencies: Competency[]): boolean {
+        const currentDate = dayjs();
+        const softDueDateMinusOneDay = competency.softDueDate?.subtract(1, 'day');
+        const competencyProgress = progress?.progress ?? 0;
+
+        // Precondition: Student has at least some progress on the competency
+        if (competencyProgress === undefined || competencyProgress === 0) {
+            return false;
+        }
+
+        // Condition 1: Current Date >= Competency Soft Due Date - 1 Days && Competency Progress >= 20%
+        if (softDueDateMinusOneDay && currentDate.isAfter(softDueDateMinusOneDay) && competencyProgress >= 20) {
+            return true;
+        }
+
+        // Filter previous competencies (those with soft due date in the past)
+        const previousCompetencies = courseCompetencies.filter((c) => c.softDueDate && c.softDueDate.isBefore(currentDate));
+        if (previousCompetencies.length === 0) {
+            if (softDueDateMinusOneDay) {
+                return false;
+            } else {
+                return competencyProgress >= 20;
+            }
+        }
+
+        // Calculate the average progress of all previous competencies
+        const totalPreviousProgress = previousCompetencies.reduce((sum, c) => {
+            const progress = c.userProgress?.first()?.progress ?? 0;
+            return sum + progress;
+        }, 0);
+        const avgPreviousProgress = totalPreviousProgress / previousCompetencies.length;
+
+        // Condition 2: Competency Progress >= 0.8 * Avg. Progress of all previous competencies
+        return competencyProgress >= 0.8 * avgPreviousProgress;
+    }
 }
 
 export interface CompetencyImportResponseDTO extends BaseEntity {
@@ -68,9 +116,19 @@ export interface CompetencyImportResponseDTO extends BaseEntity {
     linkedStandardizedCompetencyId?: number;
 }
 
+export enum ConfidenceReason {
+    NO_REASON = 'NO_REASON',
+    RECENT_SCORES_LOWER = 'RECENT_SCORES_LOWER',
+    RECENT_SCORES_HIGHER = 'RECENT_SCORES_HIGHER',
+    MORE_EASY_POINTS = 'MORE_EASY_POINTS',
+    MORE_HARD_POINTS = 'MORE_HARD_POINTS',
+    QUICKLY_SOLVED_EXERCISES = 'QUICKLY_SOLVED_EXERCISES',
+}
+
 export class CompetencyProgress {
     public progress?: number;
     public confidence?: number;
+    public confidenceReason?: ConfidenceReason;
 
     constructor() {}
 }
@@ -89,8 +147,6 @@ export class CompetencyRelation implements BaseEntity {
     public tailCompetency?: Competency;
     public headCompetency?: Competency;
     public type?: CompetencyRelationType;
-
-    constructor() {}
 }
 
 export class CompetencyRelationDTO implements BaseEntity {
@@ -98,8 +154,6 @@ export class CompetencyRelationDTO implements BaseEntity {
     tailCompetencyId?: number;
     headCompetencyId?: number;
     relationType?: CompetencyRelationType;
-
-    constructor() {}
 }
 
 /**
@@ -140,15 +194,27 @@ export function getIcon(competencyTaxonomy?: CompetencyTaxonomy): IconProp {
     return icons[competencyTaxonomy] as IconProp;
 }
 
-export function getProgress(competencyProgress: CompetencyProgress) {
+/**
+ * The progress depends on the amount of completed lecture units and the achieved scores in the exercises.
+ * @param competencyProgress The progress in the competency
+ */
+export function getProgress(competencyProgress: CompetencyProgress | undefined): number {
     return Math.round(competencyProgress?.progress ?? 0);
 }
 
-export function getConfidence(competencyProgress: CompetencyProgress, masteryThreshold: number): number {
-    return Math.min(Math.round(((competencyProgress?.confidence ?? 0) / (masteryThreshold ?? 100)) * 100), 100);
+/**
+ * The confidence is a factor for the progress, normally near 1. It depends on different heuristics and determines if the mastery is lower/higher than the progress.
+ * @param competencyProgress The progress in the competency
+ */
+export function getConfidence(competencyProgress: CompetencyProgress | undefined): number {
+    return competencyProgress?.confidence ?? 1;
 }
 
-export function getMastery(competencyProgress: CompetencyProgress, masteryThreshold: number): number {
-    const weight = 2 / 3;
-    return Math.round((1 - weight) * getProgress(competencyProgress) + weight * getConfidence(competencyProgress, masteryThreshold));
+/**
+ * The mastery is the final value that is shown to the user. It is the product of the progress and the confidence.
+ * @param competencyProgress The progress in the competency
+ */
+export function getMastery(competencyProgress: CompetencyProgress | undefined): number {
+    // clamp the value between 0 and 100
+    return Math.min(100, Math.max(0, Math.round(getProgress(competencyProgress) * getConfidence(competencyProgress))));
 }

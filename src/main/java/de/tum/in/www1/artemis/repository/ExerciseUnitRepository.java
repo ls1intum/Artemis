@@ -5,19 +5,19 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.util.List;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data JPA repository for the Exercise Unit entity.
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface ExerciseUnitRepository extends JpaRepository<ExerciseUnit, Long> {
+public interface ExerciseUnitRepository extends ArtemisJpaRepository<ExerciseUnit, Long> {
 
     @Query("""
             SELECT eu

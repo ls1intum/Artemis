@@ -735,9 +735,12 @@ code.password:hover {
     background: $displaycolor-background;
 }
 
-// This puts the owl-datetime-picker on top of the ngbootstrap modal
+// This positions the owl-datetime-picker above the ngbootstrap modal, accounting for a 10px margin which reduces width and height by 20px.
 .cdk-overlay-container {
     z-index: 1060;
+    margin: 10px;
+    width: calc(100% - 20px);
+    height: calc(100% - 20px);
 }
 
 .not-allowed {

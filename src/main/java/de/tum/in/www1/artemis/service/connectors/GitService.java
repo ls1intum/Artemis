@@ -29,6 +29,7 @@ import java.util.stream.StreamSupport;
 
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
@@ -62,7 +63,6 @@ import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
-import org.eclipse.jgit.transport.sshd.JGitKeyCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -108,6 +108,12 @@ public class GitService extends AbstractGitService {
     @Value("${artemis.git.email}")
     private String artemisGitEmail;
 
+    @Value("${artemis.version-control.user}")
+    protected String gitUser;
+
+    @Value("${artemis.version-control.password}")
+    protected String gitPassword;
+
     // TODO: clean up properly in multi node environments
     private final Map<Path, Repository> cachedRepositories = new ConcurrentHashMap<>();
 
@@ -151,23 +157,10 @@ public class GitService extends AbstractGitService {
         }
     }
 
-    private void configureSsh() {
-
-        final var sshSessionFactoryBuilder = getSshdSessionFactoryBuilder(gitSshPrivateKeyPath, gitSshPrivateKeyPassphrase, gitUrl);
-
-        try (final var sshSessionFactory = sshSessionFactoryBuilder.build(new JGitKeyCache())) {
-            sshCallback = getSshCallback(sshSessionFactory);
-        }
-    }
-
-    private boolean useSsh() {
-        return gitSshPrivateKeyPath.isPresent() && sshUrlTemplate.isPresent();
-        // password is optional and will only be applied if the ssh private key was encrypted using a password
-    }
-
+    @PreDestroy
     @Override
-    protected String getGitUriAsString(VcsRepositoryUri vcsRepositoryUri) throws URISyntaxException {
-        return getGitUri(vcsRepositoryUri).toString();
+    public void cleanup() {
+        super.cleanup();
     }
 
     /**
@@ -181,7 +174,8 @@ public class GitService extends AbstractGitService {
      * @return the URI (SSH, HTTP(S), or local path)
      * @throws URISyntaxException if SSH is used and the SSH URI could not be retrieved.
      */
-    private URI getGitUri(VcsRepositoryUri vcsRepositoryUri) throws URISyntaxException {
+    @Override
+    protected URI getGitUri(VcsRepositoryUri vcsRepositoryUri) throws URISyntaxException {
         if (profileService.isLocalVcsCiActive()) {
             // Create less generic LocalVCRepositoryUri out of VcsRepositoryUri.
             LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(vcsRepositoryUri.toString());
@@ -1020,9 +1014,8 @@ public class GitService extends AbstractGitService {
 
     /**
      * Lists all files and directories within the given repository, excluding symbolic links.
-     * This method utilizes caching to avoid repeated scanning of the repository. If the repository's content is
-     * already cached, it returns the cached content. Otherwise, it performs a scan, filters out symbolic links,
-     * and caches the result for future use.
+     * This method performs a file scan and filters out symbolic links.
+     * It supports bare and checked-out repositories.
      * <p>
      * Note: This method does not handle changes to the repository content between invocations. If files change
      * after the initial caching, the cache does not automatically refresh, which may lead to stale data.
@@ -1151,6 +1144,7 @@ public class GitService extends AbstractGitService {
      * @param repository Local Repository Object.
      * @throws IOException if the deletion of the repository failed.
      */
+    @Override
     public void deleteLocalRepository(Repository repository) throws IOException {
         cachedRepositories.remove(repository.getLocalPath());
         super.deleteLocalRepository(repository);

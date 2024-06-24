@@ -103,6 +103,7 @@ public class ShortAnswerMapping extends DomainObject implements QuizQuestionComp
         return question;
     }
 
+    @Override
     public void setQuestion(ShortAnswerQuestion shortAnswerQuestion) {
         this.question = shortAnswerQuestion;
     }

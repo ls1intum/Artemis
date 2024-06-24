@@ -14,14 +14,20 @@
             "optionalDescription": "Optional competencies are not required to complete the learning path. They can provide additional practice or may cover material that exceeds the courses requirements.",
             "course": "Course",
             "progress": "Progress",
-            "progressDescription": "The percentage of completed lecture units and exercises linked to this competency.",
-            "confidence": "Confidence",
-            "confidenceDescription": "The average score in all linked exercises in relation to the threshold required for mastering the competency defined by the instructor.",
+            "progressDescription": "The progress is influenced by the percentage of completed lecture units and your score in the exercises.",
             "mastery": "Mastery",
-            "masteryDescription": "A weighted metric of your progress and confidence, which shows your overall advancement towards competency mastery.",
+            "masteryDescription": "A weighted metric of your progress, which shows your overall advancement towards competency mastery.",
             "masteredStudents": "Mastered students",
             "mastered": "Mastered",
             "competencies": "Competencies",
+            "confidenceReasons": {
+                "NO_REASON": "The confidence is roughly the same as the mastery",
+                "RECENT_SCORES_LOWER": "Since your recent scores are lower than your average in the competency, the mastery is lower than the progress",
+                "RECENT_SCORES_HIGHER": "Since your recent scores are higher than your average in the competency, the mastery is higher than the progress",
+                "MORE_EASY_POINTS": "Since you mostly scored your points in easy exercises, the mastery is lower than the progress",
+                "MORE_HARD_POINTS": "Since you mostly scored your points in hard exercises, the mastery is higher than the progress",
+                "QUICKLY_SOLVED_EXERCISES": "Since you solved some exercises quickly, the mastery is higher than the progress"
+            },
             "taxonomies": {
                 "REMEMBER": "Remember",
                 "UNDERSTAND": "Understand",
@@ -45,7 +51,7 @@
             "manageCompetencies": {
                 "title": "Competency Management",
                 "importButton": "Import competencies",
-                "importFromCoursesButton": "Import competencies from other courses",
+                "importFromCoursesButton": "Import from other courses",
                 "importAllButton": "Import all competencies of a course",
                 "importStandardizedButton": "Import standardized competencies",
                 "createButton": "Create competency",
@@ -59,7 +65,7 @@
                 "searchTableHeader": "Search Competencies",
                 "searchTableEmpty": "Found no competencies matching your search",
                 "selectedTableHeader": "Selected Competencies",
-                "selectedTableEmpty": "No competencies selected",
+                "selectedTableEmpty": "No competencies selected to import",
                 "importRelations": "Import Relations?",
                 "search": {
                     "title": "Competency Search",
@@ -76,7 +82,7 @@
                     "COURSE_TITLE": "Course Title",
                     "SEMESTER": "Semester"
                 },
-                "success": "Imported {{ noOfCompetencies }} competencies."
+                "success": "Imported {{ numCompetencies }} competencies."
             },
             "generate": {
                 "title": "Generate Competency Recommendations",
@@ -124,7 +130,7 @@
                 "softDueDate": "Recommended date of completion",
                 "softDueDateHint": "Guide students by selecting when you expect them to have mastered this competency. This is not a hard deadline.",
                 "suggestedTaxonomy": "Suggested",
-                "averageStudentScore": "Current average confidence",
+                "averageStudentScore": "Average student score",
                 "connectWithLectureUnits": "Link the competency with lecture units",
                 "selectLecture": "Select a Lecture",
                 "noLectures": "This course has no lectures",
@@ -152,7 +158,8 @@
             "competencyCard": {
                 "connectedLectureUnits": "Linked Lecture Units",
                 "connectedLectureUnitsExplanation": "The following lecture units are linked to this competency:",
-                "ringsTooltip": "Your route to competency mastery. (Red = Mastery, Green = Confidence, Blue = Progress)",
+                "ringsTooltip": "Your route to competency mastery. (Red = Mastery, Green = Progress)",
+                "ringsTooltipHideProgress": "You have not yet rated your mastery of this competency, please rate it to see your progress.",
                 "exerciseNote": "Please note that we take always the last submission into account for exercise units. Even submissions after the due date. This means for example that you can improve your progress by re-trying a quiz as often as you like. It is therefore normal, that the score here might differ from the score you officially achieved in an exercise.",
                 "delete": {
                     "question": "Do you really want to delete the competency <strong>{{ title }}</strong>? You can not undo this action!",
@@ -172,22 +179,6 @@
                 "explanation": "This lecture unit helps you to achieve the following competencies: ",
                 "noCompetencies": "No competencies are linked with this lecture unit! "
             },
-            "prerequisite": {
-                "title": "Prerequisites",
-                "select": "Select prerequisite",
-                "empty": "No prerequisites exist for this course",
-                "import": {
-                    "label": "Add prerequisites",
-                    "table": {
-                        "TITLE": "Title",
-                        "COURSE_TITLE": "Course",
-                        "SEMESTER": "Semester",
-                        "doImport": "Select"
-                    },
-                    "search": "Search competency:",
-                    "loading": "Loading..."
-                }
-            },
             "relation": {
                 "competencyRelations": "Competency Relations",
                 "tailCompetency": "Tail Competency",
@@ -206,7 +197,23 @@
             }
         },
         "prerequisite": {
-            "deleted": "Prerequisite removed"
+            "title": "Prerequisites",
+            "empty": "No prerequisites exist for this course",
+            "manage": {
+                "importButton": "Import prerequisites",
+                "importFromCoursesButton": "Import from other courses",
+                "deleted": "Prerequisite deleted",
+                "delete": {
+                    "question": "Do you really want to delete the prerequisite <strong>{{ title }}</strong>? You can not undo this action!",
+                    "typeNameToConfirm": "Please enter the name of the prerequisite for confirmation."
+                }
+            },
+            "import": {
+                "title": "Import Prerequisites",
+                "success": "Imported {{ numPrerequisites }} prerequisites.",
+                "selectedTableHeader": "Selected Prerequisites",
+                "selectedTableEmpty": "No competencies selected to import as prerequisites"
+            }
         },
         "learningPath": {
             "learningPathButton": "Learning Paths",

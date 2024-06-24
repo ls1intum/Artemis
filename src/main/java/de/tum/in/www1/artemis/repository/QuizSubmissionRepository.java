@@ -8,19 +8,19 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data JPA repository for the QuizSubmission entity.
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface QuizSubmissionRepository extends JpaRepository<QuizSubmission, Long> {
+public interface QuizSubmissionRepository extends ArtemisJpaRepository<QuizSubmission, Long> {
 
     @Query("""
             SELECT DISTINCT submission
@@ -35,6 +35,9 @@ public interface QuizSubmissionRepository extends JpaRepository<QuizSubmission, 
 
     @EntityGraph(type = LOAD, attributePaths = { "submittedAnswers" })
     QuizSubmission findWithEagerSubmittedAnswersById(long submissionId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "submittedAnswers" })
+    Optional<QuizSubmission> findWithEagerSubmittedAnswersByParticipationId(long participationId);
 
     Set<QuizSubmission> findByParticipation_Exercise_Id(long exerciseId);
 
@@ -63,4 +66,13 @@ public interface QuizSubmissionRepository extends JpaRepository<QuizSubmission, 
                 AND participation.student.login = :studentLogin
             """)
     Set<QuizSubmission> findAllByQuizBatchAndStudentLogin(@Param("quizBatchId") Long quizBatchId, @Param("studentLogin") String studentLogin);
+
+    @Query("""
+            SELECT submission
+            FROM QuizSubmission submission
+                LEFT JOIN TREAT(submission.participation AS StudentParticipation) participation
+            WHERE participation.exercise.id = :exerciseId
+                AND participation.student.login = :studentLogin
+            """)
+    Optional<QuizSubmission> findByExerciseIdAndStudentLogin(@Param("exerciseId") Long exerciseId, @Param("studentLogin") String studentLogin);
 }

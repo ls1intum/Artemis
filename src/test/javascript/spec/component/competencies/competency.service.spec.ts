@@ -20,7 +20,7 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { CompetencyPageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import * as dateUtils from 'app/utils/date.utils';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Dayjs } from 'dayjs/esm/index';
 import { Exercise } from 'app/entities/exercise.model';
 import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
@@ -97,17 +97,6 @@ describe('CompetencyService', () => {
         expect(expectedResultCompetency.body).toEqual(defaultCompetencies);
     }));
 
-    it('should find all prerequisites', fakeAsync(() => {
-        const returnedFromService = [...defaultCompetencies];
-        competencyService.getAllPrerequisitesForCourse(1).subscribe((resp) => (expectedResultCompetency = resp));
-
-        const req = httpTestingController.expectOne({ method: 'GET' });
-        req.flush(returnedFromService);
-        tick();
-
-        expect(expectedResultCompetency.body).toEqual(defaultCompetencies);
-    }));
-
     it('should get individual progress for a competency', fakeAsync(() => {
         const returnedFromService = { ...defaultCompetencyProgress };
         competencyService
@@ -140,7 +129,7 @@ describe('CompetencyService', () => {
         const returnedFromService = { ...defaultCompetencies.first(), id: 0 };
         const expected = { ...returnedFromService };
         competencyService
-            .create(new Competency(), 1)
+            .create({}, 1)
             .pipe(take(1))
             .subscribe((resp) => (expectedResultCompetency = resp));
 
@@ -195,31 +184,6 @@ describe('CompetencyService', () => {
     it('should remove a Competency relation', fakeAsync(() => {
         let result: any;
         competencyService.removeCompetencyRelation(1, 1).subscribe((resp) => (result = resp.ok));
-        const req = httpTestingController.expectOne({ method: 'DELETE' });
-        req.flush({ status: 200 });
-        tick();
-
-        expect(result).toBeTrue();
-    }));
-
-    it('should add a prerequisite', fakeAsync(() => {
-        const returnedFromService = { ...defaultCompetencies.first(), id: 0 };
-        const expected = { ...returnedFromService };
-        competencyService
-            .addPrerequisite(defaultCompetencies.first()!.id!, 1)
-            .pipe(take(1))
-            .subscribe((resp) => (expectedResultCompetency = resp));
-
-        const req = httpTestingController.expectOne({ method: 'POST' });
-        req.flush(returnedFromService);
-        tick();
-
-        expect(expectedResultCompetency.body).toEqual(expected);
-    }));
-
-    it('should remove a prerequisite', fakeAsync(() => {
-        let result: any;
-        competencyService.removePrerequisite(1, 1).subscribe((resp) => (result = resp.ok));
         const req = httpTestingController.expectOne({ method: 'DELETE' });
         req.flush({ status: 200 });
         tick();

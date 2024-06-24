@@ -19,12 +19,10 @@ export class ExamResultsPage {
             const achievedPoints = Math.floor(exerciseResult.achievedPoints).toString();
             const achievablePoints = Math.floor(exerciseResult.maxScore).toString();
             const achievedPercentage = exerciseResult.achievedScore.toString();
-            const bonusPoints = Math.floor(exercise.bonusPoints).toString();
 
             await expect(exerciseRow.locator('td').nth(1).getByText(achievedPoints)).toBeVisible();
             await expect(exerciseRow.locator('td').nth(2).getByText(achievablePoints)).toBeVisible();
             await expect(exerciseRow.locator('td').nth(3).getByText(`${achievedPercentage} %`)).toBeVisible();
-            await expect(exerciseRow.locator('td').nth(4).getByText(bonusPoints)).toBeVisible();
         }
     }
 

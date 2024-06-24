@@ -4,7 +4,16 @@
             <div class="mt-3 position-relative">
                 <div class="exercise-row-container mb-3">
                     @for (competency of competencies; track identify(i, competency); let i = $index) {
-                        <jhi-competency-card [competency]="competency" [courseId]="courseId" />
+                        <jhi-competency-card
+                            [competency]="competency"
+                            [courseId]="courseId"
+                            [hideProgress]="
+                                judgementOfLearningEnabled &&
+                                competency.id !== undefined &&
+                                promptForJolRatingMap?.[competency.id] === true &&
+                                judgementOfLearningMap?.[competency.id] === undefined
+                            "
+                        />
                     }
                 </div>
             </div>
@@ -14,12 +23,12 @@
                 <div class="exercise-row-container mb-3">
                     <div class="control-label" (click)="isCollapsed = !isCollapsed">
                         <fa-icon class="pe-3" [icon]="isCollapsed ? faAngleDown : faAngleUp" />
-                        <span>{{ 'artemisApp.competency.prerequisite.title' | artemisTranslate }}: {{ countPrerequisites }}</span>
+                        <span>{{ 'artemisApp.prerequisite.title' | artemisTranslate }}: {{ countPrerequisites }}</span>
                     </div>
                     @if (!isCollapsed) {
                         <div>
                             @for (prerequisite of prerequisites; track identify(i, prerequisite); let i = $index) {
-                                <jhi-competency-card [competency]="prerequisite" [courseId]="courseId" [isPrerequisite]="true" />
+                                <jhi-competency-card [competency]="prerequisite" [courseId]="prerequisite.linkedCourseCompetency?.course?.id" [isPrerequisite]="true" />
                             }
                         </div>
                     }
@@ -34,8 +43,6 @@
         <dl class="mt-3">
             <dt>{{ 'artemisApp.competency.progress' | artemisTranslate }}</dt>
             <dd>{{ 'artemisApp.competency.progressDescription' | artemisTranslate }}</dd>
-            <dt>{{ 'artemisApp.competency.confidence' | artemisTranslate }}</dt>
-            <dd>{{ 'artemisApp.competency.confidenceDescription' | artemisTranslate }}</dd>
             <dt>{{ 'artemisApp.competency.mastery' | artemisTranslate }}</dt>
             <dd>{{ 'artemisApp.competency.masteryDescription' | artemisTranslate }}</dd>
         </dl>
