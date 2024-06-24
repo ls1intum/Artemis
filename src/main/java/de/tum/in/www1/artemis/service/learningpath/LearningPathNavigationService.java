@@ -79,7 +79,7 @@ public class LearningPathNavigationService {
     public LearningPathNavigationDTO getNavigationRelativeToLearningObject(LearningPath learningPath, Long learningObjectId, LearningObjectType learningObjectType) {
         var currentLearningObject = learningObjectService.getLearningObjectByIdAndType(learningObjectId, learningObjectType);
         var recommendationState = learningPathRecommendationService.getRecommendedOrderOfNotMasteredCompetencies(learningPath);
-        if (currentLearningObject.isCompletedFor(learningPath.getUser())) {
+        if (learningObjectService.isCompletedByUser(currentLearningObject, learningPath.getUser())) {
             return getNavigationRelativeToCompletedLearningObject(learningPath, currentLearningObject, recommendationState);
         }
         return getNavigationRelativeToUncompletedLearningObject(learningPath, currentLearningObject, recommendationState);

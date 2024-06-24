@@ -117,7 +117,10 @@ public class LearningPathRecommendationService {
 
     public List<Competency> getRecommendedOrderOfAllCompetencies(LearningPath learningPath) {
         RecommendationState state = generateInitialRecommendationState(learningPath);
-        simulateProgression(learningPath.getCompetencies(), state);
+        var masteredCompetencies = state.masteredCompetencies.stream().map(state.competencyIdMap::get).collect(Collectors.toSet());
+        simulateProgression(masteredCompetencies, state);
+        var pendingCompetencies = getPendingCompetencies(learningPath.getCompetencies(), state);
+        simulateProgression(pendingCompetencies, state);
         return state.recommendedOrderOfCompetencies().stream().map(state.competencyIdMap::get).toList();
     }
 

@@ -424,10 +424,15 @@ public class CompetencyProgressService {
      * Calculates a user's mastery progress scaled to the mastery threshold of the corresponding competency.
      *
      * @param competencyProgress The user's progress
-     * @return The mastery level in percent
+     * @return The progress to the mastery between 0 and 1
      */
     public static double getMasteryProgress(@NotNull CompetencyProgress competencyProgress) {
         final double mastery = getMastery(competencyProgress);
+
+        if (competencyProgress.getCompetency().getMasteryThreshold() == 0) {
+            return mastery == 0 ? 0 : 1;
+        }
+
         return mastery / competencyProgress.getCompetency().getMasteryThreshold();
     }
 

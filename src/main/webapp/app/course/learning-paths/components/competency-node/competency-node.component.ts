@@ -22,7 +22,7 @@ export class CompetencyNodeComponent implements AfterViewInit {
     private readonly nodeHeight = 45.59;
 
     readonly competencyNode = input.required<CompetencyGraphNodeDTO>();
-    readonly masteryProgress = computed(() => Math.floor(this.competencyNode().masteryProgress));
+    readonly masteryProgress = computed(() => Math.floor(this.competencyNode().masteryProgress * 100));
     private readonly element: ElementRef = inject(ElementRef);
 
     readonly onSizeSet = output<SizeUpdate>();
@@ -32,7 +32,7 @@ export class CompetencyNodeComponent implements AfterViewInit {
     }
 
     isMastered(): boolean {
-        return this.masteryProgress() === 100;
+        return this.masteryProgress() >= 100;
     }
 
     isStarted(): boolean {

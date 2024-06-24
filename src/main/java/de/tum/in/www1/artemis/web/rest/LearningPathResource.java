@@ -362,8 +362,7 @@ public class LearningPathResource {
 
     /**
      * GET learning-path/:learningPathId/competencies/:competencyId/learning-objects : Gets the recommended order of learning objects for a competency in a learning path. The
-     * finished lecture units and exercises are at the beginning of the list. After that all pending lecture
-     * * units and exercises needed to master the competency are added.
+     * finished lecture units and exercises are at the beginning of the list. After that all pending lecture units and exercises needed to master the competency are added.
      *
      * @param learningPathId the id of the learning path for which to get the learning objects
      * @param competencyId   the id of the competency for which to get the learning objects
