@@ -115,7 +115,7 @@ public class ExamDateService {
         // For test exams we try to find the latest student exam
         // For real exams we try to find the only existing student exam
         if (exam.isTestExam()) {
-            optionalStudentExam = studentExamRepository.findLatestByExamIdAndUserId(exam.getId(), studentParticipation.getParticipant().getId());
+            optionalStudentExam = studentExamRepository.findFirstByExamIdAndUserIdOrderByIdDesc(exam.getId(), studentParticipation.getParticipant().getId());
         }
         else {
             optionalStudentExam = studentExamRepository.findByExamIdAndUserId(exam.getId(), studentParticipation.getParticipant().getId());

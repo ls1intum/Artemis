@@ -104,17 +104,8 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
 
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLoginAndTestRun(long exerciseId, String username, boolean testRun);
 
-    @Query("""
-            SELECT participation
-            FROM ProgrammingExerciseStudentParticipation participation
-            WHERE participation.exercise.id = :exerciseId
-                AND participation.student.login = :username
-                AND participation.testRun = :testRun
-            ORDER BY participation.id DESC
-            LIMIT 1
-            """)
-    Optional<ProgrammingExerciseStudentParticipation> findLatestByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") long exerciseId, @Param("username") String username,
-            @Param("testRun") boolean testRun);
+    Optional<ProgrammingExerciseStudentParticipation> findFirstByExerciseIdAndStudentLoginAndTestRunOrderByIdDesc(@Param("exerciseId") long exerciseId,
+            @Param("username") String username, @Param("testRun") boolean testRun);
 
     @EntityGraph(type = LOAD, attributePaths = { "team.students" })
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndTeamId(long exerciseId, long teamId);
@@ -181,17 +172,8 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") long exerciseId,
             @Param("username") String username, @Param("testRun") boolean testRun);
 
-    @Query("""
-            SELECT participation
-            FROM ProgrammingExerciseStudentParticipation participation
-                LEFT JOIN FETCH participation.submissions
-            WHERE participation.exercise.id = :exerciseId
-                AND participation.student.login = :username
-                AND participation.testRun = :testRun
-            ORDER BY participation.id DESC
-            LIMIT 1
-            """)
-    Optional<ProgrammingExerciseStudentParticipation> findLatestWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") long exerciseId,
+    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
+    Optional<ProgrammingExerciseStudentParticipation> findFirstWithSubmissionsByExerciseIdAndStudentLoginAndTestRunOrderByIdDesc(@Param("exerciseId") long exerciseId,
             @Param("username") String username, @Param("testRun") boolean testRun);
 
     @Query("""

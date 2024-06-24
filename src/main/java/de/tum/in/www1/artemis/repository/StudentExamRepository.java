@@ -218,16 +218,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             """)
     Optional<StudentExam> findByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
 
-    @Query("""
-            SELECT se
-            FROM StudentExam se
-            WHERE se.testRun = FALSE
-                AND se.exam.id = :examId
-                AND se.user.id = :userId
-            ORDER BY se.id DESC
-            LIMIT 1
-            """)
-    Optional<StudentExam> findLatestByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
+    Optional<StudentExam> findFirstByExamIdAndUserIdOrderByIdDesc(@Param("examId") long examId, @Param("userId") long userId);
 
     @Query("""
             SELECT se
@@ -250,7 +241,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
     default StudentExam findOneByExamIdAndUserId(long examId, long userId, boolean testExam) {
         Optional<StudentExam> studentExam;
         if (testExam) {
-            studentExam = this.findLatestByExamIdAndUserId(examId, userId);
+            studentExam = this.findFirstByExamIdAndUserIdOrderByIdDesc(examId, userId);
         }
         else {
             studentExam = this.findByExamIdAndUserId(examId, userId);

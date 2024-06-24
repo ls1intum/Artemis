@@ -115,15 +115,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     Optional<StudentParticipation> findByExerciseIdAndStudentLogin(@Param("exerciseId") long exerciseId, @Param("username") String username);
 
-    @Query("""
-            SELECT DISTINCT p
-            FROM StudentParticipation p
-            WHERE p.exercise.id = :exerciseId
-                AND p.student.login = :username
-            ORDER BY p.id DESC
-            LIMIT 1
-            """)
-    Optional<StudentParticipation> findLatestByExerciseIdAndStudentLogin(@Param("exerciseId") long exerciseId, @Param("username") String username);
+    Optional<StudentParticipation> findFirstByExerciseIdAndStudentLoginOrderByIdDesc(long exerciseId, String username);
 
     @Query("""
             SELECT DISTINCT p
@@ -139,11 +131,14 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             SELECT DISTINCT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
-            WHERE p.exercise.id = :exerciseId
-                AND p.student.login = :username
-                AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
-            ORDER BY p.id DESC
-            LIMIT 1
+            WHERE p.id = (
+                SELECT MAX(p2.id)
+                FROM StudentParticipation p2
+                    LEFT JOIN p2.submissions s2
+                WHERE p2.exercise.id = :exerciseId
+                    AND p2.student.login = :username
+                    AND (s2.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s2.type IS NULL)
+            )
             """)
     Optional<StudentParticipation> findLatestWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(@Param("exerciseId") long exerciseId, @Param("username") String username);
 
@@ -1019,7 +1014,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 return findTestExamParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentExam.getId());
             }
         }
-
         else {
             if (withAssessor) {
                 return findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultAndAssessorIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());

@@ -177,7 +177,7 @@ public class ParticipationService {
 
         if (exercise instanceof ProgrammingExercise programmingExercise) {
             // fetch again to get additional objects
-            participation = startProgrammingExercise(programmingExercise, (ProgrammingExerciseStudentParticipation) participation, false);
+            participation = startProgrammingExercise(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
         }
         // for all other exercises: QuizExercise, ModelingExercise, TextExercise, FileUploadExercise
         else {
@@ -231,16 +231,15 @@ public class ParticipationService {
      * Start a programming exercise participation (which does not exist yet) by creating and configuring a student git repository (step 1) and a student build plan (step 2)
      * based on the templates in the given programming exercise
      *
-     * @param exercise              the programming exercise that the currently active user (student) wants to start
-     * @param participation         inactive participation
-     * @param setInitializationDate flag if the InitializationDate should be set to the current time
+     * @param exercise      the programming exercise that the currently active user (student) wants to start
+     * @param participation inactive participation
      * @return started participation
      */
-    private StudentParticipation startProgrammingExercise(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean setInitializationDate) {
+    private StudentParticipation startProgrammingExercise(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
         // Step 1a) create the student repository (based on the template repository)
         participation = copyRepository(exercise, exercise.getVcsTemplateRepositoryUri(), participation);
 
-        return startProgrammingParticipation(exercise, participation, setInitializationDate);
+        return startProgrammingParticipation(exercise, participation);
     }
 
     /**
@@ -267,10 +266,10 @@ public class ParticipationService {
         // For practice mode 1 is always set. For more information see Participation.class
         participation.setNumberOfAttempts(1);
 
-        return startProgrammingParticipation(exercise, participation, true);
+        return startProgrammingParticipation(exercise, participation);
     }
 
-    private StudentParticipation startProgrammingParticipation(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean setInitializationDate) {
+    private StudentParticipation startProgrammingParticipation(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
         // Step 1c) configure the student repository (e.g. access right, etc.)
         participation = configureRepository(exercise, participation);
         // Step 2a) create the build plan (based on the BASE build plan)
@@ -281,11 +280,6 @@ public class ParticipationService {
         configureRepositoryWebHook(participation);
         // Step 4a) Set the InitializationState to initialized to indicate, the programming exercise is ready
         participation.setInitializationState(InitializationState.INITIALIZED);
-        // Step 4b) Set the InitializationDate to the current time
-        if (setInitializationDate) {
-            // Note: For test exams, the InitializationDate is set to the StudentExam: startedDate in {#link #startExerciseWithInitializationDate}
-            participation.setInitializationDate(ZonedDateTime.now());
-        }
         // after saving, we need to make sure the object that is used after the if statement is the right one
         return participation;
     }
@@ -569,7 +563,7 @@ public class ParticipationService {
         }
 
         if (exercise.isTestExamExercise()) {
-            return studentParticipationRepository.findLatestByExerciseIdAndStudentLogin(exercise.getId(), username);
+            return studentParticipationRepository.findFirstByExerciseIdAndStudentLoginOrderByIdDesc(exercise.getId(), username);
         }
 
         return studentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), username);

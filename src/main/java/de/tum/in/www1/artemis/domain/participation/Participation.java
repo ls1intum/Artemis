@@ -119,7 +119,7 @@ public abstract class Participation extends DomainObject implements Participatio
     /**
      * Graded course exercises, practice mode course exercises and real exam exercises always have only one parcitipation per exercise
      * In case of a test exam, there are multiple participations possible for one exercise
-     * This field is necessary to preserve the constraint of one partipation per exercise, while allowing multiple particpiations per exercise for text exams
+     * This field is necessary to preserve the constraint of one partipation per exercise, while allowing multiple particpiations per exercise for test exams
      * The value is 0 for graded course exercises and exercises in the real exams
      * The value is 1 for practice mode course exercises
      * The value is 0-255 for test exam exercises. For each subsequent participation the number is increased by one
