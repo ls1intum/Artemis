@@ -378,7 +378,7 @@ public class MetricsBean {
     }
 
     private void registerActiveAdminMetrics() {
-        activeAdminsGauge = MultiGauge.builder("artemis.users.admins.active").description("Number of active admin accounts").register(meterRegistry);
+        activeAdminsGauge = MultiGauge.builder("artemis.users.admins.active").description("User logins of active admin accounts").register(meterRegistry);
     }
 
     /**
