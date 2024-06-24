@@ -42,6 +42,11 @@ public class MigrationEntryJenkinsToLocalVC extends LocalVCMigrationEntry {
     }
 
     @Override
+    protected Class<?> getSubclass() {
+        return MigrationEntryJenkinsToLocalVC.class;
+    }
+
+    @Override
     protected void migrateSolutions(List<SolutionProgrammingExerciseParticipation> solutionParticipations) {
         // TODO implement
     }
@@ -49,11 +54,6 @@ public class MigrationEntryJenkinsToLocalVC extends LocalVCMigrationEntry {
     @Override
     protected void migrateTemplates(List<TemplateProgrammingExerciseParticipation> templateParticipations) {
         // TODO implement
-    }
-
-    @Override
-    protected Class<?> getSubclass() {
-        return MigrationEntryJenkinsToLocalVC.class;
     }
 
     @Override
