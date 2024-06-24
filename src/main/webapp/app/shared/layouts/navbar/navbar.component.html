@@ -150,7 +150,7 @@
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }"
             >
-                @if (!isExamActive) {
+                @if (!isExamActive && !isExamStarted) {
                     <a class="guided-tour-course-admin nav-link" routerLink="/course-management" (click)="collapseNavbar()" id="course-admin-menu">
                         <span>
                             <fa-icon [icon]="faThList" />
@@ -167,7 +167,7 @@
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }"
             >
-                @if (!isExamActive) {
+                @if (!isExamActive && !isExamStarted) {
                     <a class="guided-tour-admin nav-link dropdown-toggle" ngbDropdownToggle id="admin-menu">
                         <span>
                             <fa-icon [icon]="faUserPlus" />
