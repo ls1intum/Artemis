@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
@@ -51,16 +52,19 @@ public class ProgrammingMessagingService {
 
     private final TeamRepository teamRepository;
 
+    private final SubmissionRepository submissionRepository;
+
     private final Optional<PyrisEventService> pyrisEventService;
 
     public ProgrammingMessagingService(GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
             ResultWebsocketService resultWebsocketService, Optional<LtiNewResultService> ltiNewResultService, TeamRepository teamRepository,
-            Optional<PyrisEventService> pyrisEventService) {
+            SubmissionRepository submissionRepository, Optional<PyrisEventService> pyrisEventService) {
         this.groupNotificationService = groupNotificationService;
         this.websocketMessagingService = websocketMessagingService;
         this.resultWebsocketService = resultWebsocketService;
         this.ltiNewResultService = ltiNewResultService;
         this.teamRepository = teamRepository;
+        this.submissionRepository = submissionRepository;
         this.pyrisEventService = pyrisEventService;
     }
 
@@ -185,22 +189,28 @@ public class ProgrammingMessagingService {
     }
 
     private void notifyIrisAboutSubmissionStatus(Result result, ProgrammingExerciseStudentParticipation studentParticipation) {
+        log.debug("Checking if Iris should be informed about the submission status for user " + studentParticipation.getParticipant().getName());
         if (studentParticipation.getParticipant() instanceof User) {
             pyrisEventService.ifPresent(eventService -> {
                 // Inform Iris so it can send a message to the user
                 try {
                     if (result.getScore() < 80.0) {
                         // Check the recent submission and only answer when the last 3 subsequent submissions failed. Failure criteria: Score < 80.0
-                        var recentSubmissions = studentParticipation.getSubmissions().stream().toList();
+                        log.info("Checking if the last 3 submissions failed for user " + studentParticipation.getParticipant().getName());
+                        var recentSubmissions = submissionRepository.findAllWithResultsAndAssessorByParticipationId(studentParticipation.getId());
                         if (recentSubmissions.size() >= 3) {
                             var lastThreeSubmissions = recentSubmissions.subList(recentSubmissions.size() - 3, recentSubmissions.size());
                             var allFailed = lastThreeSubmissions.stream()
                                     .allMatch(submission -> submission.getLatestResult() != null && submission.getLatestResult().getScore() < 80.0);
                             if (allFailed) {
+                                log.info("All last 3 submissions failed for user " + studentParticipation.getParticipant().getName());
                                 eventService.trigger(new SubmissionFailedEvent(result));
                             }
                         }
                     }
+                    // TODO: Inform Iris about successful submission
+                    // If it's the first time the user has passed, inform Iris about the successful submission
+
                 }
                 catch (Exception e) {
                     log.error("Could not trigger submission failed event for result " + result.getId(), e);

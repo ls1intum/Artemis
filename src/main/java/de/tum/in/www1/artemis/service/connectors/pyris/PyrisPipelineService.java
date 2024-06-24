@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.pyris;
 
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -16,6 +17,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.competency.CompetencyJol;
@@ -30,6 +32,8 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.PyrisChatPipelin
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.course.PyrisCourseChatPipelineExecutionDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.exercise.PyrisExerciseChatPipelineExecutionDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisCourseDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisEventDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisExerciseWithStudentSubmissionsDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisExtendedCourseDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisUserDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
@@ -172,23 +176,46 @@ public class PyrisPipelineService {
      * It provides specific data for the course chat pipeline, including:
      * - The full course with the participation of the student
      * - The metrics of the student in the course
-     * - The competency JoL if this is due to a JoL set event
-     * <p>
+     * - Event-specific data if this is due to a specific event
      *
      * @param variant       the variant of the pipeline
      * @param session       the chat session
-     * @param competencyJol if this is due to a JoL set event, this must be the newly created competencyJoL
-     * @see PyrisPipelineService#executeChatPipeline for more details on the pipeline execution process.
+     * @param eventObject   if this function triggers a pipeline execution due to a specific event, this object is the event payload
+     * @param eventDtoClass the class of the DTO that should be generated from the object
+     * @param <T>           the type of the object
+     * @param <U>           the type of the DTO
      */
-    public void executeCourseChatPipeline(String variant, IrisCourseChatSession session, CompetencyJol competencyJol) {
+    private <T, U extends PyrisEventDTO> void executeCourseChatPipeline(String variant, IrisCourseChatSession session, T eventObject, Class<U> eventDtoClass) {
         var courseId = session.getCourse().getId();
         var studentId = session.getUser().getId();
         executeChatPipeline(variant, session, "course-chat", base -> {
             var fullCourse = loadCourseWithParticipationOfStudent(courseId, studentId);
             return new PyrisCourseChatPipelineExecutionDTO(PyrisExtendedCourseDTO.of(fullCourse),
-                    learningMetricsService.getStudentCourseMetrics(session.getUser().getId(), courseId), competencyJol == null ? null : CompetencyJolDTO.of(competencyJol),
-                    base.chatHistory(), base.user(), base.settings(), base.initialStages());
+                    learningMetricsService.getStudentCourseMetrics(session.getUser().getId(), courseId),
+                    eventObject == null ? null : generateDTOFromObjectType(eventDtoClass, eventObject), base.chatHistory(), base.user(), base.settings(), base.initialStages());
         }, () -> pyrisJobService.addCourseChatJob(courseId, session.getId()));
+    }
+
+    /**
+     * Execute the course chat pipeline for the given session.
+     * It provides specific data for the course chat pipeline, including:
+     * - The full course with the participation of the student
+     * - The metrics of the student in the course
+     * - The competency JoL if this is due to a JoL set event
+     * <p>
+     *
+     * @param variant the variant of the pipeline
+     * @param session the chat session
+     * @param object  if this function triggers a pipeline execution due to a specific event, this object is the event payload
+     * @see PyrisPipelineService#executeChatPipeline for more details on the pipeline execution process.
+     */
+    public void executeCourseChatPipeline(String variant, IrisCourseChatSession session, Object object) {
+        switch (object) {
+            case null -> executeCourseChatPipeline(variant, session, null, null);
+            case CompetencyJol competencyJol -> executeCourseChatPipeline(variant, session, competencyJol, CompetencyJolDTO.class);
+            case Exercise exercise -> executeCourseChatPipeline(variant, session, exercise, PyrisExerciseWithStudentSubmissionsDTO.class);
+            default -> throw new UnsupportedOperationException("Unsupported Pyris event payload type: " + object);
+        }
     }
 
     /**
@@ -216,5 +243,38 @@ public class PyrisPipelineService {
         });
 
         return course;
+    }
+
+    /**
+     * Generate a DTO from an object type by invoking the 'of' method of the DTO class.
+     * The 'of' method must be a static method that accepts the object type as argument and returns a subclass of PyrisEventDTO.
+     * <p>
+     * This method is used to generate DTOs from object types that are not known at compile time.
+     * It is used to generate DTOs from Pyris event objects that are passed to the chat pipeline.
+     * The DTO classes must have a static 'of' method that accepts the object type as argument.
+     * The return type of the 'of' method must be a subclass of PyrisEventDTO.
+     * </p>
+     *
+     * @param dtoClass
+     * @param object
+     * @return
+     * @param <T>
+     * @param <U>
+     */
+    private <T, U extends PyrisEventDTO> U generateDTOFromObjectType(Class<U> dtoClass, T object) {
+        try {
+            // Get the 'of' method from the DTO class
+            Method ofMethod = dtoClass.getMethod("of", object.getClass());
+
+            // Check if the return type of 'of' method is a subclass of the PyrisEventDTO class
+            if (!PyrisEventDTO.class.isAssignableFrom(ofMethod.getReturnType())) {
+                throw new UnsupportedOperationException("The return type of the 'of' method must be a subclass of PyrisEventDTO");
+            }
+            // Invoke the 'of' method with the object as argument
+            return (U) ofMethod.invoke(null, object);
+        }
+        catch (Exception e) {
+            throw new UnsupportedOperationException("Failed to generate DTO from object type: " + object, e);
+        }
     }
 }

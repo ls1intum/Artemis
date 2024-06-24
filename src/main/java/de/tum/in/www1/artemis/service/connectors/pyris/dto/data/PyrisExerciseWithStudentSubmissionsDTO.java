@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisExerciseWithStudentSubmissionsDTO(long id, String title, ExerciseType type, ExerciseMode mode, double maxPoints, double bonusPoints,
         DifficultyLevel difficultyLevel, Instant releaseDate, Instant dueDate, IncludedInOverallScore inclusionMode, boolean presentationScoreEnabled,
-        Set<PyrisStudentSubmissionDTO> submissions) {
+        Set<PyrisStudentSubmissionDTO> submissions) implements PyrisEventDTO {
 
     /**
      * Convert an exercise to a PyrisExerciseWithStudentSubmissionsDTO.

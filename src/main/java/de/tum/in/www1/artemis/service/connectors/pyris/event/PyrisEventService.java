@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.pyris.event;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -9,6 +11,8 @@ import de.tum.in.www1.artemis.service.iris.session.IrisExerciseChatSessionServic
 @Service
 @Profile("iris")
 public class PyrisEventService {
+
+    private static final Logger log = LoggerFactory.getLogger(PyrisEventService.class);
 
     private final IrisCourseChatSessionService irisCourseChatSessionService;
 
@@ -27,9 +31,11 @@ public class PyrisEventService {
     public void trigger(PyrisEvent event) {
         switch (event) {
             case CompetencyJolSetEvent competencyJolSetEvent -> {
+                log.info("Received CompetencyJolSetEvent: {}", competencyJolSetEvent);
                 competencyJolSetEvent.handleEvent(irisCourseChatSessionService);
             }
             case SubmissionFailedEvent submissionFailedEvent -> {
+                log.info("Received SubmissionFailedEvent: {}", submissionFailedEvent);
                 submissionFailedEvent.handleEvent(irisExerciseChatSessionService);
             }
             default -> throw new UnsupportedOperationException("Unsupported event: " + event);

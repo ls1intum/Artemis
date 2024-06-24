@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.CompetencyJol;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
@@ -19,6 +21,7 @@ import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCourseChatSession;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.iris.IrisCourseChatSessionRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
@@ -117,10 +120,10 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
         requestAndHandleResponse(session, "default", null);
     }
 
-    private void requestAndHandleResponse(IrisCourseChatSession session, String variant, CompetencyJol competencyJol) {
+    private void requestAndHandleResponse(IrisCourseChatSession session, String variant, Object object) {
         var chatSession = (IrisCourseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
 
-        pyrisPipelineService.executeCourseChatPipeline(variant, chatSession, competencyJol);
+        pyrisPipelineService.executeCourseChatPipeline(variant, chatSession, object);
     }
 
     /**
@@ -158,6 +161,39 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
         user.hasAcceptedIrisElseThrow();
         var session = getCurrentSessionOrCreateIfNotExistsInternal(course, user, false);
         CompletableFuture.runAsync(() -> requestAndHandleResponse(session, "jol", competencyJol));
+    }
+
+    /**
+     * Triggers the course chat in response to a new submission.
+     * If the course chat is not enabled for the course, nothing happens.
+     *
+     * @param result The submission event to trigger the course chat for
+     */
+    public void onSubmissionSuccess(Result result) {
+        var participation = result.getParticipation();
+        var exercise = participation.getExercise();
+        if (exercise.isExamExercise()) {
+            // Do not trigger Iris for exam exercises
+            return;
+        }
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        if (!irisSettingsService.isEnabledFor(IrisSubSettingsType.CHAT, course)) {
+            return;
+        }
+        var participant = ((ProgrammingExerciseStudentParticipation) participation).getParticipant();
+        if (participant instanceof User) {
+            var user = (User) participant;
+            var session = getCurrentSessionOrCreateIfNotExistsInternal(course, user, false);
+            CompletableFuture.runAsync(() -> requestAndHandleResponse(session, "submission_successful", exercise));
+        }
+        else {
+            var team = (Team) participant;
+            var teamMembers = team.getStudents();
+            for (var user : teamMembers) {
+                var session = getCurrentSessionOrCreateIfNotExistsInternal(course, user, false);
+                CompletableFuture.runAsync(() -> requestAndHandleResponse(session, "submission_successful", exercise));
+            }
+        }
     }
 
     /**
