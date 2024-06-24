@@ -14,6 +14,7 @@ import { IrisMessageContentType, IrisTextMessageContent } from 'app/entities/iri
 import { AccountService } from 'app/core/auth/account.service';
 import { animate, group, style, transition, trigger } from '@angular/animations';
 import { IrisChatService } from 'app/iris/iris-chat.service';
+import * as _ from 'lodash';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -42,6 +43,32 @@ import { IrisChatService } from 'app/iris/iris-chat.service';
                 ]),
             ]),
         ]),
+        trigger('suggestionAnimation', [
+            transition(':enter', [
+                style({ height: 0, opacity: 0 }),
+                group([
+                    animate(
+                        '0.3s 0.5s ease-in-out',
+                        style({
+                            height: '*',
+                            opacity: 1,
+                        }),
+                    ),
+                ]),
+            ]),
+            transition(':leave', [
+                style({ height: '*', opacity: 1 }),
+                group([
+                    animate(
+                        '0.3s ease-in-out',
+                        style({
+                            height: 0,
+                            opacity: 0,
+                        }),
+                    ),
+                ]),
+            ]),
+        ]),
     ],
 })
 export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -65,9 +92,11 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     numNewMessageSubscription: Subscription;
     rateLimitSubscription: Subscription;
     activeStatusSubscription: Subscription;
+    suggestionsSubscription: Subscription;
 
     messages: IrisMessage[] = [];
     stages?: IrisStageDTO[] = [];
+    suggestions?: string[] = [];
     error?: IrisErrorMessageKey;
     numNewMessages: number = 0;
     rateLimitInfo: IrisRateLimitInformation;
@@ -102,6 +131,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     protected readonly IrisAssistantMessage = IrisAssistantMessage;
     protected readonly IrisTextMessageContent = IrisTextMessageContent;
     protected readonly IrisSender = IrisSender;
+    protected readonly IrisErrorMessageKey = IrisErrorMessageKey;
 
     constructor(
         protected accountService: AccountService,
@@ -116,7 +146,16 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
             if (messages.length !== this.messages?.length) {
                 this.scrollToBottom('auto');
             }
-            this.messages = [...messages].reverse();
+            this.messages = _.cloneDeep(messages).reverse();
+            this.messages.forEach((message) => {
+                // @ts-expect-error - TS doesn't get that I'm checking for the type
+                if (message.content?.[0]?.textContent) {
+                    // Double all \n
+                    const cnt = message.content[0] as IrisTextMessageContent;
+                    cnt.textContent = cnt.textContent.replace(/\n\n/g, '\n\u00A0\n');
+                    cnt.textContent = cnt.textContent.replace(/\n/g, '\n\n');
+                }
+            });
         });
         this.stagesSubscription = this.chatService.currentStages().subscribe((stages) => {
             this.stages = stages;
@@ -134,6 +173,9 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
                 this.resendAnimationActive = false;
             }
             this.active = active;
+        });
+        this.suggestionsSubscription = this.chatService.currentSuggestions().subscribe((suggestions) => {
+            this.suggestions = suggestions;
         });
 
         this.checkIfUserAcceptedIris();
@@ -166,6 +208,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         this.numNewMessageSubscription.unsubscribe();
         this.rateLimitSubscription.unsubscribe();
         this.activeStatusSubscription.unsubscribe();
+        this.suggestionsSubscription.unsubscribe();
     }
 
     checkIfUserAcceptedIris(): void {
@@ -366,5 +409,10 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         const messagesElement = this.messagesElement.nativeElement;
         const scrollTop = messagesElement.scrollTop;
         this.isScrolledToBottom = scrollTop < 50;
+    }
+
+    onSuggestionClick(suggestion: string) {
+        this.newMessageTextContent = suggestion;
+        this.onSend();
     }
 }

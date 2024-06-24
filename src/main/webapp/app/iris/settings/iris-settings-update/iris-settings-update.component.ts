@@ -9,7 +9,13 @@ import { faRotate, faSave } from '@fortawesome/free-solid-svg-icons';
 import { IrisModel } from 'app/entities/iris/settings/iris-model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { cloneDeep, isEqual } from 'lodash-es';
-import { IrisChatSubSettings, IrisCompetencyGenerationSubSettings, IrisHestiaSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
+import {
+    IrisChatSubSettings,
+    IrisCompetencyGenerationSubSettings,
+    IrisHestiaSubSettings,
+    IrisLectureIngestionSubSettings,
+} from 'app/entities/iris/settings/iris-sub-settings.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-iris-settings-update',
@@ -22,17 +28,19 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     public courseId?: number;
     @Input()
     public exerciseId?: number;
-
     public irisSettings?: IrisSettings;
     public parentIrisSettings?: IrisSettings;
     public allIrisModels?: IrisModel[];
 
     originalIrisSettings?: IrisSettings;
 
+    public autoLectureIngestion = false;
+
     // Status bools
     isLoading = false;
     isSaving = false;
     isDirty = false;
+    isAdmin: boolean;
     // Button types
     PRIMARY = ButtonType.PRIMARY;
     WARNING = ButtonType.WARNING;
@@ -48,7 +56,10 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     constructor(
         private irisSettingsService: IrisSettingsService,
         private alertService: AlertService,
-    ) {}
+        accountService: AccountService,
+    ) {
+        this.isAdmin = accountService.isAdmin();
+    }
 
     ngOnInit(): void {
         this.loadIrisSettings();
@@ -84,6 +95,7 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
             this.irisSettings = settings;
             this.fillEmptyIrisSubSettings();
             this.originalIrisSettings = cloneDeep(settings);
+            this.autoLectureIngestion = this.irisSettings?.irisLectureIngestionSettings?.autoIngestOnLectureAttachmentUpload ?? false;
             this.isDirty = false;
         });
         this.loadParentIrisSettingsObservable().subscribe((settings) => {
@@ -101,6 +113,9 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
         if (!this.irisSettings.irisChatSettings) {
             this.irisSettings.irisChatSettings = new IrisChatSubSettings();
         }
+        if (!this.irisSettings.irisLectureIngestionSettings) {
+            this.irisSettings.irisLectureIngestionSettings = new IrisLectureIngestionSubSettings();
+        }
         if (!this.irisSettings.irisHestiaSettings) {
             this.irisSettings.irisHestiaSettings = new IrisHestiaSubSettings();
         }
@@ -111,6 +126,9 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
 
     saveIrisSettings(): void {
         this.isSaving = true;
+        if (this.irisSettings && this.irisSettings.irisLectureIngestionSettings) {
+            this.irisSettings.irisLectureIngestionSettings.autoIngestOnLectureAttachmentUpload = this.autoLectureIngestion;
+        }
         this.saveIrisSettingsObservable().subscribe(
             (response) => {
                 this.isSaving = false;
@@ -120,9 +138,14 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
                 this.originalIrisSettings = cloneDeep(this.irisSettings);
                 this.alertService.success('artemisApp.iris.settings.success');
             },
-            () => {
+            (error) => {
                 this.isSaving = false;
-                this.alertService.error('artemisApp.iris.settings.error.save');
+                console.error('Error saving iris settings', error);
+                if (error.status === 400 && error.error && error.error.message) {
+                    this.alertService.error(error.error.message);
+                } else {
+                    this.alertService.error('artemisApp.iris.settings.error.save');
+                }
             },
         );
     }

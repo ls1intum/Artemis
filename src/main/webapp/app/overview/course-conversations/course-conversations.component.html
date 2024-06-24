@@ -1,5 +1,5 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
-    <div class="input-group" [hidden]="!isCodeOfConductAccepted">
+    <div class="input-group mb-1 rounded-2 p-2 me-2 module-bg" [hidden]="!isCodeOfConductAccepted">
         <!-- search bar -->
         <input
             name="searchText"
@@ -11,68 +11,10 @@
         />
         <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="courseWideSearchTerm = ''" />
         <jhi-button id="search-submit" class="ms-1" [icon]="faSearch" (onClick)="onSearch()" />
-        <jhi-documentation-button [type]="documentationType" class="information-button" />
     </div>
-    @if (formGroup && isCodeOfConductAccepted) {
-        <form [formGroup]="formGroup">
-            <!-- filter and sort controls -->
-            <div class="row mx-1 my-2 justify-content-start">
-                <!-- sort dropdown -->
-                <div class="col-12 col-sm-5 col-md-auto order-lg-2" style="margin-left: 80px">
-                    <div class="row align-items-baseline justify-content-center">
-                        <div class="col-auto p-0">{{ 'artemisApp.metis.overview.sortedByDate' | artemisTranslate }}</div>
-                        <div class="col-auto p-0 clickable" role="button" (click)="onChangeSortDir()">
-                            <fa-icon
-                                [icon]="sortingOrder === SortDirection.ASCENDING ? faLongArrowAltUp : faLongArrowAltDown"
-                                [ngbTooltip]="
-                                    sortingOrder === SortDirection.ASCENDING
-                                        ? ('artemisApp.metis.overview.sortAscending' | artemisTranslate)
-                                        : ('artemisApp.metis.overview.sortDescending' | artemisTranslate)
-                                "
-                            />
-                        </div>
-                    </div>
-                </div>
-                <!-- attribute filter -->
-                <div class="col-12 col-md-auto order-lg-1 d-flex align-items-center">
-                    <div class="row selection-prefix justify-content-center">
-                        <div class="col-auto p-0">
-                            <fa-icon [icon]="faFilter" />
-                        </div>
-                        <div class="col-auto p-0 ps-2">
-                            <input
-                                class="form-check-input"
-                                type="checkbox"
-                                formControlName="filterToUnresolved"
-                                name="filterToUnresolved"
-                                id="filterToUnresolved"
-                                (change)="onSelectContext()"
-                            />
-                            <label for="filterToUnresolved" class="p-0">{{ 'artemisApp.metis.overview.filterToUnresolved' | artemisTranslate }}</label>
-                        </div>
-                        <div class="col-auto p-0 ps-2">
-                            <input class="form-check-input" type="checkbox" formControlName="filterToOwn" name="filterToOwn" id="filterToOwn" (change)="onSelectContext()" />
-                            <label for="filterToOwn" class="p-0">{{ 'artemisApp.metis.overview.filterToOwn' | artemisTranslate }}</label>
-                        </div>
-                        <div class="col-auto p-0 ps-2">
-                            <input
-                                class="form-check-input"
-                                type="checkbox"
-                                formControlName="filterToAnsweredOrReacted"
-                                name="filterToAnsweredOrReacted"
-                                id="filterToAnsweredOrReacted"
-                                (change)="onSelectContext()"
-                            />
-                            <label for="filterToAnsweredOrReacted" class="p-0">{{ 'artemisApp.metis.overview.filterToAnsweredOrReacted' | artemisTranslate }}</label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </form>
-    }
     <!-- only display after isCodeOfConductAccepted is loaded and set to false -->
     @if (course && isCodeOfConductAccepted === false) {
-        <div>
+        <div class="module-bg px-3 py-3">
             <jhi-course-conversations-code-of-conduct [course]="course!" />
             <button id="acceptCodeOfConductButton" class="btn btn-primary" type="button" (click)="acceptCodeOfConduct()">
                 {{ 'artemisApp.codeOfConduct.accept' | artemisTranslate }}
@@ -80,16 +22,26 @@
         </div>
     }
     @if (isCodeOfConductAccepted && isServiceSetUp && course) {
-        <div class="row mt-2">
-            <div class="col d-flex flex-grow-1 justify-end px-0 me-1" style="max-width: min-content">
-                <jhi-conversation-selection-sidebar />
+        <div class="d-flex justify-content-between">
+            <div class="me-3" [ngClass]="{ 'sidebar-collapsed': isCollapsed }">
+                <jhi-sidebar
+                    (onSelectConversation)="onConversationSelected($event)"
+                    (onUpdateSidebar)="prepareSidebarData()"
+                    [itemSelected]="conversationSelected"
+                    [courseId]="course.id"
+                    [sidebarData]="sidebarData"
+                    (onPlusPressed)="onAccordionPlusButtonPressed($event)"
+                    [showAddOption]="CHANNEL_TYPE_SHOW_ADD_OPTION"
+                    [channelTypeIcon]="CHANNEL_TYPE_ICON"
+                    [collapseState]="DEFAULT_COLLAPSE_STATE"
+                />
             </div>
             @if (course && !activeConversation && isCodeOfConductPresented) {
                 <div class="col pe-0 flex-grow-1">
                     <jhi-course-conversations-code-of-conduct [course]="course!" />
                 </div>
             }
-            <div class="col pe-0 flex-grow-1" [ngClass]="{ 'card-border': true }" style="min-width: 200px">
+            <div class="col pe-0 flex-grow-1 module-bg" [ngClass]="{ 'card-border': true }" style="min-width: 200px">
                 @if (activeConversation) {
                     <jhi-conversation-header />
                     <jhi-conversation-messages (openThread)="postInThread = $event" [course]="course" />

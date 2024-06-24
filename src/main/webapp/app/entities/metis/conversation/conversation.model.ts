@@ -46,6 +46,7 @@ export abstract class ConversationDTO {
     public isFavorite?: boolean;
     public isHidden?: boolean;
     public isMuted?: boolean;
+    public hasUnreadMessage?: boolean;
 
     protected constructor(type: ConversationType) {
         this.type = type;
