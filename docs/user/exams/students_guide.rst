@@ -154,6 +154,7 @@ Participating in Quiz Exercises
 
 - All questions are listed in the main screen below one another.
 - To navigate between them you can scroll.
+- You can see the ``question overview`` on the left. Each question representation shows whether that question has been answered or not. The blue background indicates that the question is answered, while the yellow background indicates that the question is not answered.
 - To submit your solution, click on another exercise in the navigation sidebar.
 
     .. note::
