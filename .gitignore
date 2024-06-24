@@ -189,13 +189,6 @@ data-exports/
 !/docker/.docker-data/artemis-postgres-data/.gitkeep
 
 ######################
-# Cypress
-######################
-/src/test/cypress/screenshots/
-/src/test/cypress/videos/
-/src/test/cypress/build
-
-######################
 # Playwright
 ######################
 /src/test/playwright/test-reports/

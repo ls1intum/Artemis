@@ -2,7 +2,7 @@
     "root": true,
     "ignorePatterns": ["projects/**/*"],
     "parserOptions": {
-        "project": ["./tsconfig.json", "./tsconfig.app.json", "./tsconfig.spec.json", "src/test/cypress/tsconfig.json", "src/test/playwright/tsconfig.json"]
+        "project": ["./tsconfig.json", "./tsconfig.app.json", "./tsconfig.spec.json", "src/test/playwright/tsconfig.json"]
     },
     "extends": ["plugin:prettier/recommended"],
     "overrides": [
