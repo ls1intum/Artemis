@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { MODELING_EDITOR_CANVAS } from 'src/test/cypress/support/constants';
+import { MODELING_EDITOR_CANVAS } from '../../../support/constants';
 
 import { Course } from 'app/entities/course.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
