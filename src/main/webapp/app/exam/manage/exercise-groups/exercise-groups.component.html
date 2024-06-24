@@ -122,7 +122,7 @@
                                 <div class="d-flex flex-column me-1 mb-1">
                                     <a [routerLink]="[exerciseGroup.id, 'edit']" class="edit-group btn btn-warning btn-sm me-1 mb-1">
                                         <fa-icon [icon]="faWrench" />
-                                        <span class="d-none d-xl-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
+                                        <span class="d-none d-xl-inline" jhiTranslate="entity.action.edit"></span>
                                     </a>
                                     @if (
                                         exerciseGroup.id &&

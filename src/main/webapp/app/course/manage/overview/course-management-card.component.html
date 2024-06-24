@@ -232,7 +232,7 @@
                 id="course-card-open-exams"
             >
                 <fa-icon [icon]="faGraduationCap" />
-                <span class="d-none d-xl-inline">{{ 'entity.action.exams' | artemisTranslate }}</span>
+                <span class="d-none d-xl-inline" jhiTranslate="entity.action.exams"></span>
             </a>
         }
         @if (course.isAtLeastTutor) {
@@ -244,7 +244,7 @@
                 id="course-card-open-exercises"
             >
                 <fa-icon [icon]="faListAlt" />
-                <span class="d-none d-xl-inline">{{ 'entity.action.exercise' | artemisTranslate }}</span>
+                <span class="d-none d-xl-inline" jhiTranslate="entity.action.exercise"></span>
             </a>
         }
         @if (course.isAtLeastEditor) {
@@ -255,7 +255,7 @@
                 id="course-card-open-lectures"
             >
                 <fa-icon [icon]="faFilePdf" />
-                <span class="d-none d-xl-inline">{{ 'entity.action.lecture' | artemisTranslate }}</span>
+                <span class="d-none d-xl-inline" jhiTranslate="entity.action.lecture"></span>
             </a>
         }
         @if (course.isAtLeastTutor) {
@@ -331,7 +331,7 @@
                 id="course-card-open-assessment-dashboard"
             >
                 <fa-icon [icon]="faUserCheck" />
-                <span class="d-none d-xl-inline">{{ 'entity.action.assessmentDashboard' | artemisTranslate }}</span>
+                <span class="d-none d-xl-inline" jhiTranslate="entity.action.assessmentDashboard"></span>
             </a>
         }
         @if (course.isAtLeastInstructor) {
@@ -342,7 +342,7 @@
                 id="course-card-open-scores"
             >
                 <fa-icon [icon]="faTable" />
-                <span class="d-none d-xl-inline">{{ 'entity.action.scores' | artemisTranslate }}</span>
+                <span class="d-none d-xl-inline" jhiTranslate="entity.action.scores"></span>
             </a>
         }
     </div>

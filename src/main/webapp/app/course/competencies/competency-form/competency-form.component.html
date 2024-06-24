@@ -149,7 +149,7 @@
                 </div>
                 <div>
                     <button id="submitButton" class="btn btn-primary me-2" type="submit" [disabled]="!isSubmitPossible">
-                        <span>{{ 'entity.action.submit' | artemisTranslate }}</span>
+                        <span jhiTranslate="entity.action.submit"></span>
                     </button>
                     @if (hasCancelButton) {
                         <button type="button" (click)="cancelForm()" class="btn btn-default">

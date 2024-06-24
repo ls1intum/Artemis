@@ -25,6 +25,6 @@
 @if (binaryFile && !cannotLoadFiles) {
     <div class="binaryFileDialogue">
         <span class="me-1" jhiTranslate="artemisApp.plagiarism.binaryFileNotRendered"></span>
-        <a class="text-primary" (click)="downloadCurrentFile()">{{ 'entity.action.download' | artemisTranslate }}</a>
+        <a class="text-primary" (click)="downloadCurrentFile()" jhiTranslate="entity.action.download"></a>
     </div>
 }

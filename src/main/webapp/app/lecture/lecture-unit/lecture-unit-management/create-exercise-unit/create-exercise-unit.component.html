@@ -30,9 +30,14 @@
                         jhiTranslate="artemisApp.lecture.wizardMode.newExercise"
                     ></button>
                 }
-                <button id="createButton" type="button" class="btn btn-primary" [disabled]="exercisesToCreateUnitFor.length === 0" (click)="createExerciseUnits()">
-                    {{ 'entity.action.submit' | artemisTranslate }}
-                </button>
+                <button
+                    id="createButton"
+                    type="button"
+                    class="btn btn-primary"
+                    [disabled]="exercisesToCreateUnitFor.length === 0"
+                    (click)="createExerciseUnits()"
+                    jhiTranslate="entity.action.submit"
+                ></button>
             </div>
         </div>
         <div class="row">

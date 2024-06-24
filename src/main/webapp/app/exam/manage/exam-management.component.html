@@ -114,7 +114,7 @@
                                                 <a [routerLink]="[exam.id, 'edit']" class="btn btn-warning btn-sm me-1 mb-1 d-flex align-items-center justify-content-center">
                                                     <div>
                                                         <fa-icon [icon]="faWrench" />
-                                                        <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
+                                                        <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
                                                     </div>
                                                 </a>
                                             }
@@ -139,7 +139,7 @@
                                             @if (course.isAtLeastInstructor) {
                                                 <a [routerLink]="['/course-management', course.id, 'exams', exam.id, 'scores']" class="btn btn-info btn-sm me-1 mb-1">
                                                     <fa-icon [icon]="faEye" />
-                                                    <span class="d-none d-md-inline">{{ 'entity.action.scores' | artemisTranslate }}</span>
+                                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.scores"></span>
                                                 </a>
                                             }
                                             @if (course.isAtLeastInstructor) {

@@ -3,7 +3,7 @@
         <!-- editor -->
         <ng-container ngbNavItem="editor_edit">
             @if (showEditButton) {
-                <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0">{{ 'entity.action.edit' | artemisTranslate }}</a>
+                <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0" jhiTranslate="entity.action.edit"></a>
             }
             <ng-template ngbNavContent>
                 <div [ngStyle]="{ 'minHeight.px': minHeightEditor }" class="height-100 markdown-editor d-flex flex-column" [id]="uniqueMarkdownEditorId">
@@ -49,7 +49,7 @@
         <!-- visual Mode -->
         <ng-container ngbNavItem="editor_visual">
             @if (showVisualModeButton) {
-                <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0">{{ 'entity.action.visual' | artemisTranslate }}</a>
+                <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0" jhiTranslate="entity.action.visual"></a>
             }
             <ng-template ngbNavContent>
                 <ng-content select="[#visual]" />
@@ -58,7 +58,7 @@
         <!-- preview -->
         <ng-container ngbNavItem="editor_preview">
             @if (showPreviewButton) {
-                <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0">{{ 'entity.action.preview' | artemisTranslate }}</a>
+                <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0" jhiTranslate="entity.action.preview"></a>
             }
             <ng-template ngbNavContent>
                 <ng-content select="[#preview]" />

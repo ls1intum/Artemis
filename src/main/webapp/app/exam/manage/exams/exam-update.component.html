@@ -101,7 +101,7 @@
                         id="startDate"
                     />
                     @if (isStartDateSet && isValidStartDateValue && !isValidStartDate) {
-                        <span class="invalid-feedback"> {{ 'entity.startDateError' | artemisTranslate }}</span>
+                        <span class="invalid-feedback" jhiTranslate="entity.startDateError"></span>
                     }
                 </div>
                 <div class="col-sm-4">
@@ -117,7 +117,7 @@
                         id="endDate"
                     />
                     @if (isEndDateSet && isValidEndDateValue && !isValidEndDate) {
-                        <span class="invalid-feedback"> {{ 'entity.endDateError' | artemisTranslate }}</span>
+                        <span class="invalid-feedback" jhiTranslate="entity.endDateError"></span>
                     }
                 </div>
             </div>

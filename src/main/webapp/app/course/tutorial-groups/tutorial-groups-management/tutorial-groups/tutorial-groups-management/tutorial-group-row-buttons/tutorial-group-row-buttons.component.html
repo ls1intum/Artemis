@@ -18,7 +18,7 @@
         @if (isAtLeastInstructor) {
             <a [id]="'edit-' + tutorialGroup.id" [routerLink]="['/course-management', course.id!, 'tutorial-groups', tutorialGroup.id, 'edit']" class="btn btn-warning btn-sm me-1">
                 <fa-icon [icon]="faWrench" />
-                <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
+                <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
             </a>
         }
         <!-- Delete -->

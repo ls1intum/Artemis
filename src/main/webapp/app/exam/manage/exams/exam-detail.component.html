@@ -59,7 +59,7 @@
                         }
                         <a id="scores-button" [routerLink]="getExamRoutesByIdentifier('scores')" class="btn btn-info mt-1">
                             <fa-icon [icon]="faEye" />
-                            <span>{{ 'entity.action.scores' | artemisTranslate }}</span>
+                            <span jhiTranslate="entity.action.scores"></span>
                         </a>
                         <a [routerLink]="getExamRoutesByIdentifier('plagiarism-cases')" class="tab-item btn btn-info btn-md mt-1">
                             <fa-icon [icon]="faHeartBroken" />

@@ -41,7 +41,7 @@
                     @if (competency.course?.isAtLeastInstructor) {
                         <a class="btn btn-sm btn-warning float-end" [routerLink]="['/course-management', courseId, 'competency-management', competency.id, 'edit']">
                             <fa-icon [icon]="faPencilAlt" />
-                            <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
                         </a>
                     }
                 </div>
