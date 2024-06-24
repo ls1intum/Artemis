@@ -149,9 +149,7 @@
                         [ngModel]="selectedFilter"
                         (ngModelChange)="onFilterChange($event)"
                     />
-                    <label class="btn btn-outline-danger" for="only-not-imported">{{
-                        'artemisApp.tutorialGroupImportDialog.table.showNotImportedButton' | artemisTranslate
-                    }}</label>
+                    <label class="btn btn-outline-danger" for="only-not-imported" jhiTranslate="artemisApp.tutorialGroupImportDialog.table.showNotImportedButton"></label>
                     <input
                         type="radio"
                         class="btn-check"

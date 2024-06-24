@@ -34,9 +34,11 @@
                             for="updateTutorialGroupChannelNameControl"
                             jhiTranslate="artemisApp.forms.tutorialGroupForm.updateChannelNameInput.label"
                         ></label>
-                        <small id="updateChannelNameHelp" class="form-text text-body-secondary d-block">{{
-                            'artemisApp.forms.tutorialGroupForm.updateChannelNameInput.explanation' | artemisTranslate
-                        }}</small>
+                        <small
+                            id="updateChannelNameHelp"
+                            class="form-text text-body-secondary d-block"
+                            jhiTranslate="artemisApp.forms.tutorialGroupForm.updateChannelNameInput.explanation"
+                        ></small>
                     </div>
                 }
                 <!--Online / Offline -->
@@ -181,9 +183,7 @@
                             [placeholder]="'artemisApp.forms.tutorialGroupForm.notificationInput.placeholder' | artemisTranslate"
                             rows="3"
                         ></textarea>
-                        <small id="notificationHelp" class="form-text text-body-secondary">{{
-                            'artemisApp.forms.tutorialGroupForm.notificationInput.help' | artemisTranslate
-                        }}</small>
+                        <small id="notificationHelp" class="form-text text-body-secondary" jhiTranslate="artemisApp.forms.tutorialGroupForm.notificationInput.help"></small>
                         @if (notificationControl?.invalid && (notificationControl?.dirty || notificationControl?.touched)) {
                             <div class="alert alert-danger">
                                 @if (notificationControl?.errors?.maxlength) {

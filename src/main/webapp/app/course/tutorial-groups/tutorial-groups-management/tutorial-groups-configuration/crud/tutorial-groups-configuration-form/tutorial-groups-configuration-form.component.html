@@ -46,9 +46,11 @@
                                 for="useTutorialGroupChannels"
                                 jhiTranslate="artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.label"
                             ></label>
-                            <small id="channelHelp" class="form-text text-body-secondary d-block">{{
-                                'artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.explanation' | artemisTranslate
-                            }}</small>
+                            <small
+                                id="channelHelp"
+                                class="form-text text-body-secondary d-block"
+                                jhiTranslate="artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.explanation"
+                            ></small>
                             @if (showChannelDeletionWarning) {
                                 <div
                                     class="alert alert-danger"
@@ -63,17 +65,15 @@
                             <label class="d-block" jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isPublicInput.label"></label>
                             <div class="btn-group" role="group">
                                 <input formControlName="usePublicTutorialGroupChannels" type="radio" class="btn-check" id="public" autocomplete="off" checked [value]="true" />
-                                <label class="btn btn-outline-secondary" for="public">{{
-                                    'artemisApp.dialogs.createChannel.channelForm.isPublicInput.public' | artemisTranslate
-                                }}</label>
+                                <label class="btn btn-outline-secondary" for="public" jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isPublicInput.public"></label>
                                 <input formControlName="usePublicTutorialGroupChannels" type="radio" class="btn-check" id="private" autocomplete="off" [value]="false" />
-                                <label class="btn btn-outline-secondary" for="private">{{
-                                    'artemisApp.dialogs.createChannel.channelForm.isPublicInput.private' | artemisTranslate
-                                }}</label>
+                                <label class="btn btn-outline-secondary" for="private" jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isPublicInput.private"></label>
                             </div>
-                            <small id="isPublicHelp" class="form-text text-body-secondary d-block">{{
-                                'artemisApp.dialogs.createChannel.channelForm.isPublicInput.explanation' | artemisTranslate
-                            }}</small>
+                            <small
+                                id="isPublicHelp"
+                                class="form-text text-body-secondary d-block"
+                                jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isPublicInput.explanation"
+                            ></small>
                         </div>
                     </div>
                 </div>

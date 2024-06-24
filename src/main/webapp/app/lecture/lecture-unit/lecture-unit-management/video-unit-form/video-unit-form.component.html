@@ -94,9 +94,7 @@
                         </div>
                         <div class="col-1"></div>
                         <div class="col-7">
-                            <small id="urlHelperExplanation" class="form-text text-body-secondary">{{
-                                'artemisApp.videoUnit.createVideoUnit.urlHelperPlaceholder' | artemisTranslate
-                            }}</small>
+                            <small id="urlHelperExplanation" class="form-text text-body-secondary" jhiTranslate="artemisApp.videoUnit.createVideoUnit.urlHelperPlaceholder"></small>
                             @if (urlHelperControl?.invalid && (urlHelperControl?.dirty || urlHelperControl?.touched)) {
                                 <div class="alert alert-danger">
                                     @if (urlHelperControl?.errors?.invalidVideoUrl) {

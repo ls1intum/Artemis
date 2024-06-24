@@ -35,7 +35,7 @@
                         name="expireDate"
                     />
                     @if (expireDate?.errors?.expireMustBeAfterNotification) {
-                        <span class="text-danger">{{ 'error.systemNotificationNeedsNotificationBeforeExpiration' | artemisTranslate }}</span>
+                        <span class="text-danger" jhiTranslate="error.systemNotificationNeedsNotificationBeforeExpiration"></span>
                     }
                 </div>
             </div>

@@ -14,9 +14,7 @@
         id="different-student-exams-same-fingerprints"
         [(ngModel)]="checkboxCriterionDifferentStudentExamsSameBrowserFingerprintChecked"
     />
-    <label for="different-student-exams-same-fingerprints">{{
-        'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionBrowserFingerprint' | artemisTranslate
-    }}</label>
+    <label for="different-student-exams-same-fingerprints" jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionBrowserFingerprint"></label>
 </div>
 <div>
     <input class="form-check-input" type="checkbox" id="same-student-exam-different-ips" [(ngModel)]="checkboxCriterionSameStudentExamDifferentIPAddressesChecked" />
@@ -29,9 +27,7 @@
         id="same-student-exam-different-fingerprints"
         [(ngModel)]="checkboxCriterionSameStudentExamDifferentBrowserFingerprintsChecked"
     />
-    <label for="same-student-exam-different-fingerprints">{{
-        'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionDifferentBrowserFingerprint' | artemisTranslate
-    }}</label>
+    <label for="same-student-exam-different-fingerprints" jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionDifferentBrowserFingerprint"></label>
 </div>
 <div>
     <input class="form-check-input" type="checkbox" id="ip-outside-of-range" [(ngModel)]="checkboxCriterionIPOutsideOfASpecificRangeChecked" />

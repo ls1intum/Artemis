@@ -11,9 +11,7 @@
                     [placeholder]="'artemisApp.onlineUnit.createOnlineUnit.sourcePlaceHolder' | artemisTranslate"
                     (change)="onLinkChanged()"
                 />
-                <small id="urlHelperExplanation" class="form-text text-body-secondary">{{
-                    'artemisApp.onlineUnit.createOnlineUnit.urlHelperPlaceholder' | artemisTranslate
-                }}</small>
+                <small id="urlHelperExplanation" class="form-text text-body-secondary" jhiTranslate="artemisApp.onlineUnit.createOnlineUnit.urlHelperPlaceholder"></small>
                 @if (sourceControl?.invalid && (sourceControl?.dirty || sourceControl?.touched)) {
                     <div class="alert alert-danger">
                         @if (sourceControl?.errors?.required) {

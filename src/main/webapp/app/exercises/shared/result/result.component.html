@@ -87,9 +87,7 @@
             <span id="test-submitted" class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseSubmitted"></span>
         }
         @case (ResultTemplateStatus.SUBMITTED_WAITING_FOR_GRADING) {
-            <span id="test-submitted-waiting-grading" class="text-body-secondary">{{
-                'artemisApp.courseOverview.exerciseList.exerciseSubmittedWaitingForGrading' | artemisTranslate
-            }}</span>
+            <span id="test-submitted-waiting-grading" class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseSubmittedWaitingForGrading"></span>
         }
         @case (ResultTemplateStatus.LATE_NO_FEEDBACK) {
             <span id="test-late-no-feedback" class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseLateSubmission"></span>
@@ -99,14 +97,16 @@
                 <fa-icon [icon]="faExclamationCircle" size="lg" />&nbsp;
                 @switch (missingResultInfo) {
                     @case (MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE) {
-                        <span [ngbTooltip]="'artemisApp.result.missing.programmingFailedSubmission.tooltipOnlineIde' | artemisTranslate">{{
-                            'artemisApp.result.missing.programmingFailedSubmission.message' | artemisTranslate
-                        }}</span>
+                        <span
+                            [ngbTooltip]="'artemisApp.result.missing.programmingFailedSubmission.tooltipOnlineIde' | artemisTranslate"
+                            jhiTranslate="artemisApp.result.missing.programmingFailedSubmission.message"
+                        ></span>
                     }
                     @case (MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE) {
-                        <span [ngbTooltip]="'artemisApp.result.missing.programmingFailedSubmission.tooltipOfflineIde' | artemisTranslate">{{
-                            'artemisApp.result.missing.programmingFailedSubmission.message' | artemisTranslate
-                        }}</span>
+                        <span
+                            [ngbTooltip]="'artemisApp.result.missing.programmingFailedSubmission.tooltipOfflineIde' | artemisTranslate"
+                            jhiTranslate="artemisApp.result.missing.programmingFailedSubmission.message"
+                        ></span>
                     }
                 }
                 @if (result && exercise?.type !== ExerciseType.QUIZ) {
