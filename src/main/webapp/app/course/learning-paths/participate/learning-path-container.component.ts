@@ -144,7 +144,7 @@ export class LearningPathContainerComponent implements OnInit {
     loadExercise() {
         this.exerciseService.getExerciseDetails(this.learningObjectId!).subscribe({
             next: (exerciseResponse) => {
-                this.exercise = exerciseResponse.body!;
+                this.exercise = exerciseResponse.body!.exercise;
             },
             error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
         });

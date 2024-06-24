@@ -8,11 +8,12 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
-import { faFile, faFileImport, faFilter, faPencilAlt, faPlus, faPuzzlePiece, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faFile, faFileExport, faFileImport, faFilter, faPencilAlt, faPlus, faPuzzlePiece, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { LectureImportComponent } from 'app/lecture/lecture-import.component';
 import { Subject } from 'rxjs';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { SortService } from 'app/shared/service/sort.service';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 
 export enum LectureDateFilter {
     PAST = 'filterPast',
@@ -43,12 +44,14 @@ export class LectureComponent implements OnInit {
     // Icons
     faPlus = faPlus;
     faFileImport = faFileImport;
+    faFileExport = faFileExport;
     faTrash = faTrash;
     faPencilAlt = faPencilAlt;
     faFile = faFile;
     faPuzzlePiece = faPuzzlePiece;
     faFilter = faFilter;
     faSort = faSort;
+    lectureIngestionEnabled = false;
 
     constructor(
         protected lectureService: LectureService,
@@ -57,6 +60,7 @@ export class LectureComponent implements OnInit {
         private alertService: AlertService,
         private modalService: NgbModal,
         private sortService: SortService,
+        private irisSettingsService: IrisSettingsService,
     ) {
         this.predicate = 'id';
         this.ascending = true;
@@ -65,6 +69,9 @@ export class LectureComponent implements OnInit {
     ngOnInit() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.loadAll();
+        this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
+            this.lectureIngestionEnabled = settings?.irisLectureIngestionSettings?.enabled || false;
+        });
     }
 
     trackId(index: number, item: Lecture) {
@@ -176,5 +183,16 @@ export class LectureComponent implements OnInit {
         }
 
         this.sortRows();
+    }
+
+    /**
+     * Trigger the Ingestion of all Lectures in the course.
+     */
+    ingestLecturesInPyris() {
+        if (this.lectures.first()) {
+            this.lectureService.ingestLecturesInPyris(this.lectures.first()!.course!.id!).subscribe({
+                error: (error) => console.error('Failed to send Ingestion request', error),
+            });
+        }
     }
 }

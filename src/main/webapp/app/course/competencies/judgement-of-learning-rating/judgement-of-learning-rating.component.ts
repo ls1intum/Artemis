@@ -4,11 +4,12 @@ import { StarRatingComponent } from 'app/exercises/shared/rating/star-rating/sta
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { AlertService } from 'app/core/util/alert.service';
 import { CompetencyService } from 'app/course/competencies/competency.service';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @Component({
     selector: 'jhi-judgement-of-learning-rating',
     standalone: true,
-    imports: [RatingModule, ArtemisSharedCommonModule],
+    imports: [RatingModule, ArtemisSharedCommonModule, ArtemisSharedComponentModule],
     templateUrl: './judgement-of-learning-rating.component.html',
 })
 export class JudgementOfLearningRatingComponent {

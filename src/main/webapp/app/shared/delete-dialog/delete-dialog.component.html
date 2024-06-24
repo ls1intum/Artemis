@@ -61,7 +61,7 @@
             [disabled]="deleteForm.invalid || submitDisabled"
         >
             @if (submitDisabled) {
-                <span><fa-icon [icon]="faSpinner" [spin]="true" />&nbsp;</span>
+                <span><fa-icon [icon]="faSpinner" animation="spin" />&nbsp;</span>
             }
             @switch (actionType) {
                 @case (actionTypes.Delete) {

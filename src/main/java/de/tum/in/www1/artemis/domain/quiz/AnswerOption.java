@@ -118,6 +118,7 @@ public class AnswerOption extends DomainObject implements QuizQuestionComponent<
         return question;
     }
 
+    @Override
     public void setQuestion(MultipleChoiceQuestion multipleChoiceQuestion) {
         this.question = multipleChoiceQuestion;
     }

@@ -3,10 +3,10 @@ package de.tum.in.www1.artemis.service.iris.session;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
@@ -38,9 +38,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
  */
 @Service
 @Profile("iris")
-public class IrisExerciseChatSessionService implements IrisChatBasedFeatureInterface<IrisExerciseChatSession>, IrisRateLimitedFeatureInterface {
-
-    private static final Logger log = LoggerFactory.getLogger(IrisExerciseChatSessionService.class);
+public class IrisExerciseChatSessionService extends AbstractIrisChatSessionService<IrisExerciseChatSession> implements IrisRateLimitedFeatureInterface {
 
     private final IrisMessageService irisMessageService;
 
@@ -65,7 +63,9 @@ public class IrisExerciseChatSessionService implements IrisChatBasedFeatureInter
     public IrisExerciseChatSessionService(IrisMessageService irisMessageService, IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService,
             AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            IrisRateLimitService rateLimitService, PyrisPipelineService pyrisPipelineService, ProgrammingExerciseRepository programmingExerciseRepository) {
+            IrisRateLimitService rateLimitService, PyrisPipelineService pyrisPipelineService, ProgrammingExerciseRepository programmingExerciseRepository,
+            ObjectMapper objectMapper) {
+        super(irisSessionRepository, objectMapper);
         this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
         this.irisChatWebsocketService = irisChatWebsocketService;
@@ -120,7 +120,7 @@ public class IrisExerciseChatSessionService implements IrisChatBasedFeatureInter
 
     @Override
     public void sendOverWebsocket(IrisMessage message) {
-        irisChatWebsocketService.sendMessage(message, null);
+        irisChatWebsocketService.sendMessage(message);
     }
 
     @Override
@@ -173,7 +173,9 @@ public class IrisExerciseChatSessionService implements IrisChatBasedFeatureInter
             irisChatWebsocketService.sendMessage(savedMessage, statusUpdate.stages());
         }
         else {
-            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages());
+            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), statusUpdate.suggestions());
         }
+
+        updateLatestSuggestions(session, statusUpdate.suggestions());
     }
 }

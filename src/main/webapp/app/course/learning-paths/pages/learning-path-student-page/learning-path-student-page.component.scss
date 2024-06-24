@@ -5,4 +5,9 @@
         height: calc(100vh - var(--sidebar-footer-height-dev) - 10.65rem);
         overflow: auto;
     }
+
+    .learning-path-generation-container {
+        max-width: 500px;
+        text-align: center;
+    }
 }
