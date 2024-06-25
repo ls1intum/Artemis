@@ -15,8 +15,10 @@ import { readFileSync } from 'node:fs';
 
 // Get the file names from the command line arguments
 const fileNames = process.argv.slice(2);
+fileNames.push('../../../../../src/main/webapp/app/admin/organization-management/organization-management.service.ts')
 const HTTP_METHODS = ['get', 'post', 'put', 'delete', 'patch'];
 let isFirstRestCall = true;
+console.log('WorkingDirectory: ' + process.cwd());
 
 for (const fileName of fileNames.filter(fileName => fileName.endsWith('.ts')))  {
     // Load the TypeScript file
@@ -148,7 +150,10 @@ function logRestCall(restCall: CallExpression, methodName: string, classProperti
         let url = restCall.arguments[0].getText();
         // Replace class properties in the URL
         for (const prop in classProperties) {
+            // Replace all occurrences of ${this.prop} with the actual value
             url = url.replace(new RegExp(`\\$\\{this.${prop}\\}`, 'g'), classProperties[prop]);
+            // Replace all occurrences of this.prop with the actual value
+            url = url.replace(new RegExp(`this.${prop}`, 'g'), classProperties[prop]);
         }
         console.log(`with URL: ${url}`);
 
