@@ -44,7 +44,7 @@ public interface IrisExerciseChatSessionRepository extends ArtemisJpaRepository<
             SELECT s
             FROM IrisExerciseChatSession s
             WHERE s.exercise.id = :exerciseId
-              AND s.user.id = :userId
+                AND s.user.id = :userId
             ORDER BY s.creationDate DESC
             """)
     List<IrisExerciseChatSession> findSessionsByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId, Pageable pageable);

@@ -17,12 +17,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
-record ProgrammingSubmissionAndSubmissionDate(ProgrammingSubmission programmingSubmission, ZonedDateTime submissionDate) {
+record ProgrammingSubmissionIdAndSubmissionDate(long programmingSubmissionId, ZonedDateTime submissionDate) {
 }
 
 /**
@@ -51,7 +50,12 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
         return findByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(participationId, commitHash).stream().findFirst().orElse(null);
     }
 
-    Optional<ProgrammingSubmission> findFirstByParticipationIdOrderBySubmissionDateDesc(long participationId);
+    @Query("""
+            SELECT new de.tum.in.www1.artemis.repository.ProgrammingSubmissionIdAndSubmissionDate(ps.id, ps.submissionDate)
+            FROM ProgrammingSubmission ps
+            WHERE ps.participation.id = :participationId ORDER BY ps.submissionDate DESC
+            """)
+    Optional<ProgrammingSubmission> findFirstIdByParticipationIdOrderBySubmissionDateDesc(@Param("participationId") long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = { "results" })
     Optional<ProgrammingSubmission> findProgrammingSubmissionWithResultsById(long programmingSubmissionId);
@@ -65,19 +69,19 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
      *         or an empty {@code Optional} if no submission is found
      */
     default Optional<ProgrammingSubmission> findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(long programmingSubmissionId) {
-        var programmingSubmissionOptional = findFirstByParticipationIdOrderBySubmissionDateDesc(programmingSubmissionId);
+        Optional<ProgrammingSubmission> programmingSubmissionOptional = findFirstIdByParticipationIdOrderBySubmissionDateDesc(programmingSubmissionId);
         if (programmingSubmissionOptional.isEmpty()) {
             return Optional.empty();
         }
-        var id = programmingSubmissionOptional.get().getId();
+        long id = programmingSubmissionOptional.get().getId();
         return findProgrammingSubmissionWithResultsById(id);
     }
 
     @Query("""
-            SELECT new de.tum.in.www1.artemis.repository.ProgrammingSubmissionAndSubmissionDate(s, s.submissionDate)
+            SELECT new de.tum.in.www1.artemis.repository.ProgrammingSubmissionIdAndSubmissionDate(s.id, s.submissionDate)
             FROM ProgrammingSubmission s
-            JOIN s.participation p
-            JOIN p.exercise e
+                JOIN s.participation p
+                JOIN p.exercise e
             WHERE p.id = :participationId
                 AND (s.type = de.tum.in.www1.artemis.domain.enumeration.SubmissionType.INSTRUCTOR
                     OR s.type = de.tum.in.www1.artemis.domain.enumeration.SubmissionType.TEST
@@ -85,7 +89,7 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
                     OR s.submissionDate <= e.dueDate)
             ORDER BY s.submissionDate DESC
             """)
-    List<ProgrammingSubmissionAndSubmissionDate> findSubmissionIdsAndDatesByParticipationId(@Param("participationId") long participationId, Pageable pageable);
+    List<ProgrammingSubmissionIdAndSubmissionDate> findSubmissionIdsAndDatesByParticipationId(@Param("participationId") long participationId, Pageable pageable);
 
     @EntityGraph(type = LOAD, attributePaths = { "results" })
     List<ProgrammingSubmission> findSubmissionsWithResultsByIdIn(List<Long> ids);
@@ -101,8 +105,8 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
      * @return ProgrammingSubmission list (can be empty!)
      */
     default List<ProgrammingSubmission> findGradedByParticipationIdWithResultsOrderBySubmissionDateDesc(long participationId, Pageable pageable) {
-        List<Long> ids = findSubmissionIdsAndDatesByParticipationId(participationId, pageable).stream().map(ProgrammingSubmissionAndSubmissionDate::programmingSubmission)
-                .map(DomainObject::getId).toList();
+        List<Long> ids = findSubmissionIdsAndDatesByParticipationId(participationId, pageable).stream().map(ProgrammingSubmissionIdAndSubmissionDate::programmingSubmissionId)
+                .toList();
 
         if (ids.isEmpty()) {
             return Collections.emptyList();

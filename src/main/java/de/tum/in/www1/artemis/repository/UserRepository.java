@@ -259,13 +259,13 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Query("""
             SELECT user.id
             FROM User user
-            LEFT JOIN user.groups userGroup
+                LEFT JOIN user.groups userGroup
             WHERE user.isDeleted = FALSE
-              AND :groupName = userGroup
-              AND (
-                  user.login LIKE %:loginOrName%
-                  OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
-              )
+                AND :groupName = userGroup
+                AND (
+                    user.login LIKE %:loginOrName%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
+                )
             """)
     List<Long> findUserIdsByLoginOrNameInGroup(@Param("loginOrName") String loginOrName, @Param("groupName") String groupName, Pageable pageable);
 
@@ -275,13 +275,13 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Query("""
             SELECT COUNT(user)
             FROM User user
-            LEFT JOIN user.groups userGroup
+                LEFT JOIN user.groups userGroup
             WHERE user.isDeleted = FALSE
-              AND :groupName = userGroup
-              AND (
-                  user.login LIKE %:loginOrName%
-                  OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
-              )
+                AND :groupName = userGroup
+                AND (
+                    user.login LIKE %:loginOrName%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
+                )
             """)
     long countUsersByLoginOrNameInGroup(@Param("loginOrName") String loginOrName, @Param("groupName") String groupName);
 
@@ -305,13 +305,13 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Query("""
             SELECT user.id
             FROM User user
-            LEFT JOIN user.groups userGroup
+                LEFT JOIN user.groups userGroup
             WHERE user.isDeleted = FALSE
-              AND userGroup IN :groupNames
-              AND (
-                  user.login LIKE %:loginOrName%
-                  OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
-              ) AND user.id <> :idOfUser
+                AND userGroup IN :groupNames
+                AND (
+                    user.login LIKE %:loginOrName%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
+                ) AND user.id <> :idOfUser
             """)
     List<Long> findUserIdsByLoginOrNameInGroupsNotUserId(@Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames, @Param("idOfUser") long idOfUser,
             Pageable pageable);
@@ -319,7 +319,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Query("""
             SELECT user
             FROM User user
-            LEFT JOIN FETCH user.groups userGroup
+                LEFT JOIN FETCH user.groups userGroup
             WHERE user.id IN :ids
             ORDER BY CONCAT(user.firstName, ' ', user.lastName)
             """)
@@ -328,13 +328,13 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Query("""
             SELECT COUNT(user)
             FROM User user
-            LEFT JOIN user.groups userGroup
+                LEFT JOIN user.groups userGroup
             WHERE user.isDeleted = FALSE
-              AND userGroup IN :groupNames
-              AND (
-                  user.login LIKE %:loginOrName%
-                  OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
-              ) AND user.id <> :idOfUser
+                AND userGroup IN :groupNames
+                AND (
+                    user.login LIKE %:loginOrName%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
+                ) AND user.id <> :idOfUser
             """)
     long countUsersByLoginOrNameInGroupsNotUserId(@Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames, @Param("idOfUser") long idOfUser);
 
@@ -360,26 +360,26 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Query("""
             SELECT user.id
             FROM User user
-            LEFT JOIN user.groups userGroup
+                LEFT JOIN user.groups userGroup
             WHERE user.isDeleted = FALSE
-              AND userGroup IN :groupNames
-              AND (
-                  user.login LIKE :#{#loginOrName}%
-                  OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-              )
+                AND userGroup IN :groupNames
+                AND (
+                    user.login LIKE :#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                )
             """)
     List<Long> findUserIdsByLoginOrNameInGroups(@Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames, Pageable pageable);
 
     @Query("""
             SELECT COUNT(user)
             FROM User user
-            LEFT JOIN user.groups userGroup
+                LEFT JOIN user.groups userGroup
             WHERE user.isDeleted = FALSE
-              AND userGroup IN :groupNames
-              AND (
-                  user.login LIKE :#{#loginOrName}%
-                  OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-              )
+                AND userGroup IN :groupNames
+                AND (
+                    user.login LIKE :#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                )
             """)
     long countUsersByLoginOrNameInGroups(@Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames);
 
@@ -403,30 +403,30 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Query("""
             SELECT DISTINCT user
             FROM User user
-            JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
-            JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
+                JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
+                JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
             WHERE user.isDeleted = FALSE
-              AND conversation.id = :conversationId
-              AND (
-                  :loginOrName = ''
-                  OR user.login LIKE :#{#loginOrName}%
-                  OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-              )
+                AND conversation.id = :conversationId
+                AND (
+                    :loginOrName = ''
+                    OR user.login LIKE :#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                )
             """)
     List<User> findUsersByLoginOrNameInConversation(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId, Pageable pageable);
 
     @Query("""
             SELECT COUNT(DISTINCT user)
             FROM User user
-            JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
-            JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
+                JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
+                JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
             WHERE user.isDeleted = FALSE
-              AND conversation.id = :conversationId
-              AND (
-                  :loginOrName = ''
-                  OR user.login LIKE :#{#loginOrName}%
-                  OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-              )
+                AND conversation.id = :conversationId
+                AND (
+                    :loginOrName = ''
+                    OR user.login LIKE :#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                )
             """)
     long countUsersByLoginOrNameInConversation(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId);
 
@@ -452,16 +452,16 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Query("""
             SELECT DISTINCT user
             FROM User user
-            JOIN user.groups userGroup
-            JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
-            JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
+                JOIN user.groups userGroup
+                JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
+                JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
             WHERE user.isDeleted = FALSE
-              AND conversation.id = :conversationId
-              AND (
-                  :loginOrName = ''
-                  OR user.login LIKE :#{#loginOrName}%
-                  OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-              ) AND userGroup IN :groupNames
+                AND conversation.id = :conversationId
+                AND (
+                    :loginOrName = ''
+                    OR user.login LIKE :#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                ) AND userGroup IN :groupNames
             """)
     List<User> findUsersByLoginOrNameInConversationWithCourseGroups(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId,
             @Param("groupNames") Set<String> groupNames, Pageable pageable);
@@ -469,16 +469,16 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Query("""
             SELECT COUNT(DISTINCT user)
             FROM User user
-            JOIN user.groups userGroup
-            JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
-            JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
+                JOIN user.groups userGroup
+                JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
+                JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
             WHERE user.isDeleted = FALSE
-              AND conversation.id = :conversationId
-              AND (
-                  :loginOrName = ''
-                  OR user.login LIKE :#{#loginOrName}%
-                  OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-              ) AND userGroup IN :groupNames
+                AND conversation.id = :conversationId
+                AND (
+                    :loginOrName = ''
+                    OR user.login LIKE :#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                ) AND userGroup IN :groupNames
             """)
     long countUsersByLoginOrNameInConversationWithCourseGroups(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId,
             @Param("groupNames") Set<String> groupNames);
@@ -506,32 +506,32 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Query("""
             SELECT DISTINCT user
             FROM User user
-            JOIN user.groups userGroup
-            JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
-            JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
+                JOIN user.groups userGroup
+                JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
+                JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
             WHERE user.isDeleted = FALSE
-              AND conversation.id = :conversationId
-              AND (
-                  :loginOrName = ''
-                  OR user.login LIKE :#{#loginOrName}%
-                  OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-              ) AND conversationParticipant.isModerator = TRUE
+                AND conversation.id = :conversationId
+                AND (
+                    :loginOrName = ''
+                    OR user.login LIKE :#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                ) AND conversationParticipant.isModerator = TRUE
             """)
     List<User> findModeratorsByLoginOrNameInConversation(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId, Pageable pageable);
 
     @Query("""
             SELECT COUNT(DISTINCT user)
             FROM User user
-            JOIN user.groups userGroup
-            JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
-            JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
+                JOIN user.groups userGroup
+                JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
+                JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
             WHERE user.isDeleted = FALSE
-              AND conversation.id = :conversationId
-              AND (
-                  :loginOrName = ''
-                  OR user.login LIKE :#{#loginOrName}%
-                  OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-              ) AND conversationParticipant.isModerator = TRUE
+                AND conversation.id = :conversationId
+                AND (
+                    :loginOrName = ''
+                    OR user.login LIKE :#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                ) AND conversationParticipant.isModerator = TRUE
             """)
     long countModeratorsByLoginOrNameInConversation(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId);
 
@@ -597,18 +597,18 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Query("""
             SELECT DISTINCT user
             FROM User user
-            JOIN user.groups userGroup
-            JOIN Course course ON course.id = :courseId
+                JOIN user.groups userGroup
+                JOIN Course course ON course.id = :courseId
             WHERE user.isDeleted = FALSE
-              AND (
-                  user.login LIKE :#{#loginOrName}%
-                  OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-              )
-              AND (course.studentGroupName = userGroup
-                   OR course.teachingAssistantGroupName = userGroup
-                   OR course.editorGroupName = userGroup
-                   OR course.instructorGroupName = userGroup
-              )
+                AND (
+                    user.login LIKE :#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                )
+                AND (course.studentGroupName = userGroup
+                    OR course.teachingAssistantGroupName = userGroup
+                    OR course.editorGroupName = userGroup
+                    OR course.instructorGroupName = userGroup
+               )
             """)
     List<User> findUserIdsByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, Pageable pageable);
 
@@ -618,18 +618,18 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Query("""
             SELECT COUNT(DISTINCT user)
             FROM User user
-            JOIN user.groups userGroup
-            JOIN Course course ON course.id = :courseId
+                JOIN user.groups userGroup
+                JOIN Course course ON course.id = :courseId
             WHERE user.isDeleted = FALSE
-              AND (
-                  user.login LIKE :#{#loginOrName}%
-                  OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-              )
-              AND (course.studentGroupName = userGroup
-                   OR course.teachingAssistantGroupName = userGroup
-                   OR course.editorGroupName = userGroup
-                   OR course.instructorGroupName = userGroup
-              )
+                AND (
+                    user.login LIKE :#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                )
+                AND (course.studentGroupName = userGroup
+                    OR course.teachingAssistantGroupName = userGroup
+                    OR course.editorGroupName = userGroup
+                    OR course.instructorGroupName = userGroup
+                )
             """)
     long countUsersByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId);
 

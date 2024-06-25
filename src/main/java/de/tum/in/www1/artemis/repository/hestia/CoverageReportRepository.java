@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,10 +41,10 @@ public interface CoverageReportRepository extends ArtemisJpaRepository<CoverageR
     @Query("""
             SELECT new de.tum.in.www1.artemis.repository.hestia.CoverageReportAndSubmissionDate(r, s.submissionDate)
             FROM CoverageReport r
-            JOIN r.submission s
-            JOIN ProgrammingExercise pe ON s.participation = pe.solutionParticipation
+                JOIN r.submission s
+                JOIN ProgrammingExercise pe ON s.participation = pe.solutionParticipation
             WHERE pe.id = :programmingExerciseId
-            AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
+                AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY s.submissionDate DESC
             """)
     List<CoverageReportAndSubmissionDate> findCoverageReportsByProgrammingExerciseId(@Param("programmingExerciseId") Long programmingExerciseId, Pageable pageable);
@@ -63,7 +64,7 @@ public interface CoverageReportRepository extends ArtemisJpaRepository<CoverageR
         List<Long> ids = findCoverageReportsByProgrammingExerciseId(programmingExerciseId, pageable).stream().map(CoverageReportAndSubmissionDate::coverageReport)
                 .map(DomainObject::getId).toList();
         if (ids.isEmpty()) {
-            return List.of();
+            return Collections.emptyList();
         }
         return findCoverageReportsWithSubmissionByIdIn(ids);
     }
@@ -84,7 +85,7 @@ public interface CoverageReportRepository extends ArtemisJpaRepository<CoverageR
         List<Long> ids = findCoverageReportsByProgrammingExerciseId(programmingExerciseId, pageable).stream().map(CoverageReportAndSubmissionDate::coverageReport)
                 .map(DomainObject::getId).toList();
         if (ids.isEmpty()) {
-            return List.of();
+            return Collections.emptyList();
         }
         return findDistinctCoverageReportsWithEagerRelationshipsByIdIn(ids);
     }

@@ -34,7 +34,7 @@ public interface PersistenceAuditEventRepository extends ArtemisJpaRepository<Pe
     List<Long> findIdsByAuditEventDateBetween(@Param("fromDate") Instant fromDate, @Param("toDate") Instant toDate, Pageable pageable);
 
     @EntityGraph(type = LOAD, attributePaths = "data")
-    List<PersistentAuditEvent> findWithAssociationsByIdIn(List<Long> ids);
+    List<PersistentAuditEvent> findWithDataByIdIn(List<Long> ids);
 
     @Query("""
             SELECT COUNT(p)
@@ -56,7 +56,7 @@ public interface PersistenceAuditEventRepository extends ArtemisJpaRepository<Pe
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }
-        List<PersistentAuditEvent> result = findWithAssociationsByIdIn(ids);
+        List<PersistentAuditEvent> result = findWithDataByIdIn(ids);
         return new PageImpl<>(result, pageable, countByAuditEventDateBetween(fromDate, toDate));
     }
 
@@ -83,7 +83,7 @@ public interface PersistenceAuditEventRepository extends ArtemisJpaRepository<Pe
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }
-        List<PersistentAuditEvent> result = findWithAssociationsByIdIn(ids);
+        List<PersistentAuditEvent> result = findWithDataByIdIn(ids);
         return new PageImpl<>(result, pageable, countAll());
     }
 
