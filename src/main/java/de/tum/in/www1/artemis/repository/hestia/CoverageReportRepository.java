@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.hestia.CoverageReport;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
-import de.tum.in.www1.artemis.service.dto.CoverageReportAndSubmissionDate;
+import de.tum.in.www1.artemis.service.dto.CoverageReportAndSubmissionDateDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -36,7 +36,7 @@ public interface CoverageReportRepository extends ArtemisJpaRepository<CoverageR
     void deleteBySubmissionId(Long submissionId);
 
     @Query("""
-            SELECT new de.tum.in.www1.artemis.service.dto.CoverageReportAndSubmissionDate(r, s.submissionDate)
+            SELECT new de.tum.in.www1.artemis.service.dto.CoverageReportAndSubmissionDateDTO(r, s.submissionDate)
             FROM CoverageReport r
                 JOIN r.submission s
                 JOIN ProgrammingExercise pe ON s.participation = pe.solutionParticipation
@@ -44,7 +44,7 @@ public interface CoverageReportRepository extends ArtemisJpaRepository<CoverageR
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY s.submissionDate DESC
             """)
-    List<CoverageReportAndSubmissionDate> findCoverageReportsByProgrammingExerciseId(@Param("programmingExerciseId") Long programmingExerciseId, Pageable pageable);
+    List<CoverageReportAndSubmissionDateDTO> findCoverageReportsByProgrammingExerciseId(@Param("programmingExerciseId") Long programmingExerciseId, Pageable pageable);
 
     @EntityGraph(type = LOAD, attributePaths = "submission")
     List<CoverageReport> findCoverageReportsWithSubmissionByIdIn(List<Long> ids);
@@ -58,7 +58,7 @@ public interface CoverageReportRepository extends ArtemisJpaRepository<CoverageR
      * @return a list of {@code CoverageReport} with legal submissions, or an empty list if no reports are found
      */
     default List<CoverageReport> getLatestCoverageReportsWithLegalSubmissionsForProgrammingExercise(Long programmingExerciseId, Pageable pageable) {
-        List<Long> ids = findCoverageReportsByProgrammingExerciseId(programmingExerciseId, pageable).stream().map(CoverageReportAndSubmissionDate::coverageReport)
+        List<Long> ids = findCoverageReportsByProgrammingExerciseId(programmingExerciseId, pageable).stream().map(CoverageReportAndSubmissionDateDTO::coverageReport)
                 .map(DomainObject::getId).toList();
         if (ids.isEmpty()) {
             return Collections.emptyList();
@@ -79,7 +79,7 @@ public interface CoverageReportRepository extends ArtemisJpaRepository<CoverageR
      * @return a list of distinct {@code CoverageReport} with eager relationships, or an empty list if no reports are found
      */
     default List<CoverageReport> getLatestCoverageReportsForLegalSubmissionsForProgrammingExerciseWithEagerFileReportsAndEntries(Long programmingExerciseId, Pageable pageable) {
-        List<Long> ids = findCoverageReportsByProgrammingExerciseId(programmingExerciseId, pageable).stream().map(CoverageReportAndSubmissionDate::coverageReport)
+        List<Long> ids = findCoverageReportsByProgrammingExerciseId(programmingExerciseId, pageable).stream().map(CoverageReportAndSubmissionDateDTO::coverageReport)
                 .map(DomainObject::getId).toList();
         if (ids.isEmpty()) {
             return Collections.emptyList();

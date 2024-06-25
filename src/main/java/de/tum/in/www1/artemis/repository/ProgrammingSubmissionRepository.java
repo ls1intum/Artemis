@@ -18,7 +18,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
-import de.tum.in.www1.artemis.service.dto.ProgrammingSubmissionIdAndSubmissionDate;
+import de.tum.in.www1.artemis.service.dto.ProgrammingSubmissionIdAndSubmissionDateDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -48,11 +48,11 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
     }
 
     @Query("""
-            SELECT new de.tum.in.www1.artemis.service.dto.ProgrammingSubmissionIdAndSubmissionDate(ps.id, ps.submissionDate)
+            SELECT new de.tum.in.www1.artemis.service.dto.ProgrammingSubmissionIdAndSubmissionDateDTO(ps.id, ps.submissionDate)
             FROM ProgrammingSubmission ps
             WHERE ps.participation.id = :participationId ORDER BY ps.submissionDate DESC
             """)
-    Optional<ProgrammingSubmissionIdAndSubmissionDate> findFirstIdByParticipationIdOrderBySubmissionDateDesc(@Param("participationId") long participationId);
+    Optional<ProgrammingSubmissionIdAndSubmissionDateDTO> findFirstIdByParticipationIdOrderBySubmissionDateDesc(@Param("participationId") long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = { "results" })
     Optional<ProgrammingSubmission> findProgrammingSubmissionWithResultsById(long programmingSubmissionId);
@@ -66,7 +66,7 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
      *         or an empty {@code Optional} if no submission is found
      */
     default Optional<ProgrammingSubmission> findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(long programmingSubmissionId) {
-        Optional<ProgrammingSubmissionIdAndSubmissionDate> programmingSubmissionOptional = findFirstIdByParticipationIdOrderBySubmissionDateDesc(programmingSubmissionId);
+        Optional<ProgrammingSubmissionIdAndSubmissionDateDTO> programmingSubmissionOptional = findFirstIdByParticipationIdOrderBySubmissionDateDesc(programmingSubmissionId);
         if (programmingSubmissionOptional.isEmpty()) {
             return Optional.empty();
         }
@@ -75,7 +75,7 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
     }
 
     @Query("""
-            SELECT new de.tum.in.www1.artemis.service.dto.ProgrammingSubmissionIdAndSubmissionDate(s.id, s.submissionDate)
+            SELECT new de.tum.in.www1.artemis.service.dto.ProgrammingSubmissionIdAndSubmissionDateDTO(s.id, s.submissionDate)
             FROM ProgrammingSubmission s
                 JOIN s.participation p
                 JOIN p.exercise e
@@ -86,7 +86,7 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
                     OR s.submissionDate <= e.dueDate)
             ORDER BY s.submissionDate DESC
             """)
-    List<ProgrammingSubmissionIdAndSubmissionDate> findSubmissionIdsAndDatesByParticipationId(@Param("participationId") long participationId, Pageable pageable);
+    List<ProgrammingSubmissionIdAndSubmissionDateDTO> findSubmissionIdsAndDatesByParticipationId(@Param("participationId") long participationId, Pageable pageable);
 
     @EntityGraph(type = LOAD, attributePaths = { "results" })
     List<ProgrammingSubmission> findSubmissionsWithResultsByIdIn(List<Long> ids);
@@ -102,7 +102,7 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
      * @return ProgrammingSubmission list (can be empty!)
      */
     default List<ProgrammingSubmission> findGradedByParticipationIdWithResultsOrderBySubmissionDateDesc(long participationId, Pageable pageable) {
-        List<Long> ids = findSubmissionIdsAndDatesByParticipationId(participationId, pageable).stream().map(ProgrammingSubmissionIdAndSubmissionDate::programmingSubmissionId)
+        List<Long> ids = findSubmissionIdsAndDatesByParticipationId(participationId, pageable).stream().map(ProgrammingSubmissionIdAndSubmissionDateDTO::programmingSubmissionId)
                 .toList();
 
         if (ids.isEmpty()) {

@@ -4,5 +4,5 @@ import java.time.ZonedDateTime;
 
 import de.tum.in.www1.artemis.domain.hestia.CoverageReport;
 
-public record CoverageReportAndSubmissionDate(CoverageReport coverageReport, ZonedDateTime submissionDate) {
+public record CoverageReportAndSubmissionDateDTO(CoverageReport coverageReport, ZonedDateTime submissionDate) {
 }
