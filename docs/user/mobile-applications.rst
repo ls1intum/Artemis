@@ -144,7 +144,7 @@ The iOS application supports the following features:
 
 .. raw:: html
 
-    <iframe src="https://live.rbg.tum.de/w/artemisintro/35219?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/47329?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
         Video tutorial of the Messaging features on TUM-Live.
     </iframe>
 
