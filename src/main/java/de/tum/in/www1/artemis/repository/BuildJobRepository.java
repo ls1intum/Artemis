@@ -55,14 +55,8 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             return Page.empty(pageable);
         }
         List<BuildJob> result = findWithDataByIdIn(ids);
-        return new PageImpl<>(result, pageable, countAllBuildJobs());
+        return new PageImpl<>(result, pageable, count());
     }
-
-    @Query("""
-            SELECT COUNT(b)
-            FROM BuildJob b
-            """)
-    long countAllBuildJobs();
 
     // Cast to string is necessary. Otherwise, the query will fail on PostgreSQL.
     @Query("""
@@ -100,12 +94,7 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             """)
     List<Long> findIdsByCourseId(@Param("courseId") long courseId, Pageable pageable);
 
-    @Query("""
-            SELECT COUNT(b)
-            FROM BuildJob b
-            WHERE b.courseId = :courseId
-            """)
-    long countBuildJobsByCourseId(@Param("courseId") long courseId);
+    long countBuildJobByCourseId(@Param("courseId") long courseId);
 
     /**
      * Retrieves a paginated list of all {@link BuildJob} entities that have a given course id.
@@ -120,7 +109,7 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             return Page.empty(pageable);
         }
         List<BuildJob> result = findWithDataByIdIn(ids);
-        return new PageImpl<>(result, pageable, countBuildJobsByCourseId(courseId));
+        return new PageImpl<>(result, pageable, countBuildJobByCourseId(courseId));
     }
 
     @Query("""

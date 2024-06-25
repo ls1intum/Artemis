@@ -206,7 +206,7 @@ In order to load the relationships of an entity on demand, we then use one of 3 
 
 4. **In memory paging**: Since the flag ``hibernate.query.fail_on_pagination_over_collection_fetch: true`` is now active, it is crucial to carefully craft database queries that involve FETCH statements with collections and thoroughly test the changes. In-memory paging could lead to runtime errors.
 Queries that may result in this error can return Page<> and contain JOIN FETCHES or involve internal limiting in Hibernate, such as findFirst, findLast, or findOne. One solution is to split the original query into multiple queries and a default method. The first query fetches only the IDs of entities whose full dependencies need to be fetched. The second query eagerly fetches all necessary dependencies, and the third query uses counting to build Pages, if they are utilized.
-When possible, use the default Spring Data/JPA methods for the second queries.
+When possible, use the default Spring Data/JPA methods for second(fetching) and third(counting) queries.
 An example implementation could look like this:
 
  .. code-block:: java
