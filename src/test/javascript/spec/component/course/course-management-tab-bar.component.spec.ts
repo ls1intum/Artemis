@@ -92,7 +92,7 @@ describe('Course Management Tab Bar Component', () => {
         component.ngOnInit();
 
         expect(component.course).toEqual(course);
-        expect(spy).toHaveBeenCalledWith(course.id);
+        expect(spy).toHaveBeenCalledWith(course.id, CourseAccessStorageService.STORAGE_KEY, CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_OVERVIEW);
     });
 
     it('should destroy event subscriber onDestroy', () => {

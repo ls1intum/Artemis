@@ -114,6 +114,7 @@
             "numberOfQuestions": "Anzahl an Fragen",
             "quizInstructions": {
                 "live": "Beantworte alle Fragen in der verbleibenden Zeit und klick erst dann auf die Schaltfläche \"Absenden\", wenn du fertig bist.",
+                "autoSave": "Deine Antworten werden alle 30 Sekunden automatisch gespeichert.",
                 "wait": "Warte bis das Quiz beendet ist, um deine Ergebnisse zu sehen.",
                 "result": "Du hast das Quiz mit {{userScore}} von {{maxScore}} Punkten abgeschlossen ({{percentage}} %).",
                 "waitForStart": "Bitte warte.<br><br>Diese Seite lädt automatisch neu, sobald das Quiz beginnt.",
@@ -137,6 +138,8 @@
             "notParticipatedText": "Das Quiz ist beendet und du hast nicht daran teilgenommen. Es gibt keine Ergebnisse, die angezeigt werden können.",
             "statisticsNotPublished": "Die Übungsleitung hat keine Statistiken freigegeben.",
             "successfullySubmittedText": "Deine Antworten wurden erfolgreich abgegeben.<br><br>Die Ergebnisse werden angezeigt, nachdem das Quiz beendet ist.<br><br>Wenn die Ergebnisse 60 Sekunden nach Quiz Ende nicht automatisch angezeigt werden, dann lade die Seite bitte neu.",
+            "evaluateQuizExercise": "Quiz auswerten",
+            "evaluateQuizExerciseSuccess": "Quiz-Aufgabe erfolgreich ausgewertet!",
             "re-evaluate": {
                 "title": "Quiz für {{ param }} überarbeiten",
                 "resetQuiz": "Setze Quiz zurück",

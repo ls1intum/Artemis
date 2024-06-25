@@ -70,6 +70,7 @@ import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
+import de.tum.in.www1.artemis.repository.PrerequisiteRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.RatingRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -145,6 +146,8 @@ public class CourseService {
 
     private final CompetencyRepository competencyRepository;
 
+    private final PrerequisiteRepository prerequisiteRepository;
+
     private final GradingScaleRepository gradingScaleRepository;
 
     private final StatisticsRepository statisticsRepository;
@@ -198,7 +201,8 @@ public class CourseService {
             ParticipantScoreRepository participantScoreRepository, PresentationPointsCalculationService presentationPointsCalculationService,
             TutorialGroupRepository tutorialGroupRepository, PlagiarismCaseRepository plagiarismCaseRepository, ConversationRepository conversationRepository,
             LearningPathService learningPathService, Optional<IrisSettingsService> irisSettingsService, LectureRepository lectureRepository,
-            TutorialGroupNotificationRepository tutorialGroupNotificationRepository, TutorialGroupChannelManagementService tutorialGroupChannelManagementService) {
+            TutorialGroupNotificationRepository tutorialGroupNotificationRepository, TutorialGroupChannelManagementService tutorialGroupChannelManagementService,
+            PrerequisiteRepository prerequisiteRepository) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
@@ -236,6 +240,7 @@ public class CourseService {
         this.lectureRepository = lectureRepository;
         this.tutorialGroupNotificationRepository = tutorialGroupNotificationRepository;
         this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
+        this.prerequisiteRepository = prerequisiteRepository;
     }
 
     /**
@@ -276,7 +281,7 @@ public class CourseService {
             boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
             for (Exercise exercise : course.getExercises()) {
                 // add participation with submission and result to each exercise
-                exerciseService.filterForCourseDashboard(exercise, participationsOfUserInExercises, user.getLogin(), isStudent);
+                exerciseService.filterForCourseDashboard(exercise, participationsOfUserInExercises, isStudent);
                 // remove sensitive information from the exercise for students
                 if (isStudent) {
                     exercise.filterSensitiveInformation();
@@ -321,7 +326,7 @@ public class CourseService {
         // NOTE: in this call we only want to know if competencies exist in the course, we will load them when the user navigates into them
         course.setNumberOfCompetencies(competencyRepository.countByCourse(course));
         // NOTE: in this call we only want to know if prerequisites exist in the course, we will load them when the user navigates into them
-        course.setNumberOfPrerequisites(competencyRepository.countPrerequisitesByCourseId(course.getId()));
+        course.setNumberOfPrerequisites(prerequisiteRepository.countByCourse(course));
         // NOTE: in this call we only want to know if tutorial groups exist in the course, we will load them when the user navigates into them
         course.setNumberOfTutorialGroups(tutorialGroupRepository.countByCourse(course));
         if (authCheckService.isOnlyStudentInCourse(course, user)) {
@@ -1061,6 +1066,7 @@ public class CourseService {
      * @return the number of weeks the period contains + one week
      */
     public long calculateWeeksBetweenDates(ZonedDateTime startDate, ZonedDateTime endDate) {
+        startDate = startDate.withZoneSameInstant(endDate.getZone());
         var mondayInWeekOfStart = startDate.with(DayOfWeek.MONDAY).withHour(0).withMinute(0).withSecond(0).withNano(0);
         var mondayInWeekOfEnd = endDate.plusWeeks(1).with(DayOfWeek.MONDAY).withHour(0).withMinute(0).withSecond(0).withNano(0);
         return mondayInWeekOfStart.until(mondayInWeekOfEnd, ChronoUnit.WEEKS);

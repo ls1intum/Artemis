@@ -6,17 +6,17 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Profile(PROFILE_CORE)
 @Repository
-public interface OneToOneChatRepository extends JpaRepository<OneToOneChat, Long> {
+public interface OneToOneChatRepository extends ArtemisJpaRepository<OneToOneChat, Long> {
 
     /**
      * Find all active one-to-one chats of a given user in a given course.

@@ -98,6 +98,7 @@ import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCaseService.PlagiarismMapping;
 import de.tum.in.www1.artemis.service.quiz.QuizPoolService;
+import de.tum.in.www1.artemis.service.quiz.QuizResultService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.BonusExampleDTO;
 import de.tum.in.www1.artemis.web.rest.dto.BonusResultDTO;
@@ -124,6 +125,8 @@ public class ExamService {
 
     private static final int EXAM_ACTIVE_DAYS = 7;
 
+    private final QuizResultService quizResultService;
+
     @Value("${artemis.course-archives-path}")
     private Path examArchivesDirPath;
 
@@ -136,8 +139,6 @@ public class ExamService {
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final QuizExerciseRepository quizExerciseRepository;
-
-    private final ExamQuizService examQuizService;
 
     private final ExamDateService examDateService;
 
@@ -191,7 +192,7 @@ public class ExamService {
 
     private static final String NOT_ALLOWED_TO_ACCESS_THE_GRADE_SUMMARY = "You are not allowed to access the grade summary of a student exam ";
 
-    public ExamService(ExamDateService examDateService, ExamRepository examRepository, StudentExamRepository studentExamRepository, ExamQuizService examQuizService,
+    public ExamService(ExamDateService examDateService, ExamRepository examRepository, StudentExamRepository studentExamRepository,
             InstanceMessageSendService instanceMessageSendService, TutorLeaderboardService tutorLeaderboardService, StudentParticipationRepository studentParticipationRepository,
             ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, UserRepository userRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository, ExamLiveEventsService examLiveEventsService,
@@ -199,14 +200,13 @@ public class ExamService {
             GroupNotificationService groupNotificationService, GradingScaleRepository gradingScaleRepository, PlagiarismCaseRepository plagiarismCaseRepository,
             AuthorizationCheckService authorizationCheckService, BonusService bonusService, ExerciseDeletionService exerciseDeletionService,
             SubmittedAnswerRepository submittedAnswerRepository, AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService,
-            CourseRepository courseRepository, QuizPoolService quizPoolService) {
+            CourseRepository courseRepository, QuizPoolService quizPoolService, QuizResultService quizResultService) {
         this.examDateService = examDateService;
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.examQuizService = examQuizService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
@@ -229,6 +229,7 @@ public class ExamService {
         this.courseRepository = courseRepository;
         this.quizPoolService = quizPoolService;
         this.defaultObjectMapper = new ObjectMapper();
+        this.quizResultService = quizResultService;
     }
 
     /**
@@ -1009,7 +1010,6 @@ public class ExamService {
         log.info("getStatsForChecklist invoked for exam {}", exam.getId());
         int numberOfCorrectionRoundsInExam = exam.getNumberOfCorrectionRoundsInExam();
         long start = System.nanoTime();
-        ExamChecklistDTO examChecklistDTO = new ExamChecklistDTO();
 
         List<Long> numberOfComplaintsOpenByExercise = new ArrayList<>();
         List<Long> numberOfComplaintResponsesByExercise = new ArrayList<>();
@@ -1084,14 +1084,10 @@ public class ExamService {
         for (Long numberOfComplaintResponse : numberOfComplaintResponsesByExercise) {
             totalNumberOfComplaintResponse += numberOfComplaintResponse;
         }
-        examChecklistDTO.setNumberOfTotalExamAssessmentsFinishedByCorrectionRound(totalNumberOfAssessmentsFinished);
-        examChecklistDTO.setNumberOfAllComplaints(totalNumberOfComplaints);
-        examChecklistDTO.setNumberOfAllComplaintsDone(totalNumberOfComplaintResponse);
 
         if (isInstructor) {
             // set number of student exams that have been generated
             long numberOfGeneratedStudentExams = examRepository.countGeneratedStudentExamsByExamWithoutTestRuns(exam.getId());
-            examChecklistDTO.setNumberOfGeneratedStudentExams(numberOfGeneratedStudentExams);
 
             if (log.isDebugEnabled()) {
                 log.debug("StatsTimeLog: number of generated student exams done in {}", TimeLogUtil.formatDurationFrom(start));
@@ -1099,7 +1095,6 @@ public class ExamService {
 
             // set number of test runs
             long numberOfTestRuns = studentExamRepository.countTestRunsByExamId(exam.getId());
-            examChecklistDTO.setNumberOfTestRuns(numberOfTestRuns);
             if (log.isDebugEnabled()) {
                 log.debug("StatsTimeLog: number of test runs done in {}", TimeLogUtil.formatDurationFrom(start));
             }
@@ -1107,7 +1102,6 @@ public class ExamService {
             // check if all exercises have been prepared for all students;
             boolean exercisesPrepared = numberOfGeneratedStudentExams != 0
                     && (exam.getNumberOfExercisesInExam() * numberOfGeneratedStudentExams) == totalNumberOfParticipationsGenerated;
-            examChecklistDTO.setAllExamExercisesAllStudentsPrepared(exercisesPrepared);
 
             // set started and submitted exam properties
             long numberOfStudentExamsStarted = studentExamRepository.countStudentExamsStartedByExamIdIgnoreTestRuns(exam.getId());
@@ -1119,15 +1113,16 @@ public class ExamService {
                 log.debug("StatsTimeLog: number of student exams submitted done in {}", TimeLogUtil.formatDurationFrom(start));
             }
 
-            examChecklistDTO.setNumberOfExamsStarted(numberOfStudentExamsStarted);
-            examChecklistDTO.setNumberOfExamsSubmitted(numberOfStudentExamsSubmitted);
+            return new ExamChecklistDTO(numberOfGeneratedStudentExams, numberOfTestRuns, totalNumberOfAssessmentsFinished, totalNumberOfParticipationsForAssessment,
+                    numberOfStudentExamsSubmitted, numberOfStudentExamsStarted, totalNumberOfComplaints, totalNumberOfComplaintResponse, exercisesPrepared, null, null);
+
         }
-        examChecklistDTO.setNumberOfTotalParticipationsForAssessment(totalNumberOfParticipationsForAssessment);
+
         boolean existsUnassessedQuizzes = submissionRepository.existsUnassessedQuizzesByExamId(exam.getId());
-        examChecklistDTO.setExistsUnassessedQuizzes(existsUnassessedQuizzes);
         boolean existsUnsubmittedExercises = submissionRepository.existsUnsubmittedExercisesByExamId(exam.getId());
-        examChecklistDTO.setExistsUnsubmittedExercises(existsUnsubmittedExercises);
-        return examChecklistDTO;
+
+        // For non-instructors, consider what limited information they should receive and adjust accordingly
+        return new ExamChecklistDTO(totalNumberOfAssessmentsFinished, totalNumberOfParticipationsForAssessment, existsUnassessedQuizzes, existsUnsubmittedExercises);
     }
 
     /**
@@ -1144,7 +1139,7 @@ public class ExamService {
         long start = System.nanoTime();
         log.debug("Evaluating {} quiz exercises in exam {}", quizExercises.size(), exam.getId());
         // Evaluate all quizzes for that exercise
-        quizExercises.stream().map(Exercise::getId).forEach(examQuizService::evaluateQuizAndUpdateStatistics);
+        quizExercises.stream().map(Exercise::getId).forEach(quizResultService::evaluateQuizAndUpdateStatistics);
         if (log.isDebugEnabled()) {
             log.debug("Evaluated {} quiz exercises in exam {} in {}", quizExercises.size(), exam.getId(), TimeLogUtil.formatDurationFrom(start));
         }

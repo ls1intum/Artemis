@@ -54,6 +54,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -265,6 +267,10 @@ public class CourseResource {
             if (athenaModuleAccessChanged) {
                 throw new BadRequestAlertException("You are not allowed to change the access to restricted Athena modules of a course", Course.ENTITY_NAME,
                         "restrictedAthenaModulesAccessCannotChange", true);
+            }
+            // instructors are not allowed to change the dashboard settings
+            if (existingCourse.getStudentCourseAnalyticsDashboardEnabled() != courseUpdate.getStudentCourseAnalyticsDashboardEnabled()) {
+                throw new BadRequestAlertException("You are not allowed to change the dashboard settings of a course", Course.ENTITY_NAME, "dashboardSettingsCannotChange", true);
             }
         }
 
@@ -626,6 +632,26 @@ public class CourseResource {
     }
 
     /**
+     * GET /courses/for-dropdown
+     *
+     * @return contains all courses the user has access to with id, title and icon
+     */
+    @GetMapping("courses/for-dropdown")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Set<CourseDropdownDTO>> getCoursesForDropdown() {
+        long start = System.nanoTime();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        final var courses = courseService.findAllActiveForUser(user);
+        final var response = courses.stream().map(course -> new CourseDropdownDTO(course.getId(), course.getTitle(), course.getCourseIcon())).collect(Collectors.toSet());
+        log.info("GET /courses/for-dropdown took {} for {} courses for user {}", TimeLogUtil.formatDurationFrom(start), courses.size(), user.getLogin());
+        return ResponseEntity.ok(response);
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record CourseDropdownDTO(Long id, String title, String courseIcon) {
+    }
+
+    /**
      * GET /courses/for-dashboard
      *
      * @return the ResponseEntity with status 200 (OK) and with body a DTO containing a list of courses (the user has access to) including all exercises with participation,
@@ -850,17 +876,16 @@ public class CourseResource {
         final List<CourseManagementOverviewStatisticsDTO> courseDTOs = new ArrayList<>();
         for (final var course : courseService.getAllCoursesForManagementOverview(onlyActive)) {
             final var courseId = course.getId();
-            final var courseDTO = new CourseManagementOverviewStatisticsDTO();
-            courseDTO.setCourseId(courseId);
-
             var studentsGroup = course.getStudentGroupName();
             var amountOfStudentsInCourse = Math.toIntExact(userRepository.countUserInGroup(studentsGroup));
-            courseDTO.setExerciseDTOS(exerciseService.getStatisticsForCourseManagementOverview(courseId, amountOfStudentsInCourse));
+            var exerciseStatistics = exerciseService.getStatisticsForCourseManagementOverview(courseId, amountOfStudentsInCourse);
 
             var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
             var endDate = courseService.determineEndDateForActiveStudents(course);
             var timeSpanSize = courseService.determineTimeSpanSizeForActiveStudents(course, endDate, 4);
-            courseDTO.setActiveStudents(courseService.getActiveStudents(exerciseIds, 0, timeSpanSize, endDate));
+            var activeStudents = courseService.getActiveStudents(exerciseIds, 0, timeSpanSize, endDate);
+
+            final var courseDTO = new CourseManagementOverviewStatisticsDTO(courseId, activeStudents, exerciseStatistics);
             courseDTOs.add(courseDTO);
         }
 

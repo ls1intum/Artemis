@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.in.www1.artemis.domain.AssessmentUpdate;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
@@ -40,6 +39,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.web.rest.dto.AssessmentUpdateDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ModelingAssessmentDTO;
 import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 import io.swagger.annotations.ApiResponse;
@@ -82,6 +82,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * @param submissionId the id of the submission that should be sent to the client
      * @return the assessment of the given submission
      */
+    @Override
     @GetMapping("modeling-submissions/{submissionId}/result")
     @EnforceAtLeastStudent
     public ResponseEntity<Result> getAssessmentBySubmissionId(@PathVariable Long submissionId) {
@@ -153,7 +154,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
             @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON) })
     @PutMapping("modeling-submissions/{submissionId}/assessment-after-complaint")
     @EnforceAtLeastTutor
-    public ResponseEntity<Result> updateModelingAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdate assessmentUpdate) {
+    public ResponseEntity<Result> updateModelingAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdateDTO assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         ModelingSubmission modelingSubmission = modelingSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(submissionId);
@@ -197,6 +198,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * @param resultId        - the id of the result which should get deleted
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not an instructor of the course or an admin
      */
+    @Override
     @DeleteMapping("participations/{participationId}/modeling-submissions/{submissionId}/results/{resultId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteAssessment(@PathVariable Long participationId, @PathVariable Long submissionId, @PathVariable Long resultId) {

@@ -1,27 +1,38 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { faFile, faPencilAlt, faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
+import { faFile, faFileExport, faPencilAlt, faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
+import { PROFILE_IRIS } from 'app/app.constants';
 import { Lecture } from 'app/entities/lecture.model';
 import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-
+import { LectureService } from 'app/lecture/lecture.service';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { Subscription } from 'rxjs';
 @Component({
     selector: 'jhi-lecture-detail',
     templateUrl: './lecture-detail.component.html',
 })
-export class LectureDetailComponent implements OnInit {
+export class LectureDetailComponent implements OnInit, OnDestroy {
     lecture: Lecture;
+    lectureIngestionEnabled = false;
 
     // Icons
     faPencilAlt = faPencilAlt;
     faFile = faFile;
     faPuzzlePiece = faPuzzlePiece;
+    faFileExport = faFileExport;
 
     detailSections: DetailOverviewSection[];
+    irisEnabled = false;
+    private profileInfoSubscription: Subscription;
 
     constructor(
         private activatedRoute: ActivatedRoute,
         private artemisMarkdown: ArtemisMarkdownService,
+        protected lectureService: LectureService,
+        private profileService: ProfileService,
+        private irisSettingsService: IrisSettingsService,
     ) {}
 
     /**
@@ -31,7 +42,19 @@ export class LectureDetailComponent implements OnInit {
         this.activatedRoute.data.subscribe(({ lecture }) => {
             this.lecture = lecture;
             this.getLectureDetailSections();
+            this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
+                this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
+                if (this.irisEnabled && this.lecture.course?.id) {
+                    this.irisSettingsService.getCombinedCourseSettings(this.lecture.course?.id).subscribe((settings) => {
+                        this.lectureIngestionEnabled = settings?.irisLectureIngestionSettings?.enabled || false;
+                    });
+                }
+            });
         });
+    }
+
+    ngOnDestroy(): void {
+        this.profileInfoSubscription?.unsubscribe();
     }
 
     getLectureDetailSections() {
@@ -64,5 +87,13 @@ export class LectureDetailComponent implements OnInit {
                 },
             ];
         }
+    }
+    /**
+     * Trigger the Ingeston of this Lecture in Iris.
+     */
+    ingestLectureInPyris() {
+        this.lectureService.ingestLecturesInPyris(this.lecture.course!.id!, this.lecture.id).subscribe({
+            error: (error) => console.error(`Failed to send Ingestion request`, error),
+        });
     }
 }

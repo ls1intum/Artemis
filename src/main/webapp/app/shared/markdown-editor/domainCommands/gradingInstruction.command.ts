@@ -13,8 +13,7 @@ export class GradingInstructionCommand extends DomainTagCommand {
     feedbackCommand = new FeedbackCommand();
     usageCountCommand = new UsageCountCommand();
 
-    public static readonly identifier = '[instruction]';
-    // public static readonly text = ' Add grading instruction here';
+    public static readonly IDENTIFIER = '[instruction]';
 
     buttonTranslationString = 'artemisApp.assessmentInstructions.instructions.editor.addInstruction';
 
@@ -24,23 +23,23 @@ export class GradingInstructionCommand extends DomainTagCommand {
             '\n' +
             '\t' +
             (this.creditsCommand.getOpeningIdentifier() +
-                CreditsCommand.text +
+                CreditsCommand.TEXT +
                 '\n' +
                 '\t' +
                 this.gradingScaleCommand.getOpeningIdentifier() +
-                GradingScaleCommand.text +
+                GradingScaleCommand.TEXT +
                 '\n' +
                 '\t' +
                 this.instructionCommand.getOpeningIdentifier() +
-                InstructionDescriptionCommand.text +
+                InstructionDescriptionCommand.TEXT +
                 '\n' +
                 '\t' +
                 this.feedbackCommand.getOpeningIdentifier() +
-                FeedbackCommand.text +
+                FeedbackCommand.TEXT +
                 '\n' +
                 '\t' +
                 this.usageCountCommand.getOpeningIdentifier() +
-                UsageCountCommand.text) +
+                UsageCountCommand.TEXT) +
             '\n'
         );
     }
@@ -59,7 +58,7 @@ export class GradingInstructionCommand extends DomainTagCommand {
      * @desc identify the start of the grading instruction
      */
     getOpeningIdentifier(): string {
-        return GradingInstructionCommand.identifier;
+        return GradingInstructionCommand.IDENTIFIER;
     }
 
     /**

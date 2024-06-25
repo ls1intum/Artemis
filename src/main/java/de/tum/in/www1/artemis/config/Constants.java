@@ -305,6 +305,8 @@ public final class Constants {
      */
     public static final String PROFILE_LTI = "lti";
 
+    public static final String PROFILE_SCHEDULING = "scheduling";
+
     /**
      * Size of an unsigned tinyInt in SQL, that is used in the database
      */
@@ -334,6 +336,16 @@ public final class Constants {
      * The directory to which repositories temporarely get cloned for the build job execution
      */
     public static final String CHECKED_OUT_REPOS_TEMP_DIR = "checked-out-repos";
+
+    /**
+     * Minimum score for a result to be considered successful and shown in green
+     */
+    public static final int MIN_SCORE_GREEN = 80;
+
+    /**
+     * Minimum score for a result to be considered partially successful and shown in orange
+     */
+    public static final int MIN_SCORE_ORANGE = 40;
 
     private Constants() {
     }

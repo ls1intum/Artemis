@@ -12,11 +12,12 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.exception.NetworkingException;
-import de.tum.in.www1.artemis.service.dto.athena.ExerciseDTO;
+import de.tum.in.www1.artemis.service.dto.athena.ExerciseBaseDTO;
 
 /**
  * Service for selecting the "best" submission to assess right now using Athena, e.g. by the highest information gain.
@@ -35,12 +36,14 @@ public class AthenaSubmissionSelectionService {
 
     private final AthenaDTOConverterService athenaDTOConverterService;
 
-    private record RequestDTO(ExerciseDTO exercise, List<Long> submissionIds// Athena just needs submission IDs => quicker request, because less data is sent
-    ) {
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    // Athena just needs submission IDs => quicker request, because less data is sent
+    private record RequestDTO(ExerciseBaseDTO exercise, List<Long> submissionIds) {
     }
 
-    private record ResponseDTO(@JsonProperty("data") long submissionId // submission ID to choose, or -1 if no submission was explicitly chosen
-    ) {
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    // submission ID to choose, or -1 if no submission was explicitly chosen
+    private record ResponseDTO(@JsonProperty("data") long submissionId) {
     }
 
     /**

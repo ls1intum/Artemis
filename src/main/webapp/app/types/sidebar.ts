@@ -1,14 +1,26 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { DifficultyLevel, Exercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 
 export type SidebarCardSize = 'S' | 'M' | 'L';
 export type TimeGroupCategory = 'past' | 'current' | 'future' | 'noDate';
 export type TutorialGroupCategory = 'all' | 'registered' | 'further';
-export type SidebarTypes = 'exercise' | 'default';
+export type ChannelGroupCategory =
+    | 'favoriteChannels'
+    | 'generalChannels'
+    | 'exerciseChannels'
+    | 'lectureChannels'
+    | 'groupChats'
+    | 'directMessages'
+    | 'examChannels'
+    | 'hiddenChannels';
+export type SidebarTypes = 'exercise' | 'conversation' | 'default';
 
-export type AccordionGroups = Record<TimeGroupCategory | TutorialGroupCategory | string, { entityData: SidebarCardElement[] }>;
-export type ExerciseCollapseState = Record<TimeGroupCategory, boolean>;
+export type AccordionGroups = Record<TimeGroupCategory | TutorialGroupCategory | ChannelGroupCategory | string, { entityData: SidebarCardElement[] }>;
+export type CollapseState = Record<TimeGroupCategory, boolean> | Record<ChannelGroupCategory, boolean> | Record<TutorialGroupCategory, boolean>;
+export type ChannelAccordionShowAdd = Record<ChannelGroupCategory, boolean>;
+export type ChannelTypeIcons = Record<ChannelGroupCategory, IconProp>;
 
 export interface SidebarData {
     groupByCategory: boolean;
@@ -16,6 +28,8 @@ export interface SidebarData {
     groupedData?: AccordionGroups;
     ungroupedData?: SidebarCardElement[];
     storageId?: string;
+    showAccordionAddOption?: boolean;
+    showAccordionLeadingIcon?: boolean;
 }
 
 export interface SidebarCardElement {
@@ -77,4 +91,8 @@ export interface SidebarCardElement {
      * Set for Exercises. Will be removed after refactoring
      */
     exercise?: Exercise;
+    /**
+     * Set for Conversation. Will be removed after refactoring
+     */
+    conversation?: ConversationDTO;
 }

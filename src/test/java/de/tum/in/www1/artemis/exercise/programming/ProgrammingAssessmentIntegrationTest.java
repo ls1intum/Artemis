@@ -29,7 +29,6 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.assessment.ComplaintUtilService;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.AssessmentNote;
-import de.tum.in.www1.artemis.domain.AssessmentUpdate;
 import de.tum.in.www1.artemis.domain.Complaint;
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
 import de.tum.in.www1.artemis.domain.Course;
@@ -65,6 +64,7 @@ import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.TestResourceUtils;
+import de.tum.in.www1.artemis.web.rest.dto.AssessmentUpdateDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
 
 class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -180,13 +180,9 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         complaintResponse.getComplaint().setAccepted(false);
         complaintResponse.setResponseText("rejected");
 
-        AssessmentUpdate assessmentUpdate = new AssessmentUpdate();
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().credits(80.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
-        assessmentUpdate.setFeedbacks(feedbacks);
-
-        assessmentUpdate.setComplaintResponse(complaintResponse);
-
+        final var assessmentUpdate = new AssessmentUpdateDTO(feedbacks, complaintResponse, null);
         Result updatedResult = request.putWithResponseBody("/api/programming-submissions/" + programmingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
                 Result.class, HttpStatus.OK);
 
@@ -213,7 +209,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         complaint.getResult().setParticipation(null); // Break infinite reference chain
 
         ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected");
-        AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(new ArrayList<>()).complaintResponse(complaintResponse);
+        final var assessmentUpdate = new AssessmentUpdateDTO(new ArrayList<>(), complaintResponse, null);
 
         request.putWithResponseBody("/api/programming-submissions/" + programmingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class,
                 HttpStatus.FORBIDDEN);
@@ -231,7 +227,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         complaint.getResult().setParticipation(null); // Break infinite reference chain
 
         ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected");
-        AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(new ArrayList<>()).complaintResponse(complaintResponse);
+        final var assessmentUpdate = new AssessmentUpdateDTO(new ArrayList<>(), complaintResponse, null);
 
         request.putWithResponseBody("/api/programming-submissions/" + programmingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class,
                 HttpStatus.FORBIDDEN);
@@ -250,7 +246,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         complaintResponse.getComplaint().setAccepted(false);
         complaintResponse.setResponseText("rejected");
 
-        AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(new ArrayList<>()).complaintResponse(complaintResponse);
+        final var assessmentUpdate = new AssessmentUpdateDTO(List.of(new Feedback()), complaintResponse, null);
 
         request.putWithResponseBody("/api/programming-submissions/" + programmingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class,
                 HttpStatus.FORBIDDEN);
@@ -986,7 +982,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         addAssessmentFeedbackAndCheckScore(complaintFeedback, 40.0, 40D);
         addAssessmentFeedbackAndCheckScore(complaintFeedback, 30.0, 70D);
         addAssessmentFeedbackAndCheckScore(complaintFeedback, 30.0, 100D);
-        AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(complaintFeedback).complaintResponse(complaintResponse);
+        final var assessmentUpdate = new AssessmentUpdateDTO(complaintFeedback, complaintResponse, null);
 
         // update assessment after Complaint, now 100%
         Result resultAfterComplaint = request.putWithResponseBody("/api/programming-submissions/" + programmingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,

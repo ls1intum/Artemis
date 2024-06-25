@@ -114,6 +114,7 @@
             "numberOfQuestions": "Number of Questions",
             "quizInstructions": {
                 "live": "Answer all questions in the remaining time and only click the \"Submit\" button once you are done.",
+                "autoSave": "Your answers are saved automatically every 30 seconds.",
                 "wait": "Please wait until the quiz has ended to see your results.",
                 "result": "You completed the quiz with {{userScore}} out of {{maxScore}} points ({{percentage}} %).",
                 "waitForStart": "Please wait.<br><br>This page will refresh automatically, when the quiz starts.",
@@ -137,6 +138,8 @@
             "notParticipatedText": "The quiz has ended and you did not participate. There are no results to display.",
             "statisticsNotPublished": "The instructor has not published any statistics.",
             "successfullySubmittedText": "Your answers have been successfully submitted!<br><br>The results will appear after the quiz has ended.<br><br>If the results are not displayed automatically within 60s after the end of the quiz, please reload the page.",
+            "evaluateQuizExercise": "Evaluate quiz",
+            "evaluateQuizExerciseSuccess": "Quiz exercise successfully evaluated!",
             "re-evaluate": {
                 "title": "Re-evaluate Quiz Exercise for {{ param }}",
                 "resetQuiz": "Reset Quiz Exercise",

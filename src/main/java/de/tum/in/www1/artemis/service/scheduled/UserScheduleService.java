@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_SCHEDULING;
+
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,7 +23,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.vcs.VcsUserManagementService;
 
 @Service
-@Profile("scheduling")
+@Profile(PROFILE_SCHEDULING)
 public class UserScheduleService {
 
     @Value("${artemis.user-management.registration.cleanup-time-minutes:60}")
