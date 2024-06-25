@@ -94,7 +94,7 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             """)
     List<Long> findIdsByCourseId(@Param("courseId") long courseId, Pageable pageable);
 
-    long countBuildJobByCourseId(@Param("courseId") long courseId);
+    long countBuildJobByCourseId(long courseId);
 
     /**
      * Retrieves a paginated list of all {@link BuildJob} entities that have a given course id.
