@@ -178,7 +178,7 @@ describe('LearningPathStudentNavComponent', () => {
         const navOverview = fixture.debugElement.query(By.directive(LearningPathNavOverviewComponent));
         expect(navOverview).toBeTruthy();
         expect(setShowNavigationOverviewSpy).toHaveBeenCalledWith(true);
-        expect(loadCompetenciesSpy).toHaveBeenCalledWith(learningPathId);
+        expect(loadCompetenciesSpy).toHaveBeenCalledExactlyOnceWith(learningPathId);
     });
 
     it('should call select learning object on previous click', async () => {

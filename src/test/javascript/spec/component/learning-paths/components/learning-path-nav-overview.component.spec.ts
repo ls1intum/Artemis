@@ -62,7 +62,7 @@ describe('LearningPathNavOverviewComponent', () => {
         const getLearningPathCompetenciesSpy = jest.spyOn(learningPathApiService, 'getLearningPathCompetencies').mockResolvedValue(competencies);
         await component.loadCompetencies(learningPathId);
 
-        expect(getLearningPathCompetenciesSpy).toHaveBeenCalledWith(learningPathId);
+        expect(getLearningPathCompetenciesSpy).toHaveBeenCalledExactlyOnceWith(learningPathId);
         expect(component.competencies()).toEqual(competencies);
     });
 
