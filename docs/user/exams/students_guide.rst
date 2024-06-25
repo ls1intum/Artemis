@@ -132,7 +132,7 @@ Exam Conduction
 
    Exam Navigation Sidebar
 
-- On the header, you will find the exam bar that includes remaining time and the |exam_hand_in_early| button. If you click this button, you will be sent to the exam `End Screen`_.
+- On the header, you will find the exam bar that includes the remaining time and the |exam_hand_in_early| button. If you click this button, you will be sent to the exam `End Screen`_.
 - The *time left* until the end of the exam is also shown next to the button.
 
     .. note::

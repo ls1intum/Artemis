@@ -31,6 +31,9 @@
         </div>
     </div>
 } @else {
+    <!-- Since the design of welcome page is changed, we use different alignments for startView and endView
+     However, it includes some duplicated code and ids and should be refactored with e.g. ngTemplates
+      -->
     @if (startView) {
         <div class="px-3 pb-3" [ngClass]="{ 'content-height-dev': (!isProduction || isTestServer) && !testRunStartTime, 'scrollable-content-exam-cover': !testRunStartTime }">
             <div class="d-flex justify-content-between">

@@ -142,7 +142,7 @@
             "updated": "Exam updated",
             "imported": "Exam imported",
             "deleted": "Deleted exam \"{{ param }}\"",
-            "startCheckBoxText": "I confirm that I have read the rules above and that I will comply to these rules during the exam.",
+            "startCheckBoxText": "I confirm that I have read the rules above and that I will comply with these rules during the exam.",
             "startConsentText": "I hereby confirm with my full name, representing my signature, that I have read the conditions of participation and will adhere to them for the duration of the exam.",
             "endConsentText": "I hereby confirm with my full name, representing my signature, that this exam is my own work and I have only used the indicated aids.",
             "notConfirmed": "Please tick the checkbox to continue.",
@@ -151,16 +151,16 @@
             "startExamToolTip": "Button will be activated 5 minutes before the exam start.",
             "welcomePageText": {
                 "readCarefully": "Please read the following information carefully!",
-                "workOnYourOwn": "You must work on the exam on your own. This exam is open book (including using the Internet), but you <span class='fw-bold text-primary'>must not</span>, in any way, get support by someone else (in person, chat, forum, discussion group, artificial intelligence, etc.) Doing so is classified as <span class='fw-bold text-primary'>cheating</span> (\"Unterschleif\") and leads to consequences as mentioned in the APSO (\"Allgemeine Prüfungs- und Studienordnung\"). In particular, the corresponding module in TUMonline will be marked as <span class='fw-bold text-primary'>failed (w. cheating)</span>, and you will only be allowed trying to pass the module in one final attempt (cf. APSO §24).",
+                "workOnYourOwn": "You must work on the exam on your own. This is an open book exam (including using the Internet), but you <span class='fw-bold text-primary'>must not</span>, in any way, get support from someone else (in person, chat, forum, discussion group, artificial intelligence, etc.) Doing so is classified as <span class='fw-bold text-primary'>cheating</span> (\"Unterschleif\") and leads to consequences as mentioned in the APSO (\"Allgemeine Prüfungs- und Studienordnung\"). In particular, the corresponding module in TUMonline will be marked as <span class='fw-bold text-primary'>failed (w. cheating)</span>, and you will only be allowed to try to pass the module in one final attempt (cf. APSO §24).",
                 "checkForPlagiarism": "All your submissions will be checked for plagiarism. If you happen to copy code, for example, from a book or a website, you must cite the reference by adding a note at the relevant places, e.g. <span class='fw-bold text-primary'>adapted from https://sourcemaking.com/design_patterns/bridge</span>. Failing to do so is classified as plagiarism. Copying code from other students is not allowed and is classified as plagiarism.",
-                "programmingSubmission": "Note that results in programming exercises only indicate that your submission compiles or not. No actual tests will be run against your submission. All actual tests will be executed after the exam is over. You can only get points for programming exercises if your submission compiles. <span class='fw-bold text-primary'>Compile errors will result in 0 points</span>.",
-                "submissionPeriod": "In order to compensate for potential technical problems, the submission period will close <span>{{ gracePeriodInMinutes }} minutes</span> following the official end of the exam. We encourage you to upload your submissions regularly and early. <span class='fw-bold text-primary'>Only your final submission will be graded and late submission will not be accepted</span>."
+                "programmingSubmission": "Note that results in programming exercises only indicate whether your submission compiles or not. No actual tests will be run against your submission. All actual tests will be executed after the exam is over. You can only get points for programming exercises if your submission compiles. <span class='fw-bold text-primary'>Compile errors will result in 0 points</span>.",
+                "submissionPeriod": "The submission period will close <span>{{ gracePeriodInMinutes }} minutes</span> following the official end of the exam to compensate for potential technical problems. We encourage you to upload your submissions regularly and early. <span class='fw-bold text-primary'>Only your final submission will be graded and late submission will not be accepted</span>."
             },
             "workingInstruction": {
                 "workingInstructions": "Working instructions:",
                 "important": "<span class='fw-bold text-primary'>Important</span>: Before you start solving an exercise, read the problem statement carefully.",
                 "totalPoints": "The exam consists of <span class='fw-bold text-primary'>{{ totalPoints }} points</span> and is <span class='fw-bold text-primary'>{{ totalWorkingTime }} minutes</span> long. Use the amount of points to determine the appropriate working time for one exercise.",
-                "notAllowed": "It is <span class='fw-bold text-primary'>not</span> allowed to use any artificial intelligence to solve exercises of the exam. In particular the use of OpenAI, ChatGPT, GitHub Copilot, or any similar systems are <span class='fw-bold text-primary'>forbidden</span>!"
+                "notAllowed": "It is <span class='fw-bold text-primary'>not</span> allowed to use any artificial intelligence to solve exercises of the exam. In particular the use of OpenAI, ChatGPT, GitHub Copilot, or any similar systems is <span class='fw-bold text-primary'>forbidden</span>!"
             },
             "cleanup": {
                 "title": "Cleanup",

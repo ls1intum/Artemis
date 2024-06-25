@@ -15,9 +15,7 @@ import { CodeEditorRepositoryService } from 'app/exercises/programming/shared/co
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { ButtonTooltipType, ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { map } from 'rxjs/operators';
-import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import { CommitState, DomainChange, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
@@ -53,15 +51,16 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
         submission?: ProgrammingSubmission | SubmissionVersion | FileUploadSubmission;
     }>();
 
-    static itemsVisiblePerSideDefault = 4;
-    itemsVisiblePerSide = ExamNavigationSidebarComponent.itemsVisiblePerSideDefault;
-
+    /**
+     * Index indicating that the content is exercise overview
+     */
+    readonly EXERCISE_OVERVIEW_INDEX = -1;
     subscriptionToLiveExamExerciseUpdates: Subscription;
 
     // Icons
     icon: IconProp;
-    overviewIcon: IconProp = faFileLines;
-    faChevronRight = faChevronRight;
+    readonly faFileLines = faFileLines;
+    readonly faChevronRight = faChevronRight;
     readonly ExerciseButtonStatus = ExerciseButtonStatus;
 
     profileSubscription?: Subscription;
@@ -74,7 +73,6 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     constructor(
         private profileService: ProfileService,
         private sidebarEventService: SidebarEventService,
-        private layoutService: LayoutService,
         private examParticipationService: ExamParticipationService,
         private examExerciseUpdateService: ExamExerciseUpdateService,
         private repositoryService: CodeEditorRepositoryService,
@@ -93,19 +91,6 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
                 this.changeExerciseById(exerciseIdToNavigateTo);
             });
         }
-
-        this.layoutService.subscribeToLayoutChanges().subscribe(() => {
-            // You will have all matched breakpoints in observerResponse
-            if (this.layoutService.isBreakpointActive(CustomBreakpointNames.extraLarge)) {
-                this.itemsVisiblePerSide = ExamNavigationSidebarComponent.itemsVisiblePerSideDefault;
-            } else if (this.layoutService.isBreakpointActive(CustomBreakpointNames.large)) {
-                this.itemsVisiblePerSide = 3;
-            } else if (this.layoutService.isBreakpointActive(CustomBreakpointNames.medium)) {
-                this.itemsVisiblePerSide = 1;
-            } else {
-                this.itemsVisiblePerSide = 0;
-            }
-        });
 
         const isInitialSession = this.examSessions && this.examSessions.length > 0 && this.examSessions[0].initialSession;
         if (isInitialSession || isInitialSession == undefined) {
@@ -165,7 +150,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
             this.onPageChanged.emit({ overViewChange: false, exercise: this.exercises[this.exerciseIndex], forceSave: !!forceSave, submission: submission });
         } else if (overviewPage) {
             // set index and emit event
-            this.exerciseIndex = -1;
+            this.exerciseIndex = this.EXERCISE_OVERVIEW_INDEX;
             // save current exercise
             this.onPageChanged.emit({ overViewChange: true, exercise: undefined, forceSave: false });
         }

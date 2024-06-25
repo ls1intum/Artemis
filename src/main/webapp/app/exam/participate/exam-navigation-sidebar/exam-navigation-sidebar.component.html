@@ -4,17 +4,20 @@
 >
     <div class="px-3 py-3">
         <div class="w-100 bg-module">
+            <!-- Since the exam navigation includes lots of functionalities and in-line adjustments, 
+             we use duplicated code here in order to keep the functionality of exam navigation apart from 
+             sidebar-card implementations.
+              -->
             <div class="sidebar-content" [ngClass]="{ collapsed: isCollapsed }">
                 <div class="scrollable-item-content py-2 px-2 bg-body" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer, 'sidebar-height-testRun': isTestRun }">
                     <div
-                        id="test-sidebar-card-medium"
                         class="pointer rounded-3 col-12 px-1 pt-2 pb-1 mb-2 border-5 highlight-card bg-module"
                         [ngClass]="{ 'bg-selected border-selected': exerciseIndex === -1 }"
                         (click)="changePage(true, -1)"
                     >
                         <div class="d-flex justify-content-between mb-1 align-items-baseline">
                             <span id="test-sidebar-card-title" class="small fw-semibold text-truncate me-2">
-                                <fa-icon [ngbTooltip]="'artemisApp.examParticipation.exerciseOverview' | artemisTranslate" [fixedWidth]="true" [icon]="overviewIcon" />
+                                <fa-icon [ngbTooltip]="'artemisApp.examParticipation.exerciseOverview' | artemisTranslate" [fixedWidth]="true" [icon]="faFileLines" />
                                 @if (!isCollapsed) {
                                     <span class="auto-collapse" jhiTranslate="artemisApp.studentExamDetail.overview"></span>
                                 }
@@ -27,7 +30,6 @@
                     @for (sidebarItem of sidebarData?.ungroupedData; track sidebarItem; let last = $last; let i = $index) {
                         <div [ngClass]="{ 'mb-2': !last }">
                             <div
-                                id="test-sidebar-card-medium"
                                 class="pointer rounded-3 col-12 px-1 pt-2 pb-1 border-5 highlight-card bg-module"
                                 [ngClass]="{ 'bg-selected border-selected': i === exerciseIndex }"
                                 (click)="changePage(false, i, false)"

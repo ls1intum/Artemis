@@ -43,7 +43,7 @@ export class ExamStartInformationComponent implements OnInit {
         this.prepareInformationBoxData();
     }
 
-    prepareEachInformationBox(boxTitle: string, boxContent: string | number, boxContentComponent?: string): InformationBox {
+    buildInformationBox(boxTitle: string, boxContent: string | number, boxContentComponent?: string): InformationBox {
         const examInformationBoxData: InformationBox = {
             title: boxTitle ?? '',
             content: boxContent ?? '',
@@ -54,33 +54,35 @@ export class ExamStartInformationComponent implements OnInit {
 
     prepareInformationBoxData(): void {
         if (this.moduleNumber) {
-            const informationBoxModuleNumber = this.prepareEachInformationBox('artemisApp.exam.moduleNumber', this.moduleNumber!);
+            const informationBoxModuleNumber = this.buildInformationBox('artemisApp.exam.moduleNumber', this.moduleNumber!);
             this.examInformationBoxData.push(informationBoxModuleNumber);
         }
         if (this.courseName) {
-            const informationBoxCourseName = this.prepareEachInformationBox('artemisApp.exam.course', this.courseName!);
+            const informationBoxCourseName = this.buildInformationBox('artemisApp.exam.course', this.courseName!);
             this.examInformationBoxData.push(informationBoxCourseName);
         }
         if (this.examiner) {
-            const informationBoxExaminer = this.prepareEachInformationBox('artemisApp.examManagement.examiner', this.examiner!);
+            const informationBoxExaminer = this.buildInformationBox('artemisApp.examManagement.examiner', this.examiner!);
             this.examInformationBoxData.push(informationBoxExaminer);
         }
         if (this.examinedStudent) {
-            const informationBoxExaminedStudent = this.prepareEachInformationBox('artemisApp.exam.examinedStudent', this.examinedStudent!);
+            const informationBoxExaminedStudent = this.buildInformationBox('artemisApp.exam.examinedStudent', this.examinedStudent!);
             this.examInformationBoxData.push(informationBoxExaminedStudent);
         }
-        const informationBoxTotalPoints = this.prepareEachInformationBox('artemisApp.exam.points', this.totalPoints!.toString());
+        if (this.startDate) {
+            const informationBoxStartDate = this.buildInformationBox('artemisApp.exam.date', this.startDate.toString(), 'formatedDate');
+            this.examInformationBoxData.push(informationBoxStartDate);
+        }
+
+        const informationBoxTotalWorkingTime = this.buildInformationBox('artemisApp.exam.workingTime', this.exam.workingTime!, 'workingTime');
+        this.examInformationBoxData.push(informationBoxTotalWorkingTime);
+
+        const informationBoxTotalPoints = this.buildInformationBox('artemisApp.exam.points', this.totalPoints!.toString());
         this.examInformationBoxData.push(informationBoxTotalPoints);
 
         if (this.numberOfExercisesInExam) {
-            const informationBoxNumberOfExercises = this.prepareEachInformationBox('artemisApp.exam.exercises', this.numberOfExercisesInExam!.toString());
+            const informationBoxNumberOfExercises = this.buildInformationBox('artemisApp.exam.exercises', this.numberOfExercisesInExam!.toString());
             this.examInformationBoxData.push(informationBoxNumberOfExercises);
         }
-        if (this.startDate) {
-            const informationBoxStartDate = this.prepareEachInformationBox('artemisApp.exam.date', this.startDate.toString(), 'formatedDate');
-            this.examInformationBoxData.push(informationBoxStartDate);
-        }
-        const informationBoxTotalWorkingTime = this.prepareEachInformationBox('artemisApp.exam.workingTime', this.exam.workingTime!, 'workingTime');
-        this.examInformationBoxData.push(informationBoxTotalWorkingTime);
     }
 }
