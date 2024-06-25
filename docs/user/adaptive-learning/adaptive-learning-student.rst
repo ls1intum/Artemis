@@ -24,7 +24,7 @@ Expanding the prerequisites section shows the student all competencies the instr
 |students-learning-goals-statistics|
 
 When clicking on a competency, a page opens and displays detailed statistics about the competency together with all linked lecture units and exercises.
-The bipartite rings show the student's advancement:
+The two rings show the student's advancement:
 The **green ring describes the progress**, the percentage of completed lecture units and achieved scores exercises.
 The **red ring indicates the mastery**, which shows the overall advancement toward competency completion.
 

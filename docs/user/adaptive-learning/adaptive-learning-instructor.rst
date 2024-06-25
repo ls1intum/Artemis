@@ -22,12 +22,12 @@ By completing lectures and exercises, students gain mastery of a competency (see
 A prerequisite is a competency that students are expected to have already mastered before the course. Instructors select competencies from previous courses they taught as a prerequisite, or create new ones.
 
 Competencies measure two metrics for each student:
-The progress starts at 0% and increases for every completed lecture unit and with the achieved score in exercises linked to the competency. The growth is linear, i.e. completing half of the lecture units and scoring 50% in all linked exercises results in 50% progress.
+The progress starts at 0% and increases with every completed lecture unit and with the achieved score in exercises linked to the competency. The growth is linear, e.g. completing half of the lecture units and scoring 50% in all linked exercises results in 50% progress.
 The mastery is a weighted metric and is influenced by the following heuristics:
-- The mastery increases when the latest scores of the student are higher than the average score of all linked exercises and vice versa.
-- The mastery increases when the student proportionally achieved more points in exercises marked as hard compared to the distribution of points in the competency and vice versa.
-- A similar measurement applies to easy exercises, where the mastery is decreased for achieving proportionally more points in easy exercises.
-- If the student quickly solves programming exercises with a score of at least 80% based on the amount of pushes, the mastery increases. There is no decrease in mastery for slower students!
+* The mastery increases when the latest scores of the student are higher than the average score of all linked exercises and vice versa.
+* The mastery increases when the student proportionally achieved more points in exercises marked as hard compared to the distribution of points in the competency and vice versa.
+* A similar measurement applies to easy exercises, where the mastery is decreased for achieving proportionally more points in easy exercises.
+* If the student quickly solves programming exercises with a score of at least 80% based on the amount of pushes, the mastery increases. There is no decrease in mastery for slower students!
 
 Manage Competencies
 ^^^^^^^^^^^^^^^^^^^^
