@@ -52,9 +52,11 @@ $breadcrumb-height: 38px;
 .sidebar {
     background-color: var(--module-bg);
     height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height));
+
     &.sidebar-height-dev {
         height: calc(100vh - var(--sidebar-footer-height-dev) - var(--header-height));
     }
+
     @media (max-width: 768px) {
         height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height)) !important;
     }
