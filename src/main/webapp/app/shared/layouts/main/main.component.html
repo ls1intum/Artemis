@@ -3,7 +3,7 @@
     id="page-wrapper"
     class="page-wrapper"
     [ngClass]="{ 'footer-height-dev': (!isProduction || isTestServer) && !isExamStarted }"
-    [ngStyle]="{ 'overflow-y': isTestRunExam ? 'hidden' : 'auto' }"
+    [ngStyle]="{ 'overflow-y': isTestRunExam || isExamStarted ? 'hidden' : 'auto' }"
     cdkScrollable
 >
     <jhi-page-ribbon />
