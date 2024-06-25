@@ -18,7 +18,7 @@ export type ChannelGroupCategory =
 export type SidebarTypes = 'exercise' | 'conversation' | 'default';
 
 export type AccordionGroups = Record<TimeGroupCategory | TutorialGroupCategory | ChannelGroupCategory | string, { entityData: SidebarCardElement[] }>;
-export type CollapseState = Record<TimeGroupCategory, boolean> | Record<ChannelGroupCategory, boolean>;
+export type CollapseState = Record<TimeGroupCategory, boolean> | Record<ChannelGroupCategory, boolean> | Record<TutorialGroupCategory, boolean>;
 export type ChannelAccordionShowAdd = Record<ChannelGroupCategory, boolean>;
 export type ChannelTypeIcons = Record<ChannelGroupCategory, IconProp>;
 
