@@ -152,8 +152,9 @@ Participating in Quiz Exercises
     2. Short Answer questions
     3. Drag and Drop questions
 
-- All questions are listed on the main screen below one another, and you can scroll to navigate between them.
-- You can see the ``question overview`` on the left. Each question representation shows whether that question has been answered or not. The blue background indicates that the question is answered, while the yellow background indicates that the question is not answered.
+- All questions are listed on the main screen below one another.
+- To navigate between them, you can either scroll or use the ``question overview`` on the left. When you click on one of the question representations, your view will automatically scroll to the respective question.
+- Each question representation in the ``question overview`` shows whether that question has been answered or not. The blue background indicates that the question is answered, while the yellow background indicates that the question is not answered.
 - To submit your solution, click on another exercise in the navigation sidebar.
 
     .. note::

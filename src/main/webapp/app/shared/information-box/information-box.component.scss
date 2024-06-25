@@ -1,11 +1,15 @@
 .mw-content {
     max-width: fit-content;
 
-    @media (max-width: 1798px) {
+    @media screen and (max-width: 1862px) {
         min-height: 65px;
     }
 
-    @media (max-width: 1478px) {
+    @media screen and (max-width: 1554px) {
         min-height: 85px;
+    }
+
+    @media screen and (max-width: 1351px) {
+        min-height: 125px;
     }
 }
