@@ -277,11 +277,11 @@
                 <span class="d-none d-xl-inline">{{ 'artemisApp.courseStatistics.statistics' | artemisTranslate }}</span>
             </a>
         }
-        @if (isMessagingEnabled(course) && course.isAtLeastTutor) {
+        @if (isCommunicationEnabled(course) && course.isAtLeastTutor) {
             <a
                 [routerLink]="['/courses', course.id, 'communication']"
                 class="btn btn-primary me-1 mb-1"
-                [ngbTooltip]="'artemisApp.courseOverview.menu.messages' | artemisTranslate"
+                [ngbTooltip]="'artemisApp.courseOverview.menu.communication' | artemisTranslate"
             >
                 <fa-icon [icon]="faComments" />
                 <span class="d-none d-xl-inline">{{ 'artemisApp.metis.communication.label' | artemisTranslate }}</span>
