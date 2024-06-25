@@ -60,7 +60,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     @Input()
     textChangedEmitDelay?: number;
 
-    // TODO: This is only necessary due to a bug in the code editor layout. In the future, we can remove this and the corresponding CSS class.
+    // TODO: The CSS class below allows the editor to shrink in the CodeEditorContainerComponent. We should eventually remove this class and handle the editor size differently in the code editor grid.
     @Input()
     set shrinkToFit(value: boolean) {
         if (value) {
