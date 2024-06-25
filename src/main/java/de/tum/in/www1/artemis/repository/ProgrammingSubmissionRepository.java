@@ -50,7 +50,7 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
     @Query("""
             SELECT new de.tum.in.www1.artemis.service.dto.ProgrammingSubmissionIdAndSubmissionDateDTO(ps.id, ps.submissionDate)
             FROM ProgrammingSubmission ps
-            WHERE ps.participation.id = :participationId ORDER BY ps.submissionDate DESC
+            WHERE ps.participation.id = :participationId ORDER BY ps.submissionDate DESC LIMIT 1
             """)
     Optional<ProgrammingSubmissionIdAndSubmissionDateDTO> findFirstIdByParticipationIdOrderBySubmissionDateDesc(@Param("participationId") long participationId);
 
