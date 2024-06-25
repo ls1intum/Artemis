@@ -179,7 +179,10 @@ function logRestCall(restCall: CallExpression, methodName: string, classProperti
         url = restCall.arguments[0].getText();
         // Replace class properties in the URL
         for (const prop in classProperties) {
+            // Replace all occurrences of ${this.prop} with the actual value
             url = url.replace(new RegExp(`\\$\\{this.${prop}\\}`, 'g'), classProperties[prop]);
+            // Replace all occurrences of this.prop with the actual value
+            url = url.replace(new RegExp(`this.${prop}`, 'g'), classProperties[prop]);
         }
         console.log(`with URL: ${url}`);
 
