@@ -44,7 +44,7 @@
                 class="clone-url"
                 [ngClass]="{
                     'url-box-remove-line-left': sshEnabled && ((useSsh && !localVCEnabled) || !useSsh),
-                    'url-box-remove-line-right': !localVCEnabled && !(sshEnabled && ((useSsh && !localVCEnabled) || !useSsh))
+                    'url-box-remove-line-right': !localVCEnabled && !(sshEnabled && ((useSsh && !localVCEnabled) || !useSsh)),
                 }"
                 [cdkCopyToClipboard]="getHttpOrSshRepositoryUri(false)"
                 (cdkCopyToClipboardCopied)="onCopyFinished($event)"

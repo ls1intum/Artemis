@@ -140,7 +140,7 @@ The iOS application supports the following features:
     #. Add emoji reactions
     #. Create new conversations
     #. Edit conversation settings
-    #. Restore cached messages drafts for up to one day
+    #. Restore cached messages drafts. We purge the cache after one day.
 
 .. raw:: html
 
@@ -162,8 +162,8 @@ The iOS application supports the following features:
 Installation
 ^^^^^^^^^^^^
 
-The iOS application is available in the `App Store <https://apps.apple.com/de/app/artemis-learning/id6478965616>`_ and as a beta via `TestFlight <https://testflight.apple.com/join/canwoVCk>`_.
-Make sure to follow the steps described by TestFlight to install the application.
+The iOS application is available in the `App Store <https://apps.apple.com/de/app/artemis-learning/id6478965616>`_.
+To test the beta version, install Apple's TestFlight app and follow the link `TestFlight <https://testflight.apple.com/join/canwoVCk>`_.
 
 Server Selection
 ^^^^^^^^^^^^^^^^
