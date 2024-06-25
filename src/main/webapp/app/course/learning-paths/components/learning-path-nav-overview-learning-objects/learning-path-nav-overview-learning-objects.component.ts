@@ -3,7 +3,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { AlertService } from 'app/core/util/alert.service';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 import { LearningPathNavigationService } from 'app/course/learning-paths/services/learning-path-navigation.service';
-import { LearningObjectType, LearningPathNavigationObjectDTO } from 'app/entities/competency/learning-path.model';
+import { LearningPathNavigationObjectDTO } from 'app/entities/competency/learning-path.model';
 import { IconDefinition, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
@@ -13,6 +13,7 @@ import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
     standalone: true,
     imports: [NgbAccordionModule, FontAwesomeModule, ArtemisSharedModule],
     templateUrl: './learning-path-nav-overview-learning-objects.component.html',
+    styleUrl: './learning-path-nav-overview-learning-objects.component.scss',
 })
 export class LearningPathNavOverviewLearningObjectsComponent implements OnInit {
     protected readonly faCheckCircle: IconDefinition = faCheckCircle;
@@ -52,9 +53,5 @@ export class LearningPathNavOverviewLearningObjectsComponent implements OnInit {
     selectLearningObject(learningObject: LearningPathNavigationObjectDTO): void {
         this.learningPathNavigationService.loadRelativeLearningPathNavigation(this.learningPathId(), learningObject);
         this.onLearningObjectSelected.emit();
-    }
-
-    isEqualToCurrentLearningObject(id: number, type: LearningObjectType): boolean {
-        return this.currentLearningObject()?.id === id && this.currentLearningObject()?.type === type;
     }
 }
