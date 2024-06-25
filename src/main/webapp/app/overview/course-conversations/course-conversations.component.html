@@ -49,7 +49,7 @@
                     <jhi-course-wide-search (openThread)="postInThread = $event" [courseWideSearchConfig]="courseWideSearchConfig" />
                 }
             </div>
-            <div class="col d-flex flex-grow-1 justify-end px-0" style="max-width: min-content">
+            <div class="col d-flex flex-grow-1 justify-end px-0" [ngClass]="{ 'card-border': true }" style="max-width: min-content">
                 @if (!!postInThread) {
                     <jhi-conversation-thread-sidebar
                         [activeConversation]="postInThread.conversation!"
