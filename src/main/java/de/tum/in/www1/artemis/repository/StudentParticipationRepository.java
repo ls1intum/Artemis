@@ -647,16 +647,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     @Query("""
             SELECT p.id
             FROM StudentParticipation p
+                JOIN Result r ON r.participation.id = p.id
             WHERE p.exercise.id = :exerciseId
                 AND (
                     p.student.firstName LIKE %:partialStudentName%
                     OR p.student.lastName LIKE %:partialStudentName%
-                 ) AND EXISTS (
-                    SELECT 1
-                    FROM Result r
-                    WHERE r.participation.id = p.id
-                    AND r.completionDate IS NOT NULL
-                 )
+                ) AND r.completionDate IS NOT NULL
             """)
     List<Long> findIdsByExerciseIdAndStudentName(@Param("exerciseId") long exerciseId, @Param("partialStudentName") String partialStudentName, Pageable pageable);
 
@@ -666,16 +662,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     @Query("""
             SELECT COUNT(p)
             FROM StudentParticipation p
+                JOIN Result r ON r.participation.id = p.id
             WHERE p.exercise.id = :exerciseId
                 AND (
                     p.student.firstName LIKE %:partialStudentName%
                     OR p.student.lastName LIKE %:partialStudentName%
-                 ) AND EXISTS (
-                    SELECT 1
-                    FROM Result r
-                    WHERE r.participation.id = p.id
-                    AND r.completionDate IS NOT NULL
-             )
+                ) AND r.completionDate IS NOT NULL
             """)
     long countByExerciseIdAndStudentName(@Param("exerciseId") long exerciseId, @Param("partialStudentName") String partialStudentName);
 
