@@ -36,7 +36,7 @@ public interface PersistenceAuditEventRepository extends ArtemisJpaRepository<Pe
     @EntityGraph(type = LOAD, attributePaths = "data")
     List<PersistentAuditEvent> findWithDataByIdIn(List<Long> ids);
 
-    long countByAuditEventDateBetween(@Param("fromDate") Instant fromDate, @Param("toDate") Instant toDate);
+    long countByAuditEventDateBetween(Instant fromDate, Instant toDate);
 
     /**
      * Retrieves a paginated list of {@link PersistentAuditEvent} entities that have an audit event date between the specified fromDate and toDate.
