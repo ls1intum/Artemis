@@ -14,7 +14,7 @@ Competencies allow students to understand the learning goals of the course and m
 Artemis measures two metrics for each competency: **progress** and **mastery**.
 The progress starts at 0% and increases with every completed lecture unit and score achieved in exercises linked to the competency.
 The mastery is a weighted metric of the student's progress. It can be influenced by different factors, e.g. if the latest exercise scores are higher or lower than the student's average score in the competency.
-In Artemis, a competency is considered mastered by a student the mastery is greater than or equal to the threshold set by the instructor.
+In Artemis, a competency is considered mastered by a student when the mastery is greater than or equal to the threshold set by the instructor.
 
 In case competencies are defined, students can get an overview of their individual progress and confidence on the competencies tab.
 The page lists all competencies with their title, description, and `taxonomy <https://en.wikipedia.org/wiki/Bloom%27s_taxonomy>`_.
@@ -25,8 +25,8 @@ Expanding the prerequisites section shows the student all competencies the instr
 
 When clicking on a competency, a page opens and displays detailed statistics about the competency together with all linked lecture units and exercises.
 The bipartite rings show the student's advancement:
-The **green ring describes the progress**, the percentage of completed lecture units and exercises.
-The **red ring shows the mastery**, which shows the overall advancement toward competency completion.
+The **green ring describes the progress**, the percentage of completed lecture units and achieved scores exercises.
+The **red ring indicates the mastery**, which shows the overall advancement toward competency completion.
 
 If the mastery diverges from the progress, the student can see the main reason for this divergence as a tooltip next to the mastery value.
 
