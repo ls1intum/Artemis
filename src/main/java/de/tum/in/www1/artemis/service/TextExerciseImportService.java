@@ -81,7 +81,7 @@ public class TextExerciseImportService extends ExerciseImportService {
         TextExercise newExercise = copyTextExerciseBasis(importedExercise, gradingInstructionCopyTracker);
         if (newExercise.isExamExercise()) {
             // Disable feedback suggestions on exam exercises (currently not supported)
-            newExercise.setFeedbackSuggestionModule(null);
+            newExercise.setGradedFeedbackSuggestionModule(null);
         }
 
         TextExercise newTextExercise = textExerciseRepository.save(newExercise);

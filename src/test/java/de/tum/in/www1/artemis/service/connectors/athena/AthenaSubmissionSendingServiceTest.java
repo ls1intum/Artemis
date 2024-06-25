@@ -71,10 +71,10 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
                 athenaDTOConverterService);
 
         textExercise = textExerciseUtilService.createSampleTextExercise(null);
-        textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
+        textExercise.setGradedFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
 
         programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
-        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
+        programmingExercise.setGradedFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
     }
 
     @AfterEach
@@ -168,7 +168,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testSendSubmissionsWithFeedbackSuggestionsDisabledText() {
-        textExercise.setFeedbackSuggestionModule(null);
+        textExercise.setGradedFeedbackSuggestionModule(null);
         assertThatThrownBy(() -> athenaSubmissionSendingService.sendSubmissions(textExercise)).isInstanceOf(IllegalArgumentException.class);
     }
 }

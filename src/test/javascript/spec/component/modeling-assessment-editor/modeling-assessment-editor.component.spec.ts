@@ -555,14 +555,14 @@ describe('ModelingAssessmentEditorComponent', () => {
 
     it('should report feedback suggestions enabled', () => {
         component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
-        component.modelingExercise.feedbackSuggestionModule = 'module_text_llm';
+        component.modelingExercise.gradedFeedbackSuggestionModule = 'module_text_llm';
         component.ngOnInit();
         expect(component.isFeedbackSuggestionsEnabled).toBeTrue();
     });
 
     it('should return unreferenced feedback only', () => {
         component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
-        component.modelingExercise.feedbackSuggestionModule = 'module_text_llm';
+        component.modelingExercise.gradedFeedbackSuggestionModule = 'module_text_llm';
         component.ngOnInit();
 
         const unreferencedFeedback = createTestFeedback();

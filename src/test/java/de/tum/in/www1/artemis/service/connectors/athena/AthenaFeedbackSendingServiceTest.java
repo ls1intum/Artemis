@@ -84,7 +84,7 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
         athenaRequestMockProvider.enableMockingOfRequests();
 
         textExercise = textExerciseUtilService.createSampleTextExercise(null);
-        textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
+        textExercise.setGradedFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
         when(textExerciseRepository.findWithGradingCriteriaByIdElseThrow(textExercise.getId())).thenReturn(textExercise);
 
         textSubmission = new TextSubmission(2L).text("Test - This is what the feedback references - Submission");
@@ -104,7 +104,7 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
         result.setParticipation(participation);
 
         programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
-        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
+        programmingExercise.setGradedFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
         when(programmingExerciseRepository.findByIdWithGradingCriteriaElseThrow(programmingExercise.getId())).thenReturn(programmingExercise);
 
         programmingSubmission = new ProgrammingSubmission();
@@ -206,9 +206,9 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
 
     @Test
     void testSendFeedbackWithFeedbackSuggestionsDisabled() {
-        textExercise.setFeedbackSuggestionModule(null);
+        textExercise.setGradedFeedbackSuggestionModule(null);
         assertThatThrownBy(() -> athenaFeedbackSendingService.sendFeedback(textExercise, textSubmission, List.of(textFeedback))).isInstanceOf(IllegalArgumentException.class);
-        programmingExercise.setFeedbackSuggestionModule(null);
+        programmingExercise.setGradedFeedbackSuggestionModule(null);
         assertThatThrownBy(() -> athenaFeedbackSendingService.sendFeedback(programmingExercise, programmingSubmission, List.of(programmingFeedback)))
                 .isInstanceOf(IllegalArgumentException.class);
     }

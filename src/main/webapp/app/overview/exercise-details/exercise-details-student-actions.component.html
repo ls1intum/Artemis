@@ -139,30 +139,29 @@
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.openRepository"></span>
                             </a>
                         }
-                        @if (exercise.allowFeedbackRequests) {
-                            @if (athenaEnabled) {
-                                <a
-                                    class="btn btn-primary"
-                                    (click)="requestFeedback()"
-                                    [class.btn-sm]="smallButtons"
-                                    [id]="'request-feedback-' + exercise.id"
-                                    [ngbTooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip' | artemisTranslate"
-                                >
-                                    <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
-                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback">Send automatic feedback request</span>
-                                </a>
-                            } @else {
-                                <a
-                                    class="btn btn-primary"
-                                    (click)="requestFeedback()"
-                                    [class.btn-sm]="smallButtons"
-                                    [id]="'request-feedback-' + exercise.id"
-                                    [ngbTooltip]="'artemisApp.exerciseActions.requestManualFeedbackTooltip' | artemisTranslate"
-                                >
-                                    <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
-                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestManualFeedback">Send manual feedback request</span>
-                                </a>
-                            }
+                        @if (exercise.allowManualFeedbackRequests) {
+                            <a
+                                class="btn btn-primary"
+                                (click)="requestFeedback(true)"
+                                [class.btn-sm]="smallButtons"
+                                [id]="'request-feedback-' + exercise.id"
+                                [ngbTooltip]="'artemisApp.exerciseActions.requestManualFeedbackTooltip' | artemisTranslate"
+                            >
+                                <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
+                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestManualFeedback">Send manual feedback request</span>
+                            </a>
+                        }
+                        @if (athenaEnabled) {
+                            <a
+                                class="btn btn-primary"
+                                (click)="requestFeedback(false)"
+                                [class.btn-sm]="smallButtons"
+                                [id]="'request-feedback-' + exercise.id"
+                                [ngbTooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip' | artemisTranslate"
+                            >
+                                <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
+                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback">Send automatic feedback request</span>
+                            </a>
                         }
                     </ng-container>
                 }

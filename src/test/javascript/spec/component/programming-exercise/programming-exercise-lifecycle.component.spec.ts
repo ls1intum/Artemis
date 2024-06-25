@@ -138,12 +138,12 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
     });
 
     it('should change feedback request allowed after toggling', () => {
-        comp.exercise = { ...exercise, allowFeedbackRequests: false };
-        expect(comp.exercise.allowFeedbackRequests).toBeFalse();
+        comp.exercise = { ...exercise, allowManualFeedbackRequests: false };
+        expect(comp.exercise.allowManualFeedbackRequests).toBeFalse();
 
-        comp.toggleFeedbackRequests();
+        comp.toggleManualFeedbackRequests();
 
-        expect(comp.exercise.allowFeedbackRequests).toBeTrue();
+        expect(comp.exercise.allowManualFeedbackRequests).toBeTrue();
     });
 
     it('should change assessment type from automatic to semi-automatic after toggling', () => {
@@ -172,10 +172,10 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         expect(comp.exercise.assessmentType).toBe(AssessmentType.AUTOMATIC);
 
         comp.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-        comp.exercise.feedbackSuggestionModule = 'programming_module';
+        comp.exercise.gradedFeedbackSuggestionModule = 'programming_module';
         comp.toggleAssessmentType(); // toggle to AUTOMATIC
 
-        expect(comp.exercise.feedbackSuggestionModule).toBeUndefined();
+        expect(comp.exercise.gradedFeedbackSuggestionModule).toBeUndefined();
     });
 
     it('should change publication of tests for programming exercise with published solution', () => {

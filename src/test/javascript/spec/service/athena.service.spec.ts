@@ -34,19 +34,19 @@ describe('AthenaService', () => {
     const textExercise = {
         id: 1,
         type: 'text',
-        feedbackSuggestionModule: 'text_module',
+        gradedFeedbackSuggestionModule: 'text_module',
         gradingCriteria,
     } as Exercise;
     const programmingExercise = {
         id: 2,
         type: 'programming',
-        feedbackSuggestionModule: 'programming_module',
+        gradedFeedbackSuggestionModule: 'programming_module',
         gradingCriteria,
     } as Exercise;
     const modelingExercise = {
         id: 2,
         type: 'modeling',
-        feedbackSuggestionModule: 'modeling_module',
+        gradedFeedbackSuggestionModule: 'modeling_module',
         gradingCriteria,
     } as Exercise;
     beforeEach(() => {
@@ -199,7 +199,7 @@ describe('AthenaService', () => {
         const mockProfileInfo = { activeProfiles: ['athena'] } as ProfileInfo;
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(mockProfileInfo));
 
-        const exerciseWithoutFeedbackSuggestions = { ...textExercise, feedbackSuggestionModule: undefined } as Exercise;
+        const exerciseWithoutFeedbackSuggestions = { ...textExercise, gradedFeedbackSuggestionModule: undefined } as Exercise;
 
         athenaService.getTextFeedbackSuggestions(exerciseWithoutFeedbackSuggestions, { id: 2, text: '' } as TextSubmission).subscribe((suggestions: TextBlockRef[]) => {
             response = suggestions;

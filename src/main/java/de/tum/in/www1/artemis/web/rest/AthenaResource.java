@@ -121,7 +121,7 @@ public class AthenaResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
         // Check if feedback suggestions are actually enabled
-        if (!exercise.areFeedbackSuggestionsEnabled()) {
+        if (!exercise.areGradedFeedbackSuggestionsEnabled()) {
             throw new InternalServerErrorException("Feedback suggestions are not enabled for this exercise");
         }
 

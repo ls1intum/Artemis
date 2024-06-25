@@ -1,5 +1,8 @@
 {
     "artemisApp": {
+        "beforeTheDueDate": {
+            "beforeTheDueDate": "Vor dem Abgabedatum"
+        },
         "assessment": {
             "assessment": "Bewertung",
             "assessmentIllegalSubmission": "Achtung: Es handelt sich um eine illegale Einreichung.",

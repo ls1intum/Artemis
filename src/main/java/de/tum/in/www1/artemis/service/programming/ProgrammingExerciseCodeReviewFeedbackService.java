@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaFeedbackSuggestionsService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
  * Service class for managing code review feedback on programming exercises.
@@ -78,22 +79,26 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
      * This method decides whether to generate feedback automatically using Athena,
      * or notify a tutor to manually process the feedback.
      *
+     * @param manualFeedback      if true, the feedback should be answered by tutor, otherwise - by Athena
      * @param exerciseId          the id of the programming exercise.
      * @param participation       the student participation associated with the exercise.
      * @param programmingExercise the programming exercise object.
      * @return ProgrammingExerciseStudentParticipation updated programming exercise for a tutor assessment
      */
-    public ProgrammingExerciseStudentParticipation handleNonGradedFeedbackRequest(Long exerciseId, ProgrammingExerciseStudentParticipation participation,
+    public ProgrammingExerciseStudentParticipation handleFeedbackRequest(boolean manualFeedback, Long exerciseId, ProgrammingExerciseStudentParticipation participation,
             ProgrammingExercise programmingExercise) {
+        if (manualFeedback) {
+            log.debug("tutor is responsible to process feedback request: {}", exerciseId);
+            groupNotificationService.notifyTutorGroupAboutNewFeedbackRequest(programmingExercise);
+            return setIndividualDueDateAndLockRepository(participation, programmingExercise, true);
+        }
         if (this.athenaFeedbackSuggestionsService.isPresent()) {
             this.checkRateLimitOrThrow(participation);
             CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(participation, programmingExercise));
             return participation;
         }
         else {
-            log.debug("tutor is responsible to process feedback request: {}", exerciseId);
-            groupNotificationService.notifyTutorGroupAboutNewFeedbackRequest(programmingExercise);
-            return setIndividualDueDateAndLockRepository(participation, programmingExercise, true);
+            throw new InternalServerErrorException("Athena is not available, but is required to answer this request.");
         }
     }
 

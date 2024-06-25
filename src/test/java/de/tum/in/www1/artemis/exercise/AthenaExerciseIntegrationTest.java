@@ -95,7 +95,7 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
         courseRepository.save(course);
 
         textExercise.setId(null);
-        textExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
+        textExercise.setGradedFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
 
         request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
     }
@@ -104,7 +104,7 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testCreateTextExercise_useRestrictedAthenaModule_badRequest() throws Exception {
         textExercise.setId(null);
-        textExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
+        textExercise.setGradedFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
 
         request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
@@ -115,7 +115,7 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
         course.setRestrictedAthenaModulesAccess(true);
         courseRepository.save(course);
 
-        textExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
+        textExercise.setGradedFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
 
         request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.OK);
     }
@@ -123,7 +123,7 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testUpdateTextExercise_useRestrictedAthenaModule_badRequest() throws Exception {
-        textExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
+        textExercise.setGradedFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
 
         request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
@@ -134,7 +134,7 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
         textExercise.setDueDate(ZonedDateTime.now());
         textExerciseRepository.save(textExercise);
 
-        textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
+        textExercise.setGradedFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
 
         request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
@@ -144,7 +144,7 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
     void testCreateExamTextExercise_useAthena_badRequest() throws Exception {
         ExerciseGroup group = examUtilService.addExerciseGroupWithExamAndCourse(true);
         TextExercise examTextExercise = TextExerciseFactory.generateTextExerciseForExam(group);
-        examTextExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
+        examTextExercise.setGradedFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
 
         request.postWithResponseBody("/api/text-exercises", examTextExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
@@ -167,16 +167,16 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
         courseRepository.save(course);
 
         // Set allowed modules for the default exercises
-        textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
-        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
+        textExercise.setGradedFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
+        programmingExercise.setGradedFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
 
         // Create two new exercises
         TextExercise textExerciseRestrictedModule = textExerciseUtilService.createSampleTextExercise(course);
         ProgrammingExercise programmingExerciseRestrictedModule = programmingExerciseUtilService.createSampleProgrammingExercise();
         course.addExercises(programmingExerciseRestrictedModule);
         // Set restricted modules for two new exercises
-        textExerciseRestrictedModule.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
-        programmingExerciseRestrictedModule.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_PROGRAMMING_TEST);
+        textExerciseRestrictedModule.setGradedFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
+        programmingExerciseRestrictedModule.setGradedFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_PROGRAMMING_TEST);
 
         // Save all exercise changes
         textExerciseRepository.saveAll(List.of(textExercise, textExerciseRestrictedModule));
@@ -197,14 +197,15 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
         TextExercise updatedTextExerciseRestrictedModule = request.get("/api/text-exercises/" + textExerciseRestrictedModule.getId(), HttpStatus.OK, TextExercise.class);
 
         // Check that the default exercises still have their module set
-        assertThat(updatedProgrammingExercise.getFeedbackSuggestionModule()).as("Athena module for the programming exercise was unchanged")
-                .isEqualTo(programmingExercise.getFeedbackSuggestionModule());
-        assertThat(updatedTextExercise.getFeedbackSuggestionModule()).as("Athena module for the text exercise was unchanged").isEqualTo(textExercise.getFeedbackSuggestionModule());
+        assertThat(updatedProgrammingExercise.getGradedFeedbackSuggestionModule()).as("Athena module for the programming exercise was unchanged")
+                .isEqualTo(programmingExercise.getGradedFeedbackSuggestionModule());
+        assertThat(updatedTextExercise.getGradedFeedbackSuggestionModule()).as("Athena module for the text exercise was unchanged")
+                .isEqualTo(textExercise.getGradedFeedbackSuggestionModule());
 
         // Check that the two additional exercises do not have a restricted module set
-        assertThat(updatedProgrammingExerciseRestrictedModule.getFeedbackSuggestionModule())
+        assertThat(updatedProgrammingExerciseRestrictedModule.getGradedFeedbackSuggestionModule())
                 .as("access to restricted Athena module for the programming exercise was revoked successfully").isNull();
-        assertThat(updatedTextExerciseRestrictedModule.getFeedbackSuggestionModule()).as("access to restricted Athena module for the text exercise was revoked successfully")
+        assertThat(updatedTextExerciseRestrictedModule.getGradedFeedbackSuggestionModule()).as("access to restricted Athena module for the text exercise was revoked successfully")
                 .isNull();
     }
 }
