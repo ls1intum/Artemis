@@ -24,6 +24,7 @@ A prerequisite is a competency that students are expected to have already master
 Competencies measure two metrics for each student:
 The progress starts at 0% and increases with every completed lecture unit and with the achieved score in exercises linked to the competency. The growth is linear, e.g. completing half of the lecture units and scoring 50% in all linked exercises results in 50% progress.
 The mastery is a weighted metric and is influenced by the following heuristics:
+
 * The mastery increases when the latest scores of the student are higher than the average score of all linked exercises and vice versa.
 * The mastery increases when the student proportionally achieved more points in exercises marked as hard compared to the distribution of points in the competency and vice versa.
 * A similar measurement applies to easy exercises, where the mastery is decreased for achieving proportionally more points in easy exercises.
