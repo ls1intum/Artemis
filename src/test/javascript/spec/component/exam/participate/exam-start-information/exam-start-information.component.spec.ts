@@ -159,7 +159,7 @@ describe('ExamStartInformationComponent', () => {
 
         component.exam = exam1;
         component.studentExam = studentExam1;
-        const informationBoxStub = jest.spyOn(component, 'prepareEachInformationBox');
+        const informationBoxStub = jest.spyOn(component, 'buildInformationBox');
         const informationBoxDataStub = jest.spyOn(component, 'prepareInformationBoxData');
         fixture.detectChanges();
         expect(informationBoxStub).toHaveBeenCalledTimes(8);
