@@ -27,7 +27,7 @@ The mastery is a weighted metric and is influenced by the following heuristics:
 - The mastery increases when the latest scores of the student are higher than the average score of all linked exercises and vice versa.
 - The mastery increases when the student proportionally achieved more points in exercises marked as hard compared to the distribution of points in the competency and vice versa.
 - A similar measurement applies to easy exercises, where the mastery is decreased for achieving proportionally more points in easy exercises.
-- If the student quickly solves programming exercises with a score of at least 80% based on the amount of pushes, the mastery increases. There is no decrease in mastery for slower student!
+- If the student quickly solves programming exercises with a score of at least 80% based on the amount of pushes, the mastery increases. There is no decrease in mastery for slower students!
 
 Manage Competencies
 ^^^^^^^^^^^^^^^^^^^^
