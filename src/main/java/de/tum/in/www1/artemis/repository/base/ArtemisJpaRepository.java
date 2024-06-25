@@ -46,8 +46,8 @@ public interface ArtemisJpaRepository<T, ID> extends JpaRepository<T, ID> {
      * Find an entity by its id and given specification without using limiting internally.
      *
      * @param spec the specification to apply
-     * @param id   the id of the entity to find
-     * @return the entity with the given id
+     * @param id   the id of the entity to find, it will augment spec with an <bold>and</bold> operator
+     * @return the entity that corresponds to spec and has the given id
      */
     Optional<T> findOneById(Specification<T> spec, ID id);
 

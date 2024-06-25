@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.repository.hestia;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
-import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -20,10 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.hestia.CoverageReport;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
+import de.tum.in.www1.artemis.service.dto.CoverageReportAndSubmissionDate;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-
-record CoverageReportAndSubmissionDate(CoverageReport coverageReport, ZonedDateTime submissionDate) {
-}
 
 /**
  * Spring Data JPA repository for the CoverageReport entity.
@@ -39,7 +36,7 @@ public interface CoverageReportRepository extends ArtemisJpaRepository<CoverageR
     void deleteBySubmissionId(Long submissionId);
 
     @Query("""
-            SELECT new de.tum.in.www1.artemis.repository.hestia.CoverageReportAndSubmissionDate(r, s.submissionDate)
+            SELECT new de.tum.in.www1.artemis.service.dto.CoverageReportAndSubmissionDate(r, s.submissionDate)
             FROM CoverageReport r
                 JOIN r.submission s
                 JOIN ProgrammingExercise pe ON s.participation = pe.solutionParticipation

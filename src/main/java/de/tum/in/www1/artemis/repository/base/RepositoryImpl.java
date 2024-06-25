@@ -90,8 +90,8 @@ public class RepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID> {
      * Find an entity by its id and given specification without using limiting internally.
      *
      * @param spec the specification to apply
-     * @param id   the id of the base entity to find
-     * @return the entity with the given id
+     * @param id   the id of the entity to find, it will augment spec with an <bold>and</bold> operator
+     * @return the entity that corresponds to spec and has the given id
      */
     @NotNull
     public Optional<T> findOneById(Specification<T> spec, ID id) {
@@ -124,8 +124,8 @@ public class RepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID> {
      * Find an entity by its id and given specification without using limiting internally or throw if none found.
      *
      * @param spec the specification to apply
-     * @param id   the id of the base entity to find
-     * @return the entity with the given id
+     * @param id   the id of the entity to find, it will augment spec with an <bold>and</bold> operator
+     * @return the entity that corresponds to spec and has the given id
      */
     @NotNull
     public T findOneByIdOrElseThrow(Specification<T> spec, ID id) {

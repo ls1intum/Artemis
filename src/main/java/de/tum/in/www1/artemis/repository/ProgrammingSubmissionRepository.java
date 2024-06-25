@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.repository;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
-import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -19,10 +18,8 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
+import de.tum.in.www1.artemis.service.dto.ProgrammingSubmissionIdAndSubmissionDate;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-
-record ProgrammingSubmissionIdAndSubmissionDate(long programmingSubmissionId, ZonedDateTime submissionDate) {
-}
 
 /**
  * Spring Data JPA repository for the ProgrammingSubmission entity.
@@ -51,7 +48,7 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
     }
 
     @Query("""
-            SELECT new de.tum.in.www1.artemis.repository.ProgrammingSubmissionIdAndSubmissionDate(ps.id, ps.submissionDate)
+            SELECT new de.tum.in.www1.artemis.service.dto.ProgrammingSubmissionIdAndSubmissionDate(ps.id, ps.submissionDate)
             FROM ProgrammingSubmission ps
             WHERE ps.participation.id = :participationId ORDER BY ps.submissionDate DESC
             """)
@@ -78,7 +75,7 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
     }
 
     @Query("""
-            SELECT new de.tum.in.www1.artemis.repository.ProgrammingSubmissionIdAndSubmissionDate(s.id, s.submissionDate)
+            SELECT new de.tum.in.www1.artemis.service.dto.ProgrammingSubmissionIdAndSubmissionDate(s.id, s.submissionDate)
             FROM ProgrammingSubmission s
                 JOIN s.participation p
                 JOIN p.exercise e
