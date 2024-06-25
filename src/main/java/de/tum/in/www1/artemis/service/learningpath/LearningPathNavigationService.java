@@ -46,6 +46,14 @@ public class LearningPathNavigationService {
         var currentLearningObject = learningPathRecommendationService.getCurrentUncompletedLearningObject(learningPath.getUser(), recommendationState);
         var recommendationStateWithAllCompetencies = learningPathRecommendationService.getRecommendedOrderOfAllCompetencies(learningPath);
 
+        if (currentLearningObject == null) {
+            var lastCompletedCompetencyId = recommendationStateWithAllCompetencies.recommendedOrderOfCompetencies().getLast();
+            var lastCompletedCompetency = recommendationStateWithAllCompetencies.competencyIdMap().get(lastCompletedCompetencyId);
+            var recommendedLearningObjectsInLastCompetency = learningPathRecommendationService.getOrderOfLearningObjectsForCompetency(lastCompletedCompetency,
+                    learningPath.getUser());
+            currentLearningObject = recommendedLearningObjectsInLastCompetency.getLast();
+        }
+
         return getNavigationRelativeToLearningObject(recommendationStateWithAllCompetencies, currentLearningObject, learningPath);
     }
 
@@ -88,12 +96,15 @@ public class LearningPathNavigationService {
             List<LearningObject> learningObjectsInCurrentCompetency, int indexOfCurrentLearningObject, User user) {
         LearningObject predecessorLearningObject = null;
         if (indexOfCurrentLearningObject == 0) {
-            int indexOfCurrentCompetency = recommendationState.recommendedOrderOfCompetencies().indexOf(currentCompetency.getId());
-            if (indexOfCurrentCompetency > 0) {
-                long previousCompetencyId = recommendationState.recommendedOrderOfCompetencies().get(indexOfCurrentCompetency - 1);
-                var previousCompetency = recommendationState.competencyIdMap().get(previousCompetencyId);
-                var learningObjectsInPreviousCompetency = learningPathRecommendationService.getOrderOfLearningObjectsForCompetency(previousCompetency, user);
-                predecessorLearningObject = learningObjectsInPreviousCompetency.getLast();
+            int indexOfCompetencyToSearch = recommendationState.recommendedOrderOfCompetencies().indexOf(currentCompetency.getId()) - 1;
+            while (indexOfCompetencyToSearch >= 0 && predecessorLearningObject == null) {
+                long competencyIdToSearchNext = recommendationState.recommendedOrderOfCompetencies().get(indexOfCompetencyToSearch);
+                var competencyToSearch = recommendationState.competencyIdMap().get(competencyIdToSearchNext);
+                var learningObjectsInPreviousCompetency = learningPathRecommendationService.getOrderOfLearningObjectsForCompetency(competencyToSearch, user);
+                if (!learningObjectsInPreviousCompetency.isEmpty()) {
+                    predecessorLearningObject = learningObjectsInPreviousCompetency.getLast();
+                }
+                indexOfCompetencyToSearch--;
             }
         }
         else {
@@ -106,12 +117,15 @@ public class LearningPathNavigationService {
             List<LearningObject> learningObjectsInCurrentCompetency, int indexOfCurrentLearningObject, User user) {
         LearningObject successorLearningObject = null;
         if (indexOfCurrentLearningObject == learningObjectsInCurrentCompetency.size() - 1) {
-            int indexOfCurrentCompetency = recommendationState.recommendedOrderOfCompetencies().indexOf(currentCompetency.getId());
-            if (indexOfCurrentCompetency < recommendationState.recommendedOrderOfCompetencies().size() - 1) {
-                long nextCompetencyId = recommendationState.recommendedOrderOfCompetencies().get(indexOfCurrentCompetency + 1);
-                var nextCompetency = recommendationState.competencyIdMap().get(nextCompetencyId);
-                var learningObjectsInNextCompetency = learningPathRecommendationService.getOrderOfLearningObjectsForCompetency(nextCompetency, user);
-                successorLearningObject = learningObjectsInNextCompetency.getFirst();
+            int indexOfCompetencyToSearch = recommendationState.recommendedOrderOfCompetencies().indexOf(currentCompetency.getId()) + 1;
+            while (indexOfCompetencyToSearch < recommendationState.recommendedOrderOfCompetencies().size() && successorLearningObject == null) {
+                long competencyIdToSearchNext = recommendationState.recommendedOrderOfCompetencies().get(indexOfCompetencyToSearch);
+                var nextCompetencyToSearch = recommendationState.competencyIdMap().get(competencyIdToSearchNext);
+                var learningObjectsInNextCompetency = learningPathRecommendationService.getOrderOfLearningObjectsForCompetency(nextCompetencyToSearch, user);
+                if (!learningObjectsInNextCompetency.isEmpty()) {
+                    successorLearningObject = learningObjectsInNextCompetency.getFirst();
+                }
+                indexOfCompetencyToSearch++;
             }
         }
         else {

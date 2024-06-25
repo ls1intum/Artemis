@@ -164,15 +164,15 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
             competencyRelationRepository.save(relation);
         }
 
-        textExercise = createAndLinkTextExercise(competencies[0], false);
-
         lecture = new Lecture();
         lecture.setDescription("Test Lecture");
         lecture.setCourse(course);
         lectureRepository.save(lecture);
 
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
-        textUnit = createAndLinkTextUnit(student, competencies[1], true);
+
+        textUnit = createAndLinkTextUnit(student, competencies[0], true);
+        textExercise = createAndLinkTextExercise(competencies[1], false);
     }
 
     private ZonedDateTime now() {
@@ -667,6 +667,9 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+
+        competencyProgressService.updateProgressByLearningObject(textUnit, Set.of(student));
+
         final var result = request.get("/api/learning-path/" + learningPath.getId() + "/navigation", HttpStatus.OK, LearningPathNavigationDTO.class);
 
         var predecessorLearningObject = result.predecessorLearningObject();
@@ -677,10 +680,11 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         var currentLearningObject = result.currentLearningObject();
         assertThat(currentLearningObject).isNotNull();
         assertThat(currentLearningObject.type()).isEqualTo(LearningPathNavigationObjectDTO.LearningObjectType.EXERCISE);
-        assertThat(currentLearningObject.id()).isNotNull();
+        assertThat(currentLearningObject.id()).isEqualTo(textExercise.getId());
 
         assertThat(result.successorLearningObject()).isNull();
-        assertThat(result.progress()).isEqualTo(learningPath.getProgress());
+
+        assertThat(result.progress()).isEqualTo(20);
     }
 
     @Test
@@ -759,12 +763,12 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         var result = request.getList("/api/learning-path/" + learningPath.getId() + "/competencies/" + competencies[0].getId() + "/learning-objects", HttpStatus.OK,
                 LearningPathNavigationObjectDTO.class);
 
-        assertThat(result).containsExactly(LearningPathNavigationObjectDTO.of(textExercise, false));
+        assertThat(result).containsExactly(LearningPathNavigationObjectDTO.of(textUnit, true));
 
         result = request.getList("/api/learning-path/" + learningPath.getId() + "/competencies/" + competencies[1].getId() + "/learning-objects", HttpStatus.OK,
                 LearningPathNavigationObjectDTO.class);
 
-        assertThat(result).containsExactly(LearningPathNavigationObjectDTO.of(textUnit, true));
+        assertThat(result).containsExactly(LearningPathNavigationObjectDTO.of(textExercise, false));
     }
 
     @Test
