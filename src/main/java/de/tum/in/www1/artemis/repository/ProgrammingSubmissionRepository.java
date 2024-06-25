@@ -52,7 +52,7 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
             FROM ProgrammingSubmission ps
             WHERE ps.participation.id = :participationId ORDER BY ps.submissionDate DESC
             """)
-    Optional<ProgrammingSubmission> findFirstIdByParticipationIdOrderBySubmissionDateDesc(@Param("participationId") long participationId);
+    Optional<ProgrammingSubmissionIdAndSubmissionDate> findFirstIdByParticipationIdOrderBySubmissionDateDesc(@Param("participationId") long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = { "results" })
     Optional<ProgrammingSubmission> findProgrammingSubmissionWithResultsById(long programmingSubmissionId);
@@ -66,11 +66,11 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
      *         or an empty {@code Optional} if no submission is found
      */
     default Optional<ProgrammingSubmission> findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(long programmingSubmissionId) {
-        Optional<ProgrammingSubmission> programmingSubmissionOptional = findFirstIdByParticipationIdOrderBySubmissionDateDesc(programmingSubmissionId);
+        Optional<ProgrammingSubmissionIdAndSubmissionDate> programmingSubmissionOptional = findFirstIdByParticipationIdOrderBySubmissionDateDesc(programmingSubmissionId);
         if (programmingSubmissionOptional.isEmpty()) {
             return Optional.empty();
         }
-        long id = programmingSubmissionOptional.get().getId();
+        long id = programmingSubmissionOptional.get().programmingSubmissionId();
         return findProgrammingSubmissionWithResultsById(id);
     }
 
