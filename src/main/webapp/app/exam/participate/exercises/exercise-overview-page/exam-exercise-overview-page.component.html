@@ -41,20 +41,20 @@
                         {{ i + 1 }}
                     </td>
                     <td style="max-width: 30px">
-                        <div [ngbTooltip]="getIconTooltip(item.exercise.type) | artemisTranslate">
-                            <fa-icon [icon]="getIcon(item.exercise.type)" placement="right auto" />
+                        <div>
+                            <fa-icon [ngbTooltip]="getIconTooltip(item.exercise.type) | artemisTranslate" [icon]="getIcon(item.exercise.type)" placement="right auto" />
                         </div>
                     </td>
                     <td style="max-width: 100px; font-weight: bold">
                         <a class="w-100" (click)="openExercise(item.exercise)">
-                            {{ item.exercise.exerciseGroup?.title }}
+                            {{ item.exercise.title }}
                         </a>
                     </td>
                     <td style="max-width: 30px">
                         {{ item.exercise.maxPoints }}
                     </td>
                     <td style="max-width: 50px; font-weight: bold">
-                        <div style="display: flex; align-items: center">
+                        <div class="d-flex justify-content-between gap-3" style="align-items: center">
                             <div
                                 style="max-width: 10px; margin-right: 10px"
                                 [ngClass]="setExerciseIconStatus(item)"

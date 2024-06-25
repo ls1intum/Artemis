@@ -62,12 +62,10 @@ describe('ExamStartInformationComponent', () => {
         jest.resetAllMocks();
     });
 
-    it('should initialize', () => {
+    it('should initialize with the correct start date', () => {
         component.exam = exam;
         component.studentExam = studentExam;
         fixture.detectChanges();
-        component.ngOnInit();
-        expect(fixture).toBeDefined();
         expect(component.startDate).toEqual(exam.startDate);
     });
 
@@ -76,8 +74,6 @@ describe('ExamStartInformationComponent', () => {
         component.exam = exam;
         component.studentExam = studentExam;
         fixture.detectChanges();
-        component.ngOnInit();
-        expect(fixture).toBeDefined();
         expect(component.startDate).toBeUndefined();
     });
 
@@ -86,8 +82,6 @@ describe('ExamStartInformationComponent', () => {
         component.exam = exam;
         component.studentExam = studentExam;
         fixture.detectChanges();
-        component.ngOnInit();
-        expect(fixture).toBeDefined();
         expect(component.totalPoints).toBe(120);
     });
 
@@ -96,8 +90,6 @@ describe('ExamStartInformationComponent', () => {
         component.exam = exam;
         component.studentExam = studentExam;
         fixture.detectChanges();
-        component.ngOnInit();
-        expect(fixture).toBeDefined();
         expect(component.totalWorkingTimeInMinutes).toBe(120);
     });
 
@@ -106,8 +98,6 @@ describe('ExamStartInformationComponent', () => {
         component.exam = exam;
         component.studentExam = studentExam;
         fixture.detectChanges();
-        component.ngOnInit();
-        expect(fixture).toBeDefined();
         expect(component.moduleNumber).toBe('IN18000');
     });
 
@@ -116,8 +106,6 @@ describe('ExamStartInformationComponent', () => {
         component.exam = exam;
         component.studentExam = studentExam;
         fixture.detectChanges();
-        component.ngOnInit();
-        expect(fixture).toBeDefined();
         expect(component.courseName).toBe('Software Engineering');
     });
 
@@ -126,8 +114,6 @@ describe('ExamStartInformationComponent', () => {
         component.exam = exam;
         component.studentExam = studentExam;
         fixture.detectChanges();
-        component.ngOnInit();
-        expect(fixture).toBeDefined();
         expect(component.examiner).toBe('Prof. Dr. Stephan Krusche');
     });
 
@@ -136,8 +122,6 @@ describe('ExamStartInformationComponent', () => {
         component.exam = exam;
         component.studentExam = studentExam;
         fixture.detectChanges();
-        component.ngOnInit();
-        expect(fixture).toBeDefined();
         expect(component.numberOfExercisesInExam).toBe(10);
     });
 
@@ -145,8 +129,6 @@ describe('ExamStartInformationComponent', () => {
         component.exam = exam;
         component.studentExam = studentExam;
         fixture.detectChanges();
-        component.ngOnInit();
-        expect(fixture).toBeDefined();
         expect(component.examinedStudent).toBe('Test User');
     });
 
@@ -155,8 +137,6 @@ describe('ExamStartInformationComponent', () => {
         component.exam = exam;
         component.studentExam = studentExam;
         fixture.detectChanges();
-        component.ngOnInit();
-        expect(fixture).toBeDefined();
         expect(component.startDate).toStrictEqual(examStartDate);
     });
 
@@ -181,8 +161,7 @@ describe('ExamStartInformationComponent', () => {
         component.studentExam = studentExam1;
         const informationBoxStub = jest.spyOn(component, 'prepareEachInformationBox');
         const informationBoxDataStub = jest.spyOn(component, 'prepareInformationBoxData');
-        component.ngOnInit();
-        expect(fixture).toBeDefined();
+        fixture.detectChanges();
         expect(informationBoxStub).toHaveBeenCalledTimes(8);
         expect(informationBoxDataStub).toHaveBeenCalledOnce();
     });

@@ -290,6 +290,7 @@
         "examParticipation": {
             "timer": "Time left: ",
             "timerEndView": "Time left to submit: ",
+            "exerciseOverview": "This is the exercise overview",
             "connected": "Your answers will be saved every 30s.",
             "ideConnected": "Your answers have to be submitted manually.",
             "disconnected": "You are disconnected. Please check your internet connection. You can continue working, but you need to be connected in order to save changes!",

@@ -26,6 +26,7 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform {
      *
      * @param seconds the number of seconds that are turned into a human-readable format
      * @param short allows the format to be shortened
+     * @param isExam determines if this transformation is used for the student exam view
      */
     transform(seconds: number, short = false, isExam = false): string {
         seconds = Math.max(0, seconds ?? 0);

@@ -5,7 +5,8 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamExerciseOverviewItem } from 'app/entities/exam-exercise-overview-item.model';
 import { ButtonTooltipType, ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
-import { facSaveSuccess } from '../../../../../content/icons/icons';
+import { facSaveSuccess, facSaveWarning } from '../../../../../content/icons/icons';
+import { ExerciseButtonStatus } from 'app/exam/participate/exam-navigation-sidebar/exam-navigation-sidebar.component';
 
 @Component({
     selector: 'jhi-exam-exercise-overview-page',
@@ -17,6 +18,7 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
     @Output() onPageChanged = new EventEmitter<{ overViewChange: boolean; exercise: Exercise; forceSave: boolean }>();
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
+    readonly ExerciseButtonStatus = ExerciseButtonStatus;
 
     examExerciseOverviewItems: ExamExerciseOverviewItem[] = [];
 
@@ -59,24 +61,26 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
      * @param item the item for which the exercise status should be calculated
      * @return the sync status of the exercise (whether the corresponding submission is saved on the server or not)
      */
-    setExerciseIconStatus(item: ExamExerciseOverviewItem): 'synced' | '' {
-        // start with a yellow status (edit icon)
-        item.icon = faHourglassHalf;
+    setExerciseIconStatus(item: ExamExerciseOverviewItem): ExerciseButtonStatus {
         const submission = ExamParticipationService.getSubmissionForExercise(item.exercise);
+        // start with exercise not started icon
+        item.icon = faHourglassHalf;
         if (!submission) {
             // in case no participation/submission yet exists -> display synced
-            return 'synced';
+            // this should only occur for programming exercises
+            return ExerciseButtonStatus.Synced;
         }
-        if (submission.submitted) {
+        if (submission.submitted && submission.isSynced) {
             item.icon = facSaveSuccess;
+            return ExerciseButtonStatus.SyncedSaved;
         }
         if (submission.isSynced) {
-            // make status blue
-            return 'synced';
+            // make save icon green
+            return ExerciseButtonStatus.Synced;
         } else {
-            // make status yellow
-            item.icon = faHourglassHalf;
-            return '';
+            // make save icon yellow except for programming exercises with only offline IDE
+            item.icon = facSaveWarning;
+            return ExerciseButtonStatus.NotSynced;
         }
     }
 

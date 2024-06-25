@@ -39,8 +39,7 @@
             </div>
         </div>
     </div>
-}
-@if (!studentFailedToSubmit) {
+} @else {
     @if (startView) {
         <div class="px-3 pb-3" [ngClass]="{ 'content-height-dev': (!isProduction || isTestServer) && !testRunStartTime, 'scrollable-content-exam-cover': !testRunStartTime }">
             <div class="d-flex justify-content-between">
@@ -75,8 +74,8 @@
 
             <div class="mb-4 fw-bold" jhiTranslate="artemisApp.exam.startConsentText"></div>
             <div class="login-form mb-4">
-                <div class="row" style="padding-bottom: 0; margin-bottom: 0">
-                    <div class="form-group" style="padding-bottom: 0; margin-bottom: 0; width: unset">
+                <div class="row pb-0 mb-0">
+                    <div class="form-group pb-0 mb-0" style="width: unset">
                         <input
                             size="40"
                             type="text"
@@ -91,7 +90,7 @@
                     </div>
                 </div>
                 <div class="row">
-                    <div id="your-name" class="md-6" style="font-weight: lighter">
+                    <div id="your-name" class="md-6 fw-lighter">
                         <span> {{ 'artemisApp.examParticipation.nameDisplay' | artemisTranslate: { fullName: accountName } }} </span>
                     </div>
                 </div>
@@ -144,7 +143,6 @@
                     class="form-check-input"
                     [class.ms-0]="!this.exam.confirmationEndText"
                     [required]="inserted"
-                    [disabled]="false"
                 />
                 <label for="confirmBox" id="formatted-confirmation-text" class="form-check-label" [innerHTML]="formattedConfirmationText"></label>
             </div>
@@ -156,7 +154,7 @@
                         </div>
                     </div>
                     <div class="row justify-content-center" style="padding-bottom: 0; margin-bottom: 0">
-                        <div class="form-group" style="padding-bottom: 0; margin-bottom: 0; width: unset">
+                        <div class="form-group pb-0 mb-0" style="width: unset">
                             <input
                                 size="50"
                                 type="text"
@@ -166,12 +164,11 @@
                                 [placeholder]="'artemisApp.examParticipation.namePlaceholder' | artemisTranslate"
                                 [(ngModel)]="enteredName"
                                 [ngModelOptions]="{ updateOn: 'change' }"
-                                [disabled]="false"
                             />
                         </div>
                     </div>
                     <div class="row justify-content-center">
-                        <div id="your-name" class="col-md-6" style="font-weight: lighter">
+                        <div id="your-name" class="col-md-6 fw-lighter">
                             <span> ({{ 'artemisApp.examParticipation.nameDisplay' | artemisTranslate: { fullName: accountName } }}) </span>
                         </div>
                     </div>
@@ -191,8 +188,8 @@
                     </div>
                 </div>
                 @if (handInEarly) {
-                    <div class="mb-2 font-weight-bold text-danger">
-                        <span jhiTranslate="artemisApp.examParticipation.handInEarly" style="font-weight: 900"></span>
+                    <div class="mb-2 fw-bold text-danger">
+                        <span jhiTranslate="artemisApp.examParticipation.handInEarly"></span>
                         <br />
                         <span jhiTranslate="artemisApp.examParticipation.handInEarlyNoticeFirstSentence"></span>
                         <br />

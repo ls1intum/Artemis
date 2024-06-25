@@ -15,9 +15,9 @@ export class JhiConnectionStatusComponent implements OnInit, OnDestroy {
     websocketStatusSubscription: Subscription;
 
     // Icons
-    faCircle = faCircle;
-    faTowerBroadcast = faTowerBroadcast;
-    faExclamation = faExclamation;
+    readonly faCircle = faCircle;
+    readonly faTowerBroadcast = faTowerBroadcast;
+    readonly faExclamation = faExclamation;
 
     constructor(private websocketService: JhiWebsocketService) {}
 

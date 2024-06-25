@@ -12,7 +12,7 @@ import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storag
 import { TranslateService } from '@ngx-translate/core';
 import { ExamBarComponent } from 'app/exam/participate/exam-bar/exam-bar.component';
 
-describe('Exam Bar Component', () => {
+describe('ExamBarComponent', () => {
     let fixture: ComponentFixture<ExamBarComponent>;
     let comp: ExamBarComponent;
 
@@ -50,7 +50,7 @@ describe('Exam Bar Component', () => {
         fixture.detectChanges();
     });
 
-    it('trigger when the exam is about to end', () => {
+    it('trigger emit and call saveExercise when the exam is about to end', () => {
         jest.spyOn(comp, 'saveExercise');
         jest.spyOn(comp.examAboutToEnd, 'emit');
 

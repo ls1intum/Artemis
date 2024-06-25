@@ -258,9 +258,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
         if (this.routerEventSubscription) {
             this.routerEventSubscription.unsubscribe();
         }
-        if (this.examStartedSubscription) {
-            this.examStartedSubscription.unsubscribe();
-        }
         if (this.examActiveCheckFuture) {
             clearTimeout(this.examActiveCheckFuture);
         }
@@ -268,6 +265,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             this.standardizedCompetencySubscription.unsubscribe();
         }
         this.queryParamsSubscription?.unsubscribe();
+        this.examStartedSubscription?.unsubscribe();
     }
 
     breadcrumbTranslation = {

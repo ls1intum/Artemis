@@ -21,7 +21,7 @@ import { facSaveSuccess, facSaveWarning } from 'src/main/webapp/content/icons/ic
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ExamLiveEventsButtonComponent } from 'app/exam/participate/events/exam-live-events-button.component';
 
-describe('Exam Navigation Sidebar Component', () => {
+describe('ExamNavigationSidebarComponent', () => {
     let fixture: ComponentFixture<ExamNavigationSidebarComponent>;
     let comp: ExamNavigationSidebarComponent;
     let repositoryService: CodeEditorRepositoryService;

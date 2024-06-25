@@ -25,6 +25,12 @@ import { faChevronRight, faFileLines, faHourglassHalf } from '@fortawesome/free-
 import { facSaveSuccess, facSaveWarning } from '../../../../content/icons/icons';
 import { getIconTooltip } from 'app/entities/exercise.model';
 
+export enum ExerciseButtonStatus {
+    Synced = 'synced',
+    SyncedSaved = 'synced saved',
+    NotSynced = 'notSynced',
+}
+
 @Component({
     selector: 'jhi-exam-navigation-sidebar',
     standalone: true,
@@ -56,6 +62,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     icon: IconProp;
     overviewIcon: IconProp = faFileLines;
     faChevronRight = faChevronRight;
+    readonly ExerciseButtonStatus = ExerciseButtonStatus;
 
     profileSubscription?: Subscription;
     isProduction = true;
@@ -63,7 +70,6 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     isCollapsed: boolean = false;
     exerciseId: string;
     numberOfSavedExercises: number = 0;
-    isExerciseSaved: boolean[] = new Array(this.exercises.length).fill(false);
 
     constructor(
         private profileService: ProfileService,
@@ -194,12 +200,12 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
      * @param exerciseIndex index of the exercise
      * @return the sync status of the exercise (whether the corresponding submission is saved on the server or not)
      */
-    setExerciseButtonStatus(exerciseIndex: number): 'synced' | 'synced saved' | 'notSynced' {
+    setExerciseButtonStatus(exerciseIndex: number): ExerciseButtonStatus {
         this.icon = facSaveSuccess;
         // If we are in the exam timeline we do not use not synced as not synced shows
         // that the current submission is not saved which doesn't make sense in the timeline.
         if (this.examTimeLineView) {
-            return this.exerciseIndex === exerciseIndex ? 'synced saved' : 'synced';
+            return this.exerciseIndex === exerciseIndex ? ExerciseButtonStatus.SyncedSaved : ExerciseButtonStatus.Synced;
         }
 
         // start with a yellow status (save warning icon)
@@ -211,20 +217,20 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
         if (!submission) {
             // in case no participation/submission yet exists -> display synced
             // this should only occur for programming exercises
-            return 'synced';
+            return ExerciseButtonStatus.Synced;
         }
         if (submission.submitted && submission.isSynced) {
             this.icon = facSaveSuccess;
             this.refreshExerciseSaveCount();
-            return 'synced saved';
+            return ExerciseButtonStatus.SyncedSaved;
         }
         if (submission.isSynced || this.isOnlyOfflineIDE(exercise)) {
             // make save icon green
-            return 'synced';
+            return ExerciseButtonStatus.Synced;
         } else {
             // make save icon yellow except for programming exercises with only offline IDE
             this.icon = facSaveWarning;
-            return 'notSynced';
+            return ExerciseButtonStatus.NotSynced;
         }
     }
 

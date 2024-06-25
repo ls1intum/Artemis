@@ -10,7 +10,6 @@ export type ExamGroupCategory = 'real' | 'test';
 export type TutorialGroupCategory = 'all' | 'registered' | 'further';
 export type SidebarTypes = 'exercise' | 'exam' | 'inExam' | 'conversation' | 'default';
 export type AccordionGroups = Record<TimeGroupCategory | TutorialGroupCategory | ExamGroupCategory | ChannelGroupCategory | string, { entityData: SidebarCardElement[] }>;
-export type ExerciseCollapseState = Record<TimeGroupCategory, boolean>;
 export type ChannelGroupCategory =
     | 'favoriteChannels'
     | 'generalChannels'
@@ -72,8 +71,6 @@ export interface SidebarCardElement {
      * the item.
      */
     routerLink?: string;
-
-    // TODO Extra Exercise Part
     /**
      * Set for Exercises
      */
@@ -94,9 +91,8 @@ export interface SidebarCardElement {
      * Set for Exercises. Will be removed after refactoring
      */
     exercise?: Exercise;
-    // TODO Extra Exam Part
     /**
-     * This is a string which may define an icon for the status of the exam.
+     * Set For Exam, this is a string which may define an icon for the status of the exam.
      * It has to be a valid FontAwesome icon name and will be displayed in the
      * 'regular' style. Needed for future implementation
      */
@@ -114,14 +110,13 @@ export interface SidebarCardElement {
      */
     workingTime?: number;
     /**
-     * Set for exam, shows the maximum attainable Points
+     * Set for Exam, shows the maximum attainable Points
      */
     attainablePoints?: number;
     /**
-     * Set for exam, indetifies the current status of an exam exercise for exam sidebar
+     * Set for Exam, indetifies the current status of an exam exercise for exam sidebar
      */
     rightIcon?: IconProp;
-    // TODO Extra Conversation Part
     /**
      * Set for Conversation. Will be removed after refactoring
      */

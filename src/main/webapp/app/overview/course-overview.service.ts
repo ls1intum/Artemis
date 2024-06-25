@@ -73,6 +73,7 @@ export class CourseOverviewService {
             const upcomingExam = exams?.reduce((a, b) => ((a?.startDate?.valueOf() ?? 0) > (b?.startDate?.valueOf() ?? 0) ? a : b));
             return upcomingExam;
         }
+        return undefined;
     }
 
     getCorrespondingExerciseGroupByDate(date: dayjs.Dayjs | undefined): TimeGroupCategory {

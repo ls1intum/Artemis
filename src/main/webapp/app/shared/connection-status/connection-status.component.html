@@ -9,8 +9,7 @@
             }
             <span jhiTranslate="connectionStatus.connected"></span>
         </div>
-    }
-    @if (disconnected) {
+    } @else {
         <div [ngClass]="{ 'badge bg-danger connectedExam': isExamMode }">
             @if (isExamMode) {
                 <fa-icon [fixedWidth]="true" [icon]="faExclamation" />

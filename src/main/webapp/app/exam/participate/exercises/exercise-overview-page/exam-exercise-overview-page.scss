@@ -1,4 +1,10 @@
-.synced {
+.notSynced {
+    --fa-secondary-color: var(--bs-body-color);
+    --fa-secondary-opacity: 1; // necessary to set the opacity to 1, because it's 0.4 per default
+    --fa-primary-color: var(--warning);
+}
+
+.saved {
     --fa-secondary-color: var(--bs-body-color);
     --fa-secondary-opacity: 1;
     --fa-primary-color: var(--success);

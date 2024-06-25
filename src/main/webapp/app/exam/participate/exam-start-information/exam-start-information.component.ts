@@ -12,7 +12,6 @@ import dayjs from 'dayjs/esm';
     standalone: true,
     imports: [ArtemisSharedModule, ArtemisSharedComponentModule, InformationBoxComponent, ArtemisExamSharedModule],
     templateUrl: './exam-start-information.component.html',
-    styleUrl: './exam-start-information.component.scss',
 })
 export class ExamStartInformationComponent implements OnInit {
     examInformationBoxData: InformationBox[] = [];
@@ -20,15 +19,15 @@ export class ExamStartInformationComponent implements OnInit {
     @Input() exam: Exam;
     @Input() studentExam: StudentExam;
 
-    totalPoints: number | undefined;
-    totalWorkingTimeInMinutes: number | undefined;
-    moduleNumber: string | undefined;
-    courseName: string | undefined;
-    examiner: string | undefined;
-    numberOfExercisesInExam: number | undefined;
-    examinedStudent: string | undefined;
-    startDate: dayjs.Dayjs | undefined;
-    gracePeriodInMinutes: number | undefined;
+    totalPoints?: number;
+    totalWorkingTimeInMinutes?: number;
+    moduleNumber?: string;
+    courseName?: string;
+    examiner?: string;
+    numberOfExercisesInExam?: number;
+    examinedStudent?: string;
+    startDate?: dayjs.Dayjs;
+    gracePeriodInMinutes?: number;
 
     ngOnInit(): void {
         this.totalPoints = this.exam.examMaxPoints;
@@ -44,11 +43,11 @@ export class ExamStartInformationComponent implements OnInit {
         this.prepareInformationBoxData();
     }
 
-    prepareEachInformationBox(param1: string, param2: string | number, param3?: string): InformationBox {
+    prepareEachInformationBox(boxTitle: string, boxContent: string | number, boxContentComponent?: string): InformationBox {
         const examInformationBoxData: InformationBox = {
-            title: param1 ?? '',
-            content: param2 ?? '',
-            contentComponent: param3,
+            title: boxTitle ?? '',
+            content: boxContent ?? '',
+            contentComponent: boxContentComponent,
         };
         return examInformationBoxData;
     }

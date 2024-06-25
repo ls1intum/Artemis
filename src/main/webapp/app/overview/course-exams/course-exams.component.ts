@@ -26,7 +26,7 @@ const DEFAULT_COLLAPSE_STATE: CollapseState = {
 @Component({
     selector: 'jhi-course-exams',
     templateUrl: './course-exams.component.html',
-    styleUrls: ['./course-exams.component.scss', '../course-overview.scss'],
+    styleUrls: ['./course-exams.component.scss'],
 })
 export class CourseExamsComponent implements OnInit, OnDestroy {
     courseId: number;

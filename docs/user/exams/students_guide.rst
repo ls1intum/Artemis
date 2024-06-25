@@ -132,7 +132,7 @@ Exam Conduction
 
    Exam Navigation Sidebar
 
-- On the header, you will find the exam bar that includes remaining time and the |exam_hand_in_early| button. If you press on this button, you will be sent to the exam `End Screen`_.
+- On the header, you will find the exam bar that includes remaining time and the |exam_hand_in_early| button. If you click this button, you will be sent to the exam `End Screen`_.
 - The *time left* until the end of the exam is also shown next to the button.
 
     .. note::
@@ -152,8 +152,7 @@ Participating in Quiz Exercises
     2. Short Answer questions
     3. Drag and Drop questions
 
-- All questions are listed in the main screen below one another.
-- To navigate between them you can scroll.
+- All questions are listed on the main screen below one another, and you can scroll to navigate between them.
 - You can see the ``question overview`` on the left. Each question representation shows whether that question has been answered or not. The blue background indicates that the question is answered, while the yellow background indicates that the question is not answered.
 - To submit your solution, click on another exercise in the navigation sidebar.
 

@@ -19,7 +19,5 @@ export interface InformationBox {
     styleUrls: ['./information-box.component.scss'],
 })
 export class InformationBoxComponent {
-    constructor() {}
-
     @Input() informationBoxData: InformationBox;
 }

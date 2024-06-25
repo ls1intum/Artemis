@@ -9,14 +9,14 @@
                     <div
                         id="test-sidebar-card-medium"
                         class="pointer rounded-3 col-12 px-1 pt-2 pb-1 mb-2 border-5 highlight-card bg-module"
-                        [ngClass]="{ 'bg-selected border-selected': -1 === exerciseIndex }"
+                        [ngClass]="{ 'bg-selected border-selected': exerciseIndex === -1 }"
                         (click)="changePage(true, -1)"
                     >
                         <div class="d-flex justify-content-between mb-1 align-items-baseline">
                             <span id="test-sidebar-card-title" class="small fw-semibold text-truncate me-2">
-                                <fa-icon [fixedWidth]="true" [icon]="overviewIcon" />
+                                <fa-icon [ngbTooltip]="'artemisApp.examParticipation.exerciseOverview' | artemisTranslate" [fixedWidth]="true" [icon]="overviewIcon" />
                                 @if (!isCollapsed) {
-                                    <span jhiTranslate="artemisApp.studentExamDetail.overview"></span>
+                                    <span class="auto-collapse" jhiTranslate="artemisApp.studentExamDetail.overview"></span>
                                 }
                             </span>
                             <span [ngbTooltip]="'artemisApp.examParticipation.numberOfSavedExercises' | artemisTranslate">
@@ -42,7 +42,9 @@
                                             />
                                         }
                                         @if (!isCollapsed) {
-                                            {{ sidebarItem.title }}
+                                            <span class="auto-collapse">
+                                                {{ sidebarItem.title }}
+                                            </span>
                                         }
                                     </span>
                                     <span
@@ -64,7 +66,7 @@
 
     <div
         id="test-collapse"
-        class="double-arrow mb-2"
+        class="auto-collapse double-arrow mb-2"
         [ngClass]="{ 'menu-closed': isCollapsed }"
         [ngbTooltip]="(isCollapsed ? 'Expand' : 'Collapse') + ' Menu (Ctrl + M)'"
         (click)="toggleCollapseState()"
