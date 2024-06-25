@@ -23,8 +23,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.exception.GitException;
-
 @Service
 @Profile(PROFILE_BUILDAGENT)
 public class BuildAgentSSHKeyService {
@@ -44,22 +42,20 @@ public class BuildAgentSSHKeyService {
 
     @EventListener(ApplicationReadyEvent.class)
     public void applicationReady() {
-        if (useSSHForBuildAgent) {
-            log.info("Using SSH for build agent authentication.");
-        }
         if (!useSSHForBuildAgent) {
             return;
         }
 
+        log.info("Using SSH for build agent authentication.");
+
         if (gitSshPrivateKeyPath.isEmpty()) {
-            throw new GitException("No SSH private key folder was set but should use SSH for build agent authentication.");
+            throw new RuntimeException("No SSH private key folder was set but should use SSH for build agent authentication.");
         }
 
         generateKeyPair();
 
         try {
             writePrivateKey();
-            writePublicKey();
         }
         catch (IOException | GeneralSecurityException e) {
             throw new RuntimeException(e);
@@ -88,17 +84,8 @@ public class BuildAgentSSHKeyService {
         Files.setPosixFilePermissions(privateKeyPath, PosixFilePermissions.fromString("rw-------"));
     }
 
-    private void writePublicKey() throws IOException, GeneralSecurityException {
-        Path publicKeyPath = Path.of(gitSshPrivateKeyPath.orElseThrow(), "id_rsa.pub");
-        OpenSSHKeyPairResourceWriter writer = new OpenSSHKeyPairResourceWriter();
-
-        try (OutputStream outputStream = Files.newOutputStream(publicKeyPath)) {
-            writer.writePublicKey(keyPair, sshKeyComment, outputStream);
-        }
-    }
-
     public String getPublicKeyAsString() {
-        if (!shouldUseSSHForBuildAgent()) {
+        if (!useSSHForBuildAgent) {
             return null;
         }
 
@@ -110,9 +97,5 @@ public class BuildAgentSSHKeyService {
         catch (IOException | GeneralSecurityException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private boolean shouldUseSSHForBuildAgent() {
-        return useSSHForBuildAgent;
     }
 }
