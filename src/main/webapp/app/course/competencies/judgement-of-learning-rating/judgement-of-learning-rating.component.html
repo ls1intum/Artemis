@@ -1,8 +1,11 @@
 <!-- eslint-disable @angular-eslint/template/eqeqeq -->
 <div class="alert alert-info">
-    <b>
-        <span jhiTranslate="artemisApp.courseStudentDashboard.judgementOfLearning.title"></span>
-    </b>
+    <div class="d-flex gap-1 align-items-center">
+        <b>
+            <span jhiTranslate="artemisApp.courseStudentDashboard.judgementOfLearning.title"></span>
+        </b>
+        <jhi-help-icon text="artemisApp.courseStudentDashboard.judgementOfLearning.info" />
+    </div>
     <star-rating
         checkedColor="var(--yellow)"
         uncheckedColor="var(--gray-500)"

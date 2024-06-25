@@ -4,7 +4,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
-import '@angular/localize/init';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import {
     TutorialGroupsConfigurationFormComponent,

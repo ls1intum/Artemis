@@ -124,7 +124,7 @@ export class LectureUpdateWizardCompetenciesComponent implements OnInit {
         }
 
         const { title, description, taxonomy, connectedLectureUnits } = formData;
-        this.currentlyProcessedCompetency = new Competency();
+        this.currentlyProcessedCompetency = {};
 
         this.currentlyProcessedCompetency.title = title;
         this.currentlyProcessedCompetency.description = description;
@@ -198,7 +198,7 @@ export class LectureUpdateWizardCompetenciesComponent implements OnInit {
                     }
 
                     this.alertService.success(`Competency ${this.currentlyProcessedCompetency.title} was successfully edited.`);
-                    this.currentlyProcessedCompetency = new Competency();
+                    this.currentlyProcessedCompetency = {};
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
@@ -267,6 +267,6 @@ export class LectureUpdateWizardCompetenciesComponent implements OnInit {
         this.isConnectingCompetency = false;
         this.isLoadingCompetencyForm = false;
 
-        this.currentlyProcessedCompetency = new Competency();
+        this.currentlyProcessedCompetency = {};
     }
 }

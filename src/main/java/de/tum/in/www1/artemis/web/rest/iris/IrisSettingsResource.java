@@ -126,9 +126,7 @@ public class IrisSettingsResource {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
 
-        // Editors can see the full settings, students only the reduced settings
-        var getReduced = !authCheckService.isAtLeastEditorForExercise(exercise, user);
-        var combinedIrisSettings = irisSettingsService.getCombinedIrisSettingsFor(exercise, getReduced);
+        var combinedIrisSettings = irisSettingsService.getCombinedIrisSettingsFor(exercise, irisSettingsService.shouldShowMinimalSettings(exercise, user));
         return ResponseEntity.ok(combinedIrisSettings);
     }
 

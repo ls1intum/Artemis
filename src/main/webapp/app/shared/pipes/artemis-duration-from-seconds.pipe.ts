@@ -9,9 +9,9 @@ type Duration = {
 
 @Pipe({ name: 'artemisDurationFromSeconds' })
 export class ArtemisDurationFromSecondsPipe implements PipeTransform {
-    private readonly secondsInDay = 60 * 60 * 24;
-    private readonly secondsInHour = 60 * 60;
-    private readonly secondsInMinute = 60;
+    private readonly SECONDS_IN_DAY = 60 * 60 * 24;
+    private readonly SECONDS_IN_HOUR = 60 * 60;
+    private readonly SECONDS_IN_MINUTE = 60;
 
     /**
      * Convert seconds to a human-readable duration format:
@@ -44,10 +44,10 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform {
      * @param seconds the total seconds of the duration.
      */
     public secondsToDuration(seconds: number): Duration {
-        const days = Math.floor(seconds / this.secondsInDay);
-        const hours = Math.floor((seconds % this.secondsInDay) / this.secondsInHour);
-        const minutes = Math.floor((seconds % this.secondsInHour) / this.secondsInMinute);
-        seconds = seconds % this.secondsInMinute;
+        const days = Math.floor(seconds / this.SECONDS_IN_DAY);
+        const hours = Math.floor((seconds % this.SECONDS_IN_DAY) / this.SECONDS_IN_HOUR);
+        const minutes = Math.floor((seconds % this.SECONDS_IN_HOUR) / this.SECONDS_IN_MINUTE);
+        seconds = seconds % this.SECONDS_IN_MINUTE;
 
         return {
             days,
@@ -62,7 +62,7 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform {
      * @param duration for which the total number of seconds should be determined.
      */
     public durationToSeconds(duration: Duration): number {
-        return duration.days * this.secondsInDay + duration.hours * this.secondsInHour + duration.minutes * this.secondsInMinute + duration.seconds;
+        return duration.days * this.SECONDS_IN_DAY + duration.hours * this.SECONDS_IN_HOUR + duration.minutes * this.SECONDS_IN_MINUTE + duration.seconds;
     }
 
     /**

@@ -22,13 +22,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilterDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -38,7 +38,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface ConversationMessageRepository extends JpaRepository<Post, Long>, CustomPostRepository {
+public interface ConversationMessageRepository extends ArtemisJpaRepository<Post, Long>, CustomPostRepository {
 
     Logger log = LoggerFactory.getLogger(ConversationMessageRepository.class);
 

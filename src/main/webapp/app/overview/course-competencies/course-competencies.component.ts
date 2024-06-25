@@ -3,12 +3,13 @@ import { CompetencyService } from 'app/course/competencies/competency.service';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Competency, CompetencyJol } from 'app/entities/competency.model';
-import { Observable, Subscription, forkJoin } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Competency, CompetencyJol, getMastery } from 'app/entities/competency.model';
+import { Subscription, forkJoin, of } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 @Component({
@@ -41,6 +42,7 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
         private alertService: AlertService,
         private courseStorageService: CourseStorageService,
         private competencyService: CompetencyService,
+        private prerequisiteService: PrerequisiteService,
     ) {}
 
     ngOnInit(): void {
@@ -69,12 +71,7 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
     }
 
     get countMasteredCompetencies() {
-        return this.competencies.filter((competency) => {
-            if (competency.userProgress?.length && competency.masteryThreshold) {
-                return competency.userProgress.first()!.progress == 100 && competency.userProgress.first()!.confidence! >= competency.masteryThreshold!;
-            }
-            return false;
-        }).length;
+        return this.competencies.filter((competency) => getMastery(competency.userProgress?.first()) >= (competency.masteryThreshold ?? 100)).length;
     }
 
     get countPrerequisites() {
@@ -91,32 +88,27 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
     loadData() {
         this.isLoading = true;
 
-        const observables = [this.competencyService.getAllForCourse(this.courseId), this.competencyService.getAllPrerequisitesForCourse(this.courseId)] as Observable<
-            HttpResponse<Competency[] | { [key: number]: { current: CompetencyJol; prior?: CompetencyJol } }>
-        >[];
+        const getAllCompetenciesObservable = this.competencyService.getAllForCourse(this.courseId);
+        const prerequisitesObservable = this.prerequisiteService.getAllPrerequisitesForCourse(this.courseId);
+        const competencyJolObservable = this.judgementOfLearningEnabled ? this.competencyService.getJoLAllForCourse(this.courseId) : of(undefined);
 
-        if (this.judgementOfLearningEnabled) {
-            observables.push(this.competencyService.getJoLAllForCourse(this.courseId));
-        }
-
-        forkJoin(observables).subscribe({
+        forkJoin([getAllCompetenciesObservable, prerequisitesObservable, competencyJolObservable]).subscribe({
             next: ([competencies, prerequisites, judgementOfLearningMap]) => {
                 this.competencies = competencies.body! as Competency[];
-                this.prerequisites = prerequisites.body! as Competency[];
+                this.prerequisites = prerequisites;
 
-                if (this.judgementOfLearningEnabled) {
+                if (judgementOfLearningMap !== undefined) {
                     const competenciesMap: { [key: number]: Competency } = Object.fromEntries(this.competencies.map((competency) => [competency.id, competency]));
                     this.judgementOfLearningMap = Object.fromEntries(
-                        Object.entries((judgementOfLearningMap?.body ?? {}) as { [key: number]: { current: CompetencyJol; prior?: CompetencyJol } }).filter(([key, value]) => {
+                        Object.entries((judgementOfLearningMap.body ?? {}) as { [key: number]: { current: CompetencyJol; prior?: CompetencyJol } }).filter(([key, value]) => {
                             const progress = competenciesMap[Number(key)]?.userProgress?.first();
-                            return value.current.competencyProgress === (progress?.progress ?? 0) && value.current.competencyConfidence === (progress?.confidence ?? 0);
+                            return value.current.competencyProgress === (progress?.progress ?? 0) && value.current.competencyConfidence === (progress?.confidence ?? 1);
                         }),
                     );
                     this.promptForJolRatingMap = Object.fromEntries(
                         this.competencies.map((competency) => [competency.id, CompetencyJol.shouldPromptForJol(competency, competency.userProgress?.first(), this.competencies)]),
                     );
                 }
-
                 // Also update the course, so we do not need to fetch again next time
                 if (this.course) {
                     this.course.competencies = this.competencies;
