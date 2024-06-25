@@ -19,7 +19,6 @@ export type ChannelGroupCategory =
     | 'directMessages'
     | 'examChannels'
     | 'hiddenChannels';
-
 export type CollapseState =
     | Record<TimeGroupCategory, boolean>
     | Record<ChannelGroupCategory, boolean>
