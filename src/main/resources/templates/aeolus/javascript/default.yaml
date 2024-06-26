@@ -4,7 +4,7 @@ metadata:
   description: Run tests using Jest
 actions:
   - name: install_dependencies
-    script: 'npm ci'
+    script: 'npm ci --prefer-offline --no-audit'
   - name: test
     script: 'npm run test:ci'
     runAlways: false

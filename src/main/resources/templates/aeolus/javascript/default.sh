@@ -3,7 +3,7 @@ set -e
 export AEOLUS_INITIAL_DIRECTORY=${PWD}
 install_dependencies () {
   echo '⚙️ executing install_dependencies'
-  npm ci
+  npm ci --prefer-offline --no-audit
 }
 
 test () {

@@ -29,7 +29,7 @@ private void runTestSteps() {
  */
 private void test() {
     stage('Build') {
-        sh 'npm ci --prefer-offline'
+        sh 'npm ci --prefer-offline --no-audit'
     }
     stage('Test') {
         sh 'npm run test:ci'
