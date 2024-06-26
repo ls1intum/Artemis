@@ -1,4 +1,4 @@
-import { math } from 'exercise';
+import { math } from 'artemis-exercise';
 
 describe('math', () => {
     it('should add 1 and 2 to 3', () => {
