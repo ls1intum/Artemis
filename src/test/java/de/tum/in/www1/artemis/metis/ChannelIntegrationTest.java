@@ -562,15 +562,15 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_ONLY", "DISABLED" })
+    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "DISABLED" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void registerDeregisterUsersToChannel_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration)
+    void registerDeregisterUsersToChannel_communicationFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration)
             throws Exception {
-        registerUsersToChannel_messagingDeactivated(courseInformationSharingConfiguration);
+        registerUsersToChannel_communicationDeactivated(courseInformationSharingConfiguration);
 
     }
 
-    void registerUsersToChannel_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+    void registerUsersToChannel_communicationDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
         var channel = createChannel(true, TEST_PREFIX);
         setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
         // given

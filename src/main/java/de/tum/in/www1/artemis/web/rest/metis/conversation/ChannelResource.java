@@ -397,6 +397,7 @@ public class ChannelResource extends ConversationManagementResource {
     public ResponseEntity<Void> registerUsersToChannel(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody(required = false) List<String> userLogins,
             @RequestParam(defaultValue = "false") Boolean addAllStudents, @RequestParam(defaultValue = "false") Boolean addAllTutors,
             @RequestParam(defaultValue = "false") Boolean addAllInstructors) {
+        checkMessagingOrCommunicationEnabledElseThrow(courseId);
         List<String> usersLoginsToRegister = new ArrayList<>();
         if (userLogins != null) {
             usersLoginsToRegister.addAll(userLogins);
@@ -432,6 +433,7 @@ public class ChannelResource extends ConversationManagementResource {
     @PostMapping("{courseId}/channels/{channelId}/deregister")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deregisterUsers(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
+        checkMessagingOrCommunicationEnabledElseThrow(courseId);
         if (userLogins == null || userLogins.isEmpty()) {
             throw new BadRequestAlertException("No user logins provided", CHANNEL_ENTITY_NAME, "userLoginsEmpty");
         }

@@ -192,7 +192,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getConversationsOfUser_onlyCourseWideChannelsIfMessagingDisabled() throws Exception {
+    void getConversationsOfUser_onlyChannelsIfMessagingDisabled() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX + "1");
         addUsersToConversation(channel.getId(), "tutor1");
@@ -214,7 +214,6 @@ class ConversationIntegrationTest extends AbstractConversationTest {
 
         assertThat(channels).allSatisfy(ch -> {
             assertThat(ch).isInstanceOf(ChannelDTO.class);
-            assertThat(((ChannelDTO) ch).getIsCourseWide()).isTrue();
         });
 
         // cleanup
