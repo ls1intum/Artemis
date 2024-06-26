@@ -178,28 +178,24 @@ public interface CompetencyRepository extends ArtemisJpaRepository<Competency, L
             """)
     Optional<Competency> findByIdWithExercisesAndLectureUnits(@Param("competencyId") long competencyId);
 
-    default Competency findByIdWithLectureUnitsAndCompletionsElseThrow(long competencyId) {
-        return findByIdWithLectureUnitsAndCompletions(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
-    }
-
     default Competency findByIdWithExercisesElseThrow(long competencyId) {
-        return getValueElseThrow(findByIdWithExercises(competencyId));
+        return getValueElseThrow(findByIdWithExercises(competencyId), competencyId);
     }
 
     default Competency findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(long competencyId) {
-        return getValueElseThrow(findByIdWithExercisesAndLectureUnitsBidirectional(competencyId));
+        return getValueElseThrow(findByIdWithExercisesAndLectureUnitsBidirectional(competencyId), competencyId);
     }
 
     default Competency findWithLectureUnitsAndExercisesByIdElseThrow(long competencyId) {
-        return getValueElseThrow(findWithLectureUnitsAndExercisesById(competencyId));
+        return getValueElseThrow(findWithLectureUnitsAndExercisesById(competencyId), competencyId);
     }
 
     default Competency findByIdWithLectureUnitsElseThrow(long competencyId) {
-        return getValueElseThrow(findByIdWithLectureUnits(competencyId));
+        return getValueElseThrow(findByIdWithLectureUnits(competencyId), competencyId);
     }
 
     default Competency findByIdWithExercisesAndLectureUnitsElseThrow(long competencyId) {
-        return findByIdWithExercisesAndLectureUnits(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
+        return getValueElseThrow(findByIdWithExercisesAndLectureUnits(competencyId), competencyId);
     }
 
     long countByCourse(Course course);
