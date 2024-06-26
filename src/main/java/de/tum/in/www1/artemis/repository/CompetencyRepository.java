@@ -169,10 +169,6 @@ public interface CompetencyRepository extends ArtemisJpaRepository<Competency, L
             """)
     Set<Competency> findAllByLearningPath(@Param("learningPath") LearningPath learningPath);
 
-    default Competency findByIdWithLectureUnitsAndCompletionsElseThrow(long competencyId) {
-        return findByIdWithLectureUnitsAndCompletions(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
-    }
-
     default Competency findByIdWithExercisesElseThrow(long competencyId) {
         return getValueElseThrow(findByIdWithExercises(competencyId));
     }
