@@ -22,6 +22,13 @@ public interface CourseCompetencyRepository extends JpaRepository<CourseCompeten
             """)
     List<CourseCompetency> findAllByIdAndUserIsAtLeastEditorInCourse(@Param("courseCompetencyIds") List<Long> courseCompetencyIds, @Param("groups") Set<String> groups);
 
+    @Query("""
+            SELECT c.title
+            FROM CourseCompetency c
+            WHERE c.course.id = :courseId
+            """)
+    List<String> findAllTitlesByCourseId(@Param("courseId") long courseId);
+
     /**
      * Finds a list of competencies by id and verifies that the user is at least editor in the respective courses.
      * If any of the competencies are not accessible, throws a {@link EntityNotFoundException}

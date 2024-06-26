@@ -32,12 +32,14 @@ export enum CompetencyRelationError {
     EXISTING = 'EXISTING',
 }
 
-export enum CompetencyValidators {
+export enum CourseCompetencyValidators {
     TITLE_MAX = 255,
     DESCRIPTION_MAX = 10000,
+    MASTERY_THRESHOLD_MIN = 0,
+    MASTERY_THRESHOLD_MAX = 100,
 }
 
-export const DEFAULT_MASTERY_THRESHOLD = 80;
+export const DEFAULT_MASTERY_THRESHOLD = 100;
 
 export interface BaseCompetency extends BaseEntity {
     title?: string;
