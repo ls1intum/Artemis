@@ -75,6 +75,7 @@ describe('CloneRepoButtonComponent', () => {
                 },
             },
         },
+        theiaPortalURL: 'https://theia-test.k8s.ase.cit.tum.de',
     };
 
     let participation: ProgrammingExerciseStudentParticipation = {};
