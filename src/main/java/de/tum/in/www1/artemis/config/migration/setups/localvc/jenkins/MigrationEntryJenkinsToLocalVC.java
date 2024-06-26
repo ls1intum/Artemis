@@ -87,6 +87,11 @@ public class MigrationEntryJenkinsToLocalVC extends LocalVCMigrationEntry {
             try {
                 if (isRepositoryUriNotNull(participation, "Repository URI is null for template participation with id {}, cant migrate")) {
                     changeRepositoryUriFromSourceVCSToLocalVC(participation.getProgrammingExercise(), participation.getRepositoryUri(), participation.getBuildPlanId());
+                    changeRepositoryUriFromSourceVCSToLocalVC(participation.getProgrammingExercise(), participation.getProgrammingExercise().getTestRepositoryUri(),
+                            participation.getBuildPlanId());
+                    changeRepositoryUriFromSourceVCSToLocalVC(participation.getProgrammingExercise(), participation.getProgrammingExercise().getSolutionRepositoryUri(),
+                            participation.getBuildPlanId());
+                    // TODO also auxiliary or general search & replace?
                 }
             }
             catch (Exception e) {
@@ -105,6 +110,11 @@ public class MigrationEntryJenkinsToLocalVC extends LocalVCMigrationEntry {
             try {
                 if (isRepositoryUriNotNull(participation, "Repository URI is null for student participation with id {}, cant migrate")) {
                     changeRepositoryUriFromSourceVCSToLocalVC(participation.getProgrammingExercise(), participation.getRepositoryUri(), participation.getBuildPlanId());
+                    changeRepositoryUriFromSourceVCSToLocalVC(participation.getProgrammingExercise(), participation.getProgrammingExercise().getTestRepositoryUri(),
+                            participation.getBuildPlanId());
+                    changeRepositoryUriFromSourceVCSToLocalVC(participation.getProgrammingExercise(), participation.getProgrammingExercise().getSolutionRepositoryUri(),
+                            participation.getBuildPlanId());
+                    // TODO also auxiliary or general search & replace?
                 }
             }
             catch (Exception e) {
