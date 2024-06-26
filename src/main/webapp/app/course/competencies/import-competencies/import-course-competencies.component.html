@@ -1,0 +1,41 @@
+<div>
+    <h2 id="page-heading" [jhiTranslate]="'artemisApp.' + entityType + '.import.title'"></h2>
+    <jhi-competency-search [search]="filter" (searchChange)="filterChange($event)" />
+    <h3 class="mt-2" jhiTranslate="artemisApp.competency.import.searchTableHeader"></h3>
+    @if (searchedCourseCompetencies.resultsOnPage?.length) {
+        <jhi-import-competencies-table [content]="searchedCourseCompetencies" [search]="search" (searchChange)="searchChange($event)">
+            <ng-template let-competency="competency">
+                <jhi-button title="entity.action.select" (onClick)="selectCompetency(competency)" [disabled]="disabledIds.includes(competency.id!)" />
+            </ng-template>
+        </jhi-import-competencies-table>
+    } @else {
+        <span jhiTranslate="artemisApp.competency.import.searchTableEmpty"></span>
+    }
+    <h3 class="mt-2" [jhiTranslate]="'artemisApp.' + entityType + '.import.selectedTableHeader'"></h3>
+    @if (selectedCourseCompetencies.resultsOnPage?.length) {
+        <jhi-import-competencies-table
+            [content]="selectedCourseCompetencies"
+            [search]="selectedCourseCompetenciesSearch"
+            (searchChange)="sortSelected($event)"
+            [displayPagination]="false"
+        >
+            <ng-template let-competency="competency">
+                <jhi-button [btnType]="ButtonType.ERROR" [icon]="faTrash" (onClick)="removeCompetency(competency)" />
+            </ng-template>
+        </jhi-import-competencies-table>
+    } @else {
+        <span [jhiTranslate]="'artemisApp.' + entityType + '.import.selectedTableEmpty'"></span>
+    }
+    <div class="mt-4">
+        @if (allowRelationImport) {
+            <div class="mb-1 d-flex">
+                <span [jhiTranslate]="'artemisApp.competency.import.importRelations'"></span>
+                <input type="checkbox" class="ms-2" [(ngModel)]="importRelations" name="importRelations" />
+            </div>
+        }
+        <div>
+            <jhi-button id="cancelButton" [btnType]="ButtonType.SECONDARY" [title]="'entity.action.cancel'" [icon]="faBan" (onClick)="onCancel()" />
+            <jhi-button id="importButton" [title]="'entity.action.import'" [icon]="faFileImport" [disabled]="!isSubmitPossible()" [isLoading]="isLoading" (onClick)="onSubmit()" />
+        </div>
+    </div>
+</div>

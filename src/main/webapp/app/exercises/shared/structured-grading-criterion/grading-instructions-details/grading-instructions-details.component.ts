@@ -102,7 +102,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
                     // if it is a dummy criterion, leave out the command identifier
                     markdownText += this.generateInstructionsMarkdown(criterion);
                 } else {
-                    markdownText += GradingCriterionCommand.identifier + criterion.title + '\n' + '\t' + this.generateInstructionsMarkdown(criterion);
+                    markdownText += GradingCriterionCommand.IDENTIFIER + criterion.title + '\n' + '\t' + this.generateInstructionsMarkdown(criterion);
                 }
             }
         }
@@ -130,7 +130,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     generateInstructionText(instruction: GradingInstruction): string {
         let markdownText = '';
         markdownText =
-            GradingInstructionCommand.identifier +
+            GradingInstructionCommand.IDENTIFIER +
             '\n' +
             '\t' +
             this.generateCreditsText(instruction) +
@@ -153,42 +153,42 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
 
     generateCreditsText(instruction: GradingInstruction): string {
         if (instruction.credits == undefined) {
-            instruction.credits = parseFloat(CreditsCommand.text);
-            return CreditsCommand.identifier + ' ' + CreditsCommand.text;
+            instruction.credits = parseFloat(CreditsCommand.TEXT);
+            return CreditsCommand.IDENTIFIER + ' ' + CreditsCommand.TEXT;
         }
-        return CreditsCommand.identifier + ' ' + instruction.credits;
+        return CreditsCommand.IDENTIFIER + ' ' + instruction.credits;
     }
 
     generateGradingScaleText(instruction: GradingInstruction): string {
         if (instruction.gradingScale == undefined) {
-            instruction.gradingScale = GradingScaleCommand.text;
-            return GradingScaleCommand.identifier + ' ' + GradingScaleCommand.text;
+            instruction.gradingScale = GradingScaleCommand.TEXT;
+            return GradingScaleCommand.IDENTIFIER + ' ' + GradingScaleCommand.TEXT;
         }
-        return GradingScaleCommand.identifier + ' ' + instruction.gradingScale;
+        return GradingScaleCommand.IDENTIFIER + ' ' + instruction.gradingScale;
     }
 
     generateInstructionDescriptionText(instruction: GradingInstruction): string {
         if (instruction.instructionDescription == undefined) {
-            instruction.instructionDescription = InstructionDescriptionCommand.text;
-            return InstructionDescriptionCommand.identifier + ' ' + InstructionDescriptionCommand.text;
+            instruction.instructionDescription = InstructionDescriptionCommand.TEXT;
+            return InstructionDescriptionCommand.IDENTIFIER + ' ' + InstructionDescriptionCommand.TEXT;
         }
-        return InstructionDescriptionCommand.identifier + ' ' + instruction.instructionDescription;
+        return InstructionDescriptionCommand.IDENTIFIER + ' ' + instruction.instructionDescription;
     }
 
     generateInstructionFeedback(instruction: GradingInstruction): string {
         if (instruction.feedback == undefined) {
-            instruction.feedback = FeedbackCommand.text;
-            return FeedbackCommand.identifier + ' ' + FeedbackCommand.text;
+            instruction.feedback = FeedbackCommand.TEXT;
+            return FeedbackCommand.IDENTIFIER + ' ' + FeedbackCommand.TEXT;
         }
-        return FeedbackCommand.identifier + ' ' + instruction.feedback;
+        return FeedbackCommand.IDENTIFIER + ' ' + instruction.feedback;
     }
 
     generateUsageCount(instruction: GradingInstruction): string {
         if (instruction.usageCount == undefined) {
-            instruction.usageCount = parseInt(UsageCountCommand.text, 10);
-            return UsageCountCommand.identifier + ' ' + UsageCountCommand.text;
+            instruction.usageCount = parseInt(UsageCountCommand.TEXT, 10);
+            return UsageCountCommand.IDENTIFIER + ' ' + UsageCountCommand.TEXT;
         }
-        return UsageCountCommand.identifier + ' ' + instruction.usageCount;
+        return UsageCountCommand.IDENTIFIER + ' ' + instruction.usageCount;
     }
 
     initializeExerciseGradingInstructionText(): string {

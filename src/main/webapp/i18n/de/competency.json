@@ -14,14 +14,20 @@
             "optionalDescription": "Optionale Kompetenzen müssen nicht absolviert werden um den Lernpfad zu vervollständigen. Sie dienen entweder als zusätzliche Übung oder gehen über die erwarteten Inhalte des Kurses hinaus.",
             "course": "Kurs",
             "progress": "Fortschritt",
-            "progressDescription": "Der Prozentsatz an abgeschlossenen Vorlesungseinheiten und Übungen, die mit dieser Kompetenz verknüpft sind.",
-            "confidence": "Konfidenz",
-            "confidenceDescription": "Die durchschnittliche Bewertung in allen verknüpften Übungen im Verhältnis zu dem vom Lehrenden festgelegten Schwellenwert für die Beherrschung der Kompetenz.",
+            "progressDescription": "Der Fortschritt basiert auf dem Prozentsatz an abgeschlossenen Vorlesungseinheiten und den erreichten Punkten in den Übungen.",
             "mastery": "Kompetenzbeherrschung",
-            "masteryDescription": "Ein gewichteter Leistungsindex aus Fortschritt und Konfidenz, der Deine Entwicklung auf dem Weg zur Beherrschung der Kompetenz veranschaulicht.",
+            "masteryDescription": "Ein gewichteter Leistungsindex aus deinem Fortschritt, der Deine Entwicklung auf dem Weg zur Beherrschung der Kompetenz veranschaulicht.",
             "masteredStudents": "Studierende mit Kompetenz",
             "mastered": "Abgeschlossen",
             "competencies": "Kompetenzen",
+            "confidenceReasons": {
+                "NO_REASON": "Die Kompetenzbeherrschung entspricht in etwa dem Fortschritt",
+                "RECENT_SCORES_LOWER": "Da die letzten Bewertungen niedriger waren als dein Durchschnitt in dieser Kompetenz, ist die Kompetenzbeherrschung niedriger als der Fortschritt",
+                "RECENT_SCORES_HIGHER": "Da die letzten Bewertungen höher waren als dein Durchschnitt in dieser Kompetenz, ist die Kompetenzbeherrschung höher als der Fortschritt",
+                "MORE_EASY_POINTS": "Da ein größerer Anteil deiner Punkte aus einfachen Aufgaben kommt, ist die Kompetenzbeherrschung niedriger als der Fortschritt",
+                "MORE_HARD_POINTS": "Da ein größerer Anteil deiner Punkte aus schwierigen Aufgaben kommt, ist die Kompetenzbeherrschung höher als der Fortschritt",
+                "QUICKLY_SOLVED_EXERCISES": "Da du Aufgaben schnell gelöst hast, ist die Kompetenzbeherrschung höher als der Fortschritt"
+            },
             "taxonomies": {
                 "REMEMBER": "Erinnern",
                 "UNDERSTAND": "Verstehen",
@@ -45,7 +51,7 @@
             "manageCompetencies": {
                 "title": "Kompetenzmanagement",
                 "importButton": "Kompetenzen importieren",
-                "importFromCoursesButton": "Kompetenzen aus anderen Kursen importieren",
+                "importFromCoursesButton": "Aus anderen Kursen importieren",
                 "importAllButton": "Alle Kompetenzen eines Kurses importieren",
                 "importStandardizedButton": "Standardisierte Kompetenzen importieren",
                 "createButton": "Kompetenz erstellen",
@@ -59,7 +65,7 @@
                 "searchTableHeader": "Nach Kompetenzen suchen",
                 "searchTableEmpty": "Keine Kompetenzen gefunden, die deiner Suche entsprechen",
                 "selectedTableHeader": "Ausgewählte Kompetenzen",
-                "selectedTableEmpty": "Keine Kompetenzen ausgewählt",
+                "selectedTableEmpty": "Keine Kompetenzen zum Import ausgewählt",
                 "importRelations": "Relationen importieren?",
                 "search": {
                     "title": "Kompetenzen durchsuchen",
@@ -76,7 +82,7 @@
                     "COURSE_TITLE": "Kurstitel",
                     "SEMESTER": "Semester"
                 },
-                "success": "Imported {{ noOfCompetencies }} competencies."
+                "success": "{{ numCompetencies }} Kompetenzen importiert."
             },
             "generate": {
                 "title": "Kompetenzvorschläge generieren",
@@ -118,13 +124,12 @@
                 "titlePlaceholder": "Gib der Kompetenz einen Titel",
                 "titleRequiredValidationError": "Eine Kompetenz braucht einen Titel",
                 "titleMaxLengthValidationError": "Der Titel einer Kompetenz ist auf maximal {{max}} Symbole beschränkt",
-                "titleUniqueValidationError": "Es gibt bereits eine Kompetenz mit diesem Titel in dem Kurs",
-                "descriptionPlaceholder": "Was sollen die Studierenden lernen? Beispiel: \"Du kannst den Unterschied zwischen Rekursion und Schleifen erklären.\"",
+                "titleUniqueValidationError": "Es gibt bereits eine Kompetenz/Voraussetzung mit diesem Titel in dem Kurs",
                 "descriptionMaxLengthValidationError": "Die Beschreibung der Kompetenz ist auf maximal {{max}} Symbole beschränkt",
                 "softDueDate": "Empfohlenes Fertigstellungsdatum",
                 "softDueDateHint": "Empfehle einen Zeitpunkt zu dem die Studierenden diese Kompetenz gemeistert haben sollten. Dies ist keine harte Frist.",
                 "suggestedTaxonomy": "Vorschlag",
-                "averageStudentScore": "Aktuelle durchschnittliche Konfidenz",
+                "averageStudentScore": "Durchschnittliche Bewertung der Studierenden",
                 "connectWithLectureUnits": "Verbinde die Kompetenz mit Vorlesungseinheiten",
                 "selectLecture": "Wähle eine Vorlesung aus",
                 "noLectures": "Dieser Kurs hat keine Vorlesungen",
@@ -152,7 +157,8 @@
             "competencyCard": {
                 "connectedLectureUnits": "Verbundene Vorlesungseinheiten",
                 "connectedLectureUnitsExplanation": "Die folgenden Vorlesungseinheiten sind mit der Kompetenz verbunden:",
-                "ringsTooltip": "Dein Weg zum Erwerb der Kompetenz. (Rot = Kompetenzbeherrschung, Grün = Selbstsicherheit, Blau = Fortschritt)",
+                "ringsTooltip": "Dein Weg zum Erwerb der Kompetenz. (Rot = Kompetenzbeherrschung, Grün = Fortschritt)",
+                "ringsTooltipHideProgress": "Du hast dein Verständnis dieser Kompetenz noch nicht bewertet. Bitte bewerte es, um deinen Fortschritt zu sehen.",
                 "exerciseNote": "Bitte beachte, dass bei Aufgabeneinheiten immer die letzte Einreichung berücksichtigt wird. Auch Einreichungen nach dem Fälligkeitsdatum. Das bedeutet, dass du z. B. deinen Fortschritt verbessern kannst, indem du ein Quiz beliebig oft erneut versuchst. Es ist daher normal, dass deine Bewertung hier von der Bewertung, welche du offiziell in einer Übung erreicht hast, abweichen kann.",
                 "delete": {
                     "question": "Willst du wirklich die Kompetenz <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen!",
@@ -172,22 +178,6 @@
                 "explanation": "Diese Vorlesungseinheit hilft dir bei der Erreichung der folgenden Kompetenzen:",
                 "noCompetencies": "Keine Kompetenzen mit dieser Vorlesungseinheit verbunden!"
             },
-            "prerequisite": {
-                "title": "Voraussetzungen",
-                "select": "Voraussetzung auswählen",
-                "empty": "Es existieren keine Voraussetzungen für diesen Kurs",
-                "import": {
-                    "label": "Voraussetzungen hinzufügen",
-                    "table": {
-                        "TITLE": "Titel",
-                        "COURSE_TITLE": "Kurs",
-                        "SEMESTER": "Semester",
-                        "doImport": "Auswählen"
-                    },
-                    "search": "Nach Kompetenz suchen:",
-                    "loading": "Lade..."
-                }
-            },
             "relation": {
                 "competencyRelations": "Beziehungen zwischen Kompetenzen",
                 "tailCompetency": "Kompetenz Schluss",
@@ -205,8 +195,47 @@
                 }
             }
         },
+        "courseCompetency": {
+            "title": "Titel",
+            "course": "Kurs",
+            "description": "Beschreibung",
+            "taxonomy": "Taxonomie",
+            "softDueDate": "Empfohlen bis"
+        },
         "prerequisite": {
-            "deleted": "Voraussetzung entfernt"
+            "title": "Voraussetzungen",
+            "empty": "Es existieren keine Voraussetzungen für diesen Kurs",
+            "manage": {
+                "createButton": "Voraussetzung erstellen",
+                "importButton": "Voraussetzungen importieren",
+                "importFromCoursesButton": "Aus anderen Kursen importieren",
+                "deleted": "Voraussetzung gelöscht",
+                "delete": {
+                    "question": "Willst du wirklich die Voraussetzung <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen!",
+                    "typeNameToConfirm": "Bitte gib zur Bestätigung den Namen der Voraussetzung ein."
+                }
+            },
+            "import": {
+                "title": "Voraussetzungen importieren",
+                "success": "{{ numPrerequisites }} Voraussetzungen importiert.",
+                "selectedTableHeader": "Ausgewählte Kompetenzen",
+                "selectedTableEmpty": "Keine Kompetenzen zum Import als Voraussetzungen ausgewählt"
+            },
+            "create": {
+                "title": "Erstelle eine neue Voraussetzung",
+                "titlePlaceholder": "Gib der Voraussetzung einen Titel",
+                "softDueDateTooltip": "Empfehle einen Zeitpunkt zu dem die Studierenden diese Voraussetzung gemeistert haben sollten. Dies ist keine harte Frist.",
+                "suggestedTaxonomy": "Vorschlag",
+                "error": {
+                    "titleRequired": "Eine Voraussetzung braucht einen Titel",
+                    "titleMaxLength": "Der Titel einer Voraussetzung ist auf maximal {{max}} Symbole beschränkt",
+                    "descriptionMaxLength": "Die Beschreibung der Voraussetzung ist auf maximal {{max}} Symbole beschränkt",
+                    "titleUnique": "Es gibt bereits eine Kompetenz/Voraussetzung mit diesem Titel in dem Kurs"
+                }
+            },
+            "edit": {
+                "title": "Bearbeite eine Voraussetzung"
+            }
         },
         "learningPath": {
             "learningPathButton": "Lernpfade",

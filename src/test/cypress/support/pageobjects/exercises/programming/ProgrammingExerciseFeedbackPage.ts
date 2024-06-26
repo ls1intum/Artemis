@@ -6,8 +6,8 @@ import { OnlineEditorPage } from './OnlineEditorPage';
  */
 export class ProgrammingExerciseFeedbackPage extends AbstractExerciseFeedback {
     shouldShowAdditionalFeedback(points: number, feedbackText: string) {
-        cy.reloadUntilFound(this.additionalFeedbackSelector);
-        cy.get(this.additionalFeedbackSelector).contains(`${points} Points: ${feedbackText}`).should('be.visible');
+        cy.reloadUntilFound(this.ADDITIONAL_FEEDBACK_SELECTOR);
+        cy.get(this.ADDITIONAL_FEEDBACK_SELECTOR).contains(`${points} Points: ${feedbackText}`).should('be.visible');
     }
 
     shouldShowCodeFeedback(exerciseID: number, filename: string, feedback: string, points: string, editorPage: OnlineEditorPage) {

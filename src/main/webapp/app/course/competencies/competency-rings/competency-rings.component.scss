@@ -17,10 +17,12 @@ svg {
         transform-origin: 50%;
     }
     .progressbar {
-        animation: ring-appear 1s ease-in-out forwards;
-        transition:
-            stroke-dasharray 1s ease-in-out,
-            opacity 1s linear;
+        &-anim {
+            animation: ring-appear 1s ease-in-out forwards;
+            transition:
+                stroke-dasharray 1s ease-in-out,
+                opacity 1s linear;
+        }
         stroke-linecap: round;
 
         &.hidden {
@@ -32,42 +34,43 @@ svg {
         fill: none;
     }
 
-    .ring1 {
-        transform: scale(1) rotate(-90deg);
+    .mastery-ring {
+        transform: scale(0.75) rotate(-90deg);
 
         .background {
             stroke: var(--competency-rings-red-bg);
         }
         .progressbar {
             stroke: var(--competency-rings-red);
-            animation-duration: 1.6s;
-            transition-duration: 1.6s;
+            &-anim {
+                animation-duration: 1.3s;
+                transition-duration: 1.3s;
+            }
         }
     }
 
-    .ring2 {
-        transform: scale(0.75) rotate(-90deg);
+    .progress-ring {
+        transform: scale(0.5) rotate(-90deg);
 
         .background {
             stroke: var(--competency-rings-green-bg);
         }
         .progressbar {
+            &-anim {
+                animation-duration: 1s;
+                transition-duration: 1s;
+            }
             stroke: var(--competency-rings-green);
-            animation-duration: 1.3s;
-            transition-duration: 1.3s;
         }
     }
+}
 
-    .ring3 {
-        transform: scale(0.5) rotate(-90deg);
+.muted-competency-rings {
+    --competency-rings-red-bg: var(--body-bg);
+    --competency-rings-green-bg: var(--body-bg);
+    --competency-rings-blue-bg: var(--body-bg);
+}
 
-        .background {
-            stroke: var(--competency-rings-blue-bg);
-        }
-        .progressbar {
-            stroke: var(--competency-rings-blue);
-            animation-duration: 1s;
-            transition-duration: 1s;
-        }
-    }
+.question-mark {
+    color: var(--secondary);
 }

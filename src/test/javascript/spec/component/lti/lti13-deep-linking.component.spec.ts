@@ -116,10 +116,7 @@ describe('Lti13DeepLinkingComponent', () => {
 
     it('should set isDeepLinking to false if the response status is not 200', fakeAsync(() => {
         const replaceMock = jest.fn();
-        Object.defineProperty(window, 'location', {
-            value: { replace: replaceMock },
-            writable: true,
-        });
+        // TODO: change the test to avoid mocking window.location
         component.selectExercise(exercise1.id);
         component.selectExercise(exercise2.id);
         component.courseId = 123;
@@ -157,11 +154,7 @@ describe('Lti13DeepLinkingComponent', () => {
     }));
 
     it('should send deep link request and navigate when exercise is selected', () => {
-        const replaceMock = jest.fn();
-        Object.defineProperty(window, 'location', {
-            value: { replace: replaceMock },
-            writable: true,
-        });
+        // TODO: change the test to avoid mocking window.location
         component.selectExercise(exercise1.id);
         component.courseId = 123;
 

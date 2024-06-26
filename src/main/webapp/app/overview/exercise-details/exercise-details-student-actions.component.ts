@@ -1,11 +1,11 @@
 import { Component, ContentChild, HostBinding, Input, OnChanges, OnInit, TemplateRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
-import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
+import { ExternalCloningService } from 'app/exercises/programming/shared/service/external-cloning.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { isResumeExerciseAvailable, isStartExerciseAvailable, isStartPracticeAvailable } from 'app/exercises/shared/exercise/exercise.utils';
+import { hasExerciseDueDatePassed, isResumeExerciseAvailable, isStartExerciseAvailable, isStartPracticeAvailable } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -25,7 +25,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
     selector: 'jhi-exercise-details-student-actions',
     templateUrl: './exercise-details-student-actions.component.html',
     styleUrls: ['../course-overview.scss'],
-    providers: [SourceTreeService],
+    providers: [ExternalCloningService],
 })
 export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges {
     readonly FeatureToggle = FeatureToggle;
@@ -85,6 +85,15 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         if (this.repositoryLink.includes('exams')) {
             this.repositoryLink += `/exercises/${this.exercise.id}`;
         }
+        if (this.repositoryLink.includes('dashboard')) {
+            const parts = this.repositoryLink.split('/');
+            this.repositoryLink = [...parts.slice(0, parts.indexOf('dashboard')), 'exercises', this.exercise.id].join('/');
+        }
+        if (this.repositoryLink.includes('lectures')) {
+            const parts = this.repositoryLink.split('/');
+            this.repositoryLink = [...parts.slice(0, parts.indexOf('lectures')), 'exercises', this.exercise.id].join('/');
+        }
+
         if (this.exercise.type === ExerciseType.QUIZ) {
             const quizExercise = this.exercise as QuizExercise;
             this.uninitializedQuiz = ArtemisQuizService.isUninitialized(quizExercise);
@@ -103,7 +112,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             this.editorLabel = 'uploadFile';
         }
 
-        this.beforeDueDate = !this.exercise.dueDate || dayjs().isBefore(this.exercise.dueDate);
+        this.beforeDueDate = !this.exercise.dueDate || !hasExerciseDueDatePassed(this.exercise, this.gradedParticipation);
     }
 
     /**
@@ -319,7 +328,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             const athenaResults = this.gradedParticipation.results.filter((result) => result.assessmentType === 'AUTOMATIC_ATHENA');
             const countOfSuccessfulRequests = athenaResults.filter((result) => result.successful === true).length;
 
-            if (countOfSuccessfulRequests >= 3) {
+            if (countOfSuccessfulRequests >= 20) {
                 const rateLimitExceededWarning = this.translateService.instant('artemisApp.exercise.maxAthenaResultsReached');
                 window.alert(rateLimitExceededWarning);
                 return false;

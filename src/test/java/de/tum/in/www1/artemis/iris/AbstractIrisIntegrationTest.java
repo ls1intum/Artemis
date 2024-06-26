@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.connector.IrisRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
-import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisExerciseChatSession;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettings;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
@@ -78,6 +78,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         var globalSettings = irisSettingsService.getGlobalSettings();
         activateSubSettings(globalSettings.getIrisChatSettings());
         activateSubSettings(globalSettings.getIrisHestiaSettings());
+        activateSubSettings(globalSettings.getIrisLectureIngestionSettings());
         activateSubSettings(globalSettings.getIrisCompetencyGenerationSettings());
         irisSettingsRepository.save(globalSettings);
     }
@@ -105,6 +106,8 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         activateSubSettings(courseSettings.getIrisCompetencyGenerationSettings());
         courseSettings.getIrisCompetencyGenerationSettings().setTemplate(createDummyTemplate());
 
+        activateSubSettings(courseSettings.getIrisLectureIngestionSettings());
+
         irisSettingsRepository.save(courseSettings);
     }
 
@@ -126,9 +129,9 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
      * @param session  The chat session
      * @param matchers Argument matchers which describe the messages that should have been sent
      */
-    protected void verifyWebsocketActivityWasExactly(IrisChatSession session, ArgumentMatcher<?>... matchers) {
+    protected void verifyWebsocketActivityWasExactly(IrisExerciseChatSession session, ArgumentMatcher<?>... matchers) {
         var userLogin = session.getUser().getLogin();
-        var topicSuffix = "sessions/" + session.getId();
+        var topicSuffix = "" + session.getId();
         for (ArgumentMatcher<?> callDescriptor : matchers) {
             verifyMessageWasSentOverWebsocket(userLogin, topicSuffix, callDescriptor);
         }

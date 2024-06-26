@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 
 /**
  * An IrisSession represents a list of messages of Artemis, a user, and an LLM.
- * See {@link IrisChatSession} and {@link IrisHestiaSession} for concrete implementations.
+ * See {@link IrisExerciseChatSession} and {@link IrisHestiaSession} for concrete implementations.
  */
 @Entity
 @Table(name = "iris_session")
@@ -38,7 +38,8 @@ import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // @formatter:off
 @JsonSubTypes({
-    @JsonSubTypes.Type(value = IrisChatSession.class, name = "chat"),
+    @JsonSubTypes.Type(value = IrisExerciseChatSession.class, name = "chat"), // TODO: Legacy. Should ideally be "exercise_chat"
+    @JsonSubTypes.Type(value = IrisCourseChatSession.class, name = "course_chat"),
     @JsonSubTypes.Type(value = IrisHestiaSession.class, name = "hestia"),
 })
 // @formatter:on
@@ -52,6 +53,13 @@ public abstract class IrisSession extends DomainObject {
 
     @Column(name = "creation_date")
     private ZonedDateTime creationDate = ZonedDateTime.now();
+
+    /**
+     * The latest suggestions that were sent to the user.
+     * This column holds the list of latest suggestions as a JSON array.
+     */
+    @Column(name = "latest_suggestions")
+    private String latestSuggestions;
 
     // TODO: This is only used in the tests -> Remove
     public IrisMessage newMessage() {
@@ -74,6 +82,14 @@ public abstract class IrisSession extends DomainObject {
 
     public void setMessages(List<IrisMessage> messages) {
         this.messages = messages;
+    }
+
+    public String getLatestSuggestions() {
+        return latestSuggestions;
+    }
+
+    public void setLatestSuggestions(String latestSuggestions) {
+        this.latestSuggestions = latestSuggestions;
     }
 
 }

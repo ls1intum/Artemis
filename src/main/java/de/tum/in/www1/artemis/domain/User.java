@@ -46,6 +46,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
  * A user.
@@ -232,6 +233,12 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.setId(id);
     }
 
+    public User(Long id, String firstName, String lastName) {
+        this(id);
+        this.firstName = firstName;
+        this.lastName = lastName;
+    }
+
     public User(Long id, String login, String firstName, String lastName, String langKey, String email) {
         this(id);
         this.login = login;
@@ -250,6 +257,7 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.login = StringUtils.lowerCase(login, Locale.ENGLISH);
     }
 
+    @Override
     public String getParticipantIdentifier() {
         return login;
     }
@@ -281,6 +289,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     /**
      * @return name as a concatenation of first name and last name
      */
+    @Override
     public String getName() {
         if (lastName != null && !lastName.isEmpty()) {
             return firstName + " " + lastName;
@@ -534,6 +543,20 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Nullable
     public ZonedDateTime getIrisAcceptedTimestamp() {
         return irisAccepted;
+    }
+
+    public void setIrisAcceptedTimestamp(@Nullable ZonedDateTime irisAccepted) {
+        this.irisAccepted = irisAccepted;
+    }
+
+    /**
+     * Checks if the user has accepted the Iris privacy policy.
+     * If not, an {@link AccessForbiddenException} is thrown.
+     */
+    public void hasAcceptedIrisElseThrow() {
+        if (irisAccepted == null) {
+            throw new AccessForbiddenException("The user has not accepted the Iris privacy policy yet.");
+        }
     }
 
     @Nullable
