@@ -44,6 +44,8 @@ public class GroupChat extends Conversation {
 
     /**
      * Generates a name for the group chat.
+     *
+     * @return the generated name
      */
     public String generateName() {
         String generatedName = getConversationParticipants().stream().map((participant) -> participant.getUser().getName()).collect(Collectors.joining(", "));
