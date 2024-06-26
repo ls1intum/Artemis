@@ -1,5 +1,5 @@
 {
-    "name": "exercise",
+    "name": "artemis-exercise",
     "private": true,
     "main": "./index.js",
     "type": "module"
