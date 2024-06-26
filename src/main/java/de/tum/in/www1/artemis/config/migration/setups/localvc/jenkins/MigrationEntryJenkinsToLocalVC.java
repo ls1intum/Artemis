@@ -11,6 +11,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.JenkinsException;
+import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
@@ -34,9 +35,9 @@ public class MigrationEntryJenkinsToLocalVC extends LocalVCMigrationEntry {
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, UriService uriService,
-            JenkinsBuildPlanService jenkinsBuildPlanService) {
+            JenkinsBuildPlanService jenkinsBuildPlanService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
         super(programmingExerciseRepository, solutionProgrammingExerciseParticipationRepository, templateProgrammingExerciseParticipationRepository,
-                programmingExerciseStudentParticipationRepository);
+                programmingExerciseStudentParticipationRepository, auxiliaryRepositoryRepository);
         this.uriService = uriService;
         this.jenkinsBuildPlanService = jenkinsBuildPlanService;
     }
@@ -54,7 +55,27 @@ public class MigrationEntryJenkinsToLocalVC extends LocalVCMigrationEntry {
      */
     @Override
     protected void migrateSolutions(List<SolutionProgrammingExerciseParticipation> solutionParticipations) {
-        // TODO implement
+        for (var participation : solutionParticipations) {
+            try {
+                if (isRepositoryUriNotNull(participation, "Repository URI is null for solution participation with id {}, cant migrate")) {
+                    changeRepositoryUriFromSourceVCSToLocalVC(participation.getProgrammingExercise(), participation.getRepositoryUri(), participation.getBuildPlanId());
+                    changeRepositoryUriFromSourceVCSToLocalVC(participation.getProgrammingExercise(), participation.getProgrammingExercise().getTestRepositoryUri(),
+                            participation.getBuildPlanId());
+                    for (var repo : getAuxiliaryRepositories(participation.getProgrammingExercise().getId())) {
+                        if (repo.getRepositoryUri() == null) {
+                            log.error("Repository URI is null for auxiliary repository with id {}, cant migrate", repo.getId());
+                        }
+                        else {
+                            changeRepositoryUriFromSourceVCSToLocalVC(participation.getProgrammingExercise(), repo.getRepositoryUri(), participation.getBuildPlanId());
+                        }
+                    }
+                }
+            }
+            catch (Exception e) {
+                log.error("Failed to migrate solution participation with id {}", participation.getId(), e);
+                errorList.add(participation);
+            }
+        }
     }
 
     /**
