@@ -25,7 +25,14 @@ export class CompetencyGraphComponent implements OnInit, AfterViewInit {
 
     private readonly competencyGraph: WritableSignal<CompetencyGraphDTO> = signal<CompetencyGraphDTO>({ nodes: [], edges: [] });
     readonly nodes: Signal<CompetencyGraphNodeDTO[]> = computed(() => this.competencyGraph().nodes);
-    readonly edges: Signal<CompetencyGraphEdgeDTO[]> = computed(() => this.competencyGraph().edges);
+    readonly edges: Signal<CompetencyGraphEdgeDTO[]> = computed(() =>
+        this.competencyGraph().edges.map((edge) => {
+            return {
+                ...edge,
+                id: `edge-${edge.id}`,
+            };
+        }),
+    );
 
     readonly layout: WritableSignal<string | Layout> = signal('dagreCluster');
     readonly update$: Subject<boolean> = new Subject<boolean>();
