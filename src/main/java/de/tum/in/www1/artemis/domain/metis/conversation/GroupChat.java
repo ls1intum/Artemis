@@ -36,10 +36,20 @@ public class GroupChat extends Conversation {
     public GroupChat(Long id, User creator, Set<ConversationParticipant> conversationParticipants, Set<Post> posts, Course course, ZonedDateTime creationDate,
             ZonedDateTime lastMessageDate, String name) {
         super(id, creator, conversationParticipants, posts, course, creationDate, lastMessageDate);
-        this.name = name;
+        this.name = StringUtils.isBlank(name) ? generateName() : name;
     }
 
     public GroupChat() {
+    }
+
+    public String generateName() {
+        String generatedName = getConversationParticipants().stream().map((participant) -> participant.getUser().getName()).collect(Collectors.joining(", "));
+
+        // The name should be human-readable, so we limit it for very long lists and add "…" to hint that the string is not complete.
+        if (generatedName.length() >= Constants.GROUP_CONVERSATION_HUMAN_READABLE_NAME_LIMIT) {
+            generatedName = generatedName.substring(0, Constants.GROUP_CONVERSATION_HUMAN_READABLE_NAME_LIMIT) + "…";
+        }
+        return generatedName;
     }
 
     @Override
@@ -60,20 +70,7 @@ public class GroupChat extends Conversation {
 
     @Override
     public String getHumanReadableNameForReceiver(User sender) {
-        if (StringUtils.isBlank(getName())) {
-            final String generatedName = getConversationParticipants().stream().map((participant) -> participant.getUser().getName()).collect(Collectors.joining(", "));
-
-            // The name should be human-readable, so we limit it for very long lists and add "…" to hint that the string is not complete.
-            if (generatedName.length() >= Constants.GROUP_CONVERSATION_HUMAN_READABLE_NAME_LIMIT) {
-                return generatedName.substring(0, Constants.GROUP_CONVERSATION_HUMAN_READABLE_NAME_LIMIT) + "…";
-            }
-            else {
-                return generatedName;
-            }
-        }
-        else {
-            return getName();
-        }
+        return getName();
     }
 
     @Override

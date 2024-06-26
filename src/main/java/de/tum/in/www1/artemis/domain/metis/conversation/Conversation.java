@@ -58,11 +58,11 @@ public abstract class Conversation extends DomainObject {
     private User creator;
 
     @JsonIgnoreProperties("conversation")
-    @OneToMany(mappedBy = "conversation", cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "conversation", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     private Set<ConversationParticipant> conversationParticipants = new HashSet<>();
 
     @JsonIgnoreProperties("conversation")
-    @OneToMany(mappedBy = "conversation", cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "conversation", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     private Set<Post> posts = new HashSet<>();
 
     @ManyToOne
