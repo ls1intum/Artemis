@@ -14,7 +14,6 @@ import java.util.Objects;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.RepositoryNotFoundException;
@@ -205,8 +204,6 @@ public class LocalVCServletService {
             }
         }
 
-        User user = authenticateUser(authorizationHeader);
-
         // Optimization.
         // For each git command (i.e. 'git fetch' or 'git push'), the git client sends three requests.
         // The URLs of the first two requests end on '[repository URI]/info/refs'. The third one ends on '[repository URI]/git-receive-pack' (for push) and '[repository
@@ -223,6 +220,8 @@ public class LocalVCServletService {
 
         ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey);
 
+        User user = authenticateUser(authorizationHeader, exercise);
+
         // Check that offline IDE usage is allowed.
         if (Boolean.FALSE.equals(exercise.isAllowOfflineIde()) && authorizationCheckService.isOnlyStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
             throw new LocalVCForbiddenException();
@@ -235,7 +234,7 @@ public class LocalVCServletService {
         log.debug("Authorizing user {} for repository {} took {}", user.getLogin(), localVCRepositoryUri, TimeLogUtil.formatDurationFrom(timeNanoStart));
     }
 
-    private User authenticateUser(String authorizationHeader) throws LocalVCAuthException {
+    private User authenticateUser(String authorizationHeader, ProgrammingExercise exercise) throws LocalVCAuthException {
 
         UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
 
@@ -249,9 +248,16 @@ public class LocalVCServletService {
 
             // Note: we first check if the user has used a vcs access token instead of a password
 
-            if (user.isPresent() && !StringUtils.isEmpty(user.get().getVcsAccessToken()) && Objects.equals(user.get().getVcsAccessToken(), password)) {
+            if (user.isPresent()) { // !StringUtils.isEmpty(user.get().getVcsAccessToken()) && Objects.equals(user.get().getVcsAccessToken(), password)) {
                 // user is authenticated by using the correct access token
-                return user.get();
+                var studentParticipation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(exercise, user.get().getLogin());
+                if (Objects.equals(studentParticipation.getVcsAccessToken(), password)) {
+                    User suser = user.get();
+                    suser.setVcsAccessToken(studentParticipation.getVcsAccessToken());
+                    return suser;
+                }
+                // suser.setVcsAccessToken();
+                throw new LocalVCAuthException(new AccessForbiddenException());
             }
 
             // if the user does not have an access token or has used a password, we try to authenticate the user with it

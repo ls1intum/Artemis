@@ -54,8 +54,8 @@ public class GitLabPersonalAccessTokenManagementService extends VcsTokenManageme
     /**
      * The config parameter for enabling VCS access tokens.
      */
-    @Value("${artemis.version-control.version-control-access-token:#{false}}")
-    private Boolean versionControlAccessToken;
+    @Value("${artemis.version-control.version-control-access-token:#{true}}")
+    private Boolean useVersionControlAccessToken;
 
     public GitLabPersonalAccessTokenManagementService(UserRepository userRepository, GitLabApi gitlabApi, @Qualifier("gitlabRestTemplate") RestTemplate restTemplate) {
         this.userRepository = userRepository;
@@ -72,7 +72,7 @@ public class GitLabPersonalAccessTokenManagementService extends VcsTokenManageme
      */
     @Override
     public void createAccessToken(User user, Duration lifetime) {
-        if (versionControlAccessToken) {
+        if (useVersionControlAccessToken) {
             if (user.getVcsAccessToken() != null) {
                 throw new IllegalArgumentException("User already has an access token");
             }
@@ -115,7 +115,7 @@ public class GitLabPersonalAccessTokenManagementService extends VcsTokenManageme
      */
     @Override
     public void renewAccessToken(User user, Duration newLifetime) {
-        if (versionControlAccessToken) {
+        if (useVersionControlAccessToken) {
             if (user.getVcsAccessToken() == null) {
                 throw new IllegalArgumentException("User has no VCS access token to be renewed");
             }

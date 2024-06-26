@@ -181,6 +181,14 @@ public abstract class Participation extends DomainObject implements Participatio
         this.individualDueDate = individualDueDate;
     }
 
+    public String getVcsAccessToken() {
+        return this.vcsAccessToken;
+    }
+
+    public void setVcsAccessToken(String vcsAccessToken) {
+        this.vcsAccessToken = vcsAccessToken;
+    }
+
     public boolean isTestRun() {
         return Boolean.TRUE.equals(testRun);
     }

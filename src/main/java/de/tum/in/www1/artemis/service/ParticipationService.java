@@ -225,6 +225,8 @@ public class ParticipationService {
         participation.setInitializationState(InitializationState.UNINITIALIZED);
         participation.setExercise(exercise);
         participation.setParticipant(participant);
+        // todo generate random one
+        participation.setVcsAccessToken("vcpat-9999999m5GIAtTtYEX3OyWYzcl4uQMcxPtG8xQcL");
         // StartedDate is used to link a Participation to a test exam exercise
         if (initializationDate != null) {
             participation.setInitializationDate(initializationDate);
