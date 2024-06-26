@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { CompetencyValidators } from 'app/entities/competency.model';
+import { CourseCompetencyValidators } from 'app/entities/competency.model';
 import { faChevronRight, faPencilAlt, faSave, faTrash, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { FormGroup, Validators } from '@angular/forms';
@@ -26,13 +26,13 @@ export class CompetencyRecommendationDetailComponent implements OnInit {
     protected readonly faPencilAlt = faPencilAlt;
 
     //Other constants for html
-    protected readonly competencyValidators = CompetencyValidators;
+    protected readonly competencyValidators = CourseCompetencyValidators;
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
 
     ngOnInit(): void {
-        this.titleControl.addValidators([Validators.required, Validators.maxLength(CompetencyValidators.TITLE_MAX)]);
-        this.descriptionControl.addValidators([Validators.maxLength(CompetencyValidators.DESCRIPTION_MAX)]);
+        this.titleControl.addValidators([Validators.required, Validators.maxLength(CourseCompetencyValidators.TITLE_MAX)]);
+        this.descriptionControl.addValidators([Validators.maxLength(CourseCompetencyValidators.DESCRIPTION_MAX)]);
         //disable all competency controls as component is not in edit mode
         this.form.controls.competency.disable();
         //viewed checkbox is always enabled
