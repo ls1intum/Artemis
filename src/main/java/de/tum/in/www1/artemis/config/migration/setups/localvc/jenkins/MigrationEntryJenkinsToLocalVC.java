@@ -53,7 +53,17 @@ public class MigrationEntryJenkinsToLocalVC extends LocalVCMigrationEntry {
 
     @Override
     protected void migrateTemplates(List<TemplateProgrammingExerciseParticipation> templateParticipations) {
-        // TODO implement
+        for (var participation : templateParticipations) {
+            try {
+                if (isRepositoryUriNotNull(participation, "Repository URI is null for template participation with id {}, cant migrate")) {
+                    changeRepositoryUriFromSourceVCSToLocalVC(participation.getProgrammingExercise(), participation.getRepositoryUri(), participation.getBuildPlanId());
+                }
+            }
+            catch (Exception e) {
+                log.error("Failed to migrate template participation with id {}", participation.getId(), e);
+                errorList.add(participation);
+            }
+        }
     }
 
     @Override
