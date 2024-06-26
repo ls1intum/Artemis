@@ -9,43 +9,42 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 @Profile(PROFILE_CORE)
 @Repository
-public interface LearningPathRepository extends JpaRepository<LearningPath, Long> {
+public interface LearningPathRepository extends ArtemisJpaRepository<LearningPath, Long> {
 
     Optional<LearningPath> findByCourseIdAndUserId(long courseId, long userId);
 
     default LearningPath findByCourseIdAndUserIdElseThrow(long courseId, long userId) {
-        return findByCourseIdAndUserId(courseId, userId).orElseThrow(() -> new EntityNotFoundException("LearningPath"));
+        return getValueElseThrow(findByCourseIdAndUserId(courseId, userId));
     }
 
     @EntityGraph(type = LOAD, attributePaths = { "user" })
     Optional<LearningPath> findWithEagerUserById(long learningPathId);
 
     default LearningPath findWithEagerUserByIdElseThrow(long learningPathId) {
-        return findWithEagerUserById(learningPathId).orElseThrow(() -> new EntityNotFoundException("LearningPath"));
+        return getValueElseThrow(findWithEagerUserById(learningPathId));
     }
 
     @EntityGraph(type = LOAD, attributePaths = { "competencies" })
     Optional<LearningPath> findWithEagerCompetenciesByCourseIdAndUserId(long courseId, long userId);
 
     default LearningPath findWithEagerCompetenciesByCourseIdAndUserIdElseThrow(long courseId, long userId) {
-        return findWithEagerCompetenciesByCourseIdAndUserId(courseId, userId).orElseThrow(() -> new EntityNotFoundException("LearningPath"));
+        return getValueElseThrow(findWithEagerCompetenciesByCourseIdAndUserId(courseId, userId));
     }
 
     @EntityGraph(type = LOAD, attributePaths = { "course", "competencies" })
     Optional<LearningPath> findWithEagerCourseAndCompetenciesById(long learningPathId);
 
     default LearningPath findWithEagerCourseAndCompetenciesByIdElseThrow(long learningPathId) {
-        return findWithEagerCourseAndCompetenciesById(learningPathId).orElseThrow(() -> new EntityNotFoundException("LearningPath"));
+        return getValueElseThrow(findWithEagerCourseAndCompetenciesById(learningPathId));
     }
 
     @Query("""
@@ -72,6 +71,6 @@ public interface LearningPathRepository extends JpaRepository<LearningPath, Long
     Optional<LearningPath> findWithCompetenciesAndLectureUnitsAndExercisesById(long learningPathId);
 
     default LearningPath findWithCompetenciesAndLectureUnitsAndExercisesByIdElseThrow(long learningPathId) {
-        return findWithCompetenciesAndLectureUnitsAndExercisesById(learningPathId).orElseThrow(() -> new EntityNotFoundException("LearningPath"));
+        return getValueElseThrow(findWithCompetenciesAndLectureUnitsAndExercisesById(learningPathId));
     }
 }

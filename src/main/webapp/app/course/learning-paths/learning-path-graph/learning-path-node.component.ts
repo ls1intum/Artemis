@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { CompetencyProgressForLearningPathDTO, NgxLearningPathNode, NodeType, getIcon } from 'app/entities/competency/learning-path.model';
-import { Competency, CompetencyProgress, getConfidence, getMastery, getProgress } from 'app/entities/competency.model';
+import { Competency, CompetencyProgress, getMastery, getProgress } from 'app/entities/competency.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitForLearningPathNodeDetailsDTO } from 'app/entities/lecture-unit/lectureUnit.model';
@@ -40,11 +40,7 @@ export class LearningPathNodeComponent implements OnInit {
         return getProgress(this.nodeDetailsData.competencyProgress!);
     }
 
-    get confidence() {
-        return getConfidence(this.nodeDetailsData.competencyProgress!, this.competencyProgressDTO!.masteryThreshold!);
-    }
-
     get mastery() {
-        return getMastery(this.nodeDetailsData.competencyProgress!, this.competencyProgressDTO!.masteryThreshold!);
+        return getMastery(this.nodeDetailsData.competencyProgress);
     }
 }

@@ -1,0 +1,185 @@
+<!-- client -->
+<div class="chat-header">
+    <div class="header-start">
+        <jhi-iris-logo [size]="IrisLogoSize.FLUID" />
+        <div class="word-iris">Iris</div>
+        <a [routerLink]="'/about-iris'" target="_blank">
+            <fa-icon [icon]="faCircleInfo" class="info-button" />
+        </a>
+    </div>
+    <div class="d-flex gap-2">
+        @if (rateLimitInfo.rateLimit > 0) {
+            <div class="toolbox">
+                <span class="rate-limit" [ngbTooltip]="'artemisApp.exerciseChatbot.rateLimitTooltip' | artemisTranslate: { hours: rateLimitInfo.rateLimitTimeframeHours }">
+                    {{ rateLimitInfo.currentMessageCount }} / {{ rateLimitInfo.rateLimit }}
+                </span>
+            </div>
+        }
+        <div class="toolbox">
+            @if (this.messages.length >= 1) {
+                <button id="clear-chat-button" (click)="onClearSession(clearConfirmModal)" class="header-icon">
+                    <fa-icon [icon]="faTrash" />
+                </button>
+            }
+
+            @if (fullSize !== undefined) {
+                <button (click)="fullSizeToggle.next()" class="header-icon">
+                    @if (!fullSize) {
+                        <fa-icon [icon]="faExpand" />
+                    } @else {
+                        <fa-icon [icon]="faCompress" />
+                    }
+                </button>
+            }
+
+            @if (showCloseButton) {
+                <button (click)="closeChat()" class="header-icon">
+                    <fa-icon [icon]="faXmark" />
+                </button>
+            }
+        </div>
+    </div>
+</div>
+<ng-template #clearConfirmModal let-modal>
+    <div class="modal-header">
+        <h4 class="modal-title">
+            <span jhiTranslate="artemisApp.exerciseChatbot.clearSession.title"></span>
+        </h4>
+        <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+    </div>
+    <div class="modal-body">
+        <p jhiTranslate="artemisApp.exerciseChatbot.clearSession.text"></p>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-danger" (click)="modal.close('confirm')">
+            <span jhiTranslate="artemisApp.exerciseChatbot.clearSession.submit"></span>
+        </button>
+    </div>
+</ng-template>
+<!-- main chat section -->
+<div class="chat-body" [class.not-accepted]="!userAccepted" #chatBody>
+    @if (messages?.length) {
+        <div class="messages" #messagesElement (scroll)="checkChatScroll()">
+            @if (suggestions?.length) {
+                <div @suggestionAnimation class="suggestions-container">
+                    @for (suggestion of suggestions; track suggestion) {
+                        <button class="suggestion-button" (click)="onSuggestionClick(suggestion)" [innerHTML]="suggestion"></button>
+                    }
+                </div>
+            }
+            @for (message of messages; track message.id; let i = $index) {
+                <div @messageAnimation [@.disabled]="!shouldAnimate" [style.transform-origin]="message.sender === IrisSender.USER ? 'bottom right' : 'bottom left'">
+                    @for (content of message.content; track content) {
+                        <div>
+                            @if (message.sender === IrisSender.USER) {
+                                <div class="d-flex justify-content-end align-items-center">
+                                    @if (content.type === IrisMessageContentType.TEXT) {
+                                        <pre>
+                                                <span
+                                                    [innerHTML]="(content | as: IrisTextMessageContent).textContent | htmlForMarkdown"
+                                                    class="bubble-right"></span>
+                                            </pre>
+                                    }
+                                </div>
+                            }
+                            @if (message.sender === IrisSender.LLM) {
+                                <div style="width: fit-content; position: relative">
+                                    @if (content.type === IrisMessageContentType.TEXT) {
+                                        <div class="bubble-left">
+                                            <span [innerHTML]="(content | as: IrisTextMessageContent).textContent! | htmlForMarkdown"></span>
+                                        </div>
+
+                                        <div class="rate-message-buttons toolbox">
+                                            <button
+                                                class="btn btn-sm"
+                                                [class.thumbs-up-clicked]="(message | as: IrisAssistantMessage).helpful"
+                                                [class.clickable]="!(message | as: IrisAssistantMessage).helpful"
+                                                [class.rate-button-not-clicked]="!(message | as: IrisAssistantMessage).helpful"
+                                                (click)="rateMessage(message, true)"
+                                                [disabled]="(message | as: IrisAssistantMessage).helpful"
+                                            >
+                                                <fa-icon [icon]="faThumbsUp" />
+                                            </button>
+                                            <button
+                                                class="btn btn-sm"
+                                                [class.thumbs-down-clicked]="(message | as: IrisAssistantMessage).helpful === false"
+                                                [class.clickable]="(message | as: IrisAssistantMessage).helpful !== false"
+                                                [class.rate-button-not-clicked]="(message | as: IrisAssistantMessage).helpful !== false"
+                                                (click)="rateMessage(message, false)"
+                                                [disabled]="(message | as: IrisAssistantMessage).helpful === false"
+                                            >
+                                                <fa-icon [icon]="faThumbsDown" />
+                                            </button>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+    @if (!messages?.length) {
+        <div class="empty-chat-message">
+            <jhi-iris-logo [size]="IrisLogoSize.SMALL" />
+            <h3 jhiTranslate="artemisApp.iris.chat.helpOffer"></h3>
+        </div>
+    }
+    <jhi-chat-status-bar [stages]="stages" />
+    @if (!userAccepted) {
+        <div class="p-chat">
+            <div class="message-text" jhiTranslate="artemisApp.exerciseChatbot.popUpMessage"></div>
+            <div class="button-container">
+                <button type="button" class="btn btn-primary" #acceptButton (click)="acceptPermission()" jhiTranslate="artemisApp.exerciseChatbot.accept"></button>
+                <button type="button" class="btn btn-secondary" (click)="closeChat()" jhiTranslate="artemisApp.exerciseChatbot.decline"></button>
+            </div>
+        </div>
+    }
+    <div class="scroll-to-bottom" [hidden]="isScrolledToBottom" (click)="scrollToBottom('smooth')" #scrollArrow>
+        <fa-icon [icon]="faArrowDown" />
+    </div>
+    @if (error) {
+        <div class="client-chat-error">
+            {{ error | artemisTranslate }}
+        </div>
+    }
+    @if (!active) {
+        <div class="client-chat-error" [jhiTranslate]="IrisErrorMessageKey.IRIS_NOT_AVAILABLE"></div>
+    }
+    @if (userAccepted) {
+        <div class="chat-input">
+            <textarea
+                [(ngModel)]="newMessageTextContent"
+                rows="1"
+                class="form-control"
+                (ngModelChange)="onModelChange()"
+                (input)="onInput()"
+                (paste)="onPaste()"
+                type="text"
+                [disabled]="
+                    this.isLoading ||
+                    !this.active ||
+                    (this.rateLimitInfo?.rateLimit && this.rateLimitInfo?.currentMessageCount === this.rateLimitInfo?.rateLimit) ||
+                    this.hasActiveStage
+                "
+                (keydown)="handleKey($event)"
+                placeholder="{{ 'artemisApp.exerciseChatbot.inputMessage' | artemisTranslate }}"
+                #messageTextarea
+            ></textarea>
+            <jhi-button
+                id="irisSendButton"
+                (onClick)="onSend()"
+                [btnType]="ButtonType.SUCCESS_OUTLINE"
+                [icon]="faPaperPlane"
+                [disabled]="
+                    this.isLoading ||
+                    !this.active ||
+                    (this.rateLimitInfo?.rateLimit && this.rateLimitInfo?.currentMessageCount === this.rateLimitInfo?.rateLimit) ||
+                    this.hasActiveStage
+                "
+            />
+            <span class="disclaimer-message">{{ 'artemisApp.exerciseChatbot.disclaimer' | artemisTranslate }}</span>
+        </div>
+    }
+</div>

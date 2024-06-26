@@ -36,6 +36,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
+import de.tum.in.www1.artemis.domain.competency.Prerequisite;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
@@ -224,6 +225,9 @@ public class Course extends DomainObject {
     @Column(name = "learning_paths_enabled", nullable = false)
     private boolean learningPathsEnabled = false;
 
+    @Column(name = "student_course_analytics_dashboard_enabled", nullable = false)
+    private boolean studentCourseAnalyticsDashboardEnabled = false;
+
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("course")
     private Set<LearningPath> learningPaths = new HashSet<>();
@@ -245,11 +249,10 @@ public class Course extends DomainObject {
     @JsonIgnoreProperties("course")
     private Set<Organization> organizations = new HashSet<>();
 
-    @ManyToMany
-    @JoinTable(name = "competency_course", joinColumns = @JoinColumn(name = "course_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "competency_id", referencedColumnName = "id"))
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties("consecutiveCourses")
-    private Set<Competency> prerequisites = new HashSet<>();
+    @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("course")
+    @OrderBy("title")
+    private Set<Prerequisite> prerequisites = new HashSet<>();
 
     @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "tutorial_groups_configuration_id")
@@ -697,22 +700,12 @@ public class Course extends DomainObject {
         this.organizations = organizations;
     }
 
-    public Set<Competency> getPrerequisites() {
+    public Set<Prerequisite> getPrerequisites() {
         return prerequisites;
     }
 
-    public void setPrerequisites(Set<Competency> prerequisites) {
+    public void setPrerequisites(Set<Prerequisite> prerequisites) {
         this.prerequisites = prerequisites;
-    }
-
-    public void addPrerequisite(Competency competency) {
-        this.prerequisites.add(competency);
-        competency.getConsecutiveCourses().add(this);
-    }
-
-    public void removePrerequisite(Competency competency) {
-        this.prerequisites.remove(competency);
-        competency.getConsecutiveCourses().remove(this);
     }
 
     @Override
@@ -772,6 +765,14 @@ public class Course extends DomainObject {
 
     public void setLearningPathsEnabled(boolean learningPathsEnabled) {
         this.learningPathsEnabled = learningPathsEnabled;
+    }
+
+    public boolean getStudentCourseAnalyticsDashboardEnabled() {
+        return studentCourseAnalyticsDashboardEnabled;
+    }
+
+    public void setStudentCourseAnalyticsDashboardEnabled(boolean studentCourseAnalyticsDashboardEnabled) {
+        this.studentCourseAnalyticsDashboardEnabled = studentCourseAnalyticsDashboardEnabled;
     }
 
     public Set<LearningPath> getLearningPaths() {

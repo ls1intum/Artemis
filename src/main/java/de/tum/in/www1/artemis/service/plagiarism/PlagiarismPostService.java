@@ -159,7 +159,7 @@ public class PlagiarismPostService extends PostingService {
             plagiarismCasePosts = postRepository.findPostsByPlagiarismCaseId(postContextFilter.plagiarismCaseId());
 
             // protect sample solution, grading instructions, etc.
-            setAuthorRoleOfPostings(plagiarismCasePosts);
+            setAuthorRoleOfPostings(plagiarismCasePosts, course.getId());
 
             return plagiarismCasePosts;
         }

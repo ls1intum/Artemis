@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.TeamAssignmentConfig;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -52,7 +51,7 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmittedAnswerRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.service.FilePathService;
-import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.service.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
 /**
@@ -61,11 +60,11 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 @Service
 public class QuizExerciseUtilService {
 
-    private static final ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
+    private static final ZonedDateTime PAST_TIMESTAMP = ZonedDateTime.now().minusDays(1);
 
-    private static final ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(1);
+    private static final ZonedDateTime FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(1);
 
-    private static final ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
+    private static final ZonedDateTime FUTURE_FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(2);
 
     @Autowired
     private CourseRepository courseRepo;
@@ -130,8 +129,8 @@ public class QuizExerciseUtilService {
      * @return The newly created course with the quiz.
      */
     public Course addCourseWithOneQuizExercise(String title) {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, futureTimestamp, futureFutureTimestamp, QuizMode.SYNCHRONIZED);
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, QuizMode.SYNCHRONIZED);
         quizExercise.setTitle(title);
         quizExercise.setDuration(120);
         assertThat(quizExercise.getQuizQuestions()).isNotEmpty();
@@ -301,10 +300,10 @@ public class QuizExerciseUtilService {
     public QuizSubmission addQuizExerciseToCourseWithParticipationAndSubmissionForUser(Course course, String login, boolean dueDateInTheFuture) throws IOException {
         QuizExercise quizExercise;
         if (dueDateInTheFuture) {
-            quizExercise = createAndSaveQuizWithAllQuestionTypes(course, pastTimestamp, futureTimestamp, futureTimestamp, QuizMode.SYNCHRONIZED);
+            quizExercise = createAndSaveQuizWithAllQuestionTypes(course, PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_TIMESTAMP, QuizMode.SYNCHRONIZED);
         }
         else {
-            quizExercise = createAndSaveQuizWithAllQuestionTypes(course, pastTimestamp, pastTimestamp, pastTimestamp, QuizMode.SYNCHRONIZED);
+            quizExercise = createAndSaveQuizWithAllQuestionTypes(course, PAST_TIMESTAMP, PAST_TIMESTAMP, PAST_TIMESTAMP, QuizMode.SYNCHRONIZED);
         }
         quizExercise.setTitle("quiz");
         quizExercise.setDuration(120);
@@ -420,18 +419,5 @@ public class QuizExerciseUtilService {
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(releaseDate, dueDate, assessmentDueDate, quizMode, course);
         QuizExerciseFactory.addAllQuestionTypesToQuizExercise(quizExercise);
         return quizExerciseRepository.save(quizExercise);
-    }
-
-    /**
-     * Joins the given quiz batch as the user with the given username.
-     *
-     * @param quizExercise The quiz of the batch which should be joined.
-     * @param batch        The quiz batch which should be joined.
-     * @param username     The username of the user joining the batch.
-     */
-    public void joinQuizBatch(QuizExercise quizExercise, QuizBatch batch, String username) {
-        var user = new User();
-        user.setLogin(username);
-        quizScheduleService.joinQuizBatch(quizExercise, batch, user);
     }
 }

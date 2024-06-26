@@ -10,8 +10,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +37,7 @@ import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.CompetencyPageableSearchDTO;
-import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
@@ -51,6 +49,8 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 public class CompetencyService {
 
     private static final Logger log = LoggerFactory.getLogger(CompetencyService.class);
+
+    private static final String ENTITY_NAME = "Competency";
 
     private final CompetencyRepository competencyRepository;
 
@@ -89,41 +89,6 @@ public class CompetencyService {
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
         this.standardizedCompetencyRepository = standardizedCompetencyRepository;
         this.courseRepository = courseRepository;
-    }
-
-    /**
-     * Get all prerequisites for a course. Lecture units are removed.
-     *
-     * @param course The course for which the prerequisites should be retrieved.
-     * @return A list of prerequisites.
-     */
-    public Set<Competency> findAllPrerequisitesForCourse(@NotNull Course course) {
-        Set<Competency> prerequisites = competencyRepository.findPrerequisitesByCourseId(course.getId());
-        // Remove all lecture units
-        for (Competency prerequisite : prerequisites) {
-            prerequisite.setLectureUnits(Collections.emptySet());
-        }
-        return prerequisites;
-    }
-
-    /**
-     * Search for all competencies fitting a {@link SearchTermPageableSearchDTO search query}. The result is paged.
-     *
-     * @param search The search query defining the search term and the size of the returned page
-     * @param user   The user for whom to the competencies
-     * @return A wrapper object containing a list of all found competencies and the total number of pages
-     */
-    public SearchResultPageDTO<Competency> getAllOnPageWithSize(final SearchTermPageableSearchDTO<String> search, final User user) {
-        final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.COMPETENCY);
-        final var searchTerm = search.getSearchTerm();
-        final Page<Competency> competencyPage;
-        if (authCheckService.isAdmin(user)) {
-            competencyPage = competencyRepository.findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(searchTerm, searchTerm, pageable);
-        }
-        else {
-            competencyPage = competencyRepository.findByTitleInLectureOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), pageable);
-        }
-        return new SearchResultPageDTO<>(competencyPage.getContent(), competencyPage.getTotalPages());
     }
 
     /**
@@ -383,7 +348,7 @@ public class CompetencyService {
      * @return The found competency
      */
     public List<Competency> findCompetenciesWithProgressForUserByCourseId(Long courseId, Long userId) {
-        List<Competency> competencies = competencyRepository.findByCourseId(courseId);
+        List<Competency> competencies = competencyRepository.findByCourseIdOrderById(courseId);
         var progress = competencyProgressRepository.findByCompetenciesAndUser(competencies, userId).stream()
                 .collect(Collectors.toMap(completion -> completion.getCompetency().getId(), completion -> completion));
 
@@ -551,5 +516,18 @@ public class CompetencyService {
             }
         }
         return graph.hasCycle();
+    }
+
+    /**
+     * Checks if the competency is part of the course
+     *
+     * @param competencyId The id of the competency
+     * @param courseId     The id of the course
+     * @throws BadRequestAlertException if the competency does not belong to the course
+     */
+    public void checkIfCompetencyBelongsToCourse(long competencyId, long courseId) {
+        if (!competencyRepository.existsByIdAndCourseId(competencyId, courseId)) {
+            throw new BadRequestAlertException("The competency does not belong to the course", ENTITY_NAME, "competencyWrongCourse");
+        }
     }
 }

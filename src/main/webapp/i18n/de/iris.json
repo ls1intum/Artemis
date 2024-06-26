@@ -21,6 +21,10 @@
                 },
                 "subSettings": {
                     "chatSettings": "Chat Einstellungen",
+                    "lectureIngestionSettings": {
+                        "title": "Vorlesungen Erfassung Einstellungen",
+                        "autoIngestOnAttachmentUpload": "Vorlesungen automatisch an Pyris senden"
+                    },
                     "hestiaSettings": "Hestia Einstellungen",
                     "competencyGenerationSettings": "Kompetenzgenerierung Einstellungen",
                     "enabled-disabled": "Aktiviert/Deaktiviert",
@@ -65,6 +69,7 @@
                     "tooltip": "Wenn aktiviert, werden die spezifischen globalen Iris Einstellungen automatisch aktualisiert, wenn eine neue Version von Artemis neue Iris Einstellungen bereitstellt.",
                     "chatLabel": "Auto Update der Chat Einstellungen",
                     "hestiaLabel": "Auto Update der Hestia Einstellungen",
+                    "lectureIngestionLabel": "Auto Update der Vorlesungen Erfassung Einstellungen",
                     "competencyGenerationLabel": "Auto Update der Kompetenzgenerierung Einstellungen"
                 }
             },
@@ -75,6 +80,9 @@
                 "noModelAvailable": "Das Modell {{ model }} steht nicht zur Verfügung. Bitte kontaktiere einen Administrator, wenn das Problem weiterhin besteht.",
                 "noResponse": "Es wurde keine Antwort von Iris empfangen. Bitte kontaktiere einen Administrator, wenn das Problem weiterhin besteht.",
                 "parseResponse": "Ein Fehler ist beim Parsen der Antwort von Iris aufgetreten. Ursache: {{ cause }}"
+            },
+            "chat": {
+                "helpOffer": "Wie kann ich Dir helfen?"
             }
         }
     }

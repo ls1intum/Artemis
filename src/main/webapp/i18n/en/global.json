@@ -266,7 +266,8 @@
             "discardChanges": "Discard changes",
             "goBack": "Go back",
             "search": "Search",
-            "select": "Select"
+            "select": "Select",
+            "sendToIris": "Send To Iris"
         },
         "detail": {
             "field": "Field",
@@ -338,6 +339,7 @@
         "competencies": "Competencies",
         "learningPath": "Learning Path",
         "tutorialGroups": "Tutorial Groups",
+        "dashboard": "Dashboard",
         "exercise": "Exercise details",
         "exercises": "Exercises",
         "statistics": "Course statistics",

@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,13 +14,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Rating;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseRatingCount;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data JPA repository for the Rating entity.
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface RatingRepository extends JpaRepository<Rating, Long> {
+public interface RatingRepository extends ArtemisJpaRepository<Rating, Long> {
 
     Optional<Rating> findRatingByResultId(long resultId);
 
