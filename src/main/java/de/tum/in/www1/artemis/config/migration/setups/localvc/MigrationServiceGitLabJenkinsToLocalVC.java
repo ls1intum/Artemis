@@ -12,6 +12,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.migration.setups.localvc.gitlab.MigrationEntryGitLabToLocalVC;
+import de.tum.in.www1.artemis.config.migration.setups.localvc.jenkins.MigrationEntryJenkinsToLocalVC;
 
 @Service
 @Profile("gitlab & jenkins & " + PROFILE_MIGRATE_GITLAB_JENKINS_TO_LOCALVC)
@@ -23,30 +24,41 @@ public class MigrationServiceGitLabJenkinsToLocalVC {
 
     private final MigrationEntryGitLabToLocalVC migrationEntryGitLabToLocalVC;
 
-    public MigrationServiceGitLabJenkinsToLocalVC(ApplicationContext applicationContext, MigrationEntryGitLabToLocalVC migrationEntryGitLabToLocalVC) {
+    private final MigrationEntryJenkinsToLocalVC migrationEntryJenkinsToLocalVC;
+
+    public MigrationServiceGitLabJenkinsToLocalVC(ApplicationContext applicationContext, MigrationEntryGitLabToLocalVC migrationEntryGitLabToLocalVC,
+            MigrationEntryJenkinsToLocalVC migrationEntryJenkinsToLocalVC) {
         this.applicationContext = applicationContext;
         this.migrationEntryGitLabToLocalVC = migrationEntryGitLabToLocalVC;
+        this.migrationEntryJenkinsToLocalVC = migrationEntryJenkinsToLocalVC;
     }
 
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationInitialized() {
         log.info("Migration GitLab-Jenkins to LocalVC-Jenkins starting");
+        final int returnCode;
 
         log.info("Migration starts with the Jenkins build plans");
-        // TODO Add call to migration entry for Jenkins
+        boolean jenkinsMigrationStatus = migrationEntryJenkinsToLocalVC.execute();
 
-        log.info("Migration follow ups with copy the repositories and adjusting the urls in the database");
-        boolean migrationStatus = migrationEntryGitLabToLocalVC.execute();
+        if (jenkinsMigrationStatus) {
+            log.info("Migration follow ups with copy the repositories and adjusting the urls in the database");
+            boolean gitlabMigrationStatus = migrationEntryGitLabToLocalVC.execute();
 
-        SpringApplication.exit(applicationContext, () -> {
-            if (migrationStatus) {
+            if (gitlabMigrationStatus) {
                 log.info("Migration GitLab-Jenkins to LocalVC-Jenkins finished (Check previous log if there are errors with some repositories)");
-                return 0;
+                returnCode = 0;
             }
             else {
                 log.error("Migration GitLab-Jenkins to LocalVC-Jenkins failed at the GitLab to LocalVC part (Details in previous error message)");
-                return 1;
+                returnCode = 2;
             }
-        });
+        }
+        else {
+            log.error("Migration GitLab-Jenkins to LocalVC-Jenkins failed at the Jenkins to LocalVC part (Details in previous error message)");
+            returnCode = 1;
+        }
+
+        SpringApplication.exit(applicationContext, () -> returnCode);
     }
 }
