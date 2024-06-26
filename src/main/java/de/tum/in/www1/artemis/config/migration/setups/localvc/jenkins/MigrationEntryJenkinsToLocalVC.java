@@ -41,16 +41,25 @@ public class MigrationEntryJenkinsToLocalVC extends LocalVCMigrationEntry {
         this.jenkinsBuildPlanService = jenkinsBuildPlanService;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected Class<?> getSubclass() {
         return MigrationEntryJenkinsToLocalVC.class;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void migrateSolutions(List<SolutionProgrammingExerciseParticipation> solutionParticipations) {
         // TODO implement
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void migrateTemplates(List<TemplateProgrammingExerciseParticipation> templateParticipations) {
         for (var participation : templateParticipations) {
@@ -66,6 +75,9 @@ public class MigrationEntryJenkinsToLocalVC extends LocalVCMigrationEntry {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void migrateStudents(List<ProgrammingExerciseStudentParticipation> participations) {
         for (var participation : participations) {

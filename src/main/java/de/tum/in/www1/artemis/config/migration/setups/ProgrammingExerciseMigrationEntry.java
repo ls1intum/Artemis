@@ -163,10 +163,26 @@ public abstract class ProgrammingExerciseMigrationEntry {
 
     protected abstract boolean areValuesIncomplete();
 
+    /**
+     * Migrate the solution participations. Also Migrates the test and aux repository of the programming exercise since we have it
+     * in the solution participation already loaded from the database.
+     *
+     * @param solutionParticipations the solution participations to migrate
+     */
     protected abstract void migrateSolutions(List<SolutionProgrammingExerciseParticipation> solutionParticipations);
 
+    /**
+     * Migrate the template participations.
+     *
+     * @param templateParticipations list of template participations to migrate
+     */
     protected abstract void migrateTemplates(List<TemplateProgrammingExerciseParticipation> templateParticipations);
 
+    /**
+     * Migrate the student participations.
+     *
+     * @param participations list of student participations to migrate
+     */
     protected abstract void migrateStudents(List<ProgrammingExerciseStudentParticipation> participations);
 
     /**

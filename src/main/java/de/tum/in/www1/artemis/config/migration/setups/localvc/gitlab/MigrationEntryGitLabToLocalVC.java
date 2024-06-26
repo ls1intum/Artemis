@@ -124,10 +124,7 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
     }
 
     /**
-     * Migrate the solution participations. Also Migrates the test and aux repository of the programming exercise since we have it
-     * in the solution participation already loaded from the database.
-     *
-     * @param solutionParticipations the solution participations to migrate
+     * {@inheritDoc}
      */
     @Override
     protected void migrateSolutions(List<SolutionProgrammingExerciseParticipation> solutionParticipations) {
@@ -172,9 +169,7 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
     }
 
     /**
-     * Migrate the template participations.
-     *
-     * @param templateParticipations list of template participations to migrate
+     * {@inheritDoc}
      */
     @Override
     protected void migrateTemplates(List<TemplateProgrammingExerciseParticipation> templateParticipations) {
