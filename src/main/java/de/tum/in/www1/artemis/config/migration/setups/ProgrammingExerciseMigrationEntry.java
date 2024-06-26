@@ -16,12 +16,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.participation.ParticipationInterface;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
@@ -53,6 +55,8 @@ public abstract class ProgrammingExerciseMigrationEntry {
 
     protected final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
+    protected final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+
     protected static final String ERROR_MESSAGE = "Failed to migrate programming exercises within %d hours. Aborting migration.";
 
     protected final Logger log = LoggerFactory.getLogger(getSubclass());
@@ -62,11 +66,12 @@ public abstract class ProgrammingExerciseMigrationEntry {
     protected ProgrammingExerciseMigrationEntry(ProgrammingExerciseRepository programmingExerciseRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
     }
 
     /**
@@ -162,6 +167,16 @@ public abstract class ProgrammingExerciseMigrationEntry {
     }
 
     protected abstract boolean areValuesIncomplete();
+
+    /**
+     * Returns a list of auxiliary repositories for the given exercise.
+     *
+     * @param exerciseId The id of the exercise
+     * @return A list of auxiliary repositories, or an empty list if the migration service does not support auxiliary repositories
+     */
+    protected List<AuxiliaryRepository> getAuxiliaryRepositories(Long exerciseId) {
+        return auxiliaryRepositoryRepository.findByExerciseId(exerciseId);
+    }
 
     /**
      * Migrate the solution participations. Also Migrates the test and aux repository of the programming exercise since we have it

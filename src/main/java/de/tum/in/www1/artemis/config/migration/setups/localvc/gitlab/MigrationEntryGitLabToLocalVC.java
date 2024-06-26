@@ -13,7 +13,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.config.migration.setups.localvc.LocalVCMigrationEntry;
-import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -39,8 +38,6 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
     @Value("${artemis.version-control.local-vcs-repo-path:#{null}}")
     private String localVCBasePath;
 
-    private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
-
     private final UriService uriService;
 
     private final Optional<AbstractVersionControlService> sourceVersionControlService;
@@ -51,8 +48,7 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             Optional<AbstractVersionControlService> sourceVersionControlService, UriService uriService) {
         super(programmingExerciseRepository, solutionProgrammingExerciseParticipationRepository, templateProgrammingExerciseParticipationRepository,
-                programmingExerciseStudentParticipationRepository);
-        this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
+                programmingExerciseStudentParticipationRepository, auxiliaryRepositoryRepository);
         this.sourceVersionControlService = sourceVersionControlService;
         this.uriService = uriService;
     }
@@ -111,16 +107,6 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
                 log.error("Failed to migrate auxiliary repository with id {}", repo.getId(), e);
             }
         }
-    }
-
-    /**
-     * Returns a list of auxiliary repositories for the given exercise.
-     *
-     * @param exerciseId The id of the exercise
-     * @return A list of auxiliary repositories, or an empty list if the migration service does not support auxiliary repositories
-     */
-    private List<AuxiliaryRepository> getAuxiliaryRepositories(Long exerciseId) {
-        return auxiliaryRepositoryRepository.findByExerciseId(exerciseId);
     }
 
     /**

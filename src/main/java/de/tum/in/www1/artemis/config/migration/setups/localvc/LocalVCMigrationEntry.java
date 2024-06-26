@@ -5,6 +5,7 @@ import java.net.URL;
 import org.springframework.beans.factory.annotation.Value;
 
 import de.tum.in.www1.artemis.config.migration.setups.ProgrammingExerciseMigrationEntry;
+import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
@@ -18,9 +19,9 @@ public abstract class LocalVCMigrationEntry extends ProgrammingExerciseMigration
     protected LocalVCMigrationEntry(ProgrammingExerciseRepository programmingExerciseRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
         super(programmingExerciseRepository, solutionProgrammingExerciseParticipationRepository, templateProgrammingExerciseParticipationRepository,
-                programmingExerciseStudentParticipationRepository);
+                programmingExerciseStudentParticipationRepository, auxiliaryRepositoryRepository);
     }
 
     @Override
