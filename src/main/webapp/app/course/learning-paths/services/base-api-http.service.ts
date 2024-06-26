@@ -5,7 +5,7 @@ import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/comm
 import { lastValueFrom } from 'rxjs';
 
 export abstract class BaseApiHttpService {
-    private readonly httpClient = inject(HttpClient);
+    private readonly httpClient: HttpClient = inject(HttpClient);
 
     private readonly baseUrl = 'api';
 
@@ -50,7 +50,7 @@ export abstract class BaseApiHttpService {
                   };
             responseType?: 'json';
         },
-    ) {
+    ): Promise<T> {
         try {
             const response = await lastValueFrom(
                 this.httpClient.request<T>(method, `${this.baseUrl}/${url}`, {

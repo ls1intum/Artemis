@@ -1,16 +1,16 @@
 import { provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { LearningPathStudentNavComponent } from 'app/course/learning-paths/components/learning-path-student-nav/learning-path-student-nav.component';
+import { LearningPathNavComponent } from 'app/course/learning-paths/components/learning-path-student-nav/learning-path-student-nav.component';
 import { LearningObjectType, LearningPathNavigationDTO } from 'app/entities/competency/learning-path.model';
 import { By } from '@angular/platform-browser';
-import { LearningPathStudentNavOverviewComponent } from 'app/course/learning-paths/components/learning-path-student-nav-overview/learning-path-student-nav-overview.component';
+import { LearningPathNavOverviewComponent } from 'app/course/learning-paths/components/learning-path-nav-overview/learning-path-nav-overview.component';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 
 describe('LearningPathStudentNavComponent', () => {
-    let component: LearningPathStudentNavComponent;
-    let fixture: ComponentFixture<LearningPathStudentNavComponent>;
+    let component: LearningPathNavComponent;
+    let fixture: ComponentFixture<LearningPathNavComponent>;
     let learningPathApiService: LearningPathApiService;
     let getLearningPathNavigationSpy: jest.SpyInstance;
 
@@ -40,7 +40,7 @@ describe('LearningPathStudentNavComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [LearningPathStudentNavComponent],
+            imports: [LearningPathNavComponent],
             providers: [
                 provideHttpClient(),
                 {
@@ -49,9 +49,9 @@ describe('LearningPathStudentNavComponent', () => {
                 },
             ],
         })
-            .overrideComponent(LearningPathStudentNavComponent, {
+            .overrideComponent(LearningPathNavComponent, {
                 add: {
-                    imports: [LearningPathStudentNavOverviewComponent],
+                    imports: [LearningPathNavOverviewComponent],
                 },
             })
             .compileComponents();
@@ -59,7 +59,7 @@ describe('LearningPathStudentNavComponent', () => {
         learningPathApiService = TestBed.inject(LearningPathApiService);
         getLearningPathNavigationSpy = jest.spyOn(learningPathApiService, 'getLearningPathNavigation').mockResolvedValue(navigationDto);
 
-        fixture = TestBed.createComponent(LearningPathStudentNavComponent);
+        fixture = TestBed.createComponent(LearningPathNavComponent);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('learningPathId', learningPathId);
     });
@@ -73,7 +73,6 @@ describe('LearningPathStudentNavComponent', () => {
 
         expect(component).toBeTruthy();
         expect(component.learningPathId()).toBe(learningPathId);
-        expect(component.showNavigationOverview()).toBeFalse();
     });
 
     it('should show progress bar percentage', async () => {
@@ -167,6 +166,7 @@ describe('LearningPathStudentNavComponent', () => {
 
     it('should show navigation overview on click', async () => {
         const setShowNavigationOverviewSpy = jest.spyOn(component, 'setShowNavigationOverview');
+        const loadCompetenciesSpy = jest.spyOn(component.navOverview(), 'loadCompetencies');
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -175,10 +175,10 @@ describe('LearningPathStudentNavComponent', () => {
         const navOverviewButton = fixture.debugElement.query(By.css('#navigation-overview'));
         navOverviewButton.nativeElement.click();
         fixture.detectChanges();
-        const navOverview = fixture.debugElement.query(By.directive(LearningPathStudentNavOverviewComponent));
+        const navOverview = fixture.debugElement.query(By.directive(LearningPathNavOverviewComponent));
         expect(navOverview).toBeTruthy();
         expect(setShowNavigationOverviewSpy).toHaveBeenCalledWith(true);
-        expect(component.showNavigationOverview()).toBeTrue();
+        expect(loadCompetenciesSpy).toHaveBeenCalledExactlyOnceWith(learningPathId);
     });
 
     it('should call select learning object on previous click', async () => {
