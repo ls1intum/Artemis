@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.config.Constants.MIN_SCORE_GREEN;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.Set;
@@ -19,7 +18,9 @@ import de.tum.in.www1.artemis.domain.LearningObject;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationObjectDTO.LearningObjectType;
 
@@ -42,10 +43,14 @@ public class LearningObjectService {
 
     private final LectureUnitRepository lectureUnitRepository;
 
-    public LearningObjectService(ParticipantScoreService participantScoreService, ExerciseRepository exerciseRepository, LectureUnitRepository lectureUnitRepository) {
+    private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
+
+    public LearningObjectService(ParticipantScoreService participantScoreService, ExerciseRepository exerciseRepository, LectureUnitRepository lectureUnitRepository,
+            LectureUnitCompletionRepository lectureUnitCompletionRepository) {
         this.participantScoreService = participantScoreService;
         this.exerciseRepository = exerciseRepository;
         this.lectureUnitRepository = lectureUnitRepository;
+        this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
     }
 
     /**
@@ -61,37 +66,6 @@ public class LearningObjectService {
             case Exercise exercise -> participantScoreService.getStudentAndTeamParticipations(user, Set.of(exercise)).anyMatch(score -> score.getLastScore() >= MIN_SCORE_GREEN);
             default -> throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
         };
-    }
-
-    /**
-     * Get the last completed learning object of the given competencies related to the given date.
-     *
-     * @param user         the user for which to get the last completed learning object
-     * @param relatedDate  the date to which the completion date of the learning object should be related
-     * @param competencies the competencies for which to get the last completed learning object
-     * @return the last completed learning object of the given competencies related to the given date
-     */
-    public Optional<LearningObject> getCompletedPredecessorOfLearningObjectRelatedToDate(User user, Optional<ZonedDateTime> relatedDate, Set<Competency> competencies) {
-        return getCompletedLearningObjectsForUserAndCompetencies(user, competencies)
-                .filter(learningObject -> learningObject.getCompletionDate(user).orElseThrow().isBefore(relatedDate.orElse(ZonedDateTime.now())))
-                .max(Comparator.comparing(o -> o.getCompletionDate(user).orElseThrow()));
-    }
-
-    /**
-     * Get the next completed learning object of the given competencies related to the given date.
-     *
-     * @param user         the user for which to get the next completed learning object
-     * @param relatedDate  the date to which the completion date of the learning object should be related
-     * @param competencies the competencies for which to get the next completed learning object
-     * @return the next completed learning object of the given competencies related to the given date
-     */
-    public Optional<LearningObject> getCompletedSuccessorOfLearningObjectRelatedToDate(User user, Optional<ZonedDateTime> relatedDate, Set<Competency> competencies) {
-        if (relatedDate.isEmpty()) {
-            throw new RuntimeException("relatedDate must be present to get next completed learning object.");
-        }
-        return getCompletedLearningObjectsForUserAndCompetencies(user, competencies)
-                .filter(learningObject -> learningObject.getCompletionDate(user).orElseThrow().isAfter(relatedDate.get()))
-                .min(Comparator.comparing(o -> o.getCompletionDate(user).orElseThrow()));
     }
 
     /**
@@ -120,5 +94,20 @@ public class LearningObjectService {
             case EXERCISE -> exerciseRepository.findByIdWithStudentParticipationsElseThrow(learningObjectId);
             case null -> throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
         };
+    }
+
+    /**
+     * Set the lecture unit completions for the given lecture units and user.
+     *
+     * @param lectureUnits the lecture units for which to set the completions
+     * @param user         the user for which to set the completions
+     */
+    public void setLectureUnitCompletions(Set<LectureUnit> lectureUnits, User user) {
+        Set<LectureUnitCompletion> lectureUnitCompletions = lectureUnitCompletionRepository.findByLectureUnitsAndUserId(lectureUnits, user.getId());
+        lectureUnits.forEach(lectureUnit -> {
+            Optional<LectureUnitCompletion> completion = lectureUnitCompletions.stream().filter(lectureUnitCompletion -> lectureUnitCompletion.getLectureUnit().equals(lectureUnit))
+                    .findFirst();
+            lectureUnit.setCompletedUsers(completion.map(Set::of).orElse(Set.of()));
+        });
     }
 }

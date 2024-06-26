@@ -1,5 +1,5 @@
 import { Component, InputSignal, inject, input } from '@angular/core';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { FontAwesomeModule, IconDefinition } from '@fortawesome/angular-fontawesome';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyGraphComponent } from 'app/course/learning-paths/components/competency-graph/competency-graph.component';
@@ -13,12 +13,12 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
     styleUrl: './competency-graph-modal.component.scss',
 })
 export class CompetencyGraphModalComponent {
-    protected readonly closeIcon = faXmark;
+    protected readonly closeIcon: IconDefinition = faXmark;
 
-    private readonly activeModal = inject(NgbActiveModal);
+    private readonly activeModal: NgbActiveModal = inject(NgbActiveModal);
     learningPathId: InputSignal<number> = input.required();
 
-    closeModal() {
+    closeModal(): void {
         this.activeModal.close();
     }
 }

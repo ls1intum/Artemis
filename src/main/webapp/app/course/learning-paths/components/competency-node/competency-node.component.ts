@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, computed, inject, input, output } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, InputSignal, OutputEmitterRef, Signal, computed, inject, input, output } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbAccordionModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { NodeDimension } from '@swimlane/ngx-graph';
@@ -21,18 +21,18 @@ export class CompetencyNodeComponent implements AfterViewInit {
     // height of node element in pixels
     private readonly nodeHeight = 45.59;
 
-    readonly competencyNode = input.required<CompetencyGraphNodeDTO>();
-    readonly masteryProgress = computed(() => Math.floor(this.competencyNode().masteryProgress));
+    readonly competencyNode: InputSignal<CompetencyGraphNodeDTO> = input.required();
+    readonly masteryProgress: Signal<number> = computed(() => Math.floor(this.competencyNode().masteryProgress * 100));
     private readonly element: ElementRef = inject(ElementRef);
 
-    readonly onSizeSet = output<SizeUpdate>();
+    readonly onSizeSet: OutputEmitterRef<SizeUpdate> = output<SizeUpdate>();
 
     ngAfterViewInit(): void {
         this.setDimensions();
     }
 
     isMastered(): boolean {
-        return this.masteryProgress() === 100;
+        return this.masteryProgress() >= 100;
     }
 
     isStarted(): boolean {
@@ -43,7 +43,7 @@ export class CompetencyNodeComponent implements AfterViewInit {
         return this.masteryProgress() === 0;
     }
 
-    setDimensions() {
+    setDimensions(): void {
         const width: number = this.element.nativeElement.offsetWidth;
         const height = this.nodeHeight;
         this.onSizeSet.emit({ id: this.competencyNode().id, dimension: { height, width } });

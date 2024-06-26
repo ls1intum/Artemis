@@ -22,9 +22,7 @@
                 </div>
             }
             <div ngbDropdownMenu class="mt-3 col p-0" aria-labelledby="navigation-overview">
-                @if (showNavigationOverview()) {
-                    <jhi-learning-path-student-nav-overview (onLearningObjectSelected)="navOverview.close()" [learningPathId]="learningPathId()" />
-                }
+                <jhi-learning-path-nav-overview (onLearningObjectSelected)="navOverview.close()" [learningPathId]="learningPathId()" />
             </div>
         </div>
         <div class="col-4">
@@ -32,13 +30,7 @@
                 @if (successorLearningObject(); as successorLearningObject) {
                     <span class="col text-end pe-3 text-truncate text-secondary">{{ successorLearningObject.name }}</span>
                     <div class="col-md-auto">
-                        <button
-                            id="next-button"
-                            (click)="selectLearningObject(successorLearningObject)"
-                            [disabled]="!isCurrentLearningObjectCompleted()"
-                            type="button"
-                            class="btn btn-primary"
-                        >
+                        <button id="next-button" (click)="selectLearningObject(successorLearningObject)" type="button" class="btn btn-primary">
                             <span jhiTranslate="artemisApp.learningPath.navigation.nextButton"></span>
                         </button>
                     </div>
