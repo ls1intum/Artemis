@@ -219,7 +219,11 @@
                                 <jhi-button jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.exampleSolution" />
                             </a>
                         } @else {
-                            <jhi-clone-repo-button [smallButtons]="true" [repositoryUri]="programmingExercise.solutionParticipation?.repositoryUri || ''" />
+                            <jhi-clone-repo-button
+                                [smallButtons]="true"
+                                [routerLinkForRepositoryView]="['/course-management', courseId, 'programming-exercises', exerciseId, 'repository', 'SOLUTION']"
+                                [repositoryUri]="programmingExercise.solutionParticipation?.repositoryUri || ''"
+                            />
                         }
                     </div>
                 }
