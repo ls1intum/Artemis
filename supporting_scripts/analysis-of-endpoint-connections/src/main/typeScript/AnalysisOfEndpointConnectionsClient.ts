@@ -9,7 +9,7 @@ import {
     isClassDeclaration,
     isConstructorDeclaration,
     isParameter,
-    isTypeReferenceNode, SyntaxKind, ClassDeclaration, CallExpression, ConstructorDeclaration,
+    isTypeReferenceNode, SyntaxKind, ClassDeclaration, CallExpression, ConstructorDeclaration, isBinaryExpression,
 } from 'typescript';
 import { readFileSync } from 'node:fs';
 
@@ -147,13 +147,15 @@ function logRestCall(restCall: CallExpression, methodName: string, classProperti
     }
     console.log(`Found REST call: ${methodName}`);
     if (restCall.arguments.length > 0) {
-        let url = restCall.arguments[0].getText();
+        let url = evaluateUrl(restCall.arguments[0], classProperties);
         // Replace class properties in the URL
         for (const prop in classProperties) {
             // Replace all occurrences of ${this.prop} with the actual value
             url = url.replace(new RegExp(`\\$\\{this.${prop}\\}`, 'g'), classProperties[prop]);
             // Replace all occurrences of this.prop with the actual value
             url = url.replace(new RegExp(`this.${prop}`, 'g'), classProperties[prop]);
+
+
         }
         console.log(`with URL: ${url}`);
 
@@ -166,4 +168,18 @@ function logRestCall(restCall: CallExpression, methodName: string, classProperti
     }
     console.log(`At line: ${sourceFile.getLineAndCharacterOfPosition(restCall.getStart()).line + 1}`);
     console.log('-----------------------------------');
+}
+
+
+function evaluateUrl(expression: Node, classProperties: { [key: string]: string }): string {
+    if (isPropertyAccessExpression(expression) && expression.expression.getText() === 'this') {
+        const propName = expression.name.getText();
+        return classProperties[propName] || '';
+    } else if (isBinaryExpression(expression) && expression.operatorToken.kind === SyntaxKind.PlusToken) {
+        return evaluateUrl(expression.left, classProperties) + evaluateUrl(expression.right, classProperties);
+    } else if (isStringLiteral(expression)) {
+        return expression.text;
+    } else {
+        return expression.getText();
+    }
 }
