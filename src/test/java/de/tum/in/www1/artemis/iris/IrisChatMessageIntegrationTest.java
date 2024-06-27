@@ -11,6 +11,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +20,7 @@ import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatcher;
@@ -29,11 +32,15 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessageContent;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
@@ -43,8 +50,6 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageStat
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.session.IrisExerciseChatSessionService;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisWebsocketDTO;
-import de.tum.in.www1.artemis.util.IrisUtilTestService;
-import de.tum.in.www1.artemis.util.LocalRepository;
 
 class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
@@ -63,27 +68,54 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     private IrisMessageRepository irisMessageRepository;
 
     @Autowired
-    private IrisUtilTestService irisUtilTestService;
-
-    @Autowired
     private ParticipationUtilService participationUtilService;
 
     private ProgrammingExercise exercise;
 
-    private LocalRepository repository;
-
     private AtomicBoolean pipelineDone;
 
     @BeforeEach
-    void initTestCase() {
+    void initTestCase() throws GitAPIException, IOException, URISyntaxException {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
 
-        final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        String projectKey = exercise.getProjectKey();
+        exercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        exercise.setTestRepositoryUri(localVCBaseUrl + "/git/" + projectKey + "/" + projectKey.toLowerCase() + "-tests.git");
+        programmingExerciseRepository.save(exercise);
+        exercise = programmingExerciseRepository.findWithAllParticipationsById(exercise.getId()).orElseThrow();
+
+        // Set the correct repository URIs for the template and the solution participation.
+        String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
+        TemplateProgrammingExerciseParticipation templateParticipation = exercise.getTemplateParticipation();
+        templateParticipation.setRepositoryUri(localVCBaseUrl + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
+        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+        String solutionRepositorySlug = projectKey.toLowerCase() + "-solution";
+        SolutionProgrammingExerciseParticipation solutionParticipation = exercise.getSolutionParticipation();
+        solutionParticipation.setRepositoryUri(localVCBaseUrl + "/git/" + projectKey + "/" + solutionRepositorySlug + ".git");
+        solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
+
+        String assignmentRepositorySlug = projectKey.toLowerCase() + "-" + TEST_PREFIX + "student1";
+
+        // Add a participation for student1.
+        ProgrammingExerciseStudentParticipation studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+        studentParticipation.setRepositoryUri(String.format(localVCBaseUrl + "/git/%s/%s.git", projectKey, assignmentRepositorySlug));
+        studentParticipation.setBranch(defaultBranch);
+        programmingExerciseStudentParticipationRepository.save(studentParticipation);
+
+        // Prepare the repositories.
+        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
+        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, projectKey.toLowerCase() + "-tests");
+        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, solutionRepositorySlug);
+        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, assignmentRepositorySlug);
+
+        // Check that the repository folders were created in the file system for all base repositories.
+        localVCLocalCITestService.verifyRepositoryFoldersExist(exercise, localVCBasePath);
+
         activateIrisGlobally();
         activateIrisFor(course);
         activateIrisFor(exercise);
-        repository = new LocalRepository("main");
         pipelineDone = new AtomicBoolean(false);
     }
 
@@ -93,8 +125,6 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var messageToSend = createDefaultMockMessage(irisSession);
         messageToSend.setMessageDifferentiator(1453);
-
-        setupExercise();
 
         irisRequestMockProvider.mockRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
@@ -118,8 +148,6 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var messageToSend = createDefaultMockMessage(irisSession);
         messageToSend.setMessageDifferentiator(1454);
-
-        setupExercise();
 
         irisRequestMockProvider.mockRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
@@ -161,8 +189,6 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     void sendTwoMessages() throws Exception {
         var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage messageToSend1 = createDefaultMockMessage(irisSession);
-
-        setupExercise();
 
         irisRequestMockProvider.mockRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
@@ -268,8 +294,6 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var messageToSend = createDefaultMockMessage(irisSession);
 
-        setupExercise();
-
         irisRequestMockProvider.mockRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
 
@@ -291,8 +315,6 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
         var messageToSend1 = createDefaultMockMessage(irisSession);
         var messageToSend2 = createDefaultMockMessage(irisSession);
-
-        setupExercise();
 
         irisRequestMockProvider.mockRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
@@ -323,14 +345,6 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
             globalSettings.getIrisChatSettings().setRateLimitTimeframeHours(null);
             irisSettingsService.saveIrisSettings(globalSettings);
         }
-    }
-
-    private void setupExercise() throws Exception {
-        var savedExercise = irisUtilTestService.setupTemplate(exercise, repository);
-        savedExercise = irisUtilTestService.setupSolution(savedExercise, repository);
-        savedExercise = irisUtilTestService.setupTest(savedExercise, repository);
-        var exerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(savedExercise, TEST_PREFIX + "student1");
-        irisUtilTestService.setupStudentParticipation(exerciseParticipation, repository);
     }
 
     private IrisMessage createDefaultMockMessage(IrisSession irisSession) {
