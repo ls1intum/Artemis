@@ -179,6 +179,12 @@ canvas#complete-chart {
     animation-iteration-count: initial;
 }
 
+@media (max-width: 655px) {
+    .horizontal-scroll {
+        overflow-x: auto;
+    }
+}
+
 @keyframes fadeIn {
     0% {
         opacity: 0;

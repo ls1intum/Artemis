@@ -389,7 +389,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         doReturn(execStartCmd).when(execStartCmd).withDetach(anyBoolean());
         doAnswer(invocation -> {
             // Use a raw type for the callback to avoid generic type issues
-            ResultCallback callback = invocation.getArgument(0);
+            ResultCallback<Frame> callback = invocation.getArgument(0);
 
             // Simulate receiving log entries.
             Frame logEntryFrame1 = mock(Frame.class);
