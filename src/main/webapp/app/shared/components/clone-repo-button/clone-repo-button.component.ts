@@ -29,7 +29,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     @Input()
     repositoryUri?: string;
     @Input()
-    routerLinkForRepositoryView?: string;
+    routerLinkForRepositoryView?: string | string[];
     @Input()
     participations?: ProgrammingExerciseStudentParticipation[];
     @Input()

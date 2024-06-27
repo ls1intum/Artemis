@@ -322,7 +322,7 @@
                                                 } @else {
                                                     <jhi-clone-repo-button
                                                         class="me-1"
-                                                        [routerLinkForRepositoryView]="'/courses' + course.id + '/exercises/' + exercise.id + '/repository/' + value.id"
+                                                        [routerLinkForRepositoryView]="['/courses', course.id, 'exercises', exercise.id, 'repository', value.id]"
                                                         [smallButtons]="true"
                                                         [repositoryUri]="getRepositoryLink(value) || ''"
                                                     />
