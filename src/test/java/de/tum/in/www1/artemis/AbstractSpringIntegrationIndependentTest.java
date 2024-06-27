@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleSer
  */
 @ResourceLock("AbstractSpringIntegrationIndependentTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", PROFILE_SCHEDULING, "athena", "apollon", "lti", "aeolus", PROFILE_CORE })
+@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", PROFILE_SCHEDULING, "athena", "apollon", "lti", "aeolus", "theia", PROFILE_CORE })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false" })
 public abstract class AbstractSpringIntegrationIndependentTest extends AbstractArtemisIntegrationTest {
 

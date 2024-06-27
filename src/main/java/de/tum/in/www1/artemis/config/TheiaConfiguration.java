@@ -1,11 +1,9 @@
 package de.tum.in.www1.artemis.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@EnableConfigurationProperties
 @ConfigurationProperties(prefix = "theia")
 public class TheiaConfiguration {
 
@@ -20,13 +18,16 @@ public class TheiaConfiguration {
         return images;
     }
 
-    /*
-    public Map<String, Map<String, String>> getImagesForAllLanguages() {
-        return images;
+    public void setImages(final String images) {
+        this.images = images;
     }
 
-    public Map<String, String> getImagesForLanguage(String language) {
-        return images.get(language);
-    }
+    /*
+     * public Map<String, Map<String, String>> getImagesForAllLanguages() {
+     * return images;
+     * }
+     * public Map<String, String> getImagesForLanguage(String language) {
+     * return images.get(language);
+     * }
      */
 }
