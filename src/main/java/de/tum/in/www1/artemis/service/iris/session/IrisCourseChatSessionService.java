@@ -2,9 +2,13 @@ package de.tum.in.www1.artemis.service.iris.session;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -12,6 +16,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
@@ -22,6 +27,7 @@ import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCourseChatSession;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisCourseChatSessionRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
@@ -56,11 +62,16 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
 
     private final IrisCourseChatSessionRepository irisCourseChatSessionRepository;
 
+    private final StudentParticipationRepository studentParticipationRepository;
+
     private final PyrisPipelineService pyrisPipelineService;
+
+    private static final Logger log = LoggerFactory.getLogger(IrisCourseChatSessionService.class);
 
     public IrisCourseChatSessionService(IrisMessageService irisMessageService, IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService,
             AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository, IrisRateLimitService rateLimitService,
-            IrisCourseChatSessionRepository irisCourseChatSessionRepository, PyrisPipelineService pyrisPipelineService, ObjectMapper objectMapper) {
+            IrisCourseChatSessionRepository irisCourseChatSessionRepository, PyrisPipelineService pyrisPipelineService, ObjectMapper objectMapper,
+            StudentParticipationRepository studentParticipationRepository) {
         super(irisSessionRepository, objectMapper);
         this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
@@ -70,6 +81,7 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
         this.rateLimitService = rateLimitService;
         this.irisCourseChatSessionRepository = irisCourseChatSessionRepository;
         this.pyrisPipelineService = pyrisPipelineService;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -122,7 +134,6 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
 
     private void requestAndHandleResponse(IrisCourseChatSession session, String variant, Object object) {
         var chatSession = (IrisCourseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
-
         pyrisPipelineService.executeCourseChatPipeline(variant, chatSession, object);
     }
 
@@ -170,8 +181,10 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
      * @param result The submission event to trigger the course chat for
      */
     public void onSubmissionSuccess(Result result) {
+
         var participation = result.getParticipation();
-        var exercise = participation.getExercise();
+        var exercise = (ProgrammingExercise) participation.getExercise();
+
         if (exercise.isExamExercise()) {
             // Do not trigger Iris for exam exercises
             return;
@@ -183,6 +196,7 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
         var participant = ((ProgrammingExerciseStudentParticipation) participation).getParticipant();
         if (participant instanceof User) {
             var user = (User) participant;
+            setStudentParticipationsToExercise(user.getId(), exercise);
             var session = getCurrentSessionOrCreateIfNotExistsInternal(course, user, false);
             CompletableFuture.runAsync(() -> requestAndHandleResponse(session, "submission_successful", exercise));
         }
@@ -190,10 +204,18 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
             var team = (Team) participant;
             var teamMembers = team.getStudents();
             for (var user : teamMembers) {
+                setStudentParticipationsToExercise(user.getId(), exercise);
                 var session = getCurrentSessionOrCreateIfNotExistsInternal(course, user, false);
                 CompletableFuture.runAsync(() -> requestAndHandleResponse(session, "submission_successful", exercise));
             }
         }
+    }
+
+    private void setStudentParticipationsToExercise(Long studentId, ProgrammingExercise exercise) {
+        // TODO: Write a repository function to pull student participations for a specific exercise instead of a list of exercises
+        var studentParticipation = new HashSet<>(
+                studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentId, List.of(exercise)));
+        exercise.setStudentParticipations(studentParticipation);
     }
 
     /**

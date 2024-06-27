@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 import de.tum.in.www1.artemis.service.connectors.pyris.event.PyrisEventService;
 import de.tum.in.www1.artemis.service.connectors.pyris.event.SubmissionFailedEvent;
+import de.tum.in.www1.artemis.service.connectors.pyris.event.SubmissionSuccessfulEvent;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionDTO;
 import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
@@ -188,6 +189,15 @@ public class ProgrammingMessagingService {
         }
     }
 
+    /**
+     * Notify Iris about the submission status for the given result and student participation.
+     * If the submission was successful, Iris will be informed about the successful submission.
+     * If the submission failed, Iris will be informed about the submission failure.
+     * Iris will only be informed about the submission status if the participant is a user.
+     *
+     * @param result
+     * @param studentParticipation
+     */
     private void notifyIrisAboutSubmissionStatus(Result result, ProgrammingExerciseStudentParticipation studentParticipation) {
         log.debug("Checking if Iris should be informed about the submission status for user " + studentParticipation.getParticipant().getName());
         if (studentParticipation.getParticipant() instanceof User) {
@@ -208,8 +218,20 @@ public class ProgrammingMessagingService {
                             }
                         }
                     }
-                    // TODO: Inform Iris about successful submission
-                    // If it's the first time the user has passed, inform Iris about the successful submission
+                    else {
+                        log.info("Submission was successful for user " + studentParticipation.getParticipant().getName());
+                        // The submission was successful, so we inform Iris about the successful submission,
+                        // but before we do that, we check if this is the first successful time out of all submissions out of all submissions for this exercise
+                        eventService.trigger(new SubmissionSuccessfulEvent(result));
+                        var allSubmissions = submissionRepository.findAllWithResultsAndAssessorByParticipationId(studentParticipation.getId());
+                        var latestSubmission = allSubmissions.getLast();
+                        var allSuccessful = allSubmissions.stream().filter(submission -> submission.getLatestResult() != null && submission.getLatestResult().getScore() >= 80.0)
+                                .count();
+                        if (allSuccessful == 1 && latestSubmission.getLatestResult().getScore() >= 80.0) {
+                            log.info("First successful submission for user " + studentParticipation.getParticipant().getName());
+                        }
+                        // else: do nothing, as this is not the first successful submission
+                    }
 
                 }
                 catch (Exception e) {

@@ -38,6 +38,10 @@ public class PyrisEventService {
                 log.info("Received SubmissionFailedEvent: {}", submissionFailedEvent);
                 submissionFailedEvent.handleEvent(irisExerciseChatSessionService);
             }
+            case SubmissionSuccessfulEvent submissionSuccessfulEvent -> {
+                log.info("Received SubmissionSuccessfulEvent: {}", submissionSuccessfulEvent);
+                submissionSuccessfulEvent.handleEvent(irisCourseChatSessionService);
+            }
             default -> throw new UnsupportedOperationException("Unsupported event: " + event);
         }
     }
