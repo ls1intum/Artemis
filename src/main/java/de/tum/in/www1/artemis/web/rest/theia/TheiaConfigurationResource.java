@@ -16,13 +16,13 @@ import de.tum.in.www1.artemis.config.TheiaConfiguration;
 
 @Profile(PROFILE_THEIA)
 @RestController
-@RequestMapping("api/theia")
-public class TheiaConfigurationRessource {
+@RequestMapping("api/theia/")
+public class TheiaConfigurationResource {
 
     private final TheiaConfiguration theiaConfiguration;
 
     @Autowired
-    public TheiaConfigurationRessource(TheiaConfiguration theiaConfiguration) {
+    public TheiaConfigurationResource(TheiaConfiguration theiaConfiguration) {
         this.theiaConfiguration = theiaConfiguration;
     }
 
