@@ -61,12 +61,6 @@
                                         [repositoryUri]="detail.data.participation?.repositoryUri!"
                                     />
                                     <jhi-programming-exercise-instructor-repo-download class="ms-2" [exerciseId]="detail.data.exerciseId" [repositoryType]="detail.data.type" />
-                                    @if (detail.data.showOpenLink) {
-                                        <a [href]="detail.data.participation?.repositoryUri!" target="_blank" class="btn btn-sm btn-info ms-2">
-                                            <fa-icon [icon]="faArrowUpRightFromSquare" />
-                                            <span jhiTranslate="artemisApp.programmingExercise.openRepository"></span>
-                                        </a>
-                                    }
                                 </div>
                             } @else {
                                 <ng-container *ngTemplateOutlet="noData" />
