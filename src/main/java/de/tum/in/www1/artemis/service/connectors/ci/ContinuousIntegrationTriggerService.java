@@ -20,6 +20,17 @@ public interface ContinuousIntegrationTriggerService {
     /**
      * Triggers a build for the build plan in the given participation with an optional commit hash.
      *
+     * @param participation the participation with the id of the build plan that should be triggered
+     * @param commitHash    the commit hash to be used for the build trigger
+     * @throws ContinuousIntegrationException if the request to the CI failed.
+     */
+    default void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash) throws ContinuousIntegrationException {
+        triggerBuild(participation);
+    }
+
+    /**
+     * Triggers a build for the build plan in the given participation with an optional commit hash.
+     *
      * @param participation     the participation with the id of the build plan that should be triggered
      * @param commitHash        the commit hash to be used for the build trigger
      * @param triggeredByPushTo type of the repository that was pushed to and triggered the build job
