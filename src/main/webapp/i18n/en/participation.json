@@ -33,7 +33,7 @@
             "detail": {
                 "title": "Participation"
             },
-            "repositoryUri": "Repository Uri",
+            "repository": "Repository",
             "buildPlanId": "Build Plan Id",
             "initializationState": "Status",
             "initializationDate": "Participation Start Date",

@@ -57,7 +57,7 @@
                                 <div class="clone-buttons">
                                     <jhi-clone-repo-button
                                         [smallButtons]="true"
-                                        [routerLinkForRepositoryView]="['.', 'repository,', detail.data.type]"
+                                        [routerLinkForRepositoryView]="['.', 'repository', detail.data.type]"
                                         [repositoryUri]="detail.data.participation?.repositoryUri!"
                                     />
                                     <jhi-programming-exercise-instructor-repo-download class="ms-2" [exerciseId]="detail.data.exerciseId" [repositoryType]="detail.data.type" />
