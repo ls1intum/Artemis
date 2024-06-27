@@ -2,6 +2,9 @@ package de.tum.in.www1.artemis.web.rest.theia;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_THEIA;
 
+import java.util.Map;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,8 +13,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.config.TheiaConfiguration;
-import java.util.Map;
-import java.util.Optional;
 
 @Profile(PROFILE_THEIA)
 @RestController
@@ -36,6 +37,5 @@ public class TheiaConfigurationRessource {
         language = language.toLowerCase();
         return Optional.ofNullable(this.theiaConfiguration.getImagesForLanguage(language));
     }
-
 
 }
