@@ -399,7 +399,7 @@ describe('BuildQueueComponent', () => {
 
         // Initialize the component and update the build job duration
         component.ngOnInit();
-        component.updateBuildJobDuration(); // This method is called in ngOnInit in interval callback, but we call it to add coverage
+        component.runningBuildJobs = component.updateBuildJobDuration(component.runningBuildJobs); // This method is called in ngOnInit in interval callback, but we call it to add coverage
 
         // Expectations: The build job duration is calculated and set for each running build job
         for (const runningBuildJob of component.runningBuildJobs) {

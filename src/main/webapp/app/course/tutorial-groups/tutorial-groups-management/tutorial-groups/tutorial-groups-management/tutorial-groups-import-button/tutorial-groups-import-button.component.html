@@ -1,5 +1,5 @@
-<button id="importDialogButton" (click)="openTutorialGroupImportDialog($event)" type="button" class="btn">
-    <span class="d-none d-md-inline">{{ 'artemisApp.tutorialGroupImportDialog.importButton' | artemisTranslate }}</span>
+<button id="importDialogButton" (click)="openTutorialGroupImportDialog($event)" ngbDropdownItem>
+    <span>{{ 'artemisApp.tutorialGroupImportDialog.importButton' | artemisTranslate }}</span>
 </button>
 
 <ng-template #warning let-warning>

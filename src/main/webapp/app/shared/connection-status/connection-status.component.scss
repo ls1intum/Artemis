@@ -1,10 +1,15 @@
 .connection-status {
-    font-size: 14px;
+    font-size: 0.85rem;
     color: var(--connection-status);
 
     &.disconnected {
-        font-size: 20px;
+        font-size: 1.25rem;
         color: var(--connection-status-disconnected);
+    }
+
+    .connectedExam {
+        font-size: 1rem;
+        color: var(--white);
     }
 
     i {
