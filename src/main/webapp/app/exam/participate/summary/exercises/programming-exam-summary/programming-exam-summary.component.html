@@ -4,19 +4,11 @@
             <div class="col-md-4">
                 <div class="mb-4">
                     <h5>{{ 'artemisApp.exam.examSummary.yourSubmission' | artemisTranslate }}</h5>
-                    <jhi-clone-repo-button [smallButtons]="true" [repositoryUri]="participation?.userIndependentRepositoryUri || ''" />
-                    @if (localVCEnabled) {
-                        <a
-                            class="btn btn-primary"
-                            [class.btn-sm]="true"
-                            [routerLink]="routerLink + '/exercises/' + exercise.id + '/repository/' + participation.id"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            <fa-icon [icon]="faCodeBranch" [fixedWidth]="true" />
-                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.openRepository"></span>
-                        </a>
-                    }
+                    <jhi-clone-repo-button
+                        [smallButtons]="true"
+                        [repositoryUri]="participation?.userIndependentRepositoryUri || ''"
+                        [routerLinkForRepositoryView]="routerLink + '/exercises/' + exercise.id + '/repository/' + participation.id"
+                    />
                     <br />
                     <span>
                         {{ 'artemisApp.exam.examSummary.submissionLinkedToCommit' | artemisTranslate }}
