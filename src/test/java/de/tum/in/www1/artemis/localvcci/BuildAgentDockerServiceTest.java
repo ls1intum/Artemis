@@ -37,7 +37,7 @@ import de.tum.in.www1.artemis.repository.BuildJobRepository;
 import de.tum.in.www1.artemis.service.connectors.localci.buildagent.BuildAgentDockerService;
 import de.tum.in.www1.artemis.service.connectors.localci.buildagent.BuildLogsMap;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildConfig;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItem;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class BuildAgentDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -104,7 +104,7 @@ class BuildAgentDockerServiceTest extends AbstractSpringIntegrationLocalCILocalV
         doReturn(inspectImageCmd).when(dockerClient).inspectImageCmd(anyString());
         doThrow(new NotFoundException("")).when(inspectImageCmd).exec();
         BuildConfig buildConfig = new BuildConfig("echo 'test'", "test-image-name", "test", "test", "test", "test", null, null, false, false, false, null);
-        var build = new BuildJobQueueItem("1", "job1", "address1", 1, 1, 1, 1, 1, BuildStatus.SUCCESSFUL, null, null, buildConfig, null);
+        var build = new BuildJobItem("1", "job1", "address1", 1, 1, 1, 1, 1, BuildStatus.SUCCESSFUL, null, null, buildConfig, null);
         // Pull image
         try {
             buildAgentDockerService.pullDockerImage(build, new BuildLogsMap());

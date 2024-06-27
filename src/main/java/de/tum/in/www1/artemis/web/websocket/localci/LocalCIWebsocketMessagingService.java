@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildAgentInformation;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItem;
 
 /**
  * This service sends out websocket messages for the local continuous integration system.
@@ -47,7 +47,7 @@ public class LocalCIWebsocketMessagingService {
      * @param buildJobQueue the queued build jobs
      */
 
-    public void sendQueuedBuildJobsForCourse(long courseId, List<BuildJobQueueItem> buildJobQueue) {
+    public void sendQueuedBuildJobsForCourse(long courseId, List<BuildJobItem> buildJobQueue) {
         String channel = "/topic/courses/" + courseId + "/queued-jobs";
         log.debug("Sending message on topic {}: {}", channel, buildJobQueue);
         websocketMessagingService.sendMessage(channel, buildJobQueue);
@@ -59,7 +59,7 @@ public class LocalCIWebsocketMessagingService {
      * @param courseId         the id of the course for which to send the running build jobs
      * @param buildJobsRunning the running build jobs
      */
-    public void sendRunningBuildJobsForCourse(long courseId, List<BuildJobQueueItem> buildJobsRunning) {
+    public void sendRunningBuildJobsForCourse(long courseId, List<BuildJobItem> buildJobsRunning) {
         String channel = "/topic/courses/" + courseId + "/running-jobs";
         log.debug("Sending message on topic {}: {}", channel, buildJobsRunning);
         websocketMessagingService.sendMessage(channel, buildJobsRunning);
@@ -70,7 +70,7 @@ public class LocalCIWebsocketMessagingService {
      *
      * @param buildJobQueue the queued build jobs
      */
-    public void sendQueuedBuildJobs(List<BuildJobQueueItem> buildJobQueue) {
+    public void sendQueuedBuildJobs(List<BuildJobItem> buildJobQueue) {
         String channel = "/topic/admin/queued-jobs";
         log.debug("Sending message on topic {}: {}", channel, buildJobQueue);
         websocketMessagingService.sendMessage(channel, buildJobQueue);
@@ -81,7 +81,7 @@ public class LocalCIWebsocketMessagingService {
      *
      * @param buildJobQueue the running build jobs
      */
-    public void sendRunningBuildJobs(List<BuildJobQueueItem> buildJobQueue) {
+    public void sendRunningBuildJobs(List<BuildJobItem> buildJobQueue) {
         String channel = "/topic/admin/running-jobs";
         log.debug("Sending message on topic {}: {}", channel, buildJobQueue);
         websocketMessagingService.sendMessage(channel, buildJobQueue);

@@ -4,9 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -37,7 +39,8 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService.BuildStatus;
 import de.tum.in.www1.artemis.service.connectors.localci.buildagent.SharedQueueProcessingService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildConfig;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItemReferenceDTO;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.JobTimingInfo;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.RepositoryInfo;
 import de.tum.in.www1.artemis.web.rest.dto.CheckoutDirectoriesDTO;
@@ -67,14 +70,17 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     @Autowired
     private HazelcastInstance hazelcastInstance;
 
-    protected IQueue<BuildJobQueueItem> queuedJobs;
+    protected IQueue<BuildJobItemReferenceDTO> queuedJobs;
 
-    protected IMap<Long, BuildJobQueueItem> processingJobs;
+    private IMap<Long, CircularFifoQueue<BuildJobItem>> buildJobItemIMap;
+
+    protected IMap<String, BuildJobItem> processingJobs;
 
     @BeforeEach
     void setUp() {
         queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
         processingJobs = hazelcastInstance.getMap("processingJobs");
+        buildJobItemIMap = hazelcastInstance.getMap("buildJobItemMap");
 
         // remove listener to avoid triggering build job processing
         sharedQueueProcessingService.removeListener();
@@ -84,6 +90,7 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     void tearDown() {
         queuedJobs.clear();
         processingJobs.clear();
+        buildJobItemIMap.clear();
 
         // init to activate queue listener again
         sharedQueueProcessingService.init();
@@ -101,23 +108,28 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
 
-        BuildJobQueueItem job1 = new BuildJobQueueItem("1", "job1", "address1", participation.getId(), course.getId(), 1, 1, 1,
+        BuildJobItem job1 = new BuildJobItem("1", "job1", "address1", participation.getId(), course.getId(), 1, 1, 1,
                 de.tum.in.www1.artemis.domain.enumeration.BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
-        BuildJobQueueItem job2 = new BuildJobQueueItem("2", "job2", "address1", participation.getId(), course.getId(), 1, 1, 1,
+        BuildJobItem job2 = new BuildJobItem("2", "job2", "address1", participation.getId(), course.getId(), 1, 1, 1,
                 de.tum.in.www1.artemis.domain.enumeration.BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
 
+        BuildJobItemReferenceDTO job1Reference = new BuildJobItemReferenceDTO(job1);
+
         queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
+        buildJobItemIMap = hazelcastInstance.getMap("buildJobItemMap");
         processingJobs = hazelcastInstance.getMap("processingJobs");
 
         // No build jobs for the participation are queued or building
         assertThat(continuousIntegrationService.getBuildStatus(participation)).isEqualTo(BuildStatus.INACTIVE);
 
-        queuedJobs.add(job1);
-        processingJobs.put(1L, job2);
+        queuedJobs.add(job1Reference);
+        buildJobItemIMap.put(job1.participationId(), new CircularFifoQueue<>(List.of(job1)));
+        processingJobs.put(job2.id(), job2);
 
         // At least one build job for the participation is queued
         assertThat(continuousIntegrationService.getBuildStatus(participation)).isEqualTo(BuildStatus.QUEUED);
         queuedJobs.clear();
+        buildJobItemIMap.clear();
 
         // No build jobs for the participation are queued, but at least one is building
         assertThat(continuousIntegrationService.getBuildStatus(participation)).isEqualTo(BuildStatus.BUILDING);

@@ -10,10 +10,12 @@ import java.util.Optional;
 
 import jakarta.annotation.PostConstruct;
 
+import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -38,7 +40,8 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildConfig;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItemReferenceDTO;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.JobTimingInfo;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.RepositoryInfo;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
@@ -71,9 +74,14 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final GitService gitService;
 
-    private IQueue<BuildJobQueueItem> queue;
+    private IQueue<BuildJobItemReferenceDTO> queue;
 
     private IMap<String, ZonedDateTime> dockerImageCleanupInfo;
+
+    private IMap<Long, CircularFifoQueue<BuildJobItem>> buildJobItemMap;
+
+    @Value("${artemis.continuous-integration.parallel-jobs-per-participation:2}")
+    private int PARALLEL_JOBS_PER_PARTICIPATION;
 
     public LocalCITriggerService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, AeolusTemplateService aeolusTemplateService,
             ProgrammingLanguageConfiguration programmingLanguageConfiguration, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
@@ -94,6 +102,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     @PostConstruct
     public void init() {
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
+        this.buildJobItemMap = this.hazelcastInstance.getMap("buildJobItemMap");
         this.dockerImageCleanupInfo = this.hazelcastInstance.getMap("dockerImageCleanupInfo");
     }
 
@@ -155,11 +164,31 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         BuildConfig buildConfig = getBuildConfig(participation, commitHashToBuild, assignmentCommitHash, testCommitHash);
 
-        BuildJobQueueItem buildJobQueueItem = new BuildJobQueueItem(buildJobId, participation.getBuildPlanId(), null, participation.getId(), courseId, programmingExercise.getId(),
-                0, priority, null, repositoryInfo, jobTimingInfo, buildConfig, null);
+        BuildJobItem buildJobItem = new BuildJobItem(buildJobId, participation.getBuildPlanId(), null, participation.getId(), courseId, programmingExercise.getId(), 0, priority,
+                null, repositoryInfo, jobTimingInfo, buildConfig, null);
 
-        queue.add(buildJobQueueItem);
+        BuildJobItemReferenceDTO buildJobItemReference = new BuildJobItemReferenceDTO(buildJobItem);
+
+        var timeStart = System.currentTimeMillis();
+        buildJobItemMap.lock(participation.getId());
+        try {
+            CircularFifoQueue<BuildJobItem> buildJobItems = buildJobItemMap.get(participation.getId());
+            if (buildJobItems == null) {
+                buildJobItems = new CircularFifoQueue<>(PARALLEL_JOBS_PER_PARTICIPATION);
+            }
+            buildJobItems.add(buildJobItem);
+            buildJobItemMap.put(participation.getId(), buildJobItems);
+        }
+        catch (Exception e) {
+            log.error("Error while adding build job item to map", e);
+            throw new LocalCIException("Error while adding build job item to map", e);
+        }
+        finally {
+            buildJobItemMap.unlock(participation.getId());
+        }
+        queue.add(buildJobItemReference);
         log.info("Added build job {} to the queue", buildJobId);
+        log.debug("Time to add build job to queue: {}ms", System.currentTimeMillis() - timeStart);
 
         dockerImageCleanupInfo.put(buildConfig.dockerImage(), jobTimingInfo.submissionDate());
     }
