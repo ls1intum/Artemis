@@ -19,11 +19,14 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 import org.eclipse.jgit.lib.Repository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,6 +57,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
+import de.tum.in.www1.artemis.domain.science.ScienceEvent;
 import de.tum.in.www1.artemis.domain.science.ScienceEventType;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
@@ -187,7 +191,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         boolean assessmentDueDateInTheFuture = false;
         var course = prepareCourseDataForDataExportCreation(assessmentDueDateInTheFuture, "short");
         createCommunicationData(TEST_PREFIX + "student1", course);
-        createScienceEvents(TEST_PREFIX + "student1");
+        var scienceEvents = createScienceEvents(TEST_PREFIX + "student1");
         var dataExport = initDataExport();
         dataExportCreationService.createDataExport(dataExport);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
@@ -210,6 +214,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
                 .isDirectoryContaining(path -> path.getFileName().toString().endsWith("Modeling3")).isDirectoryContaining(path -> path.getFileName().toString().endsWith("Text1"))
                 .isDirectoryContaining(path -> path.getFileName().toString().endsWith("Programming")).isDirectoryContaining(path -> path.getFileName().toString().endsWith("quiz"));
         assertCommunicationDataCsvFile(courseDirPath);
+        assertScienceEventsCSVFile(extractedZipDirPath, scienceEvents);
         for (var exercisePath : getExerciseDirectoryPaths(exercisesDirPath)) {
             assertCorrectContentForExercise(exercisePath, true, assessmentDueDateInTheFuture);
         }
@@ -220,6 +225,38 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
 
     private void assertCommunicationDataCsvFile(Path courseDirPath) {
         assertThat(courseDirPath).isDirectoryContaining(path -> "messages_posts_reactions.csv".equals(path.getFileName().toString()));
+    }
+
+    /**
+     * Asserts the content of the science events CSV file.
+     * Allows for a 500ns difference between the timestamps due to the reimport from the csv export.
+     * Might cause the test to be flaky if multiple events are created overlapping and matched wrongly.
+     *
+     * @param extractedZipDirPath The path to the extracted zip directory
+     * @param events              The set of science events to compare with the content of the CSV file
+     */
+    private void assertScienceEventsCSVFile(Path extractedZipDirPath, Set<ScienceEvent> events) {
+        assertThat(extractedZipDirPath).isDirectoryContaining(path -> "science_events.csv".equals(path.getFileName().toString()));
+
+        Set<ScienceEvent> actual = new HashSet<>();
+
+        try (var reader = Files.newBufferedReader(extractedZipDirPath.resolve("science_events.csv"));
+                var csvParser = new CSVParser(reader, CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true).build())) {
+            var records = csvParser.getRecords();
+            assertThat(records.size()).isEqualTo(events.size());
+            for (var record : records) {
+                var scienceEvent = new ScienceEvent();
+                scienceEvent.setTimestamp(ZonedDateTime.parse(record.get("timestamp")));
+                scienceEvent.setType(ScienceEventType.valueOf(record.get("event_type")));
+                scienceEvent.setResourceId(Long.parseLong(record.get("resource_id")));
+                actual.add(scienceEvent);
+            }
+        }
+        catch (IOException e) {
+            fail("Failed while reading science events CSV file");
+        }
+
+        assertThat(actual).usingElementComparator(ScienceUtilService.scienceEventComparator).containsExactlyInAnyOrderElementsOf(events);
     }
 
     private Course prepareCourseDataForDataExportCreation(boolean assessmentDueDateInTheFuture, String courseShortName) throws Exception {
@@ -294,10 +331,11 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         exerciseUtilService.createPlagiarismCaseForUserForExercise(exercises.get(1), userUtilService.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.WARNING);
     }
 
-    private void createScienceEvents(String userLogin) {
-        scienceUtilService.createScienceEvent(userLogin, ScienceEventType.EXERCISE__OPEN, 1L);
-        scienceUtilService.createScienceEvent(userLogin, ScienceEventType.LECTURE__OPEN, 2L);
-        scienceUtilService.createScienceEvent(userLogin, ScienceEventType.LECTURE__OPEN_UNIT, 3L);
+    private Set<ScienceEvent> createScienceEvents(String userLogin) {
+        return Set.of(scienceUtilService.createScienceEvent(userLogin, ScienceEventType.EXERCISE__OPEN, 1L),
+                scienceUtilService.createScienceEvent(userLogin, ScienceEventType.LECTURE__OPEN, 2L),
+                scienceUtilService.createScienceEvent(userLogin, ScienceEventType.LECTURE__OPEN_UNIT, 3L));
+
     }
 
     private Exam prepareExamDataForDataExportCreation(String courseShortName) throws Exception {
