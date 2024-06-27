@@ -1,5 +1,4 @@
 theia:
     portal-url: https://your-theia-instance.com
 
-    # Theia IDE images available for the different programming languages
     images: "test"
