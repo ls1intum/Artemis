@@ -128,25 +128,15 @@
                                     @if (!localVCEnabled) {
                                         <a href="{{ getRepositoryLink(row, value) }}" target="_blank" rel="noreferrer noopener">Repository Link</a>
                                     } @else {
-                                        <jhi-clone-repo-button class="ms-2" [smallButtons]="true" [repositoryUri]="getRepositoryLink(row, value)" />
+                                        <jhi-clone-repo-button
+                                            class="ms-2"
+                                            [smallButtons]="true"
+                                            [routerLinkForRepositoryView]="'./' + row.id + '/repository'"
+                                            [repositoryUri]="getRepositoryLink(row, value)"
+                                        />
                                     }
                                 </span>
                             }
-                        </ng-template>
-                    </ngx-datatable-column>
-                }
-                @if (exercise?.type === ExerciseType.PROGRAMMING && localVCEnabled) {
-                    <ngx-datatable-column [minWidth]="120" [width]="150">
-                        <ng-template ngx-datatable-header-template>
-                            <span class="datatable-header-cell-wrapper">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.repository.title"></span>
-                            </span>
-                        </ng-template>
-                        <ng-template ngx-datatable-cell-template let-row="row">
-                            <a [routerLink]="['./', row.id, 'repository']" class="btn btn-sm btn-primary ms-2">
-                                <fa-icon [icon]="faCodeBranch" />
-                                <span jhiTranslate="artemisApp.exerciseActions.openRepository"></span>
-                            </a>
                         </ng-template>
                     </ngx-datatable-column>
                 }
