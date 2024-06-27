@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/public/")
+@RequestMapping("public/")
 public class PublicTimeResource {
 
     /**

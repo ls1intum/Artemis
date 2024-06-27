@@ -17,7 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.User;
@@ -34,7 +33,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
 public class ScienceSettingsResource {
 
     private static final Logger log = LoggerFactory.getLogger(ScienceSettingsResource.class);

@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.service.StatisticsService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("admin/")
 public class AdminStatisticsResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminStatisticsResource.class);

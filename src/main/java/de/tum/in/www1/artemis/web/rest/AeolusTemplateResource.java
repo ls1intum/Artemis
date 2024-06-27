@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
  */
 @Profile("aeolus | localci")
 @RestController
-@RequestMapping("api/aeolus/")
+@RequestMapping("aeolus/")
 public class AeolusTemplateResource {
 
     private static final Logger log = LoggerFactory.getLogger(AeolusTemplateResource.class);
@@ -52,8 +52,8 @@ public class AeolusTemplateResource {
     }
 
     /**
-     * GET /api/aeolus/templates/:language/:projectType : Get the aeolus template file with the given filename<br/>
-     * GET /api/aeolus/templates/:language : Get the aeolus template file with the given filename
+     * GET /aeolus/templates/:language/:projectType : Get the aeolus template file with the given filename<br/>
+     * GET /aeolus/templates/:language : Get the aeolus template file with the given filename
      * <p>
      * The windfile contains the default build plan configuration for new programming exercises.
      *
@@ -79,8 +79,8 @@ public class AeolusTemplateResource {
     }
 
     /**
-     * GET /api/aeolus/templates/:language/:projectType : Get the aeolus template file with the given filename<br/>
-     * GET /api/aeolus/templates/:language : Get the aeolus template file with the given filename
+     * GET /aeolus/templates/:language/:projectType : Get the aeolus template file with the given filename<br/>
+     * GET /aeolus/templates/:language : Get the aeolus template file with the given filename
      * <p>
      * The windfile contains the default build plan configuration for new programming exercises.
      *

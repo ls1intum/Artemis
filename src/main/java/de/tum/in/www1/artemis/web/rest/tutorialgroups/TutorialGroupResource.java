@@ -30,7 +30,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -64,7 +63,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
 public class TutorialGroupResource {
 
     private static final String TITLE_REGEX = "^[a-zA-Z0-9]{1}[a-zA-Z0-9- ]{0,19}$";

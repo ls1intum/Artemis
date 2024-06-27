@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ImprintDTO;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/public/")
+@RequestMapping("public/")
 public class PublicImprintResource {
 
     private final LegalDocumentService legalDocumentService;

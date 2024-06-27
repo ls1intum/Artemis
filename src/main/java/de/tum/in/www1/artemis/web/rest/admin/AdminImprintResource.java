@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ImprintDTO;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("admin/")
 public class AdminImprintResource {
 
     private final LegalDocumentService legalDocumentService;

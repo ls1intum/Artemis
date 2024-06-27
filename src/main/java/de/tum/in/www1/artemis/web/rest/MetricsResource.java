@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.web.rest.dto.metrics.StudentMetricsDTO;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/metrics/")
+@RequestMapping("metrics/")
 public class MetricsResource {
 
     private static final Logger log = LoggerFactory.getLogger(MetricsResource.class);

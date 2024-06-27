@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
  */
 @Profile("iris")
 @RestController
-@RequestMapping("api/iris/course-chat/")
+@RequestMapping("iris/course-chat/")
 public class IrisCourseChatSessionResource {
 
     protected final UserRepository userRepository;

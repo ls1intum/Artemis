@@ -76,6 +76,7 @@ import de.tum.in.www1.artemis.config.ApplicationConfiguration;
 import de.tum.in.www1.artemis.config.ConditionalMetricsExclusionConfiguration;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.versioning.VersioningTestService;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryResource;
 
 /**
@@ -306,7 +307,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
     @Test
     void testNoRestControllersImported() {
         final var exceptions = new String[] { "AccountResourceIntegrationTest", "AndroidAppSiteAssociationResourceTest", "AppleAppSiteAssociationResourceTest",
-                "ResourceArchitectureTest" };
+                "ResourceArchitectureTest", "ApiDocsConfiguration" };
         final var classes = classesExcept(allClasses, exceptions);
         classes().should(IMPORT_RESTCONTROLLER).check(classes);
     }
@@ -327,6 +328,18 @@ class ArchitectureTest extends AbstractArchitectureTest {
         final var exceptions = new String[] { "PublicResourcesConfiguration", "QuizProcessCacheTask", "QuizStartTask" };
         JavaClasses classes = classesExcept(productionClasses, exceptions);
         rule.check(classes);
+    }
+
+    @Test
+    void hasMatchingVersionTestClassBeCorrectlyImplemented() throws NoSuchMethodException {
+        // Prepare the method that the versioning test should call to be identified as such
+        Method checkMethod = VersioningTestService.class.getMethod("testDuplicateRoutes");
+        String identifyingPackage = "versioning";
+
+        ArchRule rule = classes().that(beDirectSubclassOf(AbstractArtemisIntegrationTest.class))
+                .should(haveMatchingTestClassCallingAMethod(identifyingPackage, Set.of(checkMethod))).because(
+                        "every test environment should have a corresponding versioning test covering the endpoints of this environment. Examples are \"VersioningJenkinsGitlabTest\" or \"VersioningGitlabCISamlTest\".");
+        rule.check(testClasses);
     }
 
     @Test

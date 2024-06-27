@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -37,7 +36,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
 public class SubmissionPolicyResource {
 
     private static final Logger log = LoggerFactory.getLogger(SubmissionPolicyResource.class);
@@ -224,6 +222,7 @@ public class SubmissionPolicyResource {
      *         More information on submission policy validation can be found at
      *         {@link SubmissionPolicyService#validateSubmissionPolicy(SubmissionPolicy)}.
      */
+    // TODO: I think we should use PUT here
     @PatchMapping("programming-exercises/{exerciseId}/submission-policy")
     @EnforceAtLeastInstructor
     public ResponseEntity<SubmissionPolicy> updateSubmissionPolicy(@PathVariable Long exerciseId, @RequestBody SubmissionPolicy updatedSubmissionPolicy) {

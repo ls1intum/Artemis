@@ -8,7 +8,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
@@ -22,7 +21,6 @@ import de.tum.in.www1.artemis.web.rest.dto.science.ScienceEventDTO;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
 public class ScienceResource {
 
     private static final Logger log = LoggerFactory.getLogger(ScienceResource.class);

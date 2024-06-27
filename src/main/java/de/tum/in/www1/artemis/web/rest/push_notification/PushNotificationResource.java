@@ -39,7 +39,7 @@ import io.jsonwebtoken.ExpiredJwtException;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/push_notification/")
+@RequestMapping("push_notification/")
 public class PushNotificationResource {
 
     private static final Logger log = LoggerFactory.getLogger(PushNotificationResource.class);
@@ -70,7 +70,7 @@ public class PushNotificationResource {
     }
 
     /**
-     * API Endpoint which native clients use to register with their device token to enable push notification support
+     * POST /push_notification/register - registers native clients with their device token to enable push notification support
      *
      * @param pushNotificationRegisterBody contains all information required to store the device token for a specific user
      * @return an DTO containing information about the encryption
@@ -109,7 +109,7 @@ public class PushNotificationResource {
     }
 
     /**
-     * API Endpoint used by native clients to unregister for push notifications.
+     * DELETE /push_notification/unregister - unregisters native clients for push notifications.
      *
      * @param body contains information on which device token should be removed for what user
      * @return HttpStatus as ResponseEntity

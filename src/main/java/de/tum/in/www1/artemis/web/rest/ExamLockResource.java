@@ -6,7 +6,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
@@ -16,7 +15,6 @@ import de.tum.in.www1.artemis.service.exam.ExamService;
 // only available for external version control services
 @Profile("!localvc & core")
 @RestController
-@RequestMapping("api/")
 public class ExamLockResource {
 
     private static final Logger log = LoggerFactory.getLogger(ExamLockResource.class);

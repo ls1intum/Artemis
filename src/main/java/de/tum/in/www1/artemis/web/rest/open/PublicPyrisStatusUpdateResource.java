@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
  */
 @RestController
 @Profile("iris")
-@RequestMapping("api/public/pyris/")
+@RequestMapping("public/pyris/")
 public class PublicPyrisStatusUpdateResource {
 
     private final PyrisJobService pyrisJobService;

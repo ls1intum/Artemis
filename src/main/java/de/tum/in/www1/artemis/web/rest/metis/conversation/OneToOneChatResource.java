@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.OneToOneChatDTO;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/courses/")
+@RequestMapping("courses/")
 public class OneToOneChatResource extends ConversationManagementResource {
 
     private static final Logger log = LoggerFactory.getLogger(OneToOneChatResource.class);
@@ -62,7 +62,7 @@ public class OneToOneChatResource extends ConversationManagementResource {
     }
 
     /**
-     * POST /api/courses/:courseId/one-to-one-chats/: Starts a new one to one chat in a course
+     * POST /courses/:courseId/one-to-one-chats/: Starts a new one to one chat in a course
      *
      * @param courseId                   the id of the course
      * @param otherChatParticipantLogins logins of other participants (must be 1 for one to one chat) excluding the requesting user

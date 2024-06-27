@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.GuidedTourSetting;
@@ -26,7 +25,6 @@ import de.tum.in.www1.artemis.service.user.UserService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
 public class GuidedTourSettingsResource {
 
     private static final Logger log = LoggerFactory.getLogger(GuidedTourSettingsResource.class);

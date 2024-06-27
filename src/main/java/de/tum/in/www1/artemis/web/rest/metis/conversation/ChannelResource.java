@@ -55,7 +55,7 @@ import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelIdAndNameD
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/courses/")
+@RequestMapping("courses/")
 public class ChannelResource extends ConversationManagementResource {
 
     private static final Logger log = LoggerFactory.getLogger(ChannelResource.class);
@@ -98,7 +98,7 @@ public class ChannelResource extends ConversationManagementResource {
     }
 
     /**
-     * GET /api/courses/:courseId/channels/overview: Returns an overview of all channels in a course
+     * GET /courses/:courseId/channels/overview: Returns an overview of all channels in a course
      *
      * @param courseId the id of the course
      * @return ResponseEntity with status 200 (OK) and with body containing the list of channels the user is authorized to see
@@ -127,7 +127,7 @@ public class ChannelResource extends ConversationManagementResource {
     }
 
     /**
-     * GET /api/courses/:courseId/channels/public-overview: Returns a list of channels in a course that are visible to every course member
+     * GET /courses/:courseId/channels/public-overview: Returns a list of channels in a course that are visible to every course member
      *
      * @param courseId the id of the course
      * @return ResponseEntity with status 200 (OK) and with body containing the list of channels visible to all course members
@@ -152,7 +152,7 @@ public class ChannelResource extends ConversationManagementResource {
     }
 
     /**
-     * GET /api/courses/:courseId/exercises/:exerciseId/channel Returns the channel by exercise id
+     * GET /courses/:courseId/exercises/:exerciseId/channel Returns the channel by exercise id
      *
      * @param courseId   the id of the course
      * @param exerciseId the id of the channel
@@ -177,7 +177,7 @@ public class ChannelResource extends ConversationManagementResource {
     }
 
     /**
-     * GET /api/courses/:courseId/lectures/:lectureId/channel Returns the channel by lecture id
+     * GET /courses/:courseId/lectures/:lectureId/channel Returns the channel by lecture id
      *
      * @param courseId  the id of the course
      * @param lectureId the id of the channel
@@ -203,7 +203,7 @@ public class ChannelResource extends ConversationManagementResource {
     }
 
     /**
-     * POST /api/courses/:courseId/channels/: Creates a new channel in a course
+     * POST /courses/:courseId/channels/: Creates a new channel in a course
      *
      * @param courseId   the id of the course
      * @param channelDTO the dto containing the properties of the channel to be created
@@ -234,7 +234,7 @@ public class ChannelResource extends ConversationManagementResource {
     }
 
     /**
-     * PUT /api/courses/:courseId/channels/:channelId: Updates a channel in a course
+     * PUT /courses/:courseId/channels/:channelId: Updates a channel in a course
      *
      * @param courseId   the id of the course
      * @param channelId  the id of the channel to be updated
@@ -263,7 +263,7 @@ public class ChannelResource extends ConversationManagementResource {
     }
 
     /**
-     * DELETE /api/courses/:courseId/channels/:channelId: Deletes a channel in a course
+     * DELETE /courses/:courseId/channels/:channelId: Deletes a channel in a course
      *
      * @param courseId  the id of the course
      * @param channelId the id of the channel to be deleted
@@ -294,7 +294,7 @@ public class ChannelResource extends ConversationManagementResource {
     }
 
     /**
-     * POST /api/courses/:courseId/channels/:channelId/archive : Archives a channel in a course
+     * POST /courses/:courseId/channels/:channelId/archive : Archives a channel in a course
      *
      * @param courseId  the id of the course
      * @param channelId the id of the channel to be archived
@@ -313,7 +313,7 @@ public class ChannelResource extends ConversationManagementResource {
     }
 
     /**
-     * POST /api/courses/:courseId/channels/:channelId/unarchive : Unarchives an archived channel in a course
+     * POST /courses/:courseId/channels/:channelId/unarchive : Unarchives an archived channel in a course
      *
      * @param courseId  the id of the course
      * @param channelId the id of the archived channel to be unarchived
@@ -332,7 +332,7 @@ public class ChannelResource extends ConversationManagementResource {
     }
 
     /**
-     * POST /api/courses/:courseId/channels/:channelId/grant-channel-moderator : Grants members of a channel the channel moderator role
+     * POST /courses/:courseId/channels/:channelId/grant-channel-moderator : Grants members of a channel the channel moderator role
      *
      * @param courseId   the id of the course
      * @param channelId  the id of the channel
@@ -355,7 +355,7 @@ public class ChannelResource extends ConversationManagementResource {
     }
 
     /**
-     * POST /api/courses/:courseId/channels/:channelId/revoke-channel-moderator : Revokes the channel moderator role
+     * POST /courses/:courseId/channels/:channelId/revoke-channel-moderator : Revokes the channel moderator role
      *
      * @param courseId   the id of the course
      * @param channelId  the id of the channel
@@ -382,7 +382,7 @@ public class ChannelResource extends ConversationManagementResource {
     }
 
     /**
-     * POST /api/courses/:courseId/channels/:channelId/register : Registers users to a channel of a course
+     * POST /courses/:courseId/channels/:channelId/register : Registers users to a channel of a course
      *
      * @param courseId          the id of the course
      * @param channelId         the id of the channel
@@ -423,7 +423,7 @@ public class ChannelResource extends ConversationManagementResource {
     }
 
     /**
-     * POST /api/courses/:courseId/channels/:channelId/deregister : Deregisters users from a channel of a course
+     * POST /courses/:courseId/channels/:channelId/deregister : Deregisters users from a channel of a course
      *
      * @param courseId   the id of the course
      * @param channelId  the id of the channel

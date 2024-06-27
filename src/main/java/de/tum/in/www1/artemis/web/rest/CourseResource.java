@@ -45,7 +45,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -124,7 +123,6 @@ import tech.jhipster.web.util.PaginationUtil;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
 public class CourseResource {
 
     private static final String ENTITY_NAME = "course";
@@ -1136,7 +1134,7 @@ public class CourseResource {
     }
 
     /**
-     * GET /api/courses/:courseId/members/search: Searches for members of a course
+     * GET /courses/:courseId/members/search: Searches for members of a course
      *
      * @param courseId    id of the course
      * @param loginOrName the search term to search login and names by

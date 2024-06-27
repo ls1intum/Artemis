@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 
 @Profile("iris")
 @RestController
-@RequestMapping("api/iris/")
+@RequestMapping("iris/")
 public class IrisResource {
 
     protected final UserRepository userRepository;

@@ -10,17 +10,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.security.annotations.ManualConfig;
+import de.tum.in.www1.artemis.versioning.IgnoreGlobalMapping;
 
 /**
  * REST controller for the android assetlink.json
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping(".well-known/")
 public class AndroidAppSiteAssociationResource {
 
     @Value("${artemis.androidAppPackage: #{null}}")
@@ -37,7 +36,8 @@ public class AndroidAppSiteAssociationResource {
      *
      * @return assetslinks as json
      */
-    @GetMapping("assetlinks.json")
+    @IgnoreGlobalMapping
+    @GetMapping(".well-known/assetlinks.json")
     @ManualConfig
     public ResponseEntity<List<AndroidAssetLinksEntry>> getAndroidAssetLinks() {
         if (androidAppPackage == null || androidAppPackage.length() < 4 || sha256CertFingerprints == null || sha256CertFingerprints.length() < 20) {

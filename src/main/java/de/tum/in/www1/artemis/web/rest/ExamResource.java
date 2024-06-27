@@ -45,7 +45,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -112,7 +111,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
 import tech.jhipster.web.util.PaginationUtil;
 
 /**
@@ -120,7 +119,6 @@ import tech.jhipster.web.util.PaginationUtil;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
 public class ExamResource {
 
     private static final Logger log = LoggerFactory.getLogger(ExamResource.class);
@@ -513,7 +511,7 @@ public class ExamResource {
      */
     @GetMapping("exams/active")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<Exam>> getAllActiveExams(@ApiParam Pageable pageable) {
+    public ResponseEntity<List<Exam>> getAllActiveExams(@Parameter Pageable pageable) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         Page<Exam> page = examService.getAllActiveExams(pageable, user);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);

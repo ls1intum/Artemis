@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.BuildPlan;
@@ -23,7 +22,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Profile("gitlabci | jenkins")
 @RestController
-@RequestMapping("api/")
 public class BuildPlanResource {
 
     private static final Logger log = LoggerFactory.getLogger(BuildPlanResource.class);

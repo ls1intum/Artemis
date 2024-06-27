@@ -311,4 +311,9 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     public void mockUserExists(String username) {
         log.debug("Called mockUserExists with args {}", username);
     }
+
+    @Override
+    public boolean hasMatchingVersioningTestClass() {
+        return true;
+    }
 }

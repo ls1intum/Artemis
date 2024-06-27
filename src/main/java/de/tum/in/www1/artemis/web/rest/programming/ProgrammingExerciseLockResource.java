@@ -6,7 +6,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
@@ -15,7 +14,6 @@ import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 // only available for external version control services
 @Profile("!localvc & core")
 @RestController
-@RequestMapping("api/")
 public class ProgrammingExerciseLockResource {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseLockResource.class);

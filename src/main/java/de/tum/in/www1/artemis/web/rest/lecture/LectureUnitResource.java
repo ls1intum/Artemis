@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -40,7 +39,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
 public class LectureUnitResource {
 
     private static final Logger log = LoggerFactory.getLogger(LectureUnitResource.class);

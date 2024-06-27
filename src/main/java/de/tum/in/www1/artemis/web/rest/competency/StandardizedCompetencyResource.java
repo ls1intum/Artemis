@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.SourceDTO;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/standardized-competencies/")
+@RequestMapping("standardized-competencies/")
 public class StandardizedCompetencyResource {
 
     private static final Logger log = LoggerFactory.getLogger(StandardizedCompetencyResource.class);

@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
  */
 @Profile("iris")
 @RestController
-@RequestMapping("api/iris/")
+@RequestMapping("iris/")
 public class IrisMessageResource {
 
     private final IrisSessionRepository irisSessionRepository;
@@ -56,7 +56,7 @@ public class IrisMessageResource {
     }
 
     /**
-     * GET session/{sessionId}/message: Retrieve the messages for the iris session.
+     * GET /iris/session/{sessionId}/message: Retrieve the messages for the iris session.
      *
      * @param sessionId of the session
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the list of messages, or with
@@ -73,7 +73,7 @@ public class IrisMessageResource {
     }
 
     /**
-     * POST sessions/{sessionId}/messages: Send a new message from the user to the LLM
+     * POST /sessions/{sessionId}/messages: Send a new message from the user to the LLM
      *
      * @param sessionId of the session
      * @param message   to send

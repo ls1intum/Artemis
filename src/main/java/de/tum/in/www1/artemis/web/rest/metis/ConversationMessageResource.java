@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -40,7 +39,7 @@ import de.tum.in.www1.artemis.service.metis.ConversationMessagingService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilterDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
 import tech.jhipster.web.util.PaginationUtil;
 
 /**
@@ -48,7 +47,6 @@ import tech.jhipster.web.util.PaginationUtil;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
 public class ConversationMessageResource {
 
     private static final Logger log = LoggerFactory.getLogger(ConversationMessageResource.class);
@@ -110,7 +108,7 @@ public class ConversationMessageResource {
      */
     @GetMapping("courses/{courseId}/messages")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<Post>> getMessages(@ApiParam Pageable pageable, PostContextFilterDTO postContextFilter, Principal principal) {
+    public ResponseEntity<List<Post>> getMessages(@Parameter Pageable pageable, PostContextFilterDTO postContextFilter, Principal principal) {
         long timeNanoStart = System.nanoTime();
         Page<Post> coursePosts;
 

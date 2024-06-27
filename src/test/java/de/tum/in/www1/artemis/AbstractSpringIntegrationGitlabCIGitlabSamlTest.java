@@ -399,4 +399,9 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     public void mockUserExists(String username) throws Exception {
         gitlabRequestMockProvider.mockUserExists(username, true);
     }
+
+    @Override
+    public boolean hasMatchingVersioningTestClass() {
+        return true;
+    }
 }

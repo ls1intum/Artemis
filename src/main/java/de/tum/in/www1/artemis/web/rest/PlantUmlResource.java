@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.service.PlantUmlService;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/plantuml/")
+@RequestMapping("plantuml/")
 public class PlantUmlResource {
 
     private static final Logger log = LoggerFactory.getLogger(PlantUmlResource.class);

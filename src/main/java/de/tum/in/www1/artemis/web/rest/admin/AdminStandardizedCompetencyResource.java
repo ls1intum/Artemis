@@ -39,7 +39,7 @@ import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCo
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("admin/")
 public class AdminStandardizedCompetencyResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminStandardizedCompetencyResource.class);

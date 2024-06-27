@@ -14,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -33,7 +32,6 @@ import tech.jhipster.web.util.PaginationUtil;
 
 @Profile(PROFILE_LOCALCI)
 @RestController
-@RequestMapping("api/")
 public class BuildJobQueueResource {
 
     private static final Logger log = LoggerFactory.getLogger(BuildJobQueueResource.class);

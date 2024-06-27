@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.web.rest.dto.PrivacyStatementDTO;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("admin/")
 public class AdminPrivacyStatementResource {
 
     private final LegalDocumentService legalDocumentService;

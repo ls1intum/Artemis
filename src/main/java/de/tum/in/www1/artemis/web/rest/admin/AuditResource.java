@@ -24,7 +24,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.AuditEventService;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
 import tech.jhipster.web.util.ResponseUtil;
 
 /**
@@ -32,7 +32,7 @@ import tech.jhipster.web.util.ResponseUtil;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("admin/")
 public class AuditResource {
 
     private final AuditEventService auditEventService;
@@ -49,7 +49,7 @@ public class AuditResource {
      */
     @GetMapping("audits")
     @EnforceAdmin
-    public ResponseEntity<List<AuditEvent>> getAll(@ApiParam Pageable pageable) {
+    public ResponseEntity<List<AuditEvent>> getAll(@Parameter Pageable pageable) {
         Page<AuditEvent> page = auditEventService.findAll(pageable);
         HttpHeaders headers = generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
@@ -66,7 +66,7 @@ public class AuditResource {
     @GetMapping(value = "audits", params = { "fromDate", "toDate" })
     @EnforceAdmin
     public ResponseEntity<List<AuditEvent>> getByDates(@RequestParam(value = "fromDate") LocalDate fromDate, @RequestParam(value = "toDate") LocalDate toDate,
-            @ApiParam Pageable pageable) {
+            @Parameter Pageable pageable) {
 
         Instant from = fromDate.atStartOfDay(ZoneId.systemDefault()).toInstant();
         Instant to = toDate.atStartOfDay(ZoneId.systemDefault()).plusDays(1).toInstant();

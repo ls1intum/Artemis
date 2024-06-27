@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
  */
 @Profile("iris")
 @RestController
-@RequestMapping("api/iris/exercise-chat/")
+@RequestMapping("iris/exercise-chat/")
 public class IrisExerciseChatSessionResource {
 
     protected final UserRepository userRepository;

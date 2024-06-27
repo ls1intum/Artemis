@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.security.annotations.ManualConfig;
+import de.tum.in.www1.artemis.versioning.IgnoreGlobalMapping;
 
 /**
  * REST controller to serve the public JWKSet related to all OAuth2 clients.
@@ -37,6 +38,7 @@ public class PublicOAuth2JWKSResource {
      *
      * @return ResponseEntity containing the JWKS as a JSON string with status 200 (OK). If an error occurs, returns null.
      */
+    @IgnoreGlobalMapping
     @GetMapping(".well-known/jwks.json")
     @EnforceNothing
     @ManualConfig

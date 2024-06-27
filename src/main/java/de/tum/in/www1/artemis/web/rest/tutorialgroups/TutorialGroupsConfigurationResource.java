@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
@@ -37,7 +36,6 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
 public class TutorialGroupsConfigurationResource {
 
     private static final String ENTITY_NAME = "tutorialGroupsConfiguration";
