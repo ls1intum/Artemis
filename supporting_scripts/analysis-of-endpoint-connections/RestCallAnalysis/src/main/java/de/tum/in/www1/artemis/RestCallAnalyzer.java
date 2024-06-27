@@ -20,10 +20,10 @@ public class RestCallAnalyzer {
         ObjectMapper mapper = new ObjectMapper();
 
         try {
-            List<EndpointClassInformation> endpointClasses = mapper.readValue(new File("../endpoints.json"),
+            List<EndpointClassInformation> endpointClasses = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/endpoints.json"),
                     new TypeReference<List<EndpointClassInformation>>() {
                     });
-            List<RestCallFileInformation> restCalls = mapper.readValue(new File("../restCalls.json"),
+            List<RestCallFileInformation> restCalls = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/restCalls.json"),
                     new TypeReference<List<RestCallFileInformation>>() {
                     });
 
@@ -53,7 +53,7 @@ public class RestCallAnalyzer {
                 }
             }
             RestCallAnalysis restCallAnalysis = new RestCallAnalysis(restCallsWithMatchingEndpoint, restCallsWithoutMatchingEndpoint);
-            mapper.writeValue(new File("../restCallsAndMatchingEndpoints.json"), restCallAnalysis);
+            mapper.writeValue(new File("supporting_scripts/analysis-of-endpoint-connections/restCallsAndMatchingEndpoints.json"), restCallAnalysis);
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -66,7 +66,7 @@ public class RestCallAnalyzer {
         RestCallAnalysis restCallsAndMatchingEndpoints = null;
 
         try {
-            restCallsAndMatchingEndpoints = mapper.readValue(new File("../restCallsAndMatchingEndpoints.json"),
+            restCallsAndMatchingEndpoints = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/restCallsAndMatchingEndpoints.json"),
                     new TypeReference<RestCallAnalysis>() {
                     });
         }

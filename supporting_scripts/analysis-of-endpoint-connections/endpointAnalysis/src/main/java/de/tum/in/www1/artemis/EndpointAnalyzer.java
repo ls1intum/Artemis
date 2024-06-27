@@ -11,19 +11,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class EndpointAnalyzer {
 
     public static void main(String[] args) {
+        System.out.println("working directory: " + System.getProperty("user.dir"));
         analyzeEndpoints();
         printEndpointAnalysisResult();
     }
 
     private static void analyzeEndpoints() {
-        final String endpointsJsonPath = "../endpoints.json";
+        final String endpointsJsonPath = "supporting_scripts/analysis-of-endpoint-connections/endpoints.json";
         ObjectMapper mapper = new ObjectMapper();
 
         try {
             List<EndpointClassInformation> endpointClasses = mapper.readValue(new File(endpointsJsonPath),
                     new TypeReference<List<EndpointClassInformation>>() {
                     });
-            List<RestCallFileInformation> restCallFiles = mapper.readValue(new File("../restCalls.json"),
+            List<RestCallFileInformation> restCallFiles = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/restCalls.json"),
                     new TypeReference<List<RestCallFileInformation>>() {
                     });
 
@@ -54,7 +55,8 @@ public class EndpointAnalyzer {
             }
 
             EndpointAnalysis endpointAnalysis = new EndpointAnalysis(endpointsAndMatchingRestCalls, unusedEndpoints);
-            mapper.writeValue(new File("../endpointsAndMatchingRestCalls.json"), endpointAnalysis);
+            System.out.println("working directory: " + System.getProperty("user.dir"));
+            mapper.writeValue(new File("supporting_scripts/analysis-of-endpoint-connections/endpointsAndMatchingRestCalls.json"), endpointAnalysis);
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -65,7 +67,7 @@ public class EndpointAnalyzer {
         ObjectMapper mapper = new ObjectMapper();
         EndpointAnalysis endpointsAndMatchingRestCalls = null;
         try {
-            endpointsAndMatchingRestCalls = mapper.readValue(new File("../endpointsAndMatchingRestCalls.json"),
+            endpointsAndMatchingRestCalls = mapper.readValue(new File("supporting_scripts/analysis-of-endpoint-connections/endpointsAndMatchingRestCalls.json"),
                     new TypeReference<EndpointAnalysis>() {
                     });
         }
