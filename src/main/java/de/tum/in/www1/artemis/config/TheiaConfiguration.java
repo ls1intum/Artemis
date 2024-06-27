@@ -1,11 +1,12 @@
 package de.tum.in.www1.artemis.config;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_THEIA;
+
 import java.util.Map;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_THEIA;
 
 @Profile(PROFILE_THEIA)
 @Configuration
