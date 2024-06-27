@@ -62,6 +62,9 @@ export class IrisEnabledComponent implements OnInit {
             case IrisSubSettingsType.COMPETENCY_GENERATION:
                 this.irisSubSettings = this.irisSettings?.irisCompetencyGenerationSettings;
                 break;
+            case IrisSubSettingsType.LECTURE_INGESTION:
+                this.irisSubSettings = this.irisSettings?.irisLectureIngestionSettings;
+                break;
         }
     }
 }

@@ -1,11 +1,11 @@
 import { Component, ContentChild, HostBinding, Input, OnChanges, OnInit, TemplateRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
-import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
+import { ExternalCloningService } from 'app/exercises/programming/shared/service/external-cloning.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { isResumeExerciseAvailable, isStartExerciseAvailable, isStartPracticeAvailable } from 'app/exercises/shared/exercise/exercise.utils';
+import { hasExerciseDueDatePassed, isResumeExerciseAvailable, isStartExerciseAvailable, isStartPracticeAvailable } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -25,7 +25,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
     selector: 'jhi-exercise-details-student-actions',
     templateUrl: './exercise-details-student-actions.component.html',
     styleUrls: ['../course-overview.scss'],
-    providers: [SourceTreeService],
+    providers: [ExternalCloningService],
 })
 export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges {
     readonly FeatureToggle = FeatureToggle;
@@ -112,7 +112,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             this.editorLabel = 'uploadFile';
         }
 
-        this.beforeDueDate = !this.exercise.dueDate || dayjs().isBefore(this.exercise.dueDate);
+        this.beforeDueDate = !this.exercise.dueDate || !hasExerciseDueDatePassed(this.exercise, this.gradedParticipation);
     }
 
     /**

@@ -12,9 +12,11 @@ import de.tum.in.www1.artemis.validation.constraints.TeamAssignmentConfigConstra
  */
 public class TeamAssignmentConfigValidator implements ConstraintValidator<TeamAssignmentConfigConstraints, TeamAssignmentConfig> {
 
+    @Override
     public void initialize(TeamAssignmentConfigConstraints constraint) {
     }
 
+    @Override
     public boolean isValid(TeamAssignmentConfig object, ConstraintValidatorContext context) {
         return object.getMinTeamSize() <= object.getMaxTeamSize();
     }

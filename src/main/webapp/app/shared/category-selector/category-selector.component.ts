@@ -36,7 +36,7 @@ export class CategorySelectorComponent implements OnChanges {
     categoryColors = DEFAULT_COLORS;
     selectedCategory: ExerciseCategory;
     uniqueCategoriesForAutocomplete: Observable<string[]>;
-    private readonly colorSelectorHeight = 150;
+    private readonly COLOR_SELECTOR_HEIGHT = 150;
 
     separatorKeysCodes = [ENTER, COMMA, TAB];
     categoryCtrl = new FormControl<string | undefined>(undefined);
@@ -82,7 +82,7 @@ export class CategorySelectorComponent implements OnChanges {
      */
     openColorSelector(event: MouseEvent, tagItem: ExerciseCategory) {
         this.selectedCategory = tagItem;
-        this.colorSelector.openColorSelector(event, undefined, this.colorSelectorHeight);
+        this.colorSelector.openColorSelector(event, undefined, this.COLOR_SELECTOR_HEIGHT);
     }
 
     /**
