@@ -29,6 +29,8 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     @Input()
     repositoryUri?: string;
     @Input()
+    routerLinkForRepositoryView?: string;
+    @Input()
     participations?: ProgrammingExerciseStudentParticipation[];
     @Input()
     exercise?: ProgrammingExercise;
@@ -149,15 +151,13 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     }
 
     /**
-     * Used for the Button to open the repository in a separate browser-window
-     * @return HTTPS-Repository link of the student
+     * Gets the external link of the repository. For LocalVC, undefined is returned.
      */
-    getHttpRepositoryUri(): string {
-        if (this.isTeamParticipation) {
-            return this.repositoryUriForTeam(this.getRepositoryUri());
-        } else {
-            return this.getRepositoryUri();
+    getHttpRepositoryUri(): string | undefined {
+        if (this.localVCEnabled) {
+            return undefined;
         }
+        return this.isTeamParticipation ? this.repositoryUriForTeam(this.getRepositoryUri()) : this.getRepositoryUri();
     }
 
     /**

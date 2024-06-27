@@ -39,23 +39,24 @@
                 </div>
             }
             <!-- 'url-box-remove-line-left': Remove round edges and edge on the left side (due to dropdown to select ssh or https)
-           `url-box-remove-line-right`: Remove round edges and edge on the right side (not available for LocalVC) -->
+           `url-box-remove-line-right`: Remove round edges and edge on the right side -->
             <pre
                 class="clone-url"
                 [ngClass]="{
-                    'url-box-remove-line-left': sshEnabled && ((useSsh && !localVCEnabled) || !useSsh),
-                    'url-box-remove-line-right': !localVCEnabled && !(sshEnabled && ((useSsh && !localVCEnabled) || !useSsh)),
+                    'url-box-remove-line-left': sshEnabled,
+                    'url-box-remove-line-right': (localVCEnabled && !!routerLinkForRepositoryView) || !sshEnabled || !useSsh,
                 }"
                 [cdkCopyToClipboard]="getHttpOrSshRepositoryUri(false)"
                 (cdkCopyToClipboardCopied)="onCopyFinished($event)"
                 >{{ getHttpOrSshRepositoryUri() }} </pre
             >
-            @if (!useSsh && !localVCEnabled) {
+            @if (!useSsh || routerLinkForRepositoryView) {
                 <div class="d-flex align-items-center">
                     <a
                         style="flex: 1"
                         class="btn btn-secondary btn-sm me-2 open-repository-button"
-                        [href]="getHttpRepositoryUri() | safeUrl"
+                        [href]="!localVCEnabled ? (getHttpRepositoryUri() | safeUrl) : undefined"
+                        [routerLink]="localVCEnabled ? routerLinkForRepositoryView : undefined"
                         target="_blank"
                         rel="noopener noreferrer"
                     >
