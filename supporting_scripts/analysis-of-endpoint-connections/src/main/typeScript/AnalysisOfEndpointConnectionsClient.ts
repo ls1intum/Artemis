@@ -9,7 +9,7 @@ import {
     isClassDeclaration,
     isConstructorDeclaration,
     isParameter,
-    isTypeReferenceNode, SyntaxKind, ClassDeclaration, CallExpression, ConstructorDeclaration,
+    isTypeReferenceNode, SyntaxKind, ClassDeclaration, CallExpression, ConstructorDeclaration, isBinaryExpression,
 } from 'typescript';
 import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -22,6 +22,7 @@ let restCallFiles: Array<{fileName: string, restCalls: {method: string, url: str
 
 const HTTP_METHODS = ['get', 'post', 'put', 'delete'];
 let isFirstRestCall = true;
+console.log('WorkingDirectory: ' + process.cwd());
 
 for (const fileName of fileNames.filter(fileName => fileName.endsWith('.ts')))  {
     let restCalls: Array<{method: string, url: string, line: number, filePath: string}> = [];
@@ -176,7 +177,7 @@ function logRestCall(restCall: CallExpression, methodName: string, classProperti
     console.log(`Found REST call: ${methodName}`);
     let url = '';
     if (restCall.arguments.length > 0) {
-        url = restCall.arguments[0].getText();
+        url = evaluateUrl(restCall.arguments[0], classProperties);
         // Replace class properties in the URL
         for (const prop in classProperties) {
             // Replace all occurrences of ${this.prop} with the actual value
@@ -203,4 +204,18 @@ function logRestCall(restCall: CallExpression, methodName: string, classProperti
         filePath: fileName
     };
     restCalls.push(restCallInformation);
+}
+
+
+function evaluateUrl(expression: Node, classProperties: { [key: string]: string }): string {
+    if (isPropertyAccessExpression(expression) && expression.expression.getText() === 'this') {
+        const propName = expression.name.getText();
+        return classProperties[propName] || '';
+    } else if (isBinaryExpression(expression) && expression.operatorToken.kind === SyntaxKind.PlusToken) {
+        return evaluateUrl(expression.left, classProperties) + evaluateUrl(expression.right, classProperties);
+    } else if (isStringLiteral(expression)) {
+        return expression.text;
+    } else {
+        return expression.getText();
+    }
 }
