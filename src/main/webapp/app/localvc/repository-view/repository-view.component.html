@@ -13,7 +13,13 @@
                     </a>
                 }
                 @if (exercise?.allowOfflineIde) {
-                    <jhi-clone-repo-button [loading]="!!exercise.loading" [smallButtons]="false" [repositoryUri]="repositoryUri" [exercise]="exercise" />
+                    <jhi-clone-repo-button
+                        [loading]="!!exercise.loading"
+                        [smallButtons]="false"
+                        [routerLinkForRepositoryView]="'.'"
+                        [repositoryUri]="repositoryUri"
+                        [exercise]="exercise"
+                    />
                 }
 
                 @if (exercise.id) {
