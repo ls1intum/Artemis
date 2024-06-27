@@ -96,6 +96,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     ltiEnabled: boolean;
     standardizedCompetenciesEnabled = false;
     agentName?: string;
+    isExamStarted = false;
 
     courseTitle?: string;
     exerciseTitle?: string;
@@ -133,6 +134,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private authStateSubscription: Subscription;
     private routerEventSubscription: Subscription;
     private queryParamsSubscription: Subscription;
+    private examStartedSubscription: Subscription;
     private studentExam?: StudentExam;
     private examId?: number;
     private routeExamId = 0;
@@ -241,6 +243,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
             this.studentExam = studentExam;
             this.checkExamActive();
         });
+        this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted) => {
+            this.isExamStarted = isStarted;
+        });
 
         this.buildBreadcrumbs(this.router.url);
         this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe((event: NavigationEnd) => this.buildBreadcrumbs(event.url));
@@ -260,6 +265,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             this.standardizedCompetencySubscription.unsubscribe();
         }
         this.queryParamsSubscription?.unsubscribe();
+        this.examStartedSubscription?.unsubscribe();
     }
 
     breadcrumbTranslation = {
