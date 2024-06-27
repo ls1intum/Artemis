@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -60,7 +61,7 @@ public class PublicUserJwtResource {
     }
 
     /**
-     * Authorizes a User and sets the token in cookie
+     * Authorizes a User
      *
      * @param loginVM   user credentials View Mode
      * @param userAgent User Agent
@@ -69,49 +70,28 @@ public class PublicUserJwtResource {
      */
     @PostMapping("authenticate")
     @EnforceNothing
-    public ResponseEntity<Void> authorizeToCookie(@Valid @RequestBody LoginVM loginVM, @RequestHeader("User-Agent") String userAgent, HttpServletResponse response) {
-        try {
-            var responseCookie = authorize(loginVM, userAgent);
-            response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+    public ResponseEntity<String> authorize(@Valid @RequestBody LoginVM loginVM, @RequestHeader("User-Agent") String userAgent,
+            @RequestParam(value = "as-bearer", defaultValue = "false") boolean asBearer, HttpServletResponse response) {
 
-            return ResponseEntity.ok().build();
-        }
-        catch (BadCredentialsException ex) {
-            log.warn("Wrong credentials during login for user {}", loginVM.getUsername());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-    }
-
-    private ResponseCookie authorize(LoginVM loginVM, String userAgent) throws BadCredentialsException {
         var username = loginVM.getUsername();
         var password = loginVM.getPassword();
         SecurityUtils.checkUsernameAndPasswordValidity(username, password);
 
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
 
-        authenticationToken.setDetails(Pair.of("userAgent", userAgent));
-        Authentication authentication = authenticationManager.authenticate(authenticationToken);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        boolean rememberMe = loginVM.isRememberMe() != null && loginVM.isRememberMe();
-
-        ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe);
-        return responseCookie;
-    }
-
-    /**
-     * Authorizes a User and returns the token in body
-     *
-     * @param loginVM   user credentials View Mode
-     * @param userAgent User Agent
-     * @param response  HTTP response
-     * @return the ResponseEntity with status 200 (ok), 401 (unauthorized) or 403 (Captcha required)
-     */
-    @PostMapping("authenticate/token")
-    @EnforceNothing
-    public ResponseEntity<String> authorizeToBody(@Valid @RequestBody LoginVM loginVM, @RequestHeader("User-Agent") String userAgent, HttpServletResponse response) {
         try {
-            var responseCookie = authorize(loginVM, userAgent);
-            return ResponseEntity.ok(responseCookie.getValue());
+            authenticationToken.setDetails(Pair.of("userAgent", userAgent));
+            Authentication authentication = authenticationManager.authenticate(authenticationToken);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            boolean rememberMe = loginVM.isRememberMe() != null && loginVM.isRememberMe();
+
+            ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe);
+            if (asBearer) {
+                return ResponseEntity.ok(responseCookie.getValue());
+            }
+            response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+
+            return ResponseEntity.ok().build();
         }
         catch (BadCredentialsException ex) {
             log.warn("Wrong credentials during login for user {}", loginVM.getUsername());
