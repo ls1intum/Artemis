@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
+import java.util.Map;
 
 class TheiaConfigurationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -13,8 +14,26 @@ class TheiaConfigurationTest extends AbstractSpringIntegrationIndependentTest {
     private TheiaConfiguration theiaConfiguration;
 
     @Test
-    void test() {
+    void testAutowired() {
         assertThat(theiaConfiguration).isNotNull();
-        assert ("test".equals(theiaConfiguration.getImages()));
+    }
+
+    @Test
+    void testAmountOfLanguageImages() {
+        assertThat(theiaConfiguration.getImagesForAllLanguages()).hasSize(2);
+    }
+
+    @Test
+    void testFlavorsForLanguage() {
+        Map<String, String> images = theiaConfiguration.getImagesForLanguage("java");
+        assertThat(images).hasSize(2);
+        assertThat(images).containsKey("Java-17");
+        assertThat(images).containsValue("ghcr.io/ls1intum/theia/java-17:latest");
+        assertThat(images.get("Java-Non-Existent")).isEqualTo("this-is-not-a-valid-image");
+    }
+
+    @Test
+    void testNonExistentLanguage() {
+        assertThat(theiaConfiguration.getImagesForLanguage("non-existent")).isNull();
     }
 }
