@@ -81,12 +81,6 @@
                                                 [repositoryType]="'AUXILIARY'"
                                                 [auxiliaryRepositoryId]="auxiliaryRepository.id"
                                             />
-                                            @if (detail.data.showOpenLink) {
-                                                <a [href]="auxiliaryRepository.repositoryUri" target="_blank" class="btn btn-sm btn-info ms-2">
-                                                    <fa-icon [icon]="faArrowUpRightFromSquare" />
-                                                    <span jhiTranslate="artemisApp.programmingExercise.openRepository"></span>
-                                                </a>
-                                            }
                                             <div class="auxiliaryRepositoryDescription">
                                                 @if (!auxiliaryRepository.checkoutDirectory) {
                                                     <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="noCheckoutDirectorySetTooltip" />

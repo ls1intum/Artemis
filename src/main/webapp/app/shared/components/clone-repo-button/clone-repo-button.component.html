@@ -44,13 +44,13 @@
                 class="clone-url"
                 [ngClass]="{
                     'url-box-remove-line-left': sshEnabled,
-                    'url-box-remove-line-right': (localVCEnabled && !!routerLinkForRepositoryView) || !sshEnabled || !useSsh,
+                    'url-box-remove-line-right': !localVCEnabled || (!useSsh && !!routerLinkForRepositoryView),
                 }"
                 [cdkCopyToClipboard]="getHttpOrSshRepositoryUri(false)"
                 (cdkCopyToClipboardCopied)="onCopyFinished($event)"
                 >{{ getHttpOrSshRepositoryUri() }} </pre
             >
-            @if (!useSsh || routerLinkForRepositoryView) {
+            @if (!localVCEnabled || (!useSsh && !!routerLinkForRepositoryView)) {
                 <div class="d-flex align-items-center">
                     <a
                         style="flex: 1"

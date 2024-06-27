@@ -389,7 +389,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         data: {
                             auxiliaryRepositories: exercise.auxiliaryRepositories,
                             exerciseId: exercise.id,
-                            showOpenLink: !this.localVCEnabled,
                         },
                     },
                 exercise.isAtLeastEditor &&
