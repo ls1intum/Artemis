@@ -63,7 +63,6 @@ public class DataExportScienceEventService {
             for (var scienceEvent : scienceEvents) {
                 printer.printRecord(scienceEvent.getTimestamp(), scienceEvent.getType(), scienceEvent.getResourceId());
             }
-            printer.flush();
         }
     }
 }
