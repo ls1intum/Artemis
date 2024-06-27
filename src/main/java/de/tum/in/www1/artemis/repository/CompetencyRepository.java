@@ -16,10 +16,10 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.CompetencyExerciseMasteryCalculationDTO;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the Competency entity.
@@ -52,20 +52,12 @@ public interface CompetencyRepository extends ArtemisJpaRepository<Competency, L
             """)
     Optional<Competency> findWithLectureUnitsAndExercisesById(@Param("competencyId") long competencyId);
 
-    @Query("""
-            SELECT c
-            FROM Competency c
-                LEFT JOIN FETCH c.lectureUnits lu
-                LEFT JOIN FETCH lu.completedUsers
-            WHERE c.id = :competencyId
-            """)
-    Optional<Competency> findByIdWithLectureUnitsAndCompletions(@Param("competencyId") long competencyId);
-
     /**
      * Fetches all information related to the calculation of the mastery for exercises in a competency.
      * The complex grouping by is necessary for postgres
      *
      * @param competencyId the id of the competency for which to fetch the exercise information
+     * @param user         the user for which to fetch the exercise information
      * @return the exercise information for the calculation of the mastery in the competency
      */
     @Query("""
@@ -80,15 +72,15 @@ public interface CompetencyRepository extends ArtemisJpaRepository<Competency, L
             )
             FROM Competency c
                 LEFT JOIN c.exercises ex
-                LEFT JOIN ex.studentParticipations sp
+                LEFT JOIN ex.studentParticipations sp ON sp.student = :user OR :user MEMBER OF sp.team.students
                 LEFT JOIN sp.submissions s
-                LEFT JOIN StudentScore sS ON sS.exercise = ex
-                LEFT JOIN TeamScore tS ON tS.exercise = ex
+                LEFT JOIN StudentScore sS ON sS.exercise = ex AND sS.user = :user
+                LEFT JOIN TeamScore tS ON tS.exercise = ex AND :user MEMBER OF tS.team.students
             WHERE c.id = :competencyId
                 AND ex IS NOT NULL
             GROUP BY ex.maxPoints, ex.difficulty, TYPE(ex), sS.lastScore, tS.lastScore, sS.lastPoints, tS.lastPoints, sS.lastModifiedDate, tS.lastModifiedDate
             """)
-    Set<CompetencyExerciseMasteryCalculationDTO> findAllExerciseInfoByCompetencyId(@Param("competencyId") long competencyId);
+    Set<CompetencyExerciseMasteryCalculationDTO> findAllExerciseInfoByCompetencyId(@Param("competencyId") long competencyId, @Param("user") User user);
 
     @Query("""
             SELECT c
@@ -168,28 +160,20 @@ public interface CompetencyRepository extends ArtemisJpaRepository<Competency, L
     @Cacheable(cacheNames = "competencyTitle", key = "#competencyId", unless = "#result == null")
     String getCompetencyTitle(@Param("competencyId") long competencyId);
 
-    default Competency findByIdWithLectureUnitsAndCompletionsElseThrow(long competencyId) {
-        return findByIdWithLectureUnitsAndCompletions(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
-    }
-
     default Competency findByIdWithExercisesElseThrow(long competencyId) {
-        return findByIdWithExercises(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
+        return getValueElseThrow(findByIdWithExercises(competencyId));
     }
 
     default Competency findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(long competencyId) {
-        return findByIdWithExercisesAndLectureUnitsBidirectional(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
-    }
-
-    default Competency findByIdElseThrow(long competencyId) {
-        return findById(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
+        return getValueElseThrow(findByIdWithExercisesAndLectureUnitsBidirectional(competencyId));
     }
 
     default Competency findWithLectureUnitsAndExercisesByIdElseThrow(long competencyId) {
-        return findWithLectureUnitsAndExercisesById(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
+        return getValueElseThrow(findWithLectureUnitsAndExercisesById(competencyId));
     }
 
     default Competency findByIdWithLectureUnitsElseThrow(long competencyId) {
-        return findByIdWithLectureUnits(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
+        return getValueElseThrow(findByIdWithLectureUnits(competencyId));
     }
 
     long countByCourse(Course course);
