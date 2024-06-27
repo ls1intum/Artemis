@@ -31,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.AbstractAuditingEntity;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
 
 @Entity
@@ -83,6 +84,12 @@ public class StudentExam extends AbstractAuditingEntity {
     @ManyToMany
     @JoinTable(name = "student_exam_quiz_question", joinColumns = @JoinColumn(name = "student_exam_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "quiz_question_id", referencedColumnName = "id"))
     private List<QuizQuestion> quizQuestions = new ArrayList<>();
+
+    @ManyToMany
+    @JoinTable(name = "student_exam_participation", joinColumns = @JoinColumn(name = "student_exam_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "participation_id", referencedColumnName = "id"))
+    @OrderColumn(name = "participation_order")
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private List<StudentParticipation> studentParticipations = new ArrayList<>();
 
     public Boolean isSubmitted() {
         return submitted;
@@ -199,6 +206,14 @@ public class StudentExam extends AbstractAuditingEntity {
         this.quizQuestions = quizQuestions;
     }
 
+    public List<StudentParticipation> getStudentParticipations() {
+        return studentParticipations;
+    }
+
+    public void setStudentParticipations(List<StudentParticipation> studentParticipations) {
+        this.studentParticipations = studentParticipations;
+    }
+
     /**
      * Adds the given exam session to the student exam
      *
@@ -229,6 +244,16 @@ public class StudentExam extends AbstractAuditingEntity {
             return false;
         }
         return ZonedDateTime.now().isAfter(getIndividualEndDate());
+    }
+
+    /**
+     * Check if the individual student exam is finished
+     * A student exam is finished if it's started and either submitted or the time has passed
+     *
+     * @return true if the exam is finished, otherwise false
+     */
+    public boolean isFinished() {
+        return Boolean.TRUE.equals(this.isStarted()) && (Boolean.TRUE.equals(this.isEnded()) || Boolean.TRUE.equals(this.isSubmitted()));
     }
 
     /**

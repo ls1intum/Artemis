@@ -102,12 +102,16 @@ public class ExamSubmissionService {
     }
 
     private Optional<StudentExam> findStudentExamForUser(User user, Exam exam) {
-        // Step 1: Find real exam
-        Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), exam.getId(), false);
-        if (optionalStudentExam.isEmpty()) {
-            // Step 2: Find latest (=the highest id) unsubmitted test exam
+
+        Optional<StudentExam> optionalStudentExam;
+        // Since multiple student exams for a test exam might exist, find the latest (=the highest id) unsubmitted student exam
+        if (exam.isTestExam()) {
             optionalStudentExam = studentExamRepository.findUnsubmittedStudentExamsForTestExamsWithExercisesByExamIdAndUserId(exam.getId(), user.getId()).stream()
                     .max(Comparator.comparing(StudentExam::getId));
+        }
+        else {
+            // for real exams, there's only one student exam per exam
+            optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), exam.getId(), false);
         }
         return optionalStudentExam;
     }
@@ -148,8 +152,8 @@ public class ExamSubmissionService {
      * @return the submission. If a submission already exists for the exercise we will set the id
      */
     public Submission preventMultipleSubmissions(Exercise exercise, Submission submission, User user) {
-        // Return immediately if it is not an exam submissions or if it is a programming exercise
-        if (!exercise.isExamExercise() || exercise instanceof ProgrammingExercise) {
+        // Return immediately if it is not an exam submission or if it is a programming exercise or if it is a test exam exercise
+        if (!exercise.isExamExercise() || exercise instanceof ProgrammingExercise || exercise.getExamViaExerciseGroupOrCourseMember().isTestExam()) {
             return submission;
         }
 

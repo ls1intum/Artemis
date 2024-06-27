@@ -32,6 +32,10 @@
                         @case ('CONDUCTING') {
                             <fa-icon [icon]="faCirclePlay" size="2x" />
                         }
+                        <!-- Play-Button to indicate, the attempt can be resumed -->
+                        @case ('RESUME') {
+                            <fa-icon [icon]="faCirclePlay" size="2x" />
+                        }
                         <!-- User with a clock to indicate indivial time extensions -->
                         @case ('TIMEEXTENSION') {
                             <fa-icon [icon]="faUserClock" size="2x" />
@@ -73,6 +77,11 @@
                         @case ('CONDUCTING') {
                             <div>
                                 <h5 class="text-center">{{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'conducting' | artemisTranslate }}</h5>
+                            </div>
+                        }
+                        @case ('RESUME') {
+                            <div>
+                                <h5 class="text-center">{{ 'artemisApp.exam.overview.testExam.resume' | artemisTranslate }}</h5>
                             </div>
                         }
                         @case ('TIMEEXTENSION') {

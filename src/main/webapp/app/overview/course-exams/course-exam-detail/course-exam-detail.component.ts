@@ -26,6 +26,8 @@ export const enum ExamState {
     UNDEFINED = 'UNDEFINED',
     // Case 8: No more attempts
     NO_MORE_ATTEMPTS = 'NO_MORE_ATTEMPTS',
+    // Case 9: Resume attempt (only for test exams)
+    RESUME = 'RESUME',
 }
 
 @Component({
@@ -109,7 +111,7 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
             this.timeLeftToStartInSeconds();
             return;
         }
-        if (this.exam.endDate && dayjs().isBefore(this.exam.endDate)) {
+        if (!this.exam.testExam && this.exam.endDate && dayjs().isBefore(this.exam.endDate)) {
             this.examState = ExamState.CONDUCTING;
             return;
         }
@@ -118,7 +120,7 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
     }
 
     updateExamStateWithStudentExamOrTestExam() {
-        if (!this.studentExam && !this.exam.testExam && this.course?.id && this.exam?.id) {
+        if (!this.studentExam && this.course?.id && this.exam?.id) {
             this.examParticipationService
                 .getOwnStudentExam(this.course.id, this.exam.id)
                 .subscribe({
@@ -165,6 +167,14 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
                 this.cancelExamStateSubscription();
                 return;
             }
+        } else {
+            if (this.isWithinWorkingTime()) {
+                this.examState = ExamState.RESUME;
+                return;
+            } else if (this.exam.endDate && dayjs().isBefore(this.exam.endDate)) {
+                this.examState = ExamState.CONDUCTING;
+                return;
+            }
         }
         this.examState = ExamState.UNDEFINED;
         this.cancelExamStateSubscription();
@@ -175,5 +185,15 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
      */
     timeLeftToStartInSeconds() {
         this.timeLeftToStart = dayjs(this.exam.startDate!).diff(dayjs(), 'seconds');
+    }
+
+    /**
+     * Determines if the given StudentExam is (still) within the working time
+     */
+    isWithinWorkingTime() {
+        if (this.studentExam?.started && !this.studentExam.submitted && this.studentExam.startedDate && this.exam.workingTime) {
+            const endDate = dayjs(this.studentExam.startedDate).add(this.exam.workingTime, 'seconds');
+            return dayjs(endDate).isAfter(dayjs());
+        }
     }
 }

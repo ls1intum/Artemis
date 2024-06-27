@@ -6,7 +6,6 @@ import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom
 import static java.time.ZonedDateTime.now;
 
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -179,7 +178,7 @@ public class StudentExamResource {
 
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
 
-        StudentExam studentExam = studentExamRepository.findByIdWithExercisesSubmissionPolicyAndSessionsElseThrow(studentExamId);
+        StudentExam studentExam = studentExamRepository.findByIdWithExercisesAndSessionsElseThrow(studentExamId);
 
         examService.loadQuizExercisesForStudentExam(studentExam);
 
@@ -464,7 +463,7 @@ public class StudentExamResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         studentExamAccessService.checkCourseAccessForStudentElseThrow(courseId, user);
 
-        List<StudentExam> studentExamList = studentExamRepository.findStudentExamForTestExamsByUserIdAndCourseId(user.getId(), courseId);
+        List<StudentExam> studentExamList = studentExamRepository.findStudentExamsForTestExamsByUserIdAndCourseId(user.getId(), courseId);
 
         return ResponseEntity.ok(studentExamList);
     }
@@ -488,7 +487,7 @@ public class StudentExamResource {
         log.debug("REST request to get the student exam of user {} for exam {}", user.getLogin(), examId);
 
         // 1st: Get the studentExam from the database
-        StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
+        StudentExam studentExam = studentExamRepository.findByIdWithExercisesAndStudentParticipationsElseThrow(studentExamId);
 
         // 2nd: Check equal users and access permissions
         if (!user.equals(studentExam.getUser())) {
@@ -563,8 +562,9 @@ public class StudentExamResource {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the exam live events for exam {} by user {}", examId, currentUser.getLogin());
 
-        StudentExam studentExam = studentExamRepository.findByExamIdAndUserId(examId, currentUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException("StudentExam for exam " + examId + " and user " + currentUser.getId() + " does not exist"));
+        boolean testExam = examRepository.isTestExam(examId);
+
+        StudentExam studentExam = studentExamRepository.findOneByExamIdAndUserIdElseThrow(examId, currentUser.getId(), testExam);
 
         if (studentExam.isTestRun()) {
             throw new BadRequestAlertException("Test runs do not have live events", ENTITY_NAME, "testRunNoLiveEvents");
@@ -748,12 +748,9 @@ public class StudentExamResource {
         if (studentExam.isTestExam()) {
             boolean setupTestExamNeeded = studentExam.isStarted() == null || !studentExam.isStarted();
             if (setupTestExamNeeded) {
-                // Fix startedDate. As the studentExam.startedDate is used to link the participation.initializationDate, we need to drop the ms
-                // (initializationDate is stored with ms)
-                ZonedDateTime startedDate = now().truncatedTo(ChronoUnit.SECONDS);
 
-                // Set up new participations for the Exercises and set initialisationDate to the startedDate
-                studentExamService.setUpTestExamExerciseParticipationsAndSubmissions(studentExam, startedDate);
+                // Set up new participations for the Exercises
+                studentExamService.setUpTestExamExerciseParticipationsAndSubmissions(studentExam);
             }
         }
 

@@ -117,6 +117,17 @@ public abstract class Participation extends DomainObject implements Participatio
     private Set<Submission> submissions = new HashSet<>();
 
     /**
+     * Graded course exercises, practice mode course exercises and real exam exercises always have only one parcitipation per exercise
+     * In case of a test exam, there are multiple participations possible for one exercise
+     * This field is necessary to preserve the constraint of one partipation per exercise, while allowing multiple particpiations per exercise for test exams
+     * The value is 0 for graded course exercises and exercises in the real exams
+     * The value is 1 for practice mode course exercises
+     * The value is 0-255 for test exam exercises. For each subsequent participation the number is increased by one
+     */
+    @Column(name = "number_of_attempts")
+    private int numberOfAttempts = 0;
+
+    /**
      * This property stores the total number of submissions in this participation. Not stored in the database, computed dynamically and used in showing statistics to the user in
      * the exercise view.
      */
@@ -242,6 +253,14 @@ public abstract class Participation extends DomainObject implements Participatio
         this.submissions = submissions;
     }
 
+    public int getNumberOfAttempts() {
+        return numberOfAttempts;
+    }
+
+    public void setNumberOfAttempts(int index) {
+        this.numberOfAttempts = index;
+    }
+
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     /**
@@ -353,4 +372,5 @@ public abstract class Participation extends DomainObject implements Participatio
 
     @JsonIgnore
     public abstract String getType();
+
 }
