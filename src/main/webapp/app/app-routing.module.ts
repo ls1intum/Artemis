@@ -6,6 +6,12 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { AboutIrisComponent } from 'app/iris/about-iris/about-iris.component';
 import { ProblemStatementComponent } from './overview/exercise-details/problem-statement/problem-statement.component';
 import { StandaloneFeedbackComponent } from './exercises/shared/feedback/standalone-feedback/standalone-feedback.component';
+import { RepositoryViewComponent } from './localvc/repository-view/repository-view.component';
+import { Authority } from './shared/constants/authority.constants';
+import { UserRouteAccessService } from './core/auth/user-route-access-service';
+import { LocalVCGuard } from './localvc/localvc-guard.service';
+import { CommitHistoryComponent } from './localvc/commit-history/commit-history.component';
+import { CommitDetailsViewComponent } from './localvc/commit-details-view/commit-details-view.component';
 
 const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
 
@@ -99,6 +105,44 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 {
                     path: 'courses/:courseId/exams/:examId/grading-system',
                     loadChildren: () => import('./grading-system/grading-system.module').then((m) => m.GradingSystemModule),
+                },
+                {
+                    path: 'courses/:courseId/exams/:examId/exercises/:exerciseId/repository/:participationId',
+                    component: RepositoryViewComponent,
+                    data: {
+                        authorities: [Authority.USER],
+                        pageTitle: 'artemisApp.repository.title',
+                        flushRepositoryCacheAfter: 900000, // 15 min
+                        participationCache: {},
+                        repositoryCache: {},
+                        hasSidebar: false,
+                    },
+                    canActivate: [UserRouteAccessService, LocalVCGuard],
+                },
+
+                {
+                    path: 'courses/:courseId/exams/:examId/exercises/:exerciseId/repository/:participationId/commit-history',
+                    component: CommitHistoryComponent,
+                    data: {
+                        authorities: [Authority.USER],
+                        pageTitle: 'artemisApp.repository.commitHistory.title',
+                        flushRepositoryCacheAfter: 900000, // 15 min
+                        participationCache: {},
+                        repositoryCache: {},
+                    },
+                    canActivate: [UserRouteAccessService, LocalVCGuard],
+                },
+                {
+                    path: 'courses/:courseId/exams/:examId/exercises/:exerciseId/repository/:participationId/commit-history/:commitHash',
+                    component: CommitDetailsViewComponent,
+                    data: {
+                        authorities: [Authority.USER],
+                        pageTitle: 'artemisApp.repository.commitHistory.commitDetails.title',
+                        flushRepositoryCacheAfter: 900000, // 15 min
+                        participationCache: {},
+                        repositoryCache: {},
+                    },
+                    canActivate: [UserRouteAccessService, LocalVCGuard],
                 },
                 {
                     path: 'features',
