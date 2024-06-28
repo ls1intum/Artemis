@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins.build_plan;
 
+import java.util.function.Function;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
@@ -17,22 +19,8 @@ public class JenkinsBuildPlanUtils {
      * @throws IllegalArgumentException if the xml document isn't a Jenkins pipeline script
      */
     public static void replaceScriptParameters(Document jobXmlDocument, String previousUrl, String newUrl) throws IllegalArgumentException {
-        final var scriptNode = findScriptNode(jobXmlDocument);
-        if (scriptNode == null || scriptNode.getFirstChild() == null) {
-            throw new IllegalArgumentException("Pipeline Script not found");
-        }
-
-        String pipeLineScript = scriptNode.getFirstChild().getTextContent().trim();
-        // If the script does not start with "pipeline" or the special comment,
-        // it is not actually a pipeline script, but a deprecated programming exercise with an old build xml configuration
-        if (!pipeLineScript.startsWith("pipeline") && !pipeLineScript.startsWith(PIPELINE_SCRIPT_DETECTION_COMMENT)) {
-            throw new IllegalArgumentException("Pipeline Script not found");
-        }
-        // Replace URL
         // TODO: properly replace the previousUrl with newUrl by looking up the ciRepoName in the pipelineScript
-        pipeLineScript = pipeLineScript.replace(previousUrl, newUrl);
-
-        scriptNode.getFirstChild().setTextContent(pipeLineScript);
+        editPipelineScript(jobXmlDocument, pipelineScript -> pipelineScript.replace(previousUrl, newUrl));
     }
 
     /**
@@ -44,6 +32,10 @@ public class JenkinsBuildPlanUtils {
      * @throws IllegalArgumentException
      */
     public static void searchAndReplaceInScript(Document jobXmlDocument, String oldText, String newText) throws IllegalArgumentException {
+        editPipelineScript(jobXmlDocument, pipelineScript -> pipelineScript.replace(oldText, newText));
+    }
+
+    private static void editPipelineScript(Document jobXmlDocument, Function<String, String> editor) throws IllegalArgumentException {
         final var scriptNode = findScriptNode(jobXmlDocument);
         if (scriptNode == null || scriptNode.getFirstChild() == null) {
             throw new IllegalArgumentException("Pipeline Script not found");
@@ -55,8 +47,8 @@ public class JenkinsBuildPlanUtils {
         if (!pipeLineScript.startsWith("pipeline") && !pipeLineScript.startsWith(PIPELINE_SCRIPT_DETECTION_COMMENT)) {
             throw new IllegalArgumentException("Pipeline Script not found");
         }
-
-        pipeLineScript = pipeLineScript.replace(oldText, newText);
+        // perform editing
+        pipeLineScript = editor.apply(pipeLineScript);
 
         scriptNode.getFirstChild().setTextContent(pipeLineScript);
     }
