@@ -213,15 +213,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
 
     private sortCategoriesAlphanumerically(categoryFilters: ExerciseCategoryFilterOption[]) {
         categoryFilters.sort((categoryA, categoryB) => {
-            const categoryADisplayText = categoryA.category.category?.toLowerCase() ?? '';
-            const categoryBDisplayText = categoryB.category.category?.toLowerCase() ?? '';
-            if (categoryADisplayText < categoryBDisplayText) {
-                return -1;
-            }
-            if (categoryADisplayText > categoryBDisplayText) {
-                return 1;
-            }
-            return 0;
+            return categoryA.category.compare(categoryB.category);
         });
     }
 
