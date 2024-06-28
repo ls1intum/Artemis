@@ -189,12 +189,16 @@ public class PyrisPipelineService {
     private <T, U extends PyrisEventDTO> void executeCourseChatPipeline(String variant, IrisCourseChatSession session, T eventObject, Class<U> eventDtoClass) {
         var courseId = session.getCourse().getId();
         var studentId = session.getUser().getId();
-        this.log.debug("Executing course chat pipeline vairant {} for course {} and student {}", variant, courseId, studentId);
+        this.log.debug("Executing course chat pipeline variant {} for course {} and student {}", variant, courseId, studentId);
+        // TODO: Define Pyris event payload.
         executeChatPipeline(variant, session, "course-chat", base -> {
             var fullCourse = loadCourseWithParticipationOfStudent(courseId, studentId);
             return new PyrisCourseChatPipelineExecutionDTO(PyrisExtendedCourseDTO.of(fullCourse),
                     learningMetricsService.getStudentCourseMetrics(session.getUser().getId(), courseId),
-                    eventObject == null ? null : generateDTOFromObjectType(eventDtoClass, eventObject), base.chatHistory(), base.user(), base.settings(), base.initialStages());
+                    (eventObject == null || !variant.equals("jol")) ? null : (CompetencyJolDTO) generateDTOFromObjectType(eventDtoClass, eventObject),
+                    (eventObject == null || !variant.equals("submission_successful")) ? null
+                            : (PyrisExerciseWithStudentSubmissionsDTO) generateDTOFromObjectType(eventDtoClass, eventObject),
+                    base.chatHistory(), base.user(), base.settings(), base.initialStages());
         }, () -> pyrisJobService.addCourseChatJob(courseId, session.getId()));
     }
 
@@ -212,7 +216,7 @@ public class PyrisPipelineService {
      * @see PyrisPipelineService#executeChatPipeline for more details on the pipeline execution process.
      */
     public void executeCourseChatPipeline(String variant, IrisCourseChatSession session, Object object) {
-        this.log.debug("Executing course chat pipeline variant {} with object {}", variant, object.getClass());
+        this.log.debug("Executing course chat pipeline variant {} with object {}", variant, object);
         switch (object) {
             case null -> executeCourseChatPipeline(variant, session, null, null);
             case CompetencyJol competencyJol -> executeCourseChatPipeline(variant, session, competencyJol, CompetencyJolDTO.class);
