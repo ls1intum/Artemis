@@ -41,7 +41,7 @@ class JenkinsPipelineScriptCreatorTest extends AbstractSpringIntegrationJenkinsG
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setProjectType(ProjectType.MAVEN_MAVEN);
         programmingExercise.setStaticCodeAnalysisEnabled(true);
-        programmingExercise.setSequentialTestRuns(false);
+        programmingExercise.getBuildConfig().setSequentialTestRuns(false);
         programmingExercise.setTestwiseCoverageEnabled(false);
         programmingExercise.setReleaseDate(null);
         course.addExercises(programmingExercise);

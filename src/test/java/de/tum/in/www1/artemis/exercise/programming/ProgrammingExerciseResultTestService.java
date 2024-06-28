@@ -412,7 +412,7 @@ public class ProgrammingExerciseResultTestService {
 
     // Test
     public void shouldCreateResultOnCustomDefaultBranch(String defaultBranch, AbstractBuildResultNotificationDTO resultNotification) {
-        programmingExercise.setBranch(defaultBranch);
+        programmingExercise.getBuildConfig().setBranch(defaultBranch);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         solutionParticipation.setProgrammingExercise(programmingExercise);
         programmingExerciseStudentParticipation.setProgrammingExercise(programmingExercise);

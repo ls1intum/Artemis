@@ -45,7 +45,7 @@ public class GitLabCIBuildPlanService extends AbstractBuildPlanCreator {
     @Override
     public String generateDefaultBuildPlan(ProgrammingExercise programmingExercise) {
         final Optional<String> projectTypeName = getProjectTypeName(programmingExercise);
-        final Path resourcePath = buildResourcePath(programmingExercise.getProgrammingLanguage(), projectTypeName, programmingExercise.hasSequentialTestRuns());
+        final Path resourcePath = buildResourcePath(programmingExercise.getProgrammingLanguage(), projectTypeName, programmingExercise.getBuildConfig().hasSequentialTestRuns());
         final Resource resource = resourceLoaderService.getResource(resourcePath);
 
         try {

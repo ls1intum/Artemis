@@ -78,8 +78,8 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
         }
         String script = buildScriptProviderService.getScriptFor(exercise);
         Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(exercise);
-        exercise.setBuildScript(script);
-        exercise.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
+        exercise.getBuildConfig().setBuildScript(script);
+        exercise.getBuildConfig().setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
         // recreating the build plans for the exercise means we need to store the updated exercise in the database
         programmingExerciseRepository.save(exercise);
     }

@@ -178,16 +178,16 @@ public abstract class AbstractVersionControlService implements VersionControlSer
 
     @Override
     public String getOrRetrieveBranchOfExercise(ProgrammingExercise programmingExercise) {
-        if (programmingExercise.getBranch() == null) {
+        if (programmingExercise.getBuildConfig().getBranch() == null) {
             if (!Hibernate.isInitialized(programmingExercise.getTemplateParticipation())) {
                 programmingExercise.setTemplateParticipation(templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(programmingExercise.getId()));
             }
             String branch = getDefaultBranchOfRepository(programmingExercise.getVcsTemplateRepositoryUri());
-            programmingExercise.setBranch(branch);
+            programmingExercise.getBuildConfig().setBranch(branch);
             programmingExerciseRepository.save(programmingExercise);
         }
 
-        return programmingExercise.getBranch();
+        return programmingExercise.getBuildConfig().getBranch();
     }
 
     @Override

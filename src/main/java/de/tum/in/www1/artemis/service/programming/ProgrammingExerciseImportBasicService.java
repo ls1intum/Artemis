@@ -127,9 +127,9 @@ public class ProgrammingExerciseImportBasicService {
         setupTestRepository(newProgrammingExercise);
         programmingExerciseService.initParticipations(newProgrammingExercise);
 
-        if (newProgrammingExercise.getBuildPlanConfiguration() == null) {
+        if (newProgrammingExercise.getBuildConfig().getBuildPlanConfiguration() == null) {
             // this means the user did not override the build plan config when importing the exercise and want to reuse it from the existing exercise
-            newProgrammingExercise.setBuildPlanConfiguration(originalProgrammingExercise.getBuildPlanConfiguration());
+            newProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(originalProgrammingExercise.getBuildConfig().getBuildPlanConfiguration());
         }
 
         // Hints, tasks, test cases and static code analysis categories
@@ -197,7 +197,7 @@ public class ProgrammingExerciseImportBasicService {
             newProgrammingExercise.generateAndSetBuildPlanAccessSecret();
         }
 
-        newProgrammingExercise.setBranch(versionControlService.orElseThrow().getDefaultBranchOfArtemis());
+        newProgrammingExercise.getBuildConfig().setBranch(versionControlService.orElseThrow().getDefaultBranchOfArtemis());
     }
 
     /**

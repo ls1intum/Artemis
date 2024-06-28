@@ -104,7 +104,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
         assertThat(newlyImported.getProjectKey()).isNotEqualTo(programmingExercise.getProjectKey());
         assertThat(newlyImported.getSolutionBuildPlanId()).isNotEqualTo(programmingExercise.getSolutionBuildPlanId());
         assertThat(newlyImported.getTemplateBuildPlanId()).isNotEqualTo(programmingExercise.getTemplateBuildPlanId());
-        assertThat(newlyImported.hasSequentialTestRuns()).isEqualTo(programmingExercise.hasSequentialTestRuns());
+        assertThat(newlyImported.getBuildConfig().hasSequentialTestRuns()).isEqualTo(programmingExercise.getBuildConfig().hasSequentialTestRuns());
         assertThat(newlyImported.isAllowOnlineEditor()).isEqualTo(programmingExercise.isAllowOnlineEditor());
         assertThat(newlyImported.getTotalNumberOfAssessments()).isNull();
         assertThat(newlyImported.getNumberOfComplaints()).isNull();

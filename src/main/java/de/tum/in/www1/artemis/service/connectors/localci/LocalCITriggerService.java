@@ -201,7 +201,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         String[] auxiliaryRepositoryUris = auxiliaryRepositories.stream().map(AuxiliaryRepository::getRepositoryUri).toArray(String[]::new);
         String[] auxiliaryRepositoryCheckoutDirectories1 = auxiliaryRepositories.stream().map(AuxiliaryRepository::getCheckoutDirectory).toArray(String[]::new);
 
-        if (programmingExercise.getCheckoutSolutionRepository()) {
+        if (programmingExercise.getBuildConfig().getCheckoutSolutionRepository()) {
             ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
             if (programmingLanguageFeature.checkoutSolutionRepositoryAllowed()) {
                 var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(participation.getProgrammingExercise().getId());
@@ -250,13 +250,13 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
         ProjectType projectType = programmingExercise.getProjectType();
         boolean staticCodeAnalysisEnabled = programmingExercise.isStaticCodeAnalysisEnabled();
-        boolean sequentialTestRunsEnabled = programmingExercise.hasSequentialTestRuns();
+        boolean sequentialTestRunsEnabled = programmingExercise.getBuildConfig().hasSequentialTestRuns();
         boolean testwiseCoverageEnabled = programmingExercise.isTestwiseCoverageEnabled();
 
         Windfile windfile;
         String dockerImage;
         try {
-            windfile = programmingExercise.getWindfile();
+            windfile = programmingExercise.getBuildConfig().getWindfile();
             dockerImage = windfile.getMetadata().docker().getFullImageName();
         }
         catch (NullPointerException e) {

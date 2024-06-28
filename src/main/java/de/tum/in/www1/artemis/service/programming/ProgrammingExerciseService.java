@@ -269,7 +269,7 @@ public class ProgrammingExerciseService {
 
         // Step 1: Setting constant facts for a programming exercise
         savedProgrammingExercise.generateAndSetProjectKey();
-        savedProgrammingExercise.setBranch(versionControl.getDefaultBranchOfArtemis());
+        savedProgrammingExercise.getBuildConfig().setBranch(versionControl.getDefaultBranchOfArtemis());
 
         // Step 2: Creating repositories for new exercise
         programmingExerciseRepositoryService.createRepositoriesForNewExercise(savedProgrammingExercise);
@@ -298,10 +298,10 @@ public class ProgrammingExerciseService {
 
         // Step 8: For LocalCI and Aeolus, we store the build plan definition in the database as a windfile, we don't do that for Jenkins as
         // we want to use the default approach of Jenkinsfiles and Build Plans if no customizations are made
-        if (aeolusTemplateService.isPresent() && savedProgrammingExercise.getBuildPlanConfiguration() == null && !profileService.isJenkinsActive()) {
+        if (aeolusTemplateService.isPresent() && savedProgrammingExercise.getBuildConfig().getBuildPlanConfiguration() == null && !profileService.isJenkinsActive()) {
             Windfile windfile = aeolusTemplateService.get().getDefaultWindfileFor(savedProgrammingExercise);
             if (windfile != null) {
-                savedProgrammingExercise.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
+                savedProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
                 savedProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
             }
             else {
@@ -362,7 +362,7 @@ public class ProgrammingExerciseService {
         validateProjectType(programmingExercise, programmingLanguageFeature);
 
         // Check if checkout solution repository is enabled
-        if (programmingExercise.getCheckoutSolutionRepository() && !programmingLanguageFeature.checkoutSolutionRepositoryAllowed()) {
+        if (programmingExercise.getBuildConfig().getCheckoutSolutionRepository() && !programmingLanguageFeature.checkoutSolutionRepositoryAllowed()) {
             throw new BadRequestAlertException("Checkout solution repository is not supported for this programming language", "Exercise", "checkoutSolutionRepositoryNotSupported");
         }
 
@@ -457,11 +457,11 @@ public class ProgrammingExerciseService {
 
         giveCIProjectPermissions(programmingExercise);
 
-        Windfile windfile = programmingExercise.getWindfile();
-        if (windfile != null && buildScriptGenerationService.isPresent() && programmingExercise.getBuildScript() == null) {
+        Windfile windfile = programmingExercise.getBuildConfig().getWindfile();
+        if (windfile != null && buildScriptGenerationService.isPresent() && programmingExercise.getBuildConfig().getBuildScript() == null) {
             String script = buildScriptGenerationService.get().getScript(programmingExercise);
-            programmingExercise.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
-            programmingExercise.setBuildScript(script);
+            programmingExercise.getBuildConfig().setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
+            programmingExercise.getBuildConfig().setBuildScript(script);
             programmingExercise = programmingExerciseRepository.saveForCreation(programmingExercise);
         }
 
@@ -576,13 +576,13 @@ public class ProgrammingExerciseService {
      * @param updatedProgrammingExercise      the changed programming exercise with its new values
      */
     private void updateBuildPlanForExercise(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) throws JsonProcessingException {
-        if (continuousIntegrationService.isEmpty()
-                || Objects.equals(programmingExerciseBeforeUpdate.getBuildPlanConfiguration(), updatedProgrammingExercise.getBuildPlanConfiguration())) {
+        if (continuousIntegrationService.isEmpty() || Objects.equals(programmingExerciseBeforeUpdate.getBuildConfig().getBuildPlanConfiguration(),
+                updatedProgrammingExercise.getBuildConfig().getBuildPlanConfiguration())) {
             return;
         }
         // we only update the build plan configuration if it has changed and is not null, otherwise we
         // do not have a valid exercise anymore
-        if (updatedProgrammingExercise.getBuildPlanConfiguration() != null) {
+        if (updatedProgrammingExercise.getBuildConfig().getBuildPlanConfiguration() != null) {
             if (!profileService.isLocalCiActive()) {
                 continuousIntegrationService.get().deleteProject(updatedProgrammingExercise.getProjectKey());
                 continuousIntegrationService.get().createProjectForExercise(updatedProgrammingExercise);
@@ -591,13 +591,13 @@ public class ProgrammingExerciseService {
             }
             if (buildScriptGenerationService.isPresent()) {
                 String script = buildScriptGenerationService.get().getScript(updatedProgrammingExercise);
-                updatedProgrammingExercise.setBuildScript(script);
+                updatedProgrammingExercise.getBuildConfig().setBuildScript(script);
                 programmingExerciseRepository.save(updatedProgrammingExercise);
             }
         }
         else {
             // if the user does not change the build plan configuration, we have to set the old one again
-            updatedProgrammingExercise.setBuildPlanConfiguration(programmingExerciseBeforeUpdate.getBuildPlanConfiguration());
+            updatedProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(programmingExerciseBeforeUpdate.getBuildConfig().getBuildPlanConfiguration());
         }
     }
 

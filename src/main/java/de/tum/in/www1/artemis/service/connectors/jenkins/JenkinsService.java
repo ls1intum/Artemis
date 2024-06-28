@@ -99,7 +99,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         deleteBuildPlan(projectKey, exercise.getTemplateBuildPlanId());
         deleteBuildPlan(projectKey, exercise.getSolutionBuildPlanId());
 
-        if (exercise.getBuildPlanConfiguration() != null) {
+        if (exercise.getBuildConfig().getBuildPlanConfiguration() != null) {
             resetCustomBuildPlanToTemplate(exercise);
         }
 
@@ -118,7 +118,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         }
         Windfile windfile = aeolusTemplateService.get().getDefaultWindfileFor(exercise);
         if (windfile != null) {
-            exercise.setBuildPlanConfiguration(mapper.writeValueAsString(windfile));
+            exercise.getBuildConfig().setBuildPlanConfiguration(mapper.writeValueAsString(windfile));
         }
         if (profileService.isAeolusActive()) {
             programmingExerciseRepository.save(exercise);

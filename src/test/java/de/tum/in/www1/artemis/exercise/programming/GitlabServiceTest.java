@@ -137,7 +137,7 @@ class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
 
         ProgrammingExercise programmingExercise = (ProgrammingExercise) course.getExercises().stream().findAny().orElseThrow();
-        programmingExercise.setBranch(null);
+        programmingExercise.getBuildConfig().setBranch(null);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
         programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
