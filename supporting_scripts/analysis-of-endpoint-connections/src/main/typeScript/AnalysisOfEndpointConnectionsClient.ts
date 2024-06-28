@@ -1,15 +1,24 @@
 import {
-    createSourceFile, forEachChild,
-    isCallExpression, isPropertyAccessExpression,
+    createSourceFile,
+    forEachChild,
+    isCallExpression,
+    isPropertyAccessExpression,
     isPropertyDeclaration,
     isStringLiteral,
     ScriptTarget,
     SourceFile,
-    Node, createProgram,
+    Node,
+    createProgram,
     isClassDeclaration,
     isConstructorDeclaration,
     isParameter,
-    isTypeReferenceNode, SyntaxKind, ClassDeclaration, CallExpression, ConstructorDeclaration, isBinaryExpression,
+    isTypeReferenceNode,
+    SyntaxKind,
+    ClassDeclaration,
+    CallExpression,
+    ConstructorDeclaration,
+    isBinaryExpression,
+    isIdentifier, isVariableDeclaration, VariableDeclaration,
 } from 'typescript';
 import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -20,7 +29,7 @@ const fileNames = getFilePaths(clientDirectory);
 
 let restCallFiles: Array<{fileName: string, restCalls: {method: string, url: string, line: number, filePath: string}[]}> = [];
 
-const HTTP_METHODS = ['get', 'post', 'put', 'delete'];
+const HTTP_METHODS = ['get', 'post', 'put', 'delete', 'patch'];
 let isFirstRestCall = true;
 console.log('WorkingDirectory: ' + process.cwd());
 
@@ -36,8 +45,11 @@ for (const fileName of fileNames.filter(fileName => fileName.endsWith('.ts')))  
     // Store parameter types
     const parameterTypes: { [key: string]: string } = {};
 
+    // Store method variables
+    const methodVariables: { [key: string]: string } = {};
+
     // Start traversing the AST from the root
-    visit(sourceFile, classProperties, parameterTypes, sourceFile, fileName, restCalls);
+    visit(sourceFile, classProperties, parameterTypes, methodVariables, sourceFile, fileName, restCalls);
     isFirstRestCall = true;
     if (restCalls.length > 0)
         restCallFiles.push({fileName: fileName, restCalls: restCalls});
@@ -75,17 +87,27 @@ function getFilePaths(directoryPath: string): string[] {
  * @param sourceFile - The TypeScript source file being analyzed.
  * @param fileName - The name of the TypeScript file.
  */
-function visit(node: Node, classProperties: { [key: string]: string }, parameterTypes: { [key: string]: string }, sourceFile: SourceFile, fileName: string, restCalls: Array<{method: string, url: string, line: number, filePath: string}>) {
+function visit(node: Node, classProperties: { [key: string]: string }, parameterTypes: { [key: string]: string }, methodVariables: { [key: string]: string }, sourceFile: SourceFile, fileName: string, restCalls: Array<{method: string, url: string, line: number, filePath: string}>) {
     if (isClassDeclaration(node)) {
         processClassDeclaration(node, classProperties, parameterTypes);
-    }
-
-    if (isCallExpression(node)) {
-        processCallExpression(node, classProperties, parameterTypes, sourceFile, fileName, restCalls);
+    } else if (isCallExpression(node)) {
+        processCallExpression(node, classProperties, parameterTypes, methodVariables, sourceFile, fileName, restCalls);
+    } else if(isVariableDeclaration(node)) {
+        processVariableDeclaration(node, methodVariables);
     }
 
     // Continue traversing the AST
-    forEachChild(node, (childNode) => visit(childNode, classProperties, parameterTypes, sourceFile, fileName, restCalls));
+    forEachChild(node, (childNode) => visit(childNode, classProperties, parameterTypes, methodVariables, sourceFile, fileName, restCalls));
+}
+
+function processVariableDeclaration(variableDeclaration: VariableDeclaration, methodVariables: { [key: string]: string }) {
+    console.log('Variable declaration node');
+    console.log('DeclarationNode: ' + variableDeclaration.getText() + ' -- Kind: ' + variableDeclaration.kind);
+    if (isVariableDeclaration(variableDeclaration) && variableDeclaration.initializer && isStringLiteral(variableDeclaration.initializer)) {
+        const key = variableDeclaration.name.getText();
+        const value = variableDeclaration.initializer.getText().slice(1, -1); // Remove the quotes
+        methodVariables[key] = value;
+    }
 }
 
 /**
@@ -142,7 +164,7 @@ function processConstructorDeclaration(constructorDeclaration: ConstructorDeclar
  * @param sourceFile - The TypeScript source file being analyzed.
  * @param fileName - The name of the TypeScript file.
  */
-function processCallExpression(callExpression: CallExpression, classProperties: { [key: string]: string }, parameterTypes: { [key: string]: string }, sourceFile: SourceFile, fileName: string, restCalls: Array<{method: string, url: string, line: number, filePath: string}>) {
+function processCallExpression(callExpression: CallExpression, classProperties: { [key: string]: string }, parameterTypes: { [key: string]: string }, methodVariables: { [key: string]: string }, sourceFile: SourceFile, fileName: string, restCalls: Array<{method: string, url: string, line: number, filePath: string}>) {
     const expression = callExpression.expression;
     // Check if the expression is a property access expression (e.g. httpClient.get)
     if (isPropertyAccessExpression(expression)) {
@@ -150,7 +172,7 @@ function processCallExpression(callExpression: CallExpression, classProperties: 
         const objectName = expression.expression.getText().replace(/^this\./, ''); // Remove 'this.' prefix if present;
         // Check if the property name is one of the httpClient methods
         if (HTTP_METHODS.includes(methodName) && parameterTypes[objectName] === 'HttpClient') {
-            logRestCall(callExpression, methodName, classProperties, sourceFile, fileName, restCalls);
+            logRestCall(callExpression, methodName, classProperties, methodVariables, sourceFile, fileName, restCalls);
         }
     }
 }
@@ -167,7 +189,7 @@ function processCallExpression(callExpression: CallExpression, classProperties: 
  * @param sourceFile - The TypeScript source file being analyzed.
  * @param fileName - The name of the TypeScript file.
  */
-function logRestCall(restCall: CallExpression, methodName: string, classProperties: { [key: string]: string }, sourceFile: SourceFile, fileName: string, restCalls: Array<{method: string, url: string, line: number, filePath: string}>) {
+function logRestCall(restCall: CallExpression, methodName: string, classProperties: { [key: string]: string }, methodVariables: { [key: string]: string }, sourceFile: SourceFile, fileName: string, restCalls: Array<{method: string, url: string, line: number, filePath: string}>) {
     if (isFirstRestCall) {
         console.log('===================================');
         console.log('REST calls found in the following file: ' + fileName);
@@ -177,7 +199,7 @@ function logRestCall(restCall: CallExpression, methodName: string, classProperti
     console.log(`Found REST call: ${methodName}`);
     let url = '';
     if (restCall.arguments.length > 0) {
-        url = evaluateUrl(restCall.arguments[0], classProperties);
+        url = evaluateUrl(restCall.arguments[0], classProperties, methodVariables);
         // Replace class properties in the URL
         for (const prop in classProperties) {
             // Replace all occurrences of ${this.prop} with the actual value
@@ -207,14 +229,16 @@ function logRestCall(restCall: CallExpression, methodName: string, classProperti
 }
 
 
-function evaluateUrl(expression: Node, classProperties: { [key: string]: string }): string {
+function evaluateUrl(expression: Node, classProperties: { [key: string]: string }, methodVariables: { [key: string]: string }): string {
     if (isPropertyAccessExpression(expression) && expression.expression.getText() === 'this') {
         const propName = expression.name.getText();
         return classProperties[propName] || '';
     } else if (isBinaryExpression(expression) && expression.operatorToken.kind === SyntaxKind.PlusToken) {
-        return evaluateUrl(expression.left, classProperties) + evaluateUrl(expression.right, classProperties);
+        return evaluateUrl(expression.left, classProperties, methodVariables) + evaluateUrl(expression.right, classProperties, methodVariables);
     } else if (isStringLiteral(expression)) {
         return expression.text;
+    } else if (isIdentifier(expression)) {
+        return methodVariables[expression.getText()] || expression.getText();
     } else {
         return expression.getText();
     }
