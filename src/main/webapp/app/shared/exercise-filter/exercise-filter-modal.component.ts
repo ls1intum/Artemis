@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
 import { NgbActiveModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -35,7 +35,7 @@ import {
         RangeSliderComponent,
     ],
 })
-export class ExerciseFilterModalComponent {
+export class ExerciseFilterModalComponent implements OnInit {
     readonly faFilter = faFilter;
 
     @Output() filterApplied = new EventEmitter<ExerciseFilterResults>();
@@ -152,9 +152,7 @@ export class ExerciseFilterModalComponent {
                 this.sidebarData.groupedData[groupedDataKey].entityData = this.sidebarData.groupedData[groupedDataKey].entityData.filter(
                     (sidebarElement) =>
                         sidebarElement?.exercise?.categories &&
-                        sidebarElement.exercise.categories.some((category) =>
-                            selectedCategories.some((selectedCategory) => selectedCategory.category === category.category && selectedCategory.color === category.color),
-                        ),
+                        sidebarElement.exercise.categories.some((category) => selectedCategories.some((selectedCategory) => selectedCategory.equals(category))),
                 );
             }
         }

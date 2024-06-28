@@ -347,7 +347,7 @@ export class ExerciseService {
      * @param exercise the exercise
      */
     static stringifyExerciseCategories(exercise: Exercise) {
-        return exercise.categories?.map((category) => JSON.stringify(category) as ExerciseCategory);
+        return exercise.categories?.map((category) => JSON.stringify(category) as unknown as ExerciseCategory);
     }
 
     /**
@@ -362,12 +362,12 @@ export class ExerciseService {
     }
 
     /**
-     * Parses the exercise categories JSON string into ExerciseCategory objects.
+     * Parses the exercise categories JSON string into {@link ExerciseCategory} objects.
      * @param exercise - the exercise
      */
     static parseExerciseCategories(exercise?: Exercise) {
         if (exercise?.categories) {
-            exercise.categories = exercise.categories.map((category) => JSON.parse(category as string) as ExerciseCategory);
+            exercise.categories = exercise.categories.map((category) => new ExerciseCategory(category.color, category.category));
         }
     }
 
