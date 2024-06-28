@@ -36,6 +36,32 @@ public class JenkinsBuildPlanUtils {
     }
 
     /**
+     * Replace every occurrence within the Jenkins pipeline script of the old text through the new text
+     *
+     * @param jobXmlDocument the Jenkins pipeline
+     * @param oldText        old text which should be replaced
+     * @param newText        new text to replace the old one
+     * @throws IllegalArgumentException
+     */
+    public static void searchAndReplaceInScript(Document jobXmlDocument, String oldText, String newText) throws IllegalArgumentException {
+        final var scriptNode = findScriptNode(jobXmlDocument);
+        if (scriptNode == null || scriptNode.getFirstChild() == null) {
+            throw new IllegalArgumentException("Pipeline Script not found");
+        }
+
+        String pipeLineScript = scriptNode.getFirstChild().getTextContent().trim();
+        // If the script does not start with "pipeline" or the special comment,
+        // it is not actually a pipeline script, but a deprecated programming exercise with an old build xml configuration
+        if (!pipeLineScript.startsWith("pipeline") && !pipeLineScript.startsWith(PIPELINE_SCRIPT_DETECTION_COMMENT)) {
+            throw new IllegalArgumentException("Pipeline Script not found");
+        }
+
+        pipeLineScript = pipeLineScript.replace(oldText, newText);
+
+        scriptNode.getFirstChild().setTextContent(pipeLineScript);
+    }
+
+    /**
      * Finds the script node within the xml document.
      *
      * @param xmlDocument the xml document

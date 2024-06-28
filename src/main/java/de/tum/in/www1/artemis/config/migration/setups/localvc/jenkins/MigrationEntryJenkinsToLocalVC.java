@@ -2,6 +2,9 @@ package de.tum.in.www1.artemis.config.migration.setups.localvc.jenkins;
 
 import java.util.List;
 
+import jakarta.annotation.PostConstruct;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
@@ -18,7 +21,6 @@ import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipatio
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.build_plan.JenkinsBuildPlanService;
-import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 
 /**
  * Migration of Jenkins Build plans when the repositories will move to LocalVC.
@@ -31,6 +33,20 @@ public class MigrationEntryJenkinsToLocalVC extends LocalVCMigrationEntry {
 
     private final JenkinsBuildPlanService jenkinsBuildPlanService;
 
+    /**
+     * Base url to the local VC repository is the server urls plus /git/.
+     */
+    private String localVCRepositoriesBaseUrl;
+
+    @Value("${artemis.version-control.url}")
+    private String sourceVCSBaseUrl;
+
+    /**
+     * URL to the source VCS with a trailing slash.
+     * This avoids that a base URL like "http://example.com" also finds "http://example.com:8080".
+     */
+    private String sourceVCSRepositoriesBaseUrl;;
+
     public MigrationEntryJenkinsToLocalVC(ProgrammingExerciseRepository programmingExerciseRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
@@ -40,6 +56,13 @@ public class MigrationEntryJenkinsToLocalVC extends LocalVCMigrationEntry {
                 programmingExerciseStudentParticipationRepository, auxiliaryRepositoryRepository);
         this.uriService = uriService;
         this.jenkinsBuildPlanService = jenkinsBuildPlanService;
+    }
+
+    @PostConstruct
+    public void initialize() {
+        localVCRepositoriesBaseUrl = localVCBaseUrl + "/git/";
+        sourceVCSRepositoriesBaseUrl = sourceVCSBaseUrl.endsWith("/") ? sourceVCSBaseUrl : sourceVCSBaseUrl + "/";
+        ;
     }
 
     /**
@@ -58,17 +81,7 @@ public class MigrationEntryJenkinsToLocalVC extends LocalVCMigrationEntry {
         for (var participation : solutionParticipations) {
             try {
                 if (isRepositoryUriNotNull(participation, "Repository URI is null for solution participation with id {}, cant migrate")) {
-                    changeRepositoryUriFromSourceVCSToLocalVC(participation.getProgrammingExercise(), participation.getRepositoryUri(), participation.getBuildPlanId());
-                    changeRepositoryUriFromSourceVCSToLocalVC(participation.getProgrammingExercise(), participation.getProgrammingExercise().getTestRepositoryUri(),
-                            participation.getBuildPlanId());
-                    for (var repo : getAuxiliaryRepositories(participation.getProgrammingExercise().getId())) {
-                        if (repo.getRepositoryUri() == null) {
-                            log.error("Repository URI is null for auxiliary repository with id {}, cant migrate", repo.getId());
-                        }
-                        else {
-                            changeRepositoryUriFromSourceVCSToLocalVC(participation.getProgrammingExercise(), repo.getRepositoryUri(), participation.getBuildPlanId());
-                        }
-                    }
+                    changeRepositoryUriFromSourceVCSToLocalVC(participation.getProgrammingExercise(), participation.getBuildPlanId());
                 }
             }
             catch (Exception e) {
@@ -86,12 +99,7 @@ public class MigrationEntryJenkinsToLocalVC extends LocalVCMigrationEntry {
         for (var participation : templateParticipations) {
             try {
                 if (isRepositoryUriNotNull(participation, "Repository URI is null for template participation with id {}, cant migrate")) {
-                    changeRepositoryUriFromSourceVCSToLocalVC(participation.getProgrammingExercise(), participation.getRepositoryUri(), participation.getBuildPlanId());
-                    changeRepositoryUriFromSourceVCSToLocalVC(participation.getProgrammingExercise(), participation.getProgrammingExercise().getTestRepositoryUri(),
-                            participation.getBuildPlanId());
-                    changeRepositoryUriFromSourceVCSToLocalVC(participation.getProgrammingExercise(), participation.getProgrammingExercise().getSolutionRepositoryUri(),
-                            participation.getBuildPlanId());
-                    // TODO also auxiliary or general search & replace?
+                    changeRepositoryUriFromSourceVCSToLocalVC(participation.getProgrammingExercise(), participation.getBuildPlanId());
                 }
             }
             catch (Exception e) {
@@ -109,12 +117,7 @@ public class MigrationEntryJenkinsToLocalVC extends LocalVCMigrationEntry {
         for (var participation : participations) {
             try {
                 if (isRepositoryUriNotNull(participation, "Repository URI is null for student participation with id {}, cant migrate")) {
-                    changeRepositoryUriFromSourceVCSToLocalVC(participation.getProgrammingExercise(), participation.getRepositoryUri(), participation.getBuildPlanId());
-                    changeRepositoryUriFromSourceVCSToLocalVC(participation.getProgrammingExercise(), participation.getProgrammingExercise().getTestRepositoryUri(),
-                            participation.getBuildPlanId());
-                    changeRepositoryUriFromSourceVCSToLocalVC(participation.getProgrammingExercise(), participation.getProgrammingExercise().getSolutionRepositoryUri(),
-                            participation.getBuildPlanId());
-                    // TODO also auxiliary or general search & replace?
+                    changeRepositoryUriFromSourceVCSToLocalVC(participation.getProgrammingExercise(), participation.getBuildPlanId());
                 }
             }
             catch (Exception e) {
@@ -124,21 +127,13 @@ public class MigrationEntryJenkinsToLocalVC extends LocalVCMigrationEntry {
         }
     }
 
-    private void changeRepositoryUriFromSourceVCSToLocalVC(ProgrammingExercise exercise, String sourceVCSRepositoryUri, String buildPlanKey) {
-        // repo is already migrated -> return
-        if (sourceVCSRepositoryUri.startsWith(localVCBaseUrl.toString())) {
-            log.info("Repository {} is already in local VC", sourceVCSRepositoryUri);
-            return;
-        }
+    private void changeRepositoryUriFromSourceVCSToLocalVC(ProgrammingExercise exercise, String buildPlanKey) {
+        var projectKey = exercise.getProjectKey();
         try {
-            var repositoryName = uriService.getRepositorySlugFromRepositoryUriString(sourceVCSRepositoryUri);
-            var projectKey = exercise.getProjectKey();
-            var localVCRepositoryUri = new LocalVCRepositoryUri(projectKey, repositoryName, localVCBaseUrl);
-
-            jenkinsBuildPlanService.updateBuildPlanRepositories(projectKey, buildPlanKey, localVCRepositoryUri.toString(), sourceVCSRepositoryUri);
+            jenkinsBuildPlanService.updateBuildPlanSearchAndReplace(projectKey, buildPlanKey, sourceVCSRepositoriesBaseUrl, localVCRepositoriesBaseUrl);
         }
         catch (JenkinsException e) {
-            log.error("Failed to adjust repository uri for the source VCS uri: {}.", sourceVCSRepositoryUri, e);
+            log.error("Failed to adjust repository uris for build plan {} in project {}.", buildPlanKey, projectKey, e);
         }
     }
 

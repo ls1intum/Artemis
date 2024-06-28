@@ -232,6 +232,26 @@ public class JenkinsBuildPlanService {
     }
 
     /**
+     * Performance a search and replace within the build plan for the specified texts.
+     *
+     * @param buildProjectKey the project key of the programming exercise
+     * @param buildPlanKey    the build plan id of the participation
+     * @param oldText         old text which should be replaced
+     * @param newText         new text to replace the old one
+     */
+    public void updateBuildPlanSearchAndReplace(String buildProjectKey, String buildPlanKey, String oldText, String newText) {
+        final Document jobConfig = jenkinsJobService.getJobConfigForJobInFolder(buildProjectKey, buildPlanKey);
+
+        try {
+            JenkinsBuildPlanUtils.searchAndReplaceInScript(jobConfig, oldText, newText);
+        }
+        catch (IllegalArgumentException e) {
+            log.error("Pipeline Script not found", e);
+        }
+        postBuildPlanConfigChange(buildPlanKey, buildProjectKey, jobConfig);
+    }
+
+    /**
      * Replaces the old build plan URL with a new one containing an updated exercise and access token.
      *
      * @param templateExercise The exercise containing the old build plan URL.
