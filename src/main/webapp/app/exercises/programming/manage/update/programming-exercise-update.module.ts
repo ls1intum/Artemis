@@ -32,6 +32,7 @@ import { ProgrammingExerciseDockerImageComponent } from 'app/exercises/programmi
 import { FormsModule } from 'app/forms/forms.module';
 import { ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-build-plan-checkout-directories.component';
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
+import { ProgrammingExerciseTheiaComponent } from 'app/exercises/programming/manage/update/update-components/theia/programming-exercise-theia.component';
 
 @NgModule({
     imports: [
@@ -68,6 +69,7 @@ import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/e
         ProgrammingExerciseLanguageComponent,
         ProgrammingExerciseGradingComponent,
         ProgrammingExerciseProblemComponent,
+        ProgrammingExerciseTheiaComponent,
         AddAuxiliaryRepositoryButtonComponent,
         RemoveAuxiliaryRepositoryButtonComponent,
     ],

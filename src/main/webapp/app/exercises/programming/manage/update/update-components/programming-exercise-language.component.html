@@ -111,6 +111,12 @@
             }
         </div>
     }
+
+    <!-- Theia Image Selection -->
+    @if (programmingExercise.allowOnlineIDE && programmingExercise.programmingLanguage) {
+        <jhi-programming-exercise-theia [programmingExercise]="programmingExercise" [programmingExerciseCreationConfig]="programmingExerciseCreationConfig" />
+    }
+
     <!-- Static code analysis checkbox -->
     @if (programmingExercise.programmingLanguage && programmingExerciseCreationConfig.staticCodeAnalysisAllowed) {
         <div>

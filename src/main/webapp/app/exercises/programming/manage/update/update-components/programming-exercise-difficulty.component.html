@@ -60,5 +60,27 @@
                 </label>
             </div>
         }
+        <div class="form-check">
+            <label [class]="!programmingExerciseCreationConfig.validIdeSelection() ? 'form-check-label text-danger' : 'form-check-label'" for="field_allowOnlineIde">
+                <input
+                    class="form-check-input"
+                    type="checkbox"
+                    name="allowOnlineIde"
+                    id="field_allowOnlineIde"
+                    [(ngModel)]="programmingExercise.allowOnlineIDE"
+                    checked
+                    (ngModelChange)="triggerValidation.emit()"
+                />
+                <span jhiTranslate="artemisApp.programmingExercise.allowOnlineIde.title"></span>
+                @if (!programmingExerciseCreationConfig.validIdeSelection()) {
+                    <fa-icon
+                        [icon]="faQuestionCircle"
+                        class="text-danger"
+                        [placement]="'top'"
+                        ngbTooltip="{{ 'artemisApp.programmingExercise.allowOnlineIde.alert' | artemisTranslate }}"
+                    />
+                }
+            </label>
+        </div>
     </div>
 </section>

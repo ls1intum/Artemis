@@ -1,0 +1,25 @@
+<div class="form-group">
+    @if (programmingExercise.allowOnlineIDE) {
+        <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.theiaImage.title" for="field_theiaImage"></label>
+        <select
+            #select="ngModel"
+            required
+            class="form-select"
+            [ngModel]="programmingExercise.theiaImage"
+            name="theiaImage"
+            id="field_theiaImage"
+            [disabled]="!!programmingExercise.id"
+        >
+            @for (item of theiaImages! | keyvalue; track item) {
+                <option [value]="item.value">
+                    {{ item.key }}
+                </option>
+            } @empty {
+                <option [value]="undefined" disabled>
+                    <div jhiTranslate="artemisApp.programmingExercise.theiaImage.noImageAvailable"></div>
+                </option>
+            }
+            <div>{{ programmingExercise?.theiaImage }}</div>
+        </select>
+    }
+</div>

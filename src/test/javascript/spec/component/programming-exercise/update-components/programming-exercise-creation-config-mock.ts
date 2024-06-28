@@ -69,5 +69,8 @@ export const programmingExerciseCreationConfigMock: ProgrammingExerciseCreationC
     validIdeSelection(): boolean | undefined {
         return true;
     },
+    validOnlineIdeSelection(): boolean | undefined {
+        return true;
+    },
     withDependencies: false,
 };
