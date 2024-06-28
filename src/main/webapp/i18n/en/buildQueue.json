@@ -59,6 +59,21 @@
                 "close": "Close",
                 "apply": "Apply",
                 "open": "Filter ({{ num }})"
+            },
+            "statistics": {
+                "title": "Overview",
+                "titleTooltip": "Data for the specified time span is fetched.",
+                "totalBuilds": "Number of Builds:",
+                "successfulBuildsWithColon": "Successful Builds:",
+                "successfulBuilds": "Successful Builds",
+                "successfulBuildsPercentage": "Successful Builds %:",
+                "failedBuilds": "Failed Builds:",
+                "failedBuildsPercentage": "Failed Builds %:",
+                "cancelledBuilds": "Cancelled Builds:",
+                "cancelledBuildsPercentage": "Cancelled Builds %:",
+                "daySpan": "1 day",
+                "weekSpan": "7 days",
+                "monthSpan": "30 days"
             }
         }
     }
