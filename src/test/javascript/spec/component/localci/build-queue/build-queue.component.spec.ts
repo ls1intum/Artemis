@@ -10,7 +10,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { ArtemisTestModule } from '../../../test.module';
-import { FinishedBuildJob } from 'app/entities/build-job.model';
+import { BuildJobStatistics, FinishedBuildJob, SpanType } from 'app/entities/build-job.model';
 import { TriggeredByPushTo } from 'app/entities/repository-info.model';
 import { waitForAsync } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
@@ -18,6 +18,7 @@ import { SortingOrder } from 'app/shared/table/pageable-table';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { PieChartModule } from '@swimlane/ngx-charts';
 
 describe('BuildQueueComponent', () => {
     let component: BuildQueueComponent;
@@ -37,6 +38,8 @@ describe('BuildQueueComponent', () => {
         cancelAllRunningBuildJobs: jest.fn(),
         getFinishedBuildJobsByCourseId: jest.fn(),
         getFinishedBuildJobs: jest.fn(),
+        getBuildJobStatistics: jest.fn(),
+        getBuildJobStatisticsForCourse: jest.fn(),
     };
 
     const mockLocalStorageService = new MockLocalStorageService();
@@ -236,6 +239,13 @@ describe('BuildQueueComponent', () => {
         },
     ];
 
+    const mockBuildJobStatistics: BuildJobStatistics = {
+        totalBuilds: 10,
+        successfulBuilds: 5,
+        failedBuilds: 3,
+        cancelledBuilds: 2,
+    };
+
     const mockFinishedJobsResponse: HttpResponse<FinishedBuildJob[]> = new HttpResponse({ body: mockFinishedJobs });
 
     const request = {
@@ -263,7 +273,7 @@ describe('BuildQueueComponent', () => {
         mockActivatedRoute = { params: of({ courseId: testCourseId }) };
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, ArtemisSharedComponentModule],
+            imports: [ArtemisTestModule, NgxDatatableModule, ArtemisSharedComponentModule, PieChartModule],
             declarations: [BuildQueueComponent, MockPipe(ArtemisTranslatePipe), MockComponent(DataTableComponent)],
             providers: [
                 { provide: BuildQueueService, useValue: mockBuildQueueService },
@@ -300,6 +310,7 @@ describe('BuildQueueComponent', () => {
         mockBuildQueueService.getQueuedBuildJobs.mockReturnValue(of(mockQueuedJobs));
         mockBuildQueueService.getRunningBuildJobs.mockReturnValue(of(mockRunningJobs));
         mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(of(mockFinishedJobsResponse));
+        mockBuildQueueService.getBuildJobStatistics.mockReturnValue(of(mockBuildJobStatistics));
 
         // Initialize the component
         component.ngOnInit();
@@ -328,6 +339,7 @@ describe('BuildQueueComponent', () => {
         mockBuildQueueService.getQueuedBuildJobsByCourseId.mockReturnValue(of(mockQueuedJobs));
         mockBuildQueueService.getRunningBuildJobsByCourseId.mockReturnValue(of(mockRunningJobs));
         mockBuildQueueService.getFinishedBuildJobsByCourseId.mockReturnValue(of(mockFinishedJobsResponse));
+        mockBuildQueueService.getBuildJobStatisticsForCourse.mockReturnValue(of(mockBuildJobStatistics));
 
         // Initialize the component
         component.ngOnInit();
@@ -336,11 +348,39 @@ describe('BuildQueueComponent', () => {
         expect(mockBuildQueueService.getQueuedBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId);
         expect(mockBuildQueueService.getRunningBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId);
         expect(mockBuildQueueService.getFinishedBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId, request, filterOptionsEmpty);
+        expect(mockBuildQueueService.getBuildJobStatisticsForCourse).toHaveBeenCalledWith(testCourseId, SpanType.WEEK);
 
         // Expectations: The component's properties are set with the mock data
         expect(component.queuedBuildJobs).toEqual(mockQueuedJobs);
         expect(component.runningBuildJobs).toEqual(mockRunningJobs);
         expect(component.finishedBuildJobs).toEqual(mockFinishedJobs);
+        expect(component.buildJobStatistics).toEqual(mockBuildJobStatistics);
+    });
+
+    it('should get build job statistics when changing the span', () => {
+        // Mock ActivatedRoute to return no course ID
+        mockActivatedRoute.paramMap = of(new Map([]));
+
+        mockBuildQueueService.getBuildJobStatistics.mockReturnValue(of(mockBuildJobStatistics));
+
+        component.ngOnInit();
+        component.onTabChange(SpanType.DAY);
+
+        expect(mockBuildQueueService.getBuildJobStatistics).toHaveBeenCalledTimes(2);
+        expect(component.buildJobStatistics).toEqual(mockBuildJobStatistics);
+    });
+
+    it('should not get build job statistics when span is the same', () => {
+        // Mock ActivatedRoute to return no course ID
+        mockActivatedRoute.paramMap = of(new Map([]));
+
+        mockBuildQueueService.getBuildJobStatistics.mockReturnValue(of(mockBuildJobStatistics));
+
+        component.ngOnInit();
+        component.onTabChange(SpanType.WEEK);
+
+        expect(mockBuildQueueService.getBuildJobStatistics).toHaveBeenCalledOnce();
+        expect(component.buildJobStatistics).toEqual(mockBuildJobStatistics);
     });
 
     it('should refresh data', () => {
@@ -359,7 +399,7 @@ describe('BuildQueueComponent', () => {
 
         // Initialize the component and update the build job duration
         component.ngOnInit();
-        component.updateBuildJobDuration(); // This method is called in ngOnInit in interval callback, but we call it to add coverage
+        component.runningBuildJobs = component.updateBuildJobDuration(component.runningBuildJobs); // This method is called in ngOnInit in interval callback, but we call it to add coverage
 
         // Expectations: The build job duration is calculated and set for each running build job
         for (const runningBuildJob of component.runningBuildJobs) {

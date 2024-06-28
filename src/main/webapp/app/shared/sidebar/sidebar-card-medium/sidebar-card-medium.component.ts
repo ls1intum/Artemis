@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { DifficultyLevel } from 'app/entities/exercise.model';
 import { SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
 import { Subscription } from 'rxjs';
@@ -16,6 +16,7 @@ export class SidebarCardMediumComponent {
     @Input({ required: true }) sidebarItem: SidebarCardElement;
     @Input() sidebarType?: SidebarTypes;
     @Input() itemSelected?: boolean;
+    @Output() pageChange = new EventEmitter<number>();
 
     isSelected: boolean = false;
 
@@ -32,6 +33,10 @@ export class SidebarCardMediumComponent {
     emitStoreAndRefresh(itemId: number | string) {
         this.sidebarEventService.emitSidebarCardEvent(itemId);
         this.refreshChildComponent();
+    }
+
+    emitPageChangeForExam() {
+        this.pageChange.emit();
     }
 
     refreshChildComponent(): void {

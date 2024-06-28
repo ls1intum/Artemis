@@ -5,27 +5,19 @@
                 <span>#</span>
             </th>
             <th style="max-width: 100px">
-                <span>
-                    {{ 'artemisApp.examManagement.checklist.textitems.exerciseStart' | artemisTranslate }}
-                </span>
+                <span jhiTranslate="artemisApp.examManagement.checklist.textitems.exerciseStart"></span>
             </th>
             <th style="max-width: 30px">
                 <span>#</span>
             </th>
             <th>
-                <span>
-                    {{ 'artemisApp.examManagement.checklist.textitems.exerciseTableSingular' | artemisTranslate }}
-                </span>
+                <span jhiTranslate="artemisApp.examManagement.checklist.textitems.exerciseTableSingular"></span>
             </th>
             <th>
-                <span>
-                    {{ 'artemisApp.examManagement.checklist.textitems.points' | artemisTranslate }}
-                </span>
+                <span jhiTranslate="artemisApp.examManagement.checklist.textitems.points"></span>
             </th>
             <th>
-                <span>
-                    {{ 'artemisApp.examManagement.checklist.textitems.numberParticipants' | artemisTranslate }}
-                </span>
+                <span jhiTranslate="artemisApp.examManagement.checklist.textitems.numberParticipants"></span>
             </th>
         </tr>
     </thead>
@@ -80,9 +72,8 @@
                 <td style="max-width: 30px">
                     @if (!column.noExercises) {
                         <span>{{ column.indexExercise }}</span>
-                    }
-                    @if (column.noExercises) {
-                        <span>-</span>
+                    } @else {
+                        <jhi-no-data />
                     }
                 </td>
                 <td>
@@ -93,25 +84,22 @@
                             </div>
                             <span>{{ column.exerciseTitle }}</span>
                         </div>
-                    }
-                    @if (!column.exerciseTitle) {
-                        <span>-</span>
+                    } @else {
+                        <jhi-no-data />
                     }
                 </td>
                 <td>
                     @if (column.exerciseMaxPoints) {
                         <span>{{ column.exerciseMaxPoints }}</span>
-                    }
-                    @if (!column.exerciseMaxPoints) {
-                        <span>-</span>
+                    } @else {
+                        <jhi-no-data />
                     }
                 </td>
                 <td>
                     @if (column.exerciseNumberOfParticipations) {
                         <span>{{ column.exerciseNumberOfParticipations }}</span>
-                    }
-                    @if (!column.exerciseNumberOfParticipations) {
-                        <span>-</span>
+                    } @else {
+                        <jhi-no-data />
                     }
                 </td>
             </tr>
