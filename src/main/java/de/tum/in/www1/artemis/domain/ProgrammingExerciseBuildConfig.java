@@ -4,11 +4,14 @@ import java.util.Objects;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -50,6 +53,10 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
 
     @Column(name = "docker_flags")
     private String dockerFlags;
+
+    @OneToOne(mappedBy = "buildConfig", fetch = FetchType.LAZY)
+    @JsonIgnoreProperties(value = "buildConfig", allowSetters = true)
+    private ProgrammingExercise programmingExercise;
 
     @JsonProperty("sequentialTestRuns")
     public boolean hasSequentialTestRuns() {
@@ -140,6 +147,14 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
 
     public void setDockerFlags(String dockerFlags) {
         this.dockerFlags = dockerFlags;
+    }
+
+    public ProgrammingExercise getProgrammingExercise() {
+        return programmingExercise;
+    }
+
+    public void setProgrammingExercise(ProgrammingExercise programmingExercise) {
+        this.programmingExercise = programmingExercise;
     }
 
     /**
