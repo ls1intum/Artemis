@@ -260,6 +260,7 @@ export const courseManagementState: Routes = [
                                 canActivate: [UserRouteAccessService, IrisGuard],
                                 canDeactivate: [PendingChangesGuard],
                             },
+                            //TODO: move to own child route.
                             {
                                 path: 'import-prerequisites',
                                 component: ImportPrerequisitesComponent,
@@ -269,6 +270,24 @@ export const courseManagementState: Routes = [
                                 },
                                 canActivate: [UserRouteAccessService],
                                 canDeactivate: [PendingChangesGuard],
+                            },
+                            {
+                                path: 'prerequisites/create',
+                                loadComponent: () => import('app/course/competencies/prerequisite-form/create-prerequisite.component').then((m) => m.CreatePrerequisiteComponent),
+                                data: {
+                                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                                    pageTitle: 'artemisApp.prerequisite.create.title',
+                                },
+                                canActivate: [UserRouteAccessService],
+                            },
+                            {
+                                path: 'prerequisites/:prerequisiteId/edit',
+                                loadComponent: () => import('app/course/competencies/prerequisite-form/edit-prerequisite.component').then((m) => m.EditPrerequisiteComponent),
+                                data: {
+                                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                                    pageTitle: 'artemisApp.prerequisite.edit.title',
+                                },
+                                canActivate: [UserRouteAccessService],
                             },
                         ],
                     },
