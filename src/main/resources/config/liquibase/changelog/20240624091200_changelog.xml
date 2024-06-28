@@ -27,6 +27,6 @@
                                  baseTableName="participation_vcs_access_token"
                                  constraintName="FK_participation_vcs_access_token_participation"
                                  referencedColumnNames="id"
-                                 referencedTableName="competency"/>
+                                 referencedTableName="participation"/>
     </changeSet>
 </databaseChangeLog>
