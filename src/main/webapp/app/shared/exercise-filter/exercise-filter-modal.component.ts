@@ -5,7 +5,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { SidebarData } from 'app/types/sidebar';
+import { SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { DifficultyLevel, ExerciseType } from 'app/entities/exercise.model';
 import { Observable, OperatorFunction, Subject, merge } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
@@ -20,6 +20,7 @@ import {
     ExerciseTypeFilterOptions,
     RangeFilter,
 } from 'app/types/exercise-filter';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 @Component({
     selector: 'jhi-exercise-filter-modal',
@@ -129,9 +130,20 @@ export class ExerciseFilterModalComponent implements OnInit {
     }
 
     applyFilter(): void {
+        if (!this.sidebarData?.groupedData) {
+            return;
+        }
+
         this.applyTypeFilter();
         this.applyDifficultyFilter();
-        this.applyExerciseCategoryFilter();
+
+        const selectedCategories = this.selectedCategoryOptions.map((categoryOption: ExerciseCategoryFilterOption) => categoryOption.category);
+        for (const groupedDataKey in this.sidebarData.groupedData) {
+            this.sidebarData.groupedData[groupedDataKey].entityData = this.sidebarData.groupedData[groupedDataKey].entityData.filter((sidebarElement) =>
+                this.applyCategoryFilter(sidebarElement, selectedCategories),
+            );
+        }
+
         this.applyPointsFilter();
         this.applyScoreFilter();
 
@@ -140,22 +152,15 @@ export class ExerciseFilterModalComponent implements OnInit {
         this.closeModal();
     }
 
-    private applyExerciseCategoryFilter() {
-        if (!this.selectedCategoryOptions.length) {
-            return;
+    private applyCategoryFilter(sidebarElement: SidebarCardElement, selectedCategories: ExerciseCategory[]): boolean {
+        if (!selectedCategories.length) {
+            return true;
+        }
+        if (!sidebarElement?.exercise?.categories) {
+            return false;
         }
 
-        const selectedCategories = this.selectedCategoryOptions.map((categoryOption: ExerciseCategoryFilterOption) => categoryOption.category);
-
-        if (this.sidebarData?.groupedData) {
-            for (const groupedDataKey in this.sidebarData.groupedData) {
-                this.sidebarData.groupedData[groupedDataKey].entityData = this.sidebarData.groupedData[groupedDataKey].entityData.filter(
-                    (sidebarElement) =>
-                        sidebarElement?.exercise?.categories &&
-                        sidebarElement.exercise.categories.some((category) => selectedCategories.some((selectedCategory) => selectedCategory.equals(category))),
-                );
-            }
-        }
+        return sidebarElement.exercise.categories.some((category) => selectedCategories.some((selectedCategory) => selectedCategory.equals(category)));
     }
 
     private applyTypeFilter() {
