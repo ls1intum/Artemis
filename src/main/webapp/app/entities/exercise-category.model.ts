@@ -14,8 +14,8 @@ export class ExerciseCategory {
     }
 
     /**
-     * Compares two exercise categories by their display text and returns an alphanumerical order.
      * @param otherExerciseCategory
+     * @returns the alphanumerical order of the two exercise categories based on their display text
      */
     compare(otherExerciseCategory: ExerciseCategory): number {
         if (this.category === otherExerciseCategory.category) {
