@@ -1,19 +1,24 @@
-.exam-footer {
-    max-width: 100vw;
-    height: 50px;
+$breadcrumb-height: 38px;
+
+.update-footer {
+    margin-top: 1rem;
+    padding: 0.5rem 0 0.75rem 0;
+    width: 100%;
     position: sticky;
-    padding: 0 10px;
     bottom: 0;
     left: 0;
     z-index: 10;
-    box-shadow: 0 0 3px var(--exam-participation-footer-box-shadow);
-    background: var(--exam-participation-footer-background);
-    margin-top: 1rem;
+    background: var(--update-footer-background);
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    border-top: 1px solid var(--border-color);
 
-    .container {
-        height: 100%;
+    &.disconnected {
+        background-color: var(--exam-participation-footer-disconnected-background);
     }
 }
+
 .exam-footer-content {
     height: 100%;
     display: flex;
@@ -27,12 +32,6 @@
         }
     }
 }
-.connected {
-    background-color: var(--exam-participation-footer-connected-background);
-}
-.disconnected {
-    background-color: var(--exam-participation-footer-disconnected-background);
-}
 
 .submissionSuccessfulHint {
     display: flex;
@@ -45,8 +44,37 @@
         font-size: 50px;
     }
 }
-.exam-navigation-sticky {
-    position: sticky;
-    top: var(--header-height);
-    z-index: 1010;
+
+.exam-background-wrapper {
+    background-color: var(--bs-body-bg);
+}
+
+.sidebar {
+    background-color: var(--module-bg);
+    height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height));
+
+    &.sidebar-height-dev {
+        height: calc(100vh - var(--sidebar-footer-height-dev) - var(--header-height));
+    }
+
+    @media (max-width: 768px) {
+        height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height)) !important;
+    }
+}
+
+.content-exam-height {
+    height: calc(100vh - var(--sidebar-footer-height-prod) - $breadcrumb-height);
+    overflow-y: auto;
+
+    &.content-exam-height-dev {
+        height: calc(100vh - var(--sidebar-footer-height-dev) - $breadcrumb-height);
+    }
+
+    &.content-exam-height-testRun {
+        height: calc(100vh - 360px);
+    }
+
+    @media (max-width: 768px) {
+        height: calc(100vh - var(--sidebar-footer-height-prod) - $breadcrumb-height) !important;
+    }
 }

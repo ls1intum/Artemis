@@ -23,6 +23,8 @@ export const PROFILE_LOCALVC = 'localvc';
 
 export const PROFILE_LOCALCI = 'localci';
 
+export const PROFILE_GITLAB = 'gitlab';
+
 export const PROFILE_AEOLUS = 'aeolus';
 
 export const PROFILE_IRIS = 'iris';

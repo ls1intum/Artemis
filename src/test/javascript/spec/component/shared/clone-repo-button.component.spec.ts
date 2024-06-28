@@ -127,7 +127,7 @@ describe('CloneRepoButtonComponent', () => {
 
         component.ngOnInit();
         tick();
-        expect(component.sshKeysUrl).toBe(info.sshKeysURL);
+        expect(component.setupSshKeysUrl).toBe(info.sshKeysURL);
         expect(component.sshTemplateUrl).toBe(info.sshCloneURLTemplate);
         expect(component.sshEnabled).toBe(!!info.sshCloneURLTemplate);
         expect(component.versionControlUrl).toBe(info.versionControlUrl);
