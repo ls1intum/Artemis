@@ -7,7 +7,7 @@
             <div class="align-self-center">
                 <div class="d-flex justify-content-between">
                     <jhi-exam-timer [criticalTime]="criticalTime" [endDate]="endDate" (timerAboutToEnd)="triggerExamAboutToEnd()" />
-                    <jhi-exam-live-events-button [duringExam]="true" />
+                    <jhi-exam-live-events-button />
                     <button id="hand-in-early" class="btn btn-danger ms-2" (click)="handInEarly()">
                         <div class="d-flex justify-content-between">
                             <span>

@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { faBullhorn } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/core/util/alert.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -24,7 +24,6 @@ export class ExamLiveEventsButtonComponent implements OnInit, OnDestroy {
     private modalRef?: NgbModalRef;
     private liveEventsSubscription?: Subscription;
     private allEventsSubscription?: Subscription;
-    @Input() duringExam = false;
     eventCount = 0;
 
     // Icons
