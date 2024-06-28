@@ -59,7 +59,7 @@
     "restCalls": [
       {
         "method": "get",
-        "url": "requestURL",
+        "url": "api/admin/audits",
         "line": 16,
         "filePath": "../../../../../src/main/webapp/app/admin/audits/audits.service.ts"
       }
@@ -316,6 +316,12 @@
         "method": "post",
         "url": "`api/complaints/${complaintId}/response`",
         "line": 59,
+        "filePath": "../../../../../src/main/webapp/app/complaints/complaint-response.service.ts"
+      },
+      {
+        "method": "patch",
+        "url": "`api/complaints/${complaintId}/response`",
+        "line": 65,
         "filePath": "../../../../../src/main/webapp/app/complaints/complaint-response.service.ts"
       }
     ]
@@ -1159,6 +1165,12 @@
         "filePath": "../../../../../src/main/webapp/app/course/tutorial-groups/services/tutorial-group-session.service.ts"
       },
       {
+        "method": "patch",
+        "url": "`api/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}/attendance-count`",
+        "line": 45,
+        "filePath": "../../../../../src/main/webapp/app/course/tutorial-groups/services/tutorial-group-session.service.ts"
+      },
+      {
         "method": "post",
         "url": "`api/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions`",
         "line": 55,
@@ -1291,6 +1303,12 @@
         "method": "put",
         "url": "`api/courses/${courseId}/exams`",
         "line": 58,
+        "filePath": "../../../../../src/main/webapp/app/exam/manage/exam-management.service.ts"
+      },
+      {
+        "method": "patch",
+        "url": "`api/courses/${courseId}/exams/${examId}/working-time`",
+        "line": 70,
         "filePath": "../../../../../src/main/webapp/app/exam/manage/exam-management.service.ts"
       },
       {
@@ -1588,6 +1606,12 @@
         "method": "get",
         "url": "`api/courses/${courseId}/exams/${examId}/student-exams`",
         "line": 40,
+        "filePath": "../../../../../src/main/webapp/app/exam/manage/student-exams/student-exam.service.ts"
+      },
+      {
+        "method": "patch",
+        "url": "`api/courses/${courseId}/exams/${examId}/student-exams/${studentExamId}/working-time`",
+        "line": 53,
         "filePath": "../../../../../src/main/webapp/app/exam/manage/student-exams/student-exam.service.ts"
       },
       {
@@ -2051,9 +2075,21 @@
         "filePath": "../../../../../src/main/webapp/app/exercises/programming/manage/services/programming-exercise-grading.service.ts"
       },
       {
+        "method": "patch",
+        "url": "`api/programming-exercises/${exerciseId}/update-test-cases`",
+        "line": 127,
+        "filePath": "../../../../../src/main/webapp/app/exercises/programming/manage/services/programming-exercise-grading.service.ts"
+      },
+      {
         "method": "get",
         "url": "`api/programming-exercises/${exerciseId}/grading/statistics`",
         "line": 131,
+        "filePath": "../../../../../src/main/webapp/app/exercises/programming/manage/services/programming-exercise-grading.service.ts"
+      },
+      {
+        "method": "patch",
+        "url": "`api/programming-exercises/${exerciseId}/test-cases/reset`",
+        "line": 141,
         "filePath": "../../../../../src/main/webapp/app/exercises/programming/manage/services/programming-exercise-grading.service.ts"
       },
       {
@@ -2066,6 +2102,24 @@
         "method": "get",
         "url": "`api/programming-exercises/${exerciseId}/static-code-analysis-categories`",
         "line": 192,
+        "filePath": "../../../../../src/main/webapp/app/exercises/programming/manage/services/programming-exercise-grading.service.ts"
+      },
+      {
+        "method": "patch",
+        "url": "`api/programming-exercises/${exerciseId}/static-code-analysis-categories`",
+        "line": 203,
+        "filePath": "../../../../../src/main/webapp/app/exercises/programming/manage/services/programming-exercise-grading.service.ts"
+      },
+      {
+        "method": "patch",
+        "url": "`api/programming-exercises/${exerciseId}/static-code-analysis-categories/reset`",
+        "line": 212,
+        "filePath": "../../../../../src/main/webapp/app/exercises/programming/manage/services/programming-exercise-grading.service.ts"
+      },
+      {
+        "method": "patch",
+        "url": "`api/programming-exercises/${targetExerciseId}/static-code-analysis-categories/import`",
+        "line": 224,
         "filePath": "../../../../../src/main/webapp/app/exercises/programming/manage/services/programming-exercise-grading.service.ts"
       }
     ]
@@ -2196,6 +2250,12 @@
         "method": "put",
         "url": "`api/programming-exercises/timeline`",
         "line": 196,
+        "filePath": "../../../../../src/main/webapp/app/exercises/programming/manage/services/programming-exercise.service.ts"
+      },
+      {
+        "method": "patch",
+        "url": "`api/programming-exercises/${programmingExerciseId}/problem-statement`",
+        "line": 209,
         "filePath": "../../../../../src/main/webapp/app/exercises/programming/manage/services/programming-exercise.service.ts"
       },
       {
@@ -2411,6 +2471,12 @@
         "method": "put",
         "url": "this.requestUrl(exerciseId)",
         "line": 78,
+        "filePath": "../../../../../src/main/webapp/app/exercises/programming/manage/services/submission-policy.service.ts"
+      },
+      {
+        "method": "patch",
+        "url": "this.requestUrl(exerciseId)",
+        "line": 89,
         "filePath": "../../../../../src/main/webapp/app/exercises/programming/manage/services/submission-policy.service.ts"
       },
       {
@@ -4374,7 +4440,7 @@
     "restCalls": [
       {
         "method": "put",
-        "url": "url",
+        "url": "/api/admin/feature-toggle",
         "line": 109,
         "filePath": "../../../../../src/main/webapp/app/shared/feature-toggle/feature-toggle.service.ts"
       }
@@ -4622,9 +4688,21 @@
         "filePath": "../../../../../src/main/webapp/app/shared/metis/conversations/conversation.service.ts"
       },
       {
+        "method": "patch",
+        "url": "`/api/courses/${courseId}/conversations/${conversationId}/mark-as-read`",
+        "line": 127,
+        "filePath": "../../../../../src/main/webapp/app/shared/metis/conversations/conversation.service.ts"
+      },
+      {
         "method": "get",
         "url": "`/api/courses/${courseId}/unread-messages`",
         "line": 131,
+        "filePath": "../../../../../src/main/webapp/app/shared/metis/conversations/conversation.service.ts"
+      },
+      {
+        "method": "patch",
+        "url": "`/api/courses/${courseId}/code-of-conduct/agreement`",
+        "line": 135,
         "filePath": "../../../../../src/main/webapp/app/shared/metis/conversations/conversation.service.ts"
       },
       {
