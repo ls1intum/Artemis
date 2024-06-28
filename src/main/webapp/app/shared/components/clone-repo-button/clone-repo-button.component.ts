@@ -9,7 +9,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { PROFILE_LOCALVC } from 'app/app.constants';
+import { PROFILE_GITLAB, PROFILE_LOCALVC } from 'app/app.constants';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { faDownload, faExternalLink } from '@fortawesome/free-solid-svg-icons';
 
@@ -34,13 +34,15 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     exercise?: ProgrammingExercise;
 
     useSsh = false;
-    sshKeysUrl?: string;
+    setupSshKeysUrl?: string;
     sshEnabled = false;
     sshTemplateUrl?: string;
     repositoryPassword?: string;
     versionControlUrl: string;
     versionControlAccessTokenRequired?: boolean;
     localVCEnabled = false;
+    gitlabVCEnabled = false;
+
     user: User;
     cloneHeadline: string;
     wasCopied = false;
@@ -68,14 +70,22 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
 
         // Get ssh information from the user
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.sshKeysUrl = profileInfo.sshKeysURL;
+            this.setupSshKeysUrl = profileInfo.sshKeysURL;
             this.sshTemplateUrl = profileInfo.sshCloneURLTemplate;
+
             this.sshEnabled = !!this.sshTemplateUrl;
             if (profileInfo.versionControlUrl) {
                 this.versionControlUrl = profileInfo.versionControlUrl;
             }
+
             this.versionControlAccessTokenRequired = profileInfo.versionControlAccessToken;
             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
+            this.gitlabVCEnabled = profileInfo.activeProfiles.includes(PROFILE_GITLAB);
+            if (this.localVCEnabled) {
+                this.setupSshKeysUrl = `${window.location.origin}/user-settings/sshSettings`;
+            } else {
+                this.setupSshKeysUrl = profileInfo.sshKeysURL;
+            }
         });
 
         this.useSsh = this.localStorage.retrieve('useSsh') || false;
@@ -171,7 +181,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
      * Inserts the correct link to the translated ssh tip.
      */
     getSshKeyTip() {
-        return this.translateService.instant('artemisApp.exerciseActions.sshKeyTip').replace(/{link:(.*)}/, '<a href="' + this.sshKeysUrl + '" target="_blank">$1</a>');
+        return this.translateService.instant('artemisApp.exerciseActions.sshKeyTip').replace(/{link:(.*)}/, '<a href="' + this.setupSshKeysUrl + '" target="_blank">$1</a>');
     }
 
     /**

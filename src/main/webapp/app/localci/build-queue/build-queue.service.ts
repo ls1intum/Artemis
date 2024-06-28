@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
-import { BuildJob, FinishedBuildJob } from 'app/entities/build-job.model';
+import { BuildJob, BuildJobStatistics, FinishedBuildJob, SpanType } from 'app/entities/build-job.model';
 import { createNestedRequestOption } from 'app/shared/util/request.util';
 import { HttpResponse } from '@angular/common/http';
 import { FinishedBuildJobFilter } from 'app/localci/build-queue/build-queue.component';
@@ -157,6 +157,34 @@ export class BuildQueueService {
         return this.http.get<FinishedBuildJob[]>(`${this.resourceUrl}/courses/${courseId}/finished-jobs`, { params: options, observe: 'response' }).pipe(
             catchError((err) => {
                 return throwError(() => new Error(`Failed to get all finished build jobs in course ${courseId}\n${err.message}`));
+            }),
+        );
+    }
+
+    /**
+     * Get BuildJobStatistics
+     *
+     * @param span the time span
+     * @returns BuildJobStatistics
+     */
+    getBuildJobStatistics(span: SpanType): Observable<BuildJobStatistics> {
+        return this.http.get<BuildJobStatistics>(`${this.adminResourceUrl}/build-job-statistics`, { params: { span } }).pipe(
+            catchError((err) => {
+                return throwError(() => new Error(`Failed to get build job statistics\n${err.message}`));
+            }),
+        );
+    }
+
+    /**
+     * Get BuildJobStatistics for a specific course
+     * @param courseId the id of the course
+     * @param span the time span
+     * @returns BuildJobStatistics
+     */
+    getBuildJobStatisticsForCourse(courseId: number, span: SpanType): Observable<BuildJobStatistics> {
+        return this.http.get<BuildJobStatistics>(`${this.resourceUrl}/courses/${courseId}/build-job-statistics`, { params: { span } }).pipe(
+            catchError((err) => {
+                return throwError(() => new Error(`Failed to get build job statistics for course ${courseId}\n${err.message}`));
             }),
         );
     }

@@ -11,6 +11,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { Exam } from 'app/entities/exam.model';
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 
 describe('CourseOverviewService', () => {
@@ -265,6 +266,25 @@ describe('CourseOverviewService', () => {
         expect(upcomingLecture?.id).toBe(2);
     });
 
+    it('should handle all past exams', () => {
+        const pastExams: Exam[] = [
+            {
+                id: 1,
+                title: 'Past Exam 1',
+                endDate: dayjs().subtract(2, 'day'),
+            },
+            {
+                id: 2,
+                title: 'Past Exam 2',
+                endDate: dayjs().subtract(1, 'day'),
+            },
+        ];
+        const upcomingExam = service.getUpcomingExam(pastExams);
+
+        // Assuming the function should return the most recent past lecture if all are in the past
+        expect(upcomingExam?.id).toBe(2);
+    });
+
     it('should correctly identify the exercises furthest in the future', () => {
         const exercises: Exercise[] = [
             {
@@ -295,6 +315,37 @@ describe('CourseOverviewService', () => {
         const upcomingExercise = service.getUpcomingExercise(exercises);
 
         expect(upcomingExercise?.id).toBe(3);
+    });
+
+    it('should correctly identify the exams furthest in the future', () => {
+        const exams: Exam[] = [
+            {
+                id: 1,
+                title: 'Past Exam',
+                endDate: dayjs().subtract(1, 'day'),
+            },
+            {
+                id: 2,
+                title: 'Upcoming Exam',
+                endDate: dayjs().add(1, 'day'),
+            },
+            {
+                id: 3,
+                title: 'Far Future Exam',
+                endDate: dayjs().add(2, 'weeks'),
+            },
+        ];
+        const upcomingExam = service.getUpcomingExam(exams);
+
+        expect(upcomingExam?.id).toBe(3);
+    });
+
+    it('should return undefined if exams array is undefined', () => {
+        expect(service.getUpcomingExam(undefined)).toBeUndefined();
+    });
+
+    it('should return undefined if exams array is empty', () => {
+        expect(service.getUpcomingExam([])).toBeUndefined();
     });
 
     it('should group conversations by conversation types and map to sidebar card elements', () => {
