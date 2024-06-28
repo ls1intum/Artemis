@@ -1,18 +1,19 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpClientTestingModule, HttpTestingController, TestRequest } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
-import { BuildJob } from 'app/entities/build-job.model';
+import { BuildJob, BuildJobStatistics, SpanType } from 'app/entities/build-job.model';
 import dayjs from 'dayjs/esm';
 import { RepositoryInfo, TriggeredByPushTo } from 'app/entities/repository-info.model';
 import { JobTimingInfo } from 'app/entities/job-timing-info.model';
 import { BuildConfig } from 'app/entities/build-config.model';
+import { FinishedBuildJobFilter } from 'app/localci/build-queue/build-queue.component';
 
 describe('BuildQueueService', () => {
     let service: BuildQueueService;
@@ -21,6 +22,23 @@ describe('BuildQueueService', () => {
     let repositoryInfo: RepositoryInfo;
     let jobTimingInfo: JobTimingInfo;
     let buildConfig: BuildConfig;
+
+    const filterOptions = new FinishedBuildJobFilter();
+    filterOptions.buildAgentAddress = '[127.0.0.1]:5701';
+    filterOptions.buildDurationFilterLowerBound = 1;
+    filterOptions.buildDurationFilterUpperBound = 10;
+    filterOptions.buildStartDateFilterFrom = dayjs('2024-01-01');
+    filterOptions.buildStartDateFilterTo = dayjs('2024-01-02');
+    filterOptions.status = 'SUCCESSFUL';
+
+    const expectFilterParams = (req: TestRequest, filterOptions: FinishedBuildJobFilter) => {
+        expect(req.request.params.get('buildAgentAddress')).toBe(filterOptions.buildAgentAddress);
+        expect(req.request.params.get('buildDurationLower')).toBe(filterOptions.buildDurationFilterLowerBound?.toString());
+        expect(req.request.params.get('buildDurationUpper')).toBe(filterOptions.buildDurationFilterUpperBound?.toString());
+        expect(req.request.params.get('startDate')).toBe(filterOptions.buildStartDateFilterFrom?.toISOString());
+        expect(req.request.params.get('endDate')).toBe(filterOptions.buildStartDateFilterTo?.toISOString());
+        expect(req.request.params.get('buildStatus')).toBe(filterOptions.status);
+    };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -443,6 +461,19 @@ describe('BuildQueueService', () => {
         req.flush(expectedResponse);
     });
 
+    it('should return filtered finished build jobs', () => {
+        const expectedResponse = [elem1];
+
+        service.getFinishedBuildJobs(undefined, filterOptions).subscribe((data) => {
+            expect(data).toEqual(expectedResponse);
+        });
+
+        const req = httpMock.expectOne((r) => r.url === `${service.adminResourceUrl}/finished-jobs`);
+        expect(req.request.method).toBe('GET');
+        expectFilterParams(req, filterOptions);
+        req.flush(expectedResponse);
+    });
+
     it('should handle errors when getting all finished build jobs', fakeAsync(() => {
         let errorOccurred = false;
 
@@ -477,6 +508,54 @@ describe('BuildQueueService', () => {
         expect(req.request.method).toBe('GET');
         req.flush(expectedResponse);
     });
+
+    it('should return filtered finished build jobs for a specific course', () => {
+        const courseId = 1;
+        const expectedResponse = [elem1];
+
+        service.getFinishedBuildJobsByCourseId(courseId, undefined, filterOptions).subscribe((data) => {
+            expect(data).toEqual(expectedResponse);
+        });
+
+        const req = httpMock.expectOne((r) => r.url === `${service.resourceUrl}/courses/${courseId}/finished-jobs`);
+        expect(req.request.method).toBe('GET');
+        expectFilterParams(req, filterOptions);
+        req.flush(expectedResponse);
+    });
+
+    it('should return build job statistics', fakeAsync(() => {
+        const expectedResponse: BuildJobStatistics = { totalBuilds: 1, successfulBuilds: 1, failedBuilds: 0, cancelledBuilds: 0 };
+
+        service.getBuildJobStatistics(SpanType.WEEK).subscribe((data) => {
+            expect(data).toEqual(expectedResponse);
+        });
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/build-job-statistics?span=7`);
+        expect(req.request.method).toBe('GET');
+        req.flush(expectedResponse);
+    }));
+
+    it('should handle errors when getting build job statistics', fakeAsync(() => {
+        let errorOccurred = false;
+
+        service.getBuildJobStatistics(SpanType.MONTH).subscribe({
+            error: (err) => {
+                expect(err.message).toBe(
+                    'Failed to get build job statistics\nHttp failure response for ' + service.adminResourceUrl + '/build-job-statistics?span=30: 500 Internal Server Error',
+                );
+                errorOccurred = true;
+            },
+        });
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/build-job-statistics?span=30`);
+        expect(req.request.method).toBe('GET');
+
+        req.flush(null, { status: 500, statusText: 'Internal Server Error' });
+
+        tick();
+
+        expect(errorOccurred).toBeTrue();
+    }));
 
     it('should handle errors when getting all finished build jobs for a specific course', fakeAsync(() => {
         const courseId = 1;

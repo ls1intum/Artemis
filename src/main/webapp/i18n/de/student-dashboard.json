@@ -44,7 +44,28 @@
                 "all": "Übungsgruppen",
                 "registered": "Meine Übungsgruppen",
                 "further": "Weitere Übungsgruppen",
-                "noUpcomingSession": "Kein Termin"
+                "real": "Klausuren",
+                "test": "Testklausuren",
+                "start": "Beginn",
+                "workingTime": "Bearbeitungszeit",
+                "attainablePoints": "Erreichbare Punkte",
+                "noUpcomingSession": "Kein Termin",
+                "header": "Konversationen",
+                "show": "Konversationen zeigen",
+                "hide": "Konversationen ausblenden",
+                "notFound": "Keine Konversation gefunden",
+                "favoriteChannels": "Favoriten",
+                "hiddenChannels": "Ausgeblendet",
+                "channels": "Kanäle",
+                "generalChannels": "Allgemein",
+                "exerciseChannels": "Aufgaben",
+                "lectureChannels": "Vorlesungen",
+                "examChannels": "Klausuren",
+                "createChannel": "Kanal erstellen",
+                "browseChannels": "Kanäle durchsuchen",
+                "groupChats": "Gruppen-Chats",
+                "directMessages": "Direktnachrichten",
+                "filterConversationPlaceholder": "Konversationen filtern"
             },
             "menu": {
                 "exercises": "Aufgaben",
@@ -203,6 +224,9 @@
             },
             "tutorialGroups": {
                 "selectTutorialGroup": "Bitte wähle eine Übungsgruppe aus."
+            },
+            "exams": {
+                "selectExam": "Bitte wähle eine Klausur aus."
             },
             "lectureList": {
                 "lectureGroupHeader": "(Vorlesungen: {{ total }})",

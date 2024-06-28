@@ -94,6 +94,8 @@ export class CodeEditorMonacoComponent implements OnChanges {
     onAcceptSuggestion = new EventEmitter<Feedback>();
     @Output()
     onDiscardSuggestion = new EventEmitter<Feedback>();
+    @Output()
+    onHighlightLines = new EventEmitter<MonacoEditorLineHighlight[]>();
 
     editorLocked = false;
     isLoading = false;
@@ -201,6 +203,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
 
     highlightLines(startLine: number, endLine: number) {
         this.editor.highlightLines(startLine, endLine, CodeEditorMonacoComponent.CLASS_DIFF_LINE_HIGHLIGHT, CodeEditorMonacoComponent.CLASS_DIFF_MARGIN_HIGHLIGHT);
+        this.onHighlightLines.emit(this.getLineHighlights());
     }
 
     setupAddFeedbackButton(): void {

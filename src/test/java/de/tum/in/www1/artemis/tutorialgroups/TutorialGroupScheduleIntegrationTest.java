@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupResource;
 class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrationTest {
 
     @BeforeEach
+    @Override
     void setupTestScenario() {
         super.setupTestScenario();
         userUtilService.addUsers(this.testPrefix, 0, 1, 0, 1);
