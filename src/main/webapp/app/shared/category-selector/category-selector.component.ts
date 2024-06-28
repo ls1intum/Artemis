@@ -129,10 +129,7 @@ export class CategorySelectorComponent implements OnChanges {
     }
 
     private createCategory(categoryString: string): ExerciseCategory {
-        const category = new ExerciseCategory();
-        category.category = categoryString;
-        category.color = this.chooseRandomColor();
-        return category;
+        return new ExerciseCategory(this.chooseRandomColor(), categoryString);
     }
 
     private chooseRandomColor(): string {
