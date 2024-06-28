@@ -1,25 +1,33 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.component';
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisTestModule } from '../../../test.module';
 import dayjs from 'dayjs/esm';
-import { CourseExamDetailComponent } from 'app/overview/course-exams/course-exam-detail/course-exam-detail.component';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { Observable, of } from 'rxjs';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CourseExamAttemptReviewDetailComponent } from 'app/overview/course-exams/course-exam-attempt-review-detail/course-exam-attempt-review-detail.component';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { SidebarComponent } from '../../../../../../main/webapp/app/shared/sidebar/sidebar.component';
+import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
+import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
+import { RouterTestingModule } from '@angular/router/testing';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { CourseOverviewService } from 'app/overview/course-overview.service';
 
 describe('CourseExamsComponent', () => {
     let component: CourseExamsComponent;
     let componentFixture: ComponentFixture<CourseExamsComponent>;
     let courseStorageService: CourseStorageService;
+    let courseOverviewService: CourseOverviewService;
+    let examParticipationService: ExamParticipationService;
     let subscribeToCourseUpdates: jest.SpyInstance;
+    const router = new MockRouter();
 
     const visibleRealExam1 = {
         id: 1,
@@ -89,11 +97,22 @@ describe('CourseExamsComponent', () => {
     } as StudentExam;
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [CourseExamsComponent, MockComponent(CourseExamDetailComponent), MockComponent(CourseExamAttemptReviewDetailComponent), MockPipe(ArtemisTranslatePipe)],
+        router.navigate.mockImplementation(() => Promise.resolve(true));
+
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule, RouterTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule)],
+            declarations: [CourseExamsComponent, SidebarComponent, SearchFilterComponent, MockPipe(ArtemisTranslatePipe), MockPipe(SearchFilterPipe)],
             providers: [
-                { provide: ActivatedRoute, useValue: { parent: { parent: { params: of(1) } } } },
+                { provide: Router, useValue: router },
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        parent: {
+                            params: of({ courseId: '1' }),
+                        },
+                        params: of({ examId: visibleRealExam1.id }),
+                    },
+                },
                 MockProvider(CourseStorageService),
                 MockProvider(ArtemisServerDateService),
                 MockProvider(ExamParticipationService),
@@ -105,7 +124,10 @@ describe('CourseExamsComponent', () => {
                 component = componentFixture.componentInstance;
 
                 courseStorageService = TestBed.inject(CourseStorageService);
+                examParticipationService = TestBed.inject(ExamParticipationService);
+                courseOverviewService = TestBed.inject(CourseOverviewService);
                 subscribeToCourseUpdates = jest.spyOn(courseStorageService, 'subscribeToCourseUpdates').mockReturnValue(of());
+                (examParticipationService as any).examIsStarted$ = of(false);
                 jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({
                     exams: [visibleRealExam1, visibleRealExam2, notVisibleRealExam, visibleTestExam1, visibleTestExam2, notVisibleTestExam],
                 });
@@ -190,5 +212,93 @@ describe('CourseExamsComponent', () => {
         component.ngOnInit();
         const resultArray = [visibleTestExam2, visibleTestExam1];
         expect(component.testExamsOfCourse).toEqual(resultArray);
+    });
+
+    it('should display/hide sidebar if exam is started/over', () => {
+        (examParticipationService as any).examIsStarted$ = of(true);
+        componentFixture.detectChanges();
+        expect(componentFixture.nativeElement.querySelector('#exam-sidebar-test').hidden).toBeTrue();
+
+        component.isExamStarted = false;
+        componentFixture.detectChanges();
+        expect(componentFixture.nativeElement.querySelector('#exam-sidebar-test').hidden).toBeFalse();
+    });
+
+    it('should group all exams as test when all exams are test exams', () => {
+        const testExams: Exam[] = [
+            { id: 1, title: 'Test Exam 1', testExam: true } as Exam,
+            { id: 2, title: 'Test Exam 2', testExam: true } as Exam,
+            { id: 3, title: 'Test Exam 3', testExam: true } as Exam,
+        ];
+
+        jest.spyOn(courseOverviewService, 'mapExamToSidebarCardElement');
+        const groupedExams = component.groupExamsByRealOrTest([], testExams);
+
+        expect(groupedExams['real'].entityData).toHaveLength(0);
+        expect(groupedExams['test'].entityData).toHaveLength(3);
+        expect(courseOverviewService.mapExamToSidebarCardElement).toHaveBeenCalledTimes(3);
+        expect(groupedExams['test'].entityData[0].title).toBe('Test Exam 1');
+        expect(groupedExams['test'].entityData[1].title).toBe('Test Exam 2');
+        expect(groupedExams['test'].entityData[2].title).toBe('Test Exam 3');
+    });
+
+    it('should group all exam types correctly and map to sidebar card elements', () => {
+        const testExams: Exam[] = [
+            { id: 1, title: 'Test Exam 1', testExam: true } as Exam,
+            { id: 2, title: 'Test Exam 2', testExam: true } as Exam,
+            { id: 3, title: 'Test Exam 3', testExam: true } as Exam,
+        ];
+
+        const realExams: Exam[] = [
+            { id: 1, title: 'Real Exam 1', testExam: false } as Exam,
+            { id: 2, title: 'Real Exam 2', testExam: false } as Exam,
+            { id: 3, title: 'Real Exam 3', testExam: false } as Exam,
+        ];
+
+        jest.spyOn(courseOverviewService, 'mapExamToSidebarCardElement');
+        const groupedExams = component.groupExamsByRealOrTest(realExams, testExams);
+
+        expect(groupedExams['real'].entityData).toHaveLength(3);
+        expect(groupedExams['test'].entityData).toHaveLength(3);
+        expect(courseOverviewService.mapExamToSidebarCardElement).toHaveBeenCalledTimes(6);
+        expect(groupedExams['test'].entityData[0].title).toBe('Test Exam 1');
+        expect(groupedExams['test'].entityData[1].title).toBe('Test Exam 2');
+        expect(groupedExams['test'].entityData[2].title).toBe('Test Exam 3');
+        expect(groupedExams['real'].entityData[0].title).toBe('Real Exam 1');
+        expect(groupedExams['real'].entityData[1].title).toBe('Real Exam 2');
+        expect(groupedExams['real'].entityData[2].title).toBe('Real Exam 3');
+    });
+
+    it('should sort exams by startDate', () => {
+        const exams: Exam[] = [
+            { id: 1, title: 'Exam 1', startDate: dayjs().subtract(10, 'minutes') } as Exam,
+            { id: 2, title: 'Exam 2', startDate: dayjs().subtract(30, 'minutes') } as Exam,
+            { id: 3, title: 'Exam 3', startDate: dayjs().subtract(20, 'minutes') } as Exam,
+        ];
+
+        const sortedExams = exams.sort((a, b) => component.sortExamsByStartDate(a, b));
+
+        expect(sortedExams[0].id).toBe(2);
+        expect(sortedExams[1].id).toBe(3);
+        expect(sortedExams[2].id).toBe(1);
+    });
+
+    it('should toggle sidebar', () => {
+        component.isCollapsed = false;
+        component.toggleSidebar();
+        expect(component.isCollapsed).toBeTrue();
+
+        component.toggleSidebar();
+        expect(component.isCollapsed).toBeFalse();
+    });
+
+    it('should not update sidebarData if there is no exam', () => {
+        const course = new Course();
+        course.exams = undefined;
+        component.course = course;
+
+        const updateSidebarDataStub = jest.spyOn(component, 'updateSidebarData');
+        component.prepareSidebarData();
+        expect(updateSidebarDataStub).not.toHaveBeenCalledOnce();
     });
 });

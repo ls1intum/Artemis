@@ -8,6 +8,7 @@
             "quiz": "quizzes.",
             "model": "modelling exercises.",
             "programming": "programming exercises.",
+            "sshsetup": "SSH setup.",
             "text": "text exercises.",
             "fileupload": "file upload exercises.",
             "notifications": "notifications.",
