@@ -2,7 +2,7 @@
   <configuration default="false" name="Artemis (Server, LocalVC &amp; LocalCI)" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
     <option name="ACTIVE_PROFILES" value="dev,localci,localvc,artemis,scheduling,buildagent,core,ldap-only,local" />
     <option name="ALTERNATIVE_JRE_PATH" value="17" />
-    <module name="Artemis.main" />
+    <module name="de.tum.in.www1.artemis.Artemis.main" />
     <option name="SHORTEN_COMMAND_LINE" value="MANIFEST" />
     <option name="SPRING_BOOT_MAIN_CLASS" value="de.tum.in.www1.artemis.ArtemisApp" />
     <option name="VM_PARAMETERS" value="-XX:+ShowCodeDetailsInExceptionMessages -Duser.country=US -Duser.language=en -Xmx1024m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8 -Duser.country=US -Duser.language=en --add-exports jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED --add-modules java.se --add-exports java.base/jdk.internal.ref=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/sun.nio.ch=ALL-UNNAMED --add-opens java.management/sun.management=ALL-UNNAMED --add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED" />

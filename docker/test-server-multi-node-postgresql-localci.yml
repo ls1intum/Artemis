@@ -100,10 +100,10 @@ services:
             - ./nginx/artemis-upstream-multi-node.conf:/etc/nginx/includes/artemis-upstream.conf:ro
             - ./nginx/artemis-ssh-upstream-multi-node.conf:/etc/nginx/includes/artemis-ssh-upstream.conf:ro
             - type: bind
-              source: ${NGINX_PROXY_SSL_CERTIFICATE_PATH:-../src/test/cypress/certs/artemis-nginx+4.pem}
+              source: ${NGINX_PROXY_SSL_CERTIFICATE_PATH:-../src/test/playwright/certs/artemis-nginx+4.pem}
               target: "/certs/fullchain.pem"
             - type: bind
-              source: ${NGINX_PROXY_SSL_CERTIFICATE_KEY_PATH:-../src/test/cypress/certs/artemis-nginx+4-key.pem}
+              source: ${NGINX_PROXY_SSL_CERTIFICATE_KEY_PATH:-../src/test/playwright/certs/artemis-nginx+4-key.pem}
               target: "/certs/priv_key.pem"
 
 networks:

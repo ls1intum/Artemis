@@ -10,9 +10,9 @@ tests:
   - changed-files:
       - any-glob-to-any-file: src/test/**/*
 
-cypress:
+playwright:
   - changed-files:
-      - any-glob-to-any-file: src/test/cypress/**/*
+      - any-glob-to-any-file: src/test/playwright/**/*
 
 database:
   - changed-files:
