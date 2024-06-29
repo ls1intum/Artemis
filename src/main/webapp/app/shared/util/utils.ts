@@ -176,3 +176,13 @@ export function scrollToTopOfPage() {
 export function isExamExercise(exercise: Exercise) {
     return exercise.course === undefined;
 }
+
+/**
+ * Rounds a value up to the nearest multiple
+ *
+ * @param value    that shall be rounded
+ * @param multiple to which we round up
+ */
+export function roundToMultiple(value: number, multiple: number) {
+    return Math.round(value / multiple) * multiple;
+}

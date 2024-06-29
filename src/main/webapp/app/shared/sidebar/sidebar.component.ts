@@ -3,27 +3,18 @@ import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Subscription, distinctUntilChanged } from 'rxjs';
 import { ProfileService } from '../layouts/profiles/profile.service';
-import { ChannelAccordionShowAdd, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData } from 'app/types/sidebar';
+import { ChannelAccordionShowAdd, ChannelTypeIcons, CollapseState, SidebarData } from 'app/types/sidebar';
 import { SidebarEventService } from './sidebar-event.service';
 import { ExerciseFilterModalComponent } from 'app/shared/exercise-filter/exercise-filter-modal.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { DifficultyLevel } from 'app/entities/exercise.model';
 import { cloneDeep } from 'lodash-es';
-import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/participation/participation.utils';
-import { DifficultyFilterOptions, ExerciseFilterOptions, ExerciseFilterResults, RangeFilter } from 'app/types/exercise-filter';
-import { getExerciseCategoryFilterOptions, getExerciseTypeFilterOptions } from 'app/shared/sidebar/sidebar.helper';
-
-const POINTS_STEP = 1;
-const SCORE_THRESHOLD_TO_INCREASE_STEP = 20;
-const SMALL_SCORE_STEP = 1;
-const SCORE_STEP = 5;
-
-// TODO allow to filter for no difficulty?
-const DEFAULT_DIFFICULTIES_FILTER: DifficultyFilterOptions = [
-    { name: 'artemisApp.exercise.easy', value: DifficultyLevel.EASY, checked: false },
-    { name: 'artemisApp.exercise.medium', value: DifficultyLevel.MEDIUM, checked: false },
-    { name: 'artemisApp.exercise.hard', value: DifficultyLevel.HARD, checked: false },
-];
+import { ExerciseFilterOptions, ExerciseFilterResults } from 'app/types/exercise-filter';
+import {
+    getAchievablePointsAndAchievedScoreFilterOptions,
+    getExerciseCategoryFilterOptions,
+    getExerciseDifficultyFilterOptions,
+    getExerciseTypeFilterOptions,
+} from 'app/shared/sidebar/sidebar.helper';
 
 @Component({
     selector: 'jhi-sidebar',
@@ -169,104 +160,14 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
             return;
         }
 
-        const scoreAndPointsFilterOptions = this.getAchievablePointsAndAchievedScoreFilterOptions();
+        const scoreAndPointsFilterOptions = getAchievablePointsAndAchievedScoreFilterOptions(this.exerciseFilters, this.sidebarData);
 
         this.exerciseFilters = {
             categoryFilters: getExerciseCategoryFilterOptions(this.exerciseFilters, this.sidebarData),
             exerciseTypesFilter: getExerciseTypeFilterOptions(this.exerciseFilters, this.sidebarData),
-            difficultyFilters: this.getExerciseDifficultyFilterOptions(),
+            difficultyFilters: getExerciseDifficultyFilterOptions(this.exerciseFilters, this.sidebarData),
             achievedScore: scoreAndPointsFilterOptions?.achievedScore,
             achievablePoints: scoreAndPointsFilterOptions?.achievablePoints,
         };
-    }
-
-    private getExerciseDifficultyFilterOptions() {
-        if (this.exerciseFilters?.difficultyFilters) {
-            return this.exerciseFilters.difficultyFilters;
-        }
-        // TODO handle noLevel difficulty
-
-        const existingDifficulties = this.sidebarData?.ungroupedData
-            ?.filter((sidebarElement: SidebarCardElement) => sidebarElement.difficulty !== undefined)
-            .map((sidebarElement: SidebarCardElement) => sidebarElement.difficulty);
-
-        return DEFAULT_DIFFICULTIES_FILTER?.filter((difficulty) => existingDifficulties?.includes(difficulty.value));
-    }
-
-    private getAchievablePointsAndAchievedScoreFilterOptions():
-        | {
-              achievablePoints: RangeFilter;
-              achievedScore: RangeFilter;
-          }
-        | undefined {
-        // TODO re caluclate the scores, they might have changed since the last filter application
-
-        if ((this.exerciseFilters?.achievablePoints && this.exerciseFilters.achievedScore) || !this.sidebarData?.ungroupedData) {
-            return;
-        }
-
-        let minAchievablePoints = Infinity;
-        let maxAchievablePoints = -Infinity;
-
-        let minAchievedScore = Infinity;
-        let maxAchievedScore = -Infinity;
-
-        this.sidebarData.ungroupedData.forEach((sidebarElement: SidebarCardElement) => {
-            if (sidebarElement.exercise?.maxPoints) {
-                const currentExerciseMaxPoints = sidebarElement.exercise.maxPoints;
-
-                if (currentExerciseMaxPoints > maxAchievablePoints) {
-                    maxAchievablePoints = currentExerciseMaxPoints;
-                }
-                if (currentExerciseMaxPoints < minAchievablePoints) {
-                    minAchievablePoints = currentExerciseMaxPoints;
-                }
-
-                if (sidebarElement.studentParticipation) {
-                    const currentExerciseAchievedScore = getLatestResultOfStudentParticipation(sidebarElement.studentParticipation, true)?.score;
-
-                    if (currentExerciseAchievedScore !== undefined) {
-                        if (currentExerciseAchievedScore > maxAchievedScore) {
-                            maxAchievedScore = currentExerciseAchievedScore;
-                        }
-                        if (currentExerciseAchievedScore < minAchievedScore) {
-                            minAchievedScore = currentExerciseAchievedScore;
-                        }
-                    }
-                }
-            }
-        });
-
-        minAchievablePoints = this.roundToMultiple(minAchievablePoints, POINTS_STEP);
-        maxAchievablePoints = this.roundToMultiple(maxAchievablePoints, POINTS_STEP);
-
-        minAchievedScore = this.roundToMultiple(minAchievedScore, SMALL_SCORE_STEP);
-        maxAchievedScore = this.roundToMultiple(maxAchievedScore, SMALL_SCORE_STEP);
-
-        if (maxAchievedScore > SCORE_THRESHOLD_TO_INCREASE_STEP) {
-            minAchievedScore = this.roundToMultiple(minAchievedScore, SCORE_STEP);
-            maxAchievedScore = this.roundToMultiple(maxAchievedScore, SCORE_STEP);
-        }
-
-        return {
-            achievablePoints: {
-                generalMin: minAchievablePoints,
-                generalMax: maxAchievablePoints,
-                selectedMin: minAchievablePoints,
-                selectedMax: maxAchievablePoints,
-                step: POINTS_STEP,
-            },
-            achievedScore: {
-                generalMin: minAchievedScore,
-                generalMax: maxAchievedScore,
-                selectedMin: minAchievedScore,
-                selectedMax: maxAchievedScore,
-                step: maxAchievedScore <= SCORE_THRESHOLD_TO_INCREASE_STEP ? SMALL_SCORE_STEP : SCORE_STEP,
-            },
-        };
-    }
-
-    private roundToMultiple(value: number, multiple: number) {
-        return Math.round(value / multiple) * multiple;
     }
 }
