@@ -47,14 +47,25 @@ public class LearningPathNavigationService {
         var recommendationStateWithAllCompetencies = learningPathRecommendationService.getRecommendedOrderOfAllCompetencies(learningPath);
 
         if (currentLearningObject == null) {
-            var lastCompletedCompetencyId = recommendationStateWithAllCompetencies.recommendedOrderOfCompetencies().getLast();
-            var lastCompletedCompetency = recommendationStateWithAllCompetencies.competencyIdMap().get(lastCompletedCompetencyId);
-            var recommendedLearningObjectsInLastCompetency = learningPathRecommendationService.getOrderOfLearningObjectsForCompetency(lastCompletedCompetency,
-                    learningPath.getUser());
-            currentLearningObject = recommendedLearningObjectsInLastCompetency.getLast();
+            currentLearningObject = getLastCompletedLearningObject(recommendationStateWithAllCompetencies, learningPath.getUser());
         }
 
         return getNavigationRelativeToLearningObject(recommendationStateWithAllCompetencies, currentLearningObject, learningPath);
+    }
+
+    private LearningObject getLastCompletedLearningObject(RecommendationState recommendationState, User user) {
+        LearningObject learningObject = null;
+        int indexOfLastCompletedCompetency = recommendationState.recommendedOrderOfCompetencies().size() - 1;
+        while (learningObject == null && indexOfLastCompletedCompetency >= 0) {
+            var lastCompletedCompetencyId = recommendationState.recommendedOrderOfCompetencies().get(indexOfLastCompletedCompetency);
+            var lastCompletedCompetency = recommendationState.competencyIdMap().get(lastCompletedCompetencyId);
+            var recommendedLearningObjectsInLastCompetency = learningPathRecommendationService.getOrderOfLearningObjectsForCompetency(lastCompletedCompetency, user);
+            if (!recommendedLearningObjectsInLastCompetency.isEmpty()) {
+                learningObject = recommendedLearningObjectsInLastCompetency.getLast();
+            }
+            indexOfLastCompletedCompetency--;
+        }
+        return learningObject;
     }
 
     /**

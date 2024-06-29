@@ -138,16 +138,14 @@ public class LearningPathRecommendationService {
      * @return the next due learning object of learning path
      */
     public LearningObject getCurrentUncompletedLearningObject(User user, RecommendationState recommendationState) {
-        var recommendedOrderOfCompetencies = recommendationState.recommendedOrderOfCompetencies;
-        if (recommendedOrderOfCompetencies.isEmpty()) {
-            return null;
+        for (long competencyId : recommendationState.recommendedOrderOfCompetencies) {
+            var competency = recommendationState.competencyIdMap.get(competencyId);
+            var recommendedOrderOfLearningObjects = getRecommendedOrderOfLearningObjects(user, competency, recommendationState);
+            if (!recommendedOrderOfLearningObjects.isEmpty()) {
+                return recommendedOrderOfLearningObjects.getFirst();
+            }
         }
-        var currentCompetency = recommendationState.competencyIdMap.get(recommendedOrderOfCompetencies.getFirst());
-        var recommendedOrderOfLearningObjects = getRecommendedOrderOfLearningObjects(user, currentCompetency, recommendationState);
-        if (recommendedOrderOfLearningObjects.isEmpty()) {
-            return null;
-        }
-        return recommendedOrderOfLearningObjects.getFirst();
+        return null;
     }
 
     /**
