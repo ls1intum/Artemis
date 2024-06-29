@@ -270,7 +270,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         // Make room for the hover button in the line decorations.
         this._editor.updateOptions({
             folding: false,
-            lineDecorationsWidth: 20,
+            lineDecorationsWidth: 18,
         });
     }
 
