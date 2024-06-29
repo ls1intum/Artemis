@@ -48,8 +48,8 @@
                         <div class="form-check form-check-inline">
                             <label>
                                 <input type="checkbox" [(ngModel)]="typeFilter.checked" [name]="typeFilter.value" />
-                                <span [jhiTranslate]="typeFilter.name"></span>
-                                <fa-icon [icon]="typeFilter.icon" />
+                                <fa-icon [icon]="typeFilter.icon" class="ms-2" />
+                                <span [jhiTranslate]="typeFilter.name" class="ms-1"></span>
                             </label>
                         </div>
                     }
