@@ -204,7 +204,10 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
             this.sidebarData?.ungroupedData
                 ?.filter((sidebarElement: SidebarCardElement) => sidebarElement.exercise?.categories !== undefined)
                 .flatMap((sidebarElement: SidebarCardElement) => sidebarElement.exercise?.categories || [])
-                .map((category: ExerciseCategory) => ({ category: category, searched: false })) ?? [];
+                .map((category: ExerciseCategory) => ({ category: category, searched: false }))
+                .reduce((unique: ExerciseCategoryFilterOption[], item: ExerciseCategoryFilterOption) => {
+                    return unique.some((uniqueItem) => uniqueItem.category.equals(item.category)) ? unique : [...unique, item];
+                }, []) ?? [];
 
         this.sortCategoriesAlphanumerically(categoryFilters);
 
