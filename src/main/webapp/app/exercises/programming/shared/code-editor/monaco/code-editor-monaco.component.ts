@@ -1,17 +1,4 @@
-import {
-    ChangeDetectorRef,
-    Component,
-    ElementRef,
-    EventEmitter,
-    Input,
-    OnChanges,
-    Output,
-    QueryList,
-    SimpleChanges,
-    ViewChild,
-    ViewChildren,
-    ViewEncapsulation,
-} from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, QueryList, SimpleChanges, ViewChild, ViewChildren, ViewEncapsulation } from '@angular/core';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { CodeEditorRepositoryFileService, ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
@@ -47,8 +34,6 @@ import { FileTypeService } from 'app/exercises/programming/shared/service/file-t
 export class CodeEditorMonacoComponent implements OnChanges {
     @ViewChild('editor', { static: true })
     editor: MonacoEditorComponent;
-    @ViewChild('addFeedbackButton', { static: true })
-    addFeedbackButton: ElementRef<HTMLDivElement>;
     @ViewChildren(CodeEditorTutorAssessmentInlineFeedbackComponent)
     inlineFeedbackComponents: QueryList<CodeEditorTutorAssessmentInlineFeedbackComponent>;
     @ViewChildren(CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent)
@@ -108,6 +93,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
 
     static readonly CLASS_DIFF_LINE_HIGHLIGHT = 'monaco-diff-line-highlight';
     static readonly CLASS_DIFF_MARGIN_HIGHLIGHT = 'monaco-diff-margin-highlight';
+    static readonly CLASS_FEEDBACK_HOVER_BUTTON = 'monaco-add-feedback-button';
 
     // Expose to template
     protected readonly Feedback = Feedback;
@@ -207,7 +193,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
     }
 
     setupAddFeedbackButton(): void {
-        this.editor.setGlyphMarginHoverButton(this.addFeedbackButton.nativeElement, (lineNumber) => this.addNewFeedback(lineNumber));
+        this.editor.setGlyphMarginHoverButton(CodeEditorMonacoComponent.CLASS_FEEDBACK_HOVER_BUTTON, (lineNumber) => this.addNewFeedback(lineNumber));
     }
 
     /**

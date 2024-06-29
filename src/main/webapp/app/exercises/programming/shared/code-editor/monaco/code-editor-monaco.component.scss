@@ -10,16 +10,11 @@
 
 .monaco-add-feedback-button {
     cursor: pointer;
+    font-size: 2.2em;
+}
 
-    /*
-     * Below are cosmetic adjustments that center the button and prevent the icon from breaking out of its row.
-     */
-    display: flex;
-    width: 19px;
-    height: 19px;
-    font-size: 18px;
-    align-items: center;
-    padding-left: 1px;
+.monaco-add-feedback-button:before {
+    content: '+';
 }
 
 .monaco-diff-line-highlight {

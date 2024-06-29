@@ -7,6 +7,7 @@ import { MonacoEditorLineWidget } from 'app/shared/monaco-editor/model/monaco-ed
 import { MonacoEditorBuildAnnotation, MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
 import { MonacoEditorGlyphMarginHoverButton } from 'app/shared/monaco-editor/model/monaco-editor-glyph-margin-hover-button.model';
 import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
+import { MonacoEditorLineDecorationsHoverButton } from './model/monaco-editor-line-decorations-hover-button.model';
 
 type EditorPosition = { row: number; column: number };
 @Component({
@@ -24,6 +25,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     editorBuildAnnotations: MonacoEditorBuildAnnotation[] = [];
     lineHighlights: MonacoEditorLineHighlight[] = [];
     glyphMarginHoverButton?: MonacoEditorGlyphMarginHoverButton;
+    lineDecorationsHoverButton?: MonacoEditorLineDecorationsHoverButton;
 
     constructor(
         private themeService: ThemeService,
@@ -253,13 +255,23 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Sets a {@link MonacoEditorGlyphMarginHoverButton} on this editor. If there was already such a button on this editor, it will be disposed.
-     * @param domNode The node to use as the button.
-     * @param clickCallback The callback to execute when the button is clicked. It will receive the line number (as shown in the editor) as parameter.
+     * TODO rename
+     * @param className
+     * @param clickCallback
      */
-    setGlyphMarginHoverButton(domNode: HTMLElement, clickCallback: (lineNumber: number) => void): void {
-        this.glyphMarginHoverButton?.dispose();
-        this.glyphMarginHoverButton = new MonacoEditorGlyphMarginHoverButton(this._editor, 'glyph-margin-hover-button-' + this._editor.getId(), domNode, clickCallback);
+    setGlyphMarginHoverButton(className: string, clickCallback: (lineNumber: number) => void): void {
+        this.lineDecorationsHoverButton?.dispose();
+        this.lineDecorationsHoverButton = new MonacoEditorLineDecorationsHoverButton(
+            this._editor,
+            'line-decorations-hover-button-' + this._editor.getId(),
+            className,
+            clickCallback,
+        );
+        // Make room for the hover button in the line decorations.
+        this._editor.updateOptions({
+            folding: false,
+            lineDecorationsWidth: '2.2ch',
+        });
     }
 
     /**
