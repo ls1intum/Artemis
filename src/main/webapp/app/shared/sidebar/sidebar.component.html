@@ -5,7 +5,7 @@
                 <div class="mt-2 mb-2">
                     <jhi-search-filter (newSearchEvent)="setSearchValue($event)" class="mb-2" />
                     @if (sidebarData.sidebarType === 'exercise') {
-                        <a (click)="openFilterExercisesDialog()"> <fa-icon [icon]="faFilter" /> Filter </a>
+                        <a (click)="openFilterExercisesDialog()" class="ms-2"> <fa-icon [icon]="faFilter" /> Filter </a>
                     }
                 </div>
             }
