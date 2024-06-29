@@ -14,6 +14,7 @@ export class RangeSliderComponent implements OnInit, OnDestroy {
     @Input() generalMaxValue: number;
     @Input() generalMinValue: number;
     @Input() step: number = DEFAULT_STEP;
+    @Input() label: string;
 
     @Input() selectedMinValue: number;
     @Input() selectedMaxValue: number;

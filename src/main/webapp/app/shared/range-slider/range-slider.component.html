@@ -1,8 +1,8 @@
 <div class="slider m-2 mb-5">
     <div class="range-input">
         <div class="progress" [style.left.%]="sliderMinPercentage" [style.right.%]="sliderMaxPercentage"></div>
-        <span class="slider-value" [style.left.%]="sliderMinPercentage">{{ selectedMinValue }}</span>
-        <span class="slider-value" [style.right.%]="sliderMaxPercentage">{{ selectedMaxValue }}</span>
+        <span class="slider-value" [style.left.%]="sliderMinPercentage">{{ selectedMinValue }}{{ label }}</span>
+        <span class="slider-value" [style.right.%]="sliderMaxPercentage">{{ selectedMaxValue }}{{ label }}</span>
 
         <input
             type="range"
