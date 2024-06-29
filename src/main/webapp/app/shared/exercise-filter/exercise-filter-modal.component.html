@@ -26,6 +26,7 @@
                     (selectItem)="onSelectItem($event)"
                     [inputFormatter]="inputFormatter"
                     [resultFormatter]="resultFormatter"
+                    (keydown.enter)="onSelectItem($event)"
                 />
             }
 

@@ -98,7 +98,6 @@ export class ExerciseFilterModalComponent implements OnInit {
         this.activeModal.close();
     }
 
-    // TODO fix that it removes categories when no category found
     // TODO add scroll option if more than 10 items are displayed
     search: OperatorFunction<string, readonly ExerciseCategoryFilterOption[]> = (text$: Observable<string>) => {
         const debouncedText$ = text$.pipe(debounceTime(200), distinctUntilChanged());
@@ -120,6 +119,13 @@ export class ExerciseFilterModalComponent implements OnInit {
     resultFormatter = (exerciseCategory: ExerciseCategoryFilterOption) => exerciseCategory.category.category ?? '';
 
     onSelectItem(event: any) {
+        const isEnterPressedForNotExistingItem = !event.item;
+        if (isEnterPressedForNotExistingItem) {
+            event.preventDefault();
+            event.stopPropagation();
+            return;
+        }
+
         event.preventDefault(); // otherwise clearing the input field will not work https://stackoverflow.com/questions/39783936/how-to-clear-the-typeahead-input-after-a-result-is-selected
         const filterOption: ExerciseCategoryFilterOption = event.item;
         filterOption.searched = true;
