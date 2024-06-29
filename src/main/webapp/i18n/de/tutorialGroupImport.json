@@ -15,81 +15,81 @@
                 "alwaysRequired": "Eins von den folgenden ist als Spaltennamen immer erforderlich um die Übungsgruppe zu identifizieren: ",
                 "requiredIfStudentRegistration": "Eins von den folgenden ist als Spaltennamen erforderlich, wenn Studierende identifiziert und registriert werden sollen: ",
                 "alwaysOptional": "Folgende Spaltennamen sind optional (nur für Anzeigzwecke): ",
-                "tutorialGroupTitle": "gruppe, titel, group, title, tutorial group -> Übungsgruppe",
-                "registrationNumber": "registrationnumber, matriculationnumber, matrikelnummer, number -> Matrikelnummer",
-                "login": "login, user, username, benutzer, benutzername -> Anmeldename",
-                "firstName": "firstname, firstnameofstudent, givenname, forename, vorname -> Vorname",
-                "lastName": "familyname, lastname, familynameofstudent, surname, nachname, familienname, name -> Nachname",
-                "campus": "campus -> Campus",
-                "language": "language -> Sprache",
-                "additionalInformation": "additionalinformation -> Zusätzliche Informationen",
-                "capacity": "capacity -> Kapazität",
-                "isOnline": "isonline -> ist Online"
-            }
-        },
-        "errorMessages": {
-            "genericErrorMessage": "Import von Übungsgruppen sind fehlgeschlagen!",
-            "withoutTitle": "Die folgenden Zeilen enthalten keinen Übungsgruppen Titel: ",
-            "invalidTitle": "Die folgenden Zeilen haben einen ungültigen Titel für die Übungsgruppe (Titel dürfen nur Buchstaben, Zahlen, Leerzeichen, Bindestriche und maximal 19 Zeichen enthalten): ",
-            "noIdentificationInformation": "Die folgenden Zeilen geben einen Benutzer an, enthalten jedoch keinen Anmeldenamen oder Immatrikulationsnummer: ",
-            "duplicatedLogins": "Die folgenden Anmeldenamen werden mehreren Übungsgruppen zugeordnet: ",
-            "duplicatedRegistrationNumbers": "Die folgenden Immatrikulationsnummern werden mehreren Übungsgruppen zugeordnet: "
-        },
-        "serverErrors": {
-            "notitle": "Kein Übungsgruppen Titel",
-            "nologinorregistrationnumber": "Kein Anmeldename oder Immatrikulationsnummer",
-            "nouserfound": "Kein passender Studierender im Kurs gefunden",
-            "multipleregistrations": "Mehrere Registrierungen in CSV für Studierenden"
-        },
-        "csvFile": {
-            "label": "Wähle eine .csv-Datei aus",
-            "validationFailed": "Bitte die Datei reparieren, sie wird aufgrund des folgenden Fehlers nicht als gültig angesehen: ",
-            "parseCSVButton": "CSV einlesen"
-        },
-        "fixedPlaceForm": {
-            "checkbox": {
-                "label": "Möchtest du nur bestimmte Zeilen auslesen? Gib einen Header und den gewünschten Wert für diesen Header an um die CSV nach diesen Zeilen zu filtern.",
-                "explanation": "Nur Zeilen, die den angegebenen Wert in der angegebenen Header Spalte haben, werden aus der CSV-Datei ausgelesen. Zum Beispiel, um nur Studenten mit 'Fixplatz' als Zeilenwert im 'Platz' Header zu parsen, gib 'Fixplatz' als Wert an und 'Platz' als Spaltennamen an."
+                "tutorialGroupTitle": "Tutorial Group, gruppe, titel, group, title, tutorial group -> Übungsgruppe",
+                "registrationNumber": "Matriculation Number, Matrikelnummer, registrationnumber, matriculationnumber, matrikelnummer, number -> Matrikelnummer",
+                "login": "Login, Anmeldename, login, user, username, benutzer, benutzername -> Anmeldename",
+                "firstName": "First Name, Vorname, firstname, firstnameofstudent, givenname, forename, vorname -> Vorname",
+                "lastName": "Last Name, Nachname, familyname, lastname, familynameofstudent, surname, nachname, familienname, name -> Nachname",
+                "campus": "Campus, campus -> Campus",
+                "language": "Language, Sprache, language -> Sprache",
+                "additionalInformation": "Additional Information, additionalinformation -> Zusätzliche Informationen",
+                "capacity": "Capacity, capacity -> Kapazität",
+                "isOnline": "is Online, ist Online, isonline -> ist Online"
             },
-            "statusHeaderInput": {
-                "label": "Spaltenname für Registrierungsstatus",
-                "placeholder": "Gib den Spaltennamen ein, der den Status der Registrierung enthält. Z.B. 'Platz'",
-                "maxLengthValidationError": "Der Spaltenname ist auf {{ max }} Zeichen beschränkt!"
+            "errorMessages": {
+                "genericErrorMessage": "Import von Übungsgruppen sind fehlgeschlagen!",
+                "withoutTitle": "Die folgenden Zeilen enthalten keinen Übungsgruppen Titel: ",
+                "invalidTitle": "Die folgenden Zeilen haben einen ungültigen Titel für die Übungsgruppe (Titel dürfen nur Buchstaben, Zahlen, Leerzeichen, Bindestriche und maximal 19 Zeichen enthalten): ",
+                "noIdentificationInformation": "Die folgenden Zeilen geben einen Benutzer an, enthalten jedoch keinen Anmeldenamen oder Immatrikulationsnummer: ",
+                "duplicatedLogins": "Die folgenden Anmeldenamen werden mehreren Übungsgruppen zugeordnet: ",
+                "duplicatedRegistrationNumbers": "Die folgenden Immatrikulationsnummern werden mehreren Übungsgruppen zugeordnet: "
             },
-            "fixedPlaceValueInput": {
-                "label": "Wert für Fixplatz-Markierung",
-                "placeholder": "Gib den Wert ein, der eine Registrierung als fix markiert. Z.B. 'Fixplatz'",
-                "maxLengthValidationError": "Der Wert ist auf {{ max }} Zeichen beschränkt!"
-            }
-        },
-        "table": {
-            "example1": "Dieses Beispiel-CSV-Format zeigt die minimal erforderlichen Header zum Parsen einer CSV-Datei:",
-            "example2": "Dieses Beispiel-CSV-Format zeigt die Header, die erforderlich sind, um Studenten mit einer Matrikelnummer zu registrieren, wobei Vorname und Nachname optional sind:",
-            "example3": "Dieses Beispiel-CSV-Format zeigt die Header, die erforderlich sind, um Studenten mit einem Login zu registrieren, wobei Vorname und Nachname optional sind:",
-            "example4": "Dieses Beispiel-CSV-Format zeigt die optionalen Header zusätzlich zu den Headern, die den Import von Studierenden ermöglichen und hinzugefügt werden können (es ist nicht notwendig, alle optionalen Header zu haben, um einen optionalen Header zu importieren):",
-            "template": "Beispiel Herunterladen",
-            "showNotImportedButton": "Nicht importierte Registrierungen",
-            "showImportedButton": "Importierte Registrierungen",
-            "showAllButton": "Alle Registrierungen",
-            "groupA": "Gruppe A",
-            "groupB": "Gruppe B",
-            "columns": {
-                "title": "Übungsgruppe",
-                "registrationNumber": "Matrikelnummer",
-                "login": "Anmeldename",
-                "firstName": "Vorname",
-                "lastName": "Nachname",
-                "campus": "Campus",
-                "language": "Sprache",
-                "additionalInformation": "Zusätzliche Informationen",
-                "capacity": "Kapazität",
-                "isOnline": "ist Online",
-                "error": "Fehler"
+            "serverErrors": {
+                "notitle": "Kein Übungsgruppen Titel",
+                "nologinorregistrationnumber": "Kein Anmeldename oder Immatrikulationsnummer",
+                "nouserfound": "Kein passender Studierender im Kurs gefunden",
+                "multipleregistrations": "Mehrere Registrierungen in CSV für Studierenden"
             },
-            "footer": {
-                "imported": "Importiert: {{ count }} Registrierungen",
-                "notImported": "Nicht importiert: {{ count }} Registrierungen",
-                "total": "Gesamt: {{ count }} Registrierungen"
+            "csvFile": {
+                "label": "Wähle eine .csv-Datei aus",
+                "validationFailed": "Bitte die Datei reparieren, sie wird aufgrund des folgenden Fehlers nicht als gültig angesehen: ",
+                "parseCSVButton": "CSV einlesen"
+            },
+            "fixedPlaceForm": {
+                "checkbox": {
+                    "label": "Möchtest du nur bestimmte Zeilen auslesen? Gib einen Header und den gewünschten Wert für diesen Header an um die CSV nach diesen Zeilen zu filtern.",
+                    "explanation": "Nur Zeilen, die den angegebenen Wert in der angegebenen Header Spalte haben, werden aus der CSV-Datei ausgelesen. Zum Beispiel, um nur Studenten mit 'Fixplatz' als Zeilenwert im 'Platz' Header zu parsen, gib 'Fixplatz' als Wert an und 'Platz' als Spaltennamen an."
+                },
+                "statusHeaderInput": {
+                    "label": "Spaltenname für Registrierungsstatus",
+                    "placeholder": "Gib den Spaltennamen ein, der den Status der Registrierung enthält. Z.B. 'Platz'",
+                    "maxLengthValidationError": "Der Spaltenname ist auf {{ max }} Zeichen beschränkt!"
+                },
+                "fixedPlaceValueInput": {
+                    "label": "Wert für Fixplatz-Markierung",
+                    "placeholder": "Gib den Wert ein, der eine Registrierung als fix markiert. Z.B. 'Fixplatz'",
+                    "maxLengthValidationError": "Der Wert ist auf {{ max }} Zeichen beschränkt!"
+                }
+            },
+            "table": {
+                "example1": "Dieses Beispiel-CSV-Format zeigt die minimal erforderlichen Header zum Parsen einer CSV-Datei:",
+                "example2": "Dieses Beispiel-CSV-Format zeigt die Header, die erforderlich sind, um Studenten mit einer Matrikelnummer zu registrieren, wobei Vorname und Nachname optional sind:",
+                "example3": "Dieses Beispiel-CSV-Format zeigt die Header, die erforderlich sind, um Studenten mit einem Login zu registrieren, wobei Vorname und Nachname optional sind:",
+                "example4": "Dieses Beispiel-CSV-Format zeigt die optionalen Header zusätzlich zu den Headern, die den Import von Studierenden ermöglichen und hinzugefügt werden können (es ist nicht notwendig, alle optionalen Header zu haben, um einen optionalen Header zu importieren):",
+                "template": "Beispiel Herunterladen",
+                "showNotImportedButton": "Nicht importierte Registrierungen",
+                "showImportedButton": "Importierte Registrierungen",
+                "showAllButton": "Alle Registrierungen",
+                "groupA": "Gruppe A",
+                "groupB": "Gruppe B",
+                "columns": {
+                    "title": "Übungsgruppe",
+                    "registrationNumber": "Matrikelnummer",
+                    "login": "Anmeldename",
+                    "firstName": "Vorname",
+                    "lastName": "Nachname",
+                    "campus": "Campus",
+                    "language": "Sprache",
+                    "additionalInformation": "Zusätzliche Informationen",
+                    "capacity": "Kapazität",
+                    "isOnline": "ist Online",
+                    "error": "Fehler"
+                },
+                "footer": {
+                    "imported": "Importiert: {{ count }} Registrierungen",
+                    "notImported": "Nicht importiert: {{ count }} Registrierungen",
+                    "total": "Gesamt: {{ count }} Registrierungen"
+                }
             }
         }
     }

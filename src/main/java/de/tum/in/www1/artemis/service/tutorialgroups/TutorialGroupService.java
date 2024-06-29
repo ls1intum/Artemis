@@ -743,12 +743,12 @@ public class TutorialGroupService {
             writeTutorialGroupJSON(groupData, tutorialGroup, selectedFields);
             if (selectedFields.contains("Students")) {
                 if ((tutorialGroup.getRegistrations() != null) && (!tutorialGroup.getRegistrations().isEmpty())) {
+                    List<Map<String, Object>> studentsList = new ArrayList<>();
                     for (TutorialGroupRegistration registration : tutorialGroup.getRegistrations()) {
                         User student = registration.getStudent();
-                        groupData.put("Students",
-                                groupData.get("Students") != null ? groupData.get("Students") + convertStudentToString(student) : convertStudentToString(student));
+                        studentsList.add(convertStudentToMap(student));
                     }
-                    groupData.put("Students", groupData.get("Students").toString().substring(0, groupData.get("Students").toString().length() - 1));
+                    groupData.put("Students", studentsList);
                 }
             }
             exportData.add(groupData);
@@ -758,10 +758,18 @@ public class TutorialGroupService {
         return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(exportData);
     }
 
-    private void writeTutorialGroupJSON(Map<String, Object> groupData, TutorialGroup tutorialGroup, List<String> selectedFields) throws JsonProcessingException {
+    private void writeTutorialGroupJSON(Map<String, Object> groupData, TutorialGroup tutorialGroup, List<String> selectedFields) {
         for (String field : selectedFields) {
             groupData.put(field, getCSVInput(tutorialGroup, field));
         }
+    }
+
+    private Map<String, Object> convertStudentToMap(User student) {
+        Map<String, Object> studentMap = new LinkedHashMap<>();
+        studentMap.put("RegistrationNumber", getValueOrDefault(student.getRegistrationNumber()));
+        studentMap.put("FirstName", getValueOrDefault(student.getFirstName()));
+        studentMap.put("LastName", getValueOrDefault(student.getLastName()));
+        return studentMap;
     }
 
     private String getValueOrDefault(Object value) {
@@ -863,16 +871,5 @@ public class TutorialGroupService {
             }
         }
         return students;
-    }
-
-    private String convertStudentToString(User student) {
-        StringBuilder studentString = new StringBuilder();
-        studentString.append(student.getRegistrationNumber());
-        studentString.append(" ");
-        studentString.append(student.getFirstName());
-        studentString.append(" ");
-        studentString.append(student.getLastName());
-        studentString.append(",");
-        return studentString.toString();
     }
 }

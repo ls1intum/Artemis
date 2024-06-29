@@ -27,14 +27,14 @@ type ParsedCSVRow = object;
 // ToDo: Idea for future: Let the specify the column names / values in the dialog
 const POSSIBLE_TUTORIAL_GROUP_TITLE_HEADERS = ['gruppe', 'titel', 'group', 'title', 'tutorialgroups'];
 const POSSIBLE_REGISTRATION_NUMBER_HEADERS = ['registrationnumber', 'matriculationnumber', 'matrikelnummer', 'number'];
-const POSSIBLE_LOGIN_HEADERS = ['login', 'user', 'username', 'benutzer', 'benutzername'];
+const POSSIBLE_LOGIN_HEADERS = ['login', 'user', 'username', 'benutzer', 'benutzername', 'anmeldename'];
 const POSSIBLE_FIRST_NAME_HEADERS = ['firstname', 'firstnameofstudent', 'givenname', 'forename', 'vorname'];
 const POSSIBLE_LAST_NAME_HEADERS = ['familyname', 'lastname', 'familynameofstudent', 'surname', 'nachname', 'familienname', 'name'];
 const POSSIBLE_CAMPUS_HEADERS = ['campus'];
 const POSSIBLE_CAPACITY_HEADERS = ['capacity'];
-const POSSIBLE_LANGUAGE_HEADERS = ['language'];
+const POSSIBLE_LANGUAGE_HEADERS = ['language', 'sprache'];
 const POSSIBLE_ADDITIONAL_INFO_HEADERS = ['additionalinformation'];
-const POSSIBLE_IS_ONLINE_HEADERS = ['isonline'];
+const POSSIBLE_IS_ONLINE_HEADERS = ['isonline', 'ist Online'];
 
 type filterValues = 'all' | 'onlyImported' | 'onlyNotImported';
 
