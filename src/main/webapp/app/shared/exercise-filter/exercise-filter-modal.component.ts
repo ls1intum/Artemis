@@ -134,14 +134,16 @@ export class ExerciseFilterModalComponent implements OnInit {
             return;
         }
 
-        this.applyDifficultyFilter();
-
         const searchedTypes: ExerciseType[] | undefined = this.typeFilters?.filter((type) => type.checked).map((type) => type.value);
         const selectedCategories = this.selectedCategoryOptions.map((categoryOption: ExerciseCategoryFilterOption) => categoryOption.category);
+        const searchedDifficulties: DifficultyLevel[] | undefined = this.difficultyFilters?.filter((difficulty) => difficulty.checked).map((difficulty) => difficulty.value);
 
         for (const groupedDataKey in this.sidebarData.groupedData) {
             this.sidebarData.groupedData[groupedDataKey].entityData = this.sidebarData.groupedData[groupedDataKey].entityData.filter(
-                (sidebarElement) => this.applyTypeFilter(sidebarElement, searchedTypes) && this.applyCategoryFilter(sidebarElement, selectedCategories),
+                (sidebarElement) =>
+                    this.satisfiesTypeFilter(sidebarElement, searchedTypes) &&
+                    this.satisfiesCategoryFilter(sidebarElement, selectedCategories) &&
+                    this.satisfiesDifficultyFilter(sidebarElement, searchedDifficulties),
             );
         }
 
@@ -153,7 +155,18 @@ export class ExerciseFilterModalComponent implements OnInit {
         this.closeModal();
     }
 
-    private applyTypeFilter(sidebarElement: SidebarCardElement, searchedTypes?: ExerciseType[]): boolean {
+    private satisfiesDifficultyFilter(sidebarElement: SidebarCardElement, searchedDifficulties?: DifficultyLevel[]): boolean {
+        if (!searchedDifficulties?.length) {
+            return true;
+        }
+        if (!sidebarElement.difficulty) {
+            return false;
+        }
+
+        return searchedDifficulties.includes(sidebarElement.difficulty);
+    }
+
+    private satisfiesTypeFilter(sidebarElement: SidebarCardElement, searchedTypes?: ExerciseType[]): boolean {
         if (!searchedTypes?.length) {
             return true;
         }
@@ -164,7 +177,7 @@ export class ExerciseFilterModalComponent implements OnInit {
         return searchedTypes.includes(sidebarElement.exercise.type);
     }
 
-    private applyCategoryFilter(sidebarElement: SidebarCardElement, selectedCategories: ExerciseCategory[]): boolean {
+    private satisfiesCategoryFilter(sidebarElement: SidebarCardElement, selectedCategories: ExerciseCategory[]): boolean {
         if (!selectedCategories.length) {
             return true;
         }
@@ -173,25 +186,6 @@ export class ExerciseFilterModalComponent implements OnInit {
         }
 
         return sidebarElement.exercise.categories.some((category) => selectedCategories.some((selectedCategory) => selectedCategory.equals(category)));
-    }
-
-    private applyDifficultyFilter() {
-        if (!this.difficultyFilters) {
-            return;
-        }
-        const searchedDifficulties: DifficultyLevel[] = this.difficultyFilters?.filter((difficulty) => difficulty.checked).map((difficulty) => difficulty.value);
-        if (searchedDifficulties.length === 0) {
-            return;
-        }
-
-        // TODO do we need to filter the ungrouped data as well?
-        if (this.sidebarData?.groupedData) {
-            for (const groupedDataKey in this.sidebarData.groupedData) {
-                this.sidebarData.groupedData[groupedDataKey].entityData = this.sidebarData.groupedData[groupedDataKey].entityData.filter(
-                    (sidebarElement) => sidebarElement.difficulty && searchedDifficulties.includes(sidebarElement.difficulty),
-                );
-            }
-        }
     }
 
     private applyScoreFilter() {
