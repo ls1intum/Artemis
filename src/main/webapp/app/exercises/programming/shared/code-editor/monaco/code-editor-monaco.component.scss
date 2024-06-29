@@ -14,7 +14,12 @@
 }
 
 .monaco-add-feedback-button:before {
+    display: flex;
+    align-items: center;
     content: '+';
+    // Cosmetic adjustment to center the + vertically
+    padding-bottom: 10%;
+    height: 100%;
 }
 
 .monaco-diff-line-highlight {
