@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 
 export enum IrisLogoSize {
+    FLUID = 'fluid',
     SMALL = 'small',
     MEDIUM = 'medium',
     BIG = 'big',
@@ -18,7 +19,7 @@ export enum IrisLogoLookDirection {
 })
 export class IrisLogoComponent implements OnInit {
     @Input()
-    size: IrisLogoSize = IrisLogoSize.BIG;
+    size: IrisLogoSize | number = IrisLogoSize.BIG;
 
     @Input()
     look: IrisLogoLookDirection = IrisLogoLookDirection.RIGHT;
@@ -33,9 +34,12 @@ export class IrisLogoComponent implements OnInit {
         } else if (this.size === IrisLogoSize.MEDIUM) {
             this.logoUrl = `public/images/iris/iris-logo-big-${this.look}.png`;
             this.classList = 'medium';
-        } else {
+        } else if (this.size === IrisLogoSize.BIG) {
             this.logoUrl = `public/images/iris/iris-logo-big-${this.look}.png`;
             this.classList = 'big img-fluid';
+        } else if (this.size === IrisLogoSize.FLUID) {
+            this.logoUrl = `public/images/iris/iris-logo-big-${this.look}.png`;
+            this.classList = 'fluid';
         }
     }
 }

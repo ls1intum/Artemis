@@ -1,13 +1,13 @@
 package de.tum.in.www1.artemis.service.connectors.pyris;
 
-import java.time.Instant;
-import java.time.ZonedDateTime;
+import static de.tum.in.www1.artemis.service.util.TimeUtil.toInstant;
+
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-
-import jakarta.annotation.Nullable;
+import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -18,20 +18,16 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Repository;
-import de.tum.in.www1.artemis.domain.iris.message.IrisJsonMessageContent;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
-import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisBuildLogEntryDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisFeedbackDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisJsonMessageContentDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisMessageContentDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisMessageDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisProgrammingExerciseDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisResultDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisSubmissionDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisTextMessageContentDTO;
 import de.tum.in.www1.artemis.service.programming.RepositoryService;
 
 @Service
@@ -44,9 +40,12 @@ public class PyrisDTOService {
 
     private final RepositoryService repositoryService;
 
-    public PyrisDTOService(GitService gitService, RepositoryService repositoryService) {
+    private final ProfileService profileService;
+
+    public PyrisDTOService(GitService gitService, RepositoryService repositoryService, ProfileService profileService) {
         this.gitService = gitService;
         this.repositoryService = repositoryService;
+        this.profileService = profileService;
     }
 
     /**
@@ -56,9 +55,9 @@ public class PyrisDTOService {
      * @param exercise the programming exercise to convert
      * @return the converted PyrisProgrammingExerciseDTO
      */
-    public PyrisProgrammingExerciseDTO toPyrisDTO(ProgrammingExercise exercise) {
-        var templateRepositoryContents = getRepository(exercise.getTemplateParticipation()).map(repositoryService::getFilesContentFromWorkingCopy).orElse(Map.of());
-        var solutionRepositoryContents = getRepository(exercise.getSolutionParticipation()).map(repositoryService::getFilesContentFromWorkingCopy).orElse(Map.of());
+    public PyrisProgrammingExerciseDTO toPyrisProgrammingExerciseDTO(ProgrammingExercise exercise) {
+        var templateRepositoryContents = getFilteredRepositoryContents(exercise.getTemplateParticipation());
+        var solutionRepositoryContents = getFilteredRepositoryContents(exercise.getSolutionParticipation());
         Optional<Repository> testRepo = Optional.empty();
         try {
             testRepo = Optional.ofNullable(gitService.getOrCheckoutRepository(exercise.getVcsTestRepositoryUri(), true));
@@ -79,11 +78,10 @@ public class PyrisDTOService {
      * @param submission the students submission
      * @return the converted PyrisSubmissionDTO
      */
-    public PyrisSubmissionDTO toPyrisDTO(ProgrammingSubmission submission) {
+    public PyrisSubmissionDTO toPyrisSubmissionDTO(ProgrammingSubmission submission) {
         var buildLogEntries = submission.getBuildLogEntries().stream().map(buildLogEntry -> new PyrisBuildLogEntryDTO(toInstant(buildLogEntry.getTime()), buildLogEntry.getLog()))
                 .toList();
-        var studentRepositoryContents = getRepository((ProgrammingExerciseParticipation) submission.getParticipation()).map(repositoryService::getFilesContentFromWorkingCopy)
-                .orElse(Map.of());
+        var studentRepositoryContents = getFilteredRepositoryContents((ProgrammingExerciseParticipation) submission.getParticipation());
         return new PyrisSubmissionDTO(submission.getId(), toInstant(submission.getSubmissionDate()), studentRepositoryContents, submission.getParticipation().isPracticeMode(),
                 submission.isBuildFailed(), buildLogEntries, getLatestResult(submission));
     }
@@ -95,34 +93,8 @@ public class PyrisDTOService {
      * @param messages the messages with contents to convert
      * @return the converted list of PyrisMessageDTOs
      */
-    public List<PyrisMessageDTO> toPyrisDTO(List<IrisMessage> messages) {
-        return messages.stream().map(message -> {
-            var content = message.getContent().stream().map(messageContent -> {
-                PyrisMessageContentDTO result = null;
-                if (messageContent.getClass().equals(IrisTextMessageContent.class)) {
-                    result = new PyrisTextMessageContentDTO(messageContent.getContentAsString());
-                }
-                else if (messageContent.getClass().equals(IrisJsonMessageContent.class)) {
-                    result = new PyrisJsonMessageContentDTO(messageContent.getContentAsString());
-                }
-                return result;
-            }).filter(Objects::nonNull).toList();
-            return new PyrisMessageDTO(toInstant(message.getSentAt()), message.getSender(), content);
-        }).toList();
-    }
-
-    /**
-     * Null safe conversion of ZonedDateTime to Instant
-     *
-     * @param zonedDateTime the ZonedDateTime to convert
-     * @return the Instant or null if the input was null
-     */
-    @Nullable
-    private Instant toInstant(@Nullable ZonedDateTime zonedDateTime) {
-        if (zonedDateTime == null) {
-            return null;
-        }
-        return zonedDateTime.toInstant();
+    public List<PyrisMessageDTO> toPyrisMessageDTOList(List<IrisMessage> messages) {
+        return messages.stream().map(PyrisMessageDTO::of).toList();
     }
 
     /**
@@ -139,7 +111,7 @@ public class PyrisDTOService {
         var feedbacks = latestResult.getFeedbacks().stream().map(feedback -> {
             var text = feedback.getDetailText();
             if (feedback.getHasLongFeedbackText()) {
-                text = feedback.getLongFeedback().get().getText();
+                text = feedback.getLongFeedback().orElseThrow().getText();
             }
             var testCaseName = feedback.getTestCase() == null ? feedback.getText() : feedback.getTestCase().getTestName();
             return new PyrisFeedbackDTO(text, testCaseName, Objects.requireNonNullElse(feedback.getCredits(), 0D));
@@ -148,21 +120,48 @@ public class PyrisDTOService {
         return new PyrisResultDTO(toInstant(latestResult.getCompletionDate()), latestResult.isSuccessful(), feedbacks);
     }
 
+    private Map<String, String> getFilteredRepositoryContents(ProgrammingExerciseParticipation participation) {
+        var language = participation.getProgrammingExercise().getProgrammingLanguage();
+
+        var repositoryContents = getRepositoryContents(participation);
+        return repositoryContents.entrySet().stream().filter(entry -> language == null || language.matchesFileExtension(entry.getKey()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
     /**
-     * Helper method to get & checkout the repository for a participation.
-     * This is an exception safe way to fetch the repository, as it will return an empty optional if the repository could not be fetched.
+     * Helper method to get & checkout the repository contents for a participation.
+     * This is an exception safe way to fetch the repository, as it will return an empty map if the repository could not be fetched.
      * This is useful, as the Pyris call should not fail if the repository is not available.
      *
      * @param participation the participation
      * @return the repository or empty if it could not be fetched
      */
-    private Optional<Repository> getRepository(ProgrammingExerciseParticipation participation) {
+    private Map<String, String> getRepositoryContents(ProgrammingExerciseParticipation participation) {
         try {
-            return Optional.ofNullable(gitService.getOrCheckoutRepository(participation.getVcsRepositoryUri(), true));
+            var repositoryUri = participation.getVcsRepositoryUri();
+            if (profileService.isLocalVcsActive()) {
+                return Optional.ofNullable(gitService.getBareRepository(repositoryUri)).map(bareRepository -> {
+                    var lastCommitObjectId = gitService.getLastCommitHash(repositoryUri);
+                    if (lastCommitObjectId == null) {
+                        return null;
+                    }
+                    var lastCommitHash = lastCommitObjectId.getName();
+                    try {
+                        return repositoryService.getFilesContentFromBareRepository(bareRepository, lastCommitHash);
+                    }
+                    catch (IOException e) {
+                        log.error("Could not fetch repository contents from bare repository", e);
+                        return null;
+                    }
+                }).orElse(Map.of());
+            }
+            else {
+                return Optional.ofNullable(gitService.getOrCheckoutRepository(repositoryUri, true)).map(repositoryService::getFilesContentFromWorkingCopy).orElse(Map.of());
+            }
         }
         catch (GitAPIException e) {
             log.error("Could not fetch repository", e);
-            return Optional.empty();
+            return Map.of();
         }
     }
 }

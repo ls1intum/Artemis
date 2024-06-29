@@ -48,7 +48,6 @@ import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.hestia.CoverageFileReport;
 import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
@@ -323,6 +322,10 @@ public class Result extends DomainObject implements Comparable<Result> {
      * @param skipAutomaticResults if true automatic results won't be updated
      */
     public void updateAllFeedbackItems(List<Feedback> feedbacks, boolean skipAutomaticResults) {
+        if (feedbacks == null) {
+            return;
+        }
+
         for (Feedback feedback : feedbacks) {
             if (skipAutomaticResults && feedback.getType() == FeedbackType.AUTOMATIC) {
                 continue;
@@ -509,17 +512,14 @@ public class Result extends DomainObject implements Comparable<Result> {
         }
     }
 
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
-
     /**
      * Updates the attributes "score" and "successful" by evaluating its submission.
      * <b>Important</b>: the quizSubmission has to be loaded with eager submitted answers, otherwise this method will not work correctly
+     *
+     * @param quizExercise the quiz exercise for which the submission should be evaluated, must contain access to the course to calculate the score correctly
      */
-    public void evaluateQuizSubmission() {
+    public void evaluateQuizSubmission(@NotNull QuizExercise quizExercise) {
         if (submission instanceof QuizSubmission quizSubmission) {
-            // get the exercise this result belongs to
-            StudentParticipation studentParticipation = (StudentParticipation) getParticipation();
-            QuizExercise quizExercise = (QuizExercise) studentParticipation.getExercise();
             // update score
             setScore(quizExercise.getScoreForSubmission(quizSubmission), quizExercise.getCourseViaExerciseGroupOrCourseMember());
         }

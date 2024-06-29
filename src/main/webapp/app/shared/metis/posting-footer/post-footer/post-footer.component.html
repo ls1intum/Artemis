@@ -26,7 +26,7 @@
 </div>
 @if (showAnswers) {
     <ng-container class="list-answer-post">
-        @for (answerPost of sortedAnswerPosts; track answerPostTrackByFn($index, answerPost); let isLastAnswer = $last) {
+        @for (answerPost of sortedAnswerPosts; track $index; let isLastAnswer = $last) {
             <jhi-answer-post
                 [lastReadDate]="lastReadDate"
                 [isReadOnlyMode]="readOnlyMode"

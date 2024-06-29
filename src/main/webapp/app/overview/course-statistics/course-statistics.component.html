@@ -72,7 +72,7 @@
                             }
                         </div>
                         <div class="col-md-3 d-flex flex-column align-self-end color-legend-container">
-                            @for (exerciseType of ngxDoughnutData; track exerciseType) {
+                            @for (exerciseType of ngxDoughnutData; track ngxDoughnutData.indexOf(exerciseType)) {
                                 <div class="color-legend-entry">
                                     <div class="color-indicator" [style.background]="exerciseType.color"></div>
                                     <h5 class="fw-bolder">{{ exerciseType.name | artemisTranslate }}</h5>
@@ -176,7 +176,7 @@
                 <hr />
                 <div class="col-12 mb-3">
                     <h2>{{ 'artemisApp.courseOverview.statistics.pointsPerExercise' | artemisTranslate }}</h2>
-                    @for (exerciseGroup of ngxExerciseGroups | keyvalue; track exerciseGroup) {
+                    @for (exerciseGroup of ngxExerciseGroups | keyvalue; let index = $index; track index) {
                         @if (exerciseGroup.value[0]) {
                             <div class="row mt-3 d-flex justify-content-end" id="{{ exerciseGroup.value[0]?.type }}-wrapper">
                                 <div class="col-12 mb-1 d-flex align-items-center">
@@ -194,7 +194,7 @@
                                         [xAxis]="true"
                                         [yAxis]="true"
                                         [xScaleMax]="exerciseGroup.value[0].xScaleMax"
-                                        [barPadding]="barPadding"
+                                        [barPadding]="BAR_PADDING"
                                         [maxXAxisTickLength]="15"
                                         (select)="onSelect($event)"
                                     >

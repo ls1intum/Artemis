@@ -17,8 +17,6 @@ import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 @Profile("iris")
 public class IrisChatWebsocketService extends IrisWebsocketService {
 
-    private static final String WEBSOCKET_TOPIC_SESSION_TYPE = "sessions";
-
     private final IrisRateLimitService rateLimitService;
 
     public IrisChatWebsocketService(WebsocketMessagingService websocketMessagingService, IrisRateLimitService rateLimitService) {
@@ -28,7 +26,7 @@ public class IrisChatWebsocketService extends IrisWebsocketService {
 
     private User checkSessionTypeAndGetUser(IrisSession irisSession) {
         if (!(irisSession instanceof IrisChatSession chatSession)) {
-            throw new UnsupportedOperationException("Only IrisChatSession is supported");
+            throw new UnsupportedOperationException("Only IrisChatSessions are supported");
         }
         return chatSession.getUser();
     }
@@ -43,24 +41,37 @@ public class IrisChatWebsocketService extends IrisWebsocketService {
         var session = irisMessage.getSession();
         var user = checkSessionTypeAndGetUser(session);
         var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
-        super.send(user, WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), new IrisWebsocketDTO(irisMessage, null, rateLimitInfo, stages));
+        super.send(user, session.getId(), new IrisWebsocketDTO(irisMessage, rateLimitInfo, stages, null));
     }
 
     /**
-     * Sends an exception over the websocket to a specific user
+     * Sends a message over the websocket to a specific user without stages and suggestions
      *
-     * @param session   to which the exception belongs
-     * @param throwable that should be sent over the websocket
-     * @param stages    that should be sent over the websocket
+     * @param message that should be sent over the websocket
      */
-    public void sendException(IrisSession session, Throwable throwable, List<PyrisStageDTO> stages) {
-        User user = checkSessionTypeAndGetUser(session);
-        var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
-        super.send(user, WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), new IrisWebsocketDTO(null, throwable, rateLimitInfo, stages));
+    public void sendMessage(IrisMessage message) {
+        sendMessage(message, null);
     }
 
+    /**
+     * Sends a status update over the websocket to a specific user
+     *
+     * @param session the session to send the status update to
+     * @param stages  the stages to send
+     */
     public void sendStatusUpdate(IrisSession session, List<PyrisStageDTO> stages) {
+        this.sendStatusUpdate(session, stages, null);
+    }
+
+    /**
+     * Sends a status update over the websocket to a specific user
+     *
+     * @param session     the session to send the status update to
+     * @param stages      the stages to send
+     * @param suggestions the suggestions to send
+     */
+    public void sendStatusUpdate(IrisSession session, List<PyrisStageDTO> stages, List<String> suggestions) {
         var user = checkSessionTypeAndGetUser(session);
-        super.send(user, WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), new IrisWebsocketDTO(null, null, rateLimitService.getRateLimitInformation(user), stages));
+        super.send(user, session.getId(), new IrisWebsocketDTO(null, rateLimitService.getRateLimitInformation(user), stages, suggestions));
     }
 }

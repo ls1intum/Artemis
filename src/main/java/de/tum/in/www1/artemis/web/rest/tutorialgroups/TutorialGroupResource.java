@@ -4,8 +4,10 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.web.rest.util.DateUtil.isIso8601DateString;
 import static de.tum.in.www1.artemis.web.rest.util.DateUtil.isIso8601TimeString;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -22,6 +24,9 @@ import jakarta.ws.rs.BadRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -31,9 +36,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
@@ -50,6 +57,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.feature.Feature;
@@ -294,6 +302,7 @@ public class TutorialGroupResource {
      * @param notificationText               the optional notification text
      * @param updateTutorialGroupChannelName whether the tutorial group channel name should be updated with the new tutorial group title or not
      */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record TutorialGroupUpdateDTO(@Valid @NotNull TutorialGroup tutorialGroup, @Size(min = 1, max = 1000) @Nullable String notificationText,
             @Nullable Boolean updateTutorialGroupChannelName) {
     }
@@ -529,6 +538,58 @@ public class TutorialGroupResource {
                 throw new BadRequestAlertException("The tutorialGroupId in the path does not match the id in the tutorial group", ENTITY_NAME, "tutorialGroupIdMismatch");
             }
         });
+    }
+
+    /**
+     * GET /courses/:courseId/tutorial-groups/export : Export tutorial groups for a specific course to a CSV file.
+     *
+     * @param courseId the id of the course for which the tutorial groups should be exported
+     * @param fields   the list of fields to include in the CSV export
+     * @return the ResponseEntity with status 200 (OK) and the CSV file containing the tutorial groups
+     */
+    @GetMapping(value = "courses/{courseId}/tutorial-groups/export/csv", produces = "text/csv")
+    @EnforceAtLeastInstructorInCourse
+    @FeatureToggle(Feature.TutorialGroups)
+    public ResponseEntity<byte[]> exportTutorialGroupsToCSV(@PathVariable Long courseId, @RequestParam List<String> fields) {
+        log.debug("REST request to export TutorialGroups to CSV for course: {}", courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        String csvContent = "";
+        try {
+            csvContent = tutorialGroupService.exportTutorialGroupsToCSV(course, user, fields);
+        }
+        catch (IOException e) {
+            throw new BadRequestException("Error occurred while exporting tutorial groups", e);
+        }
+        byte[] bytes = csvContent.getBytes(StandardCharsets.UTF_8);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(new MediaType("text", "csv"));
+        headers.setContentDispositionFormData("attachment", "tutorial-groups.csv");
+        headers.setContentLength(bytes.length);
+
+        return ResponseEntity.ok().headers(headers).body(bytes);
+    }
+
+    /**
+     * GET /courses/:courseId/tutorial-groups/export/json : Export tutorial groups to JSON.
+     *
+     * @param courseId the id of the course to which the tutorial groups belong to
+     * @param fields   the fields to be included in the export
+     * @return ResponseEntity with the JSON data of the tutorial groups
+     */
+    @GetMapping(value = "courses/{courseId}/tutorial-groups/export/json", produces = MediaType.APPLICATION_JSON_VALUE)
+    @EnforceAtLeastInstructorInCourse
+    @FeatureToggle(Feature.TutorialGroups)
+    public ResponseEntity<String> exportTutorialGroupsToJSON(@PathVariable Long courseId, @RequestParam List<String> fields) {
+        log.debug("REST request to export TutorialGroups to JSON for course: {}", courseId);
+        try {
+            String json = tutorialGroupService.exportTutorialGroupsToJSON(courseId, fields);
+            return ResponseEntity.ok().body(json);
+        }
+        catch (JsonProcessingException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to process JSON export");
+        }
     }
 
     /**

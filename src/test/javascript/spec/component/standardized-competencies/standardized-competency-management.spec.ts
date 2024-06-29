@@ -28,6 +28,7 @@ import { KnowledgeAreaTreeStubComponent } from './knowledge-area-tree-stub.compo
 import { StandardizedCompetencyService } from 'app/shared/standardized-competencies/standardized-competency.service';
 import { StandardizedCompetencyEditStubComponent } from './detail/standardized-competency-edit-stub';
 import { StandardizedCompetencyFilterStubComponent } from './filter/standardized-competency-filter-stub.component';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 
 describe('StandardizedCompetencyManagementComponent', () => {
     let componentFixture: ComponentFixture<StandardizedCompetencyManagementComponent>;
@@ -47,6 +48,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
                 MockComponent(ButtonComponent),
                 KnowledgeAreaTreeStubComponent,
                 MockRouterLinkDirective,
+                MockComponent(DocumentationButtonComponent),
             ],
             providers: [ArtemisTranslatePipe, MockProvider(StandardizedCompetencyService), MockProvider(AdminStandardizedCompetencyService), MockProvider(NgbModal)],
         })

@@ -5,15 +5,15 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.util.List;
 
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 
 import de.tum.in.www1.artemis.domain.iris.session.IrisHestiaSession;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * Repository interface for managing {@link IrisHestiaSession} entities.
  * Provides custom queries for finding hestia sessions based on different criteria.
  */
-public interface IrisHestiaSessionRepository extends JpaRepository<IrisHestiaSession, Long> {
+public interface IrisHestiaSessionRepository extends ArtemisJpaRepository<IrisHestiaSession, Long> {
 
     /**
      * Finds a list of {@link IrisHestiaSession} based on the exercise and user IDs.

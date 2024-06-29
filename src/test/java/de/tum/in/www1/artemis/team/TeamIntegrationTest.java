@@ -42,6 +42,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.CoursesForDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ExerciseDetailsDTO;
 
 class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -88,7 +89,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final int NUMBER_OF_STUDENTS = 3;
 
-    private static final long nonExistingId = 123456789L;
+    private static final long NON_EXISTING_ID = 123456789L;
 
     private static final String TEST_PREFIX = "tit";
 
@@ -267,7 +268,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testUpdateTeam_NotFound() throws Exception {
         // Try updating a non-existing team
         Team team4 = new Team();
-        team4.setId(nonExistingId);
+        team4.setId(NON_EXISTING_ID);
         team4.setExercise(exercise);
         request.putWithResponseBody(resourceUrl() + "/" + team4.getId(), team4, Team.class, HttpStatus.NOT_FOUND);
     }
@@ -327,7 +328,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetTeam_NotFound() throws Exception {
-        request.get(resourceUrl() + "/" + nonExistingId, HttpStatus.NOT_FOUND, Team.class);
+        request.get(resourceUrl() + "/" + NON_EXISTING_ID, HttpStatus.NOT_FOUND, Team.class);
     }
 
     @Test
@@ -395,7 +396,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteTeam_NotFound() throws Exception {
-        request.delete(resourceUrl() + "/" + nonExistingId, HttpStatus.NOT_FOUND);
+        request.delete(resourceUrl() + "/" + NON_EXISTING_ID, HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -422,7 +423,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // Check that a student is found by his login and that he is NOT marked as "assignedToTeam" yet
         List<TeamSearchUserDTO> users2 = request.getList(resourceUrlSearchUsersInCourse(TEST_PREFIX + "student1"), HttpStatus.OK, TeamSearchUserDTO.class);
         assertThat(users2).as("Only user with login " + TEST_PREFIX + "'student1' was found").hasSize(1);
-        assertThat(users2.get(0).getAssignedTeamId()).as("User was correctly marked as not being assigned to a team yet").isNull();
+        assertThat(users2.get(0).assignedTeamId()).as("User was correctly marked as not being assigned to a team yet").isNull();
 
         // Check that no student is returned for non-existing login/name
         List<TeamSearchUserDTO> users3 = request.getList(resourceUrlSearchUsersInCourse("chuckNorris"), HttpStatus.OK, TeamSearchUserDTO.class);
@@ -434,7 +435,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         List<TeamSearchUserDTO> users4 = request.getList(resourceUrlSearchUsersInCourse(teamStudent.getLogin()), HttpStatus.OK, TeamSearchUserDTO.class);
         assertThat(users4).as("User from team was found").hasSize(1);
-        assertThat(users4.get(0).getAssignedTeamId()).as("User from team was correctly marked as being assigned to a team already").isEqualTo(team.getId());
+        assertThat(users4.get(0).assignedTeamId()).as("User from team was correctly marked as being assigned to a team already").isEqualTo(team.getId());
     }
 
     @Test
@@ -499,8 +500,8 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(serverExercise.isStudentAssignedTeamIdComputed()).as("Assigned team id on exercise was computed.").isTrue();
 
         // Check for endpoint: @GetMapping("exercises/{exerciseId}/details")
-        Exercise exerciseWithDetails = request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.OK, Exercise.class);
-        assertThat(exerciseWithDetails.getStudentAssignedTeamId()).as("Assigned team id on exercise from details is correct for student.").isEqualTo(team.getId());
+        ExerciseDetailsDTO exerciseWithDetails = request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
+        assertThat(exerciseWithDetails.exercise().getStudentAssignedTeamId()).as("Assigned team id on exercise from details is correct for student.").isEqualTo(team.getId());
         assertThat(serverExercise.isStudentAssignedTeamIdComputed()).as("Assigned team id on exercise was computed.").isTrue();
     }
 

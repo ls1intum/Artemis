@@ -94,7 +94,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationIndep
     private StudentParticipation participation;
 
     @BeforeEach
-    void initTestCase() throws Exception {
+    void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
         Course course = fileUploadExerciseUtilService.addCourseWithFourFileUploadExercise();
         releasedFileUploadExercise = exerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
@@ -153,7 +153,19 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationIndep
         // TODO: upload a real file from the file system twice with the same and with different names and test both works correctly
     }
 
+    @Test
+    @WithMockUser(TEST_PREFIX + "student3")
+    void submitFileSpecialExtensions() throws Exception {
+        releasedFileUploadExercise.setFilePattern("ipynb");
+        exerciseRepository.save(releasedFileUploadExercise);
+        submitFile("test.ipynb", false, MediaType.APPLICATION_OCTET_STREAM);
+    }
+
     private void submitFile(String filename, boolean differentFilePath) throws Exception {
+        submitFile(filename, differentFilePath, MediaType.IMAGE_PNG);
+    }
+
+    private void submitFile(String filename, boolean differentFilePath, MediaType expectedMediaType) throws Exception {
         FileUploadSubmission submission = ParticipationFactory.generateFileUploadSubmission(false);
 
         if (differentFilePath) {
@@ -185,7 +197,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(fileBytes.length > 0).as("Stored file has content").isTrue();
         checkDetailsHidden(returnedSubmission, true);
 
-        MvcResult file = request.performMvcRequest(get(returnedSubmission.getFilePath())).andExpect(status().isOk()).andExpect(content().contentType(MediaType.IMAGE_PNG))
+        MvcResult file = request.performMvcRequest(get(returnedSubmission.getFilePath())).andExpect(status().isOk()).andExpect(content().contentType(expectedMediaType))
                 .andReturn();
         assertThat(file.getResponse().getContentAsByteArray()).isEqualTo(validFile.getBytes());
     }
@@ -320,8 +332,8 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationIndep
         FileUploadSubmission storedSubmission = request.get("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submission-without-assessment", HttpStatus.OK,
                 FileUploadSubmission.class);
 
-        assertThat(storedSubmission).as("in-time submission was found").isEqualToIgnoringGivenFields(submission, "results", "submissionDate", "fileService", "filePathService",
-                "entityFileService");
+        final String[] ignoringFields = { "results", "submissionDate", "fileService", "filePathService", "entityFileService", "participation" };
+        assertThat(storedSubmission).as("in-time submission was found").usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(submission);
         assertThat(storedSubmission.getSubmissionDate()).as("submission date is correct").isCloseTo(submission.getSubmissionDate(), HalfSecond());
         assertThat(storedSubmission.getLatestResult()).as("result is not set").isNull();
         checkDetailsHidden(storedSubmission, false);
@@ -342,8 +354,8 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationIndep
         FileUploadSubmission storedSubmission = request.get("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submission-without-assessment", HttpStatus.OK,
                 FileUploadSubmission.class);
 
-        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(lateSubmission, "result", "submissionDate", "fileService", "filePathService",
-                "entityFileService");
+        final String[] ignoringFields = { "results", "submissionDate", "fileService", "filePathService", "entityFileService", "participation" };
+        assertThat(storedSubmission).as("submission was found").usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(lateSubmission);
         assertThat(storedSubmission.getLatestResult()).as("result is not set").isNull();
         checkDetailsHidden(storedSubmission, false);
     }
@@ -364,8 +376,8 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationIndep
         FileUploadSubmission storedSubmission = request.get("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submission-without-assessment?lock=true",
                 HttpStatus.OK, FileUploadSubmission.class);
 
-        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(lateSubmission, "results", "submissionDate", "fileService", "filePathService",
-                "entityFileService");
+        final String[] ignoringFields = { "results", "submissionDate", "fileService", "filePathService", "entityFileService", "participation" };
+        assertThat(storedSubmission).as("submission was found").usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(lateSubmission);
         assertThat(storedSubmission.getLatestResult()).as("result is set").isNotNull();
         checkDetailsHidden(storedSubmission, false);
     }

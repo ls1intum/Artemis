@@ -295,6 +295,24 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         expect(component.numberOfNotImportedRegistration).toBe(1);
     });
 
+    it('should generate and download CSV when generateCSV is called', () => {
+        const createElementSpy = jest.spyOn(document, 'createElement').mockReturnValue(document.createElement('a'));
+        const appendChildSpy = jest.spyOn(document.body, 'appendChild');
+        const removeChildSpy = jest.spyOn(document.body, 'removeChild');
+
+        component.generateCSV(1);
+
+        const expectedContent = 'data:text/csv;charset=utf-8,Title\n';
+        const encodedUri = encodeURI(expectedContent);
+
+        expect(createElementSpy).toHaveBeenCalledWith('a');
+        const link = createElementSpy.mock.results[0].value as HTMLAnchorElement;
+        expect(link.getAttribute('href')).toBe(encodedUri);
+        expect(link.getAttribute('download')).toBe('example1.csv');
+        expect(appendChildSpy).toHaveBeenCalledWith(link);
+        expect(removeChildSpy).toHaveBeenCalledWith(link);
+    });
+
     async function validationTest(data: TutorialGroupRegistrationImportDTO[], translationKey: string, errorAddition?: string) {
         // given
         const translateService = TestBed.inject(TranslateService);

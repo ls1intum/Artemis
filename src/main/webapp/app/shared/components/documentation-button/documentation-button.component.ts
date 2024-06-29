@@ -12,10 +12,13 @@ const DocumentationLinks = {
     Quiz: 'exercises/quiz/',
     Model: 'exercises/modeling/',
     Programming: 'exercises/programming/',
+    SshSetup: 'exercises/programming.html#repository-access',
     Text: 'exercises/textual/',
     FileUpload: 'exercises/file-upload/',
     Notifications: 'notifications/',
     Competencies: 'adaptive-learning/',
+    StandardizedCompetencies: 'adaptive-learning/adaptive-learning-admin',
+    GenerateCompetencies: 'adaptive-learning/adaptive-learning-instructor#generate-competencies',
     Communications: 'communication/',
     Exams: 'exam_mode/',
     PlagiarismChecks: 'plagiarism-check/',
@@ -32,13 +35,13 @@ export type DocumentationType = keyof typeof DocumentationLinks;
     selector: 'jhi-documentation-button',
     styleUrls: ['./documentation-button.component.scss'],
     template: `
-        <a class="text-primary documentation-button ms-1 mb-1" href="{{ baseUrl + DocumentationLinks[this.type] }}">
+        <a class="text-primary documentation-button ms-1 mb-1" href="{{ BASE_URL + DocumentationLinks[this.type] }}">
             <fa-icon [icon]="faCircleInfo" ngbTooltip="{{ getTooltipForType() }}" />
         </a>
     `,
 })
 export class DocumentationButtonComponent {
-    readonly baseUrl = 'https://docs.artemis.cit.tum.de/user/';
+    readonly BASE_URL = 'https://docs.artemis.cit.tum.de/user/';
     readonly faCircleInfo = faCircleInfo;
     readonly DocumentationLinks = DocumentationLinks;
 

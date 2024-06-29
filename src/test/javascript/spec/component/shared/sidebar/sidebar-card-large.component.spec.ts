@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, async } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SidebarCardLargeComponent } from 'app/shared/sidebar/sidebar-card-large/sidebar-card-large.component';
 import { SidebarCardItemComponent } from 'app/shared/sidebar/sidebar-card-item/sidebar-card-item.component';
 import { ArtemisTestModule } from '../../../test.module';
@@ -12,14 +12,14 @@ describe('SidebarCardLargeComponent', () => {
     let fixture: ComponentFixture<SidebarCardLargeComponent>;
     let router: MockRouter;
 
-    beforeEach(async(() => {
+    beforeEach(() => {
         router = new MockRouter();
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(RouterModule)],
             declarations: [SidebarCardLargeComponent, SidebarCardItemComponent, MockRouterLinkDirective],
             providers: [{ provide: Router, useValue: router }],
         }).compileComponents();
-    }));
+    });
 
     beforeEach(() => {
         fixture = TestBed.createComponent(SidebarCardLargeComponent);
@@ -58,7 +58,7 @@ describe('SidebarCardLargeComponent', () => {
         expect(mockFn).toHaveBeenCalledWith('testId');
         expect(router.navigateByUrl).toHaveBeenCalled();
         const navigationArray = router.navigateByUrl.mock.calls[0][0];
-        expect(navigationArray).toBe('../testId');
+        expect(navigationArray).toBe('./testId');
     });
 
     it('should navigate to the when no item was selected before', async () => {

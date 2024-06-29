@@ -7,7 +7,7 @@ import { courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercis
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { AccordionGroups, SidebarCardElement, SidebarData } from 'app/types/sidebar';
+import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { CourseOverviewService } from '../course-overview.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
@@ -15,6 +15,13 @@ const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     current: { entityData: [] },
     past: { entityData: [] },
     noDate: { entityData: [] },
+};
+
+const DEFAULT_COLLAPSE_STATE: CollapseState = {
+    future: true,
+    current: false,
+    past: true,
+    noDate: true,
 };
 
 @Component({
@@ -36,6 +43,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     sidebarData: SidebarData;
     sidebarExercises: SidebarCardElement[] = [];
     isCollapsed: boolean = false;
+    readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
 
     constructor(
         private courseStorageService: CourseStorageService,
@@ -71,7 +79,17 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     navigateToExercise() {
         const upcomingExercise = this.courseOverviewService.getUpcomingExercise(this.course?.exercises);
         const lastSelectedExercise = this.getLastSelectedExercise();
-        const exerciseId = this.route.firstChild?.snapshot?.params.exerciseId;
+        let exerciseId = this.route.firstChild?.snapshot?.params.exerciseId;
+        if (!exerciseId) {
+            // Get the exerciseId from the URL
+            const url = this.router.url;
+            const urlParts = url.split('/');
+            const indexOfExercise = urlParts.indexOf('exercises');
+            if (indexOfExercise !== -1 && urlParts.length === indexOfExercise + 2) {
+                exerciseId = urlParts[indexOfExercise + 1];
+            }
+        }
+
         if (!exerciseId && lastSelectedExercise) {
             this.router.navigate([lastSelectedExercise], { relativeTo: this.route, replaceUrl: true });
         } else if (!exerciseId && upcomingExercise) {

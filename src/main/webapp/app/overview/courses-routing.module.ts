@@ -6,8 +6,12 @@ import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
 import { CourseOverviewComponent } from './course-overview.component';
+import { CourseExamsComponent } from './course-exams/course-exams.component';
 import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-tutorial-groups.component';
 import { CourseTutorialGroupDetailComponent } from './tutorial-group-details/course-tutorial-group-detail/course-tutorial-group-detail.component';
+import { ExamParticipationComponent } from 'app/exam/participate/exam-participation.component';
+import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
+import { CourseDashboardGuard } from 'app/overview/course-dashboard/course-dashboard-guard.service';
 
 const routes: Routes = [
     {
@@ -165,6 +169,15 @@ const routes: Routes = [
                 ],
             },
             {
+                path: 'dashboard',
+                loadChildren: () => import('./course-dashboard/course-dashboard.module').then((m) => m.CourseDashboardModule),
+                data: {
+                    authorities: [Authority.USER],
+                    pageTitle: 'overview.dashboard',
+                },
+                canActivate: [UserRouteAccessService, CourseDashboardGuard],
+            },
+            {
                 path: 'learning-path',
                 loadChildren: () => import('app/course/learning-paths/learning-paths.module').then((m) => m.ArtemisLearningPathsModule),
                 data: {
@@ -188,6 +201,7 @@ const routes: Routes = [
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.messages',
+                    hasSidebar: true,
                     showRefreshButton: true,
                 },
             },
@@ -218,12 +232,29 @@ const routes: Routes = [
             },
             {
                 path: 'exams',
-                loadChildren: () => import('./course-exams/course-exams.module').then((m) => m.CourseExamsModule),
+                component: CourseExamsComponent,
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.exams',
+                    hasSidebar: true,
                     showRefreshButton: true,
                 },
+                canActivate: [UserRouteAccessService],
+                children: [
+                    {
+                        path: ':examId',
+                        component: ExamParticipationComponent,
+                        data: {
+                            authorities: [Authority.USER],
+                            pageTitle: 'overview.exams',
+                            hasSidebar: true,
+                            showRefreshButton: true,
+                        },
+                        canActivate: [UserRouteAccessService],
+                        canDeactivate: [PendingChangesGuard],
+                        loadChildren: () => import('../exam/participate/exam-participation.module').then((m) => m.ArtemisExamParticipationModule),
+                    },
+                ],
             },
             {
                 path: 'plagiarism-cases',
@@ -235,7 +266,7 @@ const routes: Routes = [
             },
             {
                 path: '',
-                redirectTo: 'exercises',
+                redirectTo: 'dashboard', // dashboard will redirect to exercises if not enabled
                 pathMatch: 'full',
             },
         ],

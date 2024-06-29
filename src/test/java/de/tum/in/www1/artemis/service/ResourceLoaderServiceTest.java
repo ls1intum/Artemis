@@ -8,12 +8,14 @@ import static org.mockito.Mockito.mock;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
@@ -58,7 +60,7 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationIndependentTest
     @Test
     void testShouldNotAllowAbsolutePathsMultipleResources() {
         final Path path = publicPath.toAbsolutePath();
-        assertThatIllegalArgumentException().isThrownBy(() -> resourceLoaderService.getResources(path));
+        assertThatIllegalArgumentException().isThrownBy(() -> resourceLoaderService.getFileResources(path));
     }
 
     @Test
@@ -92,7 +94,7 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationIndependentTest
         final String content = "filesystem";
         setupJavaFiles(content);
 
-        Resource[] resources = resourceLoaderService.getResources(jenkinsFilesystemPaths.get(0).getParent(), pathPattern);
+        Resource[] resources = resourceLoaderService.getFileResources(jenkinsFilesystemPaths.get(0).getParent(), pathPattern);
         assertThat(resources).hasSize(2);
 
         for (final Resource resource : resources) {
@@ -109,7 +111,7 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationIndependentTest
             FileUtils.writeStringToFile(publicFile.toFile(), content, Charset.defaultCharset());
         }
 
-        Resource[] resources = resourceLoaderService.getResources(Path.of("public"), pathPattern);
+        Resource[] resources = resourceLoaderService.getFileResources(Path.of("public"), pathPattern);
         assertThat(resources).hasSize(1);
 
         assertThat(resources[0].getFile()).hasContent("classpath");
@@ -117,8 +119,39 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationIndependentTest
 
     @Test
     void testLoadNonExistingResources() {
-        Resource[] resources = resourceLoaderService.getResources(Path.of("non", "existing"), "*");
+        Resource[] resources = resourceLoaderService.getFileResources(Path.of("non", "existing"), "*");
         assertThat(resources).isNotNull().isEmpty();
+    }
+
+    @Test
+    void testLoadResourcesWithoutFileExtension() {
+        final Resource[] resources = resourceLoaderService.getFileResources(Path.of("templates", "c"));
+        final List<String> resourceNames = Arrays.stream(resources).map(Resource::getFilename).toList();
+
+        assertThat(resourceNames).contains("Makefile");
+    }
+
+    @Test
+    void testLoadGitResources() {
+        final Resource gitignore = resourceLoaderService.getResource(Path.of("templates", "java", ".gitignore"));
+        final Resource gitattributes = resourceLoaderService.getResource(Path.of("templates", "java", ".gitattributes"));
+
+        assertThat(gitignore.exists()).isTrue();
+        assertThat(gitattributes.exists()).isTrue();
+    }
+
+    @Test
+    void testShouldNotLoadDirectories() {
+        final Resource[] resources = resourceLoaderService.getFileResources(Path.of("templates"));
+
+        assertThat(resources).noneMatch(r -> {
+            try {
+                return r.getFile().isDirectory();
+            }
+            catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     private void setupJavaFiles(final String content) throws IOException {
@@ -131,7 +164,7 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationIndependentTest
     void testGetResourceFilePathFromJar() throws IOException, URISyntaxException {
         ResourceLoader resourceLoader = mock(ResourceLoader.class);
         Resource resource = mock(Resource.class);
-        URL resourceUrl = new URL("jar:file:/example.jar!/path/to/resource.txt");
+        URL resourceUrl = new URI("jar:file:/example.jar!/path/to/resource.txt").toURL();
 
         // Mock the getResource() method.
         doReturn(true).when(resource).exists();

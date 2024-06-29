@@ -16,13 +16,7 @@
                 }
                 @switch (detail.type) {
                     @case (DetailType.Text) {
-                        <dd id="detail-value-{{ detail.title }}">
-                            @if (detail.data.text) {
-                                {{ detail.data.text }}
-                            } @else {
-                                <ng-container *ngTemplateOutlet="noData" />
-                            }
-                        </dd>
+                        <div jhiExerciseDetail [detail]="detail"></div>
                     }
                     @case (DetailType.Date) {
                         <dd id="detail-value-{{ detail.title }}">
@@ -102,9 +96,7 @@
                                                 </a>
                                             }
                                             <div class="auxiliaryRepositoryDescription">
-                                                @if (auxiliaryRepository.checkoutDirectory) {
-                                                    <span>Checkout Directory: {{ auxiliaryRepository.checkoutDirectory }} </span>
-                                                } @else {
+                                                @if (!auxiliaryRepository.checkoutDirectory) {
                                                     <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="noCheckoutDirectorySetTooltip" />
                                                     <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySet"></span>
                                                 }
@@ -165,25 +157,30 @@
                     }
                     @case (DetailType.ProgrammingDiffReport) {
                         <dd id="detail-value-{{ detail.title }}">
+                            <span jhiTranslate="artemisApp.programmingExercise.diffReport.shortDescription"></span>
                             <div class="fw-bold">
                                 <jhi-git-diff-line-stat
                                     [addedLineCount]="detail.data.addedLineCount"
                                     [removedLineCount]="detail.data.removedLineCount"
                                     ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipDetailPage' | artemisTranslate }}"
+                                    placement="right"
                                 />
-                                @if (detail.data.addedLineCount > 0 || detail.data.removedLineCount > 0) {
+                            </div>
+                            @if (detail.data.addedLineCount > 0 || detail.data.removedLineCount > 0) {
+                                <div class="mt-1">
                                     <jhi-button
                                         [featureToggle]="FeatureToggle.ProgrammingExercises"
                                         [isLoading]="detail.data.isLoadingDiffReport ?? false"
                                         [btnSize]="ButtonSize.SMALL"
-                                        [icon]="faEye"
+                                        [icon]="faCodeCompare"
                                         [title]="'artemisApp.programmingExercise.diffReport.button'"
                                         [tooltip]="'artemisApp.programmingExercise.diffReport.tooltip'"
                                         (onClick)="showGitDiff(detail.data.gitDiffReport)"
-                                        class="ms-2"
+                                        [btnType]="WARNING"
+                                        [tooltipPlacement]="TooltipPlacement.RIGHT"
                                     />
-                                }
-                            </div>
+                                </div>
+                            }
                         </dd>
                     }
                     @case (DetailType.ProgrammingProblemStatement) {
@@ -285,9 +282,19 @@
                             }
                         </dd>
                     }
+                    @case (DetailType.ProgrammingCheckoutDirectories) {
+                        <dd id="detail-value-{{ detail.title }}">
+                            <jhi-programming-exercise-repository-and-build-plan-details
+                                [programmingExercise]="detail.data.exercise"
+                                [programmingLanguage]="detail.data.programmingLanguage"
+                                [isLocal]="detail.data.isLocal"
+                                [checkoutSolutionRepository]="detail.data.exercise.checkoutSolutionRepository"
+                            />
+                        </dd>
+                    }
                 }
             }
         }
     </dl>
-    <ng-template #noData><span>-</span></ng-template>
+    <ng-template #noData><jhi-no-data /></ng-template>
 }

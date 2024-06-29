@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_SCHEDULING;
+
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashSet;
@@ -28,7 +30,7 @@ import de.tum.in.www1.artemis.service.user.UserService;
  * Service responsible for scheduling data exports.
  */
 @Service
-@Profile("scheduling")
+@Profile(PROFILE_SCHEDULING)
 public class DataExportScheduleService {
 
     private final DataExportRepository dataExportRepository;

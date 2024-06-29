@@ -5,50 +5,31 @@ import java.util.HashSet;
 import java.util.Set;
 
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
-import jakarta.persistence.Table;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 
 @Entity
-@Table(name = "competency")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-public class Competency extends BaseCompetency {
+@DiscriminatorValue("C")
+public class Competency extends CourseCompetency {
 
-    @JsonIgnore
-    public static final int DEFAULT_MASTERY_THRESHOLD = 50;
-
-    @Column(name = "soft_due_date")
-    private ZonedDateTime softDueDate;
-
-    @Column(name = "mastery_threshold")
-    private Integer masteryThreshold;
-
-    @Column(name = "optional")
-    private boolean optional;
-
+    // TODO: move properties (linkedStandardizedCompetency, exercises, lectureUnits, userProgress, learningPaths) to CourseCompetency when refactoring
     @ManyToOne
-    @JoinColumn(name = "course_id")
-    @JsonIgnoreProperties({ "competencies", "prerequisites" })
-    private Course course;
+    @JoinColumn(name = "linked_standardized_competency_id")
+    @JsonIgnoreProperties({ "competencies" })
+    private StandardizedCompetency linkedStandardizedCompetency;
 
     @ManyToMany(mappedBy = "competencies")
     @JsonIgnoreProperties({ "competencies", "course" })
@@ -58,15 +39,6 @@ public class Competency extends BaseCompetency {
     @JsonIgnoreProperties("competencies")
     private Set<LectureUnit> lectureUnits = new HashSet<>();
 
-    /**
-     * A set of courses for which this competency is a prerequisite for.
-     */
-    @ManyToMany
-    @JoinTable(name = "competency_course", joinColumns = @JoinColumn(name = "competency_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "course_id", referencedColumnName = "id"))
-    @JsonIgnoreProperties({ "competencies", "prerequisites" })
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private Set<Course> consecutiveCourses = new HashSet<>();
-
     @OneToMany(mappedBy = "competency", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnoreProperties({ "user", "competency" })
     private Set<CompetencyProgress> userProgress = new HashSet<>();
@@ -75,51 +47,22 @@ public class Competency extends BaseCompetency {
     @JsonIgnoreProperties({ "competencies", "course" })
     private Set<LearningPath> learningPaths = new HashSet<>();
 
-    @ManyToOne
-    @JoinColumn(name = "linked_standardized_competency_id")
-    @JsonIgnoreProperties({ "competencies" })
-    private StandardizedCompetency linkedStandardizedCompetency;
+    @OneToMany(mappedBy = "competency", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<CompetencyJol> competencyJols = new HashSet<>();
 
     public Competency() {
     }
 
     public Competency(String title, String description, ZonedDateTime softDueDate, Integer masteryThreshold, CompetencyTaxonomy taxonomy, boolean optional) {
-        super(title, description, taxonomy);
-        this.softDueDate = softDueDate;
-        this.masteryThreshold = masteryThreshold;
-        this.optional = optional;
+        super(title, description, softDueDate, masteryThreshold, taxonomy, optional);
     }
 
-    public ZonedDateTime getSoftDueDate() {
-        return softDueDate;
+    public StandardizedCompetency getLinkedStandardizedCompetency() {
+        return linkedStandardizedCompetency;
     }
 
-    public void setSoftDueDate(ZonedDateTime dueDate) {
-        this.softDueDate = dueDate;
-    }
-
-    public int getMasteryThreshold() {
-        return masteryThreshold == null ? 100 : this.masteryThreshold;
-    }
-
-    public void setMasteryThreshold(Integer masteryThreshold) {
-        this.masteryThreshold = masteryThreshold;
-    }
-
-    public boolean isOptional() {
-        return optional;
-    }
-
-    public void setOptional(boolean optional) {
-        this.optional = optional;
-    }
-
-    public Course getCourse() {
-        return course;
-    }
-
-    public void setCourse(Course course) {
-        this.course = course;
+    public void setLinkedStandardizedCompetency(StandardizedCompetency linkedStandardizedCompetency) {
+        this.linkedStandardizedCompetency = linkedStandardizedCompetency;
     }
 
     public Set<Exercise> getExercises() {
@@ -133,11 +76,6 @@ public class Competency extends BaseCompetency {
     public void addExercise(Exercise exercise) {
         this.exercises.add(exercise);
         exercise.getCompetencies().add(this);
-    }
-
-    public void removeExercise(Exercise exercise) {
-        this.exercises.remove(exercise);
-        exercise.getCompetencies().remove(this);
     }
 
     public Set<LectureUnit> getLectureUnits() {
@@ -165,7 +103,7 @@ public class Competency extends BaseCompetency {
 
     /**
      * Removes the lecture unit from the competency (bidirectional)
-     * Note: ExerciseUnits are not accepted, should be set via the connected exercise (see {@link #removeExercise(Exercise)})
+     * Note: ExerciseUnits are not accepted, should be set via the connected exercise
      *
      * @param lectureUnit The lecture unit to remove
      */
@@ -176,14 +114,6 @@ public class Competency extends BaseCompetency {
         }
         this.lectureUnits.remove(lectureUnit);
         lectureUnit.getCompetencies().remove(this);
-    }
-
-    public Set<Course> getConsecutiveCourses() {
-        return consecutiveCourses;
-    }
-
-    public void setConsecutiveCourses(Set<Course> consecutiveCourses) {
-        this.consecutiveCourses = consecutiveCourses;
     }
 
     public Set<CompetencyProgress> getUserProgress() {
@@ -200,14 +130,6 @@ public class Competency extends BaseCompetency {
 
     public void setLearningPaths(Set<LearningPath> learningPaths) {
         this.learningPaths = learningPaths;
-    }
-
-    public StandardizedCompetency getLinkedStandardizedCompetency() {
-        return linkedStandardizedCompetency;
-    }
-
-    public void setLinkedStandardizedCompetency(StandardizedCompetency linkedStandardizedCompetency) {
-        this.linkedStandardizedCompetency = linkedStandardizedCompetency;
     }
 
     /**
