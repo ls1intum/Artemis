@@ -50,7 +50,7 @@ export function satisfiesScoreFilter(sidebarElement: SidebarCardElement, isFilte
         return false;
     }
 
-    return latestResult.score <= this.achievedScore!.selectedMax && latestResult.score >= this.achievedScore!.selectedMin;
+    return latestResult.score <= achievedScoreFilter.selectedMax && latestResult.score >= achievedScoreFilter.selectedMin;
 }
 
 export function satisfiesPointsFilter(sidebarElement: SidebarCardElement, isPointsFilterApplied: boolean, achievablePointsFilter?: RangeFilter): boolean {

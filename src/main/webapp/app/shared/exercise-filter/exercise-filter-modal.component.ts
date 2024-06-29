@@ -85,8 +85,6 @@ export class ExerciseFilterModalComponent implements OnInit {
         this.achievedScore = this.exerciseFilters?.achievedScore;
     }
 
-    // TODO reset filter state when closing the modal without saving
-
     // TODO do not display difficulties selection if not enough selection options
 
     // ngAfterViewInit(): void {
