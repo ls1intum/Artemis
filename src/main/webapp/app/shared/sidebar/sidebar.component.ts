@@ -195,29 +195,22 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         };
     }
 
-    private getExerciseCategoryFilterOptions() {
+    private getExerciseCategoryFilterOptions(): ExerciseCategoryFilterOption[] {
         if (this.exerciseFilters?.categoryFilters) {
             return this.exerciseFilters?.categoryFilters;
         }
 
-        const categoryFilters =
+        const categoryFilters: ExerciseCategoryFilterOption[] =
             this.sidebarData?.ungroupedData
                 ?.filter((sidebarElement: SidebarCardElement) => sidebarElement.exercise?.categories !== undefined)
                 .flatMap((sidebarElement: SidebarCardElement) => sidebarElement.exercise?.categories || [])
                 .map((category: ExerciseCategory) => ({ category: category, searched: false }))
                 .reduce((unique: ExerciseCategoryFilterOption[], item: ExerciseCategoryFilterOption) => {
                     return unique.some((uniqueItem) => uniqueItem.category.equals(item.category)) ? unique : [...unique, item];
-                }, []) ?? [];
-
-        this.sortCategoriesAlphanumerically(categoryFilters);
+                }, [])
+                .sort((categoryFilterOptionsA, categoryFilterOptionB) => categoryFilterOptionsA.category.compare(categoryFilterOptionB.category)) ?? [];
 
         return categoryFilters;
-    }
-
-    private sortCategoriesAlphanumerically(categoryFilters: ExerciseCategoryFilterOption[]) {
-        categoryFilters.sort((categoryA, categoryB) => {
-            return categoryA.category.compare(categoryB.category);
-        });
     }
 
     private getExerciseTypeFilterOptions() {
