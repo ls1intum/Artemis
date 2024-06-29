@@ -175,7 +175,7 @@ describe('MonacoEditorComponent', () => {
         const monacoMouseEvent = { target: { position: { lineNumber: 1 }, element: { classList: { contains: () => true } } } };
         fixture.detectChanges();
         comp.setText(multiLineText);
-        comp.setGlyphMarginHoverButton(className, clickCallbackStub);
+        comp.setLineDecorationsHoverButton(className, clickCallbackStub);
         comp.lineDecorationsHoverButton?.onClick(monacoMouseEvent as unknown as any);
         monacoMouseEvent.target.position.lineNumber = 3;
         comp.lineDecorationsHoverButton?.onClick(monacoMouseEvent as unknown as any);
@@ -186,7 +186,7 @@ describe('MonacoEditorComponent', () => {
     it('should hide the line decorations hover button when no line number is available', () => {
         fixture.detectChanges();
         comp.setText(multiLineText);
-        comp.setGlyphMarginHoverButton('testClass', () => {});
+        comp.setLineDecorationsHoverButton('testClass', () => {});
         const button: MonacoEditorLineDecorationsHoverButton = comp.lineDecorationsHoverButton!;
         // Case 1 - by default
         expect(button.isVisible()).toBeFalse();
@@ -209,7 +209,7 @@ describe('MonacoEditorComponent', () => {
         fixture.detectChanges();
         comp.setAnnotations(buildAnnotationArray);
         comp.addLineWidget(1, 'widget', document.createElement('div'));
-        comp.setGlyphMarginHoverButton('testClass', jest.fn());
+        comp.setLineDecorationsHoverButton('testClass', jest.fn());
         comp.highlightLines(1, 1);
         const disposeAnnotationSpy = jest.spyOn(comp.editorBuildAnnotations[0], 'dispose');
         const disposeWidgetSpy = jest.spyOn(comp.lineWidgets[0], 'dispose');

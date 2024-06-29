@@ -253,11 +253,12 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * TODO rename
-     * @param className
-     * @param clickCallback
+     * Adds a hover button to the line decorations of the editor. The button is only visible when hovering over the line.
+     * This will disable folding and set the line decorations width to make room for the button.
+     * @param className The CSS class to use for the button. This class must uniquely identify the button. To render content, use the CSS content attribute.
+     * @param clickCallback The callback to invoke when the button is clicked. The line number is passed as an argument.
      */
-    setGlyphMarginHoverButton(className: string, clickCallback: (lineNumber: number) => void): void {
+    setLineDecorationsHoverButton(className: string, clickCallback: (lineNumber: number) => void): void {
         this.lineDecorationsHoverButton?.dispose();
         this.lineDecorationsHoverButton = new MonacoEditorLineDecorationsHoverButton(
             this._editor,

@@ -189,7 +189,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
     }
 
     setupAddFeedbackButton(): void {
-        this.editor.setGlyphMarginHoverButton(CodeEditorMonacoComponent.CLASS_FEEDBACK_HOVER_BUTTON, (lineNumber) => this.addNewFeedback(lineNumber));
+        this.editor.setLineDecorationsHoverButton(CodeEditorMonacoComponent.CLASS_FEEDBACK_HOVER_BUTTON, (lineNumber) => this.addNewFeedback(lineNumber));
     }
 
     /**

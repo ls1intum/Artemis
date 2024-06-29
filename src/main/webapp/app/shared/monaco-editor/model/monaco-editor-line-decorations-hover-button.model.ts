@@ -1,6 +1,10 @@
 import { MonacoCodeEditorElement } from 'app/shared/monaco-editor/model/monaco-code-editor-element.model';
 import * as monaco from 'monaco-editor';
 
+/**
+ * Class representing a hover button that is displayed on a specific line in the editor.
+ * The button is displayed in the line decorations of the editor; i.e., it is between the line numbers and the code.
+ */
 export class MonacoEditorLineDecorationsHoverButton extends MonacoCodeEditorElement {
     private clickCallback: (lineNumber: number) => void;
     private currentLineNumber: number = 1;
@@ -11,6 +15,12 @@ export class MonacoEditorLineDecorationsHoverButton extends MonacoCodeEditorElem
     private mouseDownListener?: monaco.IDisposable;
     private mouseLeaveListener?: monaco.IDisposable;
 
+    /**
+     * @param editor The editor to which to add the button.
+     * @param id The unique id of the button.
+     * @param className The class name of the button. This is used to uniquely identify the button in the editor.
+     * @param clickCallback The callback to be called when the button is clicked. The line number of the button is passed as an argument.
+     */
     constructor(editor: monaco.editor.ICodeEditor, id: string, className: string, clickCallback: (lineNumber: number) => void) {
         super(editor, id);
         this.clickCallback = clickCallback;
