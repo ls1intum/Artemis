@@ -134,22 +134,34 @@ export class ExerciseFilterModalComponent implements OnInit {
             return;
         }
 
-        this.applyTypeFilter();
         this.applyDifficultyFilter();
 
+        const searchedTypes: ExerciseType[] | undefined = this.typeFilters?.filter((type) => type.checked).map((type) => type.value);
         const selectedCategories = this.selectedCategoryOptions.map((categoryOption: ExerciseCategoryFilterOption) => categoryOption.category);
+
         for (const groupedDataKey in this.sidebarData.groupedData) {
-            this.sidebarData.groupedData[groupedDataKey].entityData = this.sidebarData.groupedData[groupedDataKey].entityData.filter((sidebarElement) =>
-                this.applyCategoryFilter(sidebarElement, selectedCategories),
+            this.sidebarData.groupedData[groupedDataKey].entityData = this.sidebarData.groupedData[groupedDataKey].entityData.filter(
+                (sidebarElement) => this.applyTypeFilter(sidebarElement, searchedTypes) && this.applyCategoryFilter(sidebarElement, selectedCategories),
             );
         }
 
-        this.applyPointsFilter();
-        this.applyScoreFilter();
+        // this.applyPointsFilter();
+        // this.applyScoreFilter();
 
         this.filterApplied.emit({ filteredSidebarData: this.sidebarData!, appliedExerciseFilters: this.exerciseFilters });
 
         this.closeModal();
+    }
+
+    private applyTypeFilter(sidebarElement: SidebarCardElement, searchedTypes?: ExerciseType[]): boolean {
+        if (!searchedTypes?.length) {
+            return true;
+        }
+        if (!sidebarElement.exercise?.type) {
+            return false;
+        }
+
+        return searchedTypes.includes(sidebarElement.exercise.type);
     }
 
     private applyCategoryFilter(sidebarElement: SidebarCardElement, selectedCategories: ExerciseCategory[]): boolean {
@@ -161,24 +173,6 @@ export class ExerciseFilterModalComponent implements OnInit {
         }
 
         return sidebarElement.exercise.categories.some((category) => selectedCategories.some((selectedCategory) => selectedCategory.equals(category)));
-    }
-
-    private applyTypeFilter() {
-        if (!this.typeFilters) {
-            return;
-        }
-        const searchedTypes: ExerciseType[] = this.typeFilters?.filter((type) => type.checked).map((type) => type.value);
-        if (searchedTypes.length === 0) {
-            return;
-        }
-
-        if (this.sidebarData?.groupedData) {
-            for (const groupedDataKey in this.sidebarData.groupedData) {
-                this.sidebarData.groupedData[groupedDataKey].entityData = this.sidebarData.groupedData[groupedDataKey].entityData.filter(
-                    (sidebarElement) => sidebarElement?.exercise?.type && searchedTypes.includes(sidebarElement.exercise.type),
-                );
-            }
-        }
     }
 
     private applyDifficultyFilter() {
