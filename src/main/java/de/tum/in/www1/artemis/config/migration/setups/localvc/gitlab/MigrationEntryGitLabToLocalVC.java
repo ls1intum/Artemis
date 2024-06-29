@@ -99,9 +99,9 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
                 }
                 else {
                     log.debug("Migrated auxiliary repository with id {} to {}", repo.getId(), url);
+                    repo.setRepositoryUri(url);
+                    auxiliaryRepositoryRepository.save(repo);
                 }
-                repo.setRepositoryUri(url);
-                auxiliaryRepositoryRepository.save(repo);
             }
             catch (Exception e) {
                 log.error("Failed to migrate auxiliary repository with id {}", repo.getId(), e);
@@ -126,9 +126,9 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
                     }
                     else {
                         log.debug("Migrated solution participation with id {} to {}", solutionParticipation.getId(), url);
+                        solutionParticipation.setRepositoryUri(url);
+                        solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
                     }
-                    solutionParticipation.setRepositoryUri(url);
-                    solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
                     url = migrateTestRepo(solutionParticipation.getProgrammingExercise());
                     var oldBranch = programmingExercise.getBranch();
                     if (url == null) {
@@ -141,9 +141,9 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
                             programmingExercise.setBranch(defaultBranch);
                             log.debug("Changed branch of programming exercise with id {} to {}", programmingExercise.getId(), programmingExercise.getBranch());
                         }
+                        programmingExercise.setTestRepositoryUri(url);
+                        programmingExerciseRepository.save(programmingExercise);
                     }
-                    programmingExercise.setTestRepositoryUri(url);
-                    programmingExerciseRepository.save(programmingExercise);
                     migrateAuxiliaryRepositories(solutionParticipation, programmingExercise, oldBranch);
                 }
             }
@@ -170,9 +170,9 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
                     }
                     else {
                         log.debug("Migrated template participation with id {} to {}", templateParticipation.getId(), url);
+                        templateParticipation.setRepositoryUri(url);
+                        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
                     }
-                    templateParticipation.setRepositoryUri(url);
-                    templateProgrammingExerciseParticipationRepository.save(templateParticipation);
                 }
             }
             catch (Exception e) {
@@ -204,9 +204,9 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
                             participation.setBranch(defaultBranch);
                             log.debug("Changed branch of student participation with id {} to {}", participation.getId(), participation.getBranch());
                         }
+                        participation.setRepositoryUri(url);
+                        programmingExerciseStudentParticipationRepository.save(participation);
                     }
-                    participation.setRepositoryUri(url);
-                    programmingExerciseStudentParticipationRepository.save(participation);
                 }
             }
             catch (Exception e) {
