@@ -5,7 +5,6 @@ import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { MonacoEditorLineWidget } from 'app/shared/monaco-editor/model/monaco-editor-inline-widget.model';
 import { MonacoEditorBuildAnnotation, MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
-import { MonacoEditorGlyphMarginHoverButton } from 'app/shared/monaco-editor/model/monaco-editor-glyph-margin-hover-button.model';
 import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
 import { MonacoEditorLineDecorationsHoverButton } from './model/monaco-editor-line-decorations-hover-button.model';
 
@@ -24,7 +23,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     lineWidgets: MonacoEditorLineWidget[] = [];
     editorBuildAnnotations: MonacoEditorBuildAnnotation[] = [];
     lineHighlights: MonacoEditorLineHighlight[] = [];
-    glyphMarginHoverButton?: MonacoEditorGlyphMarginHoverButton;
     lineDecorationsHoverButton?: MonacoEditorLineDecorationsHoverButton;
 
     constructor(
@@ -175,7 +173,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.disposeAnnotations();
         this.disposeWidgets();
         this.disposeLineHighlights();
-        this.glyphMarginHoverButton?.dispose();
+        this.lineDecorationsHoverButton?.dispose();
     }
 
     disposeWidgets() {

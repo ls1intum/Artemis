@@ -33,13 +33,15 @@ export class MonacoEditorLineDecorationsHoverButton extends MonacoCodeEditorElem
             this.removeFromEditor();
         });
 
-        this.mouseDownListener = this.editor.onMouseDown((editorMouseEvent: monaco.editor.IEditorMouseEvent) => {
-            const lineNumber = editorMouseEvent.target?.position?.lineNumber;
-            // We identify the button via the class name of the element.
-            if (lineNumber && editorMouseEvent.target?.element?.classList?.contains(this.className)) {
-                this.clickCallback(lineNumber);
-            }
-        });
+        this.mouseDownListener = this.editor.onMouseDown(this.onClick.bind(this));
+    }
+
+    onClick(editorMouseEvent: monaco.editor.IEditorMouseEvent): void {
+        const lineNumber = editorMouseEvent.target?.position?.lineNumber;
+        // We identify the button via the class name of the element.
+        if (lineNumber && editorMouseEvent.target?.element?.classList?.contains(this.className)) {
+            this.clickCallback(lineNumber);
+        }
     }
 
     moveAndUpdate(lineNumber?: number): void {

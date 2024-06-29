@@ -8,7 +8,7 @@ import { BehaviorSubject } from 'rxjs';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
 import { MonacoCodeEditorElement } from 'app/shared/monaco-editor/model/monaco-code-editor-element.model';
-import { MonacoEditorGlyphMarginHoverButton } from 'app/shared/monaco-editor/model/monaco-editor-glyph-margin-hover-button.model';
+import { MonacoEditorLineDecorationsHoverButton } from 'app/shared/monaco-editor/model/monaco-editor-line-decorations-hover-button.model';
 
 describe('MonacoEditorComponent', () => {
     let fixture: ComponentFixture<MonacoEditorComponent>;
@@ -169,25 +169,25 @@ describe('MonacoEditorComponent', () => {
         expect(documentHighlightedMargins).toHaveLength(3);
     });
 
-    it('should pass the current line number to the glyph margin hover button when clicked', () => {
-        const marginElement = document.createElement('div');
+    it('should pass the current line number to the line decorations hover button when clicked', () => {
         const clickCallbackStub = jest.fn();
+        const className = 'testClass';
+        const monacoMouseEvent = { target: { position: { lineNumber: 1 }, element: { classList: { contains: () => true } } } };
         fixture.detectChanges();
         comp.setText(multiLineText);
-        comp.setGlyphMarginHoverButton(marginElement, clickCallbackStub);
-        comp.glyphMarginHoverButton?.moveAndUpdate(1);
-        marginElement.click();
-        comp.glyphMarginHoverButton?.moveAndUpdate(3);
-        marginElement.click();
+        comp.setGlyphMarginHoverButton(className, clickCallbackStub);
+        comp.lineDecorationsHoverButton?.onClick(monacoMouseEvent as unknown as any);
+        monacoMouseEvent.target.position.lineNumber = 3;
+        comp.lineDecorationsHoverButton?.onClick(monacoMouseEvent as unknown as any);
         expect(clickCallbackStub).toHaveBeenNthCalledWith(1, 1);
         expect(clickCallbackStub).toHaveBeenNthCalledWith(2, 3);
     });
 
-    it('should hide the glyph margin hover button when no line number is available', () => {
+    it('should hide the line decorations hover button when no line number is available', () => {
         fixture.detectChanges();
         comp.setText(multiLineText);
-        comp.setGlyphMarginHoverButton(document.createElement('div'), () => {});
-        const button: MonacoEditorGlyphMarginHoverButton = comp.glyphMarginHoverButton!;
+        comp.setGlyphMarginHoverButton('testClass', () => {});
+        const button: MonacoEditorLineDecorationsHoverButton = comp.lineDecorationsHoverButton!;
         // Case 1 - by default
         expect(button.isVisible()).toBeFalse();
         button.moveAndUpdate(1);
@@ -209,11 +209,11 @@ describe('MonacoEditorComponent', () => {
         fixture.detectChanges();
         comp.setAnnotations(buildAnnotationArray);
         comp.addLineWidget(1, 'widget', document.createElement('div'));
-        comp.setGlyphMarginHoverButton(document.createElement('div'), jest.fn());
+        comp.setGlyphMarginHoverButton('testClass', jest.fn());
         comp.highlightLines(1, 1);
         const disposeAnnotationSpy = jest.spyOn(comp.editorBuildAnnotations[0], 'dispose');
         const disposeWidgetSpy = jest.spyOn(comp.lineWidgets[0], 'dispose');
-        const disposeHoverButtonSpy = jest.spyOn(comp.glyphMarginHoverButton!, 'dispose');
+        const disposeHoverButtonSpy = jest.spyOn(comp.lineDecorationsHoverButton!, 'dispose');
         const disposeLineHighlightSpy = jest.spyOn(comp.lineHighlights[0], 'dispose');
         comp.ngOnDestroy();
         expect(disposeWidgetSpy).toHaveBeenCalledOnce();
