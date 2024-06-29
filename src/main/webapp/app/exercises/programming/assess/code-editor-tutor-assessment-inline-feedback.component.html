@@ -1,7 +1,7 @@
 <div
     id="code-editor-inline-feedback-{{ codeLine }}"
-    class="alert p-1 mb-1 border rounded"
-    [style.max-width]="'780px'"
+    class="alert p-0 mb-1 border rounded"
+    [style.max-width.%]="95"
     [class.alert-success]="feedback.credits! > 0 && feedback.isSubsequent === undefined"
     [class.alert-danger]="feedback.credits! < 0 && feedback.isSubsequent === undefined"
     [class.alert-warning]="!feedback.credits && feedback.isSubsequent === undefined"
@@ -88,9 +88,9 @@
             }
         </div>
     } @else {
-        <div class="container">
-            <div class="row align-items-top m-1">
-                <div class="col-auto ps-0">
+        <div class="container p-1">
+            <div class="row flex-nowrap align-items-top m-1">
+                <div class="col ps-0">
                     <h5 class="d-inline">
                         @if (!Feedback.isNonGradedFeedbackSuggestion(feedback)) {
                             <span
@@ -104,13 +104,13 @@
                         }
                     </h5>
                 </div>
-                <div class="col ps-0 pt-1">
+                <div class="col-10 ps-0 flex-grow-1 flex-shrink-1">
                     @if (Feedback.isNonGradedFeedbackSuggestion(feedback)) {
-                        <h6 class="d-inline" jhiTranslate="artemisApp.assessment.detail.feedback"></h6>
-                        <p [innerHTML]="buildFeedbackTextForCodeEditor(feedback)" class="mt-2"></p>
+                        <h6 class="d-inline mb-1" jhiTranslate="artemisApp.assessment.detail.feedback"></h6>
+                        <p [innerHTML]="buildFeedbackTextForCodeEditor(feedback)" class="mt-1 mb-0"></p>
                     } @else {
-                        <h6 class="d-inline" jhiTranslate="artemisApp.assessment.detail.tutorComment"></h6>
-                        <p [innerHTML]="buildFeedbackTextForCodeEditor(feedback)" class="mt-2"></p>
+                        <h6 class="d-inline mb-1" jhiTranslate="artemisApp.assessment.detail.tutorComment"></h6>
+                        <p [innerHTML]="buildFeedbackTextForCodeEditor(feedback)" class="mt-1 mb-0"></p>
                     }
                 </div>
                 @if (!readOnly) {
