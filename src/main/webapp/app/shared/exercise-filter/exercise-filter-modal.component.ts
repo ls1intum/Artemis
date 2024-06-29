@@ -5,13 +5,12 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { SidebarCardElement, SidebarData } from 'app/types/sidebar';
+import { SidebarData } from 'app/types/sidebar';
 import { DifficultyLevel, ExerciseType } from 'app/entities/exercise.model';
 import { Observable, OperatorFunction, Subject, merge } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge.component';
 import { RangeSliderComponent } from 'app/shared/range-slider/range-slider.component';
-import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/participation/participation.utils';
 import {
     DifficultyFilterOptions,
     ExerciseCategoryFilterOption,
@@ -20,7 +19,7 @@ import {
     ExerciseTypeFilterOptions,
     RangeFilter,
 } from 'app/types/exercise-filter';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { satisfiesCategoryFilter, satisfiesDifficultyFilter, satisfiesScoreFilter, satisfiesTypeFilter } from 'app/shared/exercise-filter/exercise-filter-modal.helper';
 
 @Component({
     selector: 'jhi-exercise-filter-modal',
@@ -137,77 +136,23 @@ export class ExerciseFilterModalComponent implements OnInit {
         const searchedTypes: ExerciseType[] | undefined = this.typeFilters?.filter((type) => type.checked).map((type) => type.value);
         const selectedCategories = this.selectedCategoryOptions.map((categoryOption: ExerciseCategoryFilterOption) => categoryOption.category);
         const searchedDifficulties: DifficultyLevel[] | undefined = this.difficultyFilters?.filter((difficulty) => difficulty.checked).map((difficulty) => difficulty.value);
+        const isScoreFilterApplied = this.achievedScore?.selectedMin !== this.achievedScore?.generalMin || this.achievedScore?.selectedMax !== this.achievedScore?.generalMax;
 
         for (const groupedDataKey in this.sidebarData.groupedData) {
             this.sidebarData.groupedData[groupedDataKey].entityData = this.sidebarData.groupedData[groupedDataKey].entityData.filter(
                 (sidebarElement) =>
-                    this.satisfiesTypeFilter(sidebarElement, searchedTypes) &&
-                    this.satisfiesCategoryFilter(sidebarElement, selectedCategories) &&
-                    this.satisfiesDifficultyFilter(sidebarElement, searchedDifficulties),
+                    satisfiesTypeFilter(sidebarElement, searchedTypes) &&
+                    satisfiesCategoryFilter(sidebarElement, selectedCategories) &&
+                    satisfiesDifficultyFilter(sidebarElement, searchedDifficulties) &&
+                    satisfiesScoreFilter(sidebarElement, isScoreFilterApplied, this.achievedScore),
             );
         }
 
         // this.applyPointsFilter();
-        // this.applyScoreFilter();
 
         this.filterApplied.emit({ filteredSidebarData: this.sidebarData!, appliedExerciseFilters: this.exerciseFilters });
 
         this.closeModal();
-    }
-
-    private satisfiesDifficultyFilter(sidebarElement: SidebarCardElement, searchedDifficulties?: DifficultyLevel[]): boolean {
-        if (!searchedDifficulties?.length) {
-            return true;
-        }
-        if (!sidebarElement.difficulty) {
-            return false;
-        }
-
-        return searchedDifficulties.includes(sidebarElement.difficulty);
-    }
-
-    private satisfiesTypeFilter(sidebarElement: SidebarCardElement, searchedTypes?: ExerciseType[]): boolean {
-        if (!searchedTypes?.length) {
-            return true;
-        }
-        if (!sidebarElement.exercise?.type) {
-            return false;
-        }
-
-        return searchedTypes.includes(sidebarElement.exercise.type);
-    }
-
-    private satisfiesCategoryFilter(sidebarElement: SidebarCardElement, selectedCategories: ExerciseCategory[]): boolean {
-        if (!selectedCategories.length) {
-            return true;
-        }
-        if (!sidebarElement?.exercise?.categories) {
-            return false;
-        }
-
-        return sidebarElement.exercise.categories.some((category) => selectedCategories.some((selectedCategory) => selectedCategory.equals(category)));
-    }
-
-    private applyScoreFilter() {
-        if (!this.achievedScore) {
-            return;
-        }
-
-        if (this.sidebarData?.groupedData) {
-            for (const groupedDataKey in this.sidebarData.groupedData) {
-                this.sidebarData.groupedData[groupedDataKey].entityData = this.sidebarData.groupedData[groupedDataKey].entityData.filter((sidebarElement) => {
-                    if (!sidebarElement.studentParticipation) {
-                        return false;
-                    }
-
-                    const latestResult = getLatestResultOfStudentParticipation(sidebarElement.studentParticipation, true);
-                    if (!latestResult?.score) {
-                        return false;
-                    }
-                    return latestResult.score <= this.achievedScore!.selectedMax && latestResult.score >= this.achievedScore!.selectedMin;
-                });
-            }
-        }
     }
 
     private applyPointsFilter() {
