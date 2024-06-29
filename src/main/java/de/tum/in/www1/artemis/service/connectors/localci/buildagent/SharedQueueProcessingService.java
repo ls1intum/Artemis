@@ -11,6 +11,7 @@ import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
@@ -164,15 +165,13 @@ public class SharedQueueProcessingService {
         if (queue.isEmpty()) {
             return;
         }
-
+        BuildJobQueueItem buildJob = null;
         instanceLock.lock();
         try {
             // Recheck conditions after acquiring the lock to ensure they are still valid
             if (!nodeIsAvailable() || queue.isEmpty()) {
                 return;
             }
-
-            BuildJobQueueItem buildJob;
 
             // Lock the queue to prevent multiple nodes from processing the same build job
             sharedLock.lock();
@@ -183,6 +182,22 @@ public class SharedQueueProcessingService {
                 sharedLock.unlock();
             }
             processBuild(buildJob);
+        }
+        catch (RejectedExecutionException e) {
+            log.error("Couldn't add build job to threadpool: {}\n Concurrent Build Jobs Count: {} Active tasks in pool: {}, Concurrent Build Jobs Size {}", buildJob,
+                    localProcessingJobs.get(), localCIBuildExecutorService.getActiveCount(), localCIBuildExecutorService.getMaximumPoolSize(), e);
+
+            // Add the build job back to the queue
+            if (buildJob != null) {
+                processingJobs.remove(buildJob.id());
+
+                buildJob = new BuildJobQueueItem(buildJob, "");
+                log.info("Adding build job back to the queue: {}", buildJob);
+                queue.add(buildJob);
+            }
+
+            localProcessingJobs.decrementAndGet();
+            updateLocalBuildAgentInformation();
         }
         finally {
             instanceLock.unlock();
@@ -347,8 +362,8 @@ public class SharedQueueProcessingService {
      * Checks whether the node has at least one thread available for a new build job.
      */
     private boolean nodeIsAvailable() {
-        log.debug("Currently processing jobs on this node: {}, maximum pool size of thread executor : {}", localProcessingJobs.get(),
-                localCIBuildExecutorService.getMaximumPoolSize());
+        log.debug("Currently processing jobs on this node: {}, active threads in Pool {}, maximum pool size of thread executor : {}", localProcessingJobs.get(),
+                localCIBuildExecutorService.getActiveCount(), localCIBuildExecutorService.getMaximumPoolSize());
         return localProcessingJobs.get() < localCIBuildExecutorService.getMaximumPoolSize();
     }
 
