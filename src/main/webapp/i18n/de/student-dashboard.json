@@ -93,7 +93,8 @@
                 "modalTitle": "Aufgaben Filtern",
                 "dueDateRange": "Zeitraum der Einreichungsfrist",
                 "achievedScore": "Erreichtes Ergebnis",
-                "achievablePoints": "Erreichbare Punktzahl"
+                "achievablePoints": "Erreichbare Punktzahl",
+                "applyFilter": "Filter anwenden"
             },
             "exerciseList": {
                 "filter": "Filter ({{ num }})",

@@ -105,6 +105,7 @@ export class ExerciseFilterModalComponent implements OnInit {
         const clicksWithClosedPopup$ = this.click$.pipe(filter(() => !this.instance.isPopupOpen()));
         const inputFocus$ = this.focus$;
 
+        // TODO add scroll option if more than 10 items are displayed
         return merge(debouncedText$, inputFocus$, clicksWithClosedPopup$).pipe(
             map((term) =>
                 (term === ''

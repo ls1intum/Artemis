@@ -42,7 +42,7 @@
 
         @if (typeFilters?.length ?? 0 > 1) {
             <div class="form-group">
-                <label for="exercise-type-filter-selection" class="form-control-label h6" jhiTranslate="artemisApp.courseStatistics.exerciseType"></label>
+                <label for="exercise-type-filter-selection" class="form-control-label h6" jhiTranslate="artemisApp.ratingList.exerciseType"></label>
                 <div id="exercise-type-filter-selection">
                     @for (typeFilter of typeFilters; track typeFilter) {
                         <div class="form-check form-check-inline">
@@ -107,6 +107,6 @@
         }
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-primary" (click)="applyFilter()">OK</button>
+        <button type="button" class="btn btn-primary" (click)="applyFilter()" jhiTranslate="artemisApp.courseOverview.exerciseFilter.applyFilter"></button>
     </div>
 </form>
