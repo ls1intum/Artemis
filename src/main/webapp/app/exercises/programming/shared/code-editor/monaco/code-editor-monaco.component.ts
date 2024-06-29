@@ -19,7 +19,6 @@ import {
     RenameFileChange,
 } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { fromPairs, pickBy } from 'lodash-es';
-import { faPlusSquare } from '@fortawesome/free-solid-svg-icons';
 import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback-suggestion.component';
 import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
 import { FileTypeService } from 'app/exercises/programming/shared/service/file-type.service';
@@ -89,10 +88,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
     newFeedbackLines: number[] = [];
     binaryFileSelected = false;
 
-    faPlusSquare = faPlusSquare;
-
     static readonly CLASS_DIFF_LINE_HIGHLIGHT = 'monaco-diff-line-highlight';
-    static readonly CLASS_DIFF_MARGIN_HIGHLIGHT = 'monaco-diff-margin-highlight';
     static readonly CLASS_FEEDBACK_HOVER_BUTTON = 'monaco-add-feedback-button';
 
     // Expose to template
@@ -188,7 +184,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
     }
 
     highlightLines(startLine: number, endLine: number) {
-        this.editor.highlightLines(startLine, endLine, CodeEditorMonacoComponent.CLASS_DIFF_LINE_HIGHLIGHT, CodeEditorMonacoComponent.CLASS_DIFF_MARGIN_HIGHLIGHT);
+        this.editor.highlightLines(startLine, endLine, CodeEditorMonacoComponent.CLASS_DIFF_LINE_HIGHLIGHT);
         this.onHighlightLines.emit(this.getLineHighlights());
     }
 
