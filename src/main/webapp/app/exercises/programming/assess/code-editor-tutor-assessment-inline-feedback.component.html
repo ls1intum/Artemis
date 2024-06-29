@@ -88,9 +88,9 @@
             }
         </div>
     } @else {
-        <div class="container p-1">
+        <div class="p-1">
             <div class="row flex-nowrap align-items-top m-1">
-                <div class="col ps-0">
+                <div class="col flex-grow-0 ps-0">
                     <h5 class="d-inline">
                         @if (!Feedback.isNonGradedFeedbackSuggestion(feedback)) {
                             <span
@@ -114,7 +114,7 @@
                     }
                 </div>
                 @if (!readOnly) {
-                    <div class="col d-flex justify-content-end align-items-start pe-0">
+                    <div class="col d-flex flex-grow-0 justify-content-end align-items-start pe-0">
                         <button type="submit" (click)="editFeedback(codeLine)" class="btn btn-primary btn-sm">
                             <fa-icon [icon]="faPencilAlt" />
                             <span jhiTranslate="entity.action.edit"></span>
