@@ -81,11 +81,7 @@ function processVariableDeclaration(variableDeclaration: VariableDeclaration, me
     if (isVariableDeclaration(variableDeclaration) && variableDeclaration.initializer && (isStringLiteral(variableDeclaration.initializer) || isTemplateLiteral(variableDeclaration.initializer))) {
         const key = variableDeclaration.name.getText();
         const value = variableDeclaration.initializer.getText().slice(1, -1); // Remove the quotes
-        if (methodVariables[key]) {
-            methodVariables[key].push(value);
-        } else {
-            methodVariables[key] = [value];
-        }
+        methodVariables[key] = [value];
     }
 }
 
