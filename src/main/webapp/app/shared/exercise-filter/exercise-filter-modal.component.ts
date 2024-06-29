@@ -19,7 +19,13 @@ import {
     ExerciseTypeFilterOptions,
     RangeFilter,
 } from 'app/types/exercise-filter';
-import { satisfiesCategoryFilter, satisfiesDifficultyFilter, satisfiesScoreFilter, satisfiesTypeFilter } from 'app/shared/exercise-filter/exercise-filter-modal.helper';
+import {
+    satisfiesCategoryFilter,
+    satisfiesDifficultyFilter,
+    satisfiesPointsFilter,
+    satisfiesScoreFilter,
+    satisfiesTypeFilter,
+} from 'app/shared/exercise-filter/exercise-filter-modal.helper';
 
 @Component({
     selector: 'jhi-exercise-filter-modal',
@@ -137,6 +143,8 @@ export class ExerciseFilterModalComponent implements OnInit {
         const selectedCategories = this.selectedCategoryOptions.map((categoryOption: ExerciseCategoryFilterOption) => categoryOption.category);
         const searchedDifficulties: DifficultyLevel[] | undefined = this.difficultyFilters?.filter((difficulty) => difficulty.checked).map((difficulty) => difficulty.value);
         const isScoreFilterApplied = this.achievedScore?.selectedMin !== this.achievedScore?.generalMin || this.achievedScore?.selectedMax !== this.achievedScore?.generalMax;
+        const isPointsFilterApplied =
+            this.achievablePoints?.selectedMin !== this.achievablePoints?.generalMin || this.achievablePoints?.selectedMax !== this.achievablePoints?.generalMax;
 
         for (const groupedDataKey in this.sidebarData.groupedData) {
             this.sidebarData.groupedData[groupedDataKey].entityData = this.sidebarData.groupedData[groupedDataKey].entityData.filter(
@@ -144,30 +152,13 @@ export class ExerciseFilterModalComponent implements OnInit {
                     satisfiesTypeFilter(sidebarElement, searchedTypes) &&
                     satisfiesCategoryFilter(sidebarElement, selectedCategories) &&
                     satisfiesDifficultyFilter(sidebarElement, searchedDifficulties) &&
-                    satisfiesScoreFilter(sidebarElement, isScoreFilterApplied, this.achievedScore),
+                    satisfiesScoreFilter(sidebarElement, isScoreFilterApplied, this.achievedScore) &&
+                    satisfiesPointsFilter(sidebarElement, isPointsFilterApplied, this.achievablePoints),
             );
         }
-
-        // this.applyPointsFilter();
 
         this.filterApplied.emit({ filteredSidebarData: this.sidebarData!, appliedExerciseFilters: this.exerciseFilters });
 
         this.closeModal();
-    }
-
-    private applyPointsFilter() {
-        if (!this.achievablePoints) {
-            return;
-        }
-
-        if (this.sidebarData?.groupedData) {
-            for (const groupedDataKey in this.sidebarData.groupedData) {
-                this.sidebarData.groupedData[groupedDataKey].entityData = this.sidebarData.groupedData[groupedDataKey].entityData.filter(
-                    (sidebarElement) =>
-                        (sidebarElement?.exercise?.maxPoints ?? 0) <= (this.achievablePoints?.selectedMax ?? Number.MAX_SAFE_INTEGER) &&
-                        (sidebarElement?.exercise?.maxPoints ?? 0) >= (this.achievablePoints?.selectedMin ?? Number.MIN_SAFE_INTEGER),
-                );
-            }
-        }
     }
 }

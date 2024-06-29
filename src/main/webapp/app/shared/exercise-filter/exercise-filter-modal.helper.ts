@@ -52,3 +52,16 @@ export function satisfiesScoreFilter(sidebarElement: SidebarCardElement, isFilte
 
     return latestResult.score <= this.achievedScore!.selectedMax && latestResult.score >= this.achievedScore!.selectedMin;
 }
+
+export function satisfiesPointsFilter(sidebarElement: SidebarCardElement, isPointsFilterApplied: boolean, achievablePointsFilter?: RangeFilter): boolean {
+    if (!isPointsFilterApplied || !achievablePointsFilter) {
+        return true;
+    }
+
+    /** {@link Exercise.maxPoints} must be in the range 1 - 9999 */
+    if (!sidebarElement.exercise?.maxPoints) {
+        return false;
+    }
+
+    return sidebarElement.exercise.maxPoints <= achievablePointsFilter.selectedMax && sidebarElement.exercise.maxPoints >= achievablePointsFilter.selectedMin;
+}
