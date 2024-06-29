@@ -8,22 +8,26 @@
     </div>
     <div class="modal-body">
         <div class="form-group">
-            <label for="exercise-categories-filter-selection" class="form-control-label h6" jhiTranslate="artemisApp.exercise.categories"></label>
-            <input
-                id="exercise-categories-filter-selection"
-                type="text"
-                class="form-control mb-2"
-                name="category-filter-selection"
-                [(ngModel)]="model"
-                [ngbTypeahead]="search"
-                [placeholder]="'artemisApp.exercise.selectCategories' | artemisTranslate"
-                (focus)="focus$.next($any($event).target.value)"
-                (click)="click$.next($any($event).target.value)"
-                #categoriesFilterSelection="ngbTypeahead"
-                (selectItem)="onSelectItem($event)"
-                [inputFormatter]="inputFormatter"
-                [resultFormatter]="resultFormatter"
-            />
+            @if (selectableCategoryOptions.length || selectedCategoryOptions.length) {
+                <label for="exercise-categories-filter-selection" class="form-control-label h6" jhiTranslate="artemisApp.exercise.categories"></label>
+            }
+            @if (selectableCategoryOptions.length) {
+                <input
+                    id="exercise-categories-filter-selection"
+                    type="text"
+                    class="form-control mb-2"
+                    name="category-filter-selection"
+                    [(ngModel)]="model"
+                    [ngbTypeahead]="search"
+                    [placeholder]="'artemisApp.exercise.selectCategories' | artemisTranslate"
+                    (focus)="focus$.next($any($event).target.value)"
+                    (click)="click$.next($any($event).target.value)"
+                    #categoriesFilterSelection="ngbTypeahead"
+                    (selectItem)="onSelectItem($event)"
+                    [inputFormatter]="inputFormatter"
+                    [resultFormatter]="resultFormatter"
+                />
+            }
 
             <div class="row">
                 <div class="d-flex flex-row flex-wrap">

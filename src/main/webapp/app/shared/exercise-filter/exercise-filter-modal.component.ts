@@ -46,7 +46,7 @@ export class ExerciseFilterModalComponent implements OnInit {
 
     @Output() filterApplied = new EventEmitter<ExerciseFilterResults>();
 
-    @ViewChild('categoriesFilterSelection', { static: true }) instance: NgbTypeahead;
+    @ViewChild('categoriesFilterSelection', { static: false }) instance: NgbTypeahead;
 
     get selectedCategoryOptions(): ExerciseCategoryFilterOption[] {
         return this.categoryFilters.filter((categoryFilter) => categoryFilter.searched);
