@@ -98,12 +98,13 @@ export class ExerciseFilterModalComponent implements OnInit {
         this.activeModal.close();
     }
 
+    // TODO fix that it removes categories when no category found
+    // TODO add scroll option if more than 10 items are displayed
     search: OperatorFunction<string, readonly ExerciseCategoryFilterOption[]> = (text$: Observable<string>) => {
         const debouncedText$ = text$.pipe(debounceTime(200), distinctUntilChanged());
         const clicksWithClosedPopup$ = this.click$.pipe(filter(() => !this.instance.isPopupOpen()));
         const inputFocus$ = this.focus$;
 
-        // TODO add scroll option if more than 10 items are displayed
         return merge(debouncedText$, inputFocus$, clicksWithClosedPopup$).pipe(
             map((term) =>
                 (term === ''
