@@ -1,4 +1,5 @@
 $breadcrumb-height: 38px;
+$management-header-height: 220px;
 
 .update-footer {
     margin-top: 1rem;
@@ -49,19 +50,6 @@ $breadcrumb-height: 38px;
     background-color: var(--bs-body-bg);
 }
 
-.sidebar {
-    background-color: var(--module-bg);
-    height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height));
-
-    &.sidebar-height-dev {
-        height: calc(100vh - var(--sidebar-footer-height-dev) - var(--header-height));
-    }
-
-    @media (max-width: 768px) {
-        height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height)) !important;
-    }
-}
-
 .content-exam-height {
     height: calc(100vh - var(--sidebar-footer-height-prod) - $breadcrumb-height);
     overflow-y: auto;
@@ -71,7 +59,27 @@ $breadcrumb-height: 38px;
     }
 
     &.content-exam-height-testRun {
-        height: calc(100vh - 360px);
+        height: calc(100vh - var(--sidebar-footer-height-prod) - $management-header-height);
+
+        &.content-exam-height-testRun-dev {
+            height: calc(100vh - var(--sidebar-footer-height-dev) - $management-header-height);
+
+            @media (max-width: 1349px) {
+                height: calc(100vh - var(--sidebar-footer-height-dev) - $management-header-height - 40px) !important;
+            }
+
+            @media (max-width: 768px) {
+                height: calc(100vh - var(--sidebar-footer-height-prod) - $management-header-height - 20px) !important;
+            }
+        }
+
+        @media (max-width: 1349px) {
+            height: calc(100vh - var(--sidebar-footer-height-prod) - $management-header-height - 40px) !important;
+        }
+
+        @media (max-width: 768px) {
+            height: calc(100vh - var(--sidebar-footer-height-prod) - $management-header-height - 20px) !important;
+        }
     }
 
     @media (max-width: 768px) {
