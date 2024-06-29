@@ -106,21 +106,19 @@ function processVariableDeclaration(variableDeclaration: VariableDeclaration, me
     if (isVariableDeclaration(variableDeclaration) && variableDeclaration.initializer && (isStringLiteral(variableDeclaration.initializer) || isTemplateLiteral(variableDeclaration.initializer))) {
         const key = variableDeclaration.name.getText();
         const value = variableDeclaration.initializer.getText().slice(1, -1); // Remove the quotes
+        methodVariables[key] = [value];
+    }
+}
+
+function processAssignmentExpression(binaryExpression: BinaryExpression, methodVariables: { [key: string]: string[] }) {
+    if (isStringLiteral(binaryExpression.right) || isTemplateLiteral(binaryExpression.right)) {
+        const key = binaryExpression.left.getText();
+        const value = binaryExpression.right.getText();
         if (methodVariables[key]) {
             methodVariables[key].push(value);
         } else {
             methodVariables[key] = [value];
         }
-    }
-}
-
-function processAssignmentExpression(binaryExpression: BinaryExpression, methodVariables: { [key: string]: string[] }) {
-    const key = binaryExpression.left.getText();
-    const value = binaryExpression.right.getText();
-    if (methodVariables[key]) {
-        methodVariables[key].push(value);
-    } else {
-        methodVariables[key] = [value];
     }
 }
 
@@ -259,7 +257,11 @@ function evaluateUrl(expression: Node, classProperties: { [key: string]: string 
         const propName = expression.name.getText();
         urlSet.add(classProperties[propName] || '');
     } else if (isBinaryExpression(expression) && expression.operatorToken.kind === SyntaxKind.PlusToken) {
-        urlSet.add(evaluateUrl(expression.left, classProperties, methodVariables)[0] + evaluateUrl(expression.right, classProperties, methodVariables)[0]);
+        let leftSet = evaluateUrl(expression.left, classProperties, methodVariables);
+        let rightSet = evaluateUrl(expression.right, classProperties, methodVariables);
+        let leftString = Array.from(leftSet)[0];
+        let rightString = Array.from(rightSet)[0];
+        urlSet.add(leftString + rightString);
     } else if (isStringLiteral(expression)) {
         urlSet.add(expression.text);
     } else if (isIdentifier(expression)) {
