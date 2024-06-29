@@ -47,7 +47,7 @@ describe('CompetencyCardComponent', () => {
             userProgress: [
                 {
                     progress: 45,
-                    confidence: 60,
+                    confidence: 1.1,
                 } as CompetencyProgress,
             ],
         } as Competency;
@@ -55,8 +55,7 @@ describe('CompetencyCardComponent', () => {
         competencyCardComponentFixture.detectChanges();
 
         expect(competencyCardComponent.progress).toBe(45);
-        expect(competencyCardComponent.confidence).toBe(75);
-        expect(competencyCardComponent.mastery).toBe(65);
+        expect(competencyCardComponent.mastery).toBe(Math.round(45 * 1.1));
         expect(competencyCardComponent.isMastered).toBeFalse();
     });
 
@@ -75,7 +74,6 @@ describe('CompetencyCardComponent', () => {
         competencyCardComponentFixture.detectChanges();
 
         expect(competencyCardComponent.progress).toBe(100);
-        expect(competencyCardComponent.confidence).toBe(100);
         expect(competencyCardComponent.mastery).toBe(100);
         expect(competencyCardComponent.isMastered).toBeTrue();
     });

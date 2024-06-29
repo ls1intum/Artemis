@@ -2,8 +2,8 @@ import { DomainTagCommand } from 'app/shared/markdown-editor/domainCommands/doma
 import { addTextAtCursor } from 'app/shared/util/markdown.util';
 
 export class GradingScaleCommand extends DomainTagCommand {
-    public static readonly identifier = '[gradingScale]';
-    public static readonly text = 'Add instruction grading scale here (only visible for tutors)';
+    public static readonly IDENTIFIER = '[gradingScale]';
+    public static readonly TEXT = 'Add instruction grading scale here (only visible for tutors)';
     displayCommandButton = false;
 
     buttonTranslationString = 'artemisApp.assessmentInstructions.instructions.editor.addGradingScale';
@@ -13,7 +13,7 @@ export class GradingScaleCommand extends DomainTagCommand {
      * @desc Add a new gradingScale to the instruction in the editor at the location of the cursor
      */
     execute(): void {
-        const text = '\n' + this.getOpeningIdentifier() + GradingScaleCommand.text;
+        const text = '\n' + this.getOpeningIdentifier() + GradingScaleCommand.TEXT;
         addTextAtCursor(text, this.aceEditor);
     }
 
@@ -22,7 +22,7 @@ export class GradingScaleCommand extends DomainTagCommand {
      * @desc identify the start of the gradingScale
      */
     getOpeningIdentifier(): string {
-        return GradingScaleCommand.identifier;
+        return GradingScaleCommand.IDENTIFIER;
     }
 
     /**

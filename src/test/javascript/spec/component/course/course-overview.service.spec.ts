@@ -11,6 +11,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { Exam } from 'app/entities/exam.model';
+import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 
 describe('CourseOverviewService', () => {
     let service: CourseOverviewService;
@@ -21,6 +23,12 @@ describe('CourseOverviewService', () => {
     let pastLecture: Lecture;
     let futureLecture: Lecture;
     let currentLecture: Lecture;
+    let generalChannel: ChannelDTO;
+    let examChannel: ChannelDTO;
+    let exerciseChannel: ChannelDTO;
+    let favoriteChannel: ChannelDTO;
+    let hiddenChannel: ChannelDTO;
+    let generalChannel2: ChannelDTO;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -75,6 +83,38 @@ describe('CourseOverviewService', () => {
         futureLecture.id = 8;
         futureLecture.startDate = tomorrow;
         futureLecture.title = 'Advanced Topics in Computer Science';
+
+        generalChannel = new ChannelDTO();
+        generalChannel.id = 11;
+        generalChannel.name = 'General';
+        generalChannel.subType = ChannelSubType.GENERAL;
+
+        examChannel = new ChannelDTO();
+        examChannel.id = 12;
+        examChannel.name = 'exam-test';
+        examChannel.subType = ChannelSubType.EXAM;
+
+        exerciseChannel = new ChannelDTO();
+        exerciseChannel.id = 13;
+        exerciseChannel.name = 'exercise-test';
+        exerciseChannel.subType = ChannelSubType.EXERCISE;
+
+        favoriteChannel = new ChannelDTO();
+        favoriteChannel.id = 14;
+        favoriteChannel.name = 'fav-channel';
+        favoriteChannel.subType = ChannelSubType.GENERAL;
+        favoriteChannel.isFavorite = true;
+
+        hiddenChannel = new ChannelDTO();
+        hiddenChannel.id = 15;
+        hiddenChannel.name = 'hidden-channel';
+        hiddenChannel.subType = ChannelSubType.GENERAL;
+        hiddenChannel.isHidden = true;
+
+        generalChannel2 = new ChannelDTO();
+        generalChannel2.id = 16;
+        generalChannel2.name = 'General 2';
+        generalChannel2.subType = ChannelSubType.GENERAL;
     });
 
     it('should return true if sidebar collapse state is stored as true in localStorage', () => {
@@ -226,6 +266,25 @@ describe('CourseOverviewService', () => {
         expect(upcomingLecture?.id).toBe(2);
     });
 
+    it('should handle all past exams', () => {
+        const pastExams: Exam[] = [
+            {
+                id: 1,
+                title: 'Past Exam 1',
+                endDate: dayjs().subtract(2, 'day'),
+            },
+            {
+                id: 2,
+                title: 'Past Exam 2',
+                endDate: dayjs().subtract(1, 'day'),
+            },
+        ];
+        const upcomingExam = service.getUpcomingExam(pastExams);
+
+        // Assuming the function should return the most recent past lecture if all are in the past
+        expect(upcomingExam?.id).toBe(2);
+    });
+
     it('should correctly identify the exercises furthest in the future', () => {
         const exercises: Exercise[] = [
             {
@@ -256,5 +315,90 @@ describe('CourseOverviewService', () => {
         const upcomingExercise = service.getUpcomingExercise(exercises);
 
         expect(upcomingExercise?.id).toBe(3);
+    });
+
+    it('should correctly identify the exams furthest in the future', () => {
+        const exams: Exam[] = [
+            {
+                id: 1,
+                title: 'Past Exam',
+                endDate: dayjs().subtract(1, 'day'),
+            },
+            {
+                id: 2,
+                title: 'Upcoming Exam',
+                endDate: dayjs().add(1, 'day'),
+            },
+            {
+                id: 3,
+                title: 'Far Future Exam',
+                endDate: dayjs().add(2, 'weeks'),
+            },
+        ];
+        const upcomingExam = service.getUpcomingExam(exams);
+
+        expect(upcomingExam?.id).toBe(3);
+    });
+
+    it('should return undefined if exams array is undefined', () => {
+        expect(service.getUpcomingExam(undefined)).toBeUndefined();
+    });
+
+    it('should return undefined if exams array is empty', () => {
+        expect(service.getUpcomingExam([])).toBeUndefined();
+    });
+
+    it('should group conversations by conversation types and map to sidebar card elements', () => {
+        const conversations = [generalChannel, examChannel, exerciseChannel];
+
+        jest.spyOn(service, 'getCorrespondingChannelSubType');
+        jest.spyOn(service, 'mapConversationToSidebarCardElement');
+        const groupedConversations = service.groupConversationsByChannelType(conversations);
+
+        expect(groupedConversations['generalChannels'].entityData).toHaveLength(1);
+        expect(groupedConversations['examChannels'].entityData).toHaveLength(1);
+        expect(groupedConversations['exerciseChannels'].entityData).toHaveLength(1);
+        expect(service.mapConversationToSidebarCardElement).toHaveBeenCalledTimes(3);
+        expect(getAsChannelDTO(groupedConversations['generalChannels'].entityData[0].conversation)?.name).toBe('General');
+        expect(getAsChannelDTO(groupedConversations['examChannels'].entityData[0].conversation)?.name).toBe('exam-test');
+        expect(getAsChannelDTO(groupedConversations['exerciseChannels'].entityData[0].conversation)?.name).toBe('exercise-test');
+    });
+
+    it('should group conversations together when having the same type', () => {
+        const conversations = [generalChannel, generalChannel2];
+
+        jest.spyOn(service, 'getCorrespondingChannelSubType');
+        jest.spyOn(service, 'mapConversationToSidebarCardElement');
+        const groupedConversations = service.groupConversationsByChannelType(conversations);
+
+        expect(groupedConversations['generalChannels'].entityData).toHaveLength(2);
+        expect(service.mapConversationToSidebarCardElement).toHaveBeenCalledTimes(2);
+        expect(getAsChannelDTO(groupedConversations['generalChannels'].entityData[0].conversation)?.name).toBe('General');
+        expect(getAsChannelDTO(groupedConversations['generalChannels'].entityData[1].conversation)?.name).toBe('General 2');
+    });
+
+    it('should group favorite and hidden conversations correctly', () => {
+        const conversations = [generalChannel, examChannel, exerciseChannel, generalChannel2, favoriteChannel, hiddenChannel];
+
+        jest.spyOn(service, 'getCorrespondingChannelSubType');
+        jest.spyOn(service, 'mapConversationToSidebarCardElement');
+        jest.spyOn(service, 'getConversationGroup');
+        jest.spyOn(service, 'getCorrespondingChannelSubType');
+        const groupedConversations = service.groupConversationsByChannelType(conversations);
+
+        expect(groupedConversations['generalChannels'].entityData).toHaveLength(2);
+        expect(groupedConversations['examChannels'].entityData).toHaveLength(1);
+        expect(groupedConversations['exerciseChannels'].entityData).toHaveLength(1);
+        expect(groupedConversations['favoriteChannels'].entityData).toHaveLength(1);
+        expect(groupedConversations['hiddenChannels'].entityData).toHaveLength(1);
+        expect(service.mapConversationToSidebarCardElement).toHaveBeenCalledTimes(6);
+        expect(service.getConversationGroup).toHaveBeenCalledTimes(6);
+        expect(service.getCorrespondingChannelSubType).toHaveBeenCalledTimes(4);
+        expect(getAsChannelDTO(groupedConversations['generalChannels'].entityData[0].conversation)?.name).toBe('General');
+        expect(getAsChannelDTO(groupedConversations['generalChannels'].entityData[1].conversation)?.name).toBe('General 2');
+        expect(getAsChannelDTO(groupedConversations['examChannels'].entityData[0].conversation)?.name).toBe('exam-test');
+        expect(getAsChannelDTO(groupedConversations['exerciseChannels'].entityData[0].conversation)?.name).toBe('exercise-test');
+        expect(getAsChannelDTO(groupedConversations['favoriteChannels'].entityData[0].conversation)?.name).toBe('fav-channel');
+        expect(getAsChannelDTO(groupedConversations['hiddenChannels'].entityData[0].conversation)?.name).toBe('hidden-channel');
     });
 });

@@ -22,6 +22,7 @@
             "openModelingEditor": "Modellierungseditor öffnen",
             "importIntoIDE": "In deiner IDE öffnen",
             "openRepository": "Repository öffnen",
+            "openOnlineIDE": "Online IDE öffnen",
             "practiceMode": {
                 "title": "Übungsmodus",
                 "explanation": "Der Übungsmodus ermöglicht es dir nach der Einreichungsfrist zu Übungszwecken weiter an der Aufgabe zu arbeiten. Dies wird deine Bewertung nicht beeinflussen! Artemis wird dafür ein separates Repository aufsetzen, das du erneut clonen musst.",
@@ -53,6 +54,14 @@
             "cloneSourceTree": {
                 "button": "Im Git Client klonen",
                 "helpIcon": "Dies öffnet das Repository in Sourcetree oder Tower. Falls du diese nicht installiert hast, kannst du das Repository in deiner IDE oder dem Terminal klonen."
+            },
+            "cloneVSCode": {
+                "button": "In VSCode klonen",
+                "helpIcon": "Klone das Repository direkt in Visual Studio Code."
+            },
+            "cloneIntelliJ": {
+                "button": "In IntelliJ klonen",
+                "helpIcon": "Klone das Repository direkt in IntelliJ. Dieses Feature benötigt die Jetbrains Toolbox."
             },
             "goToBuildPlan": "Zum Build Plan gehen",
             "openTextEditor": "Texteditor öffnen",

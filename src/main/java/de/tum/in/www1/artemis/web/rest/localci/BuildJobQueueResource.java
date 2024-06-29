@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest.localci;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -27,10 +29,11 @@ import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAt
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.localci.SharedQueueManagementService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
+import de.tum.in.www1.artemis.service.dto.BuildJobResultCountDTO;
+import de.tum.in.www1.artemis.service.dto.BuildJobsStatisticsDTO;
 import de.tum.in.www1.artemis.service.dto.FinishedBuildJobDTO;
-import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 import tech.jhipster.web.util.PaginationUtil;
 
 @Profile(PROFILE_LOCALCI)
@@ -163,12 +166,27 @@ public class BuildJobQueueResource {
      */
     @GetMapping("courses/{courseId}/finished-jobs")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<List<FinishedBuildJobDTO>> getFinishedBuildJobsForCourse(@PathVariable long courseId, PageableSearchDTO<String> search) {
+    public ResponseEntity<List<FinishedBuildJobDTO>> getFinishedBuildJobsForCourse(@PathVariable long courseId, FinishedBuildJobPageableSearchDTO search) {
         log.debug("REST request to get the finished build jobs for course {}", courseId);
-        final Page<BuildJob> page = buildJobRepository.findAllByCourseId(courseId, PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.BUILD_JOB));
-        Page<FinishedBuildJobDTO> finishedBuildJobDTOs = FinishedBuildJobDTO.fromBuildJobsPage(page);
-        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        Page<BuildJob> buildJobPage = localCIBuildJobQueueService.getFilteredFinishedBuildJobs(search, courseId);
+        Page<FinishedBuildJobDTO> finishedBuildJobDTOs = FinishedBuildJobDTO.fromBuildJobsPage(buildJobPage);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), buildJobPage);
         return new ResponseEntity<>(finishedBuildJobDTOs.getContent(), headers, HttpStatus.OK);
     }
 
+    /**
+     * Returns the build job statistics.
+     *
+     * @param courseId the id of the course
+     * @param span     the time span in days. The statistics will be calculated for the last span days. Default is 7 days.
+     * @return the build job statistics
+     */
+    @GetMapping("courses/{courseId}/build-job-statistics")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<BuildJobsStatisticsDTO> getBuildJobStatistics(@PathVariable long courseId, @RequestParam(required = false, defaultValue = "7") int span) {
+        log.debug("REST request to get the build job statistics");
+        List<BuildJobResultCountDTO> buildJobResultCountDtos = buildJobRepository.getBuildJobsResultsStatistics(ZonedDateTime.now().minusDays(span), courseId);
+        BuildJobsStatisticsDTO buildJobStatistics = BuildJobsStatisticsDTO.of(buildJobResultCountDtos);
+        return ResponseEntity.ok(buildJobStatistics);
+    }
 }

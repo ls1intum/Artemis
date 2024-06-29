@@ -32,7 +32,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "7.2.2"
+version = "7.3.1"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -437,6 +437,7 @@ dependencies {
     implementation "org.jgrapht:jgrapht-core:1.5.2"
     // use newest version of guava to avoid security issues through outdated dependencies
     implementation "com.google.guava:guava:33.2.1-jre"
+    implementation "com.sun.activation:jakarta.activation:2.0.1"
 
     // use newest version of gson to avoid security issues through outdated dependencies
     implementation "com.google.code.gson:gson:2.11.0"

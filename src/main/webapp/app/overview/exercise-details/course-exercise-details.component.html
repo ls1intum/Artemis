@@ -1,6 +1,11 @@
 @if (exercise) {
     <div class="px-3 scrollable-content" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
-        <jhi-header-exercise-page-with-details [exercise]="exercise" [studentParticipation]="gradedStudentParticipation" [submissionPolicy]="submissionPolicy" [course]="course">
+        <jhi-header-exercise-page-with-details
+            [exercise]="exercise"
+            [studentParticipation]="gradedStudentParticipation"
+            [submissionPolicy]="submissionPolicy"
+            [course]="exercise.course"
+        >
             <span pagetitle>{{ exercise.title }}</span>
         </jhi-header-exercise-page-with-details>
         <div class="tab-bar-exercise-details justify-content-end">
