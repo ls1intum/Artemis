@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
-import { faCheckDouble, faDiagramProject, faFileArrowUp, faFilter, faFont, faKeyboard } from '@fortawesome/free-solid-svg-icons';
+import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Subscription, distinctUntilChanged } from 'rxjs';
 import { ProfileService } from '../layouts/profiles/profile.service';
@@ -7,18 +7,11 @@ import { ChannelAccordionShowAdd, ChannelTypeIcons, CollapseState, SidebarCardEl
 import { SidebarEventService } from './sidebar-event.service';
 import { ExerciseFilterModalComponent } from 'app/shared/exercise-filter/exercise-filter-modal.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { DifficultyLevel, ExerciseType } from 'app/entities/exercise.model';
+import { DifficultyLevel } from 'app/entities/exercise.model';
 import { cloneDeep } from 'lodash-es';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/participation/participation.utils';
-import {
-    DifficultyFilterOptions,
-    ExerciseCategoryFilterOption,
-    ExerciseFilterOptions,
-    ExerciseFilterResults,
-    ExerciseTypeFilterOptions,
-    RangeFilter,
-} from 'app/types/exercise-filter';
+import { DifficultyFilterOptions, ExerciseFilterOptions, ExerciseFilterResults, RangeFilter } from 'app/types/exercise-filter';
+import { getExerciseCategoryFilterOptions, getExerciseTypeFilterOptions } from 'app/shared/sidebar/sidebar.helper';
 
 const POINTS_STEP = 1;
 const SCORE_THRESHOLD_TO_INCREASE_STEP = 20;
@@ -30,14 +23,6 @@ const DEFAULT_DIFFICULTIES_FILTER: DifficultyFilterOptions = [
     { name: 'artemisApp.exercise.easy', value: DifficultyLevel.EASY, checked: false },
     { name: 'artemisApp.exercise.medium', value: DifficultyLevel.MEDIUM, checked: false },
     { name: 'artemisApp.exercise.hard', value: DifficultyLevel.HARD, checked: false },
-];
-
-const DEFAULT_EXERCISE_TYPES_FILTER: ExerciseTypeFilterOptions = [
-    { name: 'artemisApp.courseStatistics.programming', value: ExerciseType.PROGRAMMING, checked: false, icon: faKeyboard },
-    { name: 'artemisApp.courseStatistics.quiz', value: ExerciseType.QUIZ, checked: false, icon: faCheckDouble },
-    { name: 'artemisApp.courseStatistics.modeling', value: ExerciseType.MODELING, checked: false, icon: faDiagramProject },
-    { name: 'artemisApp.courseStatistics.text', value: ExerciseType.TEXT, checked: false, icon: faFont },
-    { name: 'artemisApp.courseStatistics.file-upload', value: ExerciseType.FILE_UPLOAD, checked: false, icon: faFileArrowUp },
 ];
 
 @Component({
@@ -187,42 +172,12 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         const scoreAndPointsFilterOptions = this.getAchievablePointsAndAchievedScoreFilterOptions();
 
         this.exerciseFilters = {
-            categoryFilters: this.getExerciseCategoryFilterOptions(),
-            exerciseTypesFilter: this.getExerciseTypeFilterOptions(),
+            categoryFilters: getExerciseCategoryFilterOptions(this.exerciseFilters, this.sidebarData),
+            exerciseTypesFilter: getExerciseTypeFilterOptions(this.exerciseFilters, this.sidebarData),
             difficultyFilters: this.getExerciseDifficultyFilterOptions(),
             achievedScore: scoreAndPointsFilterOptions?.achievedScore,
             achievablePoints: scoreAndPointsFilterOptions?.achievablePoints,
         };
-    }
-
-    private getExerciseCategoryFilterOptions(): ExerciseCategoryFilterOption[] {
-        if (this.exerciseFilters?.categoryFilters) {
-            return this.exerciseFilters?.categoryFilters;
-        }
-
-        const categoryFilters: ExerciseCategoryFilterOption[] =
-            this.sidebarData?.ungroupedData
-                ?.filter((sidebarElement: SidebarCardElement) => sidebarElement.exercise?.categories !== undefined)
-                .flatMap((sidebarElement: SidebarCardElement) => sidebarElement.exercise?.categories || [])
-                .map((category: ExerciseCategory) => ({ category: category, searched: false }))
-                .reduce((unique: ExerciseCategoryFilterOption[], item: ExerciseCategoryFilterOption) => {
-                    return unique.some((uniqueItem) => uniqueItem.category.equals(item.category)) ? unique : [...unique, item];
-                }, [])
-                .sort((categoryFilterOptionsA, categoryFilterOptionB) => categoryFilterOptionsA.category.compare(categoryFilterOptionB.category)) ?? [];
-
-        return categoryFilters;
-    }
-
-    private getExerciseTypeFilterOptions() {
-        if (this.exerciseFilters?.exerciseTypesFilter) {
-            return this.exerciseFilters?.exerciseTypesFilter;
-        }
-
-        const existingExerciseTypes = this.sidebarData?.ungroupedData
-            ?.filter((sidebarElement: SidebarCardElement) => sidebarElement.type !== undefined)
-            .map((sidebarElement: SidebarCardElement) => sidebarElement.type);
-
-        return DEFAULT_EXERCISE_TYPES_FILTER?.filter((exerciseType) => existingExerciseTypes?.includes(exerciseType.value));
     }
 
     private getExerciseDifficultyFilterOptions() {
