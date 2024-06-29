@@ -10,16 +10,21 @@
 
 .monaco-add-feedback-button {
     cursor: pointer;
-    font-size: 2.2em;
+    font-size: 2em;
 }
 
 .monaco-add-feedback-button:before {
     display: flex;
     content: '+';
+    background-color: var(--monaco-editor-add-feedback-button-background);
+    color: var(--monaco-editor-add-feedback-button-text);
+    border-radius: 35%;
     // Cosmetic adjustments to center the + in the line decorations
     align-items: center;
     justify-content: center;
-    padding-bottom: 15%;
+    padding-bottom: 21%;
+    margin-left: 10%;
+    margin-right: 10%;
     height: 100%;
 }
 
