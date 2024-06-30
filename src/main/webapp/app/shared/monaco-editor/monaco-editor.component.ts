@@ -268,7 +268,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.lineDecorationsHoverButton?.dispose();
         this.lineDecorationsHoverButton = new MonacoEditorLineDecorationsHoverButton(
             this._editor,
-            'line-decorations-hover-button-' + this._editor.getId(),
+            `line-decorations-hover-button-${this._editor.getId()}`,
             className,
             clickCallback,
         );
