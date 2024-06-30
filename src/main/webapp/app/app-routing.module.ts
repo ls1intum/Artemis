@@ -101,6 +101,11 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     loadChildren: () => import('./grading-system/grading-system.module').then((m) => m.GradingSystemModule),
                 },
                 {
+                    path: 'courses/:courseId/exams/:examId/exercises/:exerciseId/repository',
+                    loadChildren: () =>
+                        import('./exercises/programming/participate/programming-repository-routing.module').then((m) => m.ArtemisProgrammingRepositoryRoutingModule),
+                },
+                {
                     path: 'features',
                     loadChildren: () => import('./feature-overview/feature-overview.module').then((m) => m.FeatureOverviewModule),
                 },

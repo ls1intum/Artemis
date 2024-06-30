@@ -126,6 +126,10 @@ $breadcrumb-height: 45px; // needed to make the exam fullscreen
     }
 }
 
+.exam-end-view {
+    overflow-y: auto !important;
+}
+
 a:not(.btn):not(.tab-link):hover {
     text-decoration: none !important;
 }
