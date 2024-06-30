@@ -7,7 +7,7 @@ import * as monaco from 'monaco-editor';
  */
 export class MonacoEditorLineDecorationsHoverButton extends MonacoCodeEditorElement {
     private clickCallback: (lineNumber: number) => void;
-    private currentLineNumber: number = 1;
+    private currentLineNumber = 1;
     private decorationsCollection: monaco.editor.IEditorDecorationsCollection;
     private readonly className: string;
 
