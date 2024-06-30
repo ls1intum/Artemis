@@ -54,6 +54,7 @@ export class ProfileInfo {
             };
         };
     };
+    public theiaPortalURL: string;
 }
 
 export const hasEditableBuildPlan = (profileInfo: ProfileInfo): boolean => {
