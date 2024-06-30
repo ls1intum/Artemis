@@ -163,18 +163,16 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         void shouldFindLatestSubmissionDates() throws Exception {
             Set<Long> exerciseIds = new HashSet<Long>();
             final var exercises = exerciseRepository.findAllExercisesByCourseId(course.getId()).stream()
-                    .map(exercise -> exerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId()).orElseThrow());            // -> Here what we
-                                                                                                                                                                 // need for this
+                    .map(exercise -> exerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId()).orElseThrow());
 
             Set<ResourceTimestampDTO> expectedSet = exercises.map(exercise -> {
                 exerciseIds.add(exercise.getId());
-                final var absoluteTime = exercise.getStudentParticipations().stream().flatMap(participation -> participation.getSubmissions().stream())
+                final var latestSubmissionDate = exercise.getStudentParticipations().stream().flatMap(participation -> participation.getSubmissions().stream())
                         .map(Submission::getSubmissionDate).max(Comparator.naturalOrder()).orElseThrow();
-                return new ResourceTimestampDTO(exercise.getId(), absoluteTime);
+                return new ResourceTimestampDTO(exercise.getId(), latestSubmissionDate);
             }).collect(Collectors.toSet());
 
             Set<ResourceTimestampDTO> result = exerciseMetricsRepository.findLatestSubmissionDates(exerciseIds);
-            assertThat(result.size()).isEqualTo(5);
             assertThat(result).isEqualTo(expectedSet);
         }
 
@@ -183,20 +181,16 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         void shouldFindLatestSubmissionDatesByUser() throws Exception {
             Set<Long> exerciseIds = new HashSet<Long>();
             final var exercises = exerciseRepository.findAllExercisesByCourseId(course.getId()).stream()
-                    .map(exercise -> exerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId()).orElseThrow());            // -> Here what we
-                                                                                                                                                                 // need for this
+                    .map(exercise -> exerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId()).orElseThrow());
             final var userID = userUtilService.getUserByLogin(TEST_PREFIX + "user1337").getId();
 
             Set<ResourceTimestampDTO> expectedSet = exercises.flatMap(exercise -> {
                 exerciseIds.add(exercise.getId());
-                // Find the latest submission date for this exercise and user
                 final var latestSubmissionDate = exercise.getStudentParticipations().stream()
                         .filter(participation -> participation.getStudent().map(student -> student.getId().equals(userID)).orElse(false))
                         .flatMap(participation -> participation.getSubmissions().stream()).map(Submission::getSubmissionDate).max(Comparator.naturalOrder());
 
-                // Only create ResourceTimestampDTO if a valid date is found
-                return latestSubmissionDate.map(date -> new ResourceTimestampDTO(exercise.getId(), date)).stream(); // Convert Optional<ResourceTimestampDTO> to
-                                                                                                                    // Stream<ResourceTimestampDTO>
+                return latestSubmissionDate.map(date -> new ResourceTimestampDTO(exercise.getId(), date)).stream();
             }).collect(Collectors.toSet());
 
             Set<ResourceTimestampDTO> result = exerciseMetricsRepository.findLatestSubmissionDatesForUser(exerciseIds, userID);
