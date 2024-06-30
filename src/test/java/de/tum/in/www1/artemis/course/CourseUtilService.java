@@ -1029,11 +1029,7 @@ public class CourseUtilService {
 
     public void enableMessagingForCourse(Course course) {
         CourseInformationSharingConfiguration currentConfig = course.getCourseInformationSharingConfiguration();
-        if (currentConfig == CourseInformationSharingConfiguration.DISABLED) {
-            course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.MESSAGING_ONLY);
-            courseRepo.save(course);
-        }
-        else if (currentConfig == CourseInformationSharingConfiguration.COMMUNICATION_ONLY) {
+        if (currentConfig == CourseInformationSharingConfiguration.COMMUNICATION_ONLY) {
             course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
             courseRepo.save(course);
         }

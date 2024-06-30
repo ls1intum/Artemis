@@ -187,20 +187,11 @@ const routes: Routes = [
                 },
             },
             {
-                path: 'discussion',
-                loadChildren: () => import('./course-discussion/course-discussion.module').then((m) => m.CourseDiscussionModule),
-                data: {
-                    authorities: [Authority.USER],
-                    pageTitle: 'overview.communication',
-                    showRefreshButton: true,
-                },
-            },
-            {
-                path: 'messages',
+                path: 'communication',
                 loadChildren: () => import('./course-conversations/course-conversations.module').then((m) => m.CourseConversationsModule),
                 data: {
                     authorities: [Authority.USER],
-                    pageTitle: 'overview.messages',
+                    pageTitle: 'overview.communication',
                     hasSidebar: true,
                     showRefreshButton: true,
                 },
