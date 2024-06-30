@@ -18,8 +18,9 @@ import dayjs from 'dayjs/esm';
 import './config/dayjs';
 import { NgbDateDayjsAdapter } from 'app/core/config/datepicker-adapter';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { TraceService } from '@sentry/angular-ivy';
+import { TraceService } from '@sentry/angular';
 import { Router } from '@angular/router';
+import * as Sentry from '@sentry/angular';
 
 @NgModule({
     imports: [
@@ -34,6 +35,7 @@ import { Router } from '@angular/router';
                 useFactory: missingTranslationHandler,
             },
         }),
+        Sentry.TraceModule,
     ],
     providers: [
         provideHttpClient(withInterceptorsFromDi()),

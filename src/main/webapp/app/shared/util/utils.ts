@@ -1,5 +1,5 @@
 import { omit, sum } from 'lodash-es';
-import { captureException } from '@sentry/angular-ivy';
+import { captureException } from '@sentry/angular';
 import { Result } from 'app/entities/result.model';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
