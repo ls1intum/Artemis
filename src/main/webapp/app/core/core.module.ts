@@ -20,7 +20,6 @@ import { NgbDateDayjsAdapter } from 'app/core/config/datepicker-adapter';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { TraceService } from '@sentry/angular';
 import { Router } from '@angular/router';
-import * as Sentry from '@sentry/angular';
 
 @NgModule({
     imports: [
@@ -35,7 +34,6 @@ import * as Sentry from '@sentry/angular';
                 useFactory: missingTranslationHandler,
             },
         }),
-        Sentry.TraceModule,
     ],
     providers: [
         provideHttpClient(withInterceptorsFromDi()),
