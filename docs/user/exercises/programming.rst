@@ -177,7 +177,7 @@ Build Agent View
 
 .. include:: programming-integrated-code-lifecycle-build-agent-view.inc
 
-Build Queue View
-^^^^^^^^^^^^^^^^
+Build Overview View
+^^^^^^^^^^^^^^^^^^^
 
 .. include:: programming-integrated-code-lifecycle-build-queue-view.inc
