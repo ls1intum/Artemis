@@ -43,29 +43,14 @@ public class LearningPathNavigationService {
      */
     public LearningPathNavigationDTO getNavigation(LearningPath learningPath) {
         var recommendationState = learningPathRecommendationService.getRecommendedOrderOfNotMasteredCompetencies(learningPath);
-        var currentLearningObject = learningPathRecommendationService.getCurrentUncompletedLearningObject(learningPath.getUser(), recommendationState);
+        var currentLearningObject = learningPathRecommendationService.getFirstLearningObject(learningPath.getUser(), recommendationState);
         var recommendationStateWithAllCompetencies = learningPathRecommendationService.getRecommendedOrderOfAllCompetencies(learningPath);
 
         if (currentLearningObject == null) {
-            currentLearningObject = getLastCompletedLearningObject(recommendationStateWithAllCompetencies, learningPath.getUser());
+            currentLearningObject = learningPathRecommendationService.getLastLearningObject(learningPath.getUser(), recommendationStateWithAllCompetencies);
         }
 
         return getNavigationRelativeToLearningObject(recommendationStateWithAllCompetencies, currentLearningObject, learningPath);
-    }
-
-    private LearningObject getLastCompletedLearningObject(RecommendationState recommendationState, User user) {
-        LearningObject learningObject = null;
-        int indexOfLastCompletedCompetency = recommendationState.recommendedOrderOfCompetencies().size() - 1;
-        while (learningObject == null && indexOfLastCompletedCompetency >= 0) {
-            var lastCompletedCompetencyId = recommendationState.recommendedOrderOfCompetencies().get(indexOfLastCompletedCompetency);
-            var lastCompletedCompetency = recommendationState.competencyIdMap().get(lastCompletedCompetencyId);
-            var recommendedLearningObjectsInLastCompetency = learningPathRecommendationService.getOrderOfLearningObjectsForCompetency(lastCompletedCompetency, user);
-            if (!recommendedLearningObjectsInLastCompetency.isEmpty()) {
-                learningObject = recommendedLearningObjectsInLastCompetency.getLast();
-            }
-            indexOfLastCompletedCompetency--;
-        }
-        return learningObject;
     }
 
     /**
