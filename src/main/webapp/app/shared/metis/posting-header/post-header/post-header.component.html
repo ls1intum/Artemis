@@ -25,7 +25,7 @@
                 [ngbTooltip]="'artemisApp.metis.post.postMarkedAsResolvedTooltip' | artemisTranslate"
             />
         }
-        @if (!!isCourseMessagesPage && (!lastReadDate || (lastReadDate && posting.creationDate && posting.creationDate.isAfter(lastReadDate))) && !isAuthorOfPosting) {
+        @if (isCommunicationPage && (!lastReadDate || (lastReadDate && posting.creationDate && posting.creationDate.isAfter(lastReadDate))) && !isAuthorOfPosting) {
             <span class="badge bg-secondary hideAfter5Seconds">{{ 'global.generic.new' | artemisTranslate }}</span>
         }
     </div>

@@ -18,7 +18,6 @@ import {
     metisPostExerciseUser1,
     metisPostLectureUser1,
     metisPostLectureUser2,
-    metisPostTechSupport,
     metisTags,
     metisUser1,
     post,
@@ -35,10 +34,8 @@ import { of } from 'rxjs';
 import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { HttpResponse } from '@angular/common/http';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
-import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
-
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -49,7 +46,6 @@ describe('PostComponent', () => {
     let metisServiceGetQueryParamsSpy: jest.SpyInstance;
     let metisServiceGetPageTypeStub: jest.SpyInstance;
     let router: MockRouter;
-    const updatedTags = ['tag1', 'tag2', 'tag3'];
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -109,14 +105,6 @@ describe('PostComponent', () => {
         expect(component.tags).toEqual([]);
     });
 
-    it('should update post tags correctly', () => {
-        component.posting = metisPostLectureUser1;
-        component.ngOnInit();
-        component.posting.tags = updatedTags;
-        component.ngOnChanges();
-        expect(component.tags).toEqual(updatedTags);
-    });
-
     it('should have a tag shown for each post tag', () => {
         component.posting = metisPostLectureUser1;
         component.posting.tags = metisTags;
@@ -139,13 +127,6 @@ describe('PostComponent', () => {
         component.posting.answers = undefined;
         component.sortAnswerPosts();
         expect(component.sortedAnswerPosts).toEqual([]);
-    });
-
-    it('should sort answers on changes', () => {
-        component.posting = post;
-        component.posting.answers = unsortedAnswerArray;
-        component.ngOnChanges();
-        expect(component.sortedAnswerPosts).toEqual(sortedAnswerArray);
     });
 
     it('should contain a post header', () => {

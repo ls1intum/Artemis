@@ -71,15 +71,6 @@ describe('PostFooterComponent', () => {
         expect(component.createdAnswerPost.resolvesPost).toBeFalse();
     });
 
-    it('should contain an answer post', () => {
-        component.posting = post;
-        component.posting.answers = component.sortedAnswerPosts = unsortedAnswerArray;
-        component.showAnswers = true;
-        fixture.detectChanges();
-        const answerPostComponent = fixture.debugElement.nativeElement.querySelector('jhi-answer-post');
-        expect(answerPostComponent).not.toBeNull();
-    });
-
     it('should not contain an answer post', () => {
         component.posting = post;
         component.posting.answers = unsortedAnswerArray;

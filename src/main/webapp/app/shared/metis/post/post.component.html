@@ -23,7 +23,7 @@
                 }
                 <!-- in the course discussion overview as well as in the preview mode during similarity check, the context (lecture, exercise, course-wide topic) is shown -->
                 <!-- not shown in course messages page -->
-                @if (isCommunicationPage && (pageType === PageType.OVERVIEW || previewMode)) {
+                @if (!isCommunicationPage && (pageType === PageType.OVERVIEW || previewMode)) {
                     <span class="col-auto">
                         @if (contextInformation.routerLinkComponents) {
                             <a
@@ -45,12 +45,6 @@
                     <span class="col-auto">
                         @if (posting.title?.length) {
                             <span class="post-title">{{ posting.title }}</span>
-                        }
-                        <!-- show id only on communication page -->
-                        @if (!isCourseMessagesPage && isCommunicationPage) {
-                            <a class="reference-hash" [routerLink]="routerLink" [queryParams]="queryParams" (click)="onNavigateToPostById($event)" routerLinkActive="active"
-                                >#{{ posting.id }}</a
-                            >
                         }
                     </span>
                 }
@@ -82,7 +76,7 @@
                     [posting]="posting"
                     [(showAnswers)]="showAnswers"
                     [sortedAnswerPosts]="sortedAnswerPosts"
-                    [isCommunication]="isCommunicationPage"
+                    [isCommunicationPage]="isCommunicationPage"
                     [isThreadSidebar]="isThreadSidebar"
                     (openPostingCreateEditModal)="openCreateAnswerPostModal()"
                     (openThread)="openThread.emit()"
@@ -105,10 +99,8 @@
     [modalRef]="modalRef"
     [previewMode]="previewMode || pageType === PageType.PLAGIARISM_CASE_STUDENT"
     [posting]="posting"
-    [showAnswers]="showAnswers"
     [isCommunicationPage]="isCommunicationPage"
     [isThreadSidebar]="isThreadSidebar"
-    [sortedAnswerPosts]="sortedAnswerPosts"
     (openThread)="openThread.emit()"
     [lastReadDate]="lastReadDate"
     (userReferenceClicked)="onUserReferenceClicked($event)"
