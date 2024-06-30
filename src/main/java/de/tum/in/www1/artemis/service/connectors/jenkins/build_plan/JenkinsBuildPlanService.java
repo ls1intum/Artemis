@@ -134,7 +134,7 @@ public class JenkinsBuildPlanService {
         final ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
         final var configBuilder = builderFor(programmingLanguage, exercise.getProjectType());
         final String buildPlanUrl = jenkinsPipelineScriptCreator.generateBuildPlanURL(exercise);
-        final boolean checkoutSolution = exercise.getCheckoutSolutionRepository();
+        final boolean checkoutSolution = exercise.getBuildConfig().getCheckoutSolutionRepository();
         final Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofNullable(exercise.getProjectType()), internalRepositoryUris, checkoutSolution,
                 buildPlanUrl);
 
@@ -142,7 +142,7 @@ public class JenkinsBuildPlanService {
         String job = jobFolder + "-" + planKey;
         boolean couldCreateBuildPlan = false;
 
-        if (aeolusBuildPlanService.isPresent() && exercise.getBuildPlanConfiguration() != null) {
+        if (aeolusBuildPlanService.isPresent() && exercise.getBuildConfig().getBuildPlanConfiguration() != null) {
             var createdJob = createCustomAeolusBuildPlanForExercise(exercise, jobFolder + "/" + job, internalRepositoryUris.assignmentRepositoryUri(),
                     internalRepositoryUris.testRepositoryUri(), internalRepositoryUris.solutionRepositoryUri());
             couldCreateBuildPlan = createdJob != null;
@@ -491,13 +491,14 @@ public class JenkinsBuildPlanService {
      */
     private String createCustomAeolusBuildPlanForExercise(ProgrammingExercise programmingExercise, String buildPlanId, VcsRepositoryUri repositoryUri,
             VcsRepositoryUri testRepositoryUri, VcsRepositoryUri solutionRepositoryUri) throws ContinuousIntegrationBuildPlanException {
-        if (aeolusBuildPlanService.isEmpty() || programmingExercise.getBuildPlanConfiguration() == null) {
+        if (aeolusBuildPlanService.isEmpty() || programmingExercise.getBuildConfig().getBuildPlanConfiguration() == null) {
             return null;
         }
         try {
-            Windfile windfile = programmingExercise.getWindfile();
+            Windfile windfile = programmingExercise.getBuildConfig().getWindfile();
             Map<String, AeolusRepository> repositories = aeolusBuildPlanService.get().createRepositoryMapForWindfile(programmingExercise.getProgrammingLanguage(),
-                    programmingExercise.getBranch(), programmingExercise.getCheckoutSolutionRepository(), repositoryUri, testRepositoryUri, solutionRepositoryUri, List.of());
+                    programmingExercise.getBuildConfig().getBranch(), programmingExercise.getBuildConfig().getCheckoutSolutionRepository(), repositoryUri, testRepositoryUri,
+                    solutionRepositoryUri, List.of());
 
             String resultHookUrl = artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH;
             windfile.setPreProcessingMetadata(buildPlanId, programmingExercise.getProjectName(), this.vcsCredentials, resultHookUrl, "planDescription", repositories,

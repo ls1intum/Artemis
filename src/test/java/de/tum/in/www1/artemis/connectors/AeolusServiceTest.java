@@ -197,11 +197,11 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     void testShouldNotGenerateAnything() throws JsonProcessingException {
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
-        programmingExercise.setBuildPlanConfiguration(getSerializedWindfile());
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration(getSerializedWindfile());
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
         programmingExercise.setStaticCodeAnalysisEnabled(true);
-        programmingExercise.setSequentialTestRuns(true);
+        programmingExercise.getBuildConfig().setSequentialTestRuns(true);
         programmingExercise.setTestwiseCoverageEnabled(true);
         String script = aeolusBuildScriptGenerationService.getScript(programmingExercise);
         assertThat(script).isNull();
@@ -220,7 +220,7 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.HASKELL);
         programmingExercise.setStaticCodeAnalysisEnabled(true);
-        programmingExercise.setSequentialTestRuns(true);
+        programmingExercise.getBuildConfig().setSequentialTestRuns(true);
         programmingExercise.setTestwiseCoverageEnabled(true);
         Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
         assertThat(windfile).isNull();

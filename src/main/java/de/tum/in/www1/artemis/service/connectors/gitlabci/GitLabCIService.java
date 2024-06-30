@@ -150,8 +150,8 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
             updateVariable(repositoryPath, VARIABLE_NOTIFICATION_PLUGIN_DOCKER_IMAGE_NAME, notificationPluginDockerImage);
             updateVariable(repositoryPath, VARIABLE_NOTIFICATION_SECRET_NAME, artemisAuthenticationTokenValue);
             updateVariable(repositoryPath, VARIABLE_NOTIFICATION_URL_NAME, artemisServerUrl.toExternalForm() + NEW_RESULT_RESOURCE_API_PATH);
-            updateVariable(repositoryPath, VARIABLE_SUBMISSION_GIT_BRANCH_NAME, exercise.getBranch());
-            updateVariable(repositoryPath, VARIABLE_TEST_GIT_BRANCH_NAME, exercise.getBranch());
+            updateVariable(repositoryPath, VARIABLE_SUBMISSION_GIT_BRANCH_NAME, exercise.getBuildConfig().getBranch());
+            updateVariable(repositoryPath, VARIABLE_TEST_GIT_BRANCH_NAME, exercise.getBuildConfig().getBranch());
             updateVariable(repositoryPath, VARIABLE_TEST_GIT_REPOSITORY_SLUG_NAME, uriService.getRepositorySlugFromRepositoryUriString(exercise.getTestRepositoryUri()));
             // TODO: Use a token that is only valid for the test repository for each programming exercise
             updateVariable(repositoryPath, VARIABLE_TEST_GIT_TOKEN, gitlabToken);

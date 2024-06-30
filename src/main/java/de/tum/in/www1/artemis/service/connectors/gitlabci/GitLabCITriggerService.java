@@ -28,7 +28,7 @@ public class GitLabCITriggerService implements ContinuousIntegrationTriggerServi
 
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation) throws ContinuousIntegrationException {
-        triggerBuild(participation.getVcsRepositoryUri(), participation.getProgrammingExercise().getBranch());
+        triggerBuild(participation.getVcsRepositoryUri(), participation.getProgrammingExercise().getBuildConfig().getBranch());
     }
 
     private void triggerBuild(VcsRepositoryUri vcsRepositoryUri, String branch) {

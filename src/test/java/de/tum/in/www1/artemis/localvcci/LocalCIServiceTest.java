@@ -134,16 +134,16 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         String script = "echo 'Hello, World!'";
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         ProgrammingExercise exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        exercise.setBuildScript(script);
-        exercise.setBuildPlanConfiguration(null);
+        exercise.getBuildConfig().setBuildScript(script);
+        exercise.getBuildConfig().setBuildPlanConfiguration(null);
         continuousIntegrationService.recreateBuildPlansForExercise(exercise);
         script = buildScriptProviderService.getScriptFor(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType()), exercise.isStaticCodeAnalysisEnabled(),
-                exercise.hasSequentialTestRuns(), exercise.isTestwiseCoverageEnabled());
+                exercise.getBuildConfig().hasSequentialTestRuns(), exercise.isTestwiseCoverageEnabled());
         Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(exercise);
-        String actualBuildConfig = exercise.getBuildPlanConfiguration();
+        String actualBuildConfig = exercise.getBuildConfig().getBuildPlanConfiguration();
         String expectedBuildConfig = new ObjectMapper().writeValueAsString(windfile);
         assertThat(actualBuildConfig).isEqualTo(expectedBuildConfig);
-        assertThat(exercise.getBuildScript()).isEqualTo(script);
+        assertThat(exercise.getBuildConfig().getBuildScript()).isEqualTo(script);
         // test that the method does not throw an exception when the exercise is null
         continuousIntegrationService.recreateBuildPlansForExercise(null);
     }
@@ -155,7 +155,7 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.HASKELL);
         programmingExercise.setProjectType(null);
         programmingExercise.setStaticCodeAnalysisEnabled(false);
-        programmingExercise.setSequentialTestRuns(false);
+        programmingExercise.getBuildConfig().setSequentialTestRuns(false);
         programmingExercise.setTestwiseCoverageEnabled(false);
         String script = buildScriptProviderService.getScriptFor(programmingExercise);
         assertThat(script).isNotNull();

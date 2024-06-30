@@ -120,8 +120,8 @@ public class ProgrammingExerciseFactory {
         programmingExercise.setTestwiseCoverageEnabled(false);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setProgrammingLanguage(programmingLanguage);
-        programmingExercise.setBuildScript("Some script");
-        programmingExercise.setBuildPlanConfiguration("{\"api\":\"v0.0.1\",\"metadata\":{},\"actions\":[]}");
+        programmingExercise.getBuildConfig().setBuildScript("Some script");
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration("{\"api\":\"v0.0.1\",\"metadata\":{},\"actions\":[]}");
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
             programmingExercise.setProjectType(ProjectType.PLAIN_MAVEN);
         }
@@ -135,7 +135,7 @@ public class ProgrammingExerciseFactory {
         final var repoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
         String testRepoUri = String.format("http://some.test.url/scm/%s/%s.git", programmingExercise.getProjectKey(), repoName);
         programmingExercise.setTestRepositoryUri(testRepoUri);
-        programmingExercise.setBranch(DEFAULT_BRANCH);
+        programmingExercise.getBuildConfig().setBranch(DEFAULT_BRANCH);
     }
 
     /**
@@ -161,7 +161,7 @@ public class ProgrammingExerciseFactory {
         toBeImported.setExerciseHints(null);
         toBeImported.setSolutionParticipation(null);
         toBeImported.setTemplateParticipation(null);
-        toBeImported.setSequentialTestRuns(template.hasSequentialTestRuns());
+        toBeImported.getBuildConfig().setSequentialTestRuns(template.getBuildConfig().hasSequentialTestRuns());
         toBeImported.setProblemStatement(template.getProblemStatement());
         toBeImported.setMaxPoints(template.getMaxPoints());
         toBeImported.setBonusPoints(template.getBonusPoints());
@@ -188,7 +188,7 @@ public class ProgrammingExerciseFactory {
         toBeImported.setDueDate(template.getDueDate());
         toBeImported.setReleaseDate(template.getReleaseDate());
         toBeImported.setExampleSolutionPublicationDate(null);
-        toBeImported.setSequentialTestRuns(template.hasSequentialTestRuns());
+        toBeImported.getBuildConfig().setSequentialTestRuns(template.getBuildConfig().hasSequentialTestRuns());
         toBeImported.setBuildAndTestStudentSubmissionsAfterDueDate(template.getBuildAndTestStudentSubmissionsAfterDueDate());
         toBeImported.generateAndSetProjectKey();
         toBeImported.setPlagiarismDetectionConfig(template.getPlagiarismDetectionConfig());
@@ -434,6 +434,6 @@ public class ProgrammingExerciseFactory {
         programmingExercise.setCategories(new HashSet<>(Set.of("cat1", "cat2")));
         programmingExercise.setTestRepositoryUri("http://nadnasidni.tum/scm/" + programmingExercise.getProjectKey() + "/" + programmingExercise.getProjectKey() + "-tests.git");
         programmingExercise.setShowTestNamesToStudents(false);
-        programmingExercise.setBranch(DEFAULT_BRANCH);
+        programmingExercise.getBuildConfig().setBranch(DEFAULT_BRANCH);
     }
 }

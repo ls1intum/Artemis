@@ -180,7 +180,7 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testTriggerBuildSuccess() throws GitLabApiException {
         final ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
-        exercise.setBranch("main");
+        exercise.getBuildConfig().setBranch("main");
         programmingExerciseRepository.save(exercise);
         final ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         mockTriggerBuild(null);

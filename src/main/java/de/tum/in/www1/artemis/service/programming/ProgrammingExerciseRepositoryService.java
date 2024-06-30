@@ -332,7 +332,7 @@ public class ProgrammingExerciseRepositoryService {
         // Keep or delete testwise coverage configuration in the build file
         sectionsMap.put("record-testwise-coverage", Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled()));
 
-        if (programmingExercise.hasSequentialTestRuns()) {
+        if (programmingExercise.getBuildConfig().hasSequentialTestRuns()) {
             setupTestTemplateSequentialTestRuns(resources, templatePath, projectTemplatePath, projectType, sectionsMap);
         }
         else {
@@ -607,7 +607,7 @@ public class ProgrammingExerciseRepositoryService {
         replacements.put("${exerciseNamePomXml}", programmingExercise.getTitle().replace(" ", "-")); // Used e.g. in artifactId
         replacements.put("${exerciseName}", programmingExercise.getTitle());
         replacements.put("${studentWorkingDirectory}", Constants.STUDENT_WORKING_DIRECTORY);
-        replacements.put("${packaging}", programmingExercise.hasSequentialTestRuns() ? "pom" : "jar");
+        replacements.put("${packaging}", programmingExercise.getBuildConfig().hasSequentialTestRuns() ? "pom" : "jar");
         fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath(), replacements, List.of("gradle-wrapper.jar"));
     }
 

@@ -90,11 +90,11 @@ class AeolusBuildScriptGenerationServiceTest extends AbstractSpringIntegrationLo
         aeolusRequestMockProvider.mockGeneratePreview(AeolusTarget.CLI);
         aeolusRequestMockProvider.mockGeneratePreview(AeolusTarget.CLI);
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
-        programmingExercise.setBuildPlanConfiguration(getSerializedWindfile());
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration(getSerializedWindfile());
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
         programmingExercise.setStaticCodeAnalysisEnabled(true);
-        programmingExercise.setSequentialTestRuns(true);
+        programmingExercise.getBuildConfig().setSequentialTestRuns(true);
         programmingExercise.setTestwiseCoverageEnabled(true);
         String script = aeolusBuildScriptGenerationService.getScript(programmingExercise);
         assertThat(script).isNotNull();
@@ -102,9 +102,9 @@ class AeolusBuildScriptGenerationServiceTest extends AbstractSpringIntegrationLo
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
         programmingExercise.setProjectType(null);
         programmingExercise.setStaticCodeAnalysisEnabled(false);
-        programmingExercise.setSequentialTestRuns(false);
+        programmingExercise.getBuildConfig().setSequentialTestRuns(false);
         programmingExercise.setTestwiseCoverageEnabled(false);
-        programmingExercise.setBuildPlanConfiguration(null);
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration(null);
         script = aeolusBuildScriptGenerationService.getScript(programmingExercise);
         assertThat(script).isNotNull();
         assertThat(script).isEqualTo("imagine a result here");

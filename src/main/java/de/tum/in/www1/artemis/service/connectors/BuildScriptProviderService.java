@@ -125,7 +125,7 @@ public class BuildScriptProviderService {
     public String getScriptFor(ProgrammingExercise exercise) {
         try {
             return getScriptFor(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType()), exercise.isStaticCodeAnalysisEnabled(),
-                    exercise.hasSequentialTestRuns(), exercise.isTestwiseCoverageEnabled());
+                    exercise.getBuildConfig().hasSequentialTestRuns(), exercise.isTestwiseCoverageEnabled());
         }
         catch (IOException e) {
             log.error("Failed to provide build script for programming exercise " + exercise.getId(), e);

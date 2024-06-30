@@ -79,7 +79,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
     @Override
     public void upgradeTemplate(ProgrammingExercise exercise) {
         // TODO: Support sequential test runs
-        if (exercise.hasSequentialTestRuns()) {
+        if (exercise.getBuildConfig().hasSequentialTestRuns()) {
             return;
         }
         // Template and solution repository can also contain a project object model for some project types

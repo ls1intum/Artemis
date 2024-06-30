@@ -149,7 +149,7 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
         programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
         programmingExercise.setAllowOfflineIde(true);
         programmingExercise.setTestRepositoryUri(localVCBaseUrl + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-tests.git");
-        programmingExercise.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(aeolusTemplateService.getDefaultWindfileFor(programmingExercise)));
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(aeolusTemplateService.getDefaultWindfileFor(programmingExercise)));
         programmingExerciseRepository.save(programmingExercise);
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
         staticCodeAnalysisService.createDefaultCategories(programmingExercise);

@@ -459,7 +459,7 @@ public class ProgrammingExerciseTestService {
     // TEST
     void createProgrammingExercise_sequential_validExercise_created(ProgrammingLanguage programmingLanguage) throws Exception {
         exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course, programmingLanguage);
-        exercise.setSequentialTestRuns(true);
+        exercise.getBuildConfig().setSequentialTestRuns(true);
         exercise.setChannelName("testchannel-pe");
         setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
         mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
@@ -497,7 +497,7 @@ public class ProgrammingExerciseTestService {
                   ]
                 }""";
 
-        exercise.setBuildPlanConfiguration(validWindfile);
+        exercise.getBuildConfig().setBuildPlanConfiguration(validWindfile);
         if (programmingLanguage == C) {
             exercise.setProjectType(ProjectType.FACT);
         }
