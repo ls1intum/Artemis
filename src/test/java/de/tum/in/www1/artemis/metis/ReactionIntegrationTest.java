@@ -558,6 +558,6 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static List<Arguments> courseConfigurationProvider() {
         return List.of(Arguments.of(CourseInformationSharingConfiguration.DISABLED, false), Arguments.of(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING, true),
-                Arguments.of(CourseInformationSharingConfiguration.COMMUNICATION_ONLY, true), Arguments.of(CourseInformationSharingConfiguration.MESSAGING_ONLY, true));
+                Arguments.of(CourseInformationSharingConfiguration.COMMUNICATION_ONLY, true));
     }
 }

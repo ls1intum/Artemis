@@ -99,4 +99,14 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         this.sidebarEventSubscription?.unsubscribe();
         this.sidebarEventService.emitResetValue();
     }
+
+    getSize() {
+        const size = {
+            ['exercise']: 'M',
+            ['default']: 'M',
+            ['conversation']: 'S',
+            ['exam']: 'L',
+        };
+        return this.sidebarData.sidebarType ? size[this.sidebarData.sidebarType] : 'M';
+    }
 }

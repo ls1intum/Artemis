@@ -1,18 +1,21 @@
-<!--resizable container-->
 @if (exercise) {
+    <h3 class="text-align-left fw-normal">
+        <span>
+            {{ exercise.title }}
+        </span>
+        <!-- prettier-ignore -->
+        <span left-header>&nbsp;({{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}@if (exercise.bonusPoints) {
+            <span
+            >, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>
+            }) @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+            <jhi-included-in-score-badge
+            [includedInOverallScore]="exercise.includedInOverallScore" />
+          }</span>
+    </h3>
+    <hr />
     <jhi-resizeable-container [examTimeline]="examTimeline">
         <!--region Left Panel-->
         <span class="exercise-title" left-header>{{ examTimeline ? exercise.title : exercise?.exerciseGroup?.title ?? '-' }}</span>
-        <!-- prettier-ignore -->
-        <span left-header>&nbsp;[{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}@if (exercise.bonusPoints) {
-      <span
-      >, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>
-      }]
-      @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-        <jhi-included-in-score-badge
-        [includedInOverallScore]="exercise.includedInOverallScore" />
-      }</span>
-        <!--region Left Panel-->
         <div left-body class="px-2 pb-2 w-100">
             <div class="row">
                 @if (isActive && !result && exercise && studentSubmission && !readonly) {
@@ -71,9 +74,9 @@
             @if (exercise) {
                 <jhi-exam-exercise-update-highlighter [exercise]="exercise" (problemStatementUpdateEvent)="updateProblemStatement($event)" />
             }
-            @if (exercise!.problemStatement) {
+            @if (problemStatementHtml) {
                 <p class="mb-3 markdown-preview">
-                    <span [innerHTML]="exercise!.problemStatement! | htmlForMarkdown"></span>
+                    <span [innerHTML]="problemStatementHtml"></span>
                 </p>
             }
         </ng-container>
