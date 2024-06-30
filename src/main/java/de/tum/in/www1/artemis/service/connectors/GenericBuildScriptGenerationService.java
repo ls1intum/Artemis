@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 /**
  * Service for generating build scripts for programming exercises
  */
-@Profile("!aeolus & localci")
+@Profile("!aeolus & (localci | hades)")
 @Service
 public class GenericBuildScriptGenerationService extends BuildScriptGenerationService {
 

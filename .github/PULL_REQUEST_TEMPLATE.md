@@ -82,6 +82,8 @@ Prerequisites:
 [![](https://byob.yarr.is/ls1intum/Artemis/artemis-test4)](https://artemis-test4.artemis.cit.tum.de)
 [![](https://byob.yarr.is/ls1intum/Artemis/artemis-test5)](https://artemis-test5.artemis.cit.tum.de)
 [![](https://byob.yarr.is/ls1intum/Artemis/artemis-test6)](https://artemis-test6.artemis.cit.tum.de)
+[![](https://byob.yarr.is/ls1intum/Artemis/artemis-test7)](https://artemis-test7.artemis.cit.tum.de)
+[![](https://byob.yarr.is/ls1intum/Artemis/artemis-test8)](https://artemis-test8.artemis.cit.tum.de)
 [![](https://byob.yarr.is/ls1intum/Artemis/artemis-test9)](https://artemis-test9.artemis.cit.tum.de)
 
 ### Review Progress
