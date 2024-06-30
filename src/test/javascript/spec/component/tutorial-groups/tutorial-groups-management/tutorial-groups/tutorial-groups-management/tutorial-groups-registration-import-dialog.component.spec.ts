@@ -295,6 +295,33 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         expect(component.numberOfNotImportedRegistration).toBe(1);
     });
 
+    it('should read registrations from csv string with additional headers', async () => {
+        // given
+        const exampleDTO = generateImportDTO('Tutorial Group 1', generateStudentDTO('123456', 'John', 'Doe', 'john-doe'), 'Main Campus', 'German', '', 25, '');
+        mockParserWithDTOs([exampleDTO], []);
+
+        // when
+        await component.onParseClicked();
+        // then
+        expect(component.registrationsDisplayedInTable).toEqual([exampleDTO]);
+        expect(component.validationErrors).toEqual([]);
+        expect(component.isCSVParsing).toBeFalse();
+        expect(component.registrationsDisplayedInTable[0].campus).toBe('Main Campus');
+        expect(component.registrationsDisplayedInTable[0].language).toBe('German');
+        expect(component.registrationsDisplayedInTable[0].additionalInformation).toBe('');
+        expect(component.registrationsDisplayedInTable[0].capacity).toBe(25);
+        expect(component.registrationsDisplayedInTable[0].isOnline).toBe('');
+    });
+    it('should remove spaces from header names correctly', () => {
+        const headerWithSpaces = ' Header Name ';
+        const headerWithUnderscores = 'Header_Name';
+        const headerWithMixed = ' Header_Name With  Spaces ';
+
+        expect(component.removeWhitespacesAndUnderscoresFromHeaderName(headerWithSpaces)).toBe('headername');
+        expect(component.removeWhitespacesAndUnderscoresFromHeaderName(headerWithUnderscores)).toBe('header-name');
+        expect(component.removeWhitespacesAndUnderscoresFromHeaderName(headerWithMixed)).toBe('header-namewithspaces');
+    });
+
     it('should generate and download CSV when generateCSV is called', () => {
         const createElementSpy = jest.spyOn(document, 'createElement').mockReturnValue(document.createElement('a'));
         const appendChildSpy = jest.spyOn(document.body, 'appendChild');
@@ -430,31 +457,4 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
             status: status ?? '',
         } as ExampleRawCSVRow;
     };
-
-    it('should read registrations from csv string with additional headers', async () => {
-        // given
-        const exampleDTO = generateImportDTO('Tutorial Group 1', generateStudentDTO('123456', 'John', 'Doe', 'john-doe'), 'Main Campus', 'German', '', 25, '');
-        mockParserWithDTOs([exampleDTO], []);
-
-        // when
-        await component.onParseClicked();
-        // then
-        expect(component.registrationsDisplayedInTable).toEqual([exampleDTO]);
-        expect(component.validationErrors).toEqual([]);
-        expect(component.isCSVParsing).toBeFalse();
-        expect(component.registrationsDisplayedInTable[0].campus).toBe('Main Campus');
-        expect(component.registrationsDisplayedInTable[0].language).toBe('German');
-        expect(component.registrationsDisplayedInTable[0].additionalInformation).toBe('');
-        expect(component.registrationsDisplayedInTable[0].capacity).toBe(25);
-        expect(component.registrationsDisplayedInTable[0].isOnline).toBe('');
-    });
-    it('should remove spaces from header names correctly', () => {
-        const headerWithSpaces = ' Header Name ';
-        const headerWithUnderscores = 'Header_Name';
-        const headerWithMixed = ' Header_Name With  Spaces ';
-
-        expect(component.removeWhitespacesAndUnderscoresFromHeaderName(headerWithSpaces)).toBe('headername');
-        expect(component.removeWhitespacesAndUnderscoresFromHeaderName(headerWithUnderscores)).toBe('header-name');
-        expect(component.removeWhitespacesAndUnderscoresFromHeaderName(headerWithMixed)).toBe('header-namewithspaces');
-    });
 });
