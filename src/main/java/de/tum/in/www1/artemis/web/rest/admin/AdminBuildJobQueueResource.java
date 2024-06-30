@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest.admin;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -20,10 +21,13 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.BuildJob;
+import de.tum.in.www1.artemis.repository.BuildJobRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.connectors.localci.SharedQueueManagementService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
+import de.tum.in.www1.artemis.service.dto.BuildJobResultCountDTO;
+import de.tum.in.www1.artemis.service.dto.BuildJobsStatisticsDTO;
 import de.tum.in.www1.artemis.service.dto.FinishedBuildJobDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
 import tech.jhipster.web.util.PaginationUtil;
@@ -35,10 +39,13 @@ public class AdminBuildJobQueueResource {
 
     private final SharedQueueManagementService localCIBuildJobQueueService;
 
+    private final BuildJobRepository buildJobRepository;
+
     private static final Logger log = LoggerFactory.getLogger(AdminBuildJobQueueResource.class);
 
-    public AdminBuildJobQueueResource(SharedQueueManagementService localCIBuildJobQueueService) {
+    public AdminBuildJobQueueResource(SharedQueueManagementService localCIBuildJobQueueService, BuildJobRepository buildJobRepository) {
         this.localCIBuildJobQueueService = localCIBuildJobQueueService;
+        this.buildJobRepository = buildJobRepository;
     }
 
     /**
@@ -174,5 +181,20 @@ public class AdminBuildJobQueueResource {
         Page<FinishedBuildJobDTO> finishedBuildJobDTOs = FinishedBuildJobDTO.fromBuildJobsPage(buildJobPage);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), buildJobPage);
         return new ResponseEntity<>(finishedBuildJobDTOs.getContent(), headers, HttpStatus.OK);
+    }
+
+    /**
+     * Returns the build job statistics.
+     *
+     * @param span the time span in days. The statistics will be calculated for the last span days. Default is 7 days.
+     * @return the build job statistics
+     */
+    @GetMapping("build-job-statistics")
+    @EnforceAdmin
+    public ResponseEntity<BuildJobsStatisticsDTO> getBuildJobStatistics(@RequestParam(required = false, defaultValue = "7") int span) {
+        log.debug("REST request to get the build job statistics");
+        List<BuildJobResultCountDTO> buildJobResultCountDtos = buildJobRepository.getBuildJobsResultsStatistics(ZonedDateTime.now().minusDays(span), null);
+        BuildJobsStatisticsDTO buildJobStatistics = BuildJobsStatisticsDTO.of(buildJobResultCountDtos);
+        return ResponseEntity.ok(buildJobStatistics);
     }
 }
