@@ -30,6 +30,9 @@ export class ExamParticipationService {
     private testRunSubject = new BehaviorSubject<boolean>(false);
     testRunStarted$ = this.testRunSubject.asObservable();
 
+    private examEndViewSubject = new BehaviorSubject<boolean>(false);
+    endViewDisplayed$ = this.examEndViewSubject.asObservable();
+
     private examExerciseIds: number[];
 
     public getResourceURL(courseId: number, examId: number): string {
@@ -349,6 +352,10 @@ export class ExamParticipationService {
 
     public setExamExerciseIds(examExerciseIds: number[]) {
         this.examExerciseIds = examExerciseIds;
+    }
+
+    setEndView(isEndView: boolean) {
+        this.examEndViewSubject.next(isEndView);
     }
 
     setExamLayout(isExamStarted: boolean = true, isTestRun: boolean = false) {
