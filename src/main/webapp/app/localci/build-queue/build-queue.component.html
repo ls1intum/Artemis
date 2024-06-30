@@ -97,7 +97,7 @@
                         <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                             <span
                                 [ngClass]="{
-                                    'text-danger': row.jobTimingInfo.buildDuration > 240
+                                    'text-danger': row.jobTimingInfo.buildDuration > 240,
                                 }"
                             >
                                 @if (row.jobTimingInfo.buildDuration > 240) {
@@ -201,7 +201,7 @@
                                         'repository',
                                         row.repositoryInfo.triggeredByPushTo,
                                         'commit-history',
-                                        value
+                                        value,
                                     ]"
                                     >{{ value }}</a
                                 >
@@ -217,7 +217,7 @@
                                         row.participationId,
                                         'repository',
                                         'commit-history',
-                                        value
+                                        value,
                                     ]"
                                     >{{ value }}</a
                                 >
@@ -402,7 +402,7 @@
                                         'repository',
                                         row.repositoryInfo.triggeredByPushTo,
                                         'commit-history',
-                                        value
+                                        value,
                                     ]"
                                     >{{ value }}</a
                                 >
@@ -418,7 +418,7 @@
                                         row.participationId,
                                         'repository',
                                         'commit-history',
-                                        value
+                                        value,
                                     ]"
                                     >{{ value }}</a
                                 >
@@ -536,7 +536,7 @@
                                 [ngClass]="{
                                     'text-success': row.status === 'SUCCESSFUL',
                                     'text-warning': row.status === 'CANCELLED',
-                                    'text-danger': row.status === 'FAILED' || row.status === 'ERROR'
+                                    'text-danger': row.status === 'FAILED' || row.status === 'ERROR',
                                 }"
                             >
                                 <fa-icon [icon]="row.status === 'SUCCESSFUL' ? faCircleCheck : row.status === 'CANCELLED' ? faExclamationTriangle : faExclamationCircle" />
@@ -555,7 +555,7 @@
                                 [ngClass]="{
                                     'text-success': row.status === 'SUCCESSFUL',
                                     'text-warning': row.status === 'CANCELLED',
-                                    'text-danger': row.status === 'FAILED' || row.status === 'ERROR'
+                                    'text-danger': row.status === 'FAILED' || row.status === 'ERROR',
                                 }"
                                 >{{ value }}</span
                             >
@@ -575,7 +575,7 @@
                                 <span
                                     [ngClass]="{
                                         'text-warning': row.status === 'CANCELLED',
-                                        'text-danger': row.status === 'FAILED' || row.status === 'ERROR'
+                                        'text-danger': row.status === 'FAILED' || row.status === 'ERROR',
                                     }"
                                     >{{ value }}
                                 </span>
@@ -673,7 +673,7 @@
                                         'repository',
                                         row.triggeredByPushTo,
                                         'commit-history',
-                                        value
+                                        value,
                                     ]"
                                     >{{ value }}</a
                                 >
@@ -689,7 +689,7 @@
                                         row.participationId,
                                         'repository',
                                         'commit-history',
-                                        value
+                                        value,
                                     ]"
                                     >{{ value }}</a
                                 >
