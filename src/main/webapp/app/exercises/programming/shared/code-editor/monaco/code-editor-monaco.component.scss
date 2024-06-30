@@ -8,6 +8,10 @@
     z-index: 1;
 }
 
+.monaco-add-feedback-button:hover:before {
+    background-color: var(--monaco-editor-add-feedback-button-hover-background);
+}
+
 .monaco-add-feedback-button:before {
     cursor: pointer;
     content: '\ea60'; // codicon-plus
