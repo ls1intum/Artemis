@@ -85,8 +85,12 @@ describe('ExamExerciseUpdateHighlighterComponent', () => {
                     examExerciseIdAndProblemStatementSourceMock.next(update);
                 });
         });
-
         it('should not highlight differences for programming exercise', () => {
+            // For programming exercises, the highlighting of differences is handled in the programming-exercise-instruction.component.ts.
+            // Therefore, the highlightProblemStatementDifferences method is not called and updatedProblemStatementWithHighlightedDifferencesHTML
+            // and updatedProblemStatementHTML remain undefined
+            const highlightDifferencesSpy = jest.spyOn(component, 'highlightProblemStatementDifferences');
+            expect(highlightDifferencesSpy).not.toHaveBeenCalled();
             expect(component.updatedProblemStatementWithHighlightedDifferencesHTML).toBeUndefined();
             expect(component.updatedProblemStatementHTML).toBeUndefined();
         });
