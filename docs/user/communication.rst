@@ -60,14 +60,6 @@ Exemplary exercise detail page with messages:
 
 |exercise-messages|
 
-Course Communication Overview
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The ``Communication`` space of an Artemis course serves as overview for *all* course-wide messages in a course.
-Here, users can easily query, sort, and filter existing messages.
-
-|communication-page|
-
 Private Communication
 ----------------------
 
