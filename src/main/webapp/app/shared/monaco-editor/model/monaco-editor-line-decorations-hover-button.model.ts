@@ -46,6 +46,10 @@ export class MonacoEditorLineDecorationsHoverButton extends MonacoCodeEditorElem
         this.mouseDownListener = this.editor.onMouseDown(this.onClick.bind(this));
     }
 
+    /**
+     * Checks if the button was clicked and calls the click callback with the line number as an argument.
+     * @param editorMouseEvent The mouse event to react to.
+     */
     onClick(editorMouseEvent: monaco.editor.IEditorMouseEvent): void {
         const lineNumber = editorMouseEvent.target?.position?.lineNumber;
         // We identify the button via the class name of the element.
@@ -54,6 +58,10 @@ export class MonacoEditorLineDecorationsHoverButton extends MonacoCodeEditorElem
         }
     }
 
+    /**
+     * Move the button to the specified line number and update the editor. If the line number is undefined, the button is instead removed from the editor.
+     * @param lineNumber The line number to which to move the button, if any.
+     */
     moveAndUpdate(lineNumber?: number): void {
         if (lineNumber === undefined) {
             this.removeFromEditor();

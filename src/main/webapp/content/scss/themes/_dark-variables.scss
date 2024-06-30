@@ -441,9 +441,9 @@ $monaco-editor-build-annotation-outdated-background: scale-color($gray-500, $alp
 $monaco-editor-build-annotation-outdated-glyph: $gray-500;
 $monaco-editor-diff-highlight-green: $success;
 $monaco-editor-diff-line-highlight: scale-color($monaco-editor-diff-highlight-green, $alpha: -80%, $lightness: -20%);
-$monaco-editor-add-feedback-button-background: $gray-700;
-$monaco-editor-add-feedback-button-hover-background: lighten($gray-700, 10%);
-$monaco-editor-add-feedback-button-text: $gray-500;
+$monaco-editor-add-feedback-button-background: $gray-600;
+$monaco-editor-add-feedback-button-hover-background: lighten($gray-600, 10%);
+$monaco-editor-add-feedback-button-text: $gray-300;
 
 // Git-Diff Viewer
 $git-diff-viewer-added-line-background: rgba(63, 185, 80, 0.15);

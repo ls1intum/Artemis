@@ -25,6 +25,12 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     lineHighlights: MonacoEditorLineHighlight[] = [];
     lineDecorationsHoverButton?: MonacoEditorLineDecorationsHoverButton;
 
+    /**
+     * The default width of the line decoration button in the editor. We use the ch unit to avoid fixed pixel sizes.
+     * @private
+     */
+    private static readonly DEFAULT_LINE_DECORATION_BUTTON_WIDTH = '2.3ch';
+
     constructor(
         private themeService: ThemeService,
         elementRef: ElementRef,
@@ -269,7 +275,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         // Make room for the hover button in the line decorations.
         this._editor.updateOptions({
             folding: false,
-            lineDecorationsWidth: '2.2ch',
+            lineDecorationsWidth: MonacoEditorComponent.DEFAULT_LINE_DECORATION_BUTTON_WIDTH,
         });
     }
 
