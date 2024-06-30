@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participant;
+import de.tum.in.www1.artemis.domain.participation.ParticipationVCSAccessToken;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -39,6 +40,7 @@ import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
@@ -46,10 +48,12 @@ import de.tum.in.www1.artemis.repository.StudentScoreRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.TeamScoreRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.hestia.CoverageReportRepository;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.localci.SharedQueueManagementService;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCPersonalAccessTokenManagementService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -100,13 +104,18 @@ public class ParticipationService {
 
     private final ProfileService profileService;
 
+    private final UserRepository userRepository;
+
+    private final ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
+
     public ParticipationService(GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             BuildLogEntryService buildLogEntryService, ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService, ResultService resultService,
             CoverageReportRepository coverageReportRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
             ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
-            Optional<SharedQueueManagementService> localCISharedBuildJobQueueService, ProfileService profileService) {
+            Optional<SharedQueueManagementService> localCISharedBuildJobQueueService, ProfileService profileService, UserRepository userRepository,
+            ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository) {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
@@ -126,6 +135,8 @@ public class ParticipationService {
         this.teamScoreRepository = teamScoreRepository;
         this.localCISharedBuildJobQueueService = localCISharedBuildJobQueueService;
         this.profileService = profileService;
+        this.userRepository = userRepository;
+        this.participationVCSAccessTokenRepository = participationVCSAccessTokenRepository;
     }
 
     /**
@@ -222,16 +233,24 @@ public class ParticipationService {
         else {
             participation = new StudentParticipation();
         }
+        User user = userRepository.getUser();
         participation.setInitializationState(InitializationState.UNINITIALIZED);
         participation.setExercise(exercise);
         participation.setParticipant(participant);
-        // todo generate random one
-        participation.setVcsAccessToken("vcpat-9999999m5GIAtTtYEX3OyWYzcl4uQMcxPtG8xQcL");
+
         // StartedDate is used to link a Participation to a test exam exercise
         if (initializationDate != null) {
             participation.setInitializationDate(initializationDate);
         }
-        return studentParticipationRepository.saveAndFlush(participation);
+        participation = studentParticipationRepository.saveAndFlush(participation);
+
+        ParticipationVCSAccessToken participationVCSAccessToken = new ParticipationVCSAccessToken();
+        participationVCSAccessToken.setUser(user);
+        participationVCSAccessToken.setParticipation(participation);
+        participationVCSAccessToken.setVcsAccessToken(LocalVCPersonalAccessTokenManagementService.generateSecureVCSAccessToken());
+        participationVCSAccessTokenRepository.save(participationVCSAccessToken);
+
+        return participation;
     }
 
     /**

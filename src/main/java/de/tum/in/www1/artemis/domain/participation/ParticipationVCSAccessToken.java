@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.domain.participation;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
@@ -26,7 +25,6 @@ import de.tum.in.www1.artemis.domain.User;
 public class ParticipationVCSAccessToken extends DomainObject {
 
     @ManyToOne
-    @JoinColumn(name = "student_id")
     private User user;
 
     @ManyToOne
@@ -35,4 +33,27 @@ public class ParticipationVCSAccessToken extends DomainObject {
     @Column(name = "vcs_access_token", length = 50)
     private String vcsAccessToken;
 
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setParticipation(Participation participation) {
+        this.participation = participation;
+    }
+
+    public Participation getParticipation() {
+        return participation;
+    }
+
+    public String getVcsAccessToken() {
+        return vcsAccessToken;
+    }
+
+    public void setVcsAccessToken(String vcsAccessToken) {
+        this.vcsAccessToken = vcsAccessToken;
+    }
 }

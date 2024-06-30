@@ -43,6 +43,7 @@ import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCAuthException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCForbiddenException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
+import de.tum.in.www1.artemis.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -94,6 +95,8 @@ public class LocalVCServletService {
 
     private static URL localVCBaseUrl;
 
+    private final ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
+
     @Value("${artemis.version-control.url}")
     public void setLocalVCBaseUrl(URL localVCBaseUrl) {
         LocalVCServletService.localVCBaseUrl = localVCBaseUrl;
@@ -121,7 +124,8 @@ public class LocalVCServletService {
             RepositoryAccessService repositoryAccessService, AuthorizationCheckService authorizationCheckService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             ContinuousIntegrationTriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService,
-            ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService) {
+            ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService,
+            ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -133,6 +137,7 @@ public class LocalVCServletService {
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingMessagingService = programmingMessagingService;
         this.programmingTriggerService = programmingTriggerService;
+        this.participationVCSAccessTokenRepository = participationVCSAccessTokenRepository;
     }
 
     /**
@@ -250,10 +255,14 @@ public class LocalVCServletService {
 
             if (user.isPresent()) { // !StringUtils.isEmpty(user.get().getVcsAccessToken()) && Objects.equals(user.get().getVcsAccessToken(), password)) {
                 // user is authenticated by using the correct access token
-                var studentParticipation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(exercise, user.get().getLogin());
-                if (Objects.equals(studentParticipation.getVcsAccessToken(), password)) {
+                // var studentParticipation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(exercise, user.get().getLogin());
+                var participationVCSAccessToken = participationVCSAccessTokenRepository.findByUserId(user.get().getId()).getFirst();
+
+                // todo dont get first but the correct one for the participation
+                // todo entholzer - get token corresponding to only the participation
+                if (Objects.equals(participationVCSAccessToken.getVcsAccessToken(), password)) {
                     User suser = user.get();
-                    suser.setVcsAccessToken(studentParticipation.getVcsAccessToken());
+                    suser.setVcsAccessToken(participationVCSAccessToken.getVcsAccessToken());
                     return suser;
                 }
                 // suser.setVcsAccessToken();
