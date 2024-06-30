@@ -1,12 +1,13 @@
 <div class="h5 module-bg exam-bar mx-3 mt-0 px-3 py-2 rounded rounded-3 sticky-top">
     <div class="d-flex justify-content-between">
-        <div class="align-self-center">
-            <h3 class="align-self-center mb-0">{{ examTitle }}</h3>
-        </div>
+        <h3 class="align-self-center mb-0">
+            {{ examTitle }}
+        </h3>
         @if (!examTimeLineView) {
             <div class="align-self-center">
                 <div class="d-flex justify-content-between">
                     <jhi-exam-timer [criticalTime]="criticalTime" [endDate]="endDate" (timerAboutToEnd)="triggerExamAboutToEnd()" />
+                    <jhi-exam-live-events-button />
                     <button id="hand-in-early" class="btn btn-danger ms-2" (click)="handInEarly()">
                         <div class="d-flex justify-content-between">
                             <span>
