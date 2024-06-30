@@ -51,6 +51,8 @@ export function htmlForMarkdown(
     });
     const html = converter.makeHtml(markdownText);
     const purifyParameters = {};
+    // Prevents sanitizer from deleting <testid>id</testid>
+    purifyParameters['ADD_TAGS'] = ['testid'];
     if (allowedHtmlTags) {
         purifyParameters['ALLOWED_TAGS'] = allowedHtmlTags;
     }
