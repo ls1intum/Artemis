@@ -226,4 +226,4 @@ Should a build agent currently process the specified job, it executes ``cancelBu
 This step involves canceling the future and recording the job ID in ``Set<String> cancelledBuildJobs``.
 The cancellation triggers an Exception which is caught and managed in ``processBuild(...)`` within the ``SharedQueueProcessingService``.
 The build status is set to ``CANCELLED``, the job is removed from ``processingJobs``, and the process reinitialized with ``checkAvailabilityAndProcessNextBuild()``.
-Modifications to ``processingJobs`` trigger WebSocket updates, consequently removing the canceled job from the client's build queue display.
+Modifications to ``processingJobs`` trigger WebSocket updates, consequently removing the canceled job from the client's build overview display.
