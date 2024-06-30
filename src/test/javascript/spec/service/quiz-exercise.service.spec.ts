@@ -11,8 +11,12 @@ import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.serv
 import { ArtemisTestModule } from '../test.module';
 import * as downloadUtil from 'app/shared/util/download.util';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
+import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
+import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
+import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import dayjs from 'dayjs/esm';
 import { firstValueFrom } from 'rxjs';
+import JSZip from 'jszip';
 
 /**
  * create a QuizExercise that when used as an HTTP response can be deserialized as an equal object
@@ -35,6 +39,7 @@ describe('QuizExercise Service', () => {
     let service: QuizExerciseService;
     let httpMock: HttpTestingController;
     let elemDefault: QuizExercise;
+    let mockJSZip: jest.Mocked<JSZip>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -46,7 +51,6 @@ describe('QuizExercise Service', () => {
         });
         service = TestBed.inject(QuizExerciseService);
         httpMock = TestBed.inject(HttpTestingController);
-
         elemDefault = makeQuiz();
     });
 
@@ -232,9 +236,8 @@ describe('QuizExercise Service', () => {
             'test',
             2,
         ],
-    ])('should export a quiz (%#)', async (questions, exportAll, filename, count) => {
+    ])('should export a quiz with no assets as json (%#)', async (questions, exportAll, filename, count) => {
         const spy = jest.spyOn(downloadUtil, 'downloadFile').mockReturnValue();
-
         service.exportQuiz(questions, exportAll, filename);
 
         if (count === 0) {
@@ -255,6 +258,101 @@ describe('QuizExercise Service', () => {
         }
     });
 
+    it('should fetch correct image names and paths from drag and drop questions', async () => {
+        const spy = jest.spyOn(service, 'fetchFilePromise').mockResolvedValue();
+        const questions: QuizQuestion[] = [
+            {
+                type: QuizQuestionType.DRAG_AND_DROP,
+                text: '![image](path/to/image.png)',
+                backgroundFilePath: 'path/to/background.png',
+                dragItems: [{ pictureFilePath: 'path/to/dragItem1.png' }, { pictureFilePath: 'path/to/dragItem2.png' }],
+            } as DragAndDropQuestion,
+        ];
+        service.exportAssetsFromAllQuestions(questions, 'output.zip');
+        expect(spy).toHaveBeenCalledTimes(4);
+        expect(spy).toHaveBeenNthCalledWith(1, 'q0_background.png', expect.anything(), 'path/to/background.png');
+        expect(spy).toHaveBeenNthCalledWith(2, 'q0_dragItem-0.png', expect.anything(), 'path/to/dragItem1.png');
+        expect(spy).toHaveBeenNthCalledWith(3, 'q0_dragItem-1.png', expect.anything(), 'path/to/dragItem2.png');
+        expect(spy).toHaveBeenNthCalledWith(4, 'q0_image', expect.anything(), 'path/to/image.png');
+    });
+
+    it('should handle markdown without images', async () => {
+        const description = 'No images here, just text';
+        const regexArray = service.findImagesInMarkdown(description);
+        expect(regexArray).toHaveLength(0);
+    });
+
+    it('should export images from multiple choice options', async () => {
+        const spy = jest.spyOn(service, 'fetchFilePromise').mockResolvedValue();
+        const questions: QuizQuestion[] = [
+            {
+                type: QuizQuestionType.MULTIPLE_CHOICE,
+                answerOptions: [
+                    { text: ' text ![option1](path/to/option1.png)', invalid: false },
+                    { text: '![option2](path/to/option2.png)random', invalid: false },
+                ],
+                randomizeOrder: true,
+                invalid: false,
+                exportQuiz: false,
+            } as MultipleChoiceQuestion,
+        ];
+        service.exportAssetsFromAllQuestions(questions, 'output.zip');
+        expect(spy).toHaveBeenCalledTimes(2);
+        expect(spy).toHaveBeenNthCalledWith(1, 'q0_option1', expect.anything(), 'path/to/option1.png');
+        expect(spy).toHaveBeenNthCalledWith(2, 'q0_option2', expect.anything(), 'path/to/option2.png');
+    });
+
+    it('should export images from short answer questions', async () => {
+        const spy = jest.spyOn(service, 'fetchFilePromise').mockResolvedValue();
+        const questions: QuizQuestion[] = [
+            {
+                type: QuizQuestionType.SHORT_ANSWER,
+                text: 'This is some text, text ![image](path/to/image.png) image there , no image here [txt](link)',
+                randomizeOrder: true,
+                invalid: false,
+                exportQuiz: false,
+            } as ShortAnswerQuestion,
+        ];
+        service.exportAssetsFromAllQuestions(questions, 'output.zip');
+        expect(spy).toHaveBeenCalledOnce();
+        expect(spy).toHaveBeenCalledWith('q0_image', expect.anything(), 'path/to/image.png');
+    });
+
+    it('should not try to fetch files if there are no images to export', async () => {
+        const spy = jest.spyOn(service, 'fetchFilePromise').mockResolvedValue();
+        const spyDownload = jest.spyOn(downloadUtil, 'downloadFile').mockReturnValue();
+
+        const questions: QuizQuestion[] = [
+            {
+                type: QuizQuestionType.SHORT_ANSWER,
+                text: 'This is some text image there , no image here [txt](link)',
+                randomizeOrder: true,
+                invalid: false,
+                exportQuiz: false,
+            } as ShortAnswerQuestion,
+            {
+                type: QuizQuestionType.MULTIPLE_CHOICE,
+                answerOptions: [
+                    { text: ' some option', invalid: false },
+                    { text: ' some other option ', invalid: false },
+                ],
+                randomizeOrder: true,
+                invalid: false,
+                exportQuiz: false,
+            } as MultipleChoiceQuestion,
+        ];
+        service.exportAssetsFromAllQuestions(questions, 'output.zip');
+        expect(spy).not.toHaveBeenCalled();
+        expect(spyDownload).toHaveBeenCalled();
+    });
+    it('should throw an error if file fails to fetch', async () => {
+        const fileName = 'mockFile.png';
+        const filePath = 'path/to/mockFile.png';
+        const errorMessage = 'File with name: mockFile.png at path: path/to/mockFile.png could not be fetched';
+        jest.spyOn(service, 'fetchFilePromise').mockRejectedValue(new Error(errorMessage));
+
+        await expect(service.fetchFilePromise(fileName, mockJSZip, filePath)).rejects.toThrow(`File with name: ${fileName} at path: ${filePath} could not be fetched`);
+    });
     function validateFormData(req: TestRequest) {
         expect(req.request.body).toBeInstanceOf(FormData);
         expect(req.request.body.get('exercise')).toBeInstanceOf(Blob);
