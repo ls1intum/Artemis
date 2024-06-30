@@ -88,9 +88,11 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
         this.testExam = this.exam.testExam;
 
         if (this.startView) {
+            this.examParticipationService.setEndView(false);
             this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.startText);
             this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationStartText);
         } else {
+            this.examParticipationService.setEndView(true);
             this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.endText);
             this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationEndText);
             // this should be the individual working end + the grace period
