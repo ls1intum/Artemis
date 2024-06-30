@@ -194,9 +194,9 @@ public class SharedQueueProcessingService {
                 buildJob = new BuildJobQueueItem(buildJob, "");
                 log.info("Adding build job back to the queue: {}", buildJob);
                 queue.add(buildJob);
+                localProcessingJobs.decrementAndGet();
             }
 
-            localProcessingJobs.decrementAndGet();
             updateLocalBuildAgentInformation();
         }
         finally {
