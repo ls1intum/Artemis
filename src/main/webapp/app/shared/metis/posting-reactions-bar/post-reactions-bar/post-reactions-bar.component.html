@@ -1,5 +1,5 @@
 <div class="me-0 row">
-    @if (!isCourseMessagesPage) {
+    @if (!isCommunicationPage) {
         <!-- start discussion -->
         @if (sortedAnswerPosts.length === 0) {
             <div class="col-auto p-0">
@@ -20,7 +20,7 @@
                             : ('artemisApp.metis.showMultipleAnswers' | artemisTranslate: { number: sortedAnswerPosts.length })
                     }}</span>
                 </button>
-                @if (isCourseMessagesPage && getShowNewMessageIcon()) {
+                @if (isCommunicationPage && getShowNewMessageIcon()) {
                     <span class="badge bg-secondary hideAfter5Seconds">{{ 'global.generic.new' | artemisTranslate }}</span>
                 }
             </div>

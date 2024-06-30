@@ -33,7 +33,7 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     readOnlyMode = false;
     @Input() showAnswers: boolean;
     @Input() sortedAnswerPosts: AnswerPost[];
-    @Input() isCourseMessagesPage: boolean;
+    @Input() isCommunicationPage: boolean;
     @Input() lastReadDate?: dayjs.Dayjs;
 
     @Output() showAnswersChange = new EventEmitter<boolean>();

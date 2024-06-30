@@ -468,6 +468,6 @@ export class MetisConversationService implements OnDestroy {
     }
 
     static getLinkForConversation(courseId: number): RouteComponents {
-        return ['/courses', courseId, 'messages'];
+        return ['/courses', courseId, 'communication'];
     }
 }

@@ -104,8 +104,8 @@
                             [post]="post"
                             [showAnswers]="false"
                             [readOnlyMode]="!!getAsChannel(post.conversation)?.isArchived"
-                            [isCourseMessagesPage]="true"
                             [isCommunicationPage]="true"
+                            [showChannelReference]="true"
                             (openThread)="setPostForThread($event)"
                         />
                     </div>

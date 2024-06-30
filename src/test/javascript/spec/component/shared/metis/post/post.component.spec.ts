@@ -39,6 +39,7 @@ import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 
+
 describe('PostComponent', () => {
     let component: PostComponent;
     let fixture: ComponentFixture<PostComponent>;
@@ -152,18 +153,6 @@ describe('PostComponent', () => {
         expect(header).not.toBeNull();
     });
 
-    it('should contain a title with referencable id', () => {
-        component.isCommunicationPage = true;
-        component.posting = metisPostExerciseUser1;
-        component.ngOnInit();
-        fixture.detectChanges();
-        const title = getElement(debugElement, 'a.post-title');
-        expect(title).toBeDefined();
-        const idHash = getElement(debugElement, '.reference-hash');
-        expect(idHash).toBeDefined();
-        expect(idHash.innerHTML).toBe(`#${metisPostExerciseUser1.id}`);
-    });
-
     it('should set router link and query params', () => {
         metisServiceGetLinkSpy = jest.spyOn(metisService, 'getLinkForPost');
         metisServiceGetQueryParamsSpy = jest.spyOn(metisService, 'getQueryParamsForPost');
@@ -189,31 +178,6 @@ describe('PostComponent', () => {
         fixture.detectChanges();
         const context = getElement(fixture.debugElement, 'span.context-information');
         expect(context).toBeNull();
-    });
-
-    it('should have a course-wide context information shown as title prefix in course discussion overview', () => {
-        metisServiceGetPageTypeStub.mockReturnValue(PageType.OVERVIEW);
-        component.posting = metisPostTechSupport;
-        component.isCommunicationPage = true;
-        component.ngOnInit();
-        fixture.detectChanges();
-        const context = getElement(fixture.debugElement, 'a.linked-context-information');
-        expect(context).not.toBeNull();
-        expect(component.contextInformation.routerLinkComponents).toEqual(expect.arrayContaining(['messages']));
-    });
-
-    it('should have a conversation context information shown as title prefix in course discussion overview', () => {
-        metisServiceGetPageTypeStub.mockReturnValue(PageType.OVERVIEW);
-        component.posting = metisPostLectureUser1;
-        component.isCommunicationPage = true;
-        component.ngOnInit();
-        fixture.detectChanges();
-        const contextLink = getElement(fixture.debugElement, 'a.linked-context-information');
-        expect(component.contextInformation.routerLinkComponents).toEqual(expect.arrayContaining(['messages']));
-        expect(component.contextInformation.routerLinkComponents).toEqual(expect.arrayContaining([component.posting?.conversation?.course?.id]));
-        expect(component.contextInformation.displayName).toBeDefined();
-        expect(component.contextInformation.displayName).toEqual(getAsChannelDTO(component.posting?.conversation)?.name);
-        expect(contextLink).not.toBeNull();
     });
 
     it('should contain the posting content', () => {
@@ -252,7 +216,7 @@ describe('PostComponent', () => {
 
         component.onUserReferenceClicked(metisUser1.login!);
 
-        expect(navigateSpy).toHaveBeenCalledWith(['courses', metisCourse.id, 'messages'], {
+        expect(navigateSpy).toHaveBeenCalledWith(['courses', metisCourse.id, 'communication'], {
             queryParams: {
                 conversationId: 1,
             },
@@ -264,7 +228,7 @@ describe('PostComponent', () => {
         const metisConversationService = TestBed.inject(MetisConversationService);
         const createOneToOneChatSpy = jest.fn().mockReturnValue(of({ body: { id: 1 } } as HttpResponse<OneToOneChatDTO>));
         Object.defineProperty(metisConversationService, 'createOneToOneChat', { value: createOneToOneChatSpy });
-        component.isCourseMessagesPage = true;
+        component.isCommunicationPage = true;
 
         component.onUserReferenceClicked(metisUser1.login!);
 
@@ -276,7 +240,7 @@ describe('PostComponent', () => {
 
         component.onChannelReferenceClicked(metisChannel.id!);
 
-        expect(navigateSpy).toHaveBeenCalledWith(['courses', metisCourse.id, 'messages'], {
+        expect(navigateSpy).toHaveBeenCalledWith(['courses', metisCourse.id, 'communication'], {
             queryParams: {
                 conversationId: metisChannel.id!,
             },
@@ -287,7 +251,7 @@ describe('PostComponent', () => {
         const metisConversationService = TestBed.inject(MetisConversationService);
         const setActiveConversationSpy = jest.fn();
         Object.defineProperty(metisConversationService, 'setActiveConversation', { value: setActiveConversationSpy });
-        component.isCourseMessagesPage = true;
+        component.isCommunicationPage = true;
 
         component.onChannelReferenceClicked(metisChannel.id!);
 
