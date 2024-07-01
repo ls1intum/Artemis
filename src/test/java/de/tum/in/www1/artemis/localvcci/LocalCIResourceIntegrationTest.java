@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildConfig;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.JobTimingInfo;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.RepositoryInfo;
+import de.tum.in.www1.artemis.service.dto.BuildJobsStatisticsDTO;
 import de.tum.in.www1.artemis.service.dto.FinishedBuildJobDTO;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.PageableSearchDTO;
@@ -324,4 +325,17 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         }
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testGetBuildJobStatistics() throws Exception {
+        buildJobRepository.deleteAll();
+        buildJobRepository.save(finishedJob1);
+        buildJobRepository.save(finishedJob2);
+        var response = request.get("/api/admin/build-job-statistics", HttpStatus.OK, BuildJobsStatisticsDTO.class);
+        assertThat(response).isNotNull();
+        assertThat(response.totalBuilds()).isEqualTo(2);
+        assertThat(response.successfulBuilds()).isEqualTo(1);
+        assertThat(response.failedBuilds()).isEqualTo(1);
+        assertThat(response.cancelledBuilds()).isEqualTo(0);
+    }
 }
