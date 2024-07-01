@@ -85,7 +85,7 @@ public class LectureUnitService {
             if (existingCompletion.isEmpty()) {
                 LectureUnitCompletion completion = createLectureUnitCompletion(lectureUnit, user);
                 try {
-                    lectureUnitCompletionRepository.save(completion);
+                    lectureUnitCompletionRepository.saveAndFlush(completion);
                 }
                 catch (DataIntegrityViolationException e) {
                     // In rare instances the completion status might already exist if this method runs in parallel.
