@@ -1,7 +1,7 @@
 {
     "artemisApp": {
         "buildQueue": {
-            "title": "Build Warteschlange",
+            "title": "Build Übersicht",
             "pageTitle": "Build Job Informationen",
             "queuedBuildJobs": "Wartende Build Jobs",
             "runningBuildJobs": "Laufende Build Jobs",

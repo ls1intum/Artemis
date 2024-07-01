@@ -31,8 +31,6 @@ const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     exerciseChannels: { entityData: [] },
     lectureChannels: { entityData: [] },
     examChannels: { entityData: [] },
-    groupChats: { entityData: [] },
-    directMessages: { entityData: [] },
     hiddenChannels: { entityData: [] },
 };
 
@@ -167,8 +165,9 @@ export class CourseOverviewService {
         return groupedLectureGroups;
     }
 
-    groupConversationsByChannelType(conversations: ConversationDTO[]): AccordionGroups {
-        const groupedConversationGroups = cloneDeep(DEFAULT_CHANNEL_GROUPS) as AccordionGroups;
+    groupConversationsByChannelType(conversations: ConversationDTO[], messagingEnabled: boolean): AccordionGroups {
+        const channelGroups = messagingEnabled ? { ...DEFAULT_CHANNEL_GROUPS, groupChats: { entityData: [] }, directMessages: { entityData: [] } } : DEFAULT_CHANNEL_GROUPS;
+        const groupedConversationGroups = cloneDeep(channelGroups) as AccordionGroups;
 
         for (const conversation of conversations) {
             const conversationGroup = this.getConversationGroup(conversation);

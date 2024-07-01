@@ -244,6 +244,14 @@ These unreferenced suggestions can be accepted or discarded via buttons on the i
           :align: center
           :scale: 50%
 
+An demonstration of the automated generation of assessment suggestions for a business process model can be found in the following screencast:
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/47018?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Video tutorial of the automated assessment of modeling exercises on TUM-Live.
+    </iframe>
+
 To learn how automatic suggestions are generated and how exercises can be optimized for automatic evaluation, please refer to :ref:`Generation of Assessment Suggestions for Modeling Exercises<generation_of_assessment_suggestions_for_modeling_exercises>`.
 
 .. |edit| image:: modeling/edit.png
