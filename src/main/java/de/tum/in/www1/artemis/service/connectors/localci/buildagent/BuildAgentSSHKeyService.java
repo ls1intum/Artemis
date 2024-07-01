@@ -32,7 +32,7 @@ public class BuildAgentSSHKeyService {
     private KeyPair keyPair;
 
     @Value("${artemis.version-control.ssh-private-key-folder-path:#{null}}")
-    protected Optional<String> gitSshPrivateKeyPath;
+    private Optional<String> gitSshPrivateKeyPath;
 
     @Value("${artemis.version-control.build-agent-use-ssh:false}")
     private boolean useSSHForBuildAgent;
