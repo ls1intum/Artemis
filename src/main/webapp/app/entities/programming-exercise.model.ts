@@ -95,7 +95,7 @@ export class ProgrammingExercise extends Exercise {
      */
     public maxStaticCodeAnalysisPenalty?: number;
     public allowOfflineIde?: boolean;
-    public allowOnlineIDE?: boolean;
+    public allowOnlineIde?: boolean;
     public programmingLanguage?: ProgrammingLanguage;
     public packageName?: string;
     public sequentialTestRuns?: boolean;
@@ -138,7 +138,7 @@ export class ProgrammingExercise extends Exercise {
         this.templateParticipation = new TemplateProgrammingExerciseParticipation();
         this.solutionParticipation = new SolutionProgrammingExerciseParticipation();
         this.allowOnlineEditor = false; // default value
-        this.allowOnlineIDE = false; // default value
+        this.allowOnlineIde = false; // default value
         this.staticCodeAnalysisEnabled = false; // default value
         this.allowOfflineIde = true; // default value
         this.programmingLanguage = ProgrammingLanguage.JAVA; // default value

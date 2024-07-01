@@ -301,9 +301,15 @@ public class ProgrammingExerciseResource {
         if (!Objects.equals(programmingExerciseBeforeUpdate.isTestwiseCoverageEnabled(), updatedProgrammingExercise.isTestwiseCoverageEnabled())) {
             throw new BadRequestAlertException("Testwise coverage enabled flag must not be changed", ENTITY_NAME, "testwiseCoverageCannotChange");
         }
-        if (!Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
+        if (!Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOfflineIde())
+                && !Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOnlineIde())) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
-                    "You need to allow at least one participation mode, the online editor or the offline IDE", "noParticipationModeAllowed")).body(null);
+                    "You need to allow at least one participation mode, the online editor, the offline IDE, or the online IDE", "noParticipationModeAllowed")).body(null);
+        }
+        // Verify that a theia image is provided when the online IDE is enabled
+        if (Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOnlineIde()) && updatedProgrammingExercise.getTheiaImage() == null) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createAlert(applicationName, "You need to provide a Theia image when the online IDE is enabled", "noTheiaImageProvided")).body(null);
         }
         // Forbid changing the course the exercise belongs to.
         if (!Objects.equals(programmingExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId(),
