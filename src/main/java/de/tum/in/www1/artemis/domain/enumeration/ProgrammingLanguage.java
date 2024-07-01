@@ -10,7 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 
 public enum ProgrammingLanguage {
 
-    JAVA("java"), PYTHON("py"), C("c", "cpp"), HASKELL("hs"), KOTLIN("kt"), VHDL("vhd"), ASSEMBLER("asm"), SWIFT("swift"), OCAML("ml"), EMPTY("");
+    JAVA("java"), PYTHON("py"), C("c", "cpp"), HASKELL("hs"), KOTLIN("kt"), VHDL("vhd"), ASSEMBLER("asm"), SWIFT("swift"), OCAML("ml"), EMPTY(""), RUST("rs");
 
     private final Set<String> fileExtensions;
 
