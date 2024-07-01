@@ -356,9 +356,6 @@ public class ExerciseResource {
         if (exercise instanceof ProgrammingExercise programmingExercise) {
             Set<ExerciseHint> activatedExerciseHints = exerciseHintService.getActivatedExerciseHints(programmingExercise, user);
             Set<ExerciseHint> availableExerciseHints = exerciseHintService.getAvailableExerciseHints(programmingExercise, user);
-            var accessToken = participationVCSAccessTokenRepository.findByUserIdAndParticipationId(user.getId(), participations.getFirst().getId());
-            accessToken.ifPresent(participationVCSAccessToken -> user.setVcsAccessToken(participationVCSAccessToken.getVcsAccessToken()));
-
             return ResponseEntity.ok(new ExerciseDetailsDTO(exercise, irisSettings, plagiarismCaseInfo, availableExerciseHints, activatedExerciseHints));
         }
 
