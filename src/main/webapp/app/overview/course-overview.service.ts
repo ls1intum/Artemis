@@ -2,19 +2,36 @@ import { Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Exercise, getIcon } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
+import { Exam } from 'app/entities/exam.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { AccordionGroups, SidebarCardElement, TimeGroupCategory } from 'app/types/sidebar';
+import { AccordionGroups, ChannelGroupCategory, SidebarCardElement, TimeGroupCategory } from 'app/types/sidebar';
 import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
+import { faGraduationCap } from '@fortawesome/free-solid-svg-icons';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { faBullhorn, faHashtag } from '@fortawesome/free-solid-svg-icons';
+import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
+import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
     current: { entityData: [] },
     past: { entityData: [] },
     noDate: { entityData: [] },
+};
+
+const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
+    favoriteChannels: { entityData: [] },
+    generalChannels: { entityData: [] },
+    exerciseChannels: { entityData: [] },
+    lectureChannels: { entityData: [] },
+    examChannels: { entityData: [] },
+    hiddenChannels: { entityData: [] },
 };
 
 @Injectable({
@@ -24,7 +41,11 @@ export class CourseOverviewService {
     constructor(
         private participationService: ParticipationService,
         private translate: TranslateService,
+        private conversationService: ConversationService,
     ) {}
+
+    faBullhorn = faBullhorn;
+    faHashtag = faHashtag;
 
     getUpcomingTutorialGroup(tutorialGroups: TutorialGroup[] | undefined): TutorialGroup | undefined {
         if (tutorialGroups && tutorialGroups.length) {
@@ -43,6 +64,14 @@ export class CourseOverviewService {
             const upcomingLecture = exercises?.reduce((a, b) => ((a?.dueDate?.valueOf() ?? 0) > (b?.dueDate?.valueOf() ?? 0) ? a : b));
             return upcomingLecture;
         }
+    }
+
+    getUpcomingExam(exams: Exam[] | undefined): Exam | undefined {
+        if (exams && exams.length) {
+            const upcomingExam = exams?.reduce((a, b) => ((a?.startDate?.valueOf() ?? 0) > (b?.startDate?.valueOf() ?? 0) ? a : b));
+            return upcomingExam;
+        }
+        return undefined;
     }
 
     getCorrespondingExerciseGroupByDate(date: dayjs.Dayjs | undefined): TimeGroupCategory {
@@ -86,6 +115,32 @@ export class CourseOverviewService {
         return 'future';
     }
 
+    getConversationGroup(conversation: ConversationDTO): ChannelGroupCategory {
+        if (conversation.isFavorite) {
+            return 'favoriteChannels';
+        }
+        if (conversation.isHidden) {
+            return 'hiddenChannels';
+        }
+        if (isGroupChatDTO(conversation)) {
+            return 'groupChats';
+        }
+        if (isOneToOneChatDTO(conversation)) {
+            return 'directMessages';
+        }
+        return this.getCorrespondingChannelSubType(getAsChannelDTO(conversation)?.subType);
+    }
+
+    getCorrespondingChannelSubType(channelSubType: ChannelSubType | undefined): ChannelGroupCategory {
+        const channelSubTypeMap: { [key in ChannelSubType]: ChannelGroupCategory } = {
+            [ChannelSubType.EXERCISE]: 'exerciseChannels',
+            [ChannelSubType.GENERAL]: 'generalChannels',
+            [ChannelSubType.LECTURE]: 'lectureChannels',
+            [ChannelSubType.EXAM]: 'examChannels',
+        };
+        return channelSubType ? channelSubTypeMap[channelSubType] : 'generalChannels';
+    }
+
     groupExercisesByDueDate(sortedExercises: Exercise[]): AccordionGroups {
         const groupedExerciseGroups = cloneDeep(DEFAULT_UNIT_GROUPS) as AccordionGroups;
 
@@ -110,6 +165,19 @@ export class CourseOverviewService {
         return groupedLectureGroups;
     }
 
+    groupConversationsByChannelType(conversations: ConversationDTO[], messagingEnabled: boolean): AccordionGroups {
+        const channelGroups = messagingEnabled ? { ...DEFAULT_CHANNEL_GROUPS, groupChats: { entityData: [] }, directMessages: { entityData: [] } } : DEFAULT_CHANNEL_GROUPS;
+        const groupedConversationGroups = cloneDeep(channelGroups) as AccordionGroups;
+
+        for (const conversation of conversations) {
+            const conversationGroup = this.getConversationGroup(conversation);
+            const conversationCardItem = this.mapConversationToSidebarCardElement(conversation);
+            groupedConversationGroups[conversationGroup].entityData.push(conversationCardItem);
+        }
+
+        return groupedConversationGroups;
+    }
+
     mapLecturesToSidebarCardElements(lectures: Lecture[]) {
         return lectures.map((lecture) => this.mapLectureToSidebarCardElement(lecture));
     }
@@ -119,6 +187,13 @@ export class CourseOverviewService {
 
     mapExercisesToSidebarCardElements(exercises: Exercise[]) {
         return exercises.map((exercise) => this.mapExerciseToSidebarCardElement(exercise));
+    }
+    mapExamsToSidebarCardElements(exams: Exam[]) {
+        return exams.map((exam) => this.mapExamToSidebarCardElement(exam));
+    }
+
+    mapConversationsToSidebarCardElements(conversations: ConversationDTO[]) {
+        return conversations.map((conversation) => this.mapConversationToSidebarCardElement(conversation));
     }
 
     mapLectureToSidebarCardElement(lecture: Lecture): SidebarCardElement {
@@ -167,6 +242,32 @@ export class CourseOverviewService {
         return exerciseCardItem;
     }
 
+    mapExamToSidebarCardElement(exam: Exam): SidebarCardElement {
+        const examCardItem: SidebarCardElement = {
+            title: exam.title ?? '',
+            id: exam.id ?? '',
+            icon: faGraduationCap,
+            subtitleLeft: exam.moduleNumber ?? '',
+            startDateWithTime: exam.startDate,
+            workingTime: exam.workingTime ?? 0,
+            attainablePoints: exam.examMaxPoints ?? 0,
+            size: 'L',
+        };
+        return examCardItem;
+    }
+
+    mapConversationToSidebarCardElement(conversation: ConversationDTO): SidebarCardElement {
+        const conversationCardItem: SidebarCardElement = {
+            title: this.conversationService.getConversationName(conversation) ?? '',
+            id: conversation.id ?? '',
+            type: conversation.type,
+            icon: getAsChannelDTO(conversation)?.name === 'announcement' ? this.faBullhorn : this.faHashtag,
+            conversation: conversation,
+            size: 'S',
+        };
+        return conversationCardItem;
+    }
+
     sortLectures(lectures: Lecture[]): Lecture[] {
         const sortedLecturesByStartDate = lectures.sort((a, b) => {
             const startDateA = a.startDate ? a.startDate.valueOf() : dayjs().valueOf();
@@ -192,7 +293,7 @@ export class CourseOverviewService {
         return exercise.studentParticipations?.length ? exercise.studentParticipations[0] : undefined;
     }
 
-    sortByTitle(a: Exercise | Lecture, b: Exercise | Lecture): number {
+    sortByTitle(a: Exercise | Lecture | Exam, b: Exercise | Lecture | Exam): number {
         return a.title && b.title ? a.title.localeCompare(b.title) : 0;
     }
 

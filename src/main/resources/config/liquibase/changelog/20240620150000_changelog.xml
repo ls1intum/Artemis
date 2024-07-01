@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20240620150000" author="ekurt">
+        <update tableName="course">
+            <column name="info_sharing_config" value="1"/>
+            <where>info_sharing_config = 3</where>
+        </update>
+    </changeSet>
+</databaseChangeLog>

@@ -27,7 +27,7 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
 
     @ViewChild(AnswerPostCreateEditModalComponent) answerPostCreateEditModal?: AnswerPostCreateEditModalComponent;
     @Input() showAnswers: boolean;
-    @Input() isCourseMessagesPage: boolean;
+    @Input() isCommunicationPage: boolean;
     @Output() openThread = new EventEmitter<void>();
     @Output() userReferenceClicked = new EventEmitter<string>();
     @Output() channelReferenceClicked = new EventEmitter<number>();
@@ -119,12 +119,6 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
         answerPost.resolvesPost = this.isAtLeastTutorInCourse;
         return answerPost;
     }
-
-    /**
-     * defines a function that returns the answerPost id as unique identifier,
-     * by this means, Angular determines which answerPost in the collection of answerPosts has to be reloaded/destroyed on changes
-     */
-    answerPostTrackByFn = (index: number, answerPost: AnswerPost): number => answerPost.id!;
 
     /**
      * Open create answer modal

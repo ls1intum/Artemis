@@ -138,6 +138,8 @@
             "notParticipatedText": "Das Quiz ist beendet und du hast nicht daran teilgenommen. Es gibt keine Ergebnisse, die angezeigt werden können.",
             "statisticsNotPublished": "Die Übungsleitung hat keine Statistiken freigegeben.",
             "successfullySubmittedText": "Deine Antworten wurden erfolgreich abgegeben.<br><br>Die Ergebnisse werden angezeigt, nachdem das Quiz beendet ist.<br><br>Wenn die Ergebnisse 60 Sekunden nach Quiz Ende nicht automatisch angezeigt werden, dann lade die Seite bitte neu.",
+            "evaluateQuizExercise": "Quiz auswerten",
+            "evaluateQuizExerciseSuccess": "Quiz-Aufgabe erfolgreich ausgewertet!",
             "re-evaluate": {
                 "title": "Quiz für {{ param }} überarbeiten",
                 "resetQuiz": "Setze Quiz zurück",

@@ -107,7 +107,7 @@
             <div class="col-md-8 section-card p-0">
                 @if (!courseWithExercises) {
                     <div class="loading-spinner">
-                        <fa-icon [icon]="faSpinner" [spin]="true" />
+                        <fa-icon [icon]="faSpinner" animation="spin" />
                     </div>
                 }
                 @if (courseWithExercises) {
@@ -224,7 +224,7 @@
                     }
                     @if (!courseStatistics) {
                         <div class="loading-spinner">
-                            <fa-icon [icon]="faSpinner" [spin]="true" />
+                            <fa-icon [icon]="faSpinner" animation="spin" />
                         </div>
                     }
                 </div>
@@ -277,21 +277,14 @@
                 <span class="d-none d-xl-inline">{{ 'artemisApp.courseStatistics.statistics' | artemisTranslate }}</span>
             </a>
         }
-        @if (course.isAtLeastTutor && isCommunicationEnabled(course)) {
+        @if (isCommunicationEnabled(course) && course.isAtLeastTutor) {
             <a
-                [routerLink]="['/courses', course.id, 'discussion']"
+                [routerLink]="['/courses', course.id, 'communication']"
                 class="btn btn-primary me-1 mb-1"
-                [ngbTooltip]="'artemisApp.metis.communication.label' | artemisTranslate"
-                id="course-card-open-discussions"
+                [ngbTooltip]="'artemisApp.courseOverview.menu.communication' | artemisTranslate"
             >
-                <fa-icon [icon]="faComment" />
-                <span class="d-none d-xl-inline">{{ 'artemisApp.metis.communication.label' | artemisTranslate }}</span>
-            </a>
-        }
-        @if (isMessagingEnabled(course) && course.isAtLeastTutor) {
-            <a [routerLink]="['/courses', course.id, 'messages']" class="btn btn-primary me-1 mb-1" [ngbTooltip]="'artemisApp.courseOverview.menu.messages' | artemisTranslate">
                 <fa-icon [icon]="faComments" />
-                <span class="d-none d-xl-inline">{{ 'artemisApp.courseOverview.menu.messages' | artemisTranslate }}</span>
+                <span class="d-none d-xl-inline">{{ 'artemisApp.metis.communication.label' | artemisTranslate }}</span>
             </a>
         }
         @if (course.timeZone || course.isAtLeastInstructor) {

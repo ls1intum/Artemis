@@ -5,6 +5,7 @@ export enum IrisSubSettingsType {
     CHAT = 'chat',
     HESTIA = 'hestia',
     COMPETENCY_GENERATION = 'competency-generation',
+    LECTURE_INGESTION = 'lecture-ingestion',
 }
 
 export abstract class IrisSubSettings implements BaseEntity {
@@ -20,6 +21,11 @@ export class IrisChatSubSettings extends IrisSubSettings {
     template?: IrisTemplate;
     rateLimit?: number;
     rateLimitTimeframeHours?: number;
+}
+
+export class IrisLectureIngestionSubSettings extends IrisSubSettings {
+    type = IrisSubSettingsType.LECTURE_INGESTION;
+    autoIngestOnLectureAttachmentUpload: boolean;
 }
 
 export class IrisHestiaSubSettings extends IrisSubSettings {

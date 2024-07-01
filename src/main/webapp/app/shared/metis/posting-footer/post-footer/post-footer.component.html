@@ -8,7 +8,7 @@
                 [posting]="posting"
                 [(showAnswers)]="showAnswers"
                 [sortedAnswerPosts]="sortedAnswerPosts"
-                [isCourseMessagesPage]="isCourseMessagesPage"
+                [isCommunicationPage]="isCommunicationPage"
                 [isThreadSidebar]="isThreadSidebar"
                 (openPostingCreateEditModal)="createAnswerPostModal.open()"
                 (openThread)="openThread.emit()"
@@ -26,13 +26,13 @@
 </div>
 @if (showAnswers) {
     <ng-container class="list-answer-post">
-        @for (answerPost of sortedAnswerPosts; track answerPostTrackByFn($index, answerPost); let isLastAnswer = $last) {
+        @for (answerPost of sortedAnswerPosts; track $index; let isLastAnswer = $last) {
             <jhi-answer-post
                 [lastReadDate]="lastReadDate"
                 [isReadOnlyMode]="readOnlyMode"
                 [posting]="answerPost"
                 [isLastAnswer]="isLastAnswer"
-                [isCourseMessagesPage]="isCourseMessagesPage"
+                [isCommunicationPage]="isCommunicationPage"
                 [isThreadSidebar]="isThreadSidebar"
                 (openPostingCreateEditModal)="createAnswerPostModal.open()"
                 (userReferenceClicked)="userReferenceClicked.emit($event)"

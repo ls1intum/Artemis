@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest.admin;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -25,9 +26,10 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.connectors.localci.SharedQueueManagementService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
+import de.tum.in.www1.artemis.service.dto.BuildJobResultCountDTO;
+import de.tum.in.www1.artemis.service.dto.BuildJobsStatisticsDTO;
 import de.tum.in.www1.artemis.service.dto.FinishedBuildJobDTO;
-import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.PageableSearchDTO;
-import de.tum.in.www1.artemis.web.rest.util.PageUtil;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
 import tech.jhipster.web.util.PaginationUtil;
 
 @Profile(PROFILE_LOCALCI)
@@ -170,11 +172,29 @@ public class AdminBuildJobQueueResource {
      */
     @GetMapping("finished-jobs")
     @EnforceAdmin
-    public ResponseEntity<List<FinishedBuildJobDTO>> getFinishedBuildJobs(PageableSearchDTO<String> search) {
-        log.debug("REST request to get a page of finished build jobs");
-        final Page<BuildJob> page = buildJobRepository.findAll(PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.BUILD_JOB));
-        Page<FinishedBuildJobDTO> finishedBuildJobDTOs = FinishedBuildJobDTO.fromBuildJobsPage(page);
-        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+    public ResponseEntity<List<FinishedBuildJobDTO>> getFinishedBuildJobs(FinishedBuildJobPageableSearchDTO search) {
+        log.debug("REST request to get a page of finished build jobs with build status {}, build agent address {}, start date {} and end date {}", search.buildStatus(),
+                search.buildAgentAddress(), search.startDate(), search.endDate());
+
+        Page<BuildJob> buildJobPage = localCIBuildJobQueueService.getFilteredFinishedBuildJobs(search, null);
+
+        Page<FinishedBuildJobDTO> finishedBuildJobDTOs = FinishedBuildJobDTO.fromBuildJobsPage(buildJobPage);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), buildJobPage);
         return new ResponseEntity<>(finishedBuildJobDTOs.getContent(), headers, HttpStatus.OK);
+    }
+
+    /**
+     * Returns the build job statistics.
+     *
+     * @param span the time span in days. The statistics will be calculated for the last span days. Default is 7 days.
+     * @return the build job statistics
+     */
+    @GetMapping("build-job-statistics")
+    @EnforceAdmin
+    public ResponseEntity<BuildJobsStatisticsDTO> getBuildJobStatistics(@RequestParam(required = false, defaultValue = "7") int span) {
+        log.debug("REST request to get the build job statistics");
+        List<BuildJobResultCountDTO> buildJobResultCountDtos = buildJobRepository.getBuildJobsResultsStatistics(ZonedDateTime.now().minusDays(span), null);
+        BuildJobsStatisticsDTO buildJobStatistics = BuildJobsStatisticsDTO.of(buildJobResultCountDtos);
+        return ResponseEntity.ok(buildJobStatistics);
     }
 }

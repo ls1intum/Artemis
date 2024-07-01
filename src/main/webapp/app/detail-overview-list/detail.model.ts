@@ -16,9 +16,9 @@ import { Course } from 'app/entities/course.model';
 
 export type Detail = NotShownDetail | ShownDetail;
 
-type NotShownDetail = false | undefined;
+export type NotShownDetail = false | undefined;
 
-type ShownDetail =
+export type ShownDetail =
     | TextDetail
     | DateDetail
     | LinkDetail
@@ -36,14 +36,14 @@ type ShownDetail =
     | ProgrammingBuildStatisticsDetail
     | ProgrammingCheckoutDirectoriesDetail;
 
-interface DetailBase {
+export interface DetailBase {
     type: DetailType;
     title?: string;
     titleTranslationProps?: Record<string, string>;
     titleHelpText?: string;
 }
 
-interface TextDetail extends DetailBase {
+export interface TextDetail extends DetailBase {
     type: DetailType.Text;
     data: { text?: string | number };
 }

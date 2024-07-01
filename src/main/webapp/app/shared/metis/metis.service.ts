@@ -154,19 +154,6 @@ export class MetisService implements OnDestroy {
     }
 
     /**
-     * fetches all post tags used in the current course, informs all subscribing components
-     */
-    // TODO: unused, delete
-    updateCoursePostTags(): void {
-        this.postService
-            .getAllPostTagsByCourseId(this.courseId)
-            .pipe(map((res: HttpResponse<string[]>) => res.body!.filter((tag) => !!tag)))
-            .subscribe((tags: string[]) => {
-                this.tags$.next(tags);
-            });
-    }
-
-    /**
      * fetches all posts for a course, optionally fetching posts only for a certain context, i.e. a lecture, exercise or specified course-wide-context,
      * informs all components that subscribed on posts by sending the newly fetched posts
      * @param postContextFilter criteria to filter course posts with (lecture, exercise, course-wide context)
@@ -529,20 +516,10 @@ export class MetisService implements OnDestroy {
         let displayName = '';
         if (post.conversation) {
             displayName = getAsChannelDTO(post.conversation)?.name ?? '';
-            routerLinkComponents = ['/courses', this.courseId, 'messages'];
+            routerLinkComponents = ['/courses', this.courseId, 'communication'];
             queryParams = { conversationId: post.conversation.id! };
         }
         return { routerLinkComponents, displayName, queryParams };
-    }
-
-    /**
-     * Invokes the post service to get a top-k-list of course posts with high similarity scores when compared with a certain strategy
-     * @param {Post} tempPost that is currently created and compared against existing course posts on updates in the form group
-     * @return {Observable<Post[]>} array of similar posts that were found in the course
-     */
-    // TODO: unused, remove
-    getSimilarPosts(tempPost: Post): Observable<Post[]> {
-        return this.postService.computeSimilarityScoresWithCoursePosts(tempPost, this.courseId).pipe(map((res: HttpResponse<Post[]>) => res.body!));
     }
 
     /**

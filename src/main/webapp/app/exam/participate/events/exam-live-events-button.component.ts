@@ -24,7 +24,6 @@ export class ExamLiveEventsButtonComponent implements OnInit, OnDestroy {
     private modalRef?: NgbModalRef;
     private liveEventsSubscription?: Subscription;
     private allEventsSubscription?: Subscription;
-
     eventCount = 0;
 
     // Icons

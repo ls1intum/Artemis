@@ -3,7 +3,7 @@
     [ngClass]="{
         disabled: clickDisabled && !showResult,
         result: showResult && !forceSampleSolution,
-        incorrect: (score || 0) < shortAnswerQuestion.points! && !forceSampleSolution
+        incorrect: (score || 0) < shortAnswerQuestion.points! && !forceSampleSolution,
     }"
 >
     <h4 class="question-title-display">
@@ -23,7 +23,7 @@
                                     <input
                                         class="short-answer-question-container__input"
                                         type="text"
-                                        [maxLength]="maxCharacterCount"
+                                        [maxLength]="MAX_CHARACTER_COUNT"
                                         [disabled]="clickDisabled"
                                         value="{{ getSubmittedTextForSpotAsString(element) }}"
                                         id="solution-{{ i }}-{{ j }}-{{ shortAnswerQuestion.id }}"
@@ -57,7 +57,7 @@
                                         class="short-answer-question-container__input {{ classifyInputField(element) }}"
                                         type="text"
                                         disabled
-                                        [maxLength]="maxCharacterCount"
+                                        [maxLength]="MAX_CHARACTER_COUNT"
                                         value="{{ getTextForSpotAsString(element) }}"
                                         size="{{ getSizeForSpot(element) }}"
                                     />

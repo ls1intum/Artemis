@@ -21,7 +21,6 @@ import {
     faChevronRight,
     faCircleNotch,
     faClipboard,
-    faComment,
     faComments,
     faDoorOpen,
     faEllipsis,
@@ -53,14 +52,17 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
-import { sortCourses } from 'app/shared/util/course.util';
 import dayjs from 'dayjs/esm';
 import { Observable, Subject, Subscription, catchError, firstValueFrom, map, of, takeUntil, throwError } from 'rxjs';
 import { facSidebar } from '../../content/icons/icons';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { CourseExercisesComponent } from './course-exercises/course-exercises.component';
 import { CourseLecturesComponent } from './course-lectures/course-lectures.component';
+import { CourseExamsComponent } from './course-exams/course-exams.component';
 import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-tutorial-groups.component';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
+import { sortCourses } from 'app/shared/util/course.util';
 import { CourseUnenrollmentModalComponent } from './course-unenrollment-modal.component';
 
 interface CourseActionItem {
@@ -104,7 +106,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     private teamAssignmentUpdateListener: Subscription;
     private quizExercisesChannel: string;
     hasUnreadMessages: boolean;
-    messagesRouteLoaded: boolean;
     communicationRouteLoaded: boolean;
     isProduction = true;
     isTestServer = false;
@@ -117,6 +118,10 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     isNavbarCollapsed = false;
     profileSubscription?: Subscription;
     showRefreshButton: boolean = false;
+    isExamStarted = false;
+    isExamEndView = false;
+    private examStartedSubscription: Subscription;
+    private examEndViewSubscription: Subscription;
     readonly MIN_DISPLAYED_COURSES: number = 6;
 
     // Properties to track hidden items for dropdown menu
@@ -132,7 +137,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     private conversationServiceInstantiated = false;
     private checkedForUnreadMessages = false;
-    activatedComponentReference: CourseExercisesComponent | CourseLecturesComponent | CourseTutorialGroupsComponent;
+    activatedComponentReference: CourseExercisesComponent | CourseLecturesComponent | CourseExamsComponent | CourseTutorialGroupsComponent | CourseConversationsComponent;
 
     // Rendered embedded view for controls in the bar so we can destroy it if needed
     private controlsEmbeddedView?: EmbeddedViewRef<any>;
@@ -188,6 +193,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         private courseAccessStorageService: CourseAccessStorageService,
         private profileService: ProfileService,
         private modalService: NgbModal,
+        private examParticipationService: ExamParticipationService,
     ) {}
 
     async ngOnInit() {
@@ -197,6 +203,12 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
             this.isProduction = profileInfo?.inProduction;
             this.isTestServer = profileInfo.testServer ?? false;
+        });
+        this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted) => {
+            this.isExamStarted = isStarted;
+        });
+        this.examEndViewSubscription = this.examParticipationService.endViewDisplayed$.subscribe((isEndView) => {
+            this.isExamEndView = isEndView;
         });
         this.getCollapseStateFromStorage();
         this.course = this.courseStorageService.getCourse(this.courseId);
@@ -331,14 +343,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             const examsItem: SidebarItem = this.getExamsItems();
             sidebarItems.unshift(examsItem);
         }
-        if (isCommunicationEnabled(this.course)) {
-            const communicationItem: SidebarItem = this.getCommunicationItems();
-            sidebarItems.push(communicationItem);
-        }
-
         if (isMessagingEnabled(this.course) || isCommunicationEnabled(this.course)) {
-            const messagesItem: SidebarItem = this.getMessagesItems();
-            sidebarItems.push(messagesItem);
+            const communicationsItem: SidebarItem = this.getCommunicationsItems();
+            sidebarItems.push(communicationsItem);
         }
 
         if (this.hasTutorialGroups()) {
@@ -394,30 +401,17 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         return examsItem;
     }
 
-    getCommunicationItems() {
-        const communicationItem: SidebarItem = {
-            routerLink: 'discussion',
-            icon: faComment,
+    getCommunicationsItems() {
+        const communicationsItem: SidebarItem = {
+            routerLink: 'communication',
+            icon: faComments,
             title: 'Communication',
             translation: 'artemisApp.courseOverview.menu.communication',
             hasInOrionProperty: true,
             showInOrionWindow: false,
             hidden: false,
         };
-        return communicationItem;
-    }
-
-    getMessagesItems() {
-        const messagesItem: SidebarItem = {
-            routerLink: 'messages',
-            icon: faComments,
-            title: 'Messages',
-            translation: 'artemisApp.courseOverview.menu.messages',
-            hasInOrionProperty: true,
-            showInOrionWindow: false,
-            hidden: false,
-        };
-        return messagesItem;
+        return communicationsItem;
     }
 
     getTutorialGroupsItems() {
@@ -513,7 +507,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             return;
         }
 
-        if (!this.conversationServiceInstantiated && (this.messagesRouteLoaded || this.communicationRouteLoaded)) {
+        if (!this.conversationServiceInstantiated && this.communicationRouteLoaded) {
             this.metisConversationService
                 .setUpConversationService(this.course!)
                 .pipe(takeUntil(this.ngUnsubscribe))
@@ -569,8 +563,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     onSubRouteActivate(componentRef: any) {
         this.getPageTitle();
         this.getShowRefreshButton();
-        this.messagesRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'messages';
-        this.communicationRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'discussion';
+        this.communicationRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'communication';
 
         this.setUpConversationService();
 
@@ -587,7 +580,13 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                     this.tryRenderControls();
                 }) || undefined;
         }
-        if (componentRef instanceof CourseExercisesComponent || componentRef instanceof CourseLecturesComponent || componentRef instanceof CourseTutorialGroupsComponent) {
+        if (
+            componentRef instanceof CourseExercisesComponent ||
+            componentRef instanceof CourseLecturesComponent ||
+            componentRef instanceof CourseTutorialGroupsComponent ||
+            componentRef instanceof CourseExamsComponent ||
+            componentRef instanceof CourseConversationsComponent
+        ) {
             this.activatedComponentReference = componentRef;
         }
 
@@ -741,6 +740,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.vcSubscription?.unsubscribe();
         this.subscription?.unsubscribe();
         this.profileSubscription?.unsubscribe();
+        this.examStartedSubscription?.unsubscribe();
+        this.examEndViewSubscription?.unsubscribe();
         this.dashboardSubscription?.unsubscribe();
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();

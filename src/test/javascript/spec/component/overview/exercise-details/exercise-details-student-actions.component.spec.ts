@@ -33,6 +33,7 @@ import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-c
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { PROFILE_THEIA } from 'app/app.constants';
 
 describe('ExerciseDetailsStudentActionsComponent', () => {
     let comp: ExerciseDetailsStudentActionsComponent;
@@ -603,5 +604,38 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
         expect(window.alert).toHaveBeenCalledWith('artemisApp.exercise.maxAthenaResultsReached');
         expect(result).toBeFalse();
+    });
+
+    it.each([
+        [
+            'start theia button should be visible when profile is active and url is set',
+            {
+                activeProfiles: [PROFILE_THEIA],
+                theiaPortalURL: 'https://theia.test',
+            },
+            true,
+        ],
+        [
+            'start theia button should not be visible when profile is active but url is not set',
+            {
+                activeProfiles: [PROFILE_THEIA],
+            },
+            false,
+        ],
+        [
+            'start theia button should not be visible when profile is not active but url is set',
+            {
+                theiaPortalURL: 'https://theia.test',
+            },
+            false,
+        ],
+    ])('%s', (description, profileInfo, expectedVisibility) => {
+        getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
+        getProfileInfoSub.mockReturnValue(of(profileInfo as ProfileInfo));
+        comp.exercise = exercise;
+
+        fixture.detectChanges();
+
+        expect(comp.theiaEnabled).toBe(expectedVisibility);
     });
 });

@@ -24,7 +24,7 @@
         /></span>
     }
     <!-- File badges -->
-    @for (badge of badges; track badge) {
+    @for (badge of badges; track badges.indexOf(badge)) {
         <jhi-file-browser-badge [badge]="badge" [onColoredBackground]="item.checked || hasError || hasChanges" />
     }
     <!-- File level actions -->

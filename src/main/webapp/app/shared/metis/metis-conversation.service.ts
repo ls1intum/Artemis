@@ -159,6 +159,7 @@ export class MetisConversationService implements OnDestroy {
         if (this.activeConversation) {
             this.activeConversation.lastReadDate = dayjs();
             this.activeConversation.unreadMessagesCount = 0;
+            this.activeConversation.hasUnreadMessage = false;
         }
     }
 
@@ -329,7 +330,14 @@ export class MetisConversationService implements OnDestroy {
             this.hasUnreadMessages = hasNewMessages;
             this._hasUnreadMessages$.next(this.hasUnreadMessages);
         }
+        if (hasNewMessages) {
+            this.updateUnread();
+        }
     };
+
+    private updateUnread() {
+        this.conversationsOfUser.forEach((conversation) => (conversation.hasUnreadMessage = !!conversation.unreadMessagesCount && conversation.unreadMessagesCount > 0));
+    }
 
     private setIsLoading(value: boolean) {
         this.isLoading = value;
@@ -443,6 +451,7 @@ export class MetisConversationService implements OnDestroy {
         const indexOfCachedConversation = conversationsCopy.findIndex((cachedConversation) => cachedConversation.id === conversationId);
         if (indexOfCachedConversation !== -1) {
             conversationsCopy[indexOfCachedConversation].lastMessageDate = lastMessageDate;
+            conversationsCopy[indexOfCachedConversation].hasUnreadMessage = true;
             conversationsCopy[indexOfCachedConversation].unreadMessagesCount = (conversationsCopy[indexOfCachedConversation].unreadMessagesCount ?? 0) + 1;
             if (!this.hasUnreadMessages) {
                 this.hasUnreadMessages = true;
@@ -459,6 +468,6 @@ export class MetisConversationService implements OnDestroy {
     }
 
     static getLinkForConversation(courseId: number): RouteComponents {
-        return ['/courses', courseId, 'messages'];
+        return ['/courses', courseId, 'communication'];
     }
 }
