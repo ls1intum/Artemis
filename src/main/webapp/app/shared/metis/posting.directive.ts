@@ -4,8 +4,8 @@ import { Directive, Input, OnInit } from '@angular/core';
 @Directive()
 export abstract class PostingDirective<T extends Posting> implements OnInit {
     @Input() posting: T;
-    @Input() isCourseMessagesPage: boolean;
-    @Input() isCommunicationPage?: boolean;
+    @Input() isCommunicationPage: boolean;
+    @Input() showChannelReference?: boolean;
 
     @Input() hasChannelModerationRights = false;
     @Input() isThreadSidebar: boolean;

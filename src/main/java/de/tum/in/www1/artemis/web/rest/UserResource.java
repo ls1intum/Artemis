@@ -12,12 +12,14 @@ import java.util.Optional;
 import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -37,6 +39,7 @@ import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.dto.UserInitializationDTO;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
 import de.tum.in.www1.artemis.service.user.UserService;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import tech.jhipster.web.util.PaginationUtil;
 
 /**
@@ -63,6 +66,9 @@ import tech.jhipster.web.util.PaginationUtil;
 @RestController
 @RequestMapping("api/")
 public class UserResource {
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     private static final Logger log = LoggerFactory.getLogger(UserResource.class);
 
@@ -184,13 +190,38 @@ public class UserResource {
     @PutMapping("users/sshpublickey")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> addSshPublicKey(@RequestBody String sshPublicKey) throws GeneralSecurityException, IOException {
+
         User user = userRepository.getUser();
+        log.debug("REST request to add SSH key to user {}", user.getLogin());
         // Parse the public key string
-        AuthorizedKeyEntry keyEntry = AuthorizedKeyEntry.parseAuthorizedKeyEntry(sshPublicKey);
+        AuthorizedKeyEntry keyEntry;
+        try {
+            keyEntry = AuthorizedKeyEntry.parseAuthorizedKeyEntry(sshPublicKey);
+        }
+        catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "sshUserSettings", "saveSshKeyError", "Invalid SSH key format"))
+                    .body(null);
+        }
         // Extract the PublicKey object
         PublicKey publicKey = keyEntry.resolvePublicKey(null, null, null);
         String keyHash = HashUtils.getSha512Fingerprint(publicKey);
         userRepository.updateUserSshPublicKeyHash(user.getId(), keyHash, sshPublicKey);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * PUT users/sshpublickey : sets the ssh public key
+     *
+     * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
+     */
+    @DeleteMapping("users/sshpublickey")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> deleteSshPublicKey() {
+        User user = userRepository.getUser();
+        log.debug("REST request to remove SSH key of user {}", user.getLogin());
+        userRepository.updateUserSshPublicKeyHash(user.getId(), null, null);
+
+        log.debug("Successfully deleted SSH key of user {}", user.getLogin());
         return ResponseEntity.ok().build();
     }
 }
