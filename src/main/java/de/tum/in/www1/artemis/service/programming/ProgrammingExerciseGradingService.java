@@ -1008,7 +1008,7 @@ public class ProgrammingExerciseGradingService {
             categoryIssuesStudentsMap.put(category.getName(), new HashMap<>());
         }
 
-        final var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksForExercise(exerciseId);
+        final var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksTestCasesForExercise(exerciseId);
         for (Result result : results) {
             // number of detected issues per category for this result
             final var categoryIssuesMap = new HashMap<String, Integer>();

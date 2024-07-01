@@ -402,7 +402,8 @@ public class ModelingExerciseResource {
         log.debug("REST request to get the latest plagiarism result for the modeling exercise with id: {}", exerciseId);
         ModelingExercise modelingExercise = modelingExerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, modelingExercise, null);
-        var plagiarismResult = (ModelingPlagiarismResult) plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(modelingExercise.getId());
+        var plagiarismResult = (ModelingPlagiarismResult) plagiarismResultRepository
+                .findFirstWithComparisonsByExerciseIdOrderByLastModifiedDateDescOrNull(modelingExercise.getId());
         plagiarismResultRepository.prepareResultForClient(plagiarismResult);
         return buildPlagiarismResultResponse(plagiarismResult);
     }

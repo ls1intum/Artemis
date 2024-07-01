@@ -23,12 +23,27 @@ import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 @Repository
 public interface PlagiarismResultRepository extends ArtemisJpaRepository<PlagiarismResult<?>, Long> {
 
-    @EntityGraph(type = LOAD, attributePaths = { "comparisons" })
     Optional<PlagiarismResult<?>> findFirstByExerciseIdOrderByLastModifiedDateDesc(long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = "comparisons")
+    PlagiarismResult<?> findPlagiarismResultById(long plagiarismResultId);
+
+    /**
+     * Finds the first plagiarism result by exercise ID, including its comparisons, ordered by last modified date in descending order.
+     * If no plagiarism result is found, this method returns null. This method avoids in-memory paging by retrieving the result directly from the database.
+     *
+     * @param exerciseId the ID of the exercise to find the plagiarism result for
+     * @return the first {@code PlagiarismResult} with comparisons, ordered by last modified date in descending order,
+     *         or null if no result is found
+     */
     @Nullable
-    default PlagiarismResult<?> findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(long exerciseId) {
-        return findFirstByExerciseIdOrderByLastModifiedDateDesc(exerciseId).orElse(null);
+    default PlagiarismResult<?> findFirstWithComparisonsByExerciseIdOrderByLastModifiedDateDescOrNull(long exerciseId) {
+        var plagiarismResultIdOrEmpty = findFirstByExerciseIdOrderByLastModifiedDateDesc(exerciseId);
+        if (plagiarismResultIdOrEmpty.isEmpty()) {
+            return null;
+        }
+        var id = plagiarismResultIdOrEmpty.get().getId();
+        return findPlagiarismResultById(id);
     }
 
     /**
@@ -38,7 +53,8 @@ public interface PlagiarismResultRepository extends ArtemisJpaRepository<Plagiar
      * @return the saved result
      */
     default PlagiarismResult<?> savePlagiarismResultAndRemovePrevious(PlagiarismResult<?> result) {
-        Optional<PlagiarismResult<?>> optionalPreviousResult = findFirstByExerciseIdOrderByLastModifiedDateDesc(result.getExercise().getId());
+        Optional<PlagiarismResult<?>> optionalPreviousResult = Optional
+                .ofNullable(findFirstWithComparisonsByExerciseIdOrderByLastModifiedDateDescOrNull(result.getExercise().getId()));
         result = save(result);
         optionalPreviousResult.ifPresent(this::delete);
         return result;

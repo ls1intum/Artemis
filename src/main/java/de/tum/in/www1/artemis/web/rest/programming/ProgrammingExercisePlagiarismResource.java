@@ -77,7 +77,7 @@ public class ProgrammingExercisePlagiarismResource {
         log.debug("REST request to get the latest plagiarism result for the programming exercise with id: {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
-        var plagiarismResult = (TextPlagiarismResult) plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(programmingExercise.getId());
+        var plagiarismResult = (TextPlagiarismResult) plagiarismResultRepository.findFirstWithComparisonsByExerciseIdOrderByLastModifiedDateDescOrNull(programmingExercise.getId());
         plagiarismResultRepository.prepareResultForClient(plagiarismResult);
         return buildPlagiarismResultResponse(plagiarismResult);
     }

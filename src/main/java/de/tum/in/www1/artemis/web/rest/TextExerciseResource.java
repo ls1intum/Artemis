@@ -553,7 +553,7 @@ public class TextExerciseResource {
         log.debug("REST request to get the latest plagiarism result for the text exercise with id: {}", exerciseId);
         TextExercise textExercise = textExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExercise, null);
-        var plagiarismResult = (TextPlagiarismResult) plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(textExercise.getId());
+        var plagiarismResult = (TextPlagiarismResult) plagiarismResultRepository.findFirstWithComparisonsByExerciseIdOrderByLastModifiedDateDescOrNull(textExercise.getId());
         plagiarismResultRepository.prepareResultForClient(plagiarismResult);
         return buildPlagiarismResultResponse(plagiarismResult);
     }

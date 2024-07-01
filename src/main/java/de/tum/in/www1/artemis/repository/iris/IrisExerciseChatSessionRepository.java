@@ -1,13 +1,18 @@
 package de.tum.in.www1.artemis.repository.iris;
 
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
+import java.util.Collections;
 import java.util.List;
 
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.iris.session.IrisExerciseChatSession;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -38,12 +43,33 @@ public interface IrisExerciseChatSessionRepository extends ArtemisJpaRepository<
     @Query("""
             SELECT s
             FROM IrisExerciseChatSession s
-            LEFT JOIN FETCH s.messages
             WHERE s.exercise.id = :exerciseId
                 AND s.user.id = :userId
             ORDER BY s.creationDate DESC
             """)
-    List<IrisExerciseChatSession> findLatestByExerciseIdAndUserIdWithMessages(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId, Pageable pageable);
+    List<IrisExerciseChatSession> findSessionsByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId, Pageable pageable);
+
+    @EntityGraph(type = LOAD, attributePaths = "messages")
+    List<IrisExerciseChatSession> findSessionsWithMessagesByIdIn(List<Long> ids);
+
+    /**
+     * Finds the latest chat sessions by exercise ID and user ID, including their messages, with pagination support.
+     * This method avoids in-memory paging by retrieving the session IDs directly from the database.
+     *
+     * @param exerciseId the ID of the exercise to find the chat sessions for
+     * @param userId     the ID of the user to find the chat sessions for
+     * @param pageable   the pagination information
+     * @return a list of {@code IrisExerciseChatSession} with messages, or an empty list if no sessions are found
+     */
+    default List<IrisExerciseChatSession> findLatestByExerciseIdAndUserIdWithMessages(Long exerciseId, Long userId, Pageable pageable) {
+        List<Long> ids = findSessionsByExerciseIdAndUserId(exerciseId, userId, pageable).stream().map(DomainObject::getId).toList();
+
+        if (ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return findSessionsWithMessagesByIdIn(ids);
+    }
 
     /**
      * Finds a list of chat sessions or throws an exception if none are found.

@@ -146,7 +146,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
         var auditEvents = request.getList("/api/admin/audits?fromDate=" + pastDate + "&toDate=" + currentDate, HttpStatus.OK, PersistentAuditEvent.class);
         assertThat(auditEvents).hasSize(1);
         var auditEvent = auditEvents.getFirst();
-        var auditEventsInDb = persistenceAuditEventRepository.findAllByAuditEventDateBetween(Instant.now().minus(2, ChronoUnit.DAYS), Instant.now(), Pageable.unpaged());
+        var auditEventsInDb = persistenceAuditEventRepository.findAllWithDataByAuditEventDateBetween(Instant.now().minus(2, ChronoUnit.DAYS), Instant.now(), Pageable.unpaged());
         assertThat(auditEventsInDb.getTotalElements()).isEqualTo(1);
         assertThat(auditEvent.getPrincipal()).isEqualTo(auditEventsInDb.get().findFirst().orElseThrow().getPrincipal());
     }

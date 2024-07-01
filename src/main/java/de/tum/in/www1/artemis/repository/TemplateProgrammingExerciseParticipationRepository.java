@@ -55,7 +55,8 @@ public interface TemplateProgrammingExerciseParticipationRepository
     default TemplateProgrammingExerciseParticipation findByExerciseIdElseThrow(final Specification<TemplateProgrammingExerciseParticipation> specification, long exerciseId) {
         final Specification<TemplateProgrammingExerciseParticipation> hasExerciseIdSpec = (root, query, criteriaBuilder) -> criteriaBuilder
                 .equal(root.get(TemplateProgrammingExerciseParticipation_.PROGRAMMING_EXERCISE).get(DomainObject_.ID), exerciseId);
-        return findOne(specification.and(hasExerciseIdSpec)).orElseThrow(() -> new EntityNotFoundException("Template Programming Exercise Participation --> Exercise", exerciseId));
+        return findOneBySpec(specification.and(hasExerciseIdSpec))
+                .orElseThrow(() -> new EntityNotFoundException("Template Programming Exercise Participation --> Exercise", exerciseId));
     }
 
     /**

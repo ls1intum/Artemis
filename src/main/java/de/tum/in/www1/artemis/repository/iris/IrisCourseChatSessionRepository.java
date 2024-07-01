@@ -1,13 +1,18 @@
 package de.tum.in.www1.artemis.repository.iris;
 
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
+import java.util.Collections;
 import java.util.List;
 
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCourseChatSession;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -35,14 +40,35 @@ public interface IrisCourseChatSessionRepository extends ArtemisJpaRepository<Ir
     List<IrisCourseChatSession> findByCourseIdAndUserId(@Param("courseId") long courseId, @Param("userId") long userId);
 
     @Query("""
-                SELECT s
-                FROM IrisCourseChatSession s
-                LEFT JOIN FETCH s.messages
-                WHERE s.course.id = :courseId
-                    AND s.user.id = :userId
-                ORDER BY s.creationDate DESC
+            SELECT s
+            FROM IrisCourseChatSession s
+            WHERE s.course.id = :courseId
+                AND s.user.id = :userId
+            ORDER BY s.creationDate DESC
             """)
-    List<IrisCourseChatSession> findLatestByCourseIdAndUserIdWithMessages(@Param("courseId") long courseId, @Param("userId") long userId, Pageable pageable);
+    List<IrisCourseChatSession> findSessionsByCourseIdAndUserId(@Param("courseId") long courseId, @Param("userId") long userId, Pageable pageable);
+
+    @EntityGraph(type = LOAD, attributePaths = "messages")
+    List<IrisCourseChatSession> findSessionsWithMessagesByIdIn(List<Long> ids);
+
+    /**
+     * Finds the latest chat sessions by course ID and user ID, including their messages, with pagination support.
+     * This method avoids in-memory paging by retrieving the session IDs directly from the database.
+     *
+     * @param courseId the ID of the course to find the chat sessions for
+     * @param userId   the ID of the user to find the chat sessions for
+     * @param pageable the pagination information
+     * @return a list of {@code IrisCourseChatSession} with messages, or an empty list if no sessions are found
+     */
+    default List<IrisCourseChatSession> findLatestByCourseIdAndUserIdWithMessages(long courseId, long userId, Pageable pageable) {
+        List<Long> ids = findSessionsByCourseIdAndUserId(courseId, userId, pageable).stream().map(DomainObject::getId).toList();
+
+        if (ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return findSessionsWithMessagesByIdIn(ids);
+    }
 
     /**
      * Finds a list of chat sessions or throws an exception if none are found.

@@ -415,7 +415,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
         localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug);
 
-        await().until(() -> resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId()).isPresent());
+        await().until(() -> resultRepository.findFirstWithSubmissionsByParticipationIdOrderByCompletionDateDesc(participation.getId()).isPresent());
 
         // Second push should fail.
         localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
