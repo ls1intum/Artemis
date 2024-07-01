@@ -216,9 +216,7 @@
 
                 @if (handInEarly) {
                     <div class="mt-5">
-                        <div class="mb-2 font-weight-bold">
-                            {{ 'artemisApp.examParticipation.continueAfterHandInEarlyDescription' | artemisTranslate }}
-                        </div>
+                        <div class="mb-2 font-weight-bold" jhiTranslate="artemisApp.examParticipation.continueAfterHandInEarlyDescription"></div>
                         <button [disabled]="submitInProgress" id="continue" class="btn btn-secondary mt-2" (click)="continueAfterHandInEarly()">
                             <fa-icon [icon]="faArrowLeft" />
                             <span jhiTranslate="artemisApp.examParticipation.continueAfterHandInEarly"></span>
