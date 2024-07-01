@@ -21,7 +21,7 @@ export default defineConfig({
     /* Reporter to use. See https://playwright.dev/docs/test-reporters */
     reporter: [['junit', { outputFile: './test-reports/results.xml' }]],
     testIgnore: [
-        '**/exam/**', // This will ignore all tests in the excluded-folder directory
+        '**/exam/**', // This will temporarily disable exam page tests
     ],
     /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
     use: {
