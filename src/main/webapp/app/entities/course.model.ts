@@ -12,11 +12,11 @@ import { OnlineCourseConfiguration } from 'app/entities/online-course-configurat
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { LearningPath } from 'app/entities/competency/learning-path.model';
+import { Prerequisite } from 'app/entities/prerequisite.model';
 
 export enum CourseInformationSharingConfiguration {
     COMMUNICATION_AND_MESSAGING = 'COMMUNICATION_AND_MESSAGING',
     COMMUNICATION_ONLY = 'COMMUNICATION_ONLY',
-    MESSAGING_ONLY = 'MESSAGING_ONLY',
     DISABLED = 'DISABLED',
 }
 
@@ -33,7 +33,7 @@ export function isCommunicationEnabled(course: Course | undefined) {
  */
 export function isMessagingEnabled(course: Course | undefined) {
     const config = course?.courseInformationSharingConfiguration;
-    return config === CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING || config === CourseInformationSharingConfiguration.MESSAGING_ONLY;
+    return config === CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
 }
 
 /**
@@ -41,11 +41,7 @@ export function isMessagingEnabled(course: Course | undefined) {
  */
 export function isMessagingOrCommunicationEnabled(course: Course | undefined) {
     const config = course?.courseInformationSharingConfiguration;
-    return (
-        config === CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING ||
-        config === CourseInformationSharingConfiguration.MESSAGING_ONLY ||
-        config === CourseInformationSharingConfiguration.COMMUNICATION_ONLY
-    );
+    return config === CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING || config === CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
 }
 
 export const enum Language {
@@ -110,7 +106,7 @@ export class Course implements BaseEntity {
     public exercises?: Exercise[];
     public lectures?: Lecture[];
     public competencies?: Competency[];
-    public prerequisites?: Competency[];
+    public prerequisites?: Prerequisite[];
     public learningPathsEnabled?: boolean;
     public learningPaths?: LearningPath[];
     public exams?: Exam[];

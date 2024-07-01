@@ -151,8 +151,6 @@ For a description of the rules refer to the `PMD documentation <https://docs.pmd
 |                               +---------------------------------------------+
 |                               | CheckResultSet                              |
 |                               +---------------------------------------------+
-|                               | UnusedImports                               |
-|                               +---------------------------------------------+
 |                               | UnusedFormalParameter                       |
 |                               +---------------------------------------------+
 |                               | UnusedLocalVariable                         |
@@ -160,10 +158,10 @@ For a description of the rules refer to the `PMD documentation <https://docs.pmd
 |                               | UnusedPrivateField                          |
 |                               +---------------------------------------------+
 |                               | UnusedPrivateMethod                         |
-+-------------------------------+---------------------------------------------+
-| Code Style/Code Style         | DontImportJavaLang                          |
 |                               +---------------------------------------------+
-|                               | DuplicateImports                            |
+|                               | PrimitiveWrapperInstantiation               |
++-------------------------------+---------------------------------------------+
+| Code Style/Code Style         | UnnecessaryImport                           |
 |                               +---------------------------------------------+
 |                               | ExtendsObject                               |
 |                               +---------------------------------------------+
@@ -180,6 +178,8 @@ For a description of the rules refer to the `PMD documentation <https://docs.pmd
 |                               | UselessParentheses                          |
 |                               +---------------------------------------------+
 |                               | UselessQualifiedThis                        |
+|                               +---------------------------------------------+
+|                               | EmptyControlStatement                       |
 +-------------------------------+---------------------------------------------+
 | Design/Design                 | CollapsibleIfStatements                     |
 |                               +---------------------------------------------+
@@ -202,26 +202,6 @@ For a description of the rules refer to the `PMD documentation <https://docs.pmd
 |                               | ClassCastExceptionWithToArray               |
 |                               +---------------------------------------------+
 |                               | DontUseFloatTypeForLoopIndices              |
-|                               +---------------------------------------------+
-|                               | EmptyCatchBlock                             |
-|                               +---------------------------------------------+
-|                               | EmptyFinallyBlock                           |
-|                               +---------------------------------------------+
-|                               | EmptyIfStmt                                 |
-|                               +---------------------------------------------+
-|                               | EmptyInitializer                            |
-|                               +---------------------------------------------+
-|                               | EmptyStatementBlock                         |
-|                               +---------------------------------------------+
-|                               | EmptyStatementNotInLoop                     |
-|                               +---------------------------------------------+
-|                               | EmptySwitchStatements                       |
-|                               +---------------------------------------------+
-|                               | EmptySynchronizedBlock                      |
-|                               +---------------------------------------------+
-|                               | EmptyTryBlock                               |
-|                               +---------------------------------------------+
-|                               | EmptyWhileStmt                              |
 |                               +---------------------------------------------+
 |                               | ImportFromSamePackage                       |
 |                               +---------------------------------------------+
@@ -248,8 +228,6 @@ For a description of the rules refer to the `PMD documentation <https://docs.pmd
 |                               | DoubleCheckedLocking                        |
 +-------------------------------+---------------------------------------------+
 | Performance/Performance       | BigIntegerInstantiation                     |
-|                               +---------------------------------------------+
-|                               | BooleanInstantiation                        |
 +-------------------------------+---------------------------------------------+
 | Security/Security             | All rules                                   |
 +-------------------------------+---------------------------------------------+

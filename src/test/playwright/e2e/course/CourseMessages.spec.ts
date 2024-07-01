@@ -18,21 +18,21 @@ test.describe('Course messages', () => {
         await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
         await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
 
-        await login(instructor, `/courses/${course.id}/messages`);
+        await login(instructor, `/courses/${course.id}/communication`);
         await courseMessages.acceptCodeOfConductButton();
-        await login(studentOne, `/courses/${course.id}/messages`);
+        await login(studentOne, `/courses/${course.id}/communication`);
         await courseMessages.acceptCodeOfConductButton();
-        await login(studentTwo, `/courses/${course.id}/messages`);
+        await login(studentTwo, `/courses/${course.id}/communication`);
         await courseMessages.acceptCodeOfConductButton();
-        await login(tutor, `/courses/${course.id}/messages`);
+        await login(tutor, `/courses/${course.id}/communication`);
         await courseMessages.acceptCodeOfConductButton();
     });
 
     test.describe('Channel messages', () => {
         test.describe('Create channel', () => {
             test('Check for pre-created channels', async ({ login, courseMessages }) => {
-                await login(instructor, `/courses/${course.id}/messages`);
-                await courseMessages.browseChannelsButton();
+                await login(instructor, `/courses/${course.id}/communication`);
+                await courseMessages.browseChannelsButton('generalChannels').click();
                 await courseMessages.checkChannelsExists('tech-support');
                 await courseMessages.checkChannelsExists('organization');
                 await courseMessages.checkChannelsExists('random');
@@ -40,7 +40,7 @@ test.describe('Course messages', () => {
             });
 
             test('Instructor should be able to create a public announcement channel', async ({ login, courseMessages }) => {
-                await login(instructor, `/courses/${course.id}/messages`);
+                await login(instructor, `/courses/${course.id}/communication`);
                 const name = 'public-ancmnt-ch';
                 await courseMessages.createChannelButton();
                 await courseMessages.setName(name);
@@ -52,7 +52,7 @@ test.describe('Course messages', () => {
             });
 
             test('Instructor should be able to create a private announcement channel', async ({ login, courseMessages }) => {
-                await login(instructor, `/courses/${course.id}/messages`);
+                await login(instructor, `/courses/${course.id}/communication`);
                 const name = 'private-ancmnt-ch';
                 await courseMessages.createChannelButton();
                 await courseMessages.setName(name);
@@ -64,7 +64,7 @@ test.describe('Course messages', () => {
             });
 
             test('Instructor should be able to create a public unrestricted channel', async ({ login, courseMessages }) => {
-                await login(instructor, `/courses/${course.id}/messages`);
+                await login(instructor, `/courses/${course.id}/communication`);
                 const name = 'public-unrstct-ch';
                 await courseMessages.createChannelButton();
                 await courseMessages.setName(name);
@@ -76,7 +76,7 @@ test.describe('Course messages', () => {
             });
 
             test('Instructor should be able to create a private unrestricted channel', async ({ login, courseMessages }) => {
-                await login(instructor, `/courses/${course.id}/messages`);
+                await login(instructor, `/courses/${course.id}/communication`);
                 const name = 'private-unrstct-ch';
                 await courseMessages.createChannelButton();
                 await courseMessages.setName(name);
@@ -88,7 +88,7 @@ test.describe('Course messages', () => {
             });
 
             test('Instructor should not be able to create a channel with uppercase name', async ({ login, courseMessages }) => {
-                await login(instructor, `/courses/${course.id}/messages`);
+                await login(instructor, `/courses/${course.id}/communication`);
                 const name = 'Forbidden Name';
                 await courseMessages.createChannelButton();
                 await courseMessages.setName(name);
@@ -96,7 +96,7 @@ test.describe('Course messages', () => {
             });
 
             test('Instructor should not be able to create a channel with name longer than 30 chars', async ({ login, courseMessages }) => {
-                await login(instructor, `/courses/${course.id}/messages`);
+                await login(instructor, `/courses/${course.id}/communication`);
                 const name = 'way-way-way-too-long-channel-title';
                 await courseMessages.createChannelButton();
                 await courseMessages.setName(name);
@@ -106,16 +106,16 @@ test.describe('Course messages', () => {
             test('Check that channel is created when a lecture is created', async ({ login, courseMessages, courseManagementAPIRequests }) => {
                 await login(admin);
                 await courseManagementAPIRequests.createLecture(course, 'Test Lecture');
-                await login(instructor, `/courses/${course.id}/messages`);
-                await courseMessages.browseLectureChannelsButton();
+                await login(instructor, `/courses/${course.id}/communication`);
+                await courseMessages.browseChannelsButton('lectureChannels').click();
                 await courseMessages.checkChannelsExists('lecture-test-lecture');
             });
 
             test('Check that channel is created when an exercise is created', async ({ login, courseMessages, exerciseAPIRequests }) => {
                 await login(admin);
                 await exerciseAPIRequests.createTextExercise({ course }, 'Test Exercise');
-                await login(instructor, `/courses/${course.id}/messages`);
-                await courseMessages.browseExerciseChannelsButton();
+                await login(instructor, `/courses/${course.id}/communication`);
+                await courseMessages.browseChannelsButton('exerciseChannels').click();
                 await courseMessages.checkChannelsExists('exercise-test-exercise');
             });
 
@@ -123,8 +123,8 @@ test.describe('Course messages', () => {
                 await login(admin);
                 const examTitle = 'exam' + generateUUID();
                 await examAPIRequests.createExam({ course, title: examTitle });
-                await login(instructor, `/courses/${course.id}/messages`);
-                await courseMessages.browseExamChannelsButton();
+                await login(instructor, `/courses/${course.id}/communication`);
+                await courseMessages.browseChannelsButton('examChannels').click();
                 await courseMessages.checkChannelsExists(titleLowercase(examTitle));
             });
         });
@@ -139,7 +139,7 @@ test.describe('Course messages', () => {
             });
 
             test('Instructor should be able to edit a channel', async ({ login, courseMessages, page }) => {
-                await login(instructor, `/courses/${course.id}/messages?conversationId=${channel.id}`);
+                await login(instructor, `/courses/${course.id}/communication?conversationId=${channel.id}`);
                 const newName = 'new-test-name';
                 const topic = 'test-topic';
                 await courseMessages.getName().click();
@@ -162,8 +162,8 @@ test.describe('Course messages', () => {
             });
 
             test('Student should be joined into pre-created channels automatically', async ({ login, courseMessages }) => {
-                await login(studentOne, `/courses/${course.id}/messages`);
-                await courseMessages.browseChannelsButton();
+                await login(studentOne, `/courses/${course.id}/communication`);
+                await courseMessages.browseChannelsButton('generalChannels').click();
                 const techSupportChannelId = Number(await courseMessages.getChannelIdByName('tech-support'));
                 const techSupportJoinedBadge = courseMessages.getJoinedBadge(techSupportChannelId);
                 await expect(techSupportJoinedBadge).toBeVisible();
@@ -186,8 +186,8 @@ test.describe('Course messages', () => {
             });
 
             test('Student should be able to join a public channel', async ({ login, courseMessages }) => {
-                await login(studentOne, `/courses/${course.id}/messages`);
-                await courseMessages.browseChannelsButton();
+                await login(studentOne, `/courses/${course.id}/communication`);
+                await courseMessages.browseChannelsButton('generalChannels').click();
                 await courseMessages.joinChannel(channel.id!);
                 const joinedBadge = courseMessages.getJoinedBadge(channel.id!);
                 await expect(joinedBadge).toBeVisible();
@@ -195,9 +195,9 @@ test.describe('Course messages', () => {
             });
 
             test('Student should be able to leave a public channel', async ({ login, courseMessages, communicationAPIRequests }) => {
-                await login(studentOne, `/courses/${course.id}/messages`);
+                await login(studentOne, `/courses/${course.id}/communication`);
                 await communicationAPIRequests.joinUserIntoChannel(course, channel.id!, studentOne);
-                await courseMessages.browseChannelsButton();
+                await courseMessages.browseChannelsButton('generalChannels').click();
                 await courseMessages.leaveChannel(channel.id!);
                 await expect(courseMessages.getJoinedBadge(channel.id!)).toBeHidden();
             });
@@ -213,7 +213,7 @@ test.describe('Course messages', () => {
             });
 
             test('Student should be able to write message in channel', async ({ login, courseMessages }) => {
-                await login(studentOne, `/courses/${course.id}/messages?conversationId=${channel.id}`);
+                await login(studentOne, `/courses/${course.id}/communication?conversationId=${channel.id}`);
                 const messageText = 'Student Test Message';
                 await courseMessages.writeMessage(messageText);
                 const message = await courseMessages.save();
@@ -221,7 +221,7 @@ test.describe('Course messages', () => {
             });
 
             test('Student should be able to edit message in channel', async ({ login, courseMessages, communicationAPIRequests }) => {
-                await login(studentOne, `/courses/${course.id}/messages?conversationId=${channel.id!}`);
+                await login(studentOne, `/courses/${course.id}/communication?conversationId=${channel.id!}`);
                 const messageText = 'Student Edit Test Message';
                 const message = await communicationAPIRequests.createCourseMessage(course, channel.id!, 'channel', messageText);
                 const newMessage = 'Edited Text';
@@ -231,7 +231,7 @@ test.describe('Course messages', () => {
             });
 
             test('Student should be able to delete message in channel', async ({ login, courseMessages, communicationAPIRequests }) => {
-                await login(studentOne, `/courses/${course.id}/messages?conversationId=${channel.id}`);
+                await login(studentOne, `/courses/${course.id}/communication?conversationId=${channel.id}`);
                 const messageText = 'Student Edit Test Message';
                 const message = await communicationAPIRequests.createCourseMessage(course, channel.id!, 'channel', messageText);
                 await courseMessages.checkMessage(message.id!, messageText);
@@ -261,7 +261,7 @@ test.describe('Course messages', () => {
 
         test.describe('Create group chat', () => {
             test('Instructors should be able to create a group chat', async ({ login, courseMessages }) => {
-                await login(instructor, `/courses/${course.id}/messages`);
+                await login(instructor, `/courses/${course.id}/communication`);
                 await courseMessages.createGroupChatButton();
                 await courseMessages.addUserToGroupChat(studentOne.username);
                 await courseMessages.addUserToGroupChat(studentTwo.username);
@@ -273,7 +273,7 @@ test.describe('Course messages', () => {
             });
 
             test('Tutors should be able to create a group chat', async ({ login, courseMessages }) => {
-                await login(tutor, `/courses/${course.id}/messages`);
+                await login(tutor, `/courses/${course.id}/communication`);
                 await courseMessages.createGroupChatButton();
                 await courseMessages.addUserToGroupChat(studentOne.username);
                 await courseMessages.addUserToGroupChat(instructor.username);
@@ -285,7 +285,7 @@ test.describe('Course messages', () => {
             });
 
             test('Students should be able to create a group chat', async ({ login, courseMessages }) => {
-                await login(studentOne, `/courses/${course.id}/messages`);
+                await login(studentOne, `/courses/${course.id}/communication`);
                 await courseMessages.createGroupChatButton();
                 await courseMessages.addUserToGroupChat(studentTwo.username);
                 await courseMessages.addUserToGroupChat(tutor.username);
@@ -306,7 +306,7 @@ test.describe('Course messages', () => {
             });
 
             test('Tutors should be able to add a user to group chat', async ({ login, courseMessages }) => {
-                await login(tutor, `/courses/${course.id}/messages?conversationId=${groupChat.id}`);
+                await login(tutor, `/courses/${course.id}/communication?conversationId=${groupChat.id}`);
                 await courseMessages.addUserToGroupChatButton();
                 await courseMessages.addUserToGroupChat(instructor.username);
                 await courseMessages.updateGroupChat();
@@ -317,7 +317,7 @@ test.describe('Course messages', () => {
             });
 
             test('Students should be able to add a user to group chat', async ({ login, courseMessages }) => {
-                await login(studentOne, `/courses/${course.id}/messages?conversationId=${groupChat.id}`);
+                await login(studentOne, `/courses/${course.id}/communication?conversationId=${groupChat.id}`);
                 await courseMessages.addUserToGroupChatButton();
                 await courseMessages.addUserToGroupChat(studentTwo.username);
                 await courseMessages.updateGroupChat();
@@ -339,23 +339,25 @@ test.describe('Course messages', () => {
             });
 
             test('Tutors should be able to leave a group chat', async ({ login, courseMessages, page }) => {
-                await login(tutor, `/courses/${course.id}/messages?conversationId=${groupChat.id}`);
+                await login(tutor, `/courses/${course.id}/communication?conversationId=${groupChat.id}`);
+                await courseMessages.toggleSidebarAccordion('groupChats').click();
                 await courseMessages.checkGroupChatExists(groupChatName, true);
                 await courseMessages.listMembersButton(course.id!, groupChat.id!);
                 await courseMessages.openSettingsTab();
                 await courseMessages.leaveGroupChat();
-                await page.goto(`/courses/${course.id}/messages`);
+                await page.goto(`/courses/${course.id}/communication`);
                 await page.waitForLoadState('networkidle');
                 await courseMessages.checkGroupChatExists(groupChatName, false);
             });
 
             test('Students should be able to leave a group chat', async ({ login, courseMessages, page }) => {
-                await login(studentOne, `/courses/${course.id}/messages?conversationId=${groupChat.id}`);
+                await login(studentOne, `/courses/${course.id}/communication?conversationId=${groupChat.id}`);
+                await courseMessages.toggleSidebarAccordion('groupChats').click();
                 await courseMessages.checkGroupChatExists(groupChatName, true);
                 await courseMessages.listMembersButton(course.id!, groupChat.id!);
                 await courseMessages.openSettingsTab();
                 await courseMessages.leaveGroupChat();
-                await page.goto(`/courses/${course.id}/messages`);
+                await page.goto(`/courses/${course.id}/communication`);
                 await page.waitForLoadState('networkidle');
                 await courseMessages.checkGroupChatExists(groupChatName, false);
             });
@@ -370,7 +372,7 @@ test.describe('Course messages', () => {
             });
 
             test('Students should be able to write a message in group chat', async ({ login, courseMessages }) => {
-                await login(studentOne, `/courses/${course.id}/messages?conversationId=${groupChat.id}`);
+                await login(studentOne, `/courses/${course.id}/communication?conversationId=${groupChat.id}`);
                 const messageText = 'Student Test Message';
                 await courseMessages.writeMessage(messageText);
                 const message = await courseMessages.save(true);
@@ -378,7 +380,7 @@ test.describe('Course messages', () => {
             });
 
             test('Student should be able to edit a message in group chat', async ({ login, courseMessages, communicationAPIRequests }) => {
-                await login(studentOne, `/courses/${course.id}/messages?conversationId=${groupChat.id}`);
+                await login(studentOne, `/courses/${course.id}/communication?conversationId=${groupChat.id}`);
                 const messageText = 'Student Edit Test Message';
                 const message = await communicationAPIRequests.createCourseMessage(course, groupChat.id!, 'groupChat', messageText);
                 const newMessage = 'Edited Text';
@@ -388,7 +390,7 @@ test.describe('Course messages', () => {
             });
 
             test('Students should be able to delete a message in group chat', async ({ login, courseMessages, communicationAPIRequests }) => {
-                await login(studentOne, `/courses/${course.id}/messages?conversationId=${groupChat.id}`);
+                await login(studentOne, `/courses/${course.id}/communication?conversationId=${groupChat.id}`);
                 const messageText = 'Student Edit Test Message';
                 const message = await communicationAPIRequests.createCourseMessage(course, groupChat.id!, 'groupChat', messageText);
                 await courseMessages.checkMessage(message.id!, messageText);

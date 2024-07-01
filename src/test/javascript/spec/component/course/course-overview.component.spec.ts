@@ -33,7 +33,6 @@ import { By } from '@angular/platform-browser';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { Exam } from 'app/entities/exam.model';
 import { CompetencyService } from 'app/course/competencies/competency.service';
-import { Competency } from 'app/entities/competency.model';
 import { CourseOverviewComponent } from 'app/overview/course-overview.component';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
@@ -53,8 +52,10 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
-import { CoursesForDashboardDTO } from 'app/course/manage/courses-for-dashboard-dto';
+import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -103,18 +104,15 @@ const course2: Course = {
     exams: [exam2],
     description: 'Short description of course 2',
     shortName: 'shortName2',
-    competencies: [new Competency()],
+    competencies: [{}],
     tutorialGroups: [new TutorialGroup()],
-    prerequisites: [new Competency()],
+    prerequisites: [{}],
     numberOfCompetencies: 1,
     numberOfPrerequisites: 1,
     numberOfTutorialGroups: 1,
 };
-const course1Dashboard = { course: course1 } as CourseForDashboardDTO;
-const course2Dashboard = { course: course2 } as CourseForDashboardDTO;
-const coursesInDashboard: CourseForDashboardDTO[] = [course1Dashboard, course2Dashboard];
+const coursesDropdown: Course[] = [course1, course2];
 const courses: Course[] = [course2];
-const coursesDashboard = { courses: coursesInDashboard } as CoursesForDashboardDTO;
 
 @Component({
     template: '<ng-template #controls><button id="test-button">TestButton</button></ng-template>',
@@ -135,6 +133,7 @@ describe('CourseOverviewComponent', () => {
     let fixture: ComponentFixture<CourseOverviewComponent>;
     let courseService: CourseManagementService;
     let courseStorageService: CourseStorageService;
+    let examParticipationService: ExamParticipationService;
     let teamService: TeamService;
     let tutorialGroupsService: TutorialGroupsService;
     let tutorialGroupsConfigurationService: TutorialGroupsConfigurationService;
@@ -146,7 +145,7 @@ describe('CourseOverviewComponent', () => {
     let findOneForDashboardStub: jest.SpyInstance;
     let route: ActivatedRoute;
     let findOneForRegistrationStub: jest.SpyInstance;
-    let findAllForDashboardSpy: jest.SpyInstance;
+    let findAllForDropdownSpy: jest.SpyInstance;
 
     let metisConversationService: MetisConversationService;
 
@@ -198,6 +197,8 @@ describe('CourseOverviewComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
                 { provide: NotificationService, useClass: MockNotificationService },
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
             ],
         })
             .compileComponents()
@@ -207,6 +208,7 @@ describe('CourseOverviewComponent', () => {
                 component = fixture.componentInstance;
                 courseService = TestBed.inject(CourseManagementService);
                 courseStorageService = TestBed.inject(CourseStorageService);
+                examParticipationService = TestBed.inject(ExamParticipationService);
                 teamService = TestBed.inject(TeamService);
                 tutorialGroupsService = TestBed.inject(TutorialGroupsService);
                 tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
@@ -230,9 +232,9 @@ describe('CourseOverviewComponent', () => {
                     .spyOn(courseService, 'findOneForRegistration')
                     .mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
                 jest.spyOn(metisConversationService, 'course', 'get').mockReturnValue(course);
-                findAllForDashboardSpy = jest
-                    .spyOn(courseService, 'findAllForDashboard')
-                    .mockReturnValue(of(new HttpResponse({ body: coursesDashboard, headers: new HttpHeaders() })));
+                findAllForDropdownSpy = jest
+                    .spyOn(courseService, 'findAllForDropdown')
+                    .mockReturnValue(of(new HttpResponse({ body: coursesDropdown, headers: new HttpHeaders() })));
             });
     }));
 
@@ -305,7 +307,7 @@ describe('CourseOverviewComponent', () => {
 
         expect(metisConversationServiceStub).toHaveBeenCalledTimes(0);
 
-        const tabs = ['messages', 'exercises', 'messages'];
+        const tabs = ['communication', 'exercises', 'communication'];
         tabs.forEach((tab) => {
             route.snapshot.firstChild!.routeConfig!.path = tab;
             component.onSubRouteActivate({ controlConfiguration: undefined });
@@ -326,7 +328,7 @@ describe('CourseOverviewComponent', () => {
 
         expect(component.hasUnreadMessages).toBe(hasNewMessages);
 
-        const tabs = ['messages', 'exercises', 'messages'];
+        const tabs = ['communication', 'exercises', 'communication'];
         tabs.forEach((tab) => {
             route.snapshot.firstChild!.routeConfig!.path = tab;
             component.onSubRouteActivate({ controlConfiguration: undefined });
@@ -341,7 +343,7 @@ describe('CourseOverviewComponent', () => {
 
         component.course = { courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED };
 
-        const tabs = ['exercises', 'messages', 'exercises', 'messages'];
+        const tabs = ['exercises', 'communication', 'exercises', 'communication'];
         tabs.forEach((tab) => {
             route.snapshot.firstChild!.routeConfig!.path = tab;
             component.onSubRouteActivate({ controlConfiguration: undefined });
@@ -675,22 +677,60 @@ describe('CourseOverviewComponent', () => {
         expect(component.dropdownOpen).toBeTrue();
     });
 
-    it('should initialize courses attribute when page is loaded', () => {
-        component.ngOnInit();
+    it('should apply exam-wrapper and exam-is-active if exam is started', () => {
+        (examParticipationService as any).examIsStarted$ = of(true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.exam-wrapper')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('.exam-is-active')).not.toBeNull();
+
+        component.isExamStarted = false;
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.exam-wrapper')).toBeNull();
+        expect(fixture.nativeElement.querySelector('.exam-is-active')).toBeNull();
+    });
+
+    it('should display/hide sidebar if exam is started/over', () => {
+        (examParticipationService as any).examIsStarted$ = of(true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('mat-sidenav').hidden).toBeTrue();
+
+        component.isExamStarted = false;
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('mat-sidenav').hidden).toBeFalse();
+    });
+
+    it('should display/hide course title bar if exam is started/over', () => {
+        (examParticipationService as any).examIsStarted$ = of(true);
+        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
+        getCourseStub.mockReturnValue(course2);
+        fixture.detectChanges();
+        const courseTitleBar = fixture.debugElement.query(By.css('#course-title-bar-test'));
+        const displayStyle = courseTitleBar.nativeElement.style.display;
+        expect(displayStyle).toBe('none');
+
+        component.isExamStarted = false;
+        fixture.detectChanges();
+        const courseTitleBar2 = fixture.debugElement.query(By.css('#course-title-bar-test'));
+        const displayStyle2 = courseTitleBar2.nativeElement.style.display;
+        expect(displayStyle2).toBe('flex');
+    });
+
+    it('should initialize courses attribute when page is loaded', async () => {
+        await component.ngOnInit();
 
         expect(component.courses).toEqual(courses);
         expect(component.courses?.length).toBe(1);
     });
 
-    it('should not initialize courses attribute when page has error while loading', () => {
-        findAllForDashboardSpy.mockReturnValue(throwError(() => new HttpResponse({ status: 404 })));
+    it('should not initialize courses attribute when page has error while loading', async () => {
+        findAllForDropdownSpy.mockReturnValue(throwError(() => new HttpResponse({ status: 404 })));
 
-        component.ngOnInit();
+        await component.ngOnInit();
         expect(component.courses?.length).toBeUndefined();
     });
 
-    it('should not display current course in dropdown', () => {
-        component.ngOnInit();
+    it('should not display current course in dropdown', async () => {
+        await component.ngOnInit();
 
         expect(component.courses).toEqual(courses);
         expect(component.courses?.pop()).toBe(course2);
@@ -701,7 +741,7 @@ describe('CourseOverviewComponent', () => {
         fixture.detectChanges();
         component.ngOnDestroy();
 
-        expect(courseService.findAllForDashboard).toHaveBeenCalled();
+        expect(courseService.findAllForDropdown).toHaveBeenCalled();
         expect(component.dashboardSubscription.closed).toBeTrue();
     });
 });

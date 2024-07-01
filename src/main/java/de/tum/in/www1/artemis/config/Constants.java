@@ -308,6 +308,17 @@ public final class Constants {
     public static final String PROFILE_SCHEDULING = "scheduling";
 
     /**
+     * The name of the Spring profile used for Theia as an external online IDE.
+     */
+    public static final String PROFILE_THEIA = "theia";
+
+    /**
+     * The InfoContributor's detail key for the Theia Portal URL
+     */
+
+    public static final String THEIA_PORTAL_URL = "theiaPortalURL";
+
+    /**
      * The name of the Spring profile used to run a migration of a setup
      * with GitLab and Jenkins to local VC system and Jenkins.
      */
@@ -342,6 +353,16 @@ public final class Constants {
      * The directory to which repositories temporarely get cloned for the build job execution
      */
     public static final String CHECKED_OUT_REPOS_TEMP_DIR = "checked-out-repos";
+
+    /**
+     * Minimum score for a result to be considered successful and shown in green
+     */
+    public static final int MIN_SCORE_GREEN = 80;
+
+    /**
+     * Minimum score for a result to be considered partially successful and shown in orange
+     */
+    public static final int MIN_SCORE_ORANGE = 40;
 
     private Constants() {
     }

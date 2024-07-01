@@ -1,5 +1,5 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { LocalStorageService, NgxWebstorageModule } from 'ngx-webstorage';
+import { LocalStorageService, provideNgxWebstorage, withLocalStorage, withNgxWebstorageConfig, withSessionStorage } from 'ngx-webstorage';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 import { MockLocalStorageService } from '../helpers/mocks/service/mock-local-storage.service';
 
@@ -9,9 +9,10 @@ describe('CourseAccessStorageService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgxWebstorageModule.forRoot()],
+            imports: [],
             providers: [
                 CourseAccessStorageService,
+                provideNgxWebstorage(withNgxWebstorageConfig({ separator: ':', caseSensitive: true }), withLocalStorage(), withSessionStorage()),
                 {
                     provide: LocalStorageService,
                     useClass: MockLocalStorageService,

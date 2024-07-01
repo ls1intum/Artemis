@@ -36,6 +36,7 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.repository.SlideRepository;
+import de.tum.in.www1.artemis.service.connectors.pyris.PyrisWebhookService;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -55,8 +56,11 @@ public class LectureUnitService {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final Optional<PyrisWebhookService> pyrisWebhookService;
+
     public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, CompetencyRepository competencyRepository,
-            LectureUnitCompletionRepository lectureUnitCompletionRepository, FileService fileService, SlideRepository slideRepository, ExerciseRepository exerciseRepository) {
+            LectureUnitCompletionRepository lectureUnitCompletionRepository, FileService fileService, SlideRepository slideRepository, ExerciseRepository exerciseRepository,
+            Optional<PyrisWebhookService> pyrisWebhookService) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.competencyRepository = competencyRepository;
@@ -64,6 +68,7 @@ public class LectureUnitService {
         this.fileService = fileService;
         this.slideRepository = slideRepository;
         this.exerciseRepository = exerciseRepository;
+        this.pyrisWebhookService = pyrisWebhookService;
     }
 
     /**
@@ -162,6 +167,7 @@ public class LectureUnitService {
                 for (Slide slide : slides) {
                     fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(slide.getSlideImagePath())), 5);
                 }
+                pyrisWebhookService.ifPresent(service -> service.deleteLectureFromPyrisDB(List.of(attachmentUnit)));
                 slideRepository.deleteAll(slides);
             }
         }

@@ -65,6 +65,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @BeforeEach
+    @Override
     void setupTestScenario() throws Exception {
         super.setupTestScenario();
         users = userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
@@ -191,7 +192,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getConversationsOfUser_onlyCourseWideChannelsIfMessagingDisabled() throws Exception {
+    void getConversationsOfUser_onlyChannelsIfMessagingDisabled() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX + "1");
         addUsersToConversation(channel.getId(), "tutor1");
@@ -213,7 +214,6 @@ class ConversationIntegrationTest extends AbstractConversationTest {
 
         assertThat(channels).allSatisfy(ch -> {
             assertThat(ch).isInstanceOf(ChannelDTO.class);
-            assertThat(((ChannelDTO) ch).getIsCourseWide()).isTrue();
         });
 
         // cleanup
@@ -624,7 +624,6 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     private static List<Arguments> courseConfigurationProvider() {
         return List.of(Arguments.of(CourseInformationSharingConfiguration.DISABLED, HttpStatus.FORBIDDEN),
                 Arguments.of(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING, HttpStatus.OK),
-                Arguments.of(CourseInformationSharingConfiguration.COMMUNICATION_ONLY, HttpStatus.OK),
-                Arguments.of(CourseInformationSharingConfiguration.MESSAGING_ONLY, HttpStatus.OK));
+                Arguments.of(CourseInformationSharingConfiguration.COMMUNICATION_ONLY, HttpStatus.OK));
     }
 }

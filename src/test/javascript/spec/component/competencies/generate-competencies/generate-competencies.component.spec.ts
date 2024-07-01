@@ -84,7 +84,7 @@ describe('GenerateCompetenciesComponent', () => {
         generateCompetenciesComponentFixture.detectChanges();
         const courseDescription = 'Course Description';
         const response = new HttpResponse({
-            body: [new Competency(), new Competency()],
+            body: [{}, {}],
             status: 200,
         });
         const competencyService = TestBed.inject(CompetencyService);

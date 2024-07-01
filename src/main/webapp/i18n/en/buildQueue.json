@@ -1,7 +1,7 @@
 {
     "artemisApp": {
         "buildQueue": {
-            "title": "Build Queue",
+            "title": "Build Overview",
             "pageTitle": "Build Job Information",
             "queuedBuildJobs": "Queued Build Jobs",
             "runningBuildJobs": "Running Build Jobs",
@@ -26,7 +26,55 @@
                 "status": "Status",
                 "buildLogs": "Build Logs"
             },
-            "cancelAll": "Cancel All"
+            "cancelAll": "Cancel All",
+            "filter": {
+                "title": "BuildJobs Filter",
+                "buildStatus": {
+                    "title": "Build Status",
+                    "cancelled": "Cancelled",
+                    "failed": "Failed",
+                    "error": "Error",
+                    "successful": "Successful"
+                },
+                "buildAgentAddress": "Build Agent Address",
+                "buildStartDate": {
+                    "title": "Build Start Date",
+                    "from": "From",
+                    "to": "To",
+                    "invalidDate": "From date must be before to date"
+                },
+                "buildDuration": {
+                    "title": "Build Duration (in seconds)",
+                    "lowerBound": "Lower Bound",
+                    "upperBound": "Upper Bound",
+                    "invalidState": "Lower bound must be less than upper bound"
+                },
+                "search": {
+                    "title": "Search",
+                    "placeholder": "Search for build job",
+                    "loading": "Loading...",
+                    "tooltip": "Search will be performed on user login, course title, and course short name"
+                },
+                "none": "None",
+                "close": "Close",
+                "apply": "Apply",
+                "open": "Filter ({{ num }})"
+            },
+            "statistics": {
+                "title": "Overview",
+                "titleTooltip": "Data for the specified time span is fetched.",
+                "totalBuilds": "Number of Builds:",
+                "successfulBuildsWithColon": "Successful Builds:",
+                "successfulBuilds": "Successful Builds",
+                "successfulBuildsPercentage": "Successful Builds %:",
+                "failedBuilds": "Failed Builds:",
+                "failedBuildsPercentage": "Failed Builds %:",
+                "cancelledBuilds": "Cancelled Builds:",
+                "cancelledBuildsPercentage": "Cancelled Builds %:",
+                "daySpan": "1 day",
+                "weekSpan": "7 days",
+                "monthSpan": "30 days"
+            }
         }
     }
 }

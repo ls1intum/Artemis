@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
@@ -21,6 +22,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
+import de.tum.in.www1.artemis.service.connectors.pyris.PyrisWebhookService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -38,11 +40,15 @@ public class LectureService {
 
     private final ChannelService channelService;
 
-    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository, ChannelService channelService) {
+    private final Optional<PyrisWebhookService> pyrisWebhookService;
+
+    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository, ChannelService channelService,
+            Optional<PyrisWebhookService> pyrisWebhookService) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
         this.channelRepository = channelRepository;
         this.channelService = channelService;
+        this.pyrisWebhookService = pyrisWebhookService;
     }
 
     /**
@@ -133,9 +139,33 @@ public class LectureService {
      * @param lecture the lecture to be deleted
      */
     public void delete(Lecture lecture) {
+        if (pyrisWebhookService.isPresent()) {
+            Lecture lectureWithAttachmentUnits = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture.getId());
+            List<AttachmentUnit> attachmentUnitList = lectureWithAttachmentUnits.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit)
+                    .map(lectureUnit -> (AttachmentUnit) lectureUnit).toList();
+            if (!attachmentUnitList.isEmpty()) {
+                pyrisWebhookService.get().deleteLectureFromPyrisDB(attachmentUnitList);
+            }
+        }
         Channel lectureChannel = channelRepository.findChannelByLectureId(lecture.getId());
         channelService.deleteChannel(lectureChannel);
         lectureRepository.deleteById(lecture.getId());
     }
 
+    /**
+     * Ingest the lectures when triggered by the ingest lectures button
+     *
+     * @param lectures set of lectures to be ingested
+     * @return returns the job token if the operation is successful else it returns null
+     */
+    public boolean ingestLecturesInPyris(Set<Lecture> lectures) {
+        if (pyrisWebhookService.isPresent()) {
+            List<AttachmentUnit> attachmentUnitList = lectures.stream().flatMap(lec -> lec.getLectureUnits().stream()).filter(unit -> unit instanceof AttachmentUnit)
+                    .map(unit -> (AttachmentUnit) unit).toList();
+            if (!attachmentUnitList.isEmpty()) {
+                return pyrisWebhookService.get().addLectureUnitsToPyrisDB(attachmentUnitList) != null;
+            }
+        }
+        return false;
+    }
 }

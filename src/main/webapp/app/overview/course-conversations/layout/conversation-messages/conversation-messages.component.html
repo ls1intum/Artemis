@@ -49,7 +49,7 @@
                 <!-- loading messages -->
                 @if (isFetchingPosts) {
                     <div class="envelope">
-                        <fa-icon size="3x" [icon]="faCircleNotch" [spin]="true" />
+                        <fa-icon size="3x" [icon]="faCircleNotch" animation="spin" />
                     </div>
                 }
                 <!-- no message exist -->
@@ -78,7 +78,7 @@
                             [post]="post"
                             [showAnswers]="false"
                             [readOnlyMode]="!!getAsChannel(_activeConversation)?.isArchived"
-                            [isCourseMessagesPage]="true"
+                            [isCommunicationPage]="true"
                             (openThread)="setPostForThread($event)"
                         />
                     }
@@ -93,7 +93,7 @@
                                 <jhi-post-create-edit-modal
                                     #createEditModal
                                     [posting]="newPost!"
-                                    [isCourseMessagesPage]="true"
+                                    [isCommunicationPage]="true"
                                     (onCreate)="createEmptyPost(); scrollToBottomOfMessages()"
                                 />
                             </div>
