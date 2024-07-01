@@ -1,22 +1,22 @@
-Artemis provides a build queue view that displays all queued, running, and finished build jobs. Access to the system-wide build queue is
+Artemis provides a build overview view that displays all queued, running, and finished build jobs. Access to the system-wide build overview is
 exclusively available to **Administrators** through the *System Administration* menu.
 
 .. figure:: programming/buildQueueSystemAdministration.png
-   :alt: Build Queue System Administration
+   :alt: Build Overview System Administration
    :align: center
 
-   Build Queue System Administration
+   Build Overview System Administration
 
-**Instructors** can access the build queue for a specific course through the *Build Queue* button located in *Course Management*.
+**Instructors** can access the build overview for a specific course through the *Build Overview* button located in *Course Management*.
 This view displays only the queued, running, and finished build jobs associated with the selected course.
 
 .. figure:: programming/buildQueueCourseManagement.png
-   :alt: Build Queue Course Management
+   :alt: Build Overview Course Management
    :align: center
 
-   Build Queue Course Management
+   Build Overview Course Management
 
-The build queue view is divided into three sections:
+The build overview view is divided into three sections:
 
 
 

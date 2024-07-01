@@ -10,6 +10,7 @@ const exercises = [exercise];
 studentExamInstance.exercises = exercises as Exercise[];
 
 const examParticipationSubjectMock = new BehaviorSubject<StudentExam>(studentExamInstance);
+const examEndViewSubject = new BehaviorSubject<boolean>(false);
 
 export class MockExamParticipationService {
     loadStudentExam = (courseId: number, examId: number): Observable<StudentExam> => {
@@ -39,5 +40,9 @@ export class MockExamParticipationService {
 
     public getOwnStudentExam(courseId: number, examId: number): Observable<StudentExam> {
         return of({} as StudentExam);
+    }
+
+    setEndView(isEndView: boolean): void {
+        examEndViewSubject.next(false);
     }
 }

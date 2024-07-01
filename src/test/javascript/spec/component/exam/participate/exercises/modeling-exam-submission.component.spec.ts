@@ -169,7 +169,7 @@ describe('ModelingExamSubmissionComponent', () => {
         it('should update problem statement', () => {
             const newProblemStatement = 'new problem statement';
             comp.updateProblemStatement(newProblemStatement);
-            expect(comp.exercise.problemStatement).toEqual(newProblemStatement);
+            expect(comp.problemStatementHtml).toEqual(newProblemStatement);
         });
     });
 
