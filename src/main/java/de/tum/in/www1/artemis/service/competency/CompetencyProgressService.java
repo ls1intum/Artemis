@@ -179,7 +179,7 @@ public class CompetencyProgressService {
         Set<LectureUnit> lectureUnits = competency.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).collect(Collectors.toSet());
         Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos = competencyRepository.findAllExerciseInfoByCompetencyId(competencyId, user);
         int numberOfCompletedLectureUnits = lectureUnitCompletionRepository
-                .countByLectureUnitIds(competency.getLectureUnits().stream().map(LectureUnit::getId).collect(Collectors.toSet()));
+                .countByLectureUnitIdsAndUserId(competency.getLectureUnits().stream().map(LectureUnit::getId).collect(Collectors.toSet()), user.getId());
 
         var competencyProgress = competencyProgressRepository.findEagerByCompetencyIdAndUserId(competencyId, user.getId());
 
