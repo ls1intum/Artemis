@@ -5,10 +5,10 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.BadRequestException;
 
@@ -39,6 +39,7 @@ import de.tum.in.www1.artemis.service.LearningObjectService;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.learningpath.LearningPathNavigationService;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathRecommendationService;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -80,9 +81,12 @@ public class LearningPathResource {
 
     private final LearningObjectService learningObjectService;
 
+    private final LearningPathNavigationService learningPathNavigationService;
+
     public LearningPathResource(CourseService courseService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService,
             LearningPathService learningPathService, LearningPathRepository learningPathRepository, UserRepository userRepository,
-            CompetencyProgressService competencyProgressService, LearningPathRecommendationService learningPathRecommendationService, LearningObjectService learningObjectService) {
+            CompetencyProgressService competencyProgressService, LearningPathRecommendationService learningPathRecommendationService, LearningObjectService learningObjectService,
+            LearningPathNavigationService learningPathNavigationService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -92,6 +96,7 @@ public class LearningPathResource {
         this.competencyProgressService = competencyProgressService;
         this.learningPathRecommendationService = learningPathRecommendationService;
         this.learningObjectService = learningObjectService;
+        this.learningPathNavigationService = learningPathNavigationService;
     }
 
     /**
@@ -196,7 +201,7 @@ public class LearningPathResource {
         LearningPath learningPath = learningPathRepository.findWithEagerCourseAndCompetenciesByIdElseThrow(learningPathId);
         User user = userRepository.getUser();
 
-        checkLearningPathAccessElseThrow(learningPath.getCourse(), learningPath, user);
+        checkLearningPathAccessElseThrow(Optional.of(learningPath.getCourse()), learningPath, Optional.of(user));
 
         return ResponseEntity.ok(learningPathService.generateLearningPathCompetencyGraph(learningPath, user));
     }
@@ -230,23 +235,41 @@ public class LearningPathResource {
     }
 
     /**
-     * GET learning-path/:learningPathId/navigation : Gets the navigation information for the learning path,
-     * optionally relative to a learning object.
+     * GET learning-path/:learningPathId/relative-navigation : Gets the navigation information for the learning path relative to a learning object.
      *
      * @param learningPathId     the id of the learning path for which the navigation should be fetched
-     * @param learningObjectId   an optional id of the learning object to navigate to
-     * @param learningObjectType an optional type of the learning object to navigate to
+     * @param learningObjectId   the id of the learning object to navigate to
+     * @param learningObjectType the ype of the learning object to navigate to
+     * @param competencyId       the id of the competency the learning object belongs to
+     * @return the ResponseEntity with status 200 (OK) and with body the navigation information
+     */
+    @GetMapping("learning-path/{learningPathId}/relative-navigation")
+    @FeatureToggle(Feature.LearningPaths)
+    @EnforceAtLeastStudent
+    public ResponseEntity<LearningPathNavigationDTO> getRelativeLearningPathNavigation(@PathVariable @Valid long learningPathId, @RequestParam long learningObjectId,
+            @RequestParam LearningObjectType learningObjectType, @RequestParam long competencyId) {
+        log.debug("REST request to get navigation for learning path with id: {} relative to learning object with id: {} and type: {} in competency with id: {}", learningPathId,
+                learningObjectId, learningObjectType, competencyId);
+        var learningPath = learningPathService.findWithCompetenciesAndLearningObjectsAndCompletedUsersById(learningPathId);
+        checkLearningPathAccessElseThrow(Optional.empty(), learningPath, Optional.empty());
+        return ResponseEntity.ok(learningPathNavigationService.getNavigationRelativeToLearningObject(learningPath, learningObjectId, learningObjectType, competencyId));
+    }
+
+    /**
+     * GET learning-path/:learningPathId/navigation : Gets the navigation information for the learning path.
+     * The current learning object is the next uncompleted learning object in the learning path or the last completed learning object if all are completed.
+     *
+     * @param learningPathId the id of the learning path for which the navigation should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the navigation information
      */
     @GetMapping("learning-path/{learningPathId}/navigation")
     @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastStudent
-    public ResponseEntity<LearningPathNavigationDTO> getLearningPathNavigation(@PathVariable @Valid long learningPathId,
-            @RequestParam(required = false, name = "learningObjectId") @Nullable @Valid Long learningObjectId,
-            @RequestParam(required = false, name = "learningObjectType") @Nullable @Valid LearningObjectType learningObjectType) {
-        log.debug("REST request to get navigation for learning path with id: {} relative to learning object with id: {} and type: {}", learningPathId, learningObjectId,
-                learningObjectType);
-        return ResponseEntity.ok(learningPathService.getLearningPathNavigation(learningPathId, learningObjectId, learningObjectType));
+    public ResponseEntity<LearningPathNavigationDTO> getLearningPathNavigation(@PathVariable long learningPathId) {
+        log.debug("REST request to get navigation for learning path with id: {}", learningPathId);
+        var learningPath = learningPathService.findWithCompetenciesAndLearningObjectsAndCompletedUsersById(learningPathId);
+        checkLearningPathAccessElseThrow(Optional.empty(), learningPath, Optional.empty());
+        return ResponseEntity.ok(learningPathNavigationService.getNavigation(learningPath));
     }
 
     /**
@@ -267,9 +290,8 @@ public class LearningPathResource {
         LearningPath learningPath = learningPathService.findWithCompetenciesAndLearningObjectsAndCompletedUsersById(learningPathId);
         Course course = courseRepository.findByIdElseThrow(learningPath.getCourse().getId());
         courseService.checkLearningPathsEnabledElseThrow(course);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        checkLearningPathAccessElseThrow(course, learningPath, user);
+        checkLearningPathAccessElseThrow(Optional.of(course), learningPath, Optional.empty());
 
         NgxLearningPathDTO ngxLearningPathDTO = switch (type) {
             case GRAPH -> learningPathService.generateNgxGraphRepresentation(learningPath);
@@ -329,9 +351,8 @@ public class LearningPathResource {
     public ResponseEntity<Set<CompetencyProgressForLearningPathDTO>> getCompetencyProgressForLearningPath(@PathVariable long learningPathId) {
         log.debug("REST request to get competency progress for learning path: {}", learningPathId);
         final var learningPath = learningPathRepository.findWithEagerCourseAndCompetenciesByIdElseThrow(learningPathId);
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
 
-        checkLearningPathAccessElseThrow(learningPath.getCourse(), learningPath, user);
+        checkLearningPathAccessElseThrow(Optional.of(learningPath.getCourse()), learningPath, Optional.empty());
 
         // update progress and construct DTOs
         final var progressDTOs = learningPath.getCompetencies().stream().map(competency -> {
@@ -352,9 +373,8 @@ public class LearningPathResource {
     public ResponseEntity<List<CompetencyNameDTO>> getCompetencyOrderForLearningPath(@PathVariable long learningPathId) {
         log.debug("REST request to get competency order for learning path: {}", learningPathId);
         final var learningPath = learningPathService.findWithCompetenciesAndLearningObjectsAndCompletedUsersById(learningPathId);
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
 
-        checkLearningPathAccessElseThrow(learningPath.getCourse(), learningPath, user);
+        checkLearningPathAccessElseThrow(Optional.of(learningPath.getCourse()), learningPath, Optional.empty());
 
         var recommendationState = learningPathRecommendationService.getRecommendedOrderOfAllCompetencies(learningPath);
         List<CompetencyNameDTO> competencyNames = recommendationState.recommendedOrderOfCompetencies().stream()
@@ -377,15 +397,24 @@ public class LearningPathResource {
         final var learningPath = learningPathRepository.findWithEagerCourseAndCompetenciesByIdElseThrow(learningPathId);
         final var user = userRepository.getUserWithGroupsAndAuthorities();
 
-        checkLearningPathAccessElseThrow(learningPath.getCourse(), learningPath, user);
+        checkLearningPathAccessElseThrow(Optional.of(learningPath.getCourse()), learningPath, Optional.of(user));
 
         List<LearningPathNavigationObjectDTO> learningObjects = learningPathRecommendationService.getOrderOfLearningObjectsForCompetency(competencyId, user).stream()
                 .map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, learningObjectService.isCompletedByUser(learningObject, user))).toList();
         return ResponseEntity.ok(learningObjects);
     }
 
-    private void checkLearningPathAccessElseThrow(Course course, LearningPath learningPath, User user) {
-        if (!user.equals(learningPath.getUser()) && !authorizationCheckService.isAtLeastInstructorInCourse(course, user)) {
+    /**
+     * Checks if the user has access to the learning path. This is the case if the user is the owner of the learning path or an instructor in the course.
+     * If not, an AccessForbiddenException is thrown.
+     *
+     * @param optionalCourse the optional course for which to check the access. If empty, the course is not checked.
+     * @param learningPath   the learning path to check the access for
+     * @param optionalUser   the optional user for which to check the access. If empty, the current user is used.
+     */
+    private void checkLearningPathAccessElseThrow(Optional<Course> optionalCourse, LearningPath learningPath, Optional<User> optionalUser) {
+        User user = optionalUser.orElseGet(userRepository::getUserWithGroupsAndAuthorities);
+        if (!user.equals(learningPath.getUser()) && optionalCourse.map(course -> !authorizationCheckService.isAtLeastInstructorInCourse(course, user)).orElse(false)) {
             throw new AccessForbiddenException("You are not allowed to access another user's learning path.");
         }
     }

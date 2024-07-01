@@ -10,7 +10,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
@@ -45,8 +44,6 @@ import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyGraphNodeDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathCompetencyGraphDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDTO;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationObjectDTO.LearningObjectType;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -337,25 +334,6 @@ public class LearningPathService {
      */
     public NgxLearningPathDTO generateNgxPathRepresentation(@NotNull LearningPath learningPath) {
         return this.learningPathNgxService.generateNgxPathRepresentation(learningPath);
-    }
-
-    /**
-     * Get the navigation for the given learning path.
-     *
-     * @param learningPathId     the id of the learning path
-     * @param learningObjectId   the id of the relative learning object
-     * @param learningObjectType the type of the relative learning object
-     * @return the navigation
-     */
-    public LearningPathNavigationDTO getLearningPathNavigation(long learningPathId, @Nullable Long learningObjectId, @Nullable LearningObjectType learningObjectType) {
-        var learningPath = findWithCompetenciesAndLearningObjectsAndCompletedUsersById(learningPathId);
-        if (!userRepository.getUser().equals(learningPath.getUser())) {
-            throw new AccessForbiddenException("You are not allowed to access this learning path");
-        }
-        if (learningObjectId != null && learningObjectType != null) {
-            return learningPathNavigationService.getNavigationRelativeToLearningObject(learningPath, learningObjectId, learningObjectType);
-        }
-        return learningPathNavigationService.getNavigation(learningPath);
     }
 
     /**
