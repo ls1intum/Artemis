@@ -204,7 +204,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 if (request instanceof ServletServerHttpRequest servletRequest) {
                     attributes.put(IP_ADDRESS, servletRequest.getRemoteAddress());
                     Cookie jwtCookie = WebUtils.getCookie(servletRequest.getServletRequest(), JWTFilter.JWT_COOKIE_NAME);
-                    return JWTFilter.isJwtCookieValid(tokenProvider, jwtCookie);
+                    var jwtToken = JWTFilter.getJwtFromCookie(jwtCookie);
+                    return JWTFilter.isJwtValid(tokenProvider, jwtToken);
                 }
                 return false;
             }
