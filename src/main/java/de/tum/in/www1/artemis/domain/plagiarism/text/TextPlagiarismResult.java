@@ -13,6 +13,10 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
 @Entity
 public class TextPlagiarismResult extends PlagiarismResult<TextSubmissionElement> {
 
+    private static final int ORIGINAL_SIZE = 100;
+
+    private static final int REDUCED_SIZE = 10;
+
     /**
      * converts the given JPlagResult into a TextPlagiarismResult, only uses the 500 most interesting comparisons based on the highest similarity
      *
@@ -29,7 +33,14 @@ public class TextPlagiarismResult extends PlagiarismResult<TextSubmissionElement
             this.comparisons.add(comparison);
         }
         this.duration = result.getDuration();
-        this.setSimilarityDistribution(result.getSimilarityDistribution());
+
+        // Convert JPlag Similarity Distribution from int[100] to int[10]
+        int[] tenthPercentileSimilarityDistribution = new int[REDUCED_SIZE];
+        for (int i = 0; i < ORIGINAL_SIZE; i++) {
+            tenthPercentileSimilarityDistribution[i / REDUCED_SIZE] += result.getSimilarityDistribution()[i];
+        }
+
+        this.setSimilarityDistribution(tenthPercentileSimilarityDistribution);
         this.setExercise(exercise);
     }
 }

@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -373,6 +374,7 @@ public class ExerciseService {
      * @param originalExercise the original exercise
      * @param updatedExercise  the updatedExercise
      */
+    @Async
     public void updatePointsInRelatedParticipantScores(Exercise originalExercise, Exercise updatedExercise) {
         if (originalExercise.getMaxPoints().equals(updatedExercise.getMaxPoints()) && originalExercise.getBonusPoints().equals(updatedExercise.getBonusPoints())) {
             return; // nothing to do since points are still correct

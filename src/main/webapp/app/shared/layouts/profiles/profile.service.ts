@@ -84,6 +84,8 @@ export class ProfileService {
 
                         profileInfo.git = data.git;
 
+                        profileInfo.theiaPortalURL = data.theiaPortalURL ?? '';
+
                         return profileInfo;
                     }),
                 )

@@ -2,10 +2,12 @@ package de.tum.in.www1.artemis.service.connectors.pyris;
 
 import static de.tum.in.www1.artemis.service.util.TimeUtil.toInstant;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -54,8 +56,8 @@ public class PyrisDTOService {
      * @return the converted PyrisProgrammingExerciseDTO
      */
     public PyrisProgrammingExerciseDTO toPyrisProgrammingExerciseDTO(ProgrammingExercise exercise) {
-        var templateRepositoryContents = getRepository(exercise.getTemplateParticipation()).map(repositoryService::getFilesContentFromWorkingCopy).orElse(Map.of());
-        var solutionRepositoryContents = getRepository(exercise.getSolutionParticipation()).map(repositoryService::getFilesContentFromWorkingCopy).orElse(Map.of());
+        var templateRepositoryContents = getFilteredRepositoryContents(exercise.getTemplateParticipation());
+        var solutionRepositoryContents = getFilteredRepositoryContents(exercise.getSolutionParticipation());
         Optional<Repository> testRepo = Optional.empty();
         try {
             testRepo = Optional.ofNullable(gitService.getOrCheckoutRepository(exercise.getVcsTestRepositoryUri(), true));
@@ -79,8 +81,7 @@ public class PyrisDTOService {
     public PyrisSubmissionDTO toPyrisSubmissionDTO(ProgrammingSubmission submission) {
         var buildLogEntries = submission.getBuildLogEntries().stream().map(buildLogEntry -> new PyrisBuildLogEntryDTO(toInstant(buildLogEntry.getTime()), buildLogEntry.getLog()))
                 .toList();
-        var studentRepositoryContents = getRepository((ProgrammingExerciseParticipation) submission.getParticipation()).map(repositoryService::getFilesContentFromWorkingCopy)
-                .orElse(Map.of());
+        var studentRepositoryContents = getFilteredRepositoryContents((ProgrammingExerciseParticipation) submission.getParticipation());
         return new PyrisSubmissionDTO(submission.getId(), toInstant(submission.getSubmissionDate()), studentRepositoryContents, submission.getParticipation().isPracticeMode(),
                 submission.isBuildFailed(), buildLogEntries, getLatestResult(submission));
     }
@@ -119,27 +120,48 @@ public class PyrisDTOService {
         return new PyrisResultDTO(toInstant(latestResult.getCompletionDate()), latestResult.isSuccessful(), feedbacks);
     }
 
+    private Map<String, String> getFilteredRepositoryContents(ProgrammingExerciseParticipation participation) {
+        var language = participation.getProgrammingExercise().getProgrammingLanguage();
+
+        var repositoryContents = getRepositoryContents(participation);
+        return repositoryContents.entrySet().stream().filter(entry -> language == null || language.matchesFileExtension(entry.getKey()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
     /**
-     * Helper method to get & checkout the repository for a participation.
-     * This is an exception safe way to fetch the repository, as it will return an empty optional if the repository could not be fetched.
+     * Helper method to get & checkout the repository contents for a participation.
+     * This is an exception safe way to fetch the repository, as it will return an empty map if the repository could not be fetched.
      * This is useful, as the Pyris call should not fail if the repository is not available.
      *
      * @param participation the participation
      * @return the repository or empty if it could not be fetched
      */
-    private Optional<Repository> getRepository(ProgrammingExerciseParticipation participation) {
+    private Map<String, String> getRepositoryContents(ProgrammingExerciseParticipation participation) {
         try {
             var repositoryUri = participation.getVcsRepositoryUri();
             if (profileService.isLocalVcsActive()) {
-                return Optional.ofNullable(gitService.getBareRepository(repositoryUri));
+                return Optional.ofNullable(gitService.getBareRepository(repositoryUri)).map(bareRepository -> {
+                    var lastCommitObjectId = gitService.getLastCommitHash(repositoryUri);
+                    if (lastCommitObjectId == null) {
+                        return null;
+                    }
+                    var lastCommitHash = lastCommitObjectId.getName();
+                    try {
+                        return repositoryService.getFilesContentFromBareRepository(bareRepository, lastCommitHash);
+                    }
+                    catch (IOException e) {
+                        log.error("Could not fetch repository contents from bare repository", e);
+                        return null;
+                    }
+                }).orElse(Map.of());
             }
             else {
-                return Optional.ofNullable(gitService.getOrCheckoutRepository(repositoryUri, true));
+                return Optional.ofNullable(gitService.getOrCheckoutRepository(repositoryUri, true)).map(repositoryService::getFilesContentFromWorkingCopy).orElse(Map.of());
             }
         }
         catch (GitAPIException e) {
             log.error("Could not fetch repository", e);
-            return Optional.empty();
+            return Map.of();
         }
     }
 }

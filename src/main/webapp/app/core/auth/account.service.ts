@@ -328,10 +328,25 @@ export class AccountService implements IAccountService {
         this.prefilledUsernameValue = prefilledUsername;
     }
 
+    /**
+     * Sends the added SSH key to the server
+     *
+     * @param sshPublicKey
+     */
     addSshPublicKey(sshPublicKey: string): Observable<void> {
         if (this.userIdentity) {
             this.userIdentity.sshPublicKey = sshPublicKey;
         }
         return this.http.put<void>('api/users/sshpublickey', sshPublicKey);
+    }
+
+    /**
+     * Sends a request to the server to delete the user's current SSH key
+     */
+    deleteSshPublicKey(): Observable<void> {
+        if (this.userIdentity) {
+            this.userIdentity.sshPublicKey = undefined;
+        }
+        return this.http.delete<void>('api/users/sshpublickey');
     }
 }
