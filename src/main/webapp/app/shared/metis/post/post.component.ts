@@ -69,7 +69,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.contextInformation = this.metisService.getContextInformation(this.posting);
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
         this.sortAnswerPosts();
-        this.updateTags();
     }
 
     /**
@@ -88,16 +87,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
      */
     ngAfterContentChecked() {
         this.changeDetector.detectChanges();
-    }
-
-    /**
-     * ensures that only when clicking on a post title without having cmd key pressed,
-     * the modal is dismissed (closed and cleared)
-     */
-    onNavigateToPostById($event: MouseEvent) {
-        if (!$event.metaKey) {
-            this.modalRef?.dismiss();
-        }
     }
 
     /**
@@ -132,13 +121,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
             (answerPostA, answerPostB) =>
                 Number(answerPostB.resolvesPost) - Number(answerPostA.resolvesPost) || answerPostA.creationDate!.valueOf() - answerPostB.creationDate!.valueOf(),
         );
-    }
-
-    /**
-     * sets the current post tags, empty error if none exit
-     */
-    private updateTags(): void {
-        this.tags = this.posting.tags || [];
     }
 
     /**

@@ -32,6 +32,7 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
     @Output() userReferenceClicked = new EventEmitter<string>();
     @Output() channelReferenceClicked = new EventEmitter<number>();
 
+    sortedAnswerPosts: AnswerPost[];
     createdAnswerPost: AnswerPost;
     isAtLeastTutorInCourse: boolean;
 
@@ -53,6 +54,7 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
         this.courseId = this.metisService.getCourse().id!;
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
         this.createdAnswerPost = this.createEmptyAnswerPost();
+        this.sortAnswerPosts();
     }
 
     /**
@@ -87,5 +89,21 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
      */
     openCreateAnswerPostModal() {
         this.createAnswerPostModalComponent.open();
+    }
+
+    /**
+     * sorts answerPosts by two criteria
+     * 1. criterion: resolvesPost -> true comes first
+     * 2. criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
+     */
+    sortAnswerPosts(): void {
+        if (!this.posting.answers) {
+            this.sortedAnswerPosts = [];
+            return;
+        }
+        this.sortedAnswerPosts = this.posting.answers.sort(
+            (answerPostA, answerPostB) =>
+                Number(answerPostB.resolvesPost) - Number(answerPostA.resolvesPost) || answerPostA.creationDate!.valueOf() - answerPostB.creationDate!.valueOf(),
+        );
     }
 }
