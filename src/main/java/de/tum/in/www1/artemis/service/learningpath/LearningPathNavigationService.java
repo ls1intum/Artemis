@@ -70,6 +70,10 @@ public class LearningPathNavigationService {
 
     private LearningPathNavigationDTO getNavigationRelativeToLearningObject(RecommendationState recommendationState, LearningObject currentLearningObject,
             LearningPath learningPath) {
+        if (currentLearningObject == null) {
+            return new LearningPathNavigationDTO(null, null, null, learningPath.getProgress());
+        }
+
         var currentCompetency = learningPathRecommendationService.getCompetencyOfLearningObjectOnLearningPath(learningPath.getUser(), currentLearningObject, recommendationState);
 
         var learningObjectsInCurrentCompetency = learningPathRecommendationService.getOrderOfLearningObjectsForCompetency(currentCompetency, learningPath.getUser());
