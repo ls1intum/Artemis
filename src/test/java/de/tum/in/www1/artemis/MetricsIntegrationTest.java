@@ -43,8 +43,6 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private ExerciseMetricsRepository exerciseMetricsRepository;
 
-    private ExerciseUtilService exerciseUtilService;
-
     private Course course;
 
     private static final String STUDENT_OF_COURSE = TEST_PREFIX + "student1";
