@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { TheiaService } from 'app/exercises/programming/shared/service/theia.service';
 
@@ -13,7 +13,6 @@ export class ProgrammingExerciseTheiaComponent implements OnChanges {
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
 
     programmingLanguage?: ProgrammingLanguage;
-    projectType?: ProjectType;
     theiaImages = {};
 
     constructor(private theiaService: TheiaService) {
@@ -30,9 +29,7 @@ export class ProgrammingExerciseTheiaComponent implements OnChanges {
     }
 
     shouldReloadTemplate(): boolean {
-        return (
-            !this.programmingExercise.id && (this.programmingExercise.programmingLanguage !== this.programmingLanguage || this.programmingExercise.projectType !== this.projectType)
-        );
+        return this.programmingExercise.programmingLanguage !== this.programmingLanguage;
     }
 
     /**
@@ -40,6 +37,7 @@ export class ProgrammingExerciseTheiaComponent implements OnChanges {
      * @private
      */
     resetImageSelection() {
+        console.log('Resetting image selection');
         this.programmingExercise.theiaImage = undefined;
     }
 
@@ -53,12 +51,11 @@ export class ProgrammingExerciseTheiaComponent implements OnChanges {
         }
 
         this.programmingLanguage = this.programmingExercise.programmingLanguage;
-        this.projectType = this.programmingExercise.projectType;
 
         this.theiaService.getTheiaImages(this.programmingLanguage).subscribe({
             next: (images) => {
                 this.theiaImages = images;
-                if (Object.values(images).length > 0) {
+                if (!this.programmingExercise.theiaImage && Object.values(images).length > 0) {
                     this.programmingExercise.theiaImage = Object.values(images)[0] as string;
                 }
             },

@@ -660,8 +660,14 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>) {
         result.subscribe({
-            next: (response: HttpResponse<ProgrammingExercise>) => this.onSaveSuccess(response.body!),
-            error: (error: HttpErrorResponse) => this.onSaveError(error),
+            next: (response: HttpResponse<ProgrammingExercise>) => {
+                console.log('response', response.body!);
+                this.onSaveSuccess(response.body!);
+            },
+            error: (error: HttpErrorResponse) => {
+                console.log('error', error);
+                this.onSaveError(error);
+            },
         });
     }
 
@@ -808,14 +814,14 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * checking if at least one of Online Editor, Offline Ide, or Online Ide is selected
      */
     validIdeSelection = () => {
-        return this.programmingExercise?.allowOnlineEditor || this.programmingExercise?.allowOfflineIde || this.programmingExercise?.allowOnlineIDE;
+        return this.programmingExercise?.allowOnlineEditor || this.programmingExercise?.allowOfflineIde || this.programmingExercise?.allowOnlineIde;
     };
 
     /**
      * Checking if the online IDE is selected and a valid image is selected
      */
     validOnlineIdeSelection = () => {
-        return !this.programmingExercise?.allowOnlineIDE || this.programmingExercise?.theiaImage !== undefined;
+        return !this.programmingExercise?.allowOnlineIde || this.programmingExercise?.theiaImage !== undefined;
     };
 
     isEventInsideTextArea(event: Event): boolean {
