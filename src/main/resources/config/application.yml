@@ -182,8 +182,8 @@ spring:
     messages:
         basename: i18n/messages
     main:
-        allow-bean-definition-overriding: true
-        lazy-initialization: false
+        allow-bean-definition-overriding: false
+        lazy-initialization: true
         allow-circular-references: false
     task:
         execution:
