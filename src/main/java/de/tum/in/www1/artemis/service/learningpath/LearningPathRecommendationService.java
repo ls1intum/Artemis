@@ -137,17 +137,37 @@ public class LearningPathRecommendationService {
      * @param recommendationState the current state of the learning path recommendation
      * @return the next due learning object of learning path
      */
-    public LearningObject getCurrentUncompletedLearningObject(User user, RecommendationState recommendationState) {
-        var recommendedOrderOfCompetencies = recommendationState.recommendedOrderOfCompetencies;
-        if (recommendedOrderOfCompetencies.isEmpty()) {
-            return null;
+    public LearningObject getFirstLearningObject(User user, RecommendationState recommendationState) {
+        for (long competencyId : recommendationState.recommendedOrderOfCompetencies) {
+            var competency = recommendationState.competencyIdMap.get(competencyId);
+            var recommendedOrderOfLearningObjects = getRecommendedOrderOfLearningObjects(user, competency, recommendationState);
+            if (!recommendedOrderOfLearningObjects.isEmpty()) {
+                return recommendedOrderOfLearningObjects.getFirst();
+            }
         }
-        var currentCompetency = recommendationState.competencyIdMap.get(recommendedOrderOfCompetencies.getFirst());
-        var recommendedOrderOfLearningObjects = getRecommendedOrderOfLearningObjects(user, currentCompetency, recommendationState);
-        if (recommendedOrderOfLearningObjects.isEmpty()) {
-            return null;
+        return null;
+    }
+
+    /**
+     * Gets the last learning object of a learning path
+     *
+     * @param user                the user that should be analyzed
+     * @param recommendationState the current state of the learning path recommendation
+     * @return the last learning object of the learning path
+     */
+    public LearningObject getLastLearningObject(User user, RecommendationState recommendationState) {
+        LearningObject learningObject = null;
+        int indexOfLastCompletedCompetency = recommendationState.recommendedOrderOfCompetencies().size() - 1;
+        while (learningObject == null && indexOfLastCompletedCompetency >= 0) {
+            var lastCompletedCompetencyId = recommendationState.recommendedOrderOfCompetencies().get(indexOfLastCompletedCompetency);
+            var lastCompletedCompetency = recommendationState.competencyIdMap().get(lastCompletedCompetencyId);
+            var recommendedLearningObjectsInLastCompetency = getOrderOfLearningObjectsForCompetency(lastCompletedCompetency, user);
+            if (!recommendedLearningObjectsInLastCompetency.isEmpty()) {
+                learningObject = recommendedLearningObjectsInLastCompetency.getLast();
+            }
+            indexOfLastCompletedCompetency--;
         }
-        return recommendedOrderOfLearningObjects.getFirst();
+        return learningObject;
     }
 
     /**

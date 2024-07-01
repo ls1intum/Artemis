@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.StudentScoreUtilService;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.GradingCriterion;
 import de.tum.in.www1.artemis.domain.LearningObject;
 import de.tum.in.www1.artemis.domain.Lecture;
@@ -35,6 +36,7 @@ import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.domain.competency.RelationType;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.TextUnit;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
@@ -672,19 +674,58 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         final var result = request.get("/api/learning-path/" + learningPath.getId() + "/navigation", HttpStatus.OK, LearningPathNavigationDTO.class);
 
-        var predecessorLearningObject = result.predecessorLearningObject();
-        assertThat(predecessorLearningObject).isNotNull();
-        assertThat(predecessorLearningObject.type()).isEqualTo(LearningPathNavigationObjectDTO.LearningObjectType.LECTURE);
-        assertThat(predecessorLearningObject.id()).isEqualTo(textUnit.getId());
-
-        var currentLearningObject = result.currentLearningObject();
-        assertThat(currentLearningObject).isNotNull();
-        assertThat(currentLearningObject.type()).isEqualTo(LearningPathNavigationObjectDTO.LearningObjectType.EXERCISE);
-        assertThat(currentLearningObject.id()).isEqualTo(textExercise.getId());
-
-        assertThat(result.successorLearningObject()).isNull();
-
+        verifyNavigationResult(result, textUnit, textExercise, null);
         assertThat(result.progress()).isEqualTo(20);
+    }
+
+    @Test
+    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    void testGetLearningPathNavigationEmptyCompetencies() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+
+        textExercise.setCompetencies(Set.of());
+        textExercise = exerciseRepository.save(textExercise);
+
+        TextUnit secondTextUnit = createAndLinkTextUnit(student, competencies[2], false);
+        TextUnit thirdTextUnit = createAndLinkTextUnit(student, competencies[4], false);
+
+        var result = request.get("/api/learning-path/" + learningPath.getId() + "/navigation", HttpStatus.OK, LearningPathNavigationDTO.class);
+        verifyNavigationResult(result, textUnit, secondTextUnit, thirdTextUnit);
+
+        lectureUnitService.setLectureUnitCompletion(secondTextUnit, student, true);
+        result = request.get("/api/learning-path/" + learningPath.getId() + "/navigation", HttpStatus.OK, LearningPathNavigationDTO.class);
+        verifyNavigationResult(result, secondTextUnit, thirdTextUnit, null);
+
+        lectureUnitService.setLectureUnitCompletion(thirdTextUnit, student, true);
+        result = request.get("/api/learning-path/" + learningPath.getId() + "/navigation", HttpStatus.OK, LearningPathNavigationDTO.class);
+        verifyNavigationResult(result, secondTextUnit, thirdTextUnit, null);
+    }
+
+    private LearningPathNavigationObjectDTO.LearningObjectType getLearningObjectType(LearningObject learningObject) {
+        return switch (learningObject) {
+            case LectureUnit ignored -> LearningPathNavigationObjectDTO.LearningObjectType.LECTURE;
+            case Exercise ignored -> LearningPathNavigationObjectDTO.LearningObjectType.EXERCISE;
+            default -> throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
+        };
+    }
+
+    private void verifyNavigationResult(LearningPathNavigationDTO result, LearningObject expectedPredecessor, LearningObject expectedCurrent, LearningObject expectedSuccessor) {
+        verifyNavigationObjectResult(expectedPredecessor, result.predecessorLearningObject());
+        verifyNavigationObjectResult(expectedCurrent, result.currentLearningObject());
+        verifyNavigationObjectResult(expectedSuccessor, result.successorLearningObject());
+    }
+
+    private void verifyNavigationObjectResult(LearningObject expectedObject, LearningPathNavigationObjectDTO actualObject) {
+        if (expectedObject == null) {
+            assertThat(actualObject).isNull();
+        }
+        else {
+            assertThat(actualObject).isNotNull();
+            assertThat(actualObject.type()).isEqualTo(getLearningObjectType(expectedObject));
+            assertThat(actualObject.id()).isEqualTo(expectedObject.getId());
+        }
     }
 
     @Test
@@ -699,15 +740,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         // TODO: currently learning objects connected to more than one competency are provided twice in the learning path
         // TODO: in the navigation therefore a lecture unit might be the predecessor and the current learning object or similar
 
-        var currentLearningObject = result.currentLearningObject();
-        assertThat(currentLearningObject).isNotNull();
-        assertThat(currentLearningObject.type()).isEqualTo(LearningPathNavigationObjectDTO.LearningObjectType.LECTURE);
-        assertThat(currentLearningObject.id()).isEqualTo(textUnit.getId());
-
-        var successorLearningObject = result.successorLearningObject();
-        assertThat(successorLearningObject).isNotNull();
-        assertThat(successorLearningObject.type()).isEqualTo(LearningPathNavigationObjectDTO.LearningObjectType.EXERCISE);
-        assertThat(successorLearningObject.id()).isNotNull();
+        verifyNavigationResult(result, null, textUnit, textExercise);
 
         assertThat(result.progress()).isEqualTo(learningPath.getProgress());
     }

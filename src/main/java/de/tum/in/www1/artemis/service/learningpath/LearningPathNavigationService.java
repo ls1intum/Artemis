@@ -43,15 +43,11 @@ public class LearningPathNavigationService {
      */
     public LearningPathNavigationDTO getNavigation(LearningPath learningPath) {
         var recommendationState = learningPathRecommendationService.getRecommendedOrderOfNotMasteredCompetencies(learningPath);
-        var currentLearningObject = learningPathRecommendationService.getCurrentUncompletedLearningObject(learningPath.getUser(), recommendationState);
+        var currentLearningObject = learningPathRecommendationService.getFirstLearningObject(learningPath.getUser(), recommendationState);
         var recommendationStateWithAllCompetencies = learningPathRecommendationService.getRecommendedOrderOfAllCompetencies(learningPath);
 
         if (currentLearningObject == null) {
-            var lastCompletedCompetencyId = recommendationStateWithAllCompetencies.recommendedOrderOfCompetencies().getLast();
-            var lastCompletedCompetency = recommendationStateWithAllCompetencies.competencyIdMap().get(lastCompletedCompetencyId);
-            var recommendedLearningObjectsInLastCompetency = learningPathRecommendationService.getOrderOfLearningObjectsForCompetency(lastCompletedCompetency,
-                    learningPath.getUser());
-            currentLearningObject = recommendedLearningObjectsInLastCompetency.getLast();
+            currentLearningObject = learningPathRecommendationService.getLastLearningObject(learningPath.getUser(), recommendationStateWithAllCompetencies);
         }
 
         return getNavigationRelativeToLearningObject(recommendationStateWithAllCompetencies, currentLearningObject, learningPath);
@@ -74,6 +70,10 @@ public class LearningPathNavigationService {
 
     private LearningPathNavigationDTO getNavigationRelativeToLearningObject(RecommendationState recommendationState, LearningObject currentLearningObject,
             LearningPath learningPath) {
+        if (currentLearningObject == null) {
+            return new LearningPathNavigationDTO(null, null, null, learningPath.getProgress());
+        }
+
         var currentCompetency = learningPathRecommendationService.getCompetencyOfLearningObjectOnLearningPath(learningPath.getUser(), currentLearningObject, recommendationState);
 
         var learningObjectsInCurrentCompetency = learningPathRecommendationService.getOrderOfLearningObjectsForCompetency(currentCompetency, learningPath.getUser());
