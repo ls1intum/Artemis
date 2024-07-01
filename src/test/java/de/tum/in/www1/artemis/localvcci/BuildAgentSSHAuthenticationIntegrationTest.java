@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.service.connectors.localci.buildagent.BuildAgentSS
 import de.tum.in.www1.artemis.service.connectors.localci.buildagent.SharedQueueProcessingService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildAgentInformation;
 
-public class BuildAgentSSHAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+class BuildAgentSSHAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
     @Qualifier("hazelcastInstance")
