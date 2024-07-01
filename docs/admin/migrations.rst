@@ -7,7 +7,7 @@ From Jenkins and GitLab to Jenkins and LocalVC
 Here you can find the steps to migrate from a :ref:`GitLab and Jenkins <Jenkins and GitLab Setup>`
 to a Jenkins and LocalVC Setup.
 
-0. Your Artemis is configured to run with Jenkins and GitLab.
+0. Your Artemis is configured to run with Jenkins and GitLab and is currently not running.
 1. Make a Backup of your Jenkins and Artemis data.
 2. Adjust parameters in `application-*.yml`:
 
@@ -22,3 +22,5 @@ to a Jenkins and LocalVC Setup.
 
    1. Adjust ``artemis.version-control.url`` to point to your Artemis instance instead of your GitLab instance.
    2. ...
+6. Now you can start your Artemis again.
+   Make sure to remove the migration profile and replace the profile ``gitlab`` with profile ``localvc``.
