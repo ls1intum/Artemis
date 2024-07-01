@@ -109,7 +109,7 @@ describe('TextExamSubmissionComponent', () => {
 
         component.updateProblemStatement(newProblemStatement);
 
-        expect(component.exercise.problemStatement).toBe(newProblemStatement);
+        expect(component.problemStatementHtml).toBe(newProblemStatement);
     });
 
     it('should trigger text editor events', fakeAsync(() => {

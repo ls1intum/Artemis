@@ -25,7 +25,7 @@
                 (click)="posting.title !== '' ? createEditModal.open() : isModalOpen.emit()"
             />
         }
-        <jhi-post-create-edit-modal #createEditModal [posting]="posting" [isCourseMessagesPage]="isCourseMessagesPage" (isModalOpen)="isModalOpen.emit()" />
+        <jhi-post-create-edit-modal #createEditModal [posting]="posting" [isCommunicationPage]="isCommunicationPage" (isModalOpen)="isModalOpen.emit()" />
         @if (mayEditOrDelete) {
             <jhi-confirm-icon
                 iconSize="xs"
@@ -35,8 +35,8 @@
                 [confirmTooltip]="'artemisApp.metis.confirmDeletePost' | artemisTranslate"
             />
         }
-        @if (!!isCourseMessagesPage && (!lastReadDate || (lastReadDate && posting.creationDate && posting.creationDate.isAfter(lastReadDate))) && !isAuthorOfPosting) {
-            <span class="badge bg-secondary hideAfter5Seconds" jhiTranslate="global.generic.new"></span>
+        @if (!!isCommunicationPage && (!lastReadDate || (lastReadDate && posting.creationDate && posting.creationDate.isAfter(lastReadDate))) && !isAuthorOfPosting) {
+            <span class="badge bg-secondary hideAfter5Seconds">{{ 'global.generic.new' | artemisTranslate }}</span>
         }
     </div>
 </div>

@@ -44,6 +44,11 @@
                 "all": "Tutorial Groups",
                 "registered": "My Tutorial Groups",
                 "further": "Further Tutorial Groups",
+                "real": "Exams",
+                "test": "Test Exams",
+                "start": "Start",
+                "workingTime": "Working Time",
+                "attainablePoints": "Attainable Points",
                 "noUpcomingSession": "No upcoming Session",
                 "header": "Conversations",
                 "show": "Show conversations",
@@ -80,7 +85,6 @@
                 "exams": "Exams",
                 "testExam": "Test Exam",
                 "communication": "Communication",
-                "messages": "Messages",
                 "plagiarismCases": "Plagiarism Cases",
                 "gradingSystem": "Grading System"
             },
@@ -215,6 +219,9 @@
             },
             "tutorialGroups": {
                 "selectTutorialGroup": "Please select a Tutorial Group."
+            },
+            "exams": {
+                "selectExam": "Please select an Exam."
             },
             "lectureList": {
                 "lectureGroupHeader": "(Lectures: {{ total }})",

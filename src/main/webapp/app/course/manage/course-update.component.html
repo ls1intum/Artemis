@@ -114,7 +114,7 @@
                             [error]="!isValidDate"
                         />
                         @if (!isValidDate) {
-                            <span class="invalid-feedback" jhiTranslate="artemisApp.course.form.startDate.invalid"></span>
+                            <span class="invalid-feedback"> {{ 'artemisApp.course.form.startDate.invalid' | artemisTranslate }}</span>
                         }
                     </div>
                     <div class="form-group flex-grow-1 ms-3">
@@ -126,7 +126,7 @@
                             [error]="!isValidDate"
                         />
                         @if (!isValidDate) {
-                            <span class="invalid-feedback" jhiTranslate="artemisApp.course.form.endDate.invalid"></span>
+                            <span class="invalid-feedback"> {{ 'artemisApp.course.form.endDate.invalid' | artemisTranslate }}</span>
                         }
                     </div>
                 </div>
@@ -317,12 +317,11 @@
                             type="checkbox"
                             [(ngModel)]="communicationEnabled"
                             [ngModelOptions]="{ standalone: true }"
+                            (change)="disableMessaging()"
                         />
-                        <label
-                            for="field_communicationEnabled"
-                            class="form-check-label"
-                            jhiTranslate="artemisApp.course.courseCommunicationSetting.communicationEnabled.label"
-                        ></label>
+                        <label for="field_communicationEnabled" class="form-check-label">
+                            {{ 'artemisApp.course.courseCommunicationSetting.communicationEnabled.label' | artemisTranslate }}
+                        </label>
                         <fa-icon
                             [icon]="faQuestionCircle"
                             class="text-secondary"
@@ -331,15 +330,24 @@
                     </div>
                     <!-- Not part of model -->
                     <div class="form-check">
-                        <input id="field_messagingEnabled" class="form-check-input" type="checkbox" [(ngModel)]="messagingEnabled" [ngModelOptions]="{ standalone: true }" />
-                        <label for="field_messagingEnabled" class="form-check-label" jhiTranslate="artemisApp.course.courseCommunicationSetting.messagingEnabled.label"></label>
+                        <input
+                            id="field_messagingEnabled"
+                            class="form-check-input"
+                            type="checkbox"
+                            [(ngModel)]="messagingEnabled"
+                            [ngModelOptions]="{ standalone: true }"
+                            [disabled]="!communicationEnabled"
+                        />
+                        <label for="field_messagingEnabled" class="form-check-label">
+                            {{ 'artemisApp.course.courseCommunicationSetting.messagingEnabled.label' | artemisTranslate }}
+                        </label>
                         <fa-icon
                             [icon]="faQuestionCircle"
                             class="text-secondary"
                             ngbTooltip="{{ 'artemisApp.course.courseCommunicationSetting.messagingEnabled.tooltip' | artemisTranslate }}"
                         />
                     </div>
-                    @if (messagingEnabled || communicationEnabled) {
+                    @if (communicationEnabled) {
                         <div class="form-group">
                             <label class="form-control-label" jhiTranslate="artemisApp.codeOfConduct.title"></label>
                             <jhi-help-icon text="artemisApp.codeOfConduct.tooltip" />
@@ -438,7 +446,7 @@
                                 [error]="!isValidEnrollmentPeriod"
                             />
                             @if (!isValidEnrollmentPeriod) {
-                                <span class="invalid-feedback" jhiTranslate="artemisApp.course.form.enrollmentStartDate.invalid"></span>
+                                <span class="invalid-feedback"> {{ 'artemisApp.course.form.enrollmentStartDate.invalid' | artemisTranslate }}</span>
                             }
                         </div>
                         <div class="form-group flex-grow-1 ms-3">
@@ -450,7 +458,7 @@
                                 [error]="!isValidEnrollmentPeriod"
                             />
                             @if (!isValidEnrollmentPeriod) {
-                                <span class="invalid-feedback" jhiTranslate="artemisApp.course.form.enrollmentEndDate.invalid"></span>
+                                <span class="invalid-feedback"> {{ 'artemisApp.course.form.enrollmentEndDate.invalid' | artemisTranslate }}</span>
                             }
                         </div>
                     </div>
@@ -492,7 +500,7 @@
                             [error]="!isValidUnenrollmentEndDate"
                         />
                         @if (!isValidUnenrollmentEndDate) {
-                            <span class="invalid-feedback" jhiTranslate="artemisApp.course.form.unenrollmentEndDate.invalid"></span>
+                            <span class="invalid-feedback"> {{ 'artemisApp.course.form.unenrollmentEndDate.invalid' | artemisTranslate }}</span>
                         }
                     </div>
                 }
@@ -501,11 +509,13 @@
             @if (tutorialGroupsFeatureActivated) {
                 <div class="col-auto border border-warning p-3">
                     <span class="badge rounded-pill text-bg-warning ms-1">BETA</span>
-                    <label class="form-label" for="timeZone" jhiTranslate="artemisApp.forms.configurationForm.timeZoneInput.label"></label>
+                    <label class="form-label" for="timeZone">{{ 'artemisApp.forms.configurationForm.timeZoneInput.label' | artemisTranslate }}</label>
                     @if (timeZoneChanged) {
-                        <div class="alert alert-danger" role="alert" jhiTranslate="artemisApp.forms.configurationForm.timeZoneInput.changeWarning"></div>
+                        <div class="alert alert-danger" role="alert">
+                            {{ 'artemisApp.forms.configurationForm.timeZoneInput.changeWarning' | artemisTranslate }}
+                        </div>
                     }
-                    <div jhiTranslate="artemisApp.forms.configurationForm.timeZoneInput.beta"></div>
+                    <div>{{ 'artemisApp.forms.configurationForm.timeZoneInput.beta' | artemisTranslate }}</div>
                     <input
                         id="timeZone"
                         type="text"
@@ -520,7 +530,9 @@
                         (focus)="tzFocus$.next($any($event).target.value)"
                         (click)="tzClick$.next($any($event).target.value)"
                     />
-                    <div class="form-text" jhiTranslate="artemisApp.forms.configurationForm.timeZoneInput.explanation"></div>
+                    <div class="form-text">
+                        {{ 'artemisApp.forms.configurationForm.timeZoneInput.explanation' | artemisTranslate }}
+                    </div>
                 </div>
             }
             <div class="mt-3 d-flex">

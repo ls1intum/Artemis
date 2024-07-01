@@ -24,7 +24,7 @@
                     @if (tutorialGroup.channel.isMember) {
                         <a
                             [id]="'channel-' + tutorialGroup.id + '-' + tutorialGroup.channel.id"
-                            [routerLink]="['/courses', course.id!, 'messages']"
+                            [routerLink]="['/courses', course.id!, 'communication']"
                             [queryParams]="{ conversationId: tutorialGroup.channel.id }"
                             class="btn btn-primary"
                             jhiTranslate="artemisApp.entities.tutorialGroup.channelWithName"

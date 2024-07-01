@@ -1,4 +1,4 @@
-<div>
+<div id="exam-results-title">
     <h2>
         <ng-container>
             {{ 'artemisApp.exam.examSummary.examResults' | artemisTranslate }}
@@ -15,11 +15,13 @@
     </div>
 }
 @if (studentExam?.exam) {
-    <jhi-exam-general-information
-        [exam]="studentExam.exam!"
-        [studentExam]="studentExam"
-        [reviewIsOpen]="studentExam?.exam && isBeforeStudentReviewEnd && isAfterStudentReviewStart && !isTestRun"
-    />
+    <div>
+        <jhi-exam-general-information
+            [exam]="studentExam.exam!"
+            [studentExam]="studentExam"
+            [reviewIsOpen]="studentExam?.exam && isBeforeStudentReviewEnd && isAfterStudentReviewStart && !isTestRun"
+        />
+    </div>
 }
 @if (studentExam && studentExam.exercises && studentExam.exam?.course && studentExamGradeInfoDTO) {
     <div class="mb-4" id="exam-summary-result-overview">

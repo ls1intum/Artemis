@@ -1,57 +1,52 @@
-<h1 jhiTranslate="artemisApp.userSettings.accountInformation"></h1>
+<h1>
+    <!--Account Information-->
+    {{ 'artemisApp.userSettings.accountInformation' | artemisTranslate }}
+</h1>
 @if (currentUser) {
     <div class="list-group d-block">
         @if (currentUser.name) {
             <div class="list-group-item">
-                <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.fullName"></dt>
+                <dt>
+                    <!--Full Name-->
+                    {{ 'artemisApp.userSettings.accountInformationPage.fullName' | artemisTranslate }}
+                </dt>
                 <dd>{{ currentUser.name }}</dd>
             </div>
         }
         @if (currentUser.login) {
             <div class="list-group-item">
-                <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.login"></dt>
+                <dt>
+                    <!--Login-->
+                    {{ 'artemisApp.userSettings.accountInformationPage.login' | artemisTranslate }}
+                </dt>
                 <dd>{{ currentUser.login }}</dd>
             </div>
         }
         @if (currentUser.email) {
             <div class="list-group-item">
-                <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.email"></dt>
+                <dt>
+                    <!--Email-->
+                    {{ 'artemisApp.userSettings.accountInformationPage.email' | artemisTranslate }}
+                </dt>
                 <dd>{{ currentUser.email }}</dd>
             </div>
         }
         @if (currentUser.visibleRegistrationNumber) {
             <div class="list-group-item">
-                <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.registrationNumber"></dt>
+                <dt>
+                    <!--Registration Number-->
+                    {{ 'artemisApp.userSettings.accountInformationPage.registrationNumber' | artemisTranslate }}
+                </dt>
                 <dd>{{ currentUser.visibleRegistrationNumber }}</dd>
             </div>
         }
         @if (currentUser.createdDate) {
             <div class="list-group-item">
-                <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.joinedArtemis"></dt>
-                <dd>{{ currentUser.createdDate | artemisDate }}</dd>
-            </div>
-        }
-        @if (localVCEnabled) {
-            <div class="list-group-item">
                 <dt>
-                    <!--Local Version Control SSH Key-->
-                    <div class="row pb-1">
-                        <div class="col" jhiTranslate="artemisApp.userSettings.accountInformationPage.sshKey"></div>
-                        <div class="col col-auto text-right">
-                            <div class="btn-group" role="group" aria-label="Actions">
-                                <button class="btn btn-sm btn-warning" (click)="editSshKey = !editSshKey">
-                                    <fa-icon [icon]="faEdit" />
-                                </button>
-                                <button class="btn btn-sm btn-success" (click)="saveSshKey()" [disabled]="!editSshKey">
-                                    <fa-icon [icon]="faSave" />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                    <!--Joined Artemis on-->
+                    {{ 'artemisApp.userSettings.accountInformationPage.joinedArtemis' | artemisTranslate }}
                 </dt>
-                <dd>
-                    <textarea class="form-control" rows="5" [readonly]="!editSshKey" [(ngModel)]="sshKey"></textarea>
-                </dd>
+                <dd>{{ currentUser.createdDate | artemisDate }}</dd>
             </div>
         }
     </div>

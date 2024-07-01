@@ -89,7 +89,7 @@
                                 @if (studentExamWithGrade.studentResult.overallScoreAchieved !== undefined) {
                                     <span [class]="hasPassed ? 'text-success' : 'text-danger'"> {{ overallAchievedPercentageRoundedByCourseSettings }} % </span>
                                 } @else {
-                                    <span>-</span>
+                                    <jhi-no-data />
                                 }
                             </th>
                             @if (studentExamWithGrade?.maxBonusPoints) {
@@ -133,6 +133,21 @@
                             }}
                         }
                     </div>
+                    @if (studentExamWithGrade?.studentResult?.gradeWithBonus?.finalGrade) {
+                        <div class="h5">
+                            <span jhiTranslate="artemisApp.exam.examSummary.gradeBeforeBonus"></span>
+                            {{ studentExamWithGrade.studentResult.overallGrade }}
+                        </div>
+                        <div class="h5">
+                            <span jhiTranslate="artemisApp.exam.examSummary.gradeAfterBonus"></span>
+                            {{ studentExamWithGrade.studentResult.gradeWithBonus?.finalGrade }}
+                        </div>
+                    } @else {
+                        <div class="h5">
+                            <span jhiTranslate="artemisApp.exam.examSummary.grade"></span>
+                            {{ studentExamWithGrade.studentResult.overallGrade }}
+                        </div>
+                    }
                 </div>
             </div>
         </jhi-collapsible-card>
@@ -141,7 +156,7 @@
             <jhi-collapsible-card [isCardContentCollapsed]="isCollapsed['grading-key']" [toggleCollapse]="toggleCollapse('grading-key')">
                 <div class="header h5">
                     <fa-icon [icon]="faClipboard" /> &nbsp;
-                    {{ 'artemisApp.exam.examSummary.gradeKey' | artemisTranslate }}
+                    <span jhiTranslate="artemisApp.exam.examSummary.gradeKey"></span>
                 </div>
 
                 <div class="collapsible-content">
@@ -153,7 +168,7 @@
                 <jhi-collapsible-card [isCardContentCollapsed]="isCollapsed['bonus-grading-key']" [toggleCollapse]="toggleCollapse('bonus-grading-key')">
                     <div class="header h5">
                         <fa-icon [icon]="faAward" />&nbsp;
-                        {{ 'artemisApp.exam.examSummary.bonusGradeKey' | artemisTranslate }}
+                        <span jhiTranslate="artemisApp.exam.examSummary.bonusGradeKey"></span>
                     </div>
 
                     <div class="collapsible-content">

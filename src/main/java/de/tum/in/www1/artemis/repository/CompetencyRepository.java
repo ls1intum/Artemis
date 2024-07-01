@@ -18,9 +18,9 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.CompetencyExerciseMasteryCalculationDTO;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the Competency entity.
@@ -52,15 +52,6 @@ public interface CompetencyRepository extends ArtemisJpaRepository<Competency, L
             WHERE c.id = :competencyId
             """)
     Optional<Competency> findWithLectureUnitsAndExercisesById(@Param("competencyId") long competencyId);
-
-    @Query("""
-            SELECT c
-            FROM Competency c
-                LEFT JOIN FETCH c.lectureUnits lu
-                LEFT JOIN FETCH lu.completedUsers
-            WHERE c.id = :competencyId
-            """)
-    Optional<Competency> findByIdWithLectureUnitsAndCompletions(@Param("competencyId") long competencyId);
 
     /**
      * Fetches all information related to the calculation of the mastery for exercises in a competency.
@@ -170,28 +161,41 @@ public interface CompetencyRepository extends ArtemisJpaRepository<Competency, L
     @Cacheable(cacheNames = "competencyTitle", key = "#competencyId", unless = "#result == null")
     String getCompetencyTitle(@Param("competencyId") long competencyId);
 
-    default Competency findByIdWithLectureUnitsAndCompletionsElseThrow(long competencyId) {
-        return findByIdWithLectureUnitsAndCompletions(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
-    }
+    @Query("""
+            SELECT c
+            FROM Competency c
+                LEFT JOIN FETCH c.learningPaths lp
+            WHERE lp = :learningPath
+            """)
+    Set<Competency> findAllByLearningPath(@Param("learningPath") LearningPath learningPath);
+
+    @Query("""
+            SELECT c
+            FROM Competency c
+                LEFT JOIN FETCH c.lectureUnits lu
+                LEFT JOIN FETCH c.exercises ex
+            WHERE c.id = :competencyId
+            """)
+    Optional<Competency> findByIdWithExercisesAndLectureUnits(@Param("competencyId") long competencyId);
 
     default Competency findByIdWithExercisesElseThrow(long competencyId) {
-        return findByIdWithExercises(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
+        return getValueElseThrow(findByIdWithExercises(competencyId), competencyId);
     }
 
     default Competency findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(long competencyId) {
-        return findByIdWithExercisesAndLectureUnitsBidirectional(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
-    }
-
-    default Competency findByIdElseThrow(long competencyId) {
-        return findById(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
+        return getValueElseThrow(findByIdWithExercisesAndLectureUnitsBidirectional(competencyId), competencyId);
     }
 
     default Competency findWithLectureUnitsAndExercisesByIdElseThrow(long competencyId) {
-        return findWithLectureUnitsAndExercisesById(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
+        return getValueElseThrow(findWithLectureUnitsAndExercisesById(competencyId), competencyId);
     }
 
     default Competency findByIdWithLectureUnitsElseThrow(long competencyId) {
-        return findByIdWithLectureUnits(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
+        return getValueElseThrow(findByIdWithLectureUnits(competencyId), competencyId);
+    }
+
+    default Competency findByIdWithExercisesAndLectureUnitsElseThrow(long competencyId) {
+        return getValueElseThrow(findByIdWithExercisesAndLectureUnits(competencyId), competencyId);
     }
 
     long countByCourse(Course course);

@@ -1,73 +1,17 @@
-<!-- Section for no exams. Should only be displayed if no real and test exams exist -->
-@if (realExamsOfCourse.length === 0 && testExamsOfCourse.length === 0) {
-    <div class="d-flex flex-column align-items-center justify-content-center mt-3">
-        <h3 jhiTranslate="artemisApp.exam.overview.noExams"></h3>
-        <button [routerLink]="['/courses', this.course?.id, 'exercises']" class="btn btn-primary">
-            <fa-icon [icon]="faListAlt" class="pe-1" />
-            {{ 'artemisApp.exam.overview.goToExercises' | artemisTranslate }}
-        </button>
-    </div>
-}
+<div class="d-flex justify-content-between gap-3">
+    @if (course) {
+        <div id="exam-sidebar-test" [ngClass]="{ 'sidebar-collapsed': isCollapsed }" [hidden]="isExamStarted">
+            <jhi-sidebar [itemSelected]="examSelected" [courseId]="courseId" [sidebarData]="sidebarData" [collapseState]="DEFAULT_COLLAPSE_STATE" />
+        </div>
 
-<!-- Section for real exams. Should not be displayed if no real exams exist -->
-@if (realExamsOfCourse.length) {
-    <div class="row d-flex align-items-start">
-        @for (exam of realExamsOfCourse; track exam) {
-            <jhi-course-exam-detail [exam]="exam" [course]="course!" class="card col-12 col-md-4 col-lg-4 col-xl-3 m-2 border-success hover-effect" id="exam-{{ exam.id }}" />
-        }
-    </div>
-}
-<!-- Section test exams. Should not be displayed if no test exams exist -->
-@if (testExamsOfCourse.length) {
-    <hr />
-    <h5 jhiTranslate="artemisApp.exam.overview.testExamsHeading">Test Exams</h5>
-    <div class="row">
-        @for (exam of testExamsOfCourse; track exam) {
-            <div class="row d-flex align-items-start">
-                <div class="card col-12 col-md-4 col-lg-4 col-xl-3 m-2 border-primary hover-effect">
-                    <jhi-course-exam-detail
-                        [exam]="exam"
-                        [course]="course!"
-                        [maxAttemptsReached]="getStudentExamForExamIdOrderedByIdReverse(exam!.id!).length > 0"
-                        id="exam-{{ exam.id }}"
-                    />
-                </div>
-                <!-- List of cards representing the individual attempts per Student and test exam. Ordered by Id in reverse (latest StudentExam at the top) -->
-                <div class="col-12 col-md-4 col-lg-4 col-xl-3">
-                    @for (studentExam of getStudentExamForExamIdOrderedByIdReverse(exam!.id!); track studentExam; let i = $index; let cnt = $count) {
-                        @if (i < 4 || expandAttemptsMap.get(exam!.id!)) {
-                            <div class="row align-items-start">
-                                <jhi-course-exam-attempt-review-detail
-                                    [index]="cnt - i"
-                                    [exam]="exam!"
-                                    [courseId]="course!.id!"
-                                    [studentExam]="studentExam"
-                                    [latestExam]="i === 0"
-                                    [class]="'card m-2 border-primary'"
-                                />
-                            </div>
-                        }
-                        <!-- Control Labels to expand / collapse the list of attempts -->
-                        @if (i === 4 && !expandAttemptsMap.get(exam!.id!)) {
-                            <div class="control-label" (click)="changeExpandAttemptList(exam!.id!)">
-                                <fa-icon class="pe-3" [icon]="faAngleDown" />
-                                <span class="pe-2" jhiTranslate="artemisApp.exam.overview.testExam.showMoreAttempts"></span>
-                                <hr />
-                            </div>
-                        }
-                        @if (i === cnt - 1 && cnt > 4 && expandAttemptsMap.get(exam!.id!)) {
-                            <div class="control-label" (click)="changeExpandAttemptList(exam.id!)">
-                                <fa-icon class="pe-3" [icon]="faAngleUp" />
-                                <span class="pe-2" jhiTranslate="artemisApp.exam.overview.testExam.showLessAttempts"></span>
-                                <hr />
-                            </div>
-                        }
-                        @if (i === cnt - 1 && cnt <= 4) {
-                            <hr />
-                        }
-                    }
-                </div>
+        @if (examSelected) {
+            <div class="vw-100 module-bg rounded-3" style="min-width: 200px">
+                <router-outlet (deactivate)="onSubRouteDeactivate()" />
+            </div>
+        } @else {
+            <div class="vw-100 module-bg rounded-3 p-3 d-flex justify-content-between">
+                <div class="col-12 text-center my-auto" jhiTranslate="artemisApp.courseOverview.exams.selectExam"></div>
             </div>
         }
-    </div>
-}
+    }
+</div>

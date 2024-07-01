@@ -20,14 +20,16 @@
                     </div>
                     <!-- body -->
                     @if (noChannelAvailable) {
-                        <div class="card-body" jhiTranslate="artemisApp.metis.channel.noChannel"></div>
+                        <div class="card-body">
+                            {{ 'artemisApp.metis.channel.noChannel' | artemisTranslate }}
+                        </div>
                     } @else {
                         <div class="card-body pt-0">
                             @if (currentPost !== undefined) {
                                 <div class="my-2">
                                     <fa-icon [icon]="faArrowLeft" (click)="resetCurrentPost()" class="back-button me-2 clickable" />
-                                    <span class="back-instruction" jhiTranslate="artemisApp.metis.post.showAllPosts"></span>
-                                    <jhi-posting-thread [post]="currentPost" [showAnswers]="true" [id]="'item-' + currentPost?.id" [isCommunicationPage]="isCommunicationPage" />
+                                    <span class="back-instruction">{{ 'artemisApp.metis.post.showAllPosts' | artemisTranslate }}</span>
+                                    <jhi-posting-thread [post]="currentPost" [showAnswers]="true" [id]="'item-' + currentPost?.id" [showChannelReference]="false" />
                                 </div>
                             } @else {
                                 <div class="row ps-0">
@@ -63,7 +65,7 @@
                                                             id="filterToUnresolved"
                                                             (change)="onSelectContext()"
                                                         />
-                                                        <label for="filterToUnresolved" class="p-0" jhiTranslate="artemisApp.metis.overview.filterToUnresolved"></label>
+                                                        <label for="filterToUnresolved" class="p-0">{{ 'artemisApp.metis.overview.filterToUnresolved' | artemisTranslate }}</label>
                                                     </div>
                                                     <div class="form-group pe-2">
                                                         <input
@@ -74,7 +76,7 @@
                                                             id="filterToOwn"
                                                             (change)="onSelectContext()"
                                                         />
-                                                        <label for="filterToOwn" class="p-0" jhiTranslate="artemisApp.metis.overview.filterToOwn"></label>
+                                                        <label for="filterToOwn" class="p-0">{{ 'artemisApp.metis.overview.filterToOwn' | artemisTranslate }}</label>
                                                     </div>
                                                     <div class="form-group pe-2">
                                                         <input
@@ -85,11 +87,9 @@
                                                             id="filterToAnsweredOrReacted"
                                                             (change)="onSelectContext()"
                                                         />
-                                                        <label
-                                                            for="filterToAnsweredOrReacted"
-                                                            class="p-0"
-                                                            jhiTranslate="artemisApp.metis.overview.filterToAnsweredOrReacted"
-                                                        ></label>
+                                                        <label for="filterToAnsweredOrReacted" class="p-0">{{
+                                                            'artemisApp.metis.overview.filterToAnsweredOrReacted' | artemisTranslate
+                                                        }}</label>
                                                     </div>
                                                 </div>
                                             </div>
@@ -98,7 +98,7 @@
                                         <div class="col-auto ps-0">
                                             <div class="row align-items-baseline">
                                                 <div class="col-auto pe-1">
-                                                    <span jhiTranslate="artemisApp.metis.discussionSection.sortByDate"></span>
+                                                    <span>{{ 'artemisApp.metis.discussionSection.sortByDate' | artemisTranslate }}</span>
                                                 </div>
                                                 @if (!currentSortDirection) {
                                                     <div class="col-auto p-0 clickable" (click)="onChangeSortDir()">
@@ -133,8 +133,8 @@
                                             class="item"
                                             [post]="post"
                                             [showAnswers]="posts.length === 1"
-                                            [isCommunicationPage]="isCommunicationPage"
-                                            [isCourseMessagesPage]="false"
+                                            [showChannelReference]="false"
+                                            [isCommunicationPage]="false"
                                         />
                                     }
                                 </div>
@@ -142,13 +142,13 @@
                             <!-- loading posts -->
                             @if (isLoading) {
                                 <div class="post-result-information row mt-2">
-                                    <div class="col-12" jhiTranslate="artemisApp.metis.discussionSection.loadingMessages"></div>
+                                    <div class="col-12">{{ 'artemisApp.metis.discussionSection.loadingMessages' | artemisTranslate }}</div>
                                 </div>
                             }
                             <!-- no posts -->
                             @if (!isLoading && posts.length === 0) {
                                 <div class="post-result-information row mt-2">
-                                    <div class="col-12" jhiTranslate="artemisApp.metis.discussionSection.noMessages"></div>
+                                    <div class="col-12">{{ 'artemisApp.metis.discussionSection.noMessages' | artemisTranslate }}</div>
                                 </div>
                             }
                             <!-- new post button -->
@@ -163,10 +163,10 @@
                                                 <fa-icon [icon]="faTimes" />
                                             }
                                             @if (!shouldSendMessage) {
-                                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.metis.newMessage"></span>
+                                                <span class="d-none d-md-inline">{{ 'artemisApp.metis.newMessage' | artemisTranslate }}</span>
                                             }
                                             @if (shouldSendMessage) {
-                                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.metis.collapseNewMessage"></span>
+                                                <span class="d-none d-md-inline">{{ 'artemisApp.metis.collapseNewMessage' | artemisTranslate }}</span>
                                             }
                                         </button>
                                         @if (shouldSendMessage) {

@@ -15,30 +15,36 @@
                                 [routerLink]="['/course-management', courseId, 'tutorial-groups', 'configuration', course!.tutorialGroupsConfiguration!.id, 'tutorial-free-days']"
                             >
                                 <fa-icon [icon]="faUmbrellaBeach" />
-                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.pages.tutorialGroupsManagement.freePeriodsButtons"></span>
+                                <span class="d-none d-md-inline">{{ 'artemisApp.pages.tutorialGroupsManagement.freePeriodsButtons' | artemisTranslate }}</span>
                             </a>
                         }
                         <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'tutorial-groups', 'create']">
                             <fa-icon [icon]="faPlus" />
-                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.pages.tutorialGroupsManagement.creatTutorialGroupButton"></span>
+                            <span class="d-none d-md-inline">{{ 'artemisApp.pages.tutorialGroupsManagement.creatTutorialGroupButton' | artemisTranslate }}</span>
                         </a>
                         <div ngbDropdown class="d-inline-block">
-                            <button type="button" class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle jhiTranslate="artemisApp.generic.more"></button>
+                            <button type="button" class="btn btn-primary" id="dropdownBasic1" ngbDropdownToggle>
+                                {{ 'artemisApp.generic.more' | artemisTranslate }}
+                            </button>
                             <div ngbDropdownMenu>
                                 @if (course?.tutorialGroupsConfiguration) {
                                     <a
-                                        ngbDropDownItem
+                                        ngbDropdownItem
                                         class="btn"
                                         [routerLink]="['/course-management', courseId, 'tutorial-groups', 'configuration', course!.tutorialGroupsConfiguration!.id, 'edit']"
                                     >
-                                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.pages.tutorialGroupsManagement.editConfigurationButton"></span>
+                                        <span>{{ 'artemisApp.pages.tutorialGroupsManagement.editConfigurationButton' | artemisTranslate }}</span>
                                     </a>
                                 }
                                 <jhi-tutorial-groups-import-button
-                                    ngbDropDownItem
                                     ngbTooltip="{{ 'artemisApp.tutorialGroupImportDialog.explanations.description' | artemisTranslate }}"
                                     [courseId]="courseId"
                                     (importFinished)="loadTutorialGroups()"
+                                />
+                                <jhi-tutorial-groups-export-button
+                                    ngbTooltip="{{ 'artemisApp.tutorialGroupExportDialog.toolTip' | artemisTranslate }}"
+                                    [courseId]="courseId"
+                                    (exportFinished)="loadTutorialGroups()"
                                 />
                             </div>
                         </div>
