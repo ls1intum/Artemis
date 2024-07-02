@@ -9,6 +9,7 @@ import { Submission } from 'app/entities/submission.model';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
+import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 
 @Component({
     selector: 'jhi-modeling-submission-exam',
@@ -27,6 +28,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
     @Input()
     studentSubmission: ModelingSubmission;
+    problemStatementHtml: string;
 
     @Input()
     exercise: ModelingExercise;
@@ -45,15 +47,16 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
 
     ngOnInit(): void {
         // show submission answers in UI
+        this.problemStatementHtml = htmlForMarkdown(this.exercise?.problemStatement);
         this.updateViewFromSubmission();
     }
 
     /**
-     * Updates the problem statement of the currently loaded modeling exercise which is part of the user's student exam.
-     * @param newProblemStatement is the updated problem statement that should be displayed to the user.
+     * Updates the problem statement html of the currently loaded modeling exercise which is part of the user's student exam.
+     * @param newProblemStatementHtml is the updated problem statement html that should be displayed to the user.
      */
-    updateProblemStatement(newProblemStatement: string): void {
-        this.exercise.problemStatement = newProblemStatement;
+    updateProblemStatement(newProblemStatementHtml: string): void {
+        this.problemStatementHtml = newProblemStatementHtml;
         this.changeDetectorReference.detectChanges();
     }
 
