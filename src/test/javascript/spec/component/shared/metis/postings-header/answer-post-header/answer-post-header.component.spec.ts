@@ -79,7 +79,7 @@ describe('AnswerPostHeaderComponent', () => {
 
     it('should set author information correctly', () => {
         fixture.detectChanges();
-        const headerAuthorAndDate = getElement(debugElement, '.posting-header.header-author-date');
+        const headerAuthorAndDate = getElement(debugElement, '.header-author-date');
         expect(headerAuthorAndDate).not.toBeNull();
         expect(headerAuthorAndDate.innerHTML).toContain(metisUser1.name);
     });
