@@ -24,7 +24,8 @@ to a Jenkins and LocalVC Setup.
 3. Start Artemis with the additional profile ``migrate-gitlab-jenkins-to-localvc`` to perform the migration.
    After it Artemis stops automatically.
    Check the log of Artemis for entries with ``Migration`` to see if there were any problems.
-4. Change the credentials on your Jenkins for git access ...
+4. Adjust the credential on your Jenkins, which was previously used to access your GitLab.
+   The same credential ID now have to provide username and password of an administrator account of your Artemis instance.
 5. Change your Artemis configuration to run with LocalVC instead of GitLab.
 
    1. Adjust ``artemis.version-control.url`` to point to your Artemis instance instead of your GitLab instance.
