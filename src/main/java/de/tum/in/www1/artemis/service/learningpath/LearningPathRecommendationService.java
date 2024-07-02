@@ -217,12 +217,10 @@ public class LearningPathRecommendationService {
             if (progress.isEmpty()) {
                 competencyMastery.put(competency.getId(), 0d);
             }
-            else if (CompetencyProgressService.isMastered(progress.get())) {
-                // add competency to mastered set if mastered
-                masteredCompetencies.add(competency.getId());
-            }
             else {
-                // calculate mastery progress if not completed yet
+                if (CompetencyProgressService.isMastered(progress.get())) {
+                    masteredCompetencies.add(competency.getId());
+                }
                 competencyMastery.put(competency.getId(), CompetencyProgressService.getMasteryProgress(progress.get()));
             }
         });
@@ -372,10 +370,6 @@ public class LearningPathRecommendationService {
      * @return the utility of the given competency
      */
     private double computeUtilityOfCompetency(Competency competency, RecommendationState state) {
-        // if competency is already mastered there competency has no utility
-        if (state.masteredCompetencies.contains(competency.getId())) {
-            return 0;
-        }
         double utility = 0;
         utility += computeDueDateUtility(competency);
         utility += computePriorUtility(competency, state);
