@@ -49,19 +49,19 @@
                         </div>
                         @switch (lectureUnit.type) {
                             @case (LectureUnitType.ATTACHMENT) {
-                                <jhi-attachment-unit [attachmentUnit]="lectureUnit" [isPresentationMode]="true" />
+                                <jhi-attachment-unit [lectureUnit]="lectureUnit" [isPresentationMode]="true" />
                             }
                             @case (LectureUnitType.EXERCISE) {
                                 <jhi-exercise-unit [exerciseUnit]="lectureUnit" [isPresentationMode]="true" [course]="lecture.course!" />
                             }
                             @case (LectureUnitType.VIDEO) {
-                                <jhi-video-unit [videoUnit]="lectureUnit" [isPresentationMode]="true" />
+                                <jhi-video-unit [lectureUnit]="lectureUnit" [isPresentationMode]="true" />
                             }
                             @case (LectureUnitType.TEXT) {
-                                <jhi-text-unit [textUnit]="lectureUnit" [isPresentationMode]="true" />
+                                <jhi-text-unit [lectureUnit]="lectureUnit" [isPresentationMode]="true" />
                             }
                             @case (LectureUnitType.ONLINE) {
-                                <jhi-online-unit [onlineUnit]="lectureUnit" [isPresentationMode]="true" />
+                                <jhi-online-unit [lectureUnit]="lectureUnit" [isPresentationMode]="true" />
                             }
                         }
                     </div>

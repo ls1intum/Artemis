@@ -1,4 +1,9 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { LectureUnitDirective } from 'app/overview/course-lectures/lecture-unit/lecture-unit.directive';
+import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { LectureUnitComponent } from 'app/overview/course-lectures/lecture-unit/lecture-unit.component';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import {
     faDownload,
     faFile,
@@ -13,72 +18,38 @@ import {
     faFilePowerpoint,
     faFileWord,
 } from '@fortawesome/free-solid-svg-icons';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { FileService } from 'app/shared/http/file.service';
-import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
-import { faSquare, faSquareCheck } from '@fortawesome/free-regular-svg-icons';
-import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { AbstractScienceComponent } from 'app/shared/science/science.component';
-import { ScienceService } from 'app/shared/science/science.service';
-import { ScienceEventType } from 'app/shared/science/science.model';
 
 @Component({
     selector: 'jhi-attachment-unit',
+    standalone: true,
+    imports: [LectureUnitComponent, ArtemisSharedCommonModule],
     templateUrl: './attachment-unit.component.html',
-    styleUrls: ['../lecture-unit.component.scss'],
 })
-export class AttachmentUnitComponent extends AbstractScienceComponent {
-    @Input() attachmentUnit: AttachmentUnit;
-    @Input() isPresentationMode = false;
-    @Output() onCompletion: EventEmitter<LectureUnitCompletionEvent> = new EventEmitter();
+export class AttachmentUnitComponent extends LectureUnitDirective<AttachmentUnit> {
+    protected readonly faDownload = faDownload;
 
-    isCollapsed = true;
-
-    // Icons
-    faDownload = faDownload;
-    faSquare = faSquare;
-    faSquareCheck = faSquareCheck;
-
-    constructor(
-        private fileService: FileService,
-        scienceService: ScienceService,
-    ) {
-        super(scienceService, ScienceEventType.LECTURE__OPEN_UNIT);
-    }
-
-    handleCollapse(event: Event) {
-        event.stopPropagation();
-        this.isCollapsed = !this.isCollapsed;
-    }
-
-    downloadAttachment(event: Event) {
-        event.stopPropagation();
-
-        // log event
-        if (this.attachmentUnit?.id) {
-            this.setResourceId(this.attachmentUnit.id);
-        }
-        this.logEvent();
-
-        if (this.attachmentUnit?.attachment?.link) {
-            this.fileService.downloadFile(this.attachmentUnit?.attachment?.link);
-            this.onCompletion.emit({ lectureUnit: this.attachmentUnit, completed: true });
-        }
-    }
-
-    handleClick(event: Event, completed: boolean) {
-        event.stopPropagation();
-        this.onCompletion.emit({ lectureUnit: this.attachmentUnit, completed });
-    }
+    private readonly fileService = inject(FileService);
 
     /**
      * Returns the name of the attachment file (including its file extension)
      */
     getFileName(): string {
-        if (this.attachmentUnit?.attachment?.link) {
-            return this.attachmentUnit?.attachment?.link.substring(this.attachmentUnit?.attachment?.link.lastIndexOf('/') + 1);
+        if (this.lectureUnit().attachment?.link) {
+            const link = this.lectureUnit().attachment!.link!;
+            return link.substring(link.lastIndexOf('/') + 1);
         } else {
             return '';
+        }
+    }
+
+    handleDownload() {
+        this.logEvent();
+
+        if (this.lectureUnit().attachment?.link) {
+            const link = this.lectureUnit().attachment!.link!;
+            this.fileService.downloadFile(link);
+            this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed: true });
         }
     }
 
@@ -86,8 +57,8 @@ export class AttachmentUnitComponent extends AbstractScienceComponent {
      * Returns the matching icon for the file extension of the attachment
      */
     getAttachmentIcon(): IconDefinition {
-        if (this.attachmentUnit?.attachment?.link) {
-            const fileExtension = this.attachmentUnit?.attachment?.link.split('.').pop()!.toLocaleLowerCase();
+        if (this.lectureUnit().attachment?.link) {
+            const fileExtension = this.lectureUnit().attachment?.link?.split('.').pop()!.toLocaleLowerCase();
             switch (fileExtension) {
                 case 'png':
                 case 'jpg':

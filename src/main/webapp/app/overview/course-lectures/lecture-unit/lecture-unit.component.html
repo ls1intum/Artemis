@@ -1,0 +1,40 @@
+<div class="lecture-unit-card col clickable">
+    <div class="lecture-unit-header row px-4 m-0" (click)="toggleCollapse()">
+        <div class="d-flex p-0 justify-content-between align-items-center">
+            <div class="d-flex">
+                <fa-icon class="me-3" size="lg" [icon]="icon()" />
+                <h5 class="m-0">{{ lectureUnit().name ?? '' }}</h5>
+                @if (!isVisibleToStudents()) {
+                    <span
+                        class="badge bg-warning ms-2"
+                        ngbTooltip="{{ 'artemisApp.textUnit.notReleasedTooltip' | artemisTranslate }} {{ lectureUnit().releaseDate | artemisDate }}"
+                        jhiTranslate="artemisApp.courseOverview.exerciseList.notReleased"
+                    ></span>
+                }
+            </div>
+            <div class="d-flex align-items-center">
+                @if (showViewIsolatedButton()) {
+                    <button id="popupButton" class="btn btn-sm btn-primary" (click)="handleIsolatedView($event)">
+                        <fa-icon [icon]="viewIsolatedButtonIcon()" />
+                        <span class="d-none d-md-inline" [jhiTranslate]="viewIsolatedButtonLabel()"></span>
+                    </button>
+                }
+                @if (this.lectureUnit().completed !== undefined && !isPresentationMode() && isVisibleToStudents()) {
+                    <fa-icon
+                        class="ms-3"
+                        [ngClass]="{ 'text-body-secondary': !this.lectureUnit().completed, 'text-success': this.lectureUnit().completed }"
+                        size="lg"
+                        [icon]="this.lectureUnit().completed ? faSquareCheck : faSquare"
+                        [ngbTooltip]="(this.lectureUnit().completed ? 'artemisApp.lectureUnit.completedTooltip' : 'artemisApp.lectureUnit.uncompletedTooltip') | artemisTranslate"
+                        (click)="toggleCompletion($event)"
+                    />
+                }
+            </div>
+        </div>
+    </div>
+    @if (isCollapsed()) {
+        <div class="lecture-unit-body px-4 py-2">
+            <ng-content />
+        </div>
+    }
+</div>

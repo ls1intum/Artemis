@@ -1,66 +1,49 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { faVideo } from '@fortawesome/free-solid-svg-icons';
+import { Component, computed, output } from '@angular/core';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
-import urlParser from 'js-video-url-parser';
 import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
-import { faSquare, faSquareCheck } from '@fortawesome/free-regular-svg-icons';
-import { AbstractScienceComponent } from 'app/shared/science/science.component';
-import { ScienceService } from 'app/shared/science/science.service';
-import { ScienceEventType } from 'app/shared/science/science.model';
+import urlParser from 'js-video-url-parser';
+import { faVideo } from '@fortawesome/free-solid-svg-icons';
+import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
+import { LectureUnitDirective } from 'app/overview/course-lectures/lecture-unit/lecture-unit.directive';
+import { LectureUnitComponent } from 'app/overview/course-lectures/lecture-unit/lecture-unit.component';
 
 @Component({
     selector: 'jhi-video-unit',
+    standalone: true,
+    imports: [ArtemisSharedPipesModule, LectureUnitComponent],
     templateUrl: './video-unit.component.html',
-    styleUrls: ['../lecture-unit.component.scss'],
 })
-export class VideoUnitComponent extends AbstractScienceComponent implements OnInit {
-    @Input() videoUnit: VideoUnit;
-    @Input() isPresentationMode = false;
-    @Output() onCompletion: EventEmitter<LectureUnitCompletionEvent> = new EventEmitter();
+export class VideoUnitComponent extends LectureUnitDirective<VideoUnit> {
+    protected readonly faVideo = faVideo;
 
-    videoUrl: string;
-    isCollapsed = true;
-    completionTimeout: NodeJS.Timeout;
+    readonly onCompletion = output<LectureUnitCompletionEvent>();
 
     // List of regexes that should not be blocked by js-video-url-parser
-    videoUrlAllowList = [
+    private readonly videoUrlAllowList = [
         // TUM-Live. Example: 'https://live.rbg.tum.de/w/test/26?video_only=1'
         RegExp('^https://live\\.rbg\\.tum\\.de/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1$'),
     ];
+    private completionTimeout: NodeJS.Timeout;
 
-    // Icons
-    faVideo = faVideo;
-    faSquare = faSquare;
-    faSquareCheck = faSquareCheck;
-
-    constructor(scienceService: ScienceService) {
-        super(scienceService, ScienceEventType.LECTURE__OPEN_UNIT);
-    }
-
-    ngOnInit() {
-        if (this.videoUnit?.id) {
-            this.setResourceId(this.videoUnit.id);
-        }
-        if (this.videoUnit?.source) {
-            // Validate the URL before displaying it
-            if (this.videoUrlAllowList.some((r) => r.test(this.videoUnit.source!)) || !urlParser || urlParser.parse(this.videoUnit.source)) {
-                this.videoUrl = this.videoUnit.source;
+    readonly videoUrl = computed(() => {
+        if (this.lectureUnit().source) {
+            const source = this.lectureUnit().source!;
+            if (this.videoUrlAllowList.some((r) => r.test(source)) || !urlParser || urlParser.parse(source)) {
+                return source;
             }
         }
-    }
+        return undefined;
+    });
 
-    handleCollapse(event: Event) {
-        event.stopPropagation();
-        this.isCollapsed = !this.isCollapsed;
-
-        if (!this.isCollapsed) {
+    handleCollapse(isCollapsed: boolean) {
+        if (!isCollapsed) {
             // log event
             this.logEvent();
 
             // Mark the unit as completed when the user has it open for at least 5 minutes
             this.completionTimeout = setTimeout(
                 () => {
-                    this.onCompletion.emit({ lectureUnit: this.videoUnit, completed: true });
+                    this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed: true });
                 },
                 1000 * 60 * 5,
             );
@@ -69,8 +52,7 @@ export class VideoUnitComponent extends AbstractScienceComponent implements OnIn
         }
     }
 
-    handleClick(event: Event, completed: boolean) {
-        event.stopPropagation();
-        this.onCompletion.emit({ lectureUnit: this.videoUnit, completed });
+    handleCompletion(completed: boolean) {
+        this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed });
     }
 }

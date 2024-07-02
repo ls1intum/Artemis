@@ -68,16 +68,16 @@
                                         <jhi-exercise-unit [exerciseUnit]="lectureUnit" [course]="lecture!.course!" />
                                     }
                                     @case (LectureUnitType.ATTACHMENT) {
-                                        <jhi-attachment-unit [attachmentUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                        <jhi-attachment-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                     }
                                     @case (LectureUnitType.VIDEO) {
-                                        <jhi-video-unit [videoUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                        <jhi-video-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                     }
                                     @case (LectureUnitType.TEXT) {
-                                        <jhi-text-unit [textUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                        <jhi-text-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                     }
                                     @case (LectureUnitType.ONLINE) {
-                                        <jhi-online-unit [onlineUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                        <jhi-online-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                     }
                                 }
                             </div>

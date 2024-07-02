@@ -1,50 +1,12 @@
-<div class="row align-items-center my-2">
-    <div class="card unit-card">
-        <div class="card-header unit-card-header row align-content-center justify-content-between" (click)="handleCollapse($event)">
-            <div class="col-auto row align-content-center flex-shrink-1">
-                <h5 class="m-0 fw-medium">
-                    <fa-icon class="me-2 col-auto" [icon]="faLink" [ngbTooltip]="'artemisApp.onlineUnit.tooltip' | artemisTranslate" />
-                    {{ onlineUnit?.name }}
-                    @if (!onlineUnit?.visibleToStudents) {
-                        <span
-                            class="badge bg-warning ms-2"
-                            ngbTooltip="{{ 'artemisApp.onlineUnit.notReleasedTooltip' | artemisTranslate }} {{ onlineUnit?.releaseDate | artemisDate }}"
-                        >
-                            {{ 'artemisApp.courseOverview.exerciseList.notReleased' | artemisTranslate }}
-                        </span>
-                    }
-                </h5>
-            </div>
-            <div class="col-auto d-flex align-items-center gap-3 pe-2">
-                <button class="btn btn-sm btn-primary" (click)="openLink($event)" [ngbTooltip]="domainName">
-                    <fa-icon [icon]="faUpRightFromSquare" />
-                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.onlineUnit.doOpen"></span>
-                </button>
-                @if (!isPresentationMode && onlineUnit.visibleToStudents) {
-                    <div class="col-auto my-auto">
-                        @if (onlineUnit.completed) {
-                            <fa-icon
-                                class="text-success"
-                                size="lg"
-                                [icon]="faSquareCheck"
-                                [ngbTooltip]="'artemisApp.lectureUnit.completedTooltip' | artemisTranslate"
-                                (click)="handleClick($event, false)"
-                            />
-                        } @else {
-                            <fa-icon
-                                class="text-body-secondary"
-                                size="lg"
-                                [icon]="faSquare"
-                                [ngbTooltip]="'artemisApp.lectureUnit.uncompletedTooltip' | artemisTranslate"
-                                (click)="handleClick($event, true)"
-                            />
-                        }
-                    </div>
-                }
-            </div>
-        </div>
-        <div class="card-body unit-card-body" [ngbCollapse]="isCollapsed">
-            <p class="mb-0">{{ onlineUnit?.description }}</p>
-        </div>
-    </div>
-</div>
+<jhi-lecture-unit-card
+    [lectureUnit]="lectureUnit()"
+    [icon]="faUpRightFromSquare"
+    [showViewIsolatedButton]="true"
+    [viewIsolatedButtonLabel]="'artemisApp.onlineUnit.doOpen'"
+    [isPresentationMode]="isPresentationMode()"
+    (onCompletion)="toggleCompletion($event)"
+    (onCollapse)="toggleCollapse($event)"
+    (onShowIsolated)="handleIsolatedView()"
+>
+    {{ this.lectureUnit().description }}
+</jhi-lecture-unit-card>

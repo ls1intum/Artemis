@@ -1,73 +1,36 @@
-<div class="row align-items-center my-2">
-    <div class="card unit-card">
-        <div class="card-header unit-card-header row align-content-center justify-content-between" (click)="handleCollapse($event)">
-            <div class="col-auto row align-content-center flex-shrink-1">
-                <h5 class="m-0 fw-medium">
-                    <fa-icon class="me-2" [icon]="getAttachmentIcon()" [ngbTooltip]="'artemisApp.attachmentUnit.tooltip' | artemisTranslate" />
-                    {{ attachmentUnit?.attachment?.name ? attachmentUnit?.attachment?.name : '' }}
-                    @if (!attachmentUnit?.visibleToStudents) {
-                        <span
-                            class="badge bg-warning ms-2"
-                            ngbTooltip="{{ 'artemisApp.attachmentUnit.notReleasedTooltip' | artemisTranslate }} {{ attachmentUnit?.attachment?.releaseDate | artemisDate }}"
-                        >
-                            {{ 'artemisApp.courseOverview.exerciseList.notReleased' | artemisTranslate }}
-                        </span>
-                    }
-                </h5>
-            </div>
-            <div class="col-auto d-flex align-items-center gap-3 pe-2">
-                <button id="downloadButton" class="btn btn-primary btn-sm" (click)="downloadAttachment($event)">
-                    <fa-icon [icon]="faDownload" />
-                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.attachmentUnit.download"></span>
-                </button>
-                @if (!isPresentationMode && attachmentUnit.visibleToStudents) {
-                    <div class="col-auto">
-                        @if (attachmentUnit.completed) {
-                            <fa-icon
-                                class="text-success"
-                                size="lg"
-                                [icon]="faSquareCheck"
-                                [ngbTooltip]="'artemisApp.lectureUnit.completedTooltip' | artemisTranslate"
-                                (click)="handleClick($event, false)"
-                            />
-                        } @else {
-                            <fa-icon
-                                class="text-body-secondary"
-                                size="lg"
-                                [icon]="faSquare"
-                                [ngbTooltip]="'artemisApp.lectureUnit.uncompletedTooltip' | artemisTranslate"
-                                (click)="handleClick($event, true)"
-                            />
-                        }
-                    </div>
-                }
-            </div>
+<jhi-lecture-unit-card
+    [lectureUnit]="lectureUnit()"
+    [icon]="getAttachmentIcon()"
+    [showViewIsolatedButton]="true"
+    [viewIsolatedButtonLabel]="'artemisApp.attachmentUnit.download'"
+    [viewIsolatedButtonIcon]="faDownload"
+    [isPresentationMode]="isPresentationMode()"
+    (onCompletion)="toggleCompletion($event)"
+    (onCollapse)="toggleCollapse($event)"
+    (onShowIsolated)="handleDownload()"
+>
+    @if (lectureUnit().attachment?.uploadDate) {
+        <div>
+            <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentUnit.uploadDate">: </span>
+            {{ lectureUnit().attachment?.uploadDate | artemisDate }}
         </div>
-        <div class="card-body unit-card-body" [ngbCollapse]="isCollapsed">
-            @if (attachmentUnit?.attachment?.uploadDate) {
-                <div>
-                    <span class="font-weight-bold"> {{ 'artemisApp.attachmentUnit.uploadDate' | artemisTranslate }}: </span>
-                    {{ attachmentUnit?.attachment?.uploadDate | artemisDate }}
-                </div>
-            }
-            @if (attachmentUnit?.attachment?.version) {
-                <div>
-                    <span class="font-weight-bold"> {{ 'artemisApp.attachmentUnit.version' | artemisTranslate }}: </span>
-                    {{ attachmentUnit?.attachment?.version }}
-                </div>
-            }
-            @if (attachmentUnit?.attachment?.link) {
-                <div>
-                    <span class="font-weight-bold"> {{ 'artemisApp.attachmentUnit.FileName' | artemisTranslate }}: </span>
-                    {{ getFileName() }}
-                </div>
-            }
-            @if (attachmentUnit?.description) {
-                <div>
-                    <hr />
-                    {{ attachmentUnit?.description }}
-                </div>
-            }
+    }
+    @if (lectureUnit().attachment?.version) {
+        <div>
+            <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentUnit.version">: </span>
+            {{ lectureUnit().attachment?.version }}
         </div>
-    </div>
-</div>
+    }
+    @if (lectureUnit().attachment?.link) {
+        <div>
+            <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentUnit.FileName">: </span>
+            {{ getFileName() }}
+        </div>
+    }
+    @if (lectureUnit()?.description) {
+        <div>
+            <hr />
+            {{ lectureUnit().description }}
+        </div>
+    }
+</jhi-lecture-unit-card>
