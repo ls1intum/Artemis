@@ -562,16 +562,44 @@ describe('ExamParticipationComponent', () => {
     });
 
     describe('websocket problem statement update subscription', () => {
-        it('should correctly update exercise', () => {
+        beforeEach(() => {
+            comp.studentExam = new StudentExam();
+            comp.exam = new Exam();
+            const textExercise = new TextExercise(new Course(), undefined);
+            textExercise.id = 1;
+            textExercise.problemStatement = 'old problem statement text exercise';
+            const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+            programmingExercise.id = 2;
+            programmingExercise.problemStatement = 'old problem statement programming exercise';
+            comp.studentExam.exercises = [textExercise, programmingExercise];
+        });
+
+        it('should correctly update problem statement if exercise was not opened yet', () => {
             const event = {
-                problemStatement: 'problem statement',
-                exerciseId: 1,
+                problemStatement: 'new problem statement',
+                exerciseId: 2,
                 exerciseName: 'exercise1',
             } as any as ExamLiveEvent;
             jest.spyOn(examParticipationLiveEventsService, 'observeNewEventsAsSystem').mockReturnValue(of(event));
             jest.spyOn(examExerciseUpdateService, 'updateLiveExamExercise');
+            comp.examStarted(comp.studentExam);
             comp['subscribeToProblemStatementUpdates']();
-            expect(examExerciseUpdateService.updateLiveExamExercise).toHaveBeenCalledExactlyOnceWith(1, 'problem statement');
+            expect(examExerciseUpdateService.updateLiveExamExercise).not.toHaveBeenCalled();
+            expect(comp.studentExam.exercises![1].problemStatement).toBe('new problem statement');
+        });
+
+        it('should correctly update problem statement if exercise was previously opened', () => {
+            const event = {
+                problemStatement: 'new problem statement',
+                exerciseId: 2,
+                exerciseName: 'exercise1',
+            } as any as ExamLiveEvent;
+            jest.spyOn(examParticipationLiveEventsService, 'observeNewEventsAsSystem').mockReturnValue(of(event));
+            jest.spyOn(examExerciseUpdateService, 'updateLiveExamExercise');
+            comp.examStarted(comp.studentExam);
+            comp.pageComponentVisited[1] = true;
+            comp['subscribeToProblemStatementUpdates']();
+            expect(examExerciseUpdateService.updateLiveExamExercise).toHaveBeenCalledExactlyOnceWith(2, 'new problem statement');
         });
     });
 
