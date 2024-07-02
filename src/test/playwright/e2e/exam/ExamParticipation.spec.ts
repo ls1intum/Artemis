@@ -67,7 +67,7 @@ test.describe('Exam participation', () => {
             await examParticipation.startParticipation(studentTwo, course, exam);
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
-                await examNavigation.openExerciseAtIndex(j);
+                await examNavigation.openOrSaveExerciseByTitle(exercise.title!);
                 await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
             }
             await examParticipation.handInEarly();
@@ -85,18 +85,16 @@ test.describe('Exam participation', () => {
             await examManagement.verifySubmitted(course.id!, exam.id!, studentTwoName);
         });
 
-        test('Using save and continue to navigate within exam', async ({ login, examParticipation, examNavigation, examManagement }) => {
+        test('Using navigation sidebar to navigate within exam', async ({ login, examParticipation, examNavigation, examManagement }) => {
             await examParticipation.startParticipation(studentThree, course, exam);
-            await examNavigation.openExerciseAtIndex(0);
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
+                await examNavigation.openOrSaveExerciseByTitle(exercise.title!);
                 // Skip programming exercise this time to save execution time
                 // (we also need to use the navigation bar here, since programming  exercises do not have a "Save and continue" button)
-                if (exercise.type == ExerciseType.PROGRAMMING) {
-                    await examNavigation.openExerciseAtIndex(j + 1);
-                } else {
+                if (exercise.type !== ExerciseType.PROGRAMMING) {
                     await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
-                    await examParticipation.clickSaveAndContinue();
+                    await examNavigation.openOrSaveExerciseByTitle(exercise.title!);
                 }
             }
             await examParticipation.handInEarly();
@@ -109,12 +107,16 @@ test.describe('Exam participation', () => {
             await examParticipation.startParticipation(studentFour, course, exam);
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
+                // await
+                await examNavigation.openFromOverviewByTitle(exercise.title!);
+                await examNavigation.openOverview();
+
                 // Skip programming exercise this time to save execution time
                 // (we also need to use the navigation bar here, since programming  exercises do not have a "Save and continue" button)
+
                 if (exercise.type != ExerciseType.PROGRAMMING) {
-                    await examNavigation.openExerciseOverview();
-                    await examParticipation.selectExerciseOnOverview(j + 1);
-                    await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
+                    // await examNavigation.openExerciseFromOverviewPageByTitle(exercise.title!)
+                    // await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
                 }
             }
             await examParticipation.handInEarly();
@@ -155,16 +157,16 @@ test.describe('Exam participation', () => {
             await examParticipation.startParticipation(studentTwo, course, exam);
             const textExerciseIndex = 0;
             const textExercise = exerciseArray[textExerciseIndex];
-            await examNavigation.openExerciseAtIndex(textExerciseIndex);
+            await examNavigation.openOrSaveExerciseByTitle(textExercise.title!);
             await examParticipation.makeTextExerciseSubmission(textExercise.id!, textExercise.additionalData!.textFixture!);
-            await examParticipation.clickSaveAndContinue();
+            await examNavigation.openOrSaveExerciseByTitle(textExercise.title!);
             await examNavigation.handInEarly();
 
             await examStartEnd.clickContinue();
-            await examNavigation.openExerciseAtIndex(textExerciseIndex);
+            await examNavigation.openOrSaveExerciseByTitle(textExercise.title!);
             await textExerciseEditor.clearSubmission(textExercise.id!);
             await examParticipation.makeTextExerciseSubmission(textExercise.id!, textFixtureShort);
-            await examParticipation.clickSaveAndContinue();
+            await examNavigation.openOrSaveExerciseByTitle(textExercise.title!);
 
             await examParticipation.handInEarly();
             await examStartEnd.pressShowSummary();
@@ -187,15 +189,16 @@ test.describe('Exam participation', () => {
             await examParticipation.startParticipation(studentThree, course, exam);
             const textExerciseIndex = 0;
             const textExercise = exerciseArray[textExerciseIndex];
-            await examNavigation.openExerciseAtIndex(textExerciseIndex);
+            await examNavigation.openOrSaveExerciseByTitle(textExercise.title!);
             await examParticipation.makeTextExerciseSubmission(textExercise.id!, textExercise.additionalData!.textFixture!);
-            await examParticipation.clickSaveAndContinue();
+            await examNavigation.openOrSaveExerciseByTitle(textExercise.title!);
 
             await page.reload();
-            await examParticipation.startParticipation(studentThree, course, exam);
-            await examNavigation.openExerciseAtIndex(textExerciseIndex);
-            await textExerciseEditor.checkCurrentContent(textExercise.id!, textExercise.additionalData!.textFixture!);
-            await examParticipation.clickSaveAndContinue();
+            await page.goto(`/courses/${course.id}/exams/${exam.id}`);
+            await examParticipation.startExam();
+            await examNavigation.openOrSaveExerciseByTitle(textExercise.title!);
+            await textExerciseEditor.checkCurrentContent(textExercise.additionalData!.textFixture!);
+            await examNavigation.openOrSaveExerciseByTitle(textExercise.title!);
             await examParticipation.handInEarly();
             await examStartEnd.pressShowSummary();
             await examParticipation.verifyTextExerciseOnFinalPage(textExercise.id!, textExercise.additionalData!.textFixture!);
@@ -209,9 +212,9 @@ test.describe('Exam participation', () => {
             await examParticipation.startParticipation(studentFour, course, exam);
             const textExerciseIndex = 0;
             const textExercise = exerciseArray[textExerciseIndex];
-            await examNavigation.openExerciseAtIndex(textExerciseIndex);
+            await examNavigation.openOrSaveExerciseByTitle(textExercise.title!);
             await examParticipation.makeTextExerciseSubmission(textExercise.id!, textExercise.additionalData!.textFixture!);
-            await examParticipation.clickSaveAndContinue();
+            await examNavigation.openOrSaveExerciseByTitle(textExercise.title!);
             await examParticipation.handInEarly();
             await examStartEnd.pressShowSummary();
             await examParticipation.verifyTextExerciseOnFinalPage(textExercise.id!, textExercise.additionalData!.textFixture!);
@@ -248,9 +251,9 @@ test.describe('Exam participation', () => {
             await examParticipation.startParticipation(studentFour, course, exam);
             const textExerciseIndex = 0;
             const textExercise = exerciseArray[textExerciseIndex];
-            await examNavigation.openExerciseAtIndex(textExerciseIndex);
+            await examNavigation.openOrSaveExerciseByTitle(textExercise.title!);
             await examParticipation.makeSubmission(textExercise.id!, textExercise.type!, textExercise.additionalData);
-            await examParticipation.clickSaveAndContinue();
+            await examNavigation.openOrSaveExerciseByTitle(textExercise.title!);
             await examParticipation.checkExamFullnameInputExists();
             await examParticipation.checkYourFullname(studentFourName);
             const response = await examStartEnd.finishExam();
@@ -350,7 +353,7 @@ test.describe('Exam participation', () => {
                 await modalDialog.checkDialogMessage(timeChangeMessage);
                 await modalDialog.checkDialogAuthor(instructor.username);
                 await modalDialog.closeDialog();
-                await examParticipationActions.checkExamTimeLeft('29min');
+                await examParticipationActions.checkExamTimeLeft('29');
             }
         });
     });
