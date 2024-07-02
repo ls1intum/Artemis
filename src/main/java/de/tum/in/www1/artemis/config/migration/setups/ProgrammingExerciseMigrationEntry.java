@@ -283,10 +283,7 @@ public abstract class ProgrammingExerciseMigrationEntry {
         log.error("Failed to migrate template build plan for exercises: {}", failedTemplateExercises);
         log.error("Failed to migrate solution build plan for exercises: {}", failedSolutionExercises);
         log.error("Failed to migrate students participations: {}", failedStudentParticipations);
-        // TODO Adjust this message to our situation here, how to restart the migration
-        log.warn("Please check the logs for more information. If the issues are related to the external VCS/CI system, fix the issues and rerun the migration. or "
-                + "fix the build plans yourself and mark the migration as run. The migration can be rerun by deleting the migration entry in the database table containing "
-                + "the migration with author: {} and date_string: {} and then restarting Artemis.", "author()", "date()");
+        log.warn("Please check the logs for more information. If the issues are related to the external VCS/CI system, fix the issues and rerun the migration.");
     }
 
     /**
