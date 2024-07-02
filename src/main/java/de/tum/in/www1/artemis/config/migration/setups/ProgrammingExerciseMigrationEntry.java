@@ -32,10 +32,10 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 public abstract class ProgrammingExerciseMigrationEntry {
 
-    @Value("${migration.scaling.batch-size:100}")
+    @Value("${migration.scaling.batch-size:10}")
     protected int batchSize;
 
-    @Value("${migration.scaling.max-thread-count:32}")
+    @Value("${migration.scaling.max-thread-count:4}")
     protected int maxThreadCount;
 
     @Value("${migration.scaling.timeout-in-hours:48}")
