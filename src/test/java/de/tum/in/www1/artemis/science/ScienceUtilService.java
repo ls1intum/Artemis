@@ -41,10 +41,10 @@ public class ScienceUtilService {
             .thenComparing((ScienceEvent e1, ScienceEvent e2) -> {
 
                 Duration d = Duration.between(e1.getTimestamp(), e2.getTimestamp());
-                if (d.getNano() > 500 && d.getSeconds() >= 0) {
+                if (d.toNanos() > 500) {
                     return 1;
                 }
-                else if (d.getSeconds() < -1 || (d.getSeconds() == -1 && d.getNano() < 999_999_500)) {
+                else if (d.toNanos() < -500) {
                     return -1;
                 }
                 return 0;
