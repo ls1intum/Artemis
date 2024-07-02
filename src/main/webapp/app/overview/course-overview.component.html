@@ -239,7 +239,7 @@
         [id]="sidebarItem.testId ?? ''"
         [ngClass]="{
             'guided-tour': sidebarItem.guidedTour,
-            newMessage: !messagesRouteLoaded && hasUnreadMessages && sidebarItem.title === 'Messages',
+            newMessage: !communicationRouteLoaded && hasUnreadMessages && sidebarItem.title === 'Communication',
             collapsed: isNavbarCollapsed,
             'py-1': extraPadding,
         }"
@@ -260,7 +260,7 @@
         [id]="sidebarItem.testId ?? ''"
         [ngClass]="{
             'guided-tour': sidebarItem.guidedTour,
-            newMessage: !messagesRouteLoaded && hasUnreadMessages && sidebarItem.title === 'Messages',
+            newMessage: !communicationRouteLoaded && hasUnreadMessages && sidebarItem.title === 'Communication',
             collapsed: isNavbarCollapsed,
             'py-1': extraPadding,
         }"
