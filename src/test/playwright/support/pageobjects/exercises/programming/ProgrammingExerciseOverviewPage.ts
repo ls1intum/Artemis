@@ -48,10 +48,4 @@ export class ProgrammingExerciseOverviewPage {
     getExerciseDetails() {
         return this.page.locator('.tab-bar-exercise-details');
     }
-
-    async openRepository() {
-        const repositoryPage = this.page.context().waitForEvent('page');
-        await this.page.locator('a', { hasText: 'Open repository' }).click();
-        return await repositoryPage;
-    }
 }
