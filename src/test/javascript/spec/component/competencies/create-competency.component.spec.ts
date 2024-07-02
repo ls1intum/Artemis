@@ -126,7 +126,7 @@ describe('CreateCompetency', () => {
         competencyForm.formSubmitted.emit(formData);
 
         return createCompetencyComponentFixture.whenStable().then(() => {
-            const competency: Competency = {};
+            const competency: Competency = new Competency();
             competency.title = formData.title;
             competency.description = formData.description;
             competency.optional = formData.optional;

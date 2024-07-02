@@ -203,7 +203,7 @@ class PrerequisiteIntegrationTest extends AbstractSpringIntegrationIndependentTe
             var prerequisite = prerequisiteUtilService.createPrerequisite(course);
 
             // try to delete prerequisite in course2
-            request.delete(url(course2.getId(), prerequisite.getId()), HttpStatus.NOT_FOUND);
+            request.delete(url(course2.getId(), prerequisite.getId()), HttpStatus.BAD_REQUEST);
 
             boolean exists = prerequisiteRepository.existsById(prerequisite.getId());
             assertThat(exists).isTrue();

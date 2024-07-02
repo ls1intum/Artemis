@@ -230,7 +230,6 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
      * @param relation the given competency relation
      */
     createRelation(relation: CompetencyRelation) {
-        console.log(relation);
         this.competencyService
             .createCompetencyRelation(relation, this.courseId)
             .pipe(

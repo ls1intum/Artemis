@@ -124,7 +124,6 @@ export class CompetencyService {
 
     create(competency: Competency, courseId: number): Observable<EntityResponseType> {
         const copy = this.convertCompetencyFromClient(competency);
-        console.log(copy);
         return this.httpClient.post<Competency>(`${this.resourceURL}/courses/${courseId}/competencies`, copy, { observe: 'response' });
     }
 
