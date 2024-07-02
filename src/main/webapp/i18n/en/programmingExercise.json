@@ -623,6 +623,7 @@
             "commitInfo": {
                 "title": "Commit Information",
                 "commitHash": "Commit Hash",
+                "commits": "Commits",
                 "author": "Author",
                 "date": "Date",
                 "message": "Message",
