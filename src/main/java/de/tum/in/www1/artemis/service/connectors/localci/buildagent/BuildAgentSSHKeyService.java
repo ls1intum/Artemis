@@ -40,6 +40,9 @@ public class BuildAgentSSHKeyService {
     @Value("${info.contact}")
     private String sshKeyComment;
 
+    /**
+     * Generates the SSH key pair and writes the private key when the application is started and the build agents should use SSH for their git operations.
+     */
     @EventListener(ApplicationReadyEvent.class)
     public void applicationReady() {
         if (!useSSHForBuildAgent) {
@@ -84,6 +87,12 @@ public class BuildAgentSSHKeyService {
         Files.setPosixFilePermissions(privateKeyPath, PosixFilePermissions.fromString("rw-------"));
     }
 
+    /**
+     * Returns the formated SSH public key.
+     * If SSH is not used for the build agent, it returns {@code null}.
+     *
+     * @return the public key
+     */
     public String getPublicKeyAsString() {
         if (!useSSHForBuildAgent) {
             return null;
