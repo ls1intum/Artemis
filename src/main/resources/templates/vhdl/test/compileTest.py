@@ -9,15 +9,15 @@ def export_junit(retCode: int, stdout: str = ""):
         return
 
     test_cases = []
-    pattern = re.compile(r'report (note|error): (.*)')
+    pattern = re.compile(r'\(report (note|error)\): (.*)')
 
     for line in stdout.split('\n'):
         match = pattern.search(line)
         if match:
             severity, message = match.groups()
-            name = message.split(":")[0].strip()
+            name = message.split("-")[0].strip()
             if severity == 'note':
-                test_case = TestCase(name=name, message=message)
+                test_case = TestCase(name=name, stdout=message)
             else:
                 test_case = TestCase(name=name)
                 test_case.add_failure_info(message)

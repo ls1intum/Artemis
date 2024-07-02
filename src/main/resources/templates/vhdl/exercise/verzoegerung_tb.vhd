@@ -1,6 +1,12 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
+-- This is an example testbench. To create Testcases that will be visible in the student's view, you need
+-- to print to the console using report. report with severity level note will create a passed testcase, report
+-- with severity level error will create a failed testcase.
+-- The report message should also contain the testcase name and message separated by a dash.
+-- Example: report "Testcase 1 - Test failed" severity error;
+
 entity verzoegerung_tb is
 end verzoegerung_tb;
 
@@ -48,38 +54,38 @@ begin
        -- Assertions after START signal is set to '1'
        wait for clk_period;
        if (ALARM = '1') then
-           report "ALARM should be '0' after 1 clock cycle" severity error;
+           report "Test1 - ALARM should be '0' after 1 clock cycle" severity error;
        else
-           report "ALARM is '0' after 1 clock cycle" severity note;
+           report "Test1 - ALARM is '0' after 1 clock cycle" severity note;
        end if;
 
        wait for clk_period;
        if (ALARM = '1') then
-           report "ALARM should be '0' after 2 clock cycles" severity error;
+           report "Test2 - ALARM should be '0' after 2 clock cycles" severity error;
        else
-           report "ALARM is '0' after 2 clock cycles" severity note;
+           report "Test2 - ALARM is '0' after 2 clock cycles" severity note;
        end if;
 
        wait for clk_period;
        if (ALARM = '1') then
-           report "ALARM should be '0' after 3 clock cycles" severity error;
+           report "Test3 - ALARM should be '0' after 3 clock cycles" severity error;
        else
-           report "ALARM is '0' after 3 clock cycles" severity note;
+           report "Test3 - ALARM is '0' after 3 clock cycles" severity note;
        end if;
 
        wait for clk_period;
        if (ALARM = '0') then
-           report "ALARM should be '1' after 4 clock cycles" severity error;
+           report "Test4 - ALARM should be '1' after 4 clock cycles" severity error;
        else
-           report "ALARM is '1' after 4 clock cycles" severity note;
+           report "Test4 - ALARM is '1' after 4 clock cycles" severity note;
        end if;
 
        START <= '0';
        wait for clk_period;
        if (ALARM = '1') then
-           report "ALARM should be '1' after START is deasserted" severity error;
+           report "Test5 - ALARM should be '1' after START is deasserted" severity error;
        else
-           report "ALARM is '0' after START is deasserted" severity note;
+           report "Test5 - ALARM is '0' after START is deasserted" severity note;
        end if;
 
        -- Test Case 2: Apply START again to check reset of alarm
@@ -88,30 +94,30 @@ begin
 
        wait for clk_period;
        if (ALARM = '1') then
-           report "ALARM should be '0' after 1 clock cycle" severity error;
+           report "Test6 - ALARM should be '0' after 1 clock cycle" severity error;
        else
-           report "ALARM is '0' after 1 clock cycle" severity note;
+           report "Test6 - ALARM is '0' after 1 clock cycle" severity note;
        end if;
 
        wait for clk_period;
        if (ALARM = '1') then
-           report "ALARM should be '0' after 2 clock cycles" severity error;
+           report "Test7 - ALARM should be '0' after 2 clock cycles" severity error;
        else
-           report "ALARM is '0' after 2 clock cycles" severity note;
+           report "Test7 - ALARM is '0' after 2 clock cycles" severity note;
        end if;
 
        wait for clk_period;
        if (ALARM = '1') then
-           report "ALARM should be '0' after 3 clock cycles" severity error;
+           report "Test8 - ALARM should be '0' after 3 clock cycles" severity error;
        else
-           report "ALARM is '0' after 3 clock cycles" severity note;
+           report "Test8 - ALARM is '0' after 3 clock cycles" severity note;
        end if;
 
        wait for clk_period;
        if (ALARM = '0') then
-           report "ALARM should be '1' after 4 clock cycles" severity error;
+           report "Test9 - ALARM should be '1' after 4 clock cycles" severity error;
        else
-           report "ALARM is '1' after 4 clock cycles" severity note;
+           report "Test9 - ALARM is '1' after 4 clock cycles" severity note;
        end if;
 
        wait for clk_period;
@@ -120,9 +126,9 @@ begin
        -- Assertions for STOP signal
        wait for clk_period;
        if (ALARM = '1') then
-           report "ALARM should be '0' after 1 clock cycle" severity error;
+           report "Test10 - ALARM should be '0' after 1 clock cycle" severity error;
        else
-           report "ALARM is '0' after 1 clock cycle" severity note;
+           report "Test10 - ALARM is '0' after 1 clock cycle" severity note;
        end if;
 
        -- Wait for a few clock cycles to observe the behavior after STOP is deasserted
