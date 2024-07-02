@@ -295,7 +295,7 @@ describe('CloneRepoButtonComponent', () => {
         expect(localStorageUseSshObserveStub).toHaveBeenNthCalledWith(1, 'useSsh');
         expect(component.useSsh).toBeFalsy();
 
-        fixture.debugElement.query(By.css('.clone-repository')).nativeElement.click();
+        fixture.debugElement.query(By.css('.code-button')).nativeElement.click();
         tick();
         fixture.debugElement.query(By.css('#useSSHButton')).nativeElement.click();
         tick();
