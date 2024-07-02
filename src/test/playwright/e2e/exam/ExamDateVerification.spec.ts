@@ -81,7 +81,6 @@ test.describe('Exam date verification', () => {
             await expect(page.getByText(exam.title!).first()).toBeVisible();
             await examStartEnd.startExam();
             await expect(page.locator('span[ng-reflect-ngb-tooltip="Exercise not started"]')).toBeVisible();
-            await page.getByText(exercise.title!).nth(0).click();
             await examNavigation.openOrSaveExerciseByTitle(exercise.title!);
             const submission = await Fixtures.get('loremIpsum-short.txt');
             await textExerciseEditor.typeSubmission(exercise.id!, submission!);
