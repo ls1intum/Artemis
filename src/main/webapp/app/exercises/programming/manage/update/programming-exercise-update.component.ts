@@ -661,11 +661,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>) {
         result.subscribe({
             next: (response: HttpResponse<ProgrammingExercise>) => {
-                console.log('response', response.body!);
                 this.onSaveSuccess(response.body!);
             },
             error: (error: HttpErrorResponse) => {
-                console.log('error', error);
                 this.onSaveError(error);
             },
         });

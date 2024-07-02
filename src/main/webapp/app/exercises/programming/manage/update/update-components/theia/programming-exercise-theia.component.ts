@@ -23,9 +23,12 @@ export class ProgrammingExerciseTheiaComponent implements OnChanges {
         if (changes.programmingExerciseCreationConfig || changes.programmingExercise) {
             if (this.shouldReloadTemplate()) {
                 this.loadTheiaImages();
-                this.resetImageSelection();
             }
         }
+    }
+
+    onTheiaImageChange(theiaImage: string) {
+        this.programmingExercise.theiaImage = theiaImage;
     }
 
     shouldReloadTemplate(): boolean {
@@ -37,7 +40,6 @@ export class ProgrammingExerciseTheiaComponent implements OnChanges {
      * @private
      */
     resetImageSelection() {
-        console.log('Resetting image selection');
         this.programmingExercise.theiaImage = undefined;
     }
 
@@ -55,13 +57,20 @@ export class ProgrammingExerciseTheiaComponent implements OnChanges {
         this.theiaService.getTheiaImages(this.programmingLanguage).subscribe({
             next: (images) => {
                 this.theiaImages = images;
-                if (!this.programmingExercise.theiaImage && Object.values(images).length > 0) {
+
+                // Remove selection if no image is available
+                if (images == null) {
+                    this.resetImageSelection();
+                }
+
+                // Set the first image as default if none is selected
+                if (this.programmingExercise && !this.programmingExercise.theiaImage && Object.values(images).length > 0) {
                     this.programmingExercise.theiaImage = Object.values(images)[0] as string;
                 }
             },
             error: () => {
                 this.theiaImages = {};
-                this.programmingExercise.theiaImage = undefined;
+                this.resetImageSelection();
             },
         });
     }
