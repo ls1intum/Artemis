@@ -21,9 +21,9 @@ export class TextEditorPage {
         await getExercise(this.page, exerciseID).locator('#text-editor').clear();
     }
 
-    async checkCurrentContent(exerciseID: number, expectedContent: string) {
+    async checkCurrentContent(expectedContent: string) {
         const text = await Fixtures.get(expectedContent);
-        await expect(getExercise(this.page, exerciseID).locator('#text-editor')).toHaveValue(text!);
+        await expect(this.page.locator('#text-editor')).toHaveValue(text!);
     }
 
     async saveAndContinue() {
