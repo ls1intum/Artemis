@@ -1,0 +1,39 @@
+<div>
+    <div class="row justify-content-between align-items-center w-100 m-0 p-3">
+        <span jhiTranslate="artemisApp.learningPath.navigation.overview.title" class="col-md-auto p-0 fw-bold"></span>
+        <div class="col-md-auto p-0">
+            <button (click)="openCompetencyGraph()" id="open-competency-graph-button" type="button" class="btn btn-outline-secondary">
+                <span jhiTranslate="artemisApp.learningPath.navigation.overview.showCompetenciesGraphButton"></span>
+            </button>
+        </div>
+    </div>
+    <hr class="m-0" />
+    @if (isLoading()) {
+        <div class="row justify-content-center m-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only" jhiTranslate="loading"></span>
+            </div>
+        </div>
+    } @else if (competencies()) {
+        <div ngbAccordion class="nav-overview-competencies accordion-flush">
+            @for (competency of competencies(); track competency.id) {
+                <div ngbAccordionItem>
+                    <h2 ngbAccordionHeader>
+                        <button ngbAccordionButton class="px-3">{{ competency.title }}</button>
+                    </h2>
+                    <div ngbAccordionCollapse>
+                        <div ngbAccordionBody class="p-0 overflow-hidden">
+                            <ng-template>
+                                <jhi-learning-path-nav-overview-learning-objects
+                                    (onLearningObjectSelected)="selectLearningObject()"
+                                    [learningPathId]="learningPathId()"
+                                    [competencyId]="competency.id"
+                                />
+                            </ng-template>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
