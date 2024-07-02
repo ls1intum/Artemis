@@ -10,6 +10,7 @@ import { CourseOverviewService } from '../course-overview.service';
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
     current: { entityData: [] },
+    dueSoon: { entityData: [] },
     past: { entityData: [] },
     noDate: { entityData: [] },
 };
@@ -17,6 +18,7 @@ const DEFAULT_UNIT_GROUPS: AccordionGroups = {
 const DEFAULT_COLLAPSE_STATE: CollapseState = {
     future: true,
     current: false,
+    dueSoon: true,
     past: true,
     noDate: true,
 };

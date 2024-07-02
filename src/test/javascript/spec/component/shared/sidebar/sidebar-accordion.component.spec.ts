@@ -55,7 +55,7 @@ describe('SidebarAccordionComponent', () => {
             },
         };
         component.routeParams = { exerciseId: 3 };
-        component.collapseState = { current: false, past: false, future: true, noDate: true };
+        component.collapseState = { current: false, dueSoon: false, past: false, future: true, noDate: true };
         fixture.detectChanges();
     });
 
