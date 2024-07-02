@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, HostListener, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { Observable, Subject, Subscription, of, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
@@ -51,7 +51,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     forceRenderSubscription: Subscription;
 
     @ViewChild(MarkdownEditorMonacoComponent, { static: false }) markdownEditorMonaco?: MarkdownEditorMonacoComponent;
-    @ViewChild('statusFooter', { static: false }) statusFooter: ElementRef<HTMLDivElement>;
 
     @Input() showStatus = true;
     // If the programming exercise is being created, some features have to be disabled (saving the problemStatement & querying test cases).
