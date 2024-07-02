@@ -33,7 +33,7 @@
             "detail": {
                 "title": "Teilnahme"
             },
-            "repositoryUri": "Repository-Link",
+            "repository": "Repository",
             "buildPlanId": "Build-Plan-Link",
             "initializationState": "Status",
             "initializationDate": "Teilnahme Start",

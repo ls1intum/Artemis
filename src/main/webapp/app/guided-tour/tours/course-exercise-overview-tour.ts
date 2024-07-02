@@ -86,7 +86,7 @@ export const courseExerciseOverviewTour: GuidedTour = {
             triggerNextStep: true,
         }),
         new TextTourStep({
-            highlightSelector: '.course-exercise-row.guided-tour .clone-repository',
+            highlightSelector: '.course-exercise-row.guided-tour .code-button',
             headlineTranslateKey: 'tour.courseExerciseOverview.repositoryCreated.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.repositoryCreated.content',
             highlightPadding: 5,

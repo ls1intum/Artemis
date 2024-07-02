@@ -34,24 +34,18 @@ export class ProgrammingExerciseOverviewPage {
     }
 
     async getRepoUrl() {
-        const cloneRepoLocator = this.getCloneRepositoryButton();
+        const cloneRepoLocator = this.getCodeButton();
         await Commands.reloadUntilFound(this.page, cloneRepoLocator, 4000, 20000);
         await cloneRepoLocator.click();
         await this.page.locator('.popover-body').waitFor({ state: 'visible' });
         return await this.page.locator('.clone-url').innerText();
     }
 
-    getCloneRepositoryButton() {
-        return this.page.locator('.clone-repository');
+    getCodeButton() {
+        return this.page.locator('.code-button');
     }
 
     getExerciseDetails() {
         return this.page.locator('.tab-bar-exercise-details');
-    }
-
-    async openRepository() {
-        const repositoryPage = this.page.context().waitForEvent('page');
-        await this.page.locator('a', { hasText: 'Open repository' }).click();
-        return await repositoryPage;
     }
 }

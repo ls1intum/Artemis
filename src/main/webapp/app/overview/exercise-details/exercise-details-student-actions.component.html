@@ -125,19 +125,8 @@
                                 [smallButtons]="smallButtons"
                                 [participations]="exercise.studentParticipations!"
                                 [exercise]="exercise"
+                                [routerLinkForRepositoryView]="repositoryLink + '/repository/' + exercise.studentParticipations![0].id"
                             />
-                        }
-                        @if (localVCEnabled) {
-                            <a
-                                class="btn btn-primary"
-                                [class.btn-sm]="smallButtons"
-                                [routerLink]="repositoryLink + '/repository/' + exercise.studentParticipations![0].id"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                <fa-icon [icon]="faCodeBranch" [fixedWidth]="true" />
-                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.openRepository"></span>
-                            </a>
                         }
                         @if (theiaEnabled) {
                             <a class="btn btn-primary" [class.btn-sm]="smallButtons" (click)="startOnlineIDE()" target="_blank" rel="noopener noreferrer">
