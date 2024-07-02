@@ -21,7 +21,6 @@
             "openGradedCodeEditor": "Programmiereditor öffnen",
             "openModelingEditor": "Modellierungseditor öffnen",
             "importIntoIDE": "In deiner IDE öffnen",
-            "openRepository": "Repository öffnen",
             "openOnlineIDE": "Online IDE öffnen",
             "practiceMode": {
                 "title": "Übungsmodus",
@@ -45,7 +44,7 @@
                 "success": "Repository erfolgreich zurückgesetzt. Du kannst die Aufgabe jetzt neu bearbeiten."
             },
             "practiceModeTooltip": "Der Übungsmodus ermöglicht es dir nach der Einreichungsfrist zu Übungszwecken weiter an der Aufgabe zu arbeiten. Dies beeinflusst deine Bewertung nicht! Artemis setzt dafür ein separates Repository auf, das du erneut clonen musst.",
-            "cloneRepository": "Repository klonen",
+            "code": "Code",
             "cloneRatedRepository": "Klone dein Repository für diese Aufgabe:",
             "clonePracticeRepository": "Klone dein Repository zum Üben für diese Aufgabe:",
             "cloneExerciseRepository": "Klone ein Repository für diese Aufgabe",

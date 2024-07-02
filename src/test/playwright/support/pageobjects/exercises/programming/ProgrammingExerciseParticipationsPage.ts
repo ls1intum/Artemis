@@ -29,7 +29,8 @@ export class ProgrammingExerciseParticipationsPage {
 
     async openRepository(participationId: number) {
         const participation = this.getParticipation(participationId);
-        await participation.locator('a', { hasText: 'Open repository' }).click();
+        await participation.locator('a', { hasText: 'Code' }).click();
+        await this.page.locator('#openRepositoryButton').click();
     }
 
     async checkParticipationBuildPlan(participation: any) {
