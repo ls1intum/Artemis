@@ -8,7 +8,7 @@ export class ProgrammingExerciseAssessmentPage extends AbstractExerciseAssessmen
     async provideFeedbackOnCodeLine(lineIndex: number, points: number, feedback: string) {
         // We can't change elements from the ace editor, so we can't use custom ids here
         await this.page.locator('.view-line').nth(lineIndex).hover();
-        await this.page.locator('[widgetid*="glyph-margin-hover-button"]').click();
+        await this.page.locator('.monaco-add-feedback-button').click();
         await this.typeIntoFeedbackEditor(feedback, lineIndex);
         await this.typePointsIntoFeedbackEditor(points, lineIndex);
         await this.saveFeedback(lineIndex);

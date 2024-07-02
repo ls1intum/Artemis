@@ -179,9 +179,9 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         } as Feedback;
         fixture.detectChanges();
 
-        const headerElement = fixture.debugElement.query(By.css('.col h6')).nativeElement;
+        const headerElement = fixture.debugElement.query(By.css('.col-10 h6')).nativeElement;
         expect(headerElement.attributes['jhiTranslate'].value).toBe('artemisApp.assessment.detail.feedback');
-        const paragraphElement = fixture.debugElement.query(By.css('.col p')).nativeElement;
+        const paragraphElement = fixture.debugElement.query(By.css('.col-10 p')).nativeElement;
         expect(paragraphElement.innerHTML).toContain(comp.buildFeedbackTextForCodeEditor(comp.feedback));
     });
 
@@ -192,9 +192,9 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         } as Feedback;
         fixture.detectChanges();
 
-        const headerElement = fixture.debugElement.query(By.css('.col h6')).nativeElement;
+        const headerElement = fixture.debugElement.query(By.css('.col-10 h6')).nativeElement;
         expect(headerElement.attributes['jhiTranslate'].value).toBe('artemisApp.assessment.detail.tutorComment');
-        const paragraphElement = fixture.debugElement.query(By.css('.col p')).nativeElement;
+        const paragraphElement = fixture.debugElement.query(By.css('.col-10 p')).nativeElement;
         expect(paragraphElement.innerHTML).toContain(comp.buildFeedbackTextForCodeEditor(comp.feedback));
     });
 });

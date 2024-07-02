@@ -430,6 +430,7 @@ $code-editor-file-browser-input-color: white;
 $code-editor-file-browser-badge-background: $code-editor-file-browser-tree-hover;
 $code-editor-diff-newline-background: rgba(46, 160, 67, 0.22);
 $code-editor-gutter-newline-background: rgba(46, 160, 67, 0.6);
+$code-editor-grid-grip-lines-color: $gray-300;
 
 // Monaco editor
 $monaco-editor-build-annotation-error-background: scale-color($danger, $alpha: -80%);
@@ -440,7 +441,9 @@ $monaco-editor-build-annotation-outdated-background: scale-color($gray-500, $alp
 $monaco-editor-build-annotation-outdated-glyph: $gray-500;
 $monaco-editor-diff-highlight-green: $success;
 $monaco-editor-diff-line-highlight: scale-color($monaco-editor-diff-highlight-green, $alpha: -80%, $lightness: -20%);
-$monaco-editor-diff-margin-highlight: scale-color($monaco-editor-diff-highlight-green, $alpha: -70%, $lightness: -10%);
+$monaco-editor-add-feedback-button-background: $gray-600;
+$monaco-editor-add-feedback-button-hover-background: lighten($gray-600, 10%);
+$monaco-editor-add-feedback-button-text: $gray-300;
 
 // Git-Diff Viewer
 $git-diff-viewer-added-line-background: rgba(63, 185, 80, 0.15);

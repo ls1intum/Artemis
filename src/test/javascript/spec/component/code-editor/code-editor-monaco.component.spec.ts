@@ -453,10 +453,10 @@ describe('CodeEditorMonacoComponent', () => {
         });
     });
 
-    it('should use the correct classes to highlight lines', () => {
+    it('should use the correct class to highlight lines', () => {
         const highlightStub = jest.spyOn(comp.editor, 'highlightLines').mockImplementation();
         fixture.detectChanges();
         comp.highlightLines(1, 2);
-        expect(highlightStub).toHaveBeenCalledExactlyOnceWith(1, 2, CodeEditorMonacoComponent.CLASS_DIFF_LINE_HIGHLIGHT, CodeEditorMonacoComponent.CLASS_DIFF_MARGIN_HIGHLIGHT);
+        expect(highlightStub).toHaveBeenCalledExactlyOnceWith(1, 2, CodeEditorMonacoComponent.CLASS_DIFF_LINE_HIGHLIGHT);
     });
 });

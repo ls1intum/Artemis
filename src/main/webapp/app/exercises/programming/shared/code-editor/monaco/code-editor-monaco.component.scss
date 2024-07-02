@@ -8,24 +8,23 @@
     z-index: 1;
 }
 
-.monaco-add-feedback-button {
-    cursor: pointer;
+.monaco-add-feedback-button:hover:before {
+    background-color: var(--monaco-editor-add-feedback-button-hover-background);
+}
 
-    /*
-     * Below are cosmetic adjustments that center the button and prevent the icon from breaking out of its row.
-     */
-    display: flex;
-    width: 19px;
-    height: 19px;
-    font-size: 18px;
-    align-items: center;
+.monaco-add-feedback-button:before {
+    cursor: pointer;
+    content: '\ea60'; // codicon-plus
+    font-family: codicon;
+    font-size: 1.1em;
+    background-color: var(--monaco-editor-add-feedback-button-background);
+    color: var(--monaco-editor-add-feedback-button-text);
+    border-radius: 35%;
+    // Cosmetic adjustment: create a small gap between the button and the line number
     padding-left: 1px;
+    margin-left: 1px;
 }
 
 .monaco-diff-line-highlight {
     background-color: var(--monaco-editor-diff-line-highlight);
-}
-
-.monaco-diff-margin-highlight {
-    background-color: var(--monaco-editor-diff-margin-highlight);
 }
