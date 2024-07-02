@@ -123,12 +123,18 @@
                         </ng-template>
                         <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                             @if (value) {
-                                <jhi-clone-repo-button
-                                    class="ms-2"
-                                    [smallButtons]="true"
-                                    [routerLinkForRepositoryView]="'./' + row.id + '/repository'"
-                                    [repositoryUri]="getRepositoryLink(row, value)"
-                                />
+                                <span>
+                                    @if (!localVCEnabled) {
+                                        <a href="{{ getRepositoryLink(row, value) }}" target="_blank" rel="noreferrer noopener">Repository Link</a>
+                                    } @else {
+                                        <jhi-clone-repo-button
+                                            class="ms-2"
+                                            [smallButtons]="true"
+                                            [routerLinkForRepositoryView]="'./' + row.id + '/repository'"
+                                            [repositoryUri]="getRepositoryLink(row, value)"
+                                        />
+                                    }
+                                </span>
                             }
                         </ng-template>
                     </ngx-datatable-column>
