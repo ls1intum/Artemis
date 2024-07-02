@@ -25,6 +25,10 @@ import { CreateOnlineUnitComponent } from 'app/lecture/lecture-unit/lecture-unit
 import { OnlineUnitFormComponent } from 'app/lecture/lecture-unit/lecture-unit-management/online-unit-form/online-unit-form.component';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { AttachmentUnitsComponent } from './attachment-units/attachment-units.component';
+import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
+import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/video-unit.component';
+import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-unit.component';
+import { OnlineUnitComponent } from 'app/overview/course-lectures/online-unit/online-unit.component';
 
 @NgModule({
     imports: [
@@ -37,6 +41,10 @@ import { AttachmentUnitsComponent } from './attachment-units/attachment-units.co
         FormDateTimePickerModule,
         ArtemisCompetenciesModule,
         DragDropModule,
+        AttachmentUnitComponent,
+        VideoUnitComponent,
+        TextUnitComponent,
+        OnlineUnitComponent,
     ],
     declarations: [
         LectureUnitManagementComponent,

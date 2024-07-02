@@ -45,6 +45,7 @@ import * as DownloadUtils from 'app/shared/util/download.util';
 import { ProfileService } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile-info.model';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
+import { OnlineUnitComponent } from 'app/overview/course-lectures/online-unit/online-unit.component';
 
 describe('CourseLectureDetailsComponent', () => {
     let fixture: ComponentFixture<CourseLectureDetailsComponent>;
@@ -91,10 +92,11 @@ describe('CourseLectureDetailsComponent', () => {
             imports: [RouterTestingModule, MockDirective(NgbTooltip), MockDirective(NgbCollapse), MockDirective(NgbPopover)],
             declarations: [
                 CourseLectureDetailsComponent,
-                AttachmentUnitComponent,
-                ExerciseUnitComponent,
-                TextUnitComponent,
-                VideoUnitComponent,
+                MockComponent(AttachmentUnitComponent),
+                MockComponent(ExerciseUnitComponent),
+                MockComponent(TextUnitComponent),
+                MockComponent(VideoUnitComponent),
+                MockComponent(OnlineUnitComponent),
                 CompetenciesPopoverComponent,
                 AlertOverlayComponent,
                 NotReleasedTagComponent,
