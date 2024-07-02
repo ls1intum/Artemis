@@ -97,10 +97,12 @@ export class ExamParticipationPage extends ExamParticipationActions {
 
     async openExam(student: UserCredentials, course: Course, exam: Exam) {
         await Commands.login(this.page, student, '/');
-        await this.page.waitForURL(/\/courses/);
+        await this.page.goto(`/courses`);
+        await this.page.waitForURL('/courses');
         await this.courseList.openCourse(course.id!);
         await this.courseOverview.openExamsTab();
         await this.courseOverview.openExam(exam.title!);
+        await this.page.goto(`/courses/${course.id}/exams/${exam.id}`);
         await this.page.waitForURL(`**/exams/${exam.id}`);
     }
 
