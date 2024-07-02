@@ -47,23 +47,25 @@
                                 </div>
                             }
                         </div>
-                        @switch (lectureUnit.type) {
-                            @case (LectureUnitType.ATTACHMENT) {
-                                <jhi-attachment-unit [lectureUnit]="lectureUnit" [isPresentationMode]="true" />
+                        <div class="mt-2">
+                            @switch (lectureUnit.type) {
+                                @case (LectureUnitType.ATTACHMENT) {
+                                    <jhi-attachment-unit [lectureUnit]="lectureUnit" [isPresentationMode]="true" />
+                                }
+                                @case (LectureUnitType.EXERCISE) {
+                                    <jhi-exercise-unit [exerciseUnit]="lectureUnit" [isPresentationMode]="true" [course]="lecture.course!" />
+                                }
+                                @case (LectureUnitType.VIDEO) {
+                                    <jhi-video-unit [lectureUnit]="lectureUnit" [isPresentationMode]="true" />
+                                }
+                                @case (LectureUnitType.TEXT) {
+                                    <jhi-text-unit [lectureUnit]="lectureUnit" [isPresentationMode]="true" />
+                                }
+                                @case (LectureUnitType.ONLINE) {
+                                    <jhi-online-unit [lectureUnit]="lectureUnit" [isPresentationMode]="true" />
+                                }
                             }
-                            @case (LectureUnitType.EXERCISE) {
-                                <jhi-exercise-unit [exerciseUnit]="lectureUnit" [isPresentationMode]="true" [course]="lecture.course!" />
-                            }
-                            @case (LectureUnitType.VIDEO) {
-                                <jhi-video-unit [lectureUnit]="lectureUnit" [isPresentationMode]="true" />
-                            }
-                            @case (LectureUnitType.TEXT) {
-                                <jhi-text-unit [lectureUnit]="lectureUnit" [isPresentationMode]="true" />
-                            }
-                            @case (LectureUnitType.ONLINE) {
-                                <jhi-online-unit [lectureUnit]="lectureUnit" [isPresentationMode]="true" />
-                            }
-                        }
+                        </div>
                     </div>
                     <div class="d-flex gap-1 flex-column justify-content-center col-3 col-sm-2 col-lg-1" role="group">
                         @if (lecture.course?.id && showCompetencies) {

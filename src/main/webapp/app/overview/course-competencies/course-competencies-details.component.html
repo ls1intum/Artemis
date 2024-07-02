@@ -52,7 +52,7 @@
             <div class="col-lg-9 col-md-8">
                 <div class="row">
                     @for (lectureUnit of competency.lectureUnits; track lectureUnit) {
-                        <div class="col-12 col-lg-11">
+                        <div class="col-12 col-lg-11 mt-3">
                             @switch (lectureUnit.type) {
                                 @case (LectureUnitType.EXERCISE) {
                                     <jhi-exercise-unit [exerciseUnit]="lectureUnit" [course]="competency!.course!" />
