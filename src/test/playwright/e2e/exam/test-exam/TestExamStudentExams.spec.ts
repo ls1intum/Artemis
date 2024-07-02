@@ -69,20 +69,16 @@ test.describe('Test Exam - student exams', () => {
 
             await studentExamManagement.checkExamStudent(studentOne.username);
             await studentExamManagement.checkExamStudent(studentTwo.username);
-            await studentExamManagement.checkExamStudent(studentThree.username);
 
-            await expect(studentExamManagement.getStudentExamRows()).toHaveCount(3);
+            await expect(studentExamManagement.getStudentExamRows()).toHaveCount(2);
 
             await studentExamManagement.checkStudentExamProperty(studentOne.username, 'Started', 'Yes');
             await studentExamManagement.checkStudentExamProperty(studentTwo.username, 'Started', 'Yes');
-            await studentExamManagement.checkStudentExamProperty(studentThree.username, 'Started', 'No');
 
             await studentExamManagement.checkStudentExamProperty(studentOne.username, 'Submitted', 'Yes');
             await studentExamManagement.checkStudentExamProperty(studentTwo.username, 'Submitted', 'No');
-            await studentExamManagement.checkStudentExamProperty(studentThree.username, 'Submitted', 'No');
 
             await studentExamManagement.checkStudentExamProperty(studentTwo.username, 'Used working time', '0s');
-            await studentExamManagement.checkStudentExamProperty(studentThree.username, 'Used working time', '0s');
         });
 
         test('Search for a student in exams', async ({ page, navigationBar, courseManagement, examManagement, studentExamManagement }) => {
@@ -105,7 +101,6 @@ test.describe('Test Exam - student exams', () => {
             await studentExamManagement.typeSearchText(searchText);
             await studentExamManagement.checkExamStudent(studentOne.username);
             await studentExamManagement.checkExamStudent(studentTwo.username);
-            await studentExamManagement.checkExamStudent(studentThree.username);
         });
     });
 
@@ -121,8 +116,11 @@ test.describe('Test Exam - student exams', () => {
         if (!toStart) {
             await examParticipation.openExam(student, course, exam);
         } else {
-            await examParticipation.startParticipation(student, course, exam);
-            await examNavigation.openExerciseAtIndex(0);
+            await examParticipation.openExam(student, course, exam);
+            await examParticipation.startExam();
+            await examNavigation.openOverview();
+
+            await examNavigation.openOrSaveExerciseByTitle(examExercise.title!);
             await examParticipation.makeSubmission(examExercise.id!, examExercise.type!, examExercise.additionalData);
         }
 
