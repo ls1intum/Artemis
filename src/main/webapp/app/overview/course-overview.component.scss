@@ -307,3 +307,18 @@ jhi-secured-image {
 .dropdown-toggle::after {
     display: none;
 }
+
+@media print {
+    .sidebar-container {
+        width: $menu-width-closed !important;
+    }
+
+    .mat-drawer {
+        width: $menu-width-closed !important;
+    }
+
+    .mat-drawer-content {
+        width: calc(100vw - $menu-width-closed) !important;
+        margin-left: $menu-width-closed !important;
+    }
+}

@@ -63,6 +63,9 @@ export class ThemeService {
 
     private darkSchemeMediaQuery: MediaQueryList;
 
+    private isNavbarCollapsedSubject = new BehaviorSubject<boolean>(false);
+    isNavbarCollapsed$ = this.isNavbarCollapsedSubject.asObservable();
+
     constructor(private localStorageService: LocalStorageService) {}
 
     /**
@@ -157,6 +160,7 @@ export class ThemeService {
             if (overrideTag) {
                 overrideTag.rel = 'none-tmp';
             }
+            this.isNavbarCollapsedSubject.next(true);
             setTimeout(() => {
                 const notificationSidebarDisplayAttribute = this.hideNotificationSidebar();
 
@@ -164,6 +168,9 @@ export class ThemeService {
 
                 this.showNotificationSidebar(notificationSidebarDisplayAttribute);
             }, 250);
+            window.addEventListener('afterprint', () => {
+                this.isNavbarCollapsedSubject.next(false);
+            });
             setTimeout(() => {
                 if (overrideTag) {
                     overrideTag.rel = 'stylesheet';
