@@ -1,16 +1,16 @@
 @if (quizParticipation.quizQuestions && quizParticipation.quizQuestions.length > 0) {
-    <div class="container">
+    <div class="quiz-container">
         @if (showMissingResultsNotice) {
             <div class="alert alert-info mb-2">
                 {{ 'artemisApp.exam.examSummary.missingResultNotice' | artemisTranslate }}
             </div>
         }
         @for (question of quizParticipation.quizQuestions!; track question; let i = $index) {
-            <div>
-                <!-- TODO: Map vs Array consistency -->
+            <div class="quiz-content">
                 @if (question.type === MULTIPLE_CHOICE) {
                     <jhi-multiple-choice-question
                         id="question{{ i }}"
+                        class="quiz-question"
                         [question]="question"
                         [selectedAnswerOptions]="selectedAnswerOptions.get(question.id!)!"
                         [clickDisabled]="true"
@@ -22,10 +22,10 @@
                         [score]="getScoreForQuizQuestion(question.id!)"
                     />
                 }
-                <!-- TODO: Map vs Array consistency -->
                 @if (question.type === DRAG_AND_DROP) {
                     <jhi-drag-and-drop-question
                         id="question{{ i }}"
+                        class="quiz-question"
                         [question]="question"
                         [mappings]="dragAndDropMappings.get(question.id!)!"
                         [clickDisabled]="true"
@@ -35,10 +35,10 @@
                         [score]="getScoreForQuizQuestion(question.id!)"
                     />
                 }
-                <!-- TODO: Map vs Array consistency -->
                 @if (question.type === SHORT_ANSWER) {
                     <jhi-short-answer-question
                         id="question{{ i }}"
+                        class="quiz-question"
                         [question]="question"
                         [submittedTexts]="shortAnswerSubmittedTexts.get(question.id!)!"
                         [clickDisabled]="true"
