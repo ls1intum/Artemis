@@ -110,14 +110,6 @@ test.describe('Exam participation', () => {
                 // await
                 await examNavigation.openFromOverviewByTitle(exercise.title!);
                 await examNavigation.openOverview();
-
-                // Skip programming exercise this time to save execution time
-                // (we also need to use the navigation bar here, since programming  exercises do not have a "Save and continue" button)
-
-                if (exercise.type != ExerciseType.PROGRAMMING) {
-                    // await examNavigation.openExerciseFromOverviewPageByTitle(exercise.title!)
-                    // await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
-                }
             }
             await examParticipation.handInEarly();
 
