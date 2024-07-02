@@ -327,6 +327,20 @@ public class TutorialGroupService {
 
         // === Step 1: Try to find all tutorial groups with the mentioned title. Create them if they do not exist yet ===
         Set<TutorialGroupRegistrationImportDTO> registrationsWithTitle = filterOutWithoutTitle(registrations, failedRegistrations);
+        // Add registrations to failedRegistrations if the tutorial group already exists
+        var titlesMentionedInRegistrations = registrations.stream().map(TutorialGroupRegistrationImportDTO::title).filter(Objects::nonNull).map(String::trim)
+                .collect(Collectors.toSet());
+
+        var foundTutorialGroups = tutorialGroupRepository.findAllByCourseId(course.getId()).stream()
+                .filter(tutorialGroup -> titlesMentionedInRegistrations.contains(tutorialGroup.getTitle())).collect(Collectors.toSet());
+
+        registrationsWithTitle.forEach(registration -> {
+            if (foundTutorialGroups.stream().anyMatch(tutorialGroup -> tutorialGroup.getTitle().equals(registration.title().trim()))) {
+                if (registration.student() != null && !StringUtils.hasText(registration.student().registrationNumber()) && !StringUtils.hasText(registration.student().login())) {
+                    failedRegistrations.add(registration);
+                }
+            }
+        });
         Map<String, TutorialGroup> tutorialGroupTitleToTutorialGroup = findOrCreateTutorialGroups(course, registrationsWithTitle).stream()
                 .collect(Collectors.toMap(TutorialGroup::getTitle, Function.identity()));
 
@@ -416,6 +430,26 @@ public class TutorialGroupService {
                     tutorialGroup.setTeachingAssistant(requestingUser);
                     tutorialGroup.setIsOnline(false);
                     tutorialGroup.setCampus("Campus");
+
+                    // Set additional fields from registrations
+                    Optional<TutorialGroupRegistrationImportDTO> registrationOpt = registrations.stream().filter(r -> title.equals(r.title())).findFirst();
+                    registrationOpt.ifPresent(registration -> {
+                        if (registration.campus() != null && !registration.campus().isEmpty()) {
+                            tutorialGroup.setCampus(registration.campus());
+                        }
+                        if (registration.capacity() != null) {
+                            tutorialGroup.setCapacity(registration.capacity());
+                        }
+                        if (registration.language() != null && !registration.language().isEmpty()) {
+                            tutorialGroup.setLanguage(registration.language());
+                        }
+                        if (registration.additionalInformation() != null && !registration.additionalInformation().isEmpty()) {
+                            tutorialGroup.setAdditionalInformation(registration.additionalInformation());
+                        }
+                        if (registration.isOnline() != null) {
+                            tutorialGroup.setIsOnline(registration.isOnline());
+                        }
+                    });
                     return tutorialGroup;
                 }).collect(Collectors.toSet());
 
@@ -709,12 +743,12 @@ public class TutorialGroupService {
             writeTutorialGroupJSON(groupData, tutorialGroup, selectedFields);
             if (selectedFields.contains("Students")) {
                 if ((tutorialGroup.getRegistrations() != null) && (!tutorialGroup.getRegistrations().isEmpty())) {
+                    List<Map<String, Object>> studentsList = new ArrayList<>();
                     for (TutorialGroupRegistration registration : tutorialGroup.getRegistrations()) {
                         User student = registration.getStudent();
-                        groupData.put("Students",
-                                groupData.get("Students") != null ? groupData.get("Students") + convertStudentToString(student) : convertStudentToString(student));
+                        studentsList.add(convertStudentToMap(student));
                     }
-                    groupData.put("Students", groupData.get("Students").toString().substring(0, groupData.get("Students").toString().length() - 1));
+                    groupData.put("Students", studentsList);
                 }
             }
             exportData.add(groupData);
@@ -724,10 +758,18 @@ public class TutorialGroupService {
         return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(exportData);
     }
 
-    private void writeTutorialGroupJSON(Map<String, Object> groupData, TutorialGroup tutorialGroup, List<String> selectedFields) throws JsonProcessingException {
+    private void writeTutorialGroupJSON(Map<String, Object> groupData, TutorialGroup tutorialGroup, List<String> selectedFields) {
         for (String field : selectedFields) {
             groupData.put(field, getCSVInput(tutorialGroup, field));
         }
+    }
+
+    private Map<String, Object> convertStudentToMap(User student) {
+        Map<String, Object> studentMap = new LinkedHashMap<>();
+        studentMap.put("RegistrationNumber", getValueOrDefault(student.getRegistrationNumber()));
+        studentMap.put("FirstName", getValueOrDefault(student.getFirstName()));
+        studentMap.put("LastName", getValueOrDefault(student.getLastName()));
+        return studentMap;
     }
 
     private String getValueOrDefault(Object value) {
@@ -829,16 +871,5 @@ public class TutorialGroupService {
             }
         }
         return students;
-    }
-
-    private String convertStudentToString(User student) {
-        StringBuilder studentString = new StringBuilder();
-        studentString.append(student.getRegistrationNumber());
-        studentString.append(" ");
-        studentString.append(student.getFirstName());
-        studentString.append(" ");
-        studentString.append(student.getLastName());
-        studentString.append(",");
-        return studentString.toString();
     }
 }

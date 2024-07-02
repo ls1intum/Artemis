@@ -6,19 +6,25 @@
             "importButton": "Import Tutorial Groups",
             "dialogTitle": "Import Tutorial Group Registrations",
             "explanations": {
-                "description": "This dialog allows you to import tutorial groups and student registrations from a CSV file. If a tutorial group does not exist, it will be created. If students are listed in the CSV then they will be moved from their current tutorial group to the new one specified in the CSV file.",
+                "description": "This dialog allows you to import tutorial groups and student registrations from a CSV file. If a tutorial group does not exist, it will be created. If students are listed in the CSV then they will be moved from their current tutorial group to the new one specified in the CSV file. If a tutorial group exists but does not add any students to it, then it will not be imported.",
                 "requirements": "The top row of the CSV file must specify the headers. Each row must include a title for the tutorial group. To register students, each row must additionally include either the matriculation number or the login of the student. First and last names are optional."
             },
             "supportedHeaderNames": {
                 "label": "Supported header names (versions with spaces, underscores, hyphens and uppercase letters are also supported): ",
+                "format": "The bullet points below show the header names that the system can recognize (left side) and how they will be interpreted after parsing the CSV file (right side).",
                 "alwaysRequired": "One of these Header is always required to identify the tutorial group: ",
                 "requiredIfStudentRegistration": "One of these is required as Header if you want to identify and register students:",
                 "alwaysOptional": "Optional Headers (just for display purposes): ",
-                "tutorialGroupTitle": "gruppe, titel, group, title -> After parsing the CSV this will be saved as a Header named Tutorial Group",
-                "registrationNumber": "registrationnumber, matriculationnumber, matrikelnummer, number -> After parsing the CSV this will be saved as a header named Matriculation Number",
-                "login": "login, user, username, benutzer, benutzername -> After parsing the CSV this will be saved as a header named Login",
-                "firstName": "firstname, firstnameofstudent, givenname, forename, vorname -> After parsing the CSV this will be saved as a header named First Name",
-                "lastName": "familyname, lastname, familynameofstudent, surname, nachname, familienname, name -> After parsing the CSV this will be saved as a header named Last Name"
+                "tutorialGroupTitle": "Tutorial Group, gruppe, titel, group, title, tutorial group -> Tutorial Group",
+                "registrationNumber": "Matriculation Number, Matrikelnummer, registrationnumber, matriculationnumber, matrikelnummer, number -> Matriculation Number",
+                "login": "Login, Anmeldename, login, user, username, benutzer, benutzername -> Login",
+                "firstName": "First Name, Vorname, firstname, firstnameofstudent, givenname, forename, vorname -> First Name",
+                "lastName": "Last Name, Nachname, familyname, lastname, familynameofstudent, surname, nachname, familienname, name -> Last Name",
+                "campus": "Campus, campus -> Campus",
+                "language": "Language, Sprache, language -> Language",
+                "additionalInformation": "Additional Information, additionalinformation -> Additional Information",
+                "capacity": "Capacity, capacity -> Capacity",
+                "isOnline": "is Online, ist Online, isonline -> Is Online"
             },
             "errorMessages": {
                 "genericErrorMessage": "Import of tutorial groups failed!",
@@ -59,6 +65,7 @@
                 "example1": "This example CSV format shows the minimum required headers to parse a CSV:",
                 "example2": "This example CSV format shows the headers required to register students with a registration number, with First Name and Last Name being optional:",
                 "example3": "This example CSV format shows the headers required to register students with a login, with First Name and Last Name being optional:",
+                "example4": "This example CSV format shows the optional headers in addition to the headers which allow student import that can be added (it is not necessary to have all optional headers in order to import one optional header):",
                 "template": "Download Example",
                 "showNotImportedButton": "Not imported registrations",
                 "showImportedButton": "Imported registrations",
@@ -71,6 +78,11 @@
                     "login": "Login",
                     "firstName": "First Name",
                     "lastName": "Last Name",
+                    "campus": "Campus",
+                    "language": "Language",
+                    "additionalInformation": "Additional Information",
+                    "capacity": "Capacity",
+                    "isOnline": "is Online",
                     "error": "Error"
                 },
                 "footer": {
