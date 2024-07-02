@@ -128,6 +128,8 @@ export class ProgrammingExercise extends Exercise {
      */
     public noVersionControlAndContinuousIntegrationAvailable?: boolean;
 
+    public allowedSelfLearningFeedbackAttempts?: number;
+
     constructor(course: Course | undefined, exerciseGroup: ExerciseGroup | undefined) {
         super(ExerciseType.PROGRAMMING);
         this.course = course;
