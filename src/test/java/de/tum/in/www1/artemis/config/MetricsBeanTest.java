@@ -351,7 +351,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
                 users.get(0).getLogin());
 
         // We have to first refresh the active users and then the metrics to ensure the data is updated correctly
-        metricsBean.calculateCachedActiveUserNames();
+        metricsBean.calculateActiveUserMetrics();
         metricsBean.recalculateMetrics();
 
         // Should now have one active user
@@ -366,7 +366,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
                 users.get(1).getLogin());
 
         // We have to first refresh the active users and then the metrics to ensure the data is updated correctly
-        metricsBean.calculateCachedActiveUserNames();
+        metricsBean.calculateActiveUserMetrics();
         metricsBean.recalculateMetrics();
 
         // Should now have two active users
