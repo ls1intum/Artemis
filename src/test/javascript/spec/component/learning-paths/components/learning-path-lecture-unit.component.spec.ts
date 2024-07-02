@@ -26,7 +26,15 @@ describe('LearningPathLectureUnitComponent', () => {
     let getLectureUnitByIdSpy: jest.SpyInstance;
 
     const learningPathId = 1;
-    const lectureUnit = new VideoUnit();
+    const lectureUnit: VideoUnit = {
+        id: 1,
+        description: 'Example video unit',
+        name: 'Example video',
+        lecture: { id: 2 },
+        completed: false,
+        visibleToStudents: true,
+        source: 'https://www.youtube.com/embed/8iU8LPEa4o0',
+    };
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -63,11 +71,6 @@ describe('LearningPathLectureUnitComponent', () => {
         getLectureUnitByIdSpy = jest.spyOn(lectureUnitService, 'getLectureUnitById').mockReturnValue(of(lectureUnit));
         lectureUnitService = TestBed.inject(LectureUnitService);
 
-        lectureUnit.id = 1;
-        lectureUnit.description = 'Example video unit';
-        lectureUnit.name = 'Example video';
-        lectureUnit.lecture = { id: 2 };
-
         fixture = TestBed.createComponent(LearningPathLectureUnitComponent);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('lectureUnitId', learningPathId);
@@ -84,6 +87,7 @@ describe('LearningPathLectureUnitComponent', () => {
 
     it('should get lecture unit', async () => {
         const getLectureUnitSpy = jest.spyOn(component, 'getLectureUnit');
+
         fixture.detectChanges();
         await fixture.whenStable();
         fixture.detectChanges();
