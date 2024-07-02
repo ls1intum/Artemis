@@ -1,122 +1,101 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-unit.component';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
-import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ScienceService } from 'app/shared/science/science.service';
+import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-unit.component';
+import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { TranslateService } from '@ngx-translate/core';
+import { By } from '@angular/platform-browser';
 import { MockScienceService } from '../../../helpers/mocks/service/mock-science-service';
-import { ScienceEventType } from 'app/shared/science/science.model';
 
-describe('TextUnitFormComponent', () => {
-    const exampleName = 'Test';
-    const exampleMarkdown = '# Sample Markdown';
-    const exampleHTML = '<h3 id="samplemarkdown">Sample Markdown</h3>';
-    let textUnitComponentFixture: ComponentFixture<TextUnitComponent>;
-    let textUnitComponent: TextUnitComponent;
-    let textUnit: TextUnit;
+describe('TextUnitComponent', () => {
     let scienceService: ScienceService;
-    let logEventStub: jest.SpyInstance;
 
-    beforeEach(() => {
-        textUnit = new TextUnit();
-        textUnit.id = 1;
-        textUnit.name = exampleName;
-        textUnit.content = exampleMarkdown;
+    let component: TextUnitComponent;
+    let fixture: ComponentFixture<TextUnitComponent>;
 
-        TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip), MockDirective(NgbCollapse)],
-            declarations: [TextUnitComponent, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
-            providers: [{ provide: ScienceService, useClass: MockScienceService }],
-        })
-            .compileComponents()
-            .then(() => {
-                textUnitComponentFixture = TestBed.createComponent(TextUnitComponent);
-                textUnitComponent = textUnitComponentFixture.componentInstance;
-                textUnitComponent.textUnit = textUnit;
-                scienceService = TestBed.inject(ScienceService);
-                logEventStub = jest.spyOn(scienceService, 'logEvent');
-            });
+    let writeStub = jest.SpyInstance;
+    let closeStub = jest.SpyInstance;
+    let focusStub = jest.SpyInstance;
+    let openStub = jest.SpyInstance;
+
+    const textUnit: TextUnit = {
+        id: 1,
+        name: 'Test Text Unit',
+        content: '# Sample Markdown',
+        completed: false,
+        visibleToStudents: true,
+    };
+
+    const exampleHtml = '<h3 id="samplemarkdown">Sample Markdown</h3>';
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [TextUnitComponent],
+            providers: [
+                provideHttpClient(),
+                {
+                    provide: TranslateService,
+                    useClass: MockTranslateService,
+                },
+                { provide: ScienceService, useClass: MockScienceService },
+            ],
+        }).compileComponents();
+
+        scienceService = TestBed.inject(ScienceService);
+
+        writeStub = jest.spyOn(window.document, 'write').mockImplementation();
+        closeStub = jest.spyOn(window.document, 'close').mockImplementation();
+        focusStub = jest.spyOn(window, 'focus').mockImplementation();
+        openStub = jest.spyOn(window, 'open').mockReturnValue(window);
+
+        fixture = TestBed.createComponent(TextUnitComponent);
+        component = fixture.componentInstance;
+
+        fixture.componentRef.setInput('lectureUnit', textUnit);
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
     });
 
-    it('should convert markdown to html and display it', fakeAsync(() => {
-        textUnitComponentFixture.detectChanges();
-        textUnitComponentFixture.whenStable().then(() => {
-            expect((textUnitComponent.formattedContent as any)?.changingThisBreaksApplicationSecurity).toEqual(exampleHTML);
-            const markdown = textUnitComponentFixture.debugElement.nativeElement.querySelector('.markdown-preview');
-            expect(markdown).not.toBeNull();
-            expect(markdown.innerHTML).toEqual(exampleHTML);
-        });
-    }));
+    it('should initialize', () => {
+        expect(component).toBeTruthy();
+    });
 
-    it('should collapse unit when header clicked', fakeAsync(() => {
-        textUnitComponentFixture.detectChanges();
-        expect(textUnitComponent.isCollapsed).toBeTrue();
-        const handleCollapseSpy = jest.spyOn(textUnitComponent, 'handleCollapse');
+    it('should convert markdown to html', () => {
+        fixture.detectChanges();
+        const lectureUnitToggleButton = fixture.debugElement.query(By.css('#lecture-unit-toggle-button'));
+        lectureUnitToggleButton.nativeElement.click();
 
-        const header = textUnitComponentFixture.debugElement.nativeElement.querySelector('.unit-card-header');
-        expect(header).not.toBeNull();
-        header.click();
-        tick(500);
+        fixture.detectChanges();
 
-        textUnitComponentFixture.whenStable().then(() => {
-            expect(handleCollapseSpy).toHaveBeenCalledOnce();
-            expect(textUnitComponent.isCollapsed).toBeFalse();
-        });
-    }));
+        const markdown = fixture.debugElement.query(By.css('.markdown-preview'));
+        expect(markdown).not.toBeNull();
+        expect(markdown.nativeElement.innerHTML).toEqual(exampleHtml);
+    });
 
-    it('should display html in a new window when popup button is clicked', fakeAsync(() => {
+    it('should display html in new window on isolatedView click', () => {
         const innerHtmlCopy = window.document.body.innerHTML;
 
-        const writeStub = jest.spyOn(window.document, 'write').mockImplementation();
-        const closeStub = jest.spyOn(window.document, 'close').mockImplementation();
-        const focusStub = jest.spyOn(window, 'focus').mockImplementation();
-        const openStub = jest.spyOn(window, 'open').mockReturnValue(window);
+        fixture.detectChanges();
 
-        textUnitComponentFixture.detectChanges();
-        const popButton = textUnitComponentFixture.debugElement.nativeElement.querySelector('#popupButton');
-        popButton.click();
-        expect(textUnitComponent).not.toBeNull();
+        const isolatedViewButton = fixture.debugElement.query(By.css('#view-isolated-button'));
+        isolatedViewButton.nativeElement.click();
+
+        fixture.detectChanges();
+
         expect(openStub).toHaveBeenCalledOnce();
         expect(writeStub).toHaveBeenCalledTimes(4);
         expect(closeStub).toHaveBeenCalledOnce();
         expect(focusStub).toHaveBeenCalledOnce();
-        expect(window.document.body.innerHTML).toEqual(exampleHTML);
+        expect(window.document.body.innerHTML).toEqual(exampleHtml);
         window.document.body.innerHTML = innerHtmlCopy;
-    }));
+    });
 
-    it('should call completion callback when expanded', () => {
-        return new Promise<void>((done) => {
-            textUnitComponent.onCompletion.subscribe((event) => {
-                expect(event.lectureUnit).toEqual(textUnit);
-                expect(event.completed).toBeTrue();
-                done();
-            });
-            textUnitComponent.handleCollapse(new Event('click'));
-        });
-    }, 1000);
-
-    it('should call completion callback when clicked', () => {
-        return new Promise<void>((done) => {
-            textUnitComponent.onCompletion.subscribe((event) => {
-                expect(event.lectureUnit).toEqual(textUnit);
-                expect(event.completed).toBeFalse();
-                done();
-            });
-            textUnitComponent.handleClick(new Event('click'), false);
-        });
-    }, 1000);
-
-    it('should log event on open', () => {
-        textUnitComponent.isCollapsed = true;
-        textUnitComponentFixture.detectChanges(); // ngInit
-        textUnitComponent.handleCollapse(new Event('click'));
-        expect(logEventStub).toHaveBeenCalledExactlyOnceWith(ScienceEventType.LECTURE__OPEN_UNIT, textUnit.id!);
+    it('should log event on isolated view', () => {
+        const logEventSpy = jest.spyOn(scienceService, 'logEvent');
+        component.handleIsolatedView();
+        expect(logEventSpy).toHaveBeenCalledOnce();
     });
 });

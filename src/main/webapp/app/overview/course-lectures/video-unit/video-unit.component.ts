@@ -1,6 +1,5 @@
-import { Component, computed, output } from '@angular/core';
+import { Component, computed } from '@angular/core';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
-import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
 import urlParser from 'js-video-url-parser';
 import { faVideo } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
@@ -15,8 +14,6 @@ import { LectureUnitComponent } from 'app/overview/course-lectures/lecture-unit/
 })
 export class VideoUnitComponent extends LectureUnitDirective<VideoUnit> {
     protected readonly faVideo = faVideo;
-
-    readonly onCompletion = output<LectureUnitCompletionEvent>();
 
     // List of regexes that should not be blocked by js-video-url-parser
     private readonly videoUrlAllowList = [
@@ -35,7 +32,8 @@ export class VideoUnitComponent extends LectureUnitDirective<VideoUnit> {
         return undefined;
     });
 
-    handleCollapse(isCollapsed: boolean) {
+    toggleCollapse(isCollapsed: boolean) {
+        super.toggleCollapse(isCollapsed);
         if (!isCollapsed) {
             // log event
             this.logEvent();
@@ -50,9 +48,5 @@ export class VideoUnitComponent extends LectureUnitDirective<VideoUnit> {
         } else {
             clearTimeout(this.completionTimeout);
         }
-    }
-
-    handleCompletion(completed: boolean) {
-        this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed });
     }
 }

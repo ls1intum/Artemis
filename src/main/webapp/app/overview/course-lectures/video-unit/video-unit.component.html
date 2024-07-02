@@ -3,8 +3,8 @@
     [icon]="faVideo"
     [showViewIsolatedButton]="false"
     [isPresentationMode]="isPresentationMode()"
-    (onCompletion)="handleCompletion($event)"
-    (onCollapse)="handleCollapse($event)"
+    (onCompletion)="toggleCompletion($event)"
+    (onCollapse)="toggleCollapse($event)"
 >
     <div class="ratio ratio-16x9">
         <iframe id="videoFrame" class="rounded" [src]="videoUrl() | safeResourceUrl" allow="fullscreen"></iframe>

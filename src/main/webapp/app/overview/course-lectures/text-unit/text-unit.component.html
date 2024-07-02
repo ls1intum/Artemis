@@ -8,8 +8,6 @@
     (onShowIsolated)="handleIsolatedView()"
 >
     @if (formattedContent()) {
-        <div>
-            <div class="markdown-preview" id="printContent" [innerHtml]="formattedContent()"></div>
-        </div>
+        <div class="markdown-preview" id="printContent" [innerHtml]="formattedContent()"></div>
     }
 </jhi-lecture-unit-card>

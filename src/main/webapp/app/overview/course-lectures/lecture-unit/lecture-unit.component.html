@@ -1,5 +1,5 @@
 <div class="lecture-unit-card col clickable">
-    <div class="lecture-unit-header row px-4 m-0" (click)="toggleCollapse()">
+    <div class="lecture-unit-header row px-4 m-0" id="lecture-unit-toggle-button" (click)="toggleCollapse()">
         <div class="d-flex p-0 justify-content-between align-items-center">
             <div class="d-flex">
                 <fa-icon class="me-3" size="lg" [icon]="icon()" />
@@ -14,13 +14,14 @@
             </div>
             <div class="d-flex align-items-center">
                 @if (showViewIsolatedButton()) {
-                    <button id="popupButton" class="btn btn-sm btn-primary" (click)="handleIsolatedView($event)">
+                    <button id="view-isolated-button" class="btn btn-sm btn-primary" (click)="handleIsolatedView($event)">
                         <fa-icon [icon]="viewIsolatedButtonIcon()" />
                         <span class="d-none d-md-inline" [jhiTranslate]="viewIsolatedButtonLabel()"></span>
                     </button>
                 }
                 @if (this.lectureUnit().completed !== undefined && !isPresentationMode() && isVisibleToStudents()) {
                     <fa-icon
+                        id="completed-checkbox"
                         class="ms-3"
                         [ngClass]="{ 'text-body-secondary': !this.lectureUnit().completed, 'text-success': this.lectureUnit().completed }"
                         size="lg"
@@ -32,8 +33,8 @@
             </div>
         </div>
     </div>
-    @if (isCollapsed()) {
-        <div class="lecture-unit-body px-4 py-2">
+    @if (!isCollapsed()) {
+        <div id="lecture-unit-body" class="lecture-unit-body px-4 py-2">
             <ng-content />
         </div>
     }

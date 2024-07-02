@@ -38,9 +38,8 @@ export class AttachmentUnitComponent extends LectureUnitDirective<AttachmentUnit
         if (this.lectureUnit().attachment?.link) {
             const link = this.lectureUnit().attachment!.link!;
             return link.substring(link.lastIndexOf('/') + 1);
-        } else {
-            return '';
         }
+        return '';
     }
 
     handleDownload() {

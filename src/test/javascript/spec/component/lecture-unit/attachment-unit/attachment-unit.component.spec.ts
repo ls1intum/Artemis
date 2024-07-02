@@ -1,58 +1,60 @@
-import dayjs from 'dayjs/esm';
-
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
-import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
-import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { FileService } from 'app/shared/http/file.service';
-import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { faFile, faFileCsv, faFileImage, faFilePdf } from '@fortawesome/free-solid-svg-icons';
-import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
+import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentType } from 'app/entities/attachment.model';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs';
+import { By } from '@angular/platform-browser';
+import { MockProvider } from 'ng-mocks';
+import { provideHttpClient } from '@angular/common/http';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ScienceService } from 'app/shared/science/science.service';
 import { MockScienceService } from '../../../helpers/mocks/service/mock-science-service';
-import { ScienceEventType } from 'app/shared/science/science.model';
+import { IconDefinition, faFile, faFileCsv, faFileImage, faFilePdf } from '@fortawesome/free-solid-svg-icons';
 
 describe('AttachmentUnitComponent', () => {
-    let attachmentUnit: AttachmentUnit;
-    let attachment: Attachment;
-
-    let attachmentUnitComponentFixture: ComponentFixture<AttachmentUnitComponent>;
-    let attachmentUnitComponent: AttachmentUnitComponent;
     let scienceService: ScienceService;
-    let logEventStub: jest.SpyInstance;
+    let fileService: FileService;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip), MockDirective(NgbCollapse)],
-            declarations: [AttachmentUnitComponent, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
-            providers: [MockProvider(FileService), { provide: ScienceService, useClass: MockScienceService }],
-        })
-            .compileComponents()
-            .then(() => {
-                attachmentUnitComponentFixture = TestBed.createComponent(AttachmentUnitComponent);
-                attachmentUnitComponent = attachmentUnitComponentFixture.componentInstance;
-                scienceService = TestBed.inject(ScienceService);
-                logEventStub = jest.spyOn(scienceService, 'logEvent');
+    let component: AttachmentUnitComponent;
+    let fixture: ComponentFixture<AttachmentUnitComponent>;
 
-                attachment = new Attachment();
-                attachment.id = 1;
-                attachment.version = 1;
-                attachment.attachmentType = AttachmentType.FILE;
-                attachment.releaseDate = dayjs().year(2010).month(3).date(5);
-                attachment.uploadDate = dayjs().year(2010).month(3).date(5);
-                attachment.name = 'test';
-                attachment.link = '/path/to/file/test.pdf';
+    const attachmentUnit: AttachmentUnit = {
+        id: 1,
+        description: 'lorem ipsum',
+        attachment: {
+            id: 1,
+            version: 1,
+            attachmentType: AttachmentType.FILE,
+            releaseDate: dayjs().year(2010).month(3).date(5),
+            uploadDate: dayjs().year(2010).month(3).date(5),
+            name: 'test',
+            link: '/path/to/file/test.pdf',
+        },
+    };
 
-                attachmentUnit = new AttachmentUnit();
-                attachmentUnit.id = 1;
-                attachmentUnit.description = 'lorem ipsum';
-                attachmentUnit.attachment = attachment;
-                attachmentUnitComponent.attachmentUnit = attachmentUnit;
-            });
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [AttachmentUnitComponent],
+            providers: [
+                provideHttpClient(),
+                {
+                    provide: TranslateService,
+                    useClass: MockTranslateService,
+                },
+                MockProvider(FileService),
+                { provide: ScienceService, useClass: MockScienceService },
+            ],
+        }).compileComponents();
+
+        scienceService = TestBed.inject(ScienceService);
+        fileService = TestBed.inject(FileService);
+
+        fixture = TestBed.createComponent(AttachmentUnitComponent);
+        component = fixture.componentInstance;
+
+        fixture.componentRef.setInput('lectureUnit', attachmentUnit);
     });
 
     afterEach(() => {
@@ -60,21 +62,24 @@ describe('AttachmentUnitComponent', () => {
     });
 
     it('should initialize', () => {
-        attachmentUnitComponentFixture.detectChanges();
-        attachment.link = '/path/to/file/test.jpg';
-        attachmentUnitComponentFixture.detectChanges();
-        attachment.link = '/path/to/file/test.svg';
-        attachmentUnitComponentFixture.detectChanges();
-        attachment.link = '/path/to/file/test.zip';
-        attachmentUnitComponentFixture.detectChanges();
-        attachment.link = '/path/to/file/test.something';
-        expect(attachmentUnitComponent).not.toBeNull();
+        expect(component).toBeTruthy();
     });
 
-    it('should calculate correct fileName', () => {
-        const getFileNameSpy = jest.spyOn(attachmentUnitComponent, 'getFileName');
-        attachmentUnitComponentFixture.detectChanges();
+    it('should get file name', () => {
+        const getFileNameSpy = jest.spyOn(component, 'getFileName');
+        fixture.detectChanges();
         expect(getFileNameSpy).toHaveReturnedWith('test.pdf');
+    });
+
+    it('should handle download', () => {
+        const downloadFileSpy = jest.spyOn(fileService, 'downloadFile');
+        const onCompletionEmitSpy = jest.spyOn(component.onCompletion, 'emit');
+
+        fixture.detectChanges();
+        component.handleDownload();
+
+        expect(downloadFileSpy).toHaveBeenCalledOnce();
+        expect(onCompletionEmitSpy).toHaveBeenCalledOnce();
     });
 
     it.each([
@@ -82,49 +87,38 @@ describe('AttachmentUnitComponent', () => {
         ['csv', faFileCsv],
         ['png', faFileImage],
         ['exotic', faFile],
-    ])('should use correct icon for extension', (extension: string, icon: IconDefinition) => {
-        const getAttachmentIconSpy = jest.spyOn(attachmentUnitComponent, 'getAttachmentIcon');
-        attachmentUnitComponent.attachmentUnit!.attachment!.link = `/path/to/file/test.${extension}`;
-        attachmentUnitComponentFixture.detectChanges();
+    ])('should use correct icon for extension', async (extension: string, icon: IconDefinition) => {
+        const getAttachmentIconSpy = jest.spyOn(component, 'getAttachmentIcon');
+        component.lectureUnit().attachment!.link = `/path/to/file/test.${extension}`;
+        fixture.detectChanges();
+
         expect(getAttachmentIconSpy).toHaveReturnedWith(icon);
     });
 
     it('should download attachment when clicked', () => {
-        const fileService = TestBed.inject(FileService);
-        const downloadFileStub = jest.spyOn(fileService, 'downloadFile');
-        const downloadButton = attachmentUnitComponentFixture.debugElement.nativeElement.querySelector('#downloadButton');
-        expect(downloadButton).not.toBeNull();
-        downloadButton.click();
-        expect(downloadFileStub).toHaveBeenCalledOnce();
+        const downloadFileSpy = jest.spyOn(fileService, 'downloadFile');
+
+        fixture.detectChanges();
+
+        const viewIsolatedButton = fixture.debugElement.query(By.css('#view-isolated-button'));
+        viewIsolatedButton.nativeElement.click();
+
+        fixture.detectChanges();
+        expect(downloadFileSpy).toHaveBeenCalledOnce();
     });
 
     it('should call completion callback when downloaded', () => {
-        return new Promise<void>((done) => {
-            attachmentUnitComponent.onCompletion.subscribe((event) => {
-                expect(event.lectureUnit).toEqual(attachmentUnit);
-                expect(event.completed).toBeTrue();
-                done();
-            });
-            const stopPropagation = jest.fn();
-            attachmentUnitComponent.downloadAttachment({ stopPropagation } as any as Event);
-            expect(stopPropagation).toHaveBeenCalledOnce();
-        });
-    }, 1000);
+        const scienceLogSpy = jest.spyOn(scienceService, 'logEvent');
+        component.handleDownload();
 
-    it('should call completion callback when clicked', () => {
-        return new Promise<void>((done) => {
-            attachmentUnitComponent.onCompletion.subscribe((event) => {
-                expect(event.lectureUnit).toEqual(attachmentUnit);
-                expect(event.completed).toBeFalse();
-                done();
-            });
-            attachmentUnitComponent.handleClick(new Event('click'), false);
-        });
-    }, 1000);
+        expect(scienceLogSpy).toHaveBeenCalledOnce();
+    });
 
-    it('should log event on download', () => {
-        attachmentUnitComponentFixture.detectChanges(); // ngInit
-        attachmentUnitComponent.downloadAttachment(new Event('click'));
-        expect(logEventStub).toHaveBeenCalledExactlyOnceWith(ScienceEventType.LECTURE__OPEN_UNIT, attachmentUnit.id!);
+    it('should toggle completion', () => {
+        const onCompletionEmitSpy = jest.spyOn(component.onCompletion, 'emit');
+
+        component.handleDownload();
+
+        expect(onCompletionEmitSpy).toHaveBeenCalledOnce();
     });
 });

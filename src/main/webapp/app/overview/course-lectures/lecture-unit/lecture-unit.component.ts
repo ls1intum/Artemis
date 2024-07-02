@@ -19,12 +19,12 @@ export class LectureUnitComponent {
     readonly lectureUnit = input.required<LectureUnit>();
     protected readonly icon = input.required<IconDefinition>();
 
-    readonly showViewIsolatedButton = input<boolean>();
+    readonly showViewIsolatedButton = input<boolean>(false);
     readonly viewIsolatedButtonLabel = input<string>('artemisApp.textUnit.isolated');
     readonly viewIsolatedButtonIcon = input<IconDefinition>(faExternalLinkAlt);
     readonly onShowIsolated = output<void>();
 
-    readonly isCollapsed = signal<boolean>(false);
+    readonly isCollapsed = signal<boolean>(true);
     readonly onCollapse = output<boolean>();
 
     readonly isPresentationMode = input.required<boolean>();
