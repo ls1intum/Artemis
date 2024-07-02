@@ -20,7 +20,6 @@ describe('OnlineUnitComponent', () => {
     const onlineUnit: OnlineUnit = {
         id: 1,
         name: 'Test Online Unit',
-        content: 'Test content',
         completed: true,
         visibleToStudents: true,
         source: 'https://www.google.com',
