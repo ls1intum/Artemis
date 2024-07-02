@@ -9,6 +9,12 @@ on:
       - 'src/main/java/**'
       - 'src/main/webapp/**'
 
+# Keep in sync with build.yml and test.yml and codeql-analysis.yml
+env:
+  CI: true
+  node: 20
+  java: 21
+
 jobs:
   analysis-of-endpoint-connections:
     timeout-minutes: 10
@@ -23,10 +29,27 @@ jobs:
         run: |
           git diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD > modified_files.txt
 
+      # Analyze the client sided REST-API calls
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '${{ env.node }}'
+
+      - name: Install and compile TypeScript
+        run: |
+          cd supporting_scripts/analysis-of-endpoint-connections/src/main/typeScript/
+          npm install
+          tsc -p tsconfig.analysisOfEndpointConnections.json
+
+      - name: Run analysis-of-endpoint-connections-client
+        run: |
+          node supporting_scripts/analysis-of-endpoint-connections/src/main/typeScript/AnalysisOfEndpointConnectionsClient.js $(cat modified_files.txt)
+
+      # Analyze the server sided endpoints
       - name: Set up JDK 21
         uses: actions/setup-java@v2
         with:
-          java-version: '21'
+          java-version: '${{ env.java }}'
           distribution: 'adopt'
 
       - name: Run analysis-of-endpoint-connections
