@@ -14,7 +14,6 @@ import {
     FileChange,
     FileType,
     RenameFileChange,
-    ResizeType,
 } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { CodeEditorFileBrowserComponent, InteractableEvent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
@@ -302,12 +301,6 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
 
     onToggleCollapse(event: InteractableEvent, collapsableElement: CollapsableCodeEditorElement) {
         this.grid.toggleCollapse(event, collapsableElement);
-    }
-
-    onGridResize(type: ResizeType) {
-        if (this.aceEditor && (type === ResizeType.SIDEBAR_LEFT || type === ResizeType.SIDEBAR_RIGHT || type === ResizeType.MAIN_BOTTOM)) {
-            this.aceEditor.editor.getEditor().resize();
-        }
     }
 
     /**
