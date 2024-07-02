@@ -47,7 +47,6 @@ test.describe('Exam date verification', () => {
             await login(studentOne);
             await page.goto(`/courses/${course.id}`);
             await courseOverview.openExamsTab();
-            await courseOverview.openExam(exam.title!);
             await page.waitForURL(`**/exams/${exam.id}`);
         });
 
