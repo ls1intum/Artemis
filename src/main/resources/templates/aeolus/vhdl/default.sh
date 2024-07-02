@@ -24,12 +24,10 @@ provide_environment_information () {
   fi
 }
 
-prepare_files () {
-  echo '⚙️ executing prepare_files'
+prepare_makefile () {
+  echo '⚙️ executing prepare_makefile'
   rm -f assignment/{GNUmakefile, Makefile, makefile}
-  rm -f assignment/*_tb.vhd
   cp -f tests/Makefile assignment/Makefile || exit 2
-  cp -f tests/*_tb.vhd assignment/ || exit 2
 }
 
 run_and_compile () {
@@ -63,7 +61,7 @@ main () {
   cd "${AEOLUS_INITIAL_DIRECTORY}"
   bash -c "source ${_script_name} aeolus_sourcing; provide_environment_information"
   cd "${AEOLUS_INITIAL_DIRECTORY}"
-  bash -c "source ${_script_name} aeolus_sourcing; prepare_files"
+  bash -c "source ${_script_name} aeolus_sourcing; prepare_makefile"
   cd "${AEOLUS_INITIAL_DIRECTORY}"
   bash -c "source ${_script_name} aeolus_sourcing; run_and_compile"
 }

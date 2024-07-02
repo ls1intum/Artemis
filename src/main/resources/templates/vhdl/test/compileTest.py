@@ -1,29 +1,14 @@
 from junit_xml import TestSuite, TestCase
-import re
 import subprocess
 import argparse
 
 #Export JUnit result
-def export_junit(retCode: int, stdout: str = ""):
+def export_junit(retCode: int, msg: str, testName: str = 'Compile'):
+    tc = TestCase(testName)
+
     if retCode != 0:
-        return
-
-    test_cases = []
-    pattern = re.compile(r'report (note|error): (.*)')
-
-    for line in stdout.split('\n'):
-        match = pattern.search(line)
-        if match:
-            severity, message = match.groups()
-            name = message.split(":")[0].strip()
-            if severity == 'note':
-                test_case = TestCase(name=name, message=message)
-            else:
-                test_case = TestCase(name=name)
-                test_case.add_failure_info(message)
-            test_cases.append(test_case)
-
-    ts = TestSuite("ERA Tester", test_cases)
+        tc.add_failure_info(message=msg)
+    ts = TestSuite("ERA Tester", [tc])
     with open('result.xml', 'w') as f:
         TestSuite.to_file(f, [ts], prettyprint=False)
 
@@ -49,10 +34,10 @@ try:
     res = subprocess.run(makeArgs, capture_output=True, timeout=args.timeout)
 except subprocess.TimeoutExpired:
     print("Time for make exceeded!")
+    export_junit(1, f"Time for make exceeded, timeout was set at {args.timeout} seconds.")
 except OSError:
     print("OSError ecountered!")
+    export_junit(1, "OSError ecountered - please contact us.")
 else:
     stderr = res.stderr.decode("utf-8")
-    stdout = res.stdout.decode("utf-8")
-    print(f"Make exited with return code {res.returncode}.\n---stdout---\n{stdout}\n---stderr---\n{stderr}-----------")
-    export_junit(res.returncode, stdout)
+    export_junit(res.returncode, f"Make exited with return code {res.returncode}.\n---stderr---\n{stderr}-----------")
