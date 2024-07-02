@@ -4,12 +4,12 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { MockProvider } from 'ng-mocks';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
-import { CompetencyService } from 'app/course/competencies/competency.service';
-import { Competency } from 'app/entities/competency.model';
+import { Competency, CourseCompetency, CourseCompetencyType } from 'app/entities/competency.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
+import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 
 describe('CourseCompetencyService', () => {
     let courseCompetencyService: CourseCompetencyService;
@@ -35,10 +35,13 @@ describe('CourseCompetencyService', () => {
         });
         expectedResultCompetency = {} as HttpResponse<Competency>;
 
-        courseCompetencyService = TestBed.inject(CompetencyService);
+        courseCompetencyService = TestBed.inject(CourseCompetencyService);
         httpTestingController = TestBed.inject(HttpTestingController);
 
-        defaultCompetencies = [{ id: 0, title: 'title', description: 'description' } as Competency];
+        defaultCompetencies = [
+            { id: 0, title: 'title', description: 'description', type: CourseCompetencyType.COMPETENCY } as CourseCompetency,
+            { id: 1, title: 'title2', description: 'description2', type: CourseCompetencyType.PREREQUISITE } as CourseCompetency,
+        ];
     });
 
     afterEach(() => {

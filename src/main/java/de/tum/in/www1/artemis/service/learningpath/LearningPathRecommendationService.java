@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
+import de.tum.in.www1.artemis.domain.competency.Prerequisite;
 import de.tum.in.www1.artemis.domain.competency.RelationType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
@@ -82,6 +83,8 @@ public class LearningPathRecommendationService {
      * Base utility that is used to calculate a competencies' utility with respect to the mastery level.
      */
     private static final double MASTERY_PROGRESS_UTILITY = 1;
+
+    private static final double PREREQUISITE_UTILITY = 200;
 
     /**
      * Lookup table containing the distribution of exercises by difficulty level that should be recommended.
@@ -381,6 +384,7 @@ public class LearningPathRecommendationService {
         utility += computePriorUtility(competency, state);
         utility += computeExtendsOrAssumesUtility(competency, state);
         utility += computeMasteryUtility(competency, state);
+        utility += computePrerequisiteUtility(competency);
         return utility;
     }
 
@@ -466,6 +470,16 @@ public class LearningPathRecommendationService {
      */
     private static double computeMasteryUtility(CourseCompetency competency, RecommendationState state) {
         return state.competencyMastery.get(competency.getId()) * MASTERY_PROGRESS_UTILITY;
+    }
+
+    /**
+     * Gets the utility of the competency with respect to it being a prerequisite or not.
+     *
+     * @param competency the competency for which the utility should be computed
+     * @return prerequisite utility of the competency
+     */
+    private static double computePrerequisiteUtility(CourseCompetency competency) {
+        return competency instanceof Prerequisite ? PREREQUISITE_UTILITY : 0;
     }
 
     /**
