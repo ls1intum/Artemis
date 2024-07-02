@@ -21,9 +21,9 @@
                         [ngbTooltip]="'artemisApp.metis.post.postMarkedAsAnnouncementTooltip' | artemisTranslate"
                     />
                 }
-                <!-- in the course discussion overview as well as in the preview mode during similarity check, the context (lecture, exercise, course-wide topic) is shown -->
+                <!-- in the course all-messages as well as in the preview mode during similarity check, the context (lecture, exercise, course-wide topic) is shown -->
                 <!-- not shown in course messages page -->
-                @if (!isCommunicationPage && (pageType === PageType.OVERVIEW || previewMode)) {
+                @if (showChannelReference && (pageType === PageType.OVERVIEW || previewMode)) {
                     <span class="col-auto">
                         @if (contextInformation.routerLinkComponents) {
                             <a
