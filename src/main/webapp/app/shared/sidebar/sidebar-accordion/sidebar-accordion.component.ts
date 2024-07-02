@@ -25,9 +25,8 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
     @Input() channelTypeIcon?: ChannelTypeIcons;
     @Input() collapseState: CollapseState;
 
-    //icon
-    faChevronRight = faChevronRight;
-    faFile = faFile;
+    readonly faChevronRight = faChevronRight;
+    readonly faFile = faFile;
 
     ngOnInit() {
         this.expandGroupWithSelectedItem();

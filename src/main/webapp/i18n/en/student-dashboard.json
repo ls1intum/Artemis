@@ -88,6 +88,13 @@
                 "plagiarismCases": "Plagiarism Cases",
                 "gradingSystem": "Grading System"
             },
+            "exerciseFilter": {
+                "modalTitle": "Filter Exercises",
+                "dueDateRange": "Due Date Range",
+                "achievedScore": "Achieved Score",
+                "achievablePoints": "Achievable Points",
+                "applyFilter": "Apply filter"
+            },
             "exerciseList": {
                 "filter": "Filter ({{ num }})",
                 "releaseDate": "Release Date",

@@ -1,0 +1,119 @@
+<form name="exerciseFilterForm" (ngSubmit)="applyFilter()">
+    <div class="modal-header">
+        <h4 class="modal-title">
+            <fa-icon [icon]="faFilter" />&nbsp;
+            <span jhiTranslate="artemisApp.courseOverview.exerciseFilter.modalTitle"></span>
+        </h4>
+        <button type="button" class="btn-close" (click)="closeModal()"></button>
+    </div>
+    <div class="modal-body">
+        <div class="form-group">
+            @if (selectableCategoryOptions.length || selectedCategoryOptions.length) {
+                <label for="exercise-categories-filter-selection" class="form-control-label h6" jhiTranslate="artemisApp.exercise.categories"></label>
+            }
+            @if (selectableCategoryOptions.length) {
+                <input
+                    id="exercise-categories-filter-selection"
+                    type="text"
+                    class="form-control mb-2"
+                    name="category-filter-selection"
+                    [(ngModel)]="model"
+                    [ngbTypeahead]="search"
+                    [placeholder]="'artemisApp.exercise.selectCategories' | artemisTranslate"
+                    (focus)="focus$.next($any($event).target.value)"
+                    (click)="click$.next($any($event).target.value)"
+                    #categoriesFilterSelection="ngbTypeahead"
+                    (selectItem)="onSelectItem($event)"
+                    [inputFormatter]="inputFormatter"
+                    [resultFormatter]="resultFormatter"
+                    (keydown.enter)="onSelectItem($event)"
+                />
+            }
+
+            <div class="row">
+                <div class="d-flex flex-row flex-wrap">
+                    @for (categoryFilterOption of selectedCategoryOptions; track categoryFilterOption) {
+                        <div class="p-1">
+                            <jhi-custom-exercise-category-badge
+                                [category]="categoryFilterOption.category"
+                                [displayRemoveButton]="true"
+                                [onClick]="getRemoveItemFunction(categoryFilterOption)"
+                            />
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        @if ((typeFilters?.length ?? 0) > 1) {
+            <div class="form-group">
+                <label for="exercise-type-filter-selection" class="form-control-label h6" jhiTranslate="artemisApp.ratingList.exerciseType"></label>
+                <div id="exercise-type-filter-selection">
+                    @for (typeFilter of typeFilters; track typeFilter) {
+                        <div class="form-check form-check-inline">
+                            <label>
+                                <input type="checkbox" [(ngModel)]="typeFilter.checked" [name]="typeFilter.value" />
+                                <fa-icon [icon]="typeFilter.icon" class="ms-2" />
+                                <span [jhiTranslate]="typeFilter.name" class="ms-1"></span>
+                            </label>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!--        <div class="form-group">-->
+        <!--            <label class="form-control-label h6" jhiTranslate="artemisApp.courseOverview.exerciseFilter.dueDateRange"> </label>-->
+        <!--            TODO: Implement Date Range Picker (follow up PR @FlorianGlombik)-->
+        <!--        </div>-->
+
+        @if (difficultyFilters?.length) {
+            <div class="form-group">
+                <label for="difficulty-filter-selection" class="form-control-label h6" jhiTranslate="artemisApp.exercise.difficulty"></label>
+                <div id="difficulty-filter-selection">
+                    @for (difficultyFilter of difficultyFilters; track difficultyFilter) {
+                        <div class="form-check form-check-inline">
+                            <label>
+                                <input type="checkbox" [(ngModel)]="difficultyFilter.checked" [name]="difficultyFilter.value" />
+                                <span [jhiTranslate]="difficultyFilter.name" class="ms-1"></span>
+                            </label>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (achievedScore && achievedScore.generalMin < achievedScore.generalMax) {
+            <div class="form-group">
+                <label class="form-control-label h6" for="achieved-score-range-slider" jhiTranslate="artemisApp.courseOverview.exerciseFilter.achievedScore"></label>
+                <jhi-range-slider
+                    id="achieved-score-range-slider"
+                    [generalMinValue]="achievedScore.generalMin"
+                    [generalMaxValue]="achievedScore.generalMax"
+                    [(selectedMinValue)]="achievedScore.selectedMin"
+                    [(selectedMaxValue)]="achievedScore.selectedMax"
+                    [step]="achievedScore.step"
+                    [label]="'%'"
+                />
+            </div>
+        }
+
+        @if (achievablePoints && achievablePoints.generalMin < achievablePoints.generalMax) {
+            <div class="form-group">
+                <label class="form-control-label h6" for="achieved-points-range-slider" jhiTranslate="artemisApp.courseOverview.exerciseFilter.achievablePoints"></label>
+                <jhi-range-slider
+                    id="achieved-points-range-slider"
+                    [generalMinValue]="achievablePoints.generalMin"
+                    [generalMaxValue]="achievablePoints.generalMax"
+                    [(selectedMinValue)]="achievablePoints.selectedMin"
+                    [(selectedMaxValue)]="achievablePoints.selectedMax"
+                    [step]="achievablePoints.step"
+                />
+            </div>
+        }
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeModal()" jhiTranslate="entity.action.cancel"></button>
+        <button type="button" class="btn btn-primary" (click)="applyFilter()" jhiTranslate="artemisApp.courseOverview.exerciseFilter.applyFilter"></button>
+    </div>
+</form>

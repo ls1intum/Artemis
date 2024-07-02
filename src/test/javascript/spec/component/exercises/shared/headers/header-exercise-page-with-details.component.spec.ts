@@ -67,8 +67,7 @@ describe('HeaderExercisePageWithDetails', () => {
         expect(component.icon.iconName).toBe('keyboard');
 
         // dueDate, categories, examMode should also be set if the necessary information is known
-        const category = new ExerciseCategory();
-        category.category = 'testcategory';
+        const category = new ExerciseCategory(undefined, 'testcategory');
         const categories = [category];
         exercise.categories = categories;
         exam.endDate = dayjs().subtract(1, 'day');

@@ -1,10 +1,20 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
-import { faChevronRight, faFilter, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
+import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Subscription, distinctUntilChanged } from 'rxjs';
 import { ProfileService } from '../layouts/profiles/profile.service';
 import { ChannelAccordionShowAdd, ChannelTypeIcons, CollapseState, SidebarData } from 'app/types/sidebar';
 import { SidebarEventService } from './sidebar-event.service';
+import { ExerciseFilterModalComponent } from 'app/shared/exercise-filter/exercise-filter-modal.component';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { cloneDeep } from 'lodash-es';
+import { ExerciseFilterOptions, ExerciseFilterResults } from 'app/types/exercise-filter';
+import {
+    getAchievablePointsAndAchievedScoreFilterOptions,
+    getExerciseCategoryFilterOptions,
+    getExerciseDifficultyFilterOptions,
+    getExerciseTypeFilterOptions,
+} from 'app/shared/sidebar/sidebar.helper';
 
 @Component({
     selector: 'jhi-sidebar',
@@ -36,15 +46,19 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     isProduction = true;
     isTestServer = false;
 
-    // icons
-    faMagnifyingGlass = faMagnifyingGlass;
-    faChevronRight = faChevronRight;
-    faFilter = faFilter;
+    private modalRef: NgbModalRef | null;
+
+    readonly faFilter = faFilter;
+
+    sidebarDataBeforeFiltering: SidebarData;
+
+    exerciseFilters?: ExerciseFilterOptions;
 
     constructor(
         private route: ActivatedRoute,
         private profileService: ProfileService,
         private sidebarEventService: SidebarEventService,
+        private modalService: NgbModal,
     ) {}
 
     ngOnInit(): void {
@@ -108,5 +122,52 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
             ['exam']: 'L',
         };
         return this.sidebarData.sidebarType ? size[this.sidebarData.sidebarType] : 'M';
+    }
+
+    openFilterExercisesDialog() {
+        // TODO uncollapse all groups when a filter is active
+        // TODO display a message if filter options lead to no results
+
+        this.initializeFilterOptions();
+
+        if (!this.sidebarDataBeforeFiltering) {
+            this.sidebarDataBeforeFiltering = cloneDeep(this.sidebarData);
+        }
+
+        this.modalRef = this.modalService.open(ExerciseFilterModalComponent, {
+            size: 'lg',
+            backdrop: 'static',
+            animation: true,
+        });
+
+        this.modalRef.componentInstance.sidebarData = cloneDeep(this.sidebarDataBeforeFiltering);
+        this.modalRef.componentInstance.exerciseFilters = cloneDeep(this.exerciseFilters);
+
+        this.modalRef.componentInstance.filterApplied.subscribe((exerciseFilterResults: ExerciseFilterResults) => {
+            this.sidebarData = exerciseFilterResults.filteredSidebarData!;
+            this.exerciseFilters = exerciseFilterResults.appliedExerciseFilters;
+
+            console.log('Filter applied', exerciseFilterResults);
+        });
+    }
+
+    // TODO handle course switching (reset filters when switching courses)
+
+    // TODO dont display the filter option if no filter option is reasonable
+
+    private initializeFilterOptions() {
+        if (this.exerciseFilters) {
+            return;
+        }
+
+        const scoreAndPointsFilterOptions = getAchievablePointsAndAchievedScoreFilterOptions(this.exerciseFilters, this.sidebarData);
+
+        this.exerciseFilters = {
+            categoryFilters: getExerciseCategoryFilterOptions(this.exerciseFilters, this.sidebarData),
+            exerciseTypesFilter: getExerciseTypeFilterOptions(this.exerciseFilters, this.sidebarData),
+            difficultyFilters: getExerciseDifficultyFilterOptions(this.exerciseFilters, this.sidebarData),
+            achievedScore: scoreAndPointsFilterOptions?.achievedScore,
+            achievablePoints: scoreAndPointsFilterOptions?.achievablePoints,
+        };
     }
 }
