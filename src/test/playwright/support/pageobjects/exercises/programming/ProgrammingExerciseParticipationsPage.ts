@@ -1,4 +1,5 @@
 import { Page, expect } from '@playwright/test';
+import { RepositoryPage } from './RepositoryPage';
 
 export class ProgrammingExerciseParticipationsPage {
     private readonly page: Page;
@@ -27,10 +28,13 @@ export class ProgrammingExerciseParticipationsPage {
         }
     }
 
-    async openRepositoryOnNewPage(participationId: number) {
+    async openRepositoryOnNewPage(participationId: number): Promise<RepositoryPage> {
         const participation = this.getParticipation(participationId);
         await participation.locator('.code-button').click();
+        // The link opens the repository in a new tab, so we need to wait for the new page to be created.
+        const pagePromise = this.page.context().waitForEvent('page');
         await this.page.locator('#openRepositoryButton').click();
+        return new RepositoryPage(await pagePromise);
     }
 
     async checkParticipationBuildPlan(participation: any) {

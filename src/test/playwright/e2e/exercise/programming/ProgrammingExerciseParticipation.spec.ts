@@ -196,14 +196,7 @@ test.describe('Programming exercise participation', () => {
                 }
             });
 
-            test('Instructor checks the participation', async ({
-                login,
-                navigationBar,
-                courseManagement,
-                courseManagementExercises,
-                programmingExerciseRepository,
-                programmingExerciseParticipations,
-            }) => {
+            test('Instructor checks the participation', async ({ login, navigationBar, courseManagement, courseManagementExercises, programmingExerciseParticipations }) => {
                 await login(instructor);
                 await navigationBar.openCourseManagement();
                 await courseManagement.openExercisesOfCourse(course.id!);
@@ -213,7 +206,7 @@ test.describe('Programming exercise participation', () => {
                 await programmingExerciseParticipations.checkParticipationBuildPlan(participation);
                 const studentUsernames = submissions.map(({ student }) => student.username!);
                 await programmingExerciseParticipations.checkParticipationStudents(participation.id!, studentUsernames);
-                await programmingExerciseParticipations.openRepositoryOnNewPage(participation.id!);
+                const programmingExerciseRepository = await programmingExerciseParticipations.openRepositoryOnNewPage(participation.id!);
                 await programmingExerciseRepository.openCommitHistory();
                 const commitMessage = 'Changes by Online Editor';
                 const commits: ExerciseCommit[] = submissions.map(({ submission }) => ({ message: commitMessage, result: submission.expectedResult }));
