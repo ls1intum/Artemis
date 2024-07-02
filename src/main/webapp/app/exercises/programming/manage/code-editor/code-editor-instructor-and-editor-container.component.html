@@ -17,13 +17,7 @@
     </nav>
 }
 @if (exercise) {
-    <jhi-code-editor-container
-        [participation]="selectedParticipation!"
-        [buildable]="selectedRepository !== REPOSITORY.TEST"
-        [course]="course"
-        [allowHiddenFiles]="true"
-        [useMonacoEditor]="true"
-    >
+    <jhi-code-editor-container [participation]="selectedParticipation!" [buildable]="selectedRepository !== REPOSITORY.TEST" [course]="course" [allowHiddenFiles]="true">
         <div editorTitle>
             <span>{{ exercise?.title }}</span>
             <!-- prettier-ignore -->
