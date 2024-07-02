@@ -89,7 +89,7 @@ public class BuildAgentConfiguration {
                 formatMemory(memorySwap), pidsLimit);
 
         return HostConfig.newHostConfig().withCpuQuota(cpuCount * cpuPeriod).withCpuPeriod(cpuPeriod).withMemory(memory).withMemorySwap(memorySwap).withPidsLimit(pidsLimit)
-                .withAutoRemove(true);
+                .withAutoRemove(false);
     }
 
     /**

@@ -22,10 +22,12 @@ actions:
           echo "$REQ_FILE does not exist"
       fi
     runAlways: false
-  - name: prepare_makefile
+  - name: prepare_files
     script: |-
       rm -f assignment/{GNUmakefile, Makefile, makefile}
+      rm -f assignment/*_tb.vhd
       cp -f tests/Makefile assignment/Makefile || exit 2
+      cp -f tests/*_tb.vhd assignment/ || exit 2
     runAlways: false
   - name: run_and_compile
     script: |-
