@@ -153,7 +153,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     // The current controls configuration from the sub-route component
     public controlConfiguration?: BarControlConfiguration;
     //If print is called then the sidebar should be hidden
-    private printSubscription: Subscription;
+    printSubscription?: Subscription;
 
     // ng-container mount point extracted from our own template so we can render sth in it
     @ViewChild('controlsViewContainer', { read: ViewContainerRef }) controlsViewContainer: ViewContainerRef;
@@ -751,9 +751,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.examStartedSubscription?.unsubscribe();
         this.examEndViewSubscription?.unsubscribe();
         this.dashboardSubscription?.unsubscribe();
+        this.printSubscription?.unsubscribe();
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
-        this.printSubscription.unsubscribe();
     }
 
     subscribeForQuizChanges() {
