@@ -5,10 +5,10 @@ import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.co
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { BehaviorSubject } from 'rxjs';
-import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
 import { MonacoCodeEditorElement } from 'app/shared/monaco-editor/model/monaco-code-editor-element.model';
 import { MonacoEditorGlyphMarginHoverButton } from 'app/shared/monaco-editor/model/monaco-editor-glyph-margin-hover-button.model';
+import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 
 describe('MonacoEditorComponent', () => {
     let fixture: ComponentFixture<MonacoEditorComponent>;
