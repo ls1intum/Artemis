@@ -24,7 +24,6 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
@@ -186,7 +185,7 @@ public class LectureUnitService {
      * @param lectureUnitsToAdd    A set of lecture units to link to the specified competency
      * @param lectureUnitsToRemove A set of lecture units to unlink from the specified competency
      */
-    public void linkLectureUnitsToCompetency(Competency competency, Set<LectureUnit> lectureUnitsToAdd, Set<LectureUnit> lectureUnitsToRemove) {
+    public void linkLectureUnitsToCompetency(CourseCompetency competency, Set<LectureUnit> lectureUnitsToAdd, Set<LectureUnit> lectureUnitsToRemove) {
         final Predicate<LectureUnit> isExerciseUnit = lectureUnit -> lectureUnit instanceof ExerciseUnit;
 
         // Remove the competency from the old lecture units
@@ -213,7 +212,7 @@ public class LectureUnitService {
      * @param lectureUnits set of lecture units
      * @param competency   competency to remove
      */
-    public void removeCompetency(Set<LectureUnit> lectureUnits, Competency competency) {
+    public void removeCompetency(Set<LectureUnit> lectureUnits, CourseCompetency competency) {
         lectureUnits.forEach(lectureUnit -> lectureUnit.getCompetencies().remove(competency));
         lectureUnitRepository.saveAll(lectureUnits);
     }

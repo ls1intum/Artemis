@@ -56,6 +56,7 @@ import de.tum.in.www1.artemis.service.competency.CompetencyJolService;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.competency.CompetencyRelationService;
 import de.tum.in.www1.artemis.service.competency.CompetencyService;
+import de.tum.in.www1.artemis.service.competency.CourseCompetencyService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.iris.session.IrisCompetencyGenerationSessionService;
@@ -110,12 +111,14 @@ public class CompetencyResource {
 
     private final CompetencyJolService competencyJolService;
 
+    private final CourseCompetencyService courseCompetencyService;
+
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CompetencyRepository competencyRepository, CompetencyRelationRepository competencyRelationRepository, CompetencyService competencyService,
             CompetencyProgressRepository competencyProgressRepository, CompetencyProgressService competencyProgressService, ExerciseService exerciseService,
             LectureUnitService lectureUnitService, CompetencyRelationService competencyRelationService,
             Optional<IrisCompetencyGenerationSessionService> irisCompetencyGenerationSessionService, CourseCompetencyRepository courseCompetencyRepository,
-            CompetencyJolService competencyJolService) {
+            CompetencyJolService competencyJolService, CourseCompetencyService courseCompetencyService) {
         this.courseRepository = courseRepository;
         this.competencyRelationRepository = competencyRelationRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -130,6 +133,7 @@ public class CompetencyResource {
         this.irisCompetencyGenerationSessionService = irisCompetencyGenerationSessionService;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.competencyJolService = competencyJolService;
+        this.courseCompetencyService = courseCompetencyService;
     }
 
     /**
@@ -189,7 +193,7 @@ public class CompetencyResource {
         var currentUser = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
         var competency = competencyService.findCompetencyWithExercisesAndLectureUnitsAndProgressForUser(competencyId, currentUser.getId());
-        checkAuthorizationForCompetency(Role.STUDENT, course, competency);
+        checkAuthorizationForCompetency(course, competency);
 
         competency.setLectureUnits(competency.getLectureUnits().stream().filter(lectureUnit -> authorizationCheckService.isAllowedToSeeLectureUnit(lectureUnit, currentUser))
                 .peek(lectureUnit -> lectureUnit.setCompleted(lectureUnit.isCompletedFor(currentUser))).collect(Collectors.toSet()));
@@ -219,7 +223,7 @@ public class CompetencyResource {
         }
         var course = courseRepository.findByIdElseThrow(courseId);
         var existingCompetency = competencyRepository.findByIdWithLectureUnitsElseThrow(competency.getId());
-        checkAuthorizationForCompetency(Role.INSTRUCTOR, course, existingCompetency);
+        checkAuthorizationForCompetency(course, existingCompetency);
 
         var persistedCompetency = competencyService.updateCompetency(existingCompetency, competency);
         lectureUnitService.linkLectureUnitsToCompetency(persistedCompetency, competency.getLectureUnits(), existingCompetency.getLectureUnits());
@@ -398,10 +402,10 @@ public class CompetencyResource {
         log.info("REST request to delete a Competency : {}", competencyId);
 
         var course = courseRepository.findByIdElseThrow(courseId);
-        var competency = competencyRepository.findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(competencyId);
-        checkAuthorizationForCompetency(Role.INSTRUCTOR, course, competency);
+        var competency = courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(competencyId);
+        checkAuthorizationForCompetency(course, competency);
 
-        competencyService.deleteCompetency(competency, course);
+        courseCompetencyService.deleteCourseCompetency(competency, course);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, competency.getTitle())).build();
     }
@@ -422,7 +426,7 @@ public class CompetencyResource {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
         var competency = competencyRepository.findByIdElseThrow(competencyId);
-        checkAuthorizationForCompetency(Role.STUDENT, course, competency);
+        checkAuthorizationForCompetency(course, competency);
 
         CompetencyProgress studentProgress;
         if (refresh) {
@@ -489,9 +493,9 @@ public class CompetencyResource {
         var course = courseRepository.findByIdElseThrow(courseId);
 
         var tailCompetency = courseCompetencyRepository.findByIdElseThrow(tailId);
-        checkAuthorizationForCompetency(Role.INSTRUCTOR, course, tailCompetency);
+        checkAuthorizationForCompetency(course, tailCompetency);
         var headCompetency = courseCompetencyRepository.findByIdElseThrow(headId);
-        checkAuthorizationForCompetency(Role.INSTRUCTOR, course, headCompetency);
+        checkAuthorizationForCompetency(course, headCompetency);
 
         var createdRelation = competencyRelationService.createCompetencyRelation(tailCompetency, headCompetency, relation.relationType(), course);
 
@@ -512,8 +516,8 @@ public class CompetencyResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         var relation = competencyRelationRepository.findById(competencyRelationId).orElseThrow();
 
-        checkAuthorizationForCompetency(Role.INSTRUCTOR, course, relation.getTailCompetency());
-        checkAuthorizationForCompetency(Role.INSTRUCTOR, course, relation.getHeadCompetency());
+        checkAuthorizationForCompetency(course, relation.getTailCompetency());
+        checkAuthorizationForCompetency(course, relation.getHeadCompetency());
 
         competencyRelationRepository.delete(relation);
 
@@ -555,20 +559,18 @@ public class CompetencyResource {
     }
 
     /**
-     * Checks if the user has the necessary permissions and the competency matches the course.
+     * Checks if the competency matches the course.
      *
-     * @param role       The minimal role the user must have in the course
      * @param course     The course for which to check the authorization role for
      * @param competency The competency to be accessed by the user
      */
-    private void checkAuthorizationForCompetency(Role role, @NotNull Course course, @NotNull CourseCompetency competency) {
+    private void checkAuthorizationForCompetency(@NotNull Course course, @NotNull CourseCompetency competency) {
         if (competency.getCourse() == null) {
             throw new BadRequestAlertException("A competency must belong to a course", ENTITY_NAME, "competencyNoCourse");
         }
         if (!competency.getCourse().getId().equals(course.getId())) {
             throw new BadRequestAlertException("The competency does not belong to the correct course", ENTITY_NAME, "competencyWrongCourse");
         }
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(role, course, null);
     }
 
     /**

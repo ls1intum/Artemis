@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
@@ -175,8 +174,8 @@ public class LearningPathService {
      * @param competency Competency that should be added to each learning path
      * @param courseId   course id that the learning paths belong to
      */
-    public void linkCompetencyToLearningPathsOfCourse(@NotNull Competency competency, long courseId) {
-        var course = courseRepository.findWithEagerLearningPathsByIdElseThrow(courseId);
+    public void linkCompetencyToLearningPathsOfCourse(@NotNull CourseCompetency competency, long courseId) {
+        var course = courseRepository.findWithEagerLearningPathsAndLearningPathCompetenciesByIdElseThrow(courseId);
         var learningPaths = course.getLearningPaths();
         learningPaths.forEach(learningPath -> learningPath.addCompetency(competency));
         learningPathRepository.saveAll(learningPaths);
@@ -189,11 +188,11 @@ public class LearningPathService {
      * @param competencies The list of competencies that should be added
      * @param courseId     course id that the learning paths belong to
      */
-    public void linkCompetenciesToLearningPathsOfCourse(@NotNull List<Competency> competencies, long courseId) {
+    public void linkCompetenciesToLearningPathsOfCourse(@NotNull List<? extends CourseCompetency> competencies, long courseId) {
         if (competencies.isEmpty()) {
             return;
         }
-        var course = courseRepository.findWithEagerLearningPathsByIdElseThrow(courseId);
+        var course = courseRepository.findWithEagerLearningPathsAndLearningPathCompetenciesByIdElseThrow(courseId);
         var learningPaths = course.getLearningPaths();
         learningPaths.forEach(learningPath -> learningPath.addCompetencies(new HashSet<>(competencies)));
         learningPathRepository.saveAll(learningPaths);
@@ -206,8 +205,8 @@ public class LearningPathService {
      * @param competency Competency that should be removed from each learning path
      * @param courseId   course id that the learning paths belong to
      */
-    public void removeLinkedCompetencyFromLearningPathsOfCourse(@NotNull Competency competency, long courseId) {
-        var course = courseRepository.findWithEagerLearningPathsByIdElseThrow(courseId);
+    public void removeLinkedCompetencyFromLearningPathsOfCourse(@NotNull CourseCompetency competency, long courseId) {
+        var course = courseRepository.findWithEagerLearningPathsAndLearningPathCompetenciesByIdElseThrow(courseId);
         var learningPaths = course.getLearningPaths();
         learningPaths.forEach(learningPath -> learningPath.removeCompetency(competency));
         learningPathRepository.saveAll(learningPaths);

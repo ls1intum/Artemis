@@ -5,6 +5,9 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Set;
+
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +23,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
+import de.tum.in.www1.artemis.repository.CourseCompetencyRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.PrerequisiteRepository;
 import de.tum.in.www1.artemis.security.Role;
@@ -27,9 +32,11 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.competency.CourseCompetencyService;
 import de.tum.in.www1.artemis.service.competency.PrerequisiteService;
 import de.tum.in.www1.artemis.web.rest.dto.competency.PrerequisiteRequestDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.PrerequisiteResponseDTO;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
  * REST controller for managing {@link de.tum.in.www1.artemis.domain.competency.Prerequisite Prerequisite} entities.
@@ -41,6 +48,8 @@ public class PrerequisiteResource {
 
     private static final Logger log = LoggerFactory.getLogger(PrerequisiteResource.class);
 
+    private static final String ENTITY_NAME = "prerequisite";
+
     private final PrerequisiteService prerequisiteService;
 
     private final PrerequisiteRepository prerequisiteRepository;
@@ -49,12 +58,18 @@ public class PrerequisiteResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final CourseCompetencyService courseCompetencyService;
+
+    private final CourseCompetencyRepository courseCompetencyRepository;
+
     public PrerequisiteResource(PrerequisiteService prerequisiteService, PrerequisiteRepository prerequisiteRepository, CourseRepository courseRepository,
-            AuthorizationCheckService authorizationCheckService) {
+            AuthorizationCheckService authorizationCheckService, CourseCompetencyService courseCompetencyService, CourseCompetencyRepository courseCompetencyRepository) {
         this.prerequisiteService = prerequisiteService;
         this.prerequisiteRepository = prerequisiteRepository;
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
+        this.courseCompetencyService = courseCompetencyService;
+        this.courseCompetencyRepository = courseCompetencyRepository;
     }
 
     /**
@@ -147,7 +162,10 @@ public class PrerequisiteResource {
     public ResponseEntity<Void> deletePrerequisite(@PathVariable long prerequisiteId, @PathVariable long courseId) {
         log.info("REST request to delete Prerequisite with id : {}", prerequisiteId);
 
-        prerequisiteService.deletePrerequisite(prerequisiteId, courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var prerequisite = courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(prerequisiteId);
+        checkAuthorizationForPrerequisite(course, prerequisite);
+        courseCompetencyService.deleteCourseCompetency(prerequisite, course);
 
         return ResponseEntity.ok().build();
     }
@@ -165,9 +183,25 @@ public class PrerequisiteResource {
     public ResponseEntity<List<PrerequisiteResponseDTO>> importPrerequisites(@PathVariable long courseId, @RequestBody List<Long> courseCompetencyIds) throws URISyntaxException {
         log.info("REST request to import courseCompetencies with ids {} as prerequisites", courseCompetencyIds);
 
-        var importedPrerequisites = prerequisiteService.importPrerequisites(courseId, courseCompetencyIds);
+        // TODO: Allow import of relations between prerequisites
+        var importedPrerequisites = prerequisiteService.importPrerequisites(courseId, courseCompetencyIds, Set.of());
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/prerequisites"))
                 .body(importedPrerequisites.stream().map(PrerequisiteResponseDTO::of).toList());
+    }
+
+    /**
+     * Checks if the competency matches the course.
+     *
+     * @param course       The course for which to check the authorization role for
+     * @param prerequisite The prerequisite to be accessed by the user
+     */
+    private void checkAuthorizationForPrerequisite(@NotNull Course course, @NotNull CourseCompetency prerequisite) {
+        if (prerequisite.getCourse() == null) {
+            throw new BadRequestAlertException("A competency must belong to a course", ENTITY_NAME, "competencyNoCourse");
+        }
+        if (!prerequisite.getCourse().getId().equals(course.getId())) {
+            throw new BadRequestAlertException("The competency does not belong to the correct course", ENTITY_NAME, "competencyWrongCourse");
+        }
     }
 }

@@ -86,6 +86,17 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
             """)
     Optional<CourseCompetency> findByIdWithExercisesAndLectureUnits(@Param("competencyId") long competencyId);
 
+    @Query("""
+            SELECT c
+            FROM CourseCompetency c
+                LEFT JOIN FETCH c.exercises ex
+                LEFT JOIN FETCH ex.competencies
+                LEFT JOIN FETCH c.lectureUnits lu
+                LEFT JOIN FETCH lu.competencies
+            WHERE c.id = :competencyId
+            """)
+    Optional<CourseCompetency> findByIdWithExercisesAndLectureUnitsBidirectional(@Param("competencyId") long competencyId);
+
     /**
      * Finds a list of competencies by id and verifies that the user is at least editor in the respective courses.
      * If any of the competencies are not accessible, throws a {@link EntityNotFoundException}
@@ -122,6 +133,10 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
 
     default CourseCompetency findByIdWithExercisesAndLectureUnitsElseThrow(long competencyId) {
         return getValueElseThrow(findByIdWithExercisesAndLectureUnits(competencyId), competencyId);
+    }
+
+    default CourseCompetency findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(long competencyId) {
+        return getValueElseThrow(findByIdWithExercisesAndLectureUnitsBidirectional(competencyId), competencyId);
     }
 
     List<CourseCompetency> findByCourseIdOrderById(long courseId);
