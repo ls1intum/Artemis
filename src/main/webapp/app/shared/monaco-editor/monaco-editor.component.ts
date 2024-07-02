@@ -7,6 +7,8 @@ import { MonacoEditorLineWidget } from 'app/shared/monaco-editor/model/monaco-ed
 import { MonacoEditorBuildAnnotation, MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
 import { MonacoEditorGlyphMarginHoverButton } from 'app/shared/monaco-editor/model/monaco-editor-glyph-margin-hover-button.model';
 import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
+import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { TranslateService } from '@ngx-translate/core';
 
 type EditorPosition = { row: number; column: number };
 @Component({
@@ -23,12 +25,14 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     lineWidgets: MonacoEditorLineWidget[] = [];
     editorBuildAnnotations: MonacoEditorBuildAnnotation[] = [];
     lineHighlights: MonacoEditorLineHighlight[] = [];
+    actions: MonacoEditorAction[] = [];
     glyphMarginHoverButton?: MonacoEditorGlyphMarginHoverButton;
 
     constructor(
-        private themeService: ThemeService,
+        private readonly themeService: ThemeService,
         elementRef: ElementRef,
-        renderer: Renderer2,
+        private readonly renderer: Renderer2,
+        private readonly translateService: TranslateService,
     ) {
         /*
          * The constructor injects the editor along with its container into the empty template of this component.
@@ -44,12 +48,34 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             minimap: { enabled: false },
             readOnly: this._readOnly,
             lineNumbersMinChars: 4,
+            scrollBeyondLastLine: false,
+            scrollbar: {
+                alwaysConsumeMouseWheel: false, // Prevents the editor from consuming the mouse wheel event, allowing the parent element to scroll.
+            },
         });
+        this._editor.getModel()?.setEOL(monaco.editor.EndOfLineSequence.LF);
         renderer.appendChild(elementRef.nativeElement, this.monacoEditorContainerElement);
     }
 
     @Input()
     textChangedEmitDelay?: number;
+
+    // TODO: The CSS class below allows the editor to shrink in the CodeEditorContainerComponent. We should eventually remove this class and handle the editor size differently in the code editor grid.
+    @Input()
+    set shrinkToFit(value: boolean) {
+        if (value) {
+            this.renderer.addClass(this.monacoEditorContainerElement, 'monaco-shrink-to-fit');
+        } else {
+            this.renderer.removeClass(this.monacoEditorContainerElement, 'monaco-shrink-to-fit');
+        }
+    }
+
+    @Input()
+    set stickyScroll(value: boolean) {
+        this._editor.updateOptions({
+            stickyScroll: { enabled: value },
+        });
+    }
 
     @Input()
     set readOnly(value: boolean) {
@@ -110,12 +136,18 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this._editor.setPosition({ lineNumber: position.row, column: position.column });
     }
 
+    setSelection(range: monaco.IRange): void {
+        this._editor.setSelection(range);
+    }
+
     getText(): string {
         return this._editor.getValue();
     }
 
     setText(text: string): void {
-        this._editor.setValue(text);
+        if (this.getText() !== text) {
+            this._editor.setValue(text);
+        }
     }
 
     /**
@@ -124,6 +156,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      */
     triggerKeySequence(text: string): void {
         this._editor.trigger('MonacoEditorComponent::triggerKeySequence', 'type', { text });
+    }
+
+    focus(): void {
+        this._editor.focus();
     }
 
     getNumberOfLines(): number {
@@ -141,9 +177,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * @param fileName The name of the file to switch to.
      * @param newFileContent The content of the file (will be retrieved from the model if left out).
      */
-    changeModel(fileName: string, newFileContent?: string) {
+    changeModel(fileName: string, newFileContent?: string, languageId?: string) {
         const uri = monaco.Uri.parse(`inmemory://model/${this._editor.getId()}/${fileName}`);
         const model = monaco.editor.getModel(uri) ?? monaco.editor.createModel(newFileContent ?? '', undefined, uri);
+
         if (!this.models.includes(model)) {
             this.models.push(model);
         }
@@ -154,7 +191,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         // Some elements remain when the model is changed - dispose of them.
         this.disposeEditorElements();
 
-        monaco.editor.setModelLanguage(model, model.getLanguageId());
+        monaco.editor.setModelLanguage(model, languageId !== undefined ? languageId : model.getLanguageId());
+        model.setEOL(monaco.editor.EndOfLineSequence.LF);
         this._editor.setModel(model);
     }
 
@@ -173,6 +211,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.disposeAnnotations();
         this.disposeWidgets();
         this.disposeLineHighlights();
+        this.disposeActions();
         this.glyphMarginHoverButton?.dispose();
     }
 
@@ -195,6 +234,13 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             o.dispose();
         });
         this.lineHighlights = [];
+    }
+
+    disposeActions(): void {
+        this.actions.forEach((a) => {
+            a.dispose();
+        });
+        this.actions = [];
     }
 
     changeTheme(artemisTheme: Theme): void {
@@ -277,5 +323,20 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     getLineHighlights(): MonacoEditorLineHighlight[] {
         return this.lineHighlights;
+    }
+
+    /**
+     * Registers an action to be available in the editor. The action will be disposed when the editor is disposed.
+     * @param action The action to register.
+     */
+    registerAction(action: MonacoEditorAction): void {
+        action.register(this._editor, this.translateService);
+        this.actions.push(action);
+    }
+
+    setWordWrap(value: boolean): void {
+        this._editor.updateOptions({
+            wordWrap: value ? 'on' : 'off',
+        });
     }
 }

@@ -23,7 +23,6 @@
         [course]="course"
         [allowHiddenFiles]="true"
         [useMonacoEditor]="true"
-        (onResizeEditorInstructions)="onResizeEditorInstructions()"
     >
         <div editorTitle>
             <span>{{ exercise?.title }}</span>
@@ -134,6 +133,7 @@
             [(exercise)]="exercise"
             [(participation)]="selectedParticipation!"
             [templateParticipation]="exercise.templateParticipation!"
+            [initialEditorHeight]="'external'"
             [enableResize]="false"
             class="instructions-wrapper__content card-body p-0"
         />
