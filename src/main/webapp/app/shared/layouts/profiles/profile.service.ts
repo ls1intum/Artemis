@@ -23,12 +23,14 @@ export class ProfileService {
 
     getProfileInfo(): Observable<ProfileInfo> {
         if (!this.profileInfo) {
+            console.log(this.infoUrl);
             this.profileInfo = new BehaviorSubject(undefined);
             this.http
                 .get<ProfileInfo>(this.infoUrl, { observe: 'response' })
                 .pipe(
                     map((res: HttpResponse<ProfileInfo>) => {
                         const data = res.body!;
+                        console.log(data);
                         const profileInfo = new ProfileInfo();
                         profileInfo.activeProfiles = data.activeProfiles;
                         const displayRibbonOnProfiles = data['display-ribbon-on-profiles'].split(',');

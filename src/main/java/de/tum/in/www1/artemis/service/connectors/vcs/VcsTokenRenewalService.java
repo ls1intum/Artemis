@@ -42,12 +42,12 @@ public class VcsTokenRenewalService {
     /**
      * The config parameter for enabling VCS access tokens.
      */
-    private final boolean versionControlAccessToken;
+    private final boolean useVersionControlAccessToken;
 
     // note: we inject the configuration value here to easily test with different ones
     public VcsTokenRenewalService(@Value("${artemis.version-control.version-control-access-token:#{false}}") boolean versionControlAccessToken,
             Optional<VcsTokenManagementService> vcsTokenManagementService, UserRepository userRepository) {
-        this.versionControlAccessToken = versionControlAccessToken;
+        this.useVersionControlAccessToken = versionControlAccessToken;
         this.vcsTokenManagementService = vcsTokenManagementService;
         this.userRepository = userRepository;
     }
@@ -59,7 +59,7 @@ public class VcsTokenRenewalService {
      */
     @Scheduled(cron = "0 0 4 * * SUN") // Every sunday at 4 am
     public void renewAllVcsAccessTokens() {
-        if (versionControlAccessToken && vcsTokenManagementService.isPresent()) {
+        if (useVersionControlAccessToken && vcsTokenManagementService.isPresent()) {
             log.info("Started scheduled access token renewal");
             int renewedAccessTokenCount = renewExpiringAccessTokens();
             int createdAccessTokenCount = createMissingAccessTokens();

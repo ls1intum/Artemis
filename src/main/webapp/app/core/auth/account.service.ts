@@ -145,6 +145,7 @@ export class AccountService implements IAccountService {
 
         // check and see if we have retrieved the userIdentity data from the server.
         // if we have, reuse it by immediately resolving
+        console.log(this.userIdentity);
         if (this.userIdentity) {
             // in case a token is required but not present in the user, we cannot simply return the cached object
             if (!this.versionControlAccessTokenRequired || this.userIdentity.vcsAccessToken !== undefined) {

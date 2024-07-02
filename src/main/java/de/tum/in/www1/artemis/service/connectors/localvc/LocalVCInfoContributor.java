@@ -43,7 +43,7 @@ public class LocalVCInfoContributor implements InfoContributor {
         // TODO: only activate this when access tokens are available and make sure this does not lead to issues
         // TODO: If activated, reflect this in LocalVCInfoContributorTest
         // with the account.service.ts and its check if the access token is required
-        builder.withDetail(Constants.INFO_VERSION_CONTROL_ACCESS_TOKEN_DETAIL, false);
+        builder.withDetail(Constants.INFO_VERSION_CONTROL_ACCESS_TOKEN_DETAIL, true);
 
         // Store ssh url template
         try {
