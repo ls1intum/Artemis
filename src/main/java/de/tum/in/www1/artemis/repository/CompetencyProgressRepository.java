@@ -14,6 +14,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
@@ -89,10 +90,13 @@ public interface CompetencyProgressRepository extends ArtemisJpaRepository<Compe
 
     @Query("""
             SELECT cp
-            FROM CompetencyProgress cp
-                   LEFT JOIN cp.competency.learningPaths lPs
-            WHERE cp.user.id = :userId
-                AND :learningPathId = lPs.id
+            FROM Competency c
+                LEFT JOIN CompetencyRelation cr ON cr.tailCompetency = c
+                LEFT JOIN Competency priorC ON priorC = cr.headCompetency
+                LEFT JOIN FETCH CompetencyProgress cp ON cp.competency = priorC
+            WHERE cr.type <> de.tum.in.www1.artemis.domain.competency.RelationType.MATCHES
+                AND cp.user = :user
+                AND c = :competency
             """)
-    Set<CompetencyProgress> findAllByUserIdAndLearningPathId(@Param("userId") long userId, @Param("learningPathId") long learningPathId);
+    Set<CompetencyProgress> findAllPriorByCompetencyId(@Param("competency") Competency competency, @Param("user") User userId);
 }

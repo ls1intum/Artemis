@@ -74,9 +74,9 @@
             @if (exercise) {
                 <jhi-exam-exercise-update-highlighter [exercise]="exercise" (problemStatementUpdateEvent)="updateProblemStatement($event)" />
             }
-            @if (exercise!.problemStatement) {
+            @if (problemStatementHtml) {
                 <p class="mb-3 markdown-preview">
-                    <span [innerHTML]="exercise!.problemStatement! | htmlForMarkdown"></span>
+                    <span [innerHTML]="problemStatementHtml"></span>
                 </p>
             }
         </ng-container>
