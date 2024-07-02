@@ -64,16 +64,16 @@ export class StudentExamsComponent implements OnInit, OnDestroy {
     faExclamationTriangle = faExclamationTriangle;
 
     constructor(
-        private route: ActivatedRoute,
-        private examManagementService: ExamManagementService,
-        private studentExamService: StudentExamService,
+        protected route: ActivatedRoute,
+        protected examManagementService: ExamManagementService,
+        protected studentExamService: StudentExamService,
+        protected alertService: AlertService,
+        protected accountService: AccountService,
+        protected profileService: ProfileService,
         private courseService: CourseManagementService,
-        private alertService: AlertService,
         private modalService: NgbModal,
-        private accountService: AccountService,
         private artemisTranslatePipe: ArtemisTranslatePipe,
         private websocketService: JhiWebsocketService,
-        private profileService: ProfileService,
     ) {}
 
     /**
@@ -101,7 +101,7 @@ export class StudentExamsComponent implements OnInit, OnDestroy {
         this.websocketService.unsubscribe(getWebsocketChannel(this.examId));
     }
 
-    private loadAll() {
+    loadAll() {
         this.paramSub = this.route.params.subscribe(() => {
             this.isAdmin = this.accountService.isAdmin();
             this.courseService.find(this.courseId).subscribe((courseResponse) => {
