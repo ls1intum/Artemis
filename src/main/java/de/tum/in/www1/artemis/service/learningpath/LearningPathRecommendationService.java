@@ -26,15 +26,15 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.LearningObject;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.domain.competency.RelationType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.CompetencyProgressRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
-import de.tum.in.www1.artemis.repository.CompetencyRepository;
+import de.tum.in.www1.artemis.repository.CourseCompetencyRepository;
 import de.tum.in.www1.artemis.service.LearningObjectService;
 import de.tum.in.www1.artemis.service.ParticipantScoreService;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
@@ -53,6 +53,8 @@ public class LearningPathRecommendationService {
     private final ParticipantScoreService participantScoreService;
 
     private final CompetencyProgressRepository competencyProgressRepository;
+
+    private final CourseCompetencyRepository courseCompetencyRepository;
 
     /**
      * Base utility that is used to calculate a competencies' utility with respect to the earliest due date of the competency.
@@ -91,15 +93,13 @@ public class LearningPathRecommendationService {
     private static final double[][] EXERCISE_DIFFICULTY_DISTRIBUTION_LUT = new double[][] { { 0.87, 0.12, 0.01 }, { 0.80, 0.18, 0.02 }, { 0.72, 0.25, 0.03 }, { 0.61, 0.33, 0.06 },
             { 0.50, 0.40, 0.10 }, { 0.39, 0.45, 0.16 }, { 0.28, 0.48, 0.24 }, { 0.20, 0.47, 0.33 }, { 0.13, 0.43, 0.44 }, { 0.08, 0.37, 0.55 }, { 0.04, 0.29, 0.67 }, };
 
-    private final CompetencyRepository competencyRepository;
-
     protected LearningPathRecommendationService(CompetencyRelationRepository competencyRelationRepository, LearningObjectService learningObjectService,
-            ParticipantScoreService participantScoreService, CompetencyProgressRepository competencyProgressRepository, CompetencyRepository competencyRepository) {
+            ParticipantScoreService participantScoreService, CompetencyProgressRepository competencyProgressRepository, CourseCompetencyRepository courseCompetencyRepository) {
         this.competencyRelationRepository = competencyRelationRepository;
         this.learningObjectService = learningObjectService;
         this.participantScoreService = participantScoreService;
         this.competencyProgressRepository = competencyProgressRepository;
-        this.competencyRepository = competencyRepository;
+        this.courseCompetencyRepository = courseCompetencyRepository;
     }
 
     /**
@@ -190,7 +190,7 @@ public class LearningPathRecommendationService {
      * @param recommendationState the current state of the learning path recommendation
      * @return the competency of the given learning object
      */
-    public Competency getCompetencyOfLearningObjectOnLearningPath(User user, LearningObject learningObject, RecommendationState recommendationState) {
+    public CourseCompetency getCompetencyOfLearningObjectOnLearningPath(User user, LearningObject learningObject, RecommendationState recommendationState) {
         return recommendationState.recommendedOrderOfCompetencies.stream().map(recommendationState.competencyIdMap::get)
                 .filter(competency -> getOrderOfLearningObjectsForCompetency(competency, user).contains(learningObject)).findFirst().orElse(null);
     }
@@ -203,7 +203,7 @@ public class LearningPathRecommendationService {
      * @see RecommendationState
      */
     private RecommendationState generateInitialRecommendationState(LearningPath learningPath) {
-        Map<Long, Competency> competencyIdMap = learningPath.getCompetencies().stream().collect(Collectors.toMap(Competency::getId, Function.identity()));
+        Map<Long, CourseCompetency> competencyIdMap = learningPath.getCompetencies().stream().collect(Collectors.toMap(CourseCompetency::getId, Function.identity()));
         Map<Long, Set<Long>> matchingClusters = getMatchingCompetencyClusters(learningPath.getCompetencies());
         Map<Long, Set<Long>> priorsCompetencies = getPriorCompetencyMapping(learningPath.getCompetencies(), matchingClusters);
         Map<Long, Long> extendsCompetencies = getExtendsCompetencyMapping(learningPath.getCompetencies(), matchingClusters, priorsCompetencies);
@@ -236,7 +236,7 @@ public class LearningPathRecommendationService {
      * @param competencies the competencies for which the mapping should be generated
      * @return map representing the matching clusters
      */
-    private Map<Long, Set<Long>> getMatchingCompetencyClusters(Set<Competency> competencies) {
+    private Map<Long, Set<Long>> getMatchingCompetencyClusters(Set<CourseCompetency> competencies) {
         final Map<Long, Set<Long>> matchingClusters = new HashMap<>();
         for (var competency : competencies) {
             if (!matchingClusters.containsKey(competency.getId())) {
@@ -255,7 +255,7 @@ public class LearningPathRecommendationService {
      * @param matchingClusters the map representing the corresponding matching clusters
      * @return map to retrieve prior competencies
      */
-    private Map<Long, Set<Long>> getPriorCompetencyMapping(Set<Competency> competencies, Map<Long, Set<Long>> matchingClusters) {
+    private Map<Long, Set<Long>> getPriorCompetencyMapping(Set<CourseCompetency> competencies, Map<Long, Set<Long>> matchingClusters) {
         Map<Long, Set<Long>> priorsMap = new HashMap<>();
         for (var competency : competencies) {
             if (!priorsMap.containsKey(competency.getId())) {
@@ -275,7 +275,7 @@ public class LearningPathRecommendationService {
      * @param priorCompetencies the map to retrieve corresponding prior competencies
      * @return map to retrieve the number of competencies a competency extends
      */
-    private Map<Long, Long> getExtendsCompetencyMapping(Set<Competency> competencies, Map<Long, Set<Long>> matchingClusters, Map<Long, Set<Long>> priorCompetencies) {
+    private Map<Long, Long> getExtendsCompetencyMapping(Set<CourseCompetency> competencies, Map<Long, Set<Long>> matchingClusters, Map<Long, Set<Long>> priorCompetencies) {
         return getRelationsOfTypeCompetencyMapping(competencies, matchingClusters, priorCompetencies, RelationType.EXTENDS);
     }
 
@@ -287,7 +287,7 @@ public class LearningPathRecommendationService {
      * @param priorCompetencies the map to retrieve corresponding prior competencies
      * @return map to retrieve the number of competencies a competency assumes
      */
-    private Map<Long, Long> getAssumesCompetencyMapping(Set<Competency> competencies, Map<Long, Set<Long>> matchingClusters, Map<Long, Set<Long>> priorCompetencies) {
+    private Map<Long, Long> getAssumesCompetencyMapping(Set<CourseCompetency> competencies, Map<Long, Set<Long>> matchingClusters, Map<Long, Set<Long>> priorCompetencies) {
         return getRelationsOfTypeCompetencyMapping(competencies, matchingClusters, priorCompetencies, RelationType.ASSUMES);
     }
 
@@ -300,7 +300,7 @@ public class LearningPathRecommendationService {
      * @param type              the relation type that should be counted
      * @return map to retrieve the number of competencies a competency extends
      */
-    private Map<Long, Long> getRelationsOfTypeCompetencyMapping(Set<Competency> competencies, Map<Long, Set<Long>> matchingClusters, Map<Long, Set<Long>> priorCompetencies,
+    private Map<Long, Long> getRelationsOfTypeCompetencyMapping(Set<CourseCompetency> competencies, Map<Long, Set<Long>> matchingClusters, Map<Long, Set<Long>> priorCompetencies,
             RelationType type) {
         Map<Long, Long> map = new HashMap<>();
         for (var competency : competencies) {
@@ -321,7 +321,7 @@ public class LearningPathRecommendationService {
      * @param state        the current state of the recommendation system
      * @return set of pending competencies
      */
-    private Set<Competency> getPendingCompetencies(Set<Competency> competencies, RecommendationState state) {
+    private Set<CourseCompetency> getPendingCompetencies(Set<CourseCompetency> competencies, RecommendationState state) {
         return competencies.stream().filter(competency -> !state.masteredCompetencies.contains(competency.getId())
                 || state.matchingClusters.get(competency.getId()).stream().noneMatch(state.masteredCompetencies::contains)).collect(Collectors.toSet());
     }
@@ -332,7 +332,7 @@ public class LearningPathRecommendationService {
      * @param pendingCompetencies the set of pending competencies
      * @param state               the current state of the recommendation system
      */
-    private void simulateProgression(Set<Competency> pendingCompetencies, RecommendationState state) {
+    private void simulateProgression(Set<CourseCompetency> pendingCompetencies, RecommendationState state) {
         while (!pendingCompetencies.isEmpty()) {
             Map<Long, Double> utilities = computeUtilities(pendingCompetencies, state);
             var maxEntry = utilities.entrySet().stream().max(Comparator.comparingDouble(Map.Entry::getValue));
@@ -356,7 +356,7 @@ public class LearningPathRecommendationService {
      * @param state        the current state of the recommendation system
      * @return map to retrieve the utility of a competency
      */
-    private Map<Long, Double> computeUtilities(Set<Competency> competencies, RecommendationState state) {
+    private Map<Long, Double> computeUtilities(Set<CourseCompetency> competencies, RecommendationState state) {
         Map<Long, Double> utilities = new HashMap<>();
         for (var competency : competencies) {
             utilities.put(competency.getId(), computeUtilityOfCompetency(competency, state));
@@ -371,7 +371,7 @@ public class LearningPathRecommendationService {
      * @param state      the current state of the recommendation system
      * @return the utility of the given competency
      */
-    private double computeUtilityOfCompetency(Competency competency, RecommendationState state) {
+    private double computeUtilityOfCompetency(CourseCompetency competency, RecommendationState state) {
         // if competency is already mastered there competency has no utility
         if (state.masteredCompetencies.contains(competency.getId())) {
             return 0;
@@ -390,7 +390,7 @@ public class LearningPathRecommendationService {
      * @param competency the competency for which the utility should be computed
      * @return due date utility of the competency
      */
-    private static double computeDueDateUtility(Competency competency) {
+    private static double computeDueDateUtility(CourseCompetency competency) {
         final var earliestDueDate = getEarliestDueDate(competency);
         if (earliestDueDate.isEmpty()) {
             return 0;
@@ -416,7 +416,7 @@ public class LearningPathRecommendationService {
      * @param competency the competency for which the earliest due date should be retrieved
      * @return earliest due date of the competency
      */
-    private static Optional<ZonedDateTime> getEarliestDueDate(Competency competency) {
+    private static Optional<ZonedDateTime> getEarliestDueDate(CourseCompetency competency) {
         final var lectureDueDates = competency.getLectureUnits().stream().map(LectureUnit::getLecture).map(Lecture::getEndDate);
         final var exerciseDueDates = competency.getExercises().stream().map(Exercise::getDueDate);
         return Stream.concat(Stream.concat(Stream.of(competency.getSoftDueDate()), lectureDueDates), exerciseDueDates).filter(Objects::nonNull).min(Comparator.naturalOrder());
@@ -429,7 +429,7 @@ public class LearningPathRecommendationService {
      * @param state      the current state of the recommendation system
      * @return prior utility of the competency
      */
-    private static double computePriorUtility(Competency competency, RecommendationState state) {
+    private static double computePriorUtility(CourseCompetency competency, RecommendationState state) {
         // return max utility if no prior competencies are present
         if (state.priorCompetencies.get(competency.getId()).isEmpty()) {
             return PRIOR_UTILITY;
@@ -447,7 +447,7 @@ public class LearningPathRecommendationService {
      * @param state      the current state of the recommendation system
      * @return extends or assumes utility of the competency
      */
-    private static double computeExtendsOrAssumesUtility(Competency competency, RecommendationState state) {
+    private static double computeExtendsOrAssumesUtility(CourseCompetency competency, RecommendationState state) {
         final double weight = state.extendsCompetencies.get(competency.getId()) * EXTENDS_UTILITY_RATIO + state.assumesCompetencies.get(competency.getId()) * ASSUMES_UTILITY_RATIO;
         // return max utility if competency does not extend or assume other competencies
         if (weight == 0) {
@@ -464,7 +464,7 @@ public class LearningPathRecommendationService {
      * @param state      the current state of the recommendation system
      * @return mastery utility of the competency
      */
-    private static double computeMasteryUtility(Competency competency, RecommendationState state) {
+    private static double computeMasteryUtility(CourseCompetency competency, RecommendationState state) {
         return state.competencyMastery.get(competency.getId()) * MASTERY_PROGRESS_UTILITY;
     }
 
@@ -476,7 +476,7 @@ public class LearningPathRecommendationService {
      * @param state      the current state of the recommendation
      * @return the recommended ordering of learning objects
      */
-    public List<LearningObject> getRecommendedOrderOfLearningObjects(User user, Competency competency, RecommendationState state) {
+    public List<LearningObject> getRecommendedOrderOfLearningObjects(User user, CourseCompetency competency, RecommendationState state) {
         final var combinedPriorConfidence = computeCombinedPriorConfidence(competency, state);
         return getRecommendedOrderOfLearningObjects(user, competency, combinedPriorConfidence);
     }
@@ -489,7 +489,7 @@ public class LearningPathRecommendationService {
      * @param combinedPriorConfidence the combined confidence of the user for the prior competencies
      * @return the recommended ordering of learning objects
      */
-    public List<LearningObject> getRecommendedOrderOfLearningObjects(User user, Competency competency, double combinedPriorConfidence) {
+    public List<LearningObject> getRecommendedOrderOfLearningObjects(User user, CourseCompetency competency, double combinedPriorConfidence) {
         var pendingLectureUnits = competency.getLectureUnits().stream().filter(lectureUnit -> !lectureUnit.isCompletedFor(user)).toList();
         List<LearningObject> recommendedOrder = new ArrayList<>(pendingLectureUnits);
 
@@ -596,7 +596,7 @@ public class LearningPathRecommendationService {
      * @param state      the current state of the recommendation (containing the mapping for prior competencies)
      * @return the average confidence of all prior competencies
      */
-    private static double computeCombinedPriorConfidence(Competency competency, RecommendationState state) {
+    private static double computeCombinedPriorConfidence(CourseCompetency competency, RecommendationState state) {
         return state.priorCompetencies.get(competency.getId()).stream().map(state.competencyIdMap::get).flatMap(c -> c.getUserProgress().stream())
                 .mapToDouble(CompetencyProgress::getConfidence).sorted().average().orElse(1);
     }
@@ -619,7 +619,7 @@ public class LearningPathRecommendationService {
      * @param weightedConfidence the weighted confidence of the current and prior competencies
      * @return the predicted number of exercise points required to master the given competency
      */
-    private double calculateNumberOfExercisePointsRequiredToMaster(User user, Competency competency, double weightedConfidence) {
+    private double calculateNumberOfExercisePointsRequiredToMaster(User user, CourseCompetency competency, double weightedConfidence) {
         // we assume that the student may perform slightly worse than previously and dampen the confidence for the prediction process
         weightedConfidence *= 0.9;
         double currentPoints = participantScoreService.getStudentAndTeamParticipationPointsAsDoubleStream(user, competency.getExercises()).sum();
@@ -690,7 +690,7 @@ public class LearningPathRecommendationService {
         return EXERCISE_DIFFICULTY_DISTRIBUTION_LUT[Math.clamp(distributionIndex, 0, EXERCISE_DIFFICULTY_DISTRIBUTION_LUT.length - 1)];
     }
 
-    public record RecommendationState(Map<Long, Competency> competencyIdMap, List<Long> recommendedOrderOfCompetencies, Set<Long> masteredCompetencies,
+    public record RecommendationState(Map<Long, CourseCompetency> competencyIdMap, List<Long> recommendedOrderOfCompetencies, Set<Long> masteredCompetencies,
             Map<Long, Double> competencyMastery, Map<Long, Set<Long>> matchingClusters, Map<Long, Set<Long>> priorCompetencies, Map<Long, Long> extendsCompetencies,
             Map<Long, Long> assumesCompetencies) {
     }
@@ -704,7 +704,7 @@ public class LearningPathRecommendationService {
      * @return the recommended order of learning objects
      */
     public List<LearningObject> getOrderOfLearningObjectsForCompetency(long competencyId, User user) {
-        Competency competency = competencyRepository.findByIdWithExercisesAndLectureUnitsElseThrow(competencyId);
+        CourseCompetency competency = courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsElseThrow(competencyId);
         return getOrderOfLearningObjectsForCompetency(competency, user);
     }
 
@@ -716,7 +716,7 @@ public class LearningPathRecommendationService {
      * @param user       the user for which the recommendation should be generated
      * @return the recommended order of learning objects
      */
-    public List<LearningObject> getOrderOfLearningObjectsForCompetency(Competency competency, User user) {
+    public List<LearningObject> getOrderOfLearningObjectsForCompetency(CourseCompetency competency, User user) {
         Optional<CompetencyProgress> optionalCompetencyProgress = competencyProgressRepository.findByCompetencyIdAndUserId(competency.getId(), user.getId());
         competency.setUserProgress(optionalCompetencyProgress.map(Set::of).orElse(Set.of()));
         learningObjectService.setLectureUnitCompletions(competency.getLectureUnits(), user);

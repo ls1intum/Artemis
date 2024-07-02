@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest;
+package de.tum.in.www1.artemis.web.rest.competency;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
@@ -36,7 +36,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
-import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.repository.CompetencyProgressRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
@@ -242,7 +242,7 @@ public class CompetencyResource {
         if (competency.getId() != null || competency.getTitle() == null || competency.getTitle().trim().isEmpty()) {
             throw new BadRequestException();
         }
-        var course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
+        var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
 
         final var persistedCompetency = competencyService.createCompetency(competency, course);
 
@@ -266,7 +266,7 @@ public class CompetencyResource {
                 throw new BadRequestException();
             }
         }
-        var course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
+        var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
 
         var createdCompetencies = competencyService.createCompetencies(competencies, course);
 
@@ -286,7 +286,7 @@ public class CompetencyResource {
     public ResponseEntity<Competency> importCompetency(@PathVariable long courseId, @RequestBody Competency competencyToImport) throws URISyntaxException {
         log.info("REST request to import a competency: {}", competencyToImport.getId());
 
-        var course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
+        var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, competencyToImport.getCourse(), null);
 
         if (competencyToImport.getCourse().getId().equals(courseId)) {
@@ -313,7 +313,7 @@ public class CompetencyResource {
             @RequestParam(defaultValue = "false") boolean importRelations) throws URISyntaxException {
         log.info("REST request to import competencies: {}", competenciesToImport);
 
-        var course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
+        var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
 
         var competencies = new HashSet<>(competenciesToImport);
         List<CompetencyWithTailRelationDTO> importedCompetencies;
@@ -482,20 +482,20 @@ public class CompetencyResource {
      */
     @PostMapping("courses/{courseId}/competencies/relations")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<CompetencyRelation> createCompetencyRelation(@PathVariable long courseId, @RequestBody CompetencyRelation relation) {
-        var tailId = relation.getTailCompetency().getId();
-        var headId = relation.getHeadCompetency().getId();
+    public ResponseEntity<CompetencyRelationDTO> createCompetencyRelation(@PathVariable long courseId, @RequestBody CompetencyRelationDTO relation) {
+        var tailId = relation.tailCompetencyId();
+        var headId = relation.headCompetencyId();
         log.info("REST request to create a relation between competencies {} and {}", tailId, headId);
         var course = courseRepository.findByIdElseThrow(courseId);
 
-        var tailCompetency = competencyRepository.findByIdElseThrow(tailId);
+        var tailCompetency = courseCompetencyRepository.findByIdElseThrow(tailId);
         checkAuthorizationForCompetency(Role.INSTRUCTOR, course, tailCompetency);
-        var headCompetency = competencyRepository.findByIdElseThrow(headId);
+        var headCompetency = courseCompetencyRepository.findByIdElseThrow(headId);
         checkAuthorizationForCompetency(Role.INSTRUCTOR, course, headCompetency);
 
-        var createdRelation = competencyRelationService.createCompetencyRelation(tailCompetency, headCompetency, relation.getType(), course);
+        var createdRelation = competencyRelationService.createCompetencyRelation(tailCompetency, headCompetency, relation.relationType(), course);
 
-        return ResponseEntity.ok().body(createdRelation);
+        return ResponseEntity.ok().body(CompetencyRelationDTO.of(createdRelation));
     }
 
     /**
@@ -561,7 +561,7 @@ public class CompetencyResource {
      * @param course     The course for which to check the authorization role for
      * @param competency The competency to be accessed by the user
      */
-    private void checkAuthorizationForCompetency(Role role, @NotNull Course course, @NotNull Competency competency) {
+    private void checkAuthorizationForCompetency(Role role, @NotNull Course course, @NotNull CourseCompetency competency) {
         if (competency.getCourse() == null) {
             throw new BadRequestAlertException("A competency must belong to a course", ENTITY_NAME, "competencyNoCourse");
         }

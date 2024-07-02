@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.LearningObject;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.service.LearningObjectService;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathRecommendationService.RecommendationState;
@@ -92,7 +92,7 @@ public class LearningPathNavigationService {
         return new LearningPathNavigationDTO(predecessorLearningObjectDTO, currentLearningObjectDTO, successorLearningObjectDTO, learningPath.getProgress());
     }
 
-    private LearningObject getPredecessorOfLearningObject(RecommendationState recommendationState, Competency currentCompetency,
+    private LearningObject getPredecessorOfLearningObject(RecommendationState recommendationState, CourseCompetency currentCompetency,
             List<LearningObject> learningObjectsInCurrentCompetency, int indexOfCurrentLearningObject, User user) {
         LearningObject predecessorLearningObject = null;
         if (indexOfCurrentLearningObject == 0) {
@@ -113,7 +113,7 @@ public class LearningPathNavigationService {
         return predecessorLearningObject;
     }
 
-    private LearningObject getSuccessorOfLearningObject(RecommendationState recommendationState, Competency currentCompetency,
+    private LearningObject getSuccessorOfLearningObject(RecommendationState recommendationState, CourseCompetency currentCompetency,
             List<LearningObject> learningObjectsInCurrentCompetency, int indexOfCurrentLearningObject, User user) {
         LearningObject successorLearningObject = null;
         if (indexOfCurrentLearningObject == learningObjectsInCurrentCompetency.size() - 1) {

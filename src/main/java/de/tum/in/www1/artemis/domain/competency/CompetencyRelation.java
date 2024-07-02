@@ -20,29 +20,29 @@ public class CompetencyRelation extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "tail_competency_id", nullable = false)
-    private Competency tailCompetency;
+    private CourseCompetency tailCompetency;
 
     @ManyToOne
     @JoinColumn(name = "head_competency_id", nullable = false)
-    private Competency headCompetency;
+    private CourseCompetency headCompetency;
 
     @Column(name = "type", nullable = false)
     @Enumerated(EnumType.ORDINAL)
     private RelationType type;
 
-    public Competency getTailCompetency() {
+    public CourseCompetency getTailCompetency() {
         return tailCompetency;
     }
 
-    public void setTailCompetency(Competency tailCompetency) {
+    public void setTailCompetency(CourseCompetency tailCompetency) {
         this.tailCompetency = tailCompetency;
     }
 
-    public Competency getHeadCompetency() {
+    public CourseCompetency getHeadCompetency() {
         return headCompetency;
     }
 
-    public void setHeadCompetency(Competency headCompetency) {
+    public void setHeadCompetency(CourseCompetency headCompetency) {
         this.headCompetency = headCompetency;
     }
 

@@ -127,7 +127,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     Course findWithEagerExercisesById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "competencies", "prerequisites" })
-    Optional<Course> findWithEagerCompetenciesById(long courseId);
+    Optional<Course> findWithEagerCompetenciesAndPrerequisitesById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "learningPaths" })
     Optional<Course> findWithEagerLearningPathsById(long courseId);
@@ -182,10 +182,11 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             FROM Course course
                 LEFT JOIN FETCH course.organizations
                 LEFT JOIN FETCH course.competencies
+                LEFT JOIN FETCH course.prerequisites
                 LEFT JOIN FETCH course.learningPaths
             WHERE course.id = :courseId
             """)
-    Optional<Course> findWithEagerOrganizationsAndCompetenciesAndLearningPaths(@Param("courseId") long courseId);
+    Optional<Course> findWithEagerOrganizationsAndCompetenciesAndPrerequisitesAndLearningPaths(@Param("courseId") long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration" })
     Course findWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationById(long courseId);
@@ -378,8 +379,8 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     }
 
     @NotNull
-    default Course findWithEagerOrganizationsAndCompetenciesAndLearningPathsElseThrow(long courseId) throws EntityNotFoundException {
-        return findWithEagerOrganizationsAndCompetenciesAndLearningPaths(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    default Course findWithEagerOrganizationsAndCompetenciesAndPrerequisitesAndLearningPathsElseThrow(long courseId) throws EntityNotFoundException {
+        return getValueElseThrow(findWithEagerOrganizationsAndCompetenciesAndPrerequisitesAndLearningPaths(courseId), courseId);
     }
 
     /**
@@ -475,8 +476,8 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     }
 
     @NotNull
-    default Course findWithEagerCompetenciesByIdElseThrow(long courseId) {
-        return findWithEagerCompetenciesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    default Course findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(long courseId) {
+        return getValueElseThrow(findWithEagerCompetenciesAndPrerequisitesById(courseId), courseId);
     }
 
     @NotNull

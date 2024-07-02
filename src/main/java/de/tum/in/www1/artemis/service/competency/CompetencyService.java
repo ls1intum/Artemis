@@ -21,11 +21,13 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.competency.RelationType;
 import de.tum.in.www1.artemis.domain.competency.StandardizedCompetency;
 import de.tum.in.www1.artemis.repository.CompetencyProgressRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
+import de.tum.in.www1.artemis.repository.CourseCompetencyRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
 import de.tum.in.www1.artemis.repository.competency.StandardizedCompetencyRepository;
@@ -74,10 +76,12 @@ public class CompetencyService {
 
     private final CourseRepository courseRepository;
 
+    private final CourseCompetencyRepository courseCompetencyRepository;
+
     public CompetencyService(CompetencyRepository competencyRepository, AuthorizationCheckService authCheckService, CompetencyRelationRepository competencyRelationRepository,
             LearningPathService learningPathService, CompetencyProgressService competencyProgressService, LectureUnitService lectureUnitService, ExerciseService exerciseService,
             CompetencyProgressRepository competencyProgressRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            StandardizedCompetencyRepository standardizedCompetencyRepository, CourseRepository courseRepository) {
+            StandardizedCompetencyRepository standardizedCompetencyRepository, CourseRepository courseRepository, CourseCompetencyRepository courseCompetencyRepository) {
         this.competencyRepository = competencyRepository;
         this.authCheckService = authCheckService;
         this.competencyRelationRepository = competencyRelationRepository;
@@ -89,6 +93,7 @@ public class CompetencyService {
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
         this.standardizedCompetencyRepository = standardizedCompetencyRepository;
         this.courseRepository = courseRepository;
+        this.courseCompetencyRepository = courseCompetencyRepository;
     }
 
     /**
@@ -394,7 +399,7 @@ public class CompetencyService {
      * @param relations    The set of relations that get checked for cycles
      * @return A boolean that states whether the provided competencies and relations contain a cycle
      */
-    public boolean doesCreateCircularRelation(Set<Competency> competencies, Set<CompetencyRelation> relations) {
+    public boolean doesCreateCircularRelation(Set<CourseCompetency> competencies, Set<CompetencyRelation> relations) {
         // Inner class Vertex is only used in this method for cycle detection
         class Vertex {
 
@@ -479,7 +484,7 @@ public class CompetencyService {
         }
 
         var graph = new Graph();
-        for (Competency competency : competencies) {
+        for (CourseCompetency competency : competencies) {
             graph.addVertex(new Vertex(competency.getTitle()));
         }
         for (CompetencyRelation relation : relations) {

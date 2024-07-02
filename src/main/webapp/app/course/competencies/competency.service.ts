@@ -124,6 +124,7 @@ export class CompetencyService {
 
     create(competency: Competency, courseId: number): Observable<EntityResponseType> {
         const copy = this.convertCompetencyFromClient(competency);
+        console.log(copy);
         return this.httpClient.post<Competency>(`${this.resourceURL}/courses/${courseId}/competencies`, copy, { observe: 'response' });
     }
 
@@ -173,9 +174,9 @@ export class CompetencyService {
     }
 
     //relations
-
     createCompetencyRelation(relation: CompetencyRelation, courseId: number) {
-        return this.httpClient.post<CompetencyRelation>(`${this.resourceURL}/courses/${courseId}/competencies/relations`, relation, {
+        const relationDTO: CompetencyRelationDTO = { tailCompetencyId: relation.tailCompetency?.id, headCompetencyId: relation.headCompetency?.id, relationType: relation.type };
+        return this.httpClient.post<CompetencyRelationDTO>(`${this.resourceURL}/courses/${courseId}/competencies/relations`, relationDTO, {
             observe: 'response',
         });
     }

@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
@@ -146,6 +147,7 @@ public class LearningPathService {
         lpToCreate.setUser(user);
         lpToCreate.setCourse(course);
         lpToCreate.getCompetencies().addAll(course.getCompetencies());
+        lpToCreate.getCompetencies().addAll(course.getPrerequisites());
         var persistedLearningPath = learningPathRepository.save(lpToCreate);
         log.debug("Created LearningPath (id={}) for user (id={}) in course (id={})", persistedLearningPath.getId(), user.getId(), course.getId());
         updateLearningPathProgress(persistedLearningPath);
@@ -230,7 +232,7 @@ public class LearningPathService {
      */
     private void updateLearningPathProgress(@NotNull LearningPath learningPath) {
         final var userId = learningPath.getUser().getId();
-        final var competencyIds = learningPath.getCompetencies().stream().map(Competency::getId).collect(Collectors.toSet());
+        final var competencyIds = learningPath.getCompetencies().stream().map(CourseCompetency::getId).collect(Collectors.toSet());
         final var competencyProgresses = competencyProgressRepository.findAllByCompetencyIdsAndUserId(competencyIds, userId);
 
         final float completed = competencyProgresses.stream().filter(CompetencyProgressService::isMastered).count();
@@ -304,8 +306,8 @@ public class LearningPathService {
      * @return dto containing the competencies and relations of the learning path
      */
     public LearningPathCompetencyGraphDTO generateLearningPathCompetencyGraph(@NotNull LearningPath learningPath, @NotNull User user) {
-        Set<Competency> competencies = competencyRepository.findAllByLearningPath(learningPath);
-        Set<Long> competencyIds = competencies.stream().map(Competency::getId).collect(Collectors.toSet());
+        Set<CourseCompetency> competencies = learningPath.getCompetencies();
+        Set<Long> competencyIds = competencies.stream().map(CourseCompetency::getId).collect(Collectors.toSet());
         Map<Long, CompetencyProgress> competencyProgresses = competencyProgressRepository.findAllByCompetencyIdsAndUserId(competencyIds, user.getId()).stream()
                 .collect(Collectors.toMap(progress -> progress.getCompetency().getId(), cp -> cp));
 
@@ -395,7 +397,7 @@ public class LearningPathService {
             return learningPath;
         }
         Long userId = learningPath.getUser().getId();
-        Set<Long> competencyIds = learningPath.getCompetencies().stream().map(Competency::getId).collect(Collectors.toSet());
+        Set<Long> competencyIds = learningPath.getCompetencies().stream().map(CourseCompetency::getId).collect(Collectors.toSet());
         Map<Long, CompetencyProgress> competencyProgresses = competencyProgressRepository.findAllByCompetencyIdsAndUserId(competencyIds, userId).stream()
                 .collect(Collectors.toMap(progress -> progress.getCompetency().getId(), cp -> cp));
         Set<LectureUnit> lectureUnits = learningPath.getCompetencies().stream().flatMap(competency -> competency.getLectureUnits().stream()).collect(Collectors.toSet());

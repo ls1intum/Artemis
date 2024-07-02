@@ -25,12 +25,13 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
 import de.tum.in.www1.artemis.domain.lecture.Slide;
-import de.tum.in.www1.artemis.repository.CompetencyRepository;
+import de.tum.in.www1.artemis.repository.CourseCompetencyRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
@@ -46,8 +47,6 @@ public class LectureUnitService {
 
     private final LectureRepository lectureRepository;
 
-    private final CompetencyRepository competencyRepository;
-
     private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
 
     private final FileService fileService;
@@ -58,17 +57,19 @@ public class LectureUnitService {
 
     private final Optional<PyrisWebhookService> pyrisWebhookService;
 
-    public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, CompetencyRepository competencyRepository,
-            LectureUnitCompletionRepository lectureUnitCompletionRepository, FileService fileService, SlideRepository slideRepository, ExerciseRepository exerciseRepository,
-            Optional<PyrisWebhookService> pyrisWebhookService) {
+    private final CourseCompetencyRepository courseCompetencyRepository;
+
+    public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
+            FileService fileService, SlideRepository slideRepository, ExerciseRepository exerciseRepository, Optional<PyrisWebhookService> pyrisWebhookService,
+            CourseCompetencyRepository courseCompetencyRepository) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
-        this.competencyRepository = competencyRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
         this.fileService = fileService;
         this.slideRepository = slideRepository;
         this.exerciseRepository = exerciseRepository;
         this.pyrisWebhookService = pyrisWebhookService;
+        this.courseCompetencyRepository = courseCompetencyRepository;
     }
 
     /**
@@ -152,9 +153,9 @@ public class LectureUnitService {
 
         if (!(lectureUnitToDelete instanceof ExerciseUnit)) {
             // update associated competencies
-            Set<Competency> competencies = lectureUnitToDelete.getCompetencies();
-            competencyRepository.saveAll(competencies.stream().map(competency -> {
-                competency = competencyRepository.findByIdWithLectureUnitsElseThrow(competency.getId());
+            Set<CourseCompetency> competencies = lectureUnitToDelete.getCompetencies();
+            courseCompetencyRepository.saveAll(competencies.stream().map(competency -> {
+                competency = courseCompetencyRepository.findByIdWithLectureUnitsElseThrow(competency.getId());
                 competency.getLectureUnits().remove(lectureUnitToDelete);
                 return competency;
             }).toList());
