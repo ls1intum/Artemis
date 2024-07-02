@@ -8,7 +8,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { Course } from 'app/entities/course.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subject } from 'rxjs';
-import { captureException } from '@sentry/angular-ivy';
+import { captureException } from '@sentry/angular';
 
 @Component({
     selector: 'jhi-create-tutorial-group-free-day',

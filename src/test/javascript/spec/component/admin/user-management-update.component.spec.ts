@@ -26,10 +26,10 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Title } from '@angular/platform-browser';
 import { LANGUAGES } from 'app/core/language/language.constants';
 import { AdminUserService } from 'app/core/user/admin-user.service';
-import * as Sentry from '@sentry/angular-ivy';
+import * as Sentry from '@sentry/angular';
 // Preliminary mock before import to prevent errors
-jest.mock('@sentry/angular-ivy', () => {
-    const originalModule = jest.requireActual('@sentry/angular-ivy');
+jest.mock('@sentry/angular', () => {
+    const originalModule = jest.requireActual('@sentry/angular');
     return {
         ...originalModule,
         captureException: jest.fn(),

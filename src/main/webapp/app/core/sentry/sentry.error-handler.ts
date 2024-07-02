@@ -1,9 +1,7 @@
 import { ErrorHandler, Injectable } from '@angular/core';
-import { captureException, init, instrumentAngularRouting } from '@sentry/angular-ivy';
-import { BrowserTracing } from '@sentry/tracing';
+import { captureException, dedupeIntegration, init } from '@sentry/angular';
 import { VERSION } from 'app/app.constants';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { ArtemisDeduplicate } from 'app/core/sentry/deduplicate.sentry-integration';
 
 @Injectable({ providedIn: 'root' })
 export class SentryErrorHandler extends ErrorHandler {
@@ -32,23 +30,7 @@ export class SentryErrorHandler extends ErrorHandler {
             dsn: profileInfo.sentry.dsn,
             release: VERSION,
             environment: this.environment,
-            integrations: (integrations) => {
-                integrations.push(new ArtemisDeduplicate());
-                if (this.environment !== 'local') {
-                    integrations.push(
-                        new BrowserTracing({
-                            routingInstrumentation: instrumentAngularRouting,
-                            beforeNavigate: (context) => {
-                                return {
-                                    ...context,
-                                    name: location.pathname.replace(/\/[a-f0-9]{32}/g, '/<hash>').replace(/\/\d+/g, '/<digits>'),
-                                };
-                            },
-                        }),
-                    );
-                }
-                return integrations;
-            },
+            integrations: [dedupeIntegration()],
             tracesSampleRate: this.environment !== 'prod' ? 1.0 : 0.2,
         });
     }

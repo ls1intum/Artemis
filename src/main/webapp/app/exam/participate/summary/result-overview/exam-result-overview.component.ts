@@ -9,7 +9,7 @@ import { BonusStrategy } from 'app/entities/bonus.model';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { captureException } from '@sentry/angular-ivy';
+import { captureException } from '@sentry/angular';
 import { isExamResultPublished } from 'app/exam/participate/exam.utils';
 
 type ExerciseInfo = {

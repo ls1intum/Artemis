@@ -6,7 +6,6 @@ import { Subject } from 'rxjs';
 import { isEqual as _isEqual } from 'lodash-es';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { ArtemisTestModule } from '../../test.module';
-import { cartesianProduct } from 'app/shared/util/utils';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
 import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
@@ -19,6 +18,26 @@ import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.se
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+
+// Cartesian product helper function
+const cartesianConcatHelper = (a: any[], b: any[]): any[][] => ([] as any[][]).concat(...a.map((a2) => b.map((b2) => ([] as any[]).concat(a2, b2))));
+
+/**
+ * Returns the cartesian product for all arrays provided to the function.
+ * Type of the arrays does not matter, it will just return the combinations without any type information.
+ * Implementation taken from here: https://gist.github.com/ssippe/1f92625532eef28be6974f898efb23ef.
+ * @param a an array
+ * @param b another array
+ * @param c rest of arrays
+ */
+const cartesianProduct = (a: any[], b: any[], ...c: any[][]): any[] => {
+    if (!b || b.length === 0) {
+        return a;
+    }
+    const [b2, ...c2] = c;
+    const fab = cartesianConcatHelper(a, b);
+    return cartesianProduct(fab, b2, ...c2);
+};
 
 describe('CodeEditorActionsComponent', () => {
     let comp: CodeEditorActionsComponent;

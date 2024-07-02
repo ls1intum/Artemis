@@ -10,7 +10,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { Subject, Subscription } from 'rxjs';
-import { captureException } from '@sentry/angular-ivy';
+import { captureException } from '@sentry/angular';
 
 @Component({
     selector: 'jhi-exam-checklist',

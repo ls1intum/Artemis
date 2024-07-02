@@ -4,14 +4,14 @@ import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 // Preliminary mock before import to prevent errors
-jest.mock('@sentry/angular-ivy', () => {
-    const originalModule = jest.requireActual('@sentry/angular-ivy');
+jest.mock('@sentry/angular', () => {
+    const originalModule = jest.requireActual('@sentry/angular');
     return {
         ...originalModule,
         captureException: jest.fn(),
     };
 });
-import * as Sentry from '@sentry/angular-ivy';
+import * as Sentry from '@sentry/angular';
 
 describe('EntityTitleService', () => {
     let service: EntityTitleService;
