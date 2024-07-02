@@ -3,7 +3,7 @@ import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
-import { captureException } from '@sentry/angular-ivy';
+import { captureException } from '@sentry/angular';
 import { ValidationReason } from 'app/entities/exercise.model';
 import {
     MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD,

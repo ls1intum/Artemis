@@ -5,7 +5,6 @@ import { CodeEditorFileService } from 'app/exercises/programming/shared/code-edi
 import { LocalStorageService } from 'ngx-webstorage';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { firstValueFrom } from 'rxjs';
-import { Annotation, FileSession } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
@@ -23,6 +22,8 @@ import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/
 import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
 import { FileTypeService } from 'app/exercises/programming/shared/service/file-type.service';
 
+type FileSession = { [fileName: string]: { code: string; cursor: { column: number; row: number }; loadingError: boolean } };
+export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string };
 @Component({
     selector: 'jhi-code-editor-monaco',
     templateUrl: './code-editor-monaco.component.html',
@@ -362,9 +363,6 @@ export class CodeEditorMonacoComponent implements OnChanges {
         this.setBuildAnnotations(this.annotationsArray);
     }
 
-    /*
-     * Taken from code-editor-ace.component.ts
-     */
     /**
      * Saves the updated annotations to local storage
      * @param savedFiles
