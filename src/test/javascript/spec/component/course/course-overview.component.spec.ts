@@ -238,6 +238,7 @@ describe('CourseOverviewComponent', () => {
                     .spyOn(courseService, 'findAllForDropdown')
                     .mockReturnValue(of(new HttpResponse({ body: coursesDropdown, headers: new HttpHeaders() })));
                 printService = TestBed.inject(ThemeService);
+                (printService as any).isNavbarCollapsed$ = of(true);
             });
     }));
 
@@ -259,7 +260,6 @@ describe('CourseOverviewComponent', () => {
         const getUpdateMenuPosition = jest.spyOn(component, 'updateMenuPosition');
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
         getCourseStub.mockReturnValue(course1);
-        (printService as any).isNavbarCollapsed$ = of(true);
 
         await component.ngOnInit();
 
@@ -304,7 +304,6 @@ describe('CourseOverviewComponent', () => {
         const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
         getCourseStub.mockReturnValue(course1);
-        (printService as any).isNavbarCollapsed$ = of(true);
 
         await component.ngOnInit();
 
@@ -325,7 +324,6 @@ describe('CourseOverviewComponent', () => {
         const spy = jest.spyOn(metisConversationService, 'checkForUnreadMessages');
         metisConversationService._hasUnreadMessages$.next(hasNewMessages);
         jest.spyOn(metisConversationService, 'setUpConversationService').mockReturnValue(of());
-        (printService as any).isNavbarCollapsed$ = of(true);
 
         await component.ngOnInit();
 
@@ -361,7 +359,6 @@ describe('CourseOverviewComponent', () => {
 
     it('should redirect to the registration page if the API endpoint returned a 403, but the user can register', fakeAsync(() => {
         // mock error response
-        (printService as any).isNavbarCollapsed$ = of(true);
         findOneForDashboardStub.mockReturnValue(
             throwError(
                 new HttpResponse({
@@ -393,7 +390,6 @@ describe('CourseOverviewComponent', () => {
         const subscribeToTeamAssignmentUpdatesStub = jest.spyOn(component, 'subscribeToTeamAssignmentUpdates');
         const subscribeForQuizChangesStub = jest.spyOn(component, 'subscribeForQuizChanges');
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
-        (printService as any).isNavbarCollapsed$ = of(true);
 
         await component.ngOnInit();
 
@@ -583,7 +579,6 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should display course icon when available', () => {
-        (printService as any).isNavbarCollapsed$ = of(true);
         fixture.detectChanges();
 
         const iconElement = fixture.nativeElement.querySelector('jhi-secured-image');
@@ -632,7 +627,6 @@ describe('CourseOverviewComponent', () => {
     it('should call updateVisibility and updateMenuPosition after window resizement', async () => {
         const getUpdateVisibility = jest.spyOn(component, 'updateVisibility');
         const getUpdateMenuPosition = jest.spyOn(component, 'updateMenuPosition');
-        (printService as any).isNavbarCollapsed$ = of(true);
 
         await component.ngOnInit();
         window.dispatchEvent(new Event('resize'));
@@ -718,7 +712,6 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should initialize courses attribute when page is loaded', async () => {
-        (printService as any).isNavbarCollapsed$ = of(true);
         await component.ngOnInit();
 
         expect(component.courses).toEqual(courses);
@@ -727,14 +720,12 @@ describe('CourseOverviewComponent', () => {
 
     it('should not initialize courses attribute when page has error while loading', async () => {
         findAllForDropdownSpy.mockReturnValue(throwError(() => new HttpResponse({ status: 404 })));
-        (printService as any).isNavbarCollapsed$ = of(true);
 
         await component.ngOnInit();
         expect(component.courses?.length).toBeUndefined();
     });
 
     it('should not display current course in dropdown', async () => {
-        (printService as any).isNavbarCollapsed$ = of(true);
         await component.ngOnInit();
 
         expect(component.courses).toEqual(courses);
@@ -751,7 +742,6 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should subscribe to printService and update isNavbarCollapsed', fakeAsync(() => {
-        (printService as any).isNavbarCollapsed$ = of(true);
         fixture.detectChanges();
         tick();
         flush();
