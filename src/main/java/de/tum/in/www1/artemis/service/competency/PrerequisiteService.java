@@ -106,6 +106,7 @@ public class PrerequisiteService {
      *
      * @param courseId            the course to import into
      * @param courseCompetencyIds the ids of the courseCompetencies to import
+     * @param relations           the relations between the prerequisites to import
      * @return The list of imported prerequisites
      */
     public List<Prerequisite> importPrerequisites(long courseId, List<Long> courseCompetencyIds, Set<CompetencyRelation> relations) {
