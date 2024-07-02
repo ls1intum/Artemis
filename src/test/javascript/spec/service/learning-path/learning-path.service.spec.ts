@@ -1,6 +1,6 @@
-import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
+import { MockHttpService } from '../../helpers/mocks/service/mock-http.service';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
-import { ArtemisTestModule } from '../test.module';
+import { ArtemisTestModule } from '../../test.module';
 import { HttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { LearningPathStorageService } from 'app/course/learning-paths/participate/learning-path-storage.service';
@@ -76,5 +76,10 @@ describe('LearningPathService', () => {
     it('should send a request to the server to get competency progress for learning path', () => {
         learningPathService.getCompetencyProgressForLearningPath(1).subscribe();
         expect(getStub).toHaveBeenCalledExactlyOnceWith('api/learning-path/1/competency-progress', { observe: 'response' });
+    });
+
+    it('should send a request to the server to get learning path navigation overview', () => {
+        learningPathService.getLearningPathNavigationOverview(1).subscribe();
+        expect(getStub).toHaveBeenCalledExactlyOnceWith('api/learning-path/1/navigation-overview', { observe: 'response' });
     });
 });

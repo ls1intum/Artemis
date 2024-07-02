@@ -53,7 +53,10 @@ export class LectureUnitService {
 
     setCompletion(lectureUnitId: number, lectureId: number, completed: boolean): Observable<HttpResponse<void>> {
         const params = new HttpParams().set('completed', completed.toString());
-        return this.httpClient.post<void>(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}/completion`, null, { params, observe: 'response' });
+        return this.httpClient.post<void>(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}/completion`, null, {
+            params,
+            observe: 'response',
+        });
     }
 
     convertLectureUnitDatesFromClient<T extends LectureUnit>(lectureUnit: T): T {
@@ -159,5 +162,9 @@ export class LectureUnitService {
         return this.httpClient.get<LectureUnitForLearningPathNodeDetailsDTO>(`${this.resourceURL}/lecture-units/${lectureUnitId}/for-learning-path-node-details`, {
             observe: 'response',
         });
+    }
+
+    getLectureUnitById(lectureUnitId: number): Observable<LectureUnit> {
+        return this.httpClient.get<LectureUnit>(`${this.resourceURL}/lecture-units/${lectureUnitId}`);
     }
 }
