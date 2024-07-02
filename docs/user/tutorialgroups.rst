@@ -12,7 +12,7 @@ Overview
 Artemis facilitates the coordination of tutorial groups in a course. Tutorial groups are a learning strategy where students teach and learn from each other in small groups (20-30). In this strategy, proficient students act as tutors and lead the groups. The tutor and the group members usually meet weekly either on campus or online. Students present their solutions to homework assignments or other tasks and receive feedback and suggestions from the tutor and their peers.
 
 .. note:: The tutorial group overview page (used by students) displays dates in the student's current time zone. The tutorial group management page (used by instructors and tutors to manage groups and their sessions) displays dates in the course time zone. This is helpful if the instructors or tutors travel and work across multiple time zones. A header at the top of the page shows the current time zone used for dates.
-    
+
 Setting up Tutorial Group Plan as an Instructor
 -----------------------------------------------
 
@@ -35,7 +35,7 @@ Before the tutorial group feature can be used, three configurations need to be s
 
 * **Default tutorial group period:** This is the semester period when the groups usually meet. It is used to prefill the meeting period when creating a new tutorial group. The tutorial group period can be changed later on for each group individually.
 
-* **Artemis managed tutorial group channels:** This option allows Artemis to create and manage a dedicated channel for each tutorial group in the 'Messages' section of the course. This feature is only selectable if the course has the ``Messaging`` feature enabled in the course settings. If activated, tutorial group channels can still be managed manually but Artemis automatically performs some common tasks, such as:
+* **Artemis managed tutorial group channels:** This option allows Artemis to create and manage a dedicated channel for each tutorial group in the 'Communication' section of the course. This feature is only selectable if the course has the ``Communication`` feature enabled in the course settings. If activated, tutorial group channels can still be managed manually but Artemis automatically performs some common tasks, such as:
 
   * Adding and removing students from the channel when they register or unregister for the tutorial group
 
@@ -82,7 +82,7 @@ Managing Tutorial Groups as a Tutor
 
 Assigned tutors can manage their tutorial groups by navigating to the course's ``Tutorial Groups`` page in the course administration section. The tutor can view the group's details, register or unregister students, and edit the sessions by cancelling or rescheduling them. The tutor also has moderation rights in the tutorial group's channel in the ``Messages`` section of the course if the ``Artemis managed tutorial group channels`` feature is enabled in the tutorial group settings.
 
-The groups for which the tutor is responsible have a blue background. 
+The groups for which the tutor is responsible have a blue background.
 
 .. note::
     The instructor can perform the same actions as the tutor for all tutorial groups in the course. The tutor can only manage the tutorial groups that they are assigned to.
@@ -144,18 +144,18 @@ To see more details about a tutorial group (including an overview of all session
 .. |instructors-csv-import| image:: tutorialgroups/instructors-csv-import.png
     :width: 1000
 .. |instructors-holidays| image:: tutorialgroups/instructors-holidays.png
-    :width: 1000    
+    :width: 1000
 
 .. |tutor-overview| image:: tutorialgroups/tutor-overview.png
-    :width: 1000    
+    :width: 1000
 .. |tutor-registrations| image:: tutorialgroups/tutor-registrations.png
-    :width: 1000    
+    :width: 1000
 .. |tutor-sessions| image:: tutorialgroups/tutor-sessions.png
-    :width: 1000        
+    :width: 1000
 
 .. |student-own-groups| image:: tutorialgroups/students-own-groups.png
     :width: 1000
 .. |student-all-groups| image:: tutorialgroups/students-all-groups.png
     :width: 1000
 .. |student-detail| image:: tutorialgroups/students-detail.png
-    :width: 1000    
+    :width: 1000
