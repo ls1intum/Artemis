@@ -62,6 +62,8 @@ public class SharedQueueProcessingService {
 
     private final AtomicInteger localProcessingJobs = new AtomicInteger(0);
 
+    private final BuildAgentSSHKeyService buildAgentSSHKeyService;
+
     /**
      * Lock to prevent multiple nodes from processing the same build job.
      */
@@ -86,11 +88,12 @@ public class SharedQueueProcessingService {
     private UUID listenerId;
 
     public SharedQueueProcessingService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService,
-            BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap) {
+            BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap, BuildAgentSSHKeyService buildAgentSSHKeyService) {
         this.hazelcastInstance = hazelcastInstance;
         this.localCIBuildExecutorService = (ThreadPoolExecutor) localCIBuildExecutorService;
         this.buildJobManagementService = buildJobManagementService;
         this.buildLogsMap = buildLogsMap;
+        this.buildAgentSSHKeyService = buildAgentSSHKeyService;
     }
 
     /**
@@ -103,7 +106,7 @@ public class SharedQueueProcessingService {
         this.sharedLock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
         this.resultQueue = this.hazelcastInstance.getQueue("buildResultQueue");
-        this.listenerId = this.queue.addItemListener(new SharedQueueProcessingService.QueuedBuildJobItemListener(), true);
+        this.listenerId = this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
     }
 
     @PreDestroy
@@ -253,7 +256,9 @@ public class SharedQueueProcessingService {
             recentBuildJobs.add(recentBuildJob);
         }
 
-        return new BuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, active, recentBuildJobs);
+        String publicSshKey = buildAgentSSHKeyService.getPublicKeyAsString();
+
+        return new BuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, active, recentBuildJobs, publicSshKey);
     }
 
     private List<BuildJobQueueItem> getProcessingJobsOfNode(String memberAddress) {
