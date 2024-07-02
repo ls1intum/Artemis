@@ -944,14 +944,16 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     /**
-     * Updates problem statement of an exercise
-     * If exercise was already opened, the problem statement is updated using ExamExerciseUpdateService
-     * and differences between the old and the new problem statement will be highlighted
-     * If the exercise wasn't previously opened, the problem statement will be updated without highlighting differences,
-     * because ExamExerciseUpdateHighlighterComponents are initialized only when a student opens an exercise.
-     * We don't want to initialize all exercise components when a student opens an exam,
-     * because for big exams it would even cause 16000 REST calls at once, which could overload the system.
-     **/
+     * Updates the problem statement of an exercise.
+     * If the exercise was already opened, the problem statement is updated using ExamExerciseUpdateService,
+     * and differences between the old and new problem statements are highlighted.
+     *
+     * If the exercise wasn't previously opened, the problem statement will be updated without highlighting differences.
+     * This is because ExamExerciseUpdateHighlighterComponents are initialized only when a student opens an exercise.
+     *
+     * We avoid initializing all exercise components when a student opens an exam to prevent system overload.
+     * For large exams, initializing all components at once could result in even 16,000 REST calls, potentially overloading the system.
+     */
     private updateProblemStatement(event: ProblemStatementUpdateEvent): void {
         const index = this.studentExam.exercises!.findIndex((exercise) => exercise.id === event.exerciseId);
         const wasExerciseOpened = this.pageComponentVisited[index];
