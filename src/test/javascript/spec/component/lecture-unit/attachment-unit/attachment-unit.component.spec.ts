@@ -4,7 +4,6 @@ import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { AttachmentType } from 'app/entities/attachment.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import dayjs from 'dayjs';
 import { By } from '@angular/platform-browser';
 import { MockProvider } from 'ng-mocks';
 import { provideHttpClient } from '@angular/common/http';
@@ -27,8 +26,6 @@ describe('AttachmentUnitComponent', () => {
             id: 1,
             version: 1,
             attachmentType: AttachmentType.FILE,
-            releaseDate: dayjs().year(2010).month(3).date(5),
-            uploadDate: dayjs().year(2010).month(3).date(5),
             name: 'test',
             link: '/path/to/file/test.pdf',
         },

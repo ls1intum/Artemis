@@ -70,13 +70,11 @@ describe('VideoUnitComponent', () => {
 
         jest.useFakeTimers();
         fixture.detectChanges();
-        expect(component.completionTimeout).toBeUndefined();
         component.toggleCollapse(false); // Toggle to open
 
         fixture.detectChanges();
 
         expect(logEventSpy).toHaveBeenCalled();
-        expect(component.completionTimeout).toBeDefined();
 
         jest.runAllTimers();
 

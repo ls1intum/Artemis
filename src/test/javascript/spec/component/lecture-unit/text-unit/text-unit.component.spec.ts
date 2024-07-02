@@ -14,10 +14,10 @@ describe('TextUnitComponent', () => {
     let component: TextUnitComponent;
     let fixture: ComponentFixture<TextUnitComponent>;
 
-    let writeStub = jest.SpyInstance;
-    let closeStub = jest.SpyInstance;
-    let focusStub = jest.SpyInstance;
-    let openStub = jest.SpyInstance;
+    let writeStub: jest.SpyInstance;
+    let closeStub: jest.SpyInstance;
+    let focusStub: jest.SpyInstance;
+    let openStub: jest.SpyInstance;
 
     const textUnit: TextUnit = {
         id: 1,
