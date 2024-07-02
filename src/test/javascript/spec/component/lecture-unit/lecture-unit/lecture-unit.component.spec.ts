@@ -13,7 +13,6 @@ describe('LectureUnitComponent', () => {
     const lectureUnit: LectureUnit = {
         id: 1,
         name: 'Test Lecture Unit',
-        content: 'Test content',
         completed: true,
         visibleToStudents: true,
     };
