@@ -15,4 +15,9 @@ public class Competency extends CourseCompetency {
 
     public Competency() {
     }
+
+    @Override
+    public String getType() {
+        return "competency";
+    }
 }

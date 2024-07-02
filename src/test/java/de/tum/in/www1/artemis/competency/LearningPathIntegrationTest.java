@@ -251,7 +251,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
     void testEnableLearningPaths() throws Exception {
         enableLearningPathsRESTCall(course);
-        final var updatedCourse = courseRepository.findWithEagerLearningPathsAndCompetenciesByIdElseThrow(course.getId());
+        final var updatedCourse = courseRepository.findWithEagerLearningPathsAndCompetenciesAndPrerequisitesByIdElseThrow(course.getId());
         assertThat(updatedCourse.getLearningPathsEnabled()).as("should enable LearningPaths").isTrue();
         assertThat(updatedCourse.getLearningPaths()).isNotNull();
         assertThat(updatedCourse.getLearningPaths().size()).as("should create LearningPath for each student").isEqualTo(NUMBER_OF_STUDENTS);
@@ -264,7 +264,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testEnableLearningPathsWithNoCompetencies() throws Exception {
         var courseWithoutCompetencies = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, false, false, 0).getFirst();
         enableLearningPathsRESTCall(courseWithoutCompetencies);
-        final var updatedCourse = courseRepository.findWithEagerLearningPathsAndCompetenciesByIdElseThrow(courseWithoutCompetencies.getId());
+        final var updatedCourse = courseRepository.findWithEagerLearningPathsAndCompetenciesAndPrerequisitesByIdElseThrow(courseWithoutCompetencies.getId());
         assertThat(updatedCourse.getLearningPathsEnabled()).as("should enable LearningPaths").isTrue();
         assertThat(updatedCourse.getLearningPaths()).isNotNull();
         assertThat(updatedCourse.getLearningPaths().size()).as("should create LearningPath for each student").isEqualTo(NUMBER_OF_STUDENTS);

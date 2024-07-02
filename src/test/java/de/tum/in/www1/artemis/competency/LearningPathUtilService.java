@@ -43,7 +43,7 @@ public class LearningPathUtilService {
      * @return the updated course
      */
     public Course enableAndGenerateLearningPathsForCourse(Course course) {
-        var eagerlyLoadedCourse = courseRepository.findWithEagerLearningPathsAndCompetenciesByIdElseThrow(course.getId());
+        var eagerlyLoadedCourse = courseRepository.findWithEagerLearningPathsAndCompetenciesAndPrerequisitesByIdElseThrow(course.getId());
         learningPathService.generateLearningPaths(eagerlyLoadedCourse);
         eagerlyLoadedCourse.setLearningPathsEnabled(true);
         return courseRepository.save(eagerlyLoadedCourse);

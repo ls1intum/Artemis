@@ -100,6 +100,8 @@ public abstract class CourseCompetency extends BaseCompetency {
     @OneToMany(mappedBy = "competency", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<CompetencyJol> competencyJols = new HashSet<>();
 
+    public abstract String getType();
+
     public CourseCompetency() {
     }
 

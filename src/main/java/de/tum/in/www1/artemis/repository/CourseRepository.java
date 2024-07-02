@@ -132,8 +132,8 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "learningPaths" })
     Optional<Course> findWithEagerLearningPathsById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "competencies", "learningPaths", "learningPaths.competencies" })
-    Optional<Course> findWithEagerLearningPathsAndCompetenciesById(long courseId);
+    @EntityGraph(type = LOAD, attributePaths = { "competencies", "prerequisites", "learningPaths", "learningPaths.competencies" })
+    Optional<Course> findWithEagerLearningPathsAndCompetenciesAndPrerequisitesById(long courseId);
 
     // Note: we load attachments directly because otherwise, they will be loaded in subsequent DB calls due to the EAGER relationship
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments" })
@@ -486,8 +486,8 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     }
 
     @NotNull
-    default Course findWithEagerLearningPathsAndCompetenciesByIdElseThrow(long courseId) {
-        return findWithEagerLearningPathsAndCompetenciesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    default Course findWithEagerLearningPathsAndCompetenciesAndPrerequisitesByIdElseThrow(long courseId) {
+        return findWithEagerLearningPathsAndCompetenciesAndPrerequisitesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     Page<Course> findByTitleIgnoreCaseContaining(String partialTitle, Pageable pageable);

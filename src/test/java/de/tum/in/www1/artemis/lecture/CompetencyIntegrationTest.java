@@ -357,7 +357,11 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
             request.post("/api/courses/" + course.getId() + "/competencies/import-all/1", null, HttpStatus.FORBIDDEN);
             request.post("/api/courses/" + course.getId() + "/competencies/import", competency, HttpStatus.FORBIDDEN);
             // relations
-            request.post("/api/courses/" + course.getId() + "/competencies/relations", new CompetencyRelation(), HttpStatus.FORBIDDEN);
+            CompetencyRelation relation = new CompetencyRelation();
+            relation.setHeadCompetency(competency);
+            relation.setTailCompetency(competency);
+            relation.setType(RelationType.EXTENDS);
+            request.post("/api/courses/" + course.getId() + "/competencies/relations", CompetencyRelationDTO.of(relation), HttpStatus.FORBIDDEN);
             request.getSet("/api/courses/" + course.getId() + "/competencies/relations", HttpStatus.FORBIDDEN, CompetencyRelationDTO.class);
             request.delete("/api/courses/" + course.getId() + "/competencies/relations/1", HttpStatus.FORBIDDEN);
         }
@@ -529,7 +533,8 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
             relationToCreate.setHeadCompetency(headCompetency);
             relationToCreate.setType(RelationType.EXTENDS);
 
-            request.postWithResponseBody("/api/courses/" + course.getId() + "/competencies/relations", relationToCreate, CompetencyRelation.class, HttpStatus.OK);
+            request.postWithResponseBody("/api/courses/" + course.getId() + "/competencies/relations", CompetencyRelationDTO.of(relationToCreate), CompetencyRelation.class,
+                    HttpStatus.OK);
 
             var relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(course.getId());
             assertThat(relations).hasSize(1);
@@ -565,7 +570,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
             // relation type must be set
             relationToCreate.setType(null);
 
-            request.post("/api/courses/" + course.getId() + "/competencies/relations", relationToCreate, HttpStatus.BAD_REQUEST);
+            request.post("/api/courses/" + course.getId() + "/competencies/relations", CompetencyRelationDTO.of(relationToCreate), HttpStatus.BAD_REQUEST);
         }
 
         @Test
@@ -582,7 +587,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
             relation.setHeadCompetency(competency);
             relation.setType(RelationType.ASSUMES);
 
-            request.post("/api/courses/" + course.getId() + "/competencies/relations", relation, HttpStatus.BAD_REQUEST);
+            request.post("/api/courses/" + course.getId() + "/competencies/relations", CompetencyRelationDTO.of(relation), HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -1039,7 +1044,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
             Competency head = createCompetency(course2);
             Competency tail = createCompetency(course2);
             createRelation(tail, head, RelationType.RELATES);
-            var competencyList = List.of(head, tail);
+            List<CourseCompetency> competencyList = List.of(head, tail);
 
             competencyDTOList = request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/import/bulk?importRelations=true", competencyList,
                     CompetencyWithTailRelationDTO.class, HttpStatus.CREATED);
