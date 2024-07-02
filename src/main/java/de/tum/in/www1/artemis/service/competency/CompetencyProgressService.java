@@ -22,15 +22,15 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.LearningObject;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.enumeration.CompetencyProgressConfidenceReason;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.repository.CompetencyProgressRepository;
-import de.tum.in.www1.artemis.repository.CompetencyRepository;
+import de.tum.in.www1.artemis.repository.CourseCompetencyRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
@@ -51,8 +51,6 @@ public class CompetencyProgressService {
 
     private static final Logger log = LoggerFactory.getLogger(CompetencyProgressService.class);
 
-    private final CompetencyRepository competencyRepository;
-
     private final CompetencyProgressRepository competencyProgressRepository;
 
     private final ExerciseRepository exerciseRepository;
@@ -67,6 +65,8 @@ public class CompetencyProgressService {
 
     private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
 
+    private final CourseCompetencyRepository courseCompetencyRepository;
+
     private static final int MIN_EXERCISES_RECENCY_CONFIDENCE = 3;
 
     private static final int MAX_SUBMISSIONS_FOR_QUICK_SOLVE_HEURISTIC = 3;
@@ -77,10 +77,9 @@ public class CompetencyProgressService {
 
     private static final double CONFIDENCE_REASON_DEADZONE = 0.05;
 
-    public CompetencyProgressService(CompetencyRepository competencyRepository, CompetencyProgressRepository competencyProgressRepository, ExerciseRepository exerciseRepository,
-            LectureUnitRepository lectureUnitRepository, UserRepository userRepository, LearningPathService learningPathService, ParticipantScoreService participantScoreService,
-            LectureUnitCompletionRepository lectureUnitCompletionRepository) {
-        this.competencyRepository = competencyRepository;
+    public CompetencyProgressService(CompetencyProgressRepository competencyProgressRepository, ExerciseRepository exerciseRepository, LectureUnitRepository lectureUnitRepository,
+            UserRepository userRepository, LearningPathService learningPathService, ParticipantScoreService participantScoreService,
+            LectureUnitCompletionRepository lectureUnitCompletionRepository, CourseCompetencyRepository courseCompetencyRepository) {
         this.competencyProgressRepository = competencyProgressRepository;
         this.exerciseRepository = exerciseRepository;
         this.lectureUnitRepository = lectureUnitRepository;
@@ -88,6 +87,7 @@ public class CompetencyProgressService {
         this.learningPathService = learningPathService;
         this.participantScoreService = participantScoreService;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
+        this.courseCompetencyRepository = courseCompetencyRepository;
     }
 
     /**
@@ -110,12 +110,11 @@ public class CompetencyProgressService {
     @Async
     public void updateProgressByLearningObjectAsync(LearningObject learningObject) {
         SecurityUtils.setAuthorizationObject(); // required for async
-        Course course;
-        switch (learningObject) {
-            case Exercise exercise -> course = exercise.getCourseViaExerciseGroupOrCourseMember();
-            case LectureUnit lectureUnit -> course = lectureUnit.getLecture().getCourse();
+        Course course = switch (learningObject) {
+            case Exercise exercise -> exercise.getCourseViaExerciseGroupOrCourseMember();
+            case LectureUnit lectureUnit -> lectureUnit.getLecture().getCourse();
             default -> throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
-        }
+        };
         updateProgressByLearningObject(learningObject, userRepository.getStudents(course));
     }
 
@@ -125,7 +124,7 @@ public class CompetencyProgressService {
      * @param competency The competency for which to update all existing student progress
      */
     @Async
-    public void updateProgressByCompetencyAsync(Competency competency) {
+    public void updateProgressByCompetencyAsync(CourseCompetency competency) {
         SecurityUtils.setAuthorizationObject(); // required for async
         competencyProgressRepository.findAllByCompetencyId(competency.getId()).stream().map(CompetencyProgress::getUser)
                 .forEach(user -> updateCompetencyProgress(competency.getId(), user));
@@ -140,12 +139,11 @@ public class CompetencyProgressService {
     public void updateProgressByLearningObject(LearningObject learningObject, @NotNull Set<User> users) {
         log.debug("Updating competency progress for {} users.", users.size());
         try {
-            Set<Competency> competencies;
-            switch (learningObject) {
-                case Exercise exercise -> competencies = exerciseRepository.findWithCompetenciesById(exercise.getId()).map(Exercise::getCompetencies).orElse(null);
-                case LectureUnit lectureUnit -> competencies = lectureUnitRepository.findWithCompetenciesById(lectureUnit.getId()).map(LectureUnit::getCompetencies).orElse(null);
+            Set<CourseCompetency> competencies = switch (learningObject) {
+                case Exercise exercise -> exerciseRepository.findWithCompetenciesById(exercise.getId()).map(Exercise::getCompetencies).orElse(null);
+                case LectureUnit lectureUnit -> lectureUnitRepository.findWithCompetenciesById(lectureUnit.getId()).map(LectureUnit::getCompetencies).orElse(null);
                 default -> throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
-            }
+            };
 
             if (competencies == null) {
                 // Competencies couldn't be loaded, the exercise/lecture unit might have already been deleted
@@ -168,16 +166,16 @@ public class CompetencyProgressService {
      * @return The updated competency progress, which is also persisted to the database
      */
     public CompetencyProgress updateCompetencyProgress(Long competencyId, User user) {
-        Optional<Competency> optionalCompetency = competencyRepository.findByIdWithLectureUnits(competencyId);
+        Optional<CourseCompetency> optionalCompetency = courseCompetencyRepository.findByIdWithLectureUnits(competencyId);
 
         if (user == null || optionalCompetency.isEmpty()) {
             log.debug("User or competency no longer exist, skipping.");
             return null;
         }
 
-        Competency competency = optionalCompetency.get();
+        CourseCompetency competency = optionalCompetency.get();
         Set<LectureUnit> lectureUnits = competency.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).collect(Collectors.toSet());
-        Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos = competencyRepository.findAllExerciseInfoByCompetencyId(competencyId, user);
+        Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos = courseCompetencyRepository.findAllExerciseInfoByCompetencyId(competencyId, user);
         int numberOfCompletedLectureUnits = lectureUnitCompletionRepository
                 .countByLectureUnitIdsAndUserId(competency.getLectureUnits().stream().map(LectureUnit::getId).collect(Collectors.toSet()), user.getId());
 
@@ -448,7 +446,7 @@ public class CompetencyProgressService {
      * @param competency the competency to check
      * @return true if the competency can be mastered without completing any exercises, false otherwise
      */
-    public static boolean canBeMasteredWithoutExercises(@NotNull Competency competency) {
+    public static boolean canBeMasteredWithoutExercises(@NotNull CourseCompetency competency) {
         double numberOfLectureUnits = competency.getLectureUnits().size();
         double numberOfLearningObjects = numberOfLectureUnits + competency.getExercises().size();
         if (numberOfLearningObjects == 0) {
@@ -476,7 +474,7 @@ public class CompetencyProgressService {
      * @param course     The course for which to get the progress
      * @return The progress for the course
      */
-    public CourseCompetencyProgressDTO getCompetencyCourseProgress(@NotNull Competency competency, @NotNull Course course) {
+    public CourseCompetencyProgressDTO getCompetencyCourseProgress(@NotNull CourseCompetency competency, @NotNull Course course) {
         var numberOfStudents = competencyProgressRepository.countByCompetency(competency.getId());
         var numberOfMasteredStudents = competencyProgressRepository.countByCompetencyAndMastered(competency.getId(), competency.getMasteryThreshold());
         var averageStudentScore = RoundingUtil.roundScoreSpecifiedByCourseSettings(participantScoreService.getAverageOfAverageScores(competency.getExercises()), course);

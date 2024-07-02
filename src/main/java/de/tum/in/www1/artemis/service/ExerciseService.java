@@ -38,7 +38,7 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.lti.LtiResourceLaunch;
@@ -757,7 +757,7 @@ public class ExerciseService {
      * @param exercises  set of exercises
      * @param competency competency to remove
      */
-    public void removeCompetency(@NotNull Set<Exercise> exercises, @NotNull Competency competency) {
+    public void removeCompetency(@NotNull Set<Exercise> exercises, @NotNull CourseCompetency competency) {
         exercises.forEach(exercise -> exercise.getCompetencies().remove(competency));
         exerciseRepository.saveAll(exercises);
     }

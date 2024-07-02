@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.StudentScoreUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.LearningObject;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.lecture.LectureFactory;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
@@ -91,7 +91,7 @@ class LearningObjectServiceTest extends AbstractSpringIntegrationIndependentTest
             }
 
             @Override
-            public Set<Competency> getCompetencies() {
+            public Set<CourseCompetency> getCompetencies() {
                 return Set.of();
             }
         };

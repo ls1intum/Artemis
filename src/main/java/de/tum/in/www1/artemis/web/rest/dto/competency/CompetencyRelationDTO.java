@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.domain.competency.RelationType;
  * @param relationType     the relation type
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CompetencyRelationDTO(long id, long tailCompetencyId, long headCompetencyId, RelationType relationType) {
+public record CompetencyRelationDTO(Long id, long tailCompetencyId, long headCompetencyId, RelationType relationType) {
 
     public static CompetencyRelationDTO of(CompetencyRelation competencyRelation) {
         return new CompetencyRelationDTO(competencyRelation.getId(), competencyRelation.getTailCompetency().getId(), competencyRelation.getHeadCompetency().getId(),

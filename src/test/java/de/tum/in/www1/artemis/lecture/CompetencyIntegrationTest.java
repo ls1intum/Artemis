@@ -64,6 +64,7 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
+import de.tum.in.www1.artemis.repository.CourseCompetencyRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseUnitRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
@@ -162,6 +163,9 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
     @Autowired
     private StudentScoreUtilService studentScoreUtilService;
+
+    @Autowired
+    private CourseCompetencyRepository courseCompetencyRepository;
 
     private Course course;
 
@@ -262,7 +266,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         return lecture;
     }
 
-    private TextExercise createTextExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assassmentDueDate, Set<Competency> competencies,
+    private TextExercise createTextExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assassmentDueDate, Set<CourseCompetency> competencies,
             boolean isTeamExercise) {
         // creating text exercise with Result
         TextExercise textExercise = TextExerciseFactory.generateTextExercise(releaseDate, dueDate, assassmentDueDate, course);
@@ -278,7 +282,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         return exerciseRepository.save(textExercise);
     }
 
-    private ProgrammingExercise createProgrammingExercise(int i, Set<Competency> competencies) {
+    private ProgrammingExercise createProgrammingExercise(int i, Set<CourseCompetency> competencies) {
         ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(null, null, course);
 
         programmingExercise.setMaxPoints(i * 10.0);
@@ -353,7 +357,11 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
             request.post("/api/courses/" + course.getId() + "/competencies/import-all/1", null, HttpStatus.FORBIDDEN);
             request.post("/api/courses/" + course.getId() + "/competencies/import", competency, HttpStatus.FORBIDDEN);
             // relations
-            request.post("/api/courses/" + course.getId() + "/competencies/relations", new CompetencyRelation(), HttpStatus.FORBIDDEN);
+            CompetencyRelation relation = new CompetencyRelation();
+            relation.setHeadCompetency(competency);
+            relation.setTailCompetency(competency);
+            relation.setType(RelationType.EXTENDS);
+            request.post("/api/courses/" + course.getId() + "/competencies/relations", CompetencyRelationDTO.of(relation), HttpStatus.FORBIDDEN);
             request.getSet("/api/courses/" + course.getId() + "/competencies/relations", HttpStatus.FORBIDDEN, CompetencyRelationDTO.class);
             request.delete("/api/courses/" + course.getId() + "/competencies/relations/1", HttpStatus.FORBIDDEN);
         }
@@ -525,7 +533,8 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
             relationToCreate.setHeadCompetency(headCompetency);
             relationToCreate.setType(RelationType.EXTENDS);
 
-            request.postWithResponseBody("/api/courses/" + course.getId() + "/competencies/relations", relationToCreate, CompetencyRelation.class, HttpStatus.OK);
+            request.postWithResponseBody("/api/courses/" + course.getId() + "/competencies/relations", CompetencyRelationDTO.of(relationToCreate), CompetencyRelation.class,
+                    HttpStatus.OK);
 
             var relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(course.getId());
             assertThat(relations).hasSize(1);
@@ -561,7 +570,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
             // relation type must be set
             relationToCreate.setType(null);
 
-            request.post("/api/courses/" + course.getId() + "/competencies/relations", relationToCreate, HttpStatus.BAD_REQUEST);
+            request.post("/api/courses/" + course.getId() + "/competencies/relations", CompetencyRelationDTO.of(relationToCreate), HttpStatus.BAD_REQUEST);
         }
 
         @Test
@@ -578,7 +587,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
             relation.setHeadCompetency(competency);
             relation.setType(RelationType.ASSUMES);
 
-            request.post("/api/courses/" + course.getId() + "/competencies/relations", relation, HttpStatus.BAD_REQUEST);
+            request.post("/api/courses/" + course.getId() + "/competencies/relations", CompetencyRelationDTO.of(relation), HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -1035,7 +1044,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
             Competency head = createCompetency(course2);
             Competency tail = createCompetency(course2);
             createRelation(tail, head, RelationType.RELATES);
-            var competencyList = List.of(head, tail);
+            List<CourseCompetency> competencyList = List.of(head, tail);
 
             competencyDTOList = request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/import/bulk?importRelations=true", competencyList,
                     CompetencyWithTailRelationDTO.class, HttpStatus.CREATED);
@@ -1096,7 +1105,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
         void shouldGetCourseCompetencyTitles() throws Exception {
             competencyUtilService.createCompetencies(course, 5);
-            var competencyTitles = competencyRepository.findAllForCourse(course.getId()).stream().map(CourseCompetency::getTitle).toList();
+            var competencyTitles = courseCompetencyRepository.findAllForCourse(course.getId()).stream().map(CourseCompetency::getTitle).toList();
             prerequisiteUtilService.createPrerequisites(course, 5);
             var prerequisiteTitles = prerequisiteRepository.findAllByCourseIdOrderById(course.getId()).stream().map(CourseCompetency::getTitle).toList();
             var expectedTitles = Stream.concat(competencyTitles.stream(), prerequisiteTitles.stream()).toList();

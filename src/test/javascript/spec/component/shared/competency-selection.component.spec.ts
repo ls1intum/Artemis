@@ -4,7 +4,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { CompetencyService } from 'app/course/competencies/competency.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { NgModel, ReactiveFormsModule } from '@angular/forms';
@@ -14,12 +13,13 @@ import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ChangeDetectorRef } from '@angular/core';
+import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 
 describe('CompetencySelection', () => {
     let fixture: ComponentFixture<CompetencySelectionComponent>;
     let component: CompetencySelectionComponent;
     let courseStorageService: CourseStorageService;
-    let competencyService: CompetencyService;
+    let courseCompetencyService: CourseCompetencyService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -45,7 +45,7 @@ describe('CompetencySelection', () => {
                 fixture = TestBed.createComponent(CompetencySelectionComponent);
                 component = fixture.componentInstance;
                 courseStorageService = TestBed.inject(CourseStorageService);
-                competencyService = TestBed.inject(CompetencyService);
+                courseCompetencyService = TestBed.inject(CourseCompetencyService);
             });
     });
 
@@ -57,12 +57,12 @@ describe('CompetencySelection', () => {
         const nonOptional = { id: 1, optional: false } as Competency;
         const optional = { id: 2, optional: true } as Competency;
         const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [nonOptional, optional] });
-        const getAllForCourseSpy = jest.spyOn(competencyService, 'getAllForCourse');
+        const getAllForCourseSpy = jest.spyOn(courseCompetencyService, 'getAllForCourse');
 
         fixture.detectChanges();
 
         const selector = fixture.debugElement.nativeElement.querySelector('#competency-selector');
-        expect(component.value).toBeUndefined();
+        expect(component.selectedCompetencies).toBeUndefined();
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).not.toHaveBeenCalled();
         expect(component.isLoading).toBeFalse();
@@ -74,7 +74,7 @@ describe('CompetencySelection', () => {
         const nonOptional = { id: 1, optional: false } as Competency;
         const optional = { id: 2, optional: true } as Competency;
         const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: undefined });
-        const getAllForCourseSpy = jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [nonOptional, optional] })));
+        const getAllForCourseSpy = jest.spyOn(courseCompetencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [nonOptional, optional] })));
 
         fixture.detectChanges();
 
@@ -88,7 +88,7 @@ describe('CompetencySelection', () => {
 
     it('should set disabled when error during loading', () => {
         const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: undefined });
-        const getAllForCourseSpy = jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(throwError({ status: 500 }));
+        const getAllForCourseSpy = jest.spyOn(courseCompetencyService, 'getAllForCourse').mockReturnValue(throwError({ status: 500 }));
 
         fixture.detectChanges();
 
@@ -100,7 +100,7 @@ describe('CompetencySelection', () => {
 
     it('should be hidden when no competencies', () => {
         const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [] });
-        const getAllForCourseSpy = jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [] })));
+        const getAllForCourseSpy = jest.spyOn(courseCompetencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [] })));
 
         fixture.detectChanges();
 
@@ -118,8 +118,8 @@ describe('CompetencySelection', () => {
         fixture.detectChanges();
 
         component.writeValue([{ id: 1, title: 'other' } as Competency]);
-        expect(component.value).toBeArrayOfSize(1);
-        expect(component.value?.first()?.title).toBe('test');
+        expect(component.selectedCompetencies).toBeArrayOfSize(1);
+        expect(component.selectedCompetencies?.first()?.title).toBe('test');
     });
 
     it('should trigger change detection after loading competencies', () => {
@@ -139,24 +139,24 @@ describe('CompetencySelection', () => {
         jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [competency1, competency2, competency3] });
 
         fixture.detectChanges();
-        expect(component.value).toBeUndefined();
+        expect(component.selectedCompetencies).toBeUndefined();
 
         component.toggleCompetency(competency1);
         component.toggleCompetency(competency2);
         component.toggleCompetency(competency3);
 
-        expect(component.value).toHaveLength(3);
-        expect(component.value).toContain(competency3);
+        expect(component.selectedCompetencies).toHaveLength(3);
+        expect(component.selectedCompetencies).toContain(competency3);
 
         component.toggleCompetency(competency2);
 
-        expect(component.value).toHaveLength(2);
-        expect(component.value).not.toContain(competency2);
+        expect(component.selectedCompetencies).toHaveLength(2);
+        expect(component.selectedCompetencies).not.toContain(competency2);
 
         component.toggleCompetency(competency1);
         component.toggleCompetency(competency3);
 
-        expect(component.value).toBeUndefined();
+        expect(component.selectedCompetencies).toBeUndefined();
     });
 
     it('should register onchange', () => {

@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
@@ -170,7 +170,7 @@ public class LectureUtilService {
      * @param competencies The Competencies to add to the LectureUnits
      * @return The Lecture with updated LectureUnits
      */
-    public Lecture addCompetencyToLectureUnits(Lecture lecture, Set<Competency> competencies) {
+    public Lecture addCompetencyToLectureUnits(Lecture lecture, Set<CourseCompetency> competencies) {
         Lecture l = lectureRepo.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture.getId());
         l.getLectureUnits().forEach(lectureUnit -> {
             lectureUnit.setCompetencies(competencies);

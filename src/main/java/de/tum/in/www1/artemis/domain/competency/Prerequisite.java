@@ -18,4 +18,9 @@ public class Prerequisite extends CourseCompetency {
 
     public Prerequisite() {
     }
+
+    @Override
+    public String getType() {
+        return "prerequisite";
+    }
 }

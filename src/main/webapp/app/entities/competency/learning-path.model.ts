@@ -1,7 +1,7 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { Course } from 'app/entities/course.model';
 import { User, UserNameAndLoginDTO } from 'app/core/user/user.model';
-import { Competency, CompetencyRelationType } from 'app/entities/competency.model';
+import { CompetencyRelationType, CourseCompetency } from 'app/entities/competency.model';
 import { Edge, Node, NodeDimension } from '@swimlane/ngx-graph';
 import { faCheckCircle, faCircle, faFlag, faFlagCheckered, faPlayCircle, faSignsPost } from '@fortawesome/free-solid-svg-icons';
 
@@ -10,7 +10,7 @@ export class LearningPath implements BaseEntity {
     public progress?: number;
     public user?: User;
     public course?: Course;
-    public competencies?: Competency[];
+    public competencies?: CourseCompetency[];
 
     constructor() {}
 }

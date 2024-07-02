@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.LearningObject;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
@@ -75,8 +75,8 @@ public class LearningObjectService {
      * @param competencies the competencies for which to get the completed learning objects
      * @return the completed learning objects for the given user and competencies
      */
-    public Stream<LearningObject> getCompletedLearningObjectsForUserAndCompetencies(User user, Set<Competency> competencies) {
-        return Stream.concat(competencies.stream().map(Competency::getLectureUnits), competencies.stream().map(Competency::getExercises)).flatMap(Set::stream)
+    public Stream<LearningObject> getCompletedLearningObjectsForUserAndCompetencies(User user, Set<CourseCompetency> competencies) {
+        return Stream.concat(competencies.stream().map(CourseCompetency::getLectureUnits), competencies.stream().map(CourseCompetency::getExercises)).flatMap(Set::stream)
                 .filter(learningObject -> learningObject.getCompletionDate(user).isPresent())
                 .sorted(Comparator.comparing(learningObject -> learningObject.getCompletionDate(user).orElseThrow())).map(LearningObject.class::cast);
     }

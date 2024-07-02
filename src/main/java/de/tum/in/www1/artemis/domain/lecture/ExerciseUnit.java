@@ -19,7 +19,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 
 @Entity
 @DiscriminatorValue("E")
@@ -66,12 +66,12 @@ public class ExerciseUnit extends LectureUnit {
     }
 
     @Override
-    public Set<Competency> getCompetencies() {
+    public Set<CourseCompetency> getCompetencies() {
         return exercise == null || !Hibernate.isPropertyInitialized(exercise, "competencies") ? new HashSet<>() : exercise.getCompetencies();
     }
 
     @Override
-    public void setCompetencies(Set<Competency> competencies) {
+    public void setCompetencies(Set<CourseCompetency> competencies) {
         // Should be set in associated exercise
     }
 
