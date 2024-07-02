@@ -22,7 +22,7 @@ to a Jenkins and LocalVC Setup.
       4. ``estimated-time-per-repository`` (default 2): Time in seconds,
          which is used to give an overall estimation for one step and to log an estimated percentage progress.
 3. Start Artemis with the additional profile ``migrate-gitlab-jenkins-to-localvc`` to perform the migration.
-   After it Artemis stops automatically.
+   After it Artemis stops automatically (with a ``Application run failed`` message).
    Check the log of Artemis for entries with ``Migration`` to see if there were any problems.
 4. Adjust the credential on your Jenkins, which was previously used to access your GitLab.
    The same credential ID now have to provide username and password of an administrator account of your Artemis instance.
@@ -31,4 +31,4 @@ to a Jenkins and LocalVC Setup.
    1. Adjust ``artemis.version-control.url`` to point to your Artemis instance instead of your GitLab instance.
    2. ...
 6. Now you can start your Artemis again.
-   Make sure to remove the migration profile and replace the profile ``gitlab`` with profile ``localvc``.
+   Make sure to remove the migration profile and replace the ``gitlab`` profile with the ``localvc`` profile.
