@@ -6,6 +6,9 @@ import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { AlertService } from 'app/core/util/alert.service';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 
+import { catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
+
 @Component({
     selector: 'jhi-programming-exercise-instructor-repo-download',
     templateUrl: './programming-exercise-instructor-repo-download.component.html',
@@ -40,10 +43,23 @@ export class ProgrammingExerciseInstructorRepoDownloadComponent {
 
     exportRepository() {
         if (this.exerciseId && this.repositoryType) {
-            this.programmingExerciseService.exportInstructorRepository(this.exerciseId, this.repositoryType, this.auxiliaryRepositoryId).subscribe((response) => {
-                downloadZipFileFromResponse(response);
-                this.alertService.success('artemisApp.programmingExercise.export.successMessageRepo');
-            });
+            this.programmingExerciseService
+                .exportInstructorRepository(this.exerciseId, this.repositoryType, this.auxiliaryRepositoryId)
+                .pipe(
+                    catchError((error) => {
+                        if (error.status === 500 || error.status === 404) {
+                            this.alertService.error('artemisApp.programmingExercise.export.errorMessageRepo');
+                        }
+                        // Return an observable of undefined so the subscribe method can continue
+                        return of(undefined);
+                    }),
+                )
+                .subscribe((response) => {
+                    if (response !== undefined) {
+                        downloadZipFileFromResponse(response);
+                        this.alertService.success('artemisApp.programmingExercise.export.successMessageRepo');
+                    }
+                });
         }
     }
 }
