@@ -8,11 +8,15 @@ import { LearningPathNavigationService } from 'app/course/learning-paths/service
 import { Observable, lastValueFrom, switchMap } from 'rxjs';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/video-unit.component';
+import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-unit.component';
+import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
+import { OnlineUnitComponent } from 'app/overview/course-lectures/online-unit/online-unit.component';
 
 @Component({
     selector: 'jhi-learning-path-lecture-unit',
     standalone: true,
-    imports: [ArtemisLectureUnitsModule, ArtemisSharedModule],
+    imports: [ArtemisLectureUnitsModule, ArtemisSharedModule, VideoUnitComponent, TextUnitComponent, AttachmentUnitComponent, OnlineUnitComponent],
     templateUrl: './learning-path-lecture-unit.component.html',
 })
 export class LearningPathLectureUnitComponent {
