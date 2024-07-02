@@ -115,11 +115,10 @@
                     </ng-template>
                 </ngx-datatable-column>
                 @if (exercise?.type === ExerciseType.PROGRAMMING) {
-                    <ngx-datatable-column prop="repositoryUri" [minWidth]="120" [width]="120">
+                    <ngx-datatable-column prop="repositoryUri" [minWidth]="80" [width]="80">
                         <ng-template ngx-datatable-header-template>
-                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('repositoryUri')">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.repository"></span>
-                                <fa-icon [icon]="controls.iconForSortPropField('repositoryUri')" />
+                            <span class="datatable-header-cell-wrapper">
+                                <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.participation.repository"></span>
                             </span>
                         </ng-template>
                         <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
