@@ -652,7 +652,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.problemStatementUpdateEventsSubscription = this.liveEventsService
             .observeNewEventsAsSystem([ExamLiveEventType.PROBLEM_STATEMENT_UPDATE])
             .subscribe((event: ProblemStatementUpdateEvent) => {
-                this.examExerciseUpdateService.updateLiveExamExercise(event.exerciseId, event.problemStatement);
+                this.updateProblemStatement(event);
                 this.liveEventsService.acknowledgeEvent(event, false);
             });
     }
@@ -941,5 +941,25 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     }
                 }
             });
+    }
+
+    /**
+     * Updates problem statement of an exercise
+     * If exercise was already opened, the problem statement is updated using ExamExerciseUpdateService
+     * and differences between the old and the new problem statement will be highlighted
+     * If the exercise wasn't previously opened, the problem statement will be updated without highlighting differences,
+     * because ExamExerciseUpdateHighlighterComponents are initialized only when a student opens an exercise.
+     * We don't want to initialize all exercise components when a student opens an exam,
+     * because for big exams it would even cause 16000 REST calls at once, which could overload the system.
+     **/
+    private updateProblemStatement(event: ProblemStatementUpdateEvent): void {
+        const index = this.studentExam.exercises!.findIndex((exercise) => exercise.id === event.exerciseId);
+        const wasExerciseOpened = this.pageComponentVisited[index];
+        if (wasExerciseOpened) {
+            this.examExerciseUpdateService.updateLiveExamExercise(event.exerciseId, event.problemStatement);
+        } else {
+            const exercise = this.studentExam.exercises![index];
+            exercise.problemStatement = event.problemStatement;
+        }
     }
 }
