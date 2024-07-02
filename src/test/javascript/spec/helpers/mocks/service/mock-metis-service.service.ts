@@ -113,7 +113,7 @@ export class MockMetisService {
     }
 
     getContextInformation(post: Post): ContextInformation {
-        const routerLinkComponents = ['/courses', post.conversation?.course?.id ?? 1, 'messages'];
+        const routerLinkComponents = ['/courses', post.conversation?.course?.id ?? 1, 'communication'];
         const queryParams = { conversationId: post.conversation?.id };
         const displayName = getAsChannelDTO(post.conversation)?.name ?? 'some context';
         return { routerLinkComponents, displayName, queryParams };
