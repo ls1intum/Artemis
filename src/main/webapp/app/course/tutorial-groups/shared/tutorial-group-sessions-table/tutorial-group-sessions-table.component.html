@@ -1,25 +1,28 @@
 <div class="table-responsive session-table">
     <div class="col-12 mb-2">
-        <div class="alert alert-info">
-            {{ 'artemisApp.pages.tutorialGroupSessionManagement.timeZoneExplanation' | artemisTranslate: { timeZone: timeZoneUsedForDisplay } }}
-        </div>
+        <div
+            class="alert alert-info"
+            jhiTranslate="artemisApp.pages.tutorialGroupSessionManagement.timeZoneExplanation"
+            [translateValues]="{ timeZone: timeZoneUsedForDisplay }"
+        ></div>
     </div>
     <table class="table table-sm">
         <thead>
             <tr>
                 @if (showIdColumn) {
-                    <th>{{ 'global.field.id' | artemisTranslate }}</th>
+                    <th jhiTranslate="global.field.id"></th>
                 }
-                <th>{{ 'artemisApp.entities.tutorialGroupSession.date' | artemisTranslate }}</th>
+                <th jhiTranslate="artemisApp.entities.tutorialGroupSession.date"></th>
                 <th>
-                    <span>{{
-                        (tutorialGroup.isOnline ? 'artemisApp.forms.scheduleForm.locationInput.labelOnline' : 'artemisApp.forms.scheduleForm.locationInput.labelOffline')
-                            | artemisTranslate
-                    }}</span>
+                    <span
+                        jhiTranslate="{{
+                            tutorialGroup.isOnline ? 'artemisApp.forms.scheduleForm.locationInput.labelOnline' : 'artemisApp.forms.scheduleForm.locationInput.labelOffline'
+                        }}"
+                    ></span>
                 </th>
-                <th class="attendance-column" id="attendanceHeader">{{ 'artemisApp.entities.tutorialGroupSession.attendance' | artemisTranslate }}</th>
+                <th class="attendance-column" id="attendanceHeader" jhiTranslate="artemisApp.entities.tutorialGroupSession.attendance"></th>
                 @if (tutorialGroup.tutorialGroupSchedule) {
-                    <th>{{ 'artemisApp.pages.tutorialGroupSessionManagement.columns.notes' | artemisTranslate }}</th>
+                    <th jhiTranslate="artemisApp.pages.tutorialGroupSessionManagement.columns.notes"></th>
                 }
                 @if (extraColumn) {
                     <th></th>
@@ -45,9 +48,12 @@
                 <td [colSpan]="numberOfColumns">
                     {{ 'artemisApp.pages.tutorialGroupSessionManagement.divider' | artemisTranslate }}
                     <div class="text-center">
-                        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="isCollapsed = !isCollapsed">
-                            {{ 'artemisApp.pages.tutorialGroupSessionManagement.showAll' | artemisTranslate }}
-                        </button>
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-outline-secondary"
+                            (click)="isCollapsed = !isCollapsed"
+                            jhiTranslate="artemisApp.pages.tutorialGroupSessionManagement.showAll"
+                        ></button>
                     </div>
                 </td>
             </tr>

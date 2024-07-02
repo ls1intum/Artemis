@@ -112,9 +112,9 @@
                                 <label for="quizMode" jhiTranslate="artemisApp.quizExercise.quizMode.title" class="colon-suffix no-flex-shrink"></label>
                                 <jhi-help-icon text="artemisApp.quizExercise.quizMode.explanation" />
                                 <select id="quizMode" class="form-select" [(ngModel)]="quizExercise.quizMode" (ngModelChange)="cacheValidation()">
-                                    <option [value]="QuizMode.SYNCHRONIZED">{{ 'artemisApp.quizExercise.quizMode.synchronized' | artemisTranslate }}</option>
-                                    <option [value]="QuizMode.BATCHED">{{ 'artemisApp.quizExercise.quizMode.batched' | artemisTranslate }}</option>
-                                    <option [value]="QuizMode.INDIVIDUAL">{{ 'artemisApp.quizExercise.quizMode.individual' | artemisTranslate }}</option>
+                                    <option [value]="QuizMode.SYNCHRONIZED" jhiTranslate="artemisApp.quizExercise.quizMode.synchronized"></option>
+                                    <option [value]="QuizMode.BATCHED" jhiTranslate="artemisApp.quizExercise.quizMode.batched"></option>
+                                    <option [value]="QuizMode.INDIVIDUAL" jhiTranslate="artemisApp.quizExercise.quizMode.individual"></option>
                                 </select>
                                 <ng-container>
                                     <!-- releaseDate works similar to Exam.visibleDate -->
@@ -140,7 +140,7 @@
                                         [(ngModel)]="quizExercise.dueDate"
                                     />
                                     @if (quizExercise.dueDateError) {
-                                        <span class="invalid-feedback">{{ 'artemisApp.quizExercise.dueDateError' | artemisTranslate }}</span>
+                                        <span class="invalid-feedback" jhiTranslate="artemisApp.quizExercise.dueDateError"></span>
                                     }
                                 }
                                 @if (quizExercise.quizMode === QuizMode.SYNCHRONIZED) {
@@ -199,9 +199,7 @@
                 <div class="row">
                     <div class="col">
                         <div class="form-group">
-                            <label class="form-control-label">{{
-                                'artemisApp.exercise.includedInOverallScore' + (quizExercise.course ? 'Course' : 'Exam') + 'Label' | artemisTranslate
-                            }}</label>
+                            <label class="form-control-label" jhiTranslate="artemisApp.exercise.includedInOverallScore{{ quizExercise.course ? 'Course' : 'Exam' }}Label"></label>
                             <div>
                                 @if (quizExercise.includedInOverallScore) {
                                     <jhi-included-in-overall-score-picker

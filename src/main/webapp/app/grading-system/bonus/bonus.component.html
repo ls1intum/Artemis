@@ -11,7 +11,7 @@
     }
 </ng-template>
 <article class="bonus-form-start">
-    <h2>{{ 'artemisApp.bonus.title' | artemisTranslate }}</h2>
+    <h2 jhiTranslate="artemisApp.bonus.title"></h2>
     <div class="row mt-4">
         <div class="bonus-form-step col-1"></div>
         <div class="form-group col">
@@ -61,10 +61,10 @@
                 <table class="table table-striped">
                     <thead>
                         <tr>
-                            <th>{{ 'artemisApp.exam.examSummary.bonus' | artemisTranslate }}</th>
-                            <th>{{ 'artemisApp.exam.examSummary.interval' | artemisTranslate }}</th>
+                            <th jhiTranslate="artemisApp.exam.examSummary.bonus"></th>
+                            <th jhiTranslate="artemisApp.exam.examSummary.interval"></th>
                             @if (hasPointsSet()) {
-                                <th>{{ 'artemisApp.exam.examSummary.intervalPoints' | artemisTranslate }}</th>
+                                <th jhiTranslate="artemisApp.exam.examSummary.intervalPoints"></th>
                             }
                         </tr>
                     </thead>
@@ -87,7 +87,7 @@
             </div>
         }
         @if (bonus.bonusStrategy && bonus.sourceGradingScale && bonus.weight) {
-            <h5 class="mb-0">{{ 'artemisApp.bonus.formula.title' | artemisTranslate }}</h5>
+            <h5 class="mb-0" jhiTranslate="artemisApp.bonus.formula.title"></h5>
             @if (bonus.bonusStrategy && bonus.weight && bonusToGradeStepsDTO) {
                 <div class="fs-3 mb-4">
                     <div class="d-flex pb-2 align-items-center">
@@ -113,13 +113,9 @@
                         </div>
                     </div>
                     @if (bonus.bonusStrategy === BonusStrategy.POINTS) {
-                        <div class="row fs-6 ps-2">
-                            {{ 'artemisApp.bonus.formula.finalGradeFromPoints' | artemisTranslate }}
-                        </div>
+                        <div class="row fs-6 ps-2" jhiTranslate="artemisApp.bonus.formula.finalGradeFromPoints"></div>
                     }
-                    <div class="row fs-6 ps-2">
-                        {{ 'artemisApp.bonus.formula.finalGradeLimit' | artemisTranslate: { maxPossibleGrade: maxPossibleGrade() } }}
-                    </div>
+                    <div class="row fs-6 ps-2" jhiTranslate="artemisApp.bonus.formula.finalGradeLimit" [translateValues]="{ maxPossibleGrade: maxPossibleGrade() }"></div>
                 </div>
             }
             @if (hasBonusStrategyWeightMismatch) {
@@ -127,19 +123,19 @@
             }
             @if (examples.length) {
                 <div>
-                    <h5>{{ 'artemisApp.bonus.examples.title' | artemisTranslate }}</h5>
-                    <p class="mb-1">{{ 'artemisApp.bonus.examples.helpText' | artemisTranslate }}</p>
+                    <h5 jhiTranslate="artemisApp.bonus.examples.title"></h5>
+                    <p class="mb-1" jhiTranslate="artemisApp.bonus.examples.helpText"></p>
                     <table class="table table-striped">
                         <thead>
                             <tr>
-                                <th>{{ 'artemisApp.bonus.examples.examPoints' | artemisTranslate }}</th>
-                                <th>{{ 'artemisApp.bonus.examples.examGrade' | artemisTranslate }}</th>
-                                <th>{{ 'artemisApp.bonus.examples.bonusSourceStudentPoints' | artemisTranslate }}</th>
-                                <th>{{ 'artemisApp.bonus.examples.bonusGrade' | artemisTranslate }}</th>
+                                <th jhiTranslate="artemisApp.bonus.examples.examPoints"></th>
+                                <th jhiTranslate="artemisApp.bonus.examples.examGrade"></th>
+                                <th jhiTranslate="artemisApp.bonus.examples.bonusSourceStudentPoints"></th>
+                                <th jhiTranslate="artemisApp.bonus.examples.bonusGrade"></th>
                                 @if (currentBonusStrategyOption === BonusStrategyOption.POINTS) {
-                                    <th>{{ 'artemisApp.bonus.examples.finalPoints' | artemisTranslate }}</th>
+                                    <th jhiTranslate="artemisApp.bonus.examples.finalPoints"></th>
                                 }
-                                <th>{{ 'artemisApp.bonus.examples.finalGrade' | artemisTranslate }}</th>
+                                <th jhiTranslate="artemisApp.bonus.examples.finalGrade"></th>
                             </tr>
                         </thead>
                         <tbody>

@@ -1,15 +1,13 @@
 <div class="row">
     <div class="col-12 mb-2">
-        <div class="alert alert-info">
-            {{ 'artemisApp.generic.timeZone' | artemisTranslate: { timeZone } }}
-        </div>
+        <div class="alert alert-info" jhiTranslate="artemisApp.generic.timeZone" [translateValues]="{ timeZone }"></div>
     </div>
     <div class="col-12">
         @if (form) {
             <form class="row" [formGroup]="form" (ngSubmit)="submitForm()">
                 <!-- Date -->
                 <div>
-                    <label class="form-label" for="date">{{ 'artemisApp.forms.sessionForm.dateInput.label' | artemisTranslate }}</label>
+                    <label class="form-label" for="date" jhiTranslate="artemisApp.forms.sessionForm.dateInput.label"></label>
                     <div class="input-group">
                         <input formControlName="date" [owlDateTime]="date" class="d-none" />
                         <input
@@ -29,14 +27,10 @@
                     @if (dateControl?.invalid && (dateControl?.dirty || dateControl?.touched)) {
                         <div class="alert alert-danger">
                             @if (dateControl?.errors?.required) {
-                                <div>
-                                    {{ 'artemisApp.forms.sessionForm.dateInput.requiredDateError' | artemisTranslate }}
-                                </div>
+                                <div jhiTranslate="artemisApp.forms.sessionForm.dateInput.requiredDateError"></div>
                             }
                             @if (dateControl?.errors?.owlDateTimeParse) {
-                                <div>
-                                    {{ 'artemisApp.forms.sessionForm.dateInput.parseError' | artemisTranslate }}
-                                </div>
+                                <div jhiTranslate="artemisApp.forms.sessionForm.dateInput.parseError"></div>
                             }
                         </div>
                     }
@@ -45,13 +39,13 @@
                 <div>
                     <div class="row">
                         <div class="col-auto my-auto">
-                            <span>{{ 'artemisApp.forms.sessionForm.timeInput.from' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.forms.sessionForm.timeInput.from"></span>
                         </div>
                         <div class="col-auto">
                             <ngb-timepicker formControlName="startTime" [hourStep]="1" [minuteStep]="15" />
                         </div>
                         <div class="col-auto my-auto">
-                            <span>{{ 'artemisApp.forms.sessionForm.timeInput.to' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.forms.sessionForm.timeInput.to"></span>
                         </div>
                         <div class="col-auto my-auto">
                             <ngb-timepicker formControlName="endTime" [hourStep]="1" [minuteStep]="15" />
@@ -60,34 +54,28 @@
                     @if (startTimeControl?.invalid && (startTimeControl?.dirty || startTimeControl?.touched)) {
                         <div class="alert alert-danger">
                             @if (startTimeControl?.errors?.required) {
-                                <div>
-                                    {{ 'artemisApp.forms.sessionForm.timeInput.invalidTimeRange' | artemisTranslate }}
-                                </div>
+                                <div jhiTranslate="artemisApp.forms.sessionForm.timeInput.invalidTimeRange"></div>
                             }
                         </div>
                     }
                     @if (endTimeControl?.invalid && (endTimeControl?.dirty || endTimeControl?.touched)) {
                         <div class="alert alert-danger">
                             @if (endTimeControl?.errors?.required) {
-                                <div>
-                                    {{ 'artemisApp.forms.sessionForm.timeInput.invalidTimeRange' | artemisTranslate }}
-                                </div>
+                                <div jhiTranslate="artemisApp.forms.sessionForm.timeInput.invalidTimeRange"></div>
                             }
                         </div>
                     }
                     @if (form?.invalid && (form?.dirty || form?.touched)) {
                         <div>
                             @if (form?.errors?.invalidTimeRange) {
-                                <div class="alert alert-danger">
-                                    {{ 'artemisApp.forms.sessionForm.timeInput.invalidTimeRange' | artemisTranslate }}
-                                </div>
+                                <div class="alert alert-danger" jhiTranslate="artemisApp.forms.sessionForm.timeInput.invalidTimeRange"></div>
                             }
                         </div>
                     }
                 </div>
                 <!-- Location -->
                 <div class="form-group">
-                    <label for="location">{{ 'artemisApp.forms.sessionForm.locationInput.labelOnline' | artemisTranslate }}</label>
+                    <label for="location" jhiTranslate="artemisApp.forms.sessionForm.locationInput.labelOnline"></label>
                     <textarea
                         class="form-control"
                         id="location"
@@ -98,14 +86,10 @@
                     @if (locationControl?.invalid && (locationControl?.dirty || locationControl?.touched)) {
                         <div class="alert alert-danger">
                             @if (locationControl?.errors?.maxlength) {
-                                <div>
-                                    {{ 'artemisApp.forms.sessionForm.locationInput.maxLengthValidationError' | artemisTranslate: { max: '2000' } }}
-                                </div>
+                                <div jhiTranslate="artemisApp.forms.sessionForm.locationInput.maxLengthValidationError" [translateValues]="{ max: '2000' }"></div>
                             }
                             @if (locationControl?.errors?.required) {
-                                <div>
-                                    {{ 'artemisApp.forms.sessionForm.locationInput.requiredValidationError' | artemisTranslate }}
-                                </div>
+                                <div jhiTranslate="artemisApp.forms.sessionForm.locationInput.requiredValidationError"></div>
                             }
                         </div>
                     }
@@ -113,7 +97,7 @@
                 <div class="row mt-2">
                     <div class="col-12">
                         <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
-                            <span>{{ (isEditMode ? 'global.generic.edit' : 'global.generic.create') | artemisTranslate }}</span>
+                            <span jhiTranslate="{{ isEditMode ? 'global.generic.edit' : 'global.generic.create' }}"></span>
                         </button>
                     </div>
                 </div>

@@ -6,14 +6,14 @@
     @if (casesFiltered) {
         <div class="filter-disclaimer">
             <fa-icon class="text-warning disclaimer-icon" [icon]="faExclamationTriangle" />
-            <span>{{ 'artemisApp.plagiarism.casesFiltered' | artemisTranslate }}</span>
+            <span jhiTranslate="artemisApp.plagiarism.casesFiltered"></span>
         </div>
     }
     <!--  Temporary solution until #6593 is fixed  -->
     @if (comparisons?.length === 100) {
         <div class="filter-disclaimer">
             <fa-icon class="text-warning disclaimer-icon" [icon]="faExclamationTriangle" />
-            <span>{{ 'artemisApp.plagiarism.casesTrimmed' | artemisTranslate }}</span>
+            <span jhiTranslate="artemisApp.plagiarism.casesTrimmed"></span>
         </div>
     }
     @if (comparisons && comparisons.length) {
@@ -42,9 +42,7 @@
         </ul>
     }
     @if (!comparisons || !comparisons.length) {
-        <div class="plagiarism-empty">
-            {{ 'artemisApp.plagiarism.notFound' | artemisTranslate }}
-        </div>
+        <div class="plagiarism-empty" jhiTranslate="artemisApp.plagiarism.notFound"></div>
     }
     <div class="plagiarism-paging">
         <div class="plagiarism-paging-left" [class.disabled]="currentPage === 0" (click)="handlePageLeft()">

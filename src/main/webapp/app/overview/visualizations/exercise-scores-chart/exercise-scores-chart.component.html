@@ -1,5 +1,5 @@
 <div class="d-flex">
-    <h2 class="col-9">{{ 'artemisApp.exercise-scores-chart.title' | artemisTranslate }}</h2>
+    <h2 class="col-9" jhiTranslate="artemisApp.exercise-scores-chart.title"></h2>
     @if (exerciseTypeFilter.typeSet.size > 0) {
         <div class="filter mb-2" aria-label="Filter Dropdown" ngbDropdown>
             <button
@@ -10,11 +10,11 @@
                 id="filter-dropdown-button"
             >
                 <fa-icon [icon]="faFilter" />
-                <span>{{ 'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate: { num: exerciseTypeFilter.numberOfActiveFilters } }}</span>
+                <span jhiTranslate="artemisApp.courseOverview.exerciseList.filter" [translateValues]="{ num: exerciseTypeFilter.numberOfActiveFilters }"></span>
             </button>
             <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
                 <li>
-                    <b class="ms-2">{{ 'artemisApp.exercise-scores-chart.includeType' | artemisTranslate }}</b>
+                    <b class="ms-2" jhiTranslate="artemisApp.exercise-scores-chart.includeType"></b>
                 </li>
                 @for (type of exerciseTypeFilter.typeSet; track type) {
                     <li>

@@ -1,12 +1,10 @@
 <div class="card search-card">
     <div class="card-header">
-        <h5 class="mb-0">{{ 'artemisApp.course.exercise.search.cardTitle' | artemisTranslate }}</h5>
+        <h5 class="mb-0" jhiTranslate="artemisApp.course.exercise.search.cardTitle"></h5>
     </div>
     <div class="card-body">
         <div class="form-group">
-            <label for="exercise-search-input">
-                {{ 'artemisApp.course.exercise.search.labelExerciseName' | artemisTranslate }}
-            </label>
+            <label for="exercise-search-input" jhiTranslate="artemisApp.course.exercise.search.labelExerciseName"></label>
             <input
                 id="exercise-search-input"
                 type="search"
@@ -18,9 +16,7 @@
         </div>
         <div class="row">
             <div class="form-group col">
-                <label for="exercise-search-category-input">
-                    {{ 'artemisApp.course.exercise.search.labelExerciseCategory' | artemisTranslate }}
-                </label>
+                <label for="exercise-search-category-input" jhiTranslate="artemisApp.course.exercise.search.labelExerciseCategory"></label>
                 <input
                     id="exercise-search-category-input"
                     type="text"
@@ -31,9 +27,7 @@
                 />
             </div>
             <div class="form-group col">
-                <label for="exercise-search-type-input">
-                    {{ 'artemisApp.course.exercise.search.labelExerciseType' | artemisTranslate }}
-                </label>
+                <label for="exercise-search-type-input" jhiTranslate="artemisApp.course.exercise.search.labelExerciseType"></label>
                 <select id="exercise-search-type-input" class="form-select" [(ngModel)]="exerciseTypeSearch" (ngModelChange)="sendUpdate()">
                     @for (optionValue of typeOptions; track optionValue) {
                         <option [value]="optionValue">
@@ -44,12 +38,14 @@
             </div>
         </div>
         <div class="gap-2 d-flex">
-            <button id="resetFilterButton" class="btn btn-secondary offset-6 col-3" type="button" (click)="reset()">
-                {{ 'artemisApp.course.exercise.search.resetButton' | artemisTranslate }}
-            </button>
-            <button id="saveFilterButton" class="btn btn-primary col-3" type="button" (click)="sendUpdate()">
-                {{ 'artemisApp.course.exercise.search.searchButton' | artemisTranslate }}
-            </button>
+            <button
+                id="resetFilterButton"
+                class="btn btn-secondary offset-6 col-3"
+                type="button"
+                (click)="reset()"
+                jhiTranslate="artemisApp.course.exercise.search.resetButton"
+            ></button>
+            <button id="saveFilterButton" class="btn btn-primary col-3" type="button" (click)="sendUpdate()" jhiTranslate="artemisApp.course.exercise.search.searchButton"></button>
         </div>
     </div>
 </div>

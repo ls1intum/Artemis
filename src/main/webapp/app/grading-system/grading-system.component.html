@@ -24,9 +24,7 @@
         </div>
         <div class="dropdown-container">
             <div class="form-group">
-                <span class="colon-suffix no-flex-shrink">{{
-                    isExam ? ('artemisApp.examManagement.maxPoints.title' | artemisTranslate) : ('artemisApp.course.maxPoints.title' | artemisTranslate)
-                }}</span>
+                <span class="colon-suffix no-flex-shrink" jhiTranslate="{{ isExam ? 'artemisApp.examManagement.maxPoints.title' : 'artemisApp.course.maxPoints.title' }}"></span>
                 @if (!isExam) {
                     <jhi-help-icon text="artemisApp.course.maxPoints.info" />
                 }
@@ -68,12 +66,8 @@
 <div class="tab-bar" id="tab-bar">
     <div class="col-12 no-indent">
         <div>
-            <div class="tab-item interval" routerLink="interval" routerLinkActive="active">
-                {{ 'artemisApp.gradingSystem.intervalTab.title' | artemisTranslate }}
-            </div>
-            <div class="tab-item detailed" routerLink="detailed" routerLinkActive="active">
-                {{ 'artemisApp.gradingSystem.detailedTab.title' | artemisTranslate }}
-            </div>
+            <div class="tab-item interval" routerLink="interval" routerLinkActive="active" jhiTranslate="artemisApp.gradingSystem.intervalTab.title"></div>
+            <div class="tab-item detailed" routerLink="detailed" routerLinkActive="active" jhiTranslate="artemisApp.gradingSystem.detailedTab.title"></div>
         </div>
     </div>
 </div>

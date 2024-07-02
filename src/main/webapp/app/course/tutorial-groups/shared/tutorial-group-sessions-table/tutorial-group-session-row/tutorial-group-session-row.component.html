@@ -67,9 +67,7 @@
     @if (tutorialGroup.tutorialGroupSchedule) {
         <td>
             @if (!hasSchedule) {
-                <div class="alert alert-info" role="alert">
-                    {{ 'artemisApp.pages.tutorialGroupSessionManagement.differsFromSchedule' | artemisTranslate }}
-                </div>
+                <div class="alert alert-info" role="alert" jhiTranslate="artemisApp.pages.tutorialGroupSessionManagement.differsFromSchedule"></div>
             }
         </td>
     }

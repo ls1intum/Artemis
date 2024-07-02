@@ -1,12 +1,12 @@
-<h5>{{ 'artemisApp.examManagement.plagiarismCasesOverview.title' | artemisTranslate }}</h5>
+<h5 jhiTranslate="artemisApp.examManagement.plagiarismCasesOverview.title"></h5>
 <table class="table">
     <thead>
         <tr>
             <th scope="col">#</th>
-            <th scope="col">{{ 'artemisApp.examManagement.plagiarismCasesOverview.exerciseName' | artemisTranslate }}</th>
-            <th scope="col">{{ 'artemisApp.examManagement.plagiarismCasesOverview.numberOfResults' | artemisTranslate }}</th>
-            <th scope="col">{{ 'artemisApp.examManagement.plagiarismCasesOverview.numberOfCases' | artemisTranslate }}</th>
-            <th scope="col">{{ 'artemisApp.examManagement.plagiarismCasesOverview.actions' | artemisTranslate }}</th>
+            <th scope="col" jhiTranslate="artemisApp.examManagement.plagiarismCasesOverview.exerciseName"></th>
+            <th scope="col" jhiTranslate="artemisApp.examManagement.plagiarismCasesOverview.numberOfResults"></th>
+            <th scope="col" jhiTranslate="artemisApp.examManagement.plagiarismCasesOverview.numberOfCases"></th>
+            <th scope="col" jhiTranslate="artemisApp.examManagement.plagiarismCasesOverview.actions"></th>
         </tr>
     </thead>
     <tbody>
@@ -17,16 +17,22 @@
                 <td>{{ plagiarismResultsPerExercise.get(exercise) }}</td>
                 <td>{{ plagiarismCasesPerExercise.get(exercise) }}</td>
                 <td>
-                    <button id="view-plagiarism-results-btn-{{ i }}" class="btn btn-primary" (click)="goToPlagiarismDetection(exercise)">
-                        {{ 'artemisApp.examManagement.plagiarismCasesOverview.viewResultsOrRunDetection' | artemisTranslate }}
-                    </button>
+                    <button
+                        id="view-plagiarism-results-btn-{{ i }}"
+                        class="btn btn-primary"
+                        (click)="goToPlagiarismDetection(exercise)"
+                        jhiTranslate="artemisApp.examManagement.plagiarismCasesOverview.viewResultsOrRunDetection"
+                    ></button>
                 </td>
             </tr>
         }
     </tbody>
 </table>
 @if (anyPlagiarismCases) {
-    <button class="btn btn-primary" id="view-plagiarism-cases-btn" (click)="goToPlagiarismCases()">
-        {{ 'artemisApp.examManagement.plagiarismCasesOverview.viewCases' | artemisTranslate }}
-    </button>
+    <button
+        class="btn btn-primary"
+        id="view-plagiarism-cases-btn"
+        (click)="goToPlagiarismCases()"
+        jhiTranslate="artemisApp.examManagement.plagiarismCasesOverview.viewCases"
+    ></button>
 }

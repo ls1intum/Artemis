@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
@@ -13,6 +13,7 @@ import { generateClickSubmitButton, generateTestFormIsInvalidOnMissingRequiredPr
 import { ArtemisDateRangePipe } from 'app/shared/pipes/artemis-date-range.pipe';
 import { runOnPushChangeDetection } from '../../../../../helpers/on-push-change-detection.helper';
 import { Course } from 'app/entities/course.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('TutorialGroupsConfigurationFormComponent', () => {
     let fixture: ComponentFixture<TutorialGroupsConfigurationFormComponent>;
@@ -28,7 +29,13 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ReactiveFormsModule, FormsModule, NgbTypeaheadModule, OwlDateTimeModule, OwlNativeDateTimeModule],
-            declarations: [TutorialGroupsConfigurationFormComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDateRangePipe), MockComponent(FaIconComponent)],
+            declarations: [
+                TutorialGroupsConfigurationFormComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockPipe(ArtemisDateRangePipe),
+                MockComponent(FaIconComponent),
+                MockDirective(TranslateDirective),
+            ],
         })
             .compileComponents()
             .then(() => {

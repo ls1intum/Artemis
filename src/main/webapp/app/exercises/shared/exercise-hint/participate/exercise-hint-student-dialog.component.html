@@ -6,10 +6,11 @@
     @if (availableExerciseHints?.length) {
         <div class="mb-3">
             <h2 jhiTranslate="artemisApp.exerciseHint.studentDialog.availableHintsTitle"></h2>
-            <span class="mb-5">{{
-                'artemisApp.exerciseHint.studentDialog.availableHintTaskDescription'
-                    | artemisTranslate: { taskName: availableExerciseHints.first()!.programmingExerciseTask!.taskName }
-            }}</span>
+            <span
+                class="mb-5"
+                jhiTranslate="artemisApp.exerciseHint.studentDialog.availableHintTaskDescription"
+                [translateValues]="{ taskName: availableExerciseHints.first()!.programmingExerciseTask!.taskName }"
+            ></span>
             @for (hint of availableExerciseHints; track hint) {
                 <div class="mb-3">
                     <jhi-exercise-hint-expandable [exerciseHint]="hint" [hasUsed]="false" (onHintActivated)="this.onHintActivated.emit($event)" />

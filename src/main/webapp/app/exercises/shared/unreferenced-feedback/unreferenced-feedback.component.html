@@ -1,14 +1,17 @@
 <div (drop)="createAssessmentOnDrop($event)" (dragover)="$event.preventDefault()">
     <div class="col-md-6">
-        <button class="add-unreferenced-feedback btn btn-success mt-4" (click)="addUnreferencedFeedback()" [disabled]="readOnly">
-            {{ 'artemisApp.fileUploadAssessment.addFeedback' | artemisTranslate }}
-        </button>
+        <button
+            class="add-unreferenced-feedback btn btn-success mt-4"
+            (click)="addUnreferencedFeedback()"
+            [disabled]="readOnly"
+            jhiTranslate="artemisApp.fileUploadAssessment.addFeedback"
+        ></button>
         <div class="row mt-4">
             <h4 class="col-12" jhiTranslate="artemisApp.assessment.detail.feedback"></h4>
             @if (unreferencedFeedback.length + feedbackSuggestions.length === 0) {
                 <div class="col-12 col-lg-8 col-xl-6">
                     <div class="alert alert-secondary text-center" role="alert">
-                        <p>{{ 'artemisApp.fileUploadAssessment.assessInstructionWithDropOption' | artemisTranslate }}</p>
+                        <p jhiTranslate="artemisApp.fileUploadAssessment.assessInstructionWithDropOption"></p>
                     </div>
                 </div>
             }

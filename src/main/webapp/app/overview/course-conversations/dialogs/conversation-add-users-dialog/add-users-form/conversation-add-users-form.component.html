@@ -2,9 +2,7 @@
     <div class="row">
         <div class="col-12">
             @if (maxSelectable !== undefined) {
-                <div class="alert alert-info">
-                    {{ 'artemisApp.dialogs.addUsers.addUsersForm.maxUsersNote' | artemisTranslate: { max: maxSelectable } }}
-                </div>
+                <div class="alert alert-info" jhiTranslate="artemisApp.dialogs.addUsers.addUsersForm.maxUsersNote" [translateValues]="{ max: maxSelectable }"></div>
             }
             <div [hidden]="maxSelectable === 0">
                 <div class="mode-switch" [hidden]="!getAsChannel(activeConversation)">
@@ -19,9 +17,9 @@
                                 [value]="'individual'"
                                 [ngModelOptions]="{ standalone: true }"
                             />
-                            <label class="btn btn-secondary" for="individual">{{ 'artemisApp.dialogs.addUsers.addUsersForm.addIndividualUsers' | artemisTranslate }}</label>
+                            <label class="btn btn-secondary" for="individual" jhiTranslate="artemisApp.dialogs.addUsers.addUsersForm.addIndividualUsers"></label>
                             <input [(ngModel)]="mode" type="radio" class="btn-check" id="group" autocomplete="off" [value]="'group'" [ngModelOptions]="{ standalone: true }" />
-                            <label class="btn btn-secondary" for="group">{{ 'artemisApp.dialogs.addUsers.addUsersForm.addWholeGroups' | artemisTranslate }}</label>
+                            <label class="btn btn-secondary" for="group" jhiTranslate="artemisApp.dialogs.addUsers.addUsersForm.addWholeGroups"></label>
                         </div>
                     </div>
                 </div>
@@ -36,14 +34,10 @@
                             @if (selectedUsersControl?.invalid && (selectedUsersControl?.dirty || selectedUsersControl?.touched)) {
                                 <div class="alert alert-danger">
                                     @if (selectedUsersControl?.errors?.required) {
-                                        <div>
-                                            {{ 'artemisApp.dialogs.addUsers.addUsersForm.requiredError' | artemisTranslate }}
-                                        </div>
+                                        <div jhiTranslate="artemisApp.dialogs.addUsers.addUsersForm.requiredError"></div>
                                     }
                                     @if (selectedUsersControl?.errors?.maxlength) {
-                                        <div>
-                                            {{ 'artemisApp.dialogs.addUsers.addUsersForm.maxError' | artemisTranslate: { max: maxSelectable } }}
-                                        </div>
+                                        <div jhiTranslate="artemisApp.dialogs.addUsers.addUsersForm.maxError" [translateValues]="{ max: maxSelectable }"></div>
                                     }
                                 </div>
                             }
@@ -53,22 +47,22 @@
                         <div class="col-12">
                             <div class="form-check form-check-inline">
                                 <input class="form-check-input" type="checkbox" id="allStudents" formControlName="addAllStudents" />
-                                <label class="form-check-label" for="allStudents">{{ 'artemisApp.dialogs.addUsers.addUsersForm.addAllStudents' | artemisTranslate }}</label>
+                                <label class="form-check-label" for="allStudents" jhiTranslate="artemisApp.dialogs.addUsers.addUsersForm.addAllStudents"></label>
                             </div>
                             <div class="form-check form-check-inline">
                                 <input class="form-check-input" type="checkbox" id="allTutors" formControlName="addAllTutors" />
-                                <label class="form-check-label" for="allTutors">{{ 'artemisApp.dialogs.addUsers.addUsersForm.addAllTutors' | artemisTranslate }}</label>
+                                <label class="form-check-label" for="allTutors" jhiTranslate="artemisApp.dialogs.addUsers.addUsersForm.addAllTutors"></label>
                             </div>
                             <div class="form-check form-check-inline">
                                 <input class="form-check-input" type="checkbox" id="allInstructors" formControlName="addAllInstructors" />
-                                <label class="form-check-label" for="allInstructors">{{ 'artemisApp.dialogs.addUsers.addUsersForm.addAllInstructors' | artemisTranslate }}</label>
+                                <label class="form-check-label" for="allInstructors" jhiTranslate="artemisApp.dialogs.addUsers.addUsersForm.addAllInstructors"></label>
                             </div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-12 text-end">
                             <button type="submit" id="submitButton" [disabled]="!isSubmitPossible" class="btn btn-primary">
-                                <span>{{ 'artemisApp.dialogs.addUsers.addUsersForm.addUsersButton' | artemisTranslate }}</span>
+                                <span jhiTranslate="artemisApp.dialogs.addUsers.addUsersForm.addUsersButton"></span>
                             </button>
                         </div>
                     </div>

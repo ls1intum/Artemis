@@ -17,9 +17,7 @@
         </div>
         <div class="card-footer">
             @if (tutorialGroup.teachingAssistantName) {
-                <div>
-                    {{ 'artemisApp.tutorialGroupCard.teachingAssistant' | artemisTranslate: { name: tutorialGroup.teachingAssistantName } }}
-                </div>
+                <div jhiTranslate="artemisApp.tutorialGroupCard.teachingAssistant" [translateValues]="{ name: tutorialGroup.teachingAssistantName }"></div>
             }
             @if (showChannelLink && tutorialGroup.channel && isMessagingEnabled(course)) {
                 <div class="mt-2">
@@ -29,10 +27,11 @@
                             [routerLink]="['/courses', course.id!, 'communication']"
                             [queryParams]="{ conversationId: tutorialGroup.channel.id }"
                             class="btn btn-primary"
-                            >{{ 'artemisApp.entities.tutorialGroup.channelWithName' | artemisTranslate: { channel: tutorialGroup.channel.name } }}</a
-                        >
+                            jhiTranslate="artemisApp.entities.tutorialGroup.channelWithName"
+                            [translateValues]="{ channel: tutorialGroup.channel.name }"
+                        ></a>
                     } @else {
-                        <span>{{ 'artemisApp.entities.tutorialGroup.channelWithName' | artemisTranslate: { channel: tutorialGroup.channel.name } }}</span>
+                        <span jhiTranslate="artemisApp.entities.tutorialGroup.channelWithName" [translateValues]="{ channel: tutorialGroup.channel.name }"></span>
                     }
                 </div>
             }

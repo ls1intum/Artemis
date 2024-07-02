@@ -23,10 +23,11 @@
     />
 }
 <div>
-    <span class="badge bg-primary mb-2" id="text-assessment-word-count">
-        {{ 'artemisApp.textExercise.wordCount' | artemisTranslate: { count: wordCount } }}
-    </span>
-    <span class="badge bg-primary mb-2" id="text-assessment-character-count">
-        {{ 'artemisApp.textExercise.characterCount' | artemisTranslate: { count: characterCount } }}
-    </span>
+    <span class="badge bg-primary mb-2" id="text-assessment-word-count" jhiTranslate="artemisApp.textExercise.wordCount" [translateValues]="{ count: wordCount }"></span>
+    <span
+        class="badge bg-primary mb-2"
+        id="text-assessment-character-count"
+        jhiTranslate="artemisApp.textExercise.characterCount"
+        [translateValues]="{ count: characterCount }"
+    ></span>
 </div>

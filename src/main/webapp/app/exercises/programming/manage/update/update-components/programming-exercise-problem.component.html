@@ -6,11 +6,13 @@
         @if (programmingExerciseCreationConfig.isImportFromExistingExercise || programmingExerciseCreationConfig.isImportFromFile) {
             <ngb-alert [dismissible]="false">
                 <span class="font-weight-bold">{{ 'artemisApp.exercise.import.attention' | artemisTranslate }}</span
-                ><span>{{
-                    programmingExerciseCreationConfig.isImportFromExistingExercise
-                        ? ('artemisApp.exercise.import.markdownWarning' | artemisTranslate)
-                        : ('artemisApp.exercise.import.embeddedFilesWarning' | artemisTranslate)
-                }}</span>
+                ><span
+                    jhiTranslate="{{
+                        programmingExerciseCreationConfig.isImportFromExistingExercise
+                            ? 'artemisApp.exercise.import.markdownWarning'
+                            : 'artemisApp.exercise.import.embeddedFilesWarning'
+                    }}"
+                ></span>
             </ngb-alert>
         }
         @if (programmingExerciseCreationConfig.isImportFromExistingExercise) {

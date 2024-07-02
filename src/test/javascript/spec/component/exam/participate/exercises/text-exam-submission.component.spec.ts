@@ -16,6 +16,7 @@ import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exe
 import { ArtemisTestModule } from '../../../../test.module';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import dayjs from 'dayjs/esm';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('TextExamSubmissionComponent', () => {
     let fixture: ComponentFixture<TextExamSubmissionComponent>;
@@ -38,6 +39,7 @@ describe('TextExamSubmissionComponent', () => {
                 MockComponent(IncludedInScoreBadgeComponent),
                 MockComponent(ExamExerciseUpdateHighlighterComponent),
                 MockComponent(ResizeableContainerComponent),
+                MockDirective(TranslateDirective),
             ],
             providers: [MockProvider(TextEditorService), MockProvider(ArtemisMarkdownService)],
         })

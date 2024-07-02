@@ -1,19 +1,19 @@
 @if (isLoading) {
     <div class="d-flex justify-content-center">
         <div class="spinner-border" role="status">
-            <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+            <span class="sr-only" jhiTranslate="loading"></span>
         </div>
     </div>
 } @else {
     <div class="container">
         <div class="row">
             <div class="col-12 mx-auto">
-                <h2>{{ 'artemisApp.exerciseUnit.createExerciseUnit.headline' | artemisTranslate }}</h2>
+                <h2 jhiTranslate="artemisApp.exerciseUnit.createExerciseUnit.headline"></h2>
             </div>
         </div>
         <div class="row">
             <div class="col-sm-6 mx-auto">
-                <p>{{ 'artemisApp.exerciseUnit.createExerciseUnit.description' | artemisTranslate }}</p>
+                <p jhiTranslate="artemisApp.exerciseUnit.createExerciseUnit.description"></p>
             </div>
             <div class="col-sm-6 mx-auto text-end">
                 @if (hasCancelButton) {
@@ -22,13 +22,22 @@
                     </button>
                 }
                 @if (hasCreateExerciseButton) {
-                    <button id="createExerciseButton" type="button" class="btn btn-primary" (click)="createNewExercise()">
-                        {{ 'artemisApp.lecture.wizardMode.newExercise' | artemisTranslate }}
-                    </button>
+                    <button
+                        id="createExerciseButton"
+                        type="button"
+                        class="btn btn-primary"
+                        (click)="createNewExercise()"
+                        jhiTranslate="artemisApp.lecture.wizardMode.newExercise"
+                    ></button>
                 }
-                <button id="createButton" type="button" class="btn btn-primary" [disabled]="exercisesToCreateUnitFor.length === 0" (click)="createExerciseUnits()">
-                    {{ 'entity.action.submit' | artemisTranslate }}
-                </button>
+                <button
+                    id="createButton"
+                    type="button"
+                    class="btn btn-primary"
+                    [disabled]="exercisesToCreateUnitFor.length === 0"
+                    (click)="createExerciseUnits()"
+                    jhiTranslate="entity.action.submit"
+                ></button>
             </div>
         </div>
         <div class="row">

@@ -16,6 +16,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { WorkingTimeChangeComponent } from 'app/exam/shared/working-time-change/working-time-change.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MockDirective } from 'ng-mocks';
 
 describe('ExamLiveEventComponent', () => {
     let component: ExamLiveEventComponent;
@@ -23,7 +25,15 @@ describe('ExamLiveEventComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [ExamLiveEventComponent, WorkingTimeChangeComponent, ArtemisTranslatePipe, ArtemisDatePipe, HtmlForMarkdownPipe, ArtemisDurationFromSecondsPipe],
+            declarations: [
+                ExamLiveEventComponent,
+                WorkingTimeChangeComponent,
+                ArtemisTranslatePipe,
+                ArtemisDatePipe,
+                HtmlForMarkdownPipe,
+                ArtemisDurationFromSecondsPipe,
+                MockDirective(TranslateDirective),
+            ],
             imports: [FontAwesomeModule],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();

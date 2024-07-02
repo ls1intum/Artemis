@@ -3,7 +3,7 @@
         <span>
             <a [routerLink]="['/course-management', courseId, 'exams', examId, 'grading-system']" class="btn btn-info mt-1" id="grading-key-button-{{ exam.id }}">
                 <fa-icon [icon]="faClipboard" />
-                <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.gradingSystem' | artemisTranslate }}</span>
+                <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.gradingSystem"></span>
             </a>
         </span>
         <button

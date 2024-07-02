@@ -1,25 +1,20 @@
 @if (isLoading) {
     <div class="d-flex justify-content-center">
         <div class="spinner-border" role="status">
-            <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+            <span class="sr-only" jhiTranslate="loading"></span>
         </div>
     </div>
 }
 @if (!isLoading && complaint) {
-    <h3>
-        {{ complaint.complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.review' | artemisTranslate) : ('artemisApp.complaint.review' | artemisTranslate) }}
-    </h3>
+    <h3 [jhiTranslate]="complaint.complaintType === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedback.review' : 'artemisApp.complaint.review'"></h3>
 }
 @if (!isLoading && complaint) {
     <div class="col-12 mt-2" [class.px-0]="zeroIndent">
         @if (handled) {
-            <div class="alert alert-info">
-                {{
-                    complaint.complaintType === ComplaintType.MORE_FEEDBACK
-                        ? ('artemisApp.moreFeedback.alreadyHandled' | artemisTranslate)
-                        : ('artemisApp.complaint.complaintAlreadyHandled' | artemisTranslate)
-                }}
-            </div>
+            <div
+                class="alert alert-info"
+                [jhiTranslate]="complaint.complaintType === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedback.alreadyHandled' : 'artemisApp.complaint.complaintAlreadyHandled'"
+            ></div>
         }
         <div class="mt-3 mb-3">
             @if (showLockDuration) {
@@ -35,21 +30,13 @@
                 </div>
             }
             @if (lockedByCurrentUser) {
-                <button id="lockButton" class="btn btn-secondary" (click)="removeLock()">
-                    {{ 'artemisApp.locks.removeButton' | artemisTranslate }}
-                </button>
+                <button id="lockButton" class="btn btn-secondary" (click)="removeLock()" jhiTranslate="artemisApp.locks.removeButton"></button>
             }
         </div>
         <div class="row">
             <div class="col-12 col-md-6">
                 <h4>
-                    <span
-                        >{{
-                            complaint.complaintType === ComplaintType.MORE_FEEDBACK
-                                ? ('artemisApp.moreFeedback.title' | artemisTranslate)
-                                : ('artemisApp.complaint.title' | artemisTranslate)
-                        }}
-                    </span>
+                    <span [jhiTranslate]="complaint.complaintType === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedback.title' : 'artemisApp.complaint.title'"></span>
                     @if (handled) {
                         <small>
                             @if (complaint?.accepted) {
@@ -71,13 +58,9 @@
             </div>
             @if (handled || isAllowedToRespond) {
                 <div class="col-12 col-md-6">
-                    <h3>
-                        {{
-                            complaint.complaintType === ComplaintType.MORE_FEEDBACK
-                                ? ('artemisApp.moreFeedbackResponse.title' | artemisTranslate)
-                                : ('artemisApp.complaintResponse.title' | artemisTranslate)
-                        }}
-                    </h3>
+                    <h3
+                        [jhiTranslate]="complaint.complaintType === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedbackResponse.title' : 'artemisApp.complaintResponse.title'"
+                    ></h3>
                     <div class="d-flex flex-column">
                         <textarea
                             id="responseTextArea"
@@ -128,9 +111,8 @@
                                     [disabled]="isLockedForLoggedInUser"
                                     (click)="respondToComplaint(true)"
                                     title="{{ 'artemisApp.moreFeedbackResponse.sendResponseTooltip' | artemisTranslate }}"
-                                >
-                                    {{ 'artemisApp.moreFeedbackResponse.provideFeedback' | artemisTranslate }}
-                                </button>
+                                    jhiTranslate="artemisApp.moreFeedbackResponse.provideFeedback"
+                                ></button>
                             </div>
                         </div>
                     }

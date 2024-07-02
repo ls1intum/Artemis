@@ -23,9 +23,7 @@
         } @else {}
     </td>
     @if (mixOfOfflineAndOfflineTutorialGroups) {
-        <td>
-            {{ (tutorialGroup.isOnline ? 'artemisApp.generic.online' : 'artemisApp.generic.offline') | artemisTranslate }}
-        </td>
+        <td jhiTranslate="{{ tutorialGroup.isOnline ? 'artemisApp.generic.online' : 'artemisApp.generic.offline' }}"></td>
     }
     @if (mifOfDifferentLanguages) {
         <td>

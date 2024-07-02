@@ -2,7 +2,7 @@
     <h3 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle" id="artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle"></h3>
     <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepMessage"></p>
     <div class="form-group">
-        <label class="form-control-label">{{ 'artemisApp.exercise.includedInOverallScore' + (programmingExercise.course ? 'Course' : 'Exam') + 'Label' | artemisTranslate }}</label>
+        <label class="form-control-label" jhiTranslate="artemisApp.exercise.includedInOverallScore{{ programmingExercise.course ? 'Course' : 'Exam' }}Label"></label>
         <div>
             <jhi-included-in-overall-score-picker [(includedInOverallScore)]="programmingExercise.includedInOverallScore" [allowNotIncluded]="true" />
         </div>
@@ -23,9 +23,7 @@
                     #maxScore="ngModel"
                 />
                 @if (maxScore?.invalid && (maxScore?.dirty || maxScore?.touched) && maxScore?.errors) {
-                    <div class="alert alert-danger">
-                        {{ 'artemisApp.exercise.pointsError' | artemisTranslate }}
-                    </div>
+                    <div class="alert alert-danger" jhiTranslate="artemisApp.exercise.pointsError"></div>
                 }
             </div>
         </div>
@@ -44,9 +42,11 @@
                     #bonusPoints="ngModel"
                 />
                 @if (bonusPoints?.invalid && (bonusPoints?.dirty || bonusPoints?.touched) && bonusPoints?.errors) {
-                    <div class="alert alert-danger" [hidden]="programmingExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY">
-                        {{ 'artemisApp.exercise.bonusPointsError' | artemisTranslate }}
-                    </div>
+                    <div
+                        class="alert alert-danger"
+                        [hidden]="programmingExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
+                        jhiTranslate="artemisApp.exercise.bonusPointsError"
+                    ></div>
                 }
             </div>
         </div>
@@ -94,9 +94,9 @@
         />
         @if (programmingExerciseCreationConfig.isEdit) {
             <ngb-alert [dismissible]="false" [type]="'info'">
-                <span>{{ 'artemisApp.programmingExercise.submissionPolicy.editInGradingInformation' | artemisTranslate }}</span>
+                <span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.editInGradingInformation"></span>
                 <a [href]="editPolicyUrl">
-                    <span>{{ 'artemisApp.programmingExercise.submissionPolicy.goToGradingToEditInformation' | artemisTranslate }}</span>
+                    <span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.goToGradingToEditInformation"></span>
                 </a>
             </ngb-alert>
         }
