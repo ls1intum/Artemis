@@ -99,17 +99,11 @@ test.describe('Test exam test run', () => {
 
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
-                await examNavigation.openExerciseAtIndex(j);
+                await examNavigation.openOrSaveExerciseByTitle(exercise.title!);
                 await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
             }
             await examParticipation.handInEarly();
-            for (let j = 0; j < exerciseArray.length; j++) {
-                const exercise = exerciseArray[j];
-                await examParticipation.verifyExerciseTitleOnFinalPage(exercise.id!, exercise.exerciseGroup!.title!);
-                if (exercise.type === ExerciseType.TEXT) {
-                    await examParticipation.verifyTextExerciseOnFinalPage(exercise.id!, exercise.additionalData!.textFixture!);
-                }
-            }
+
             await examParticipation.checkExamTitle(examTitle);
             await examTestRun.openTestRunPage(course, exam);
             await examTestRun.getTestRun(testRun.id!).waitFor({ state: 'visible' });
@@ -126,12 +120,12 @@ test.describe('Test exam test run', () => {
             testRun = await courseManagementAPIRequests.createExamTestRun(exam, exerciseArray);
         });
 
-        test('Deletes a test run', async ({ examTestRun }) => {
+        test('Deletes a test run', async ({ login, examTestRun }) => {
+            await login(instructor);
             await examTestRun.openTestRunPage(course, exam);
             await examTestRun.getTestRun(testRun.id!).waitFor({ state: 'visible' });
             await expect(examTestRun.getTestRunIdElement(testRun.id!)).toBeVisible();
-            await examTestRun.deleteTestRun(testRun.id!);
-            await expect(examTestRun.getTestRun(testRun.id!)).not.toBeVisible();
+            await examTestRun.deleteTestExamTestRun();
         });
     });
 

@@ -49,6 +49,7 @@ export class ExamTestRunPage {
 
     async openTestRunPage(course: Course, exam: Exam) {
         await this.page.goto(`/course-management/${course.id}/exams/${exam.id}/test-runs`);
+        await this.page.waitForURL(`/course-management/${course.id}/exams/${exam.id}/test-runs`);
     }
 
     async setWorkingTimeHours(hours: number) {
@@ -95,6 +96,14 @@ export class ExamTestRunPage {
 
     async deleteTestRun(testRunId: number) {
         await this.page.locator(`#testrun-${testRunId}`).locator('.delete-testrun').click();
+        await this.page.locator('#confirm-entity-name').fill('Test Run');
+        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/exams/*/test-run/*`);
+        await this.page.locator('#delete').click();
+        await responsePromise;
+    }
+
+    async deleteTestExamTestRun() {
+        await this.page.locator('svg.svg-inline--fa.fa-xmark').nth(1).click();
         await this.page.locator('#confirm-entity-name').fill('Test Run');
         const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/exams/*/test-run/*`);
         await this.page.locator('#delete').click();
