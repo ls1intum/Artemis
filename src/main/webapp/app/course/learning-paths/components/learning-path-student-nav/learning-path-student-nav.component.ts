@@ -1,4 +1,4 @@
-import { Component, InputSignal, OnInit, Signal, WritableSignal, computed, inject, input, viewChild } from '@angular/core';
+import { Component, InputSignal, OnInit, Signal, WritableSignal, computed, inject, input, signal } from '@angular/core';
 import { LearningPathNavigationObjectDTO } from 'app/entities/competency/learning-path.model';
 import { CommonModule } from '@angular/common';
 import { NgbAccordionModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
@@ -34,7 +34,7 @@ export class LearningPathNavComponent implements OnInit {
         () => this.learningPathNavigationService.learningPathNavigation()?.successorLearningObject,
     );
 
-    readonly navOverview: Signal<LearningPathNavOverviewComponent> = viewChild.required(LearningPathNavOverviewComponent);
+    readonly isDropdownOpen: WritableSignal<boolean> = signal(false);
 
     ngOnInit(): void {
         this.learningPathNavigationService.loadLearningPathNavigation(this.learningPathId());
@@ -44,9 +44,7 @@ export class LearningPathNavComponent implements OnInit {
         this.learningPathNavigationService.loadRelativeLearningPathNavigation(this.learningPathId(), selectedLearningObject);
     }
 
-    setShowNavigationOverview(show: boolean): void {
-        if (show) {
-            this.navOverview().loadCompetencies(this.learningPathId());
-        }
+    setIsDropdownOpen(isOpen: boolean): void {
+        this.isDropdownOpen.set(isOpen);
     }
 }

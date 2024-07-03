@@ -170,9 +170,7 @@ describe('LearningPathStudentNavComponent', () => {
     });
 
     it('should show navigation overview on click', async () => {
-        const setShowNavigationOverviewSpy = jest.spyOn(component, 'setShowNavigationOverview');
-        const loadCompetenciesSpy = jest.spyOn(component.navOverview(), 'loadCompetencies');
-
+        const setIsDropdownOpen = jest.spyOn(component, 'setIsDropdownOpen');
         fixture.detectChanges();
         await fixture.whenStable();
         fixture.detectChanges();
@@ -182,8 +180,7 @@ describe('LearningPathStudentNavComponent', () => {
         fixture.detectChanges();
         const navOverview = fixture.debugElement.query(By.directive(LearningPathNavOverviewComponent));
         expect(navOverview).toBeTruthy();
-        expect(setShowNavigationOverviewSpy).toHaveBeenCalledWith(true);
-        expect(loadCompetenciesSpy).toHaveBeenCalledExactlyOnceWith(learningPathId);
+        expect(setIsDropdownOpen).toHaveBeenCalledWith(true);
     });
 
     it('should call select learning object on previous click', async () => {
