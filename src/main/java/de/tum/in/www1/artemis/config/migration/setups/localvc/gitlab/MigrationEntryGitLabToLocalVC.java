@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
@@ -38,17 +39,20 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
     @Value("${artemis.version-control.local-vcs-repo-path:#{null}}")
     private String localVCBasePath;
 
-    private final UriService uriService;
+    private final UserRepository userRepository;
 
     private final Optional<AbstractVersionControlService> sourceVersionControlService;
+
+    private final UriService uriService;
 
     public MigrationEntryGitLabToLocalVC(ProgrammingExerciseRepository programmingExerciseRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            Optional<AbstractVersionControlService> sourceVersionControlService, UriService uriService) {
+            UserRepository userRepository, Optional<AbstractVersionControlService> sourceVersionControlService, UriService uriService) {
         super(programmingExerciseRepository, solutionProgrammingExerciseParticipationRepository, templateProgrammingExerciseParticipationRepository,
                 programmingExerciseStudentParticipationRepository, auxiliaryRepositoryRepository);
+        this.userRepository = userRepository;
         this.sourceVersionControlService = sourceVersionControlService;
         this.uriService = uriService;
     }
@@ -72,6 +76,15 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
     @Override
     protected Class<?> getSubclass() {
         return MigrationEntryGitLabToLocalVC.class;
+    }
+
+    @Override
+    public boolean execute() {
+        boolean result = super.execute();
+        if (result) {
+            userRepository.clearVCSTokens();
+        }
+        return result;
     }
 
     private String migrateTestRepo(ProgrammingExercise programmingExercise) throws URISyntaxException {
