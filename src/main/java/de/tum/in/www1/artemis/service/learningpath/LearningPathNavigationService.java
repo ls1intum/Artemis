@@ -82,6 +82,7 @@ public class LearningPathNavigationService {
                 .map(competencyId -> recommendationState.competencyIdMap().get(competencyId))
                 .filter(competency -> competency.getLectureUnits().contains(learningObject) || competency.getExercises().contains(learningObject));
 
+        // There will always be at least one competency that contains the learning object, otherwise the learning object would not be in the learning path
         if (firstCompetency) {
             return potentialCompetencies.min(Comparator.comparingInt(competency -> recommendationState.recommendedOrderOfCompetencies().indexOf(competency.getId()))).get();
         }
@@ -96,6 +97,7 @@ public class LearningPathNavigationService {
      * @param learningPath       the learning path
      * @param learningObjectId   the id of the relative learning object
      * @param learningObjectType the type of the relative learning object
+     * @param competencyId       the id of the competency of the relative learning object
      * @return the navigation
      */
     public LearningPathNavigationDTO getNavigationRelativeToLearningObject(LearningPath learningPath, long learningObjectId, LearningObjectType learningObjectType,
