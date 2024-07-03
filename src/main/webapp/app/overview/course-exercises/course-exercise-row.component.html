@@ -1,15 +1,15 @@
-<div [id]="'exercise-card-' + exercise.id" class="course-exercise-row align-items-center mb-2 mt-2 position-relative" [class.guided-tour]="hasGuidedTour">
+<div [id]="'exercise-card-' + exercise.id" class="course-exercise-row align-items-center position-relative" [class.guided-tour]="hasGuidedTour">
     <a class="stretched-link" [routerLink]="routerLink"></a>
     <div class="col-auto d-none d-md-block">
         <a class="exercise-row-icon" [routerLink]="routerLink">
             @if (exercise.type) {
-                <fa-icon [icon]="getIcon(exercise.type)" size="2x" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" />
+                <fa-icon class="me-3" [icon]="getIcon(exercise.type)" size="lg" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" />
             }
         </a>
     </div>
     <div class="col max-width">
-        <div class="row">
-            <div class="col-auto d-md-none">
+        <div class="row m-0">
+            <div class="col-auto p-0 d-md-none">
                 <h4 class="fw-medium exercise-title">
                     @if (exercise.type) {
                         <fa-icon [icon]="getIcon(exercise.type)" />
@@ -18,8 +18,8 @@
                     {{ exercise.title }}
                 </h4>
             </div>
-            <div class="col-sm col d-none d-md-flex">
-                <h4 class="fw-medium exercise-title">{{ exercise.title }}</h4>
+            <div class="col-sm p-0 col d-none d-md-flex">
+                <h5 class="exercise-title">{{ exercise.title }}</h5>
             </div>
             @if (!isPresentationMode) {
                 <jhi-submission-result-status [exercise]="exercise" [studentParticipation]="gradedStudentParticipation" [triggerLastGraded]="false" class="result" />
