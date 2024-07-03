@@ -9,7 +9,6 @@ import { MockProvider } from 'ng-mocks';
 import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ScienceService } from 'app/shared/science/science.service';
-import { MockScienceService } from '../../../helpers/mocks/service/mock-science-service';
 import { IconDefinition, faFile, faFileCsv, faFileImage, faFilePdf } from '@fortawesome/free-solid-svg-icons';
 
 describe('AttachmentUnitComponent', () => {
@@ -41,7 +40,7 @@ describe('AttachmentUnitComponent', () => {
                     useClass: MockTranslateService,
                 },
                 MockProvider(FileService),
-                { provide: ScienceService, useClass: MockScienceService },
+                MockProvider(ScienceService),
             ],
         }).compileComponents();
 
