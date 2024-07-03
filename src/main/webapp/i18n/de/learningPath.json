@@ -6,7 +6,8 @@
                 "previousButton": "Zurück",
                 "overview": {
                     "title": "Lernpfad Kompetenzen",
-                    "showCompetenciesGraphButton": "Kompetenzgraph"
+                    "showCompetenciesGraphButton": "Kompetenzgraph",
+                    "emptyLearningObjectsLabel": "Diese Kompetenz enthält bisher noch keine Lernobjekte!"
                 }
             },
             "competencyGraphModal": {
