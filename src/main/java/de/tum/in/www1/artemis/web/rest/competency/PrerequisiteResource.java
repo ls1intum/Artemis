@@ -164,7 +164,7 @@ public class PrerequisiteResource {
 
         var course = courseRepository.findByIdElseThrow(courseId);
         var prerequisite = courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(prerequisiteId);
-        checkAuthorizationForPrerequisite(course, prerequisite);
+        checkCourseForPrerequisite(course, prerequisite);
         courseCompetencyService.deleteCourseCompetency(prerequisite, course);
 
         return ResponseEntity.ok().build();
@@ -196,7 +196,7 @@ public class PrerequisiteResource {
      * @param course       The course for which to check the authorization role for
      * @param prerequisite The prerequisite to be accessed by the user
      */
-    private void checkAuthorizationForPrerequisite(@NotNull Course course, @NotNull CourseCompetency prerequisite) {
+    private void checkCourseForPrerequisite(@NotNull Course course, @NotNull CourseCompetency prerequisite) {
         if (prerequisite.getCourse() == null) {
             throw new BadRequestAlertException("A competency must belong to a course", ENTITY_NAME, "competencyNoCourse");
         }

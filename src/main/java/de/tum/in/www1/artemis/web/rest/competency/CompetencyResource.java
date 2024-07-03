@@ -193,7 +193,7 @@ public class CompetencyResource {
         var currentUser = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
         var competency = competencyService.findCompetencyWithExercisesAndLectureUnitsAndProgressForUser(competencyId, currentUser.getId());
-        checkAuthorizationForCompetency(course, competency);
+        checkCourseForCompetency(course, competency);
 
         competency.setLectureUnits(competency.getLectureUnits().stream().filter(lectureUnit -> authorizationCheckService.isAllowedToSeeLectureUnit(lectureUnit, currentUser))
                 .peek(lectureUnit -> lectureUnit.setCompleted(lectureUnit.isCompletedFor(currentUser))).collect(Collectors.toSet()));
@@ -223,7 +223,7 @@ public class CompetencyResource {
         }
         var course = courseRepository.findByIdElseThrow(courseId);
         var existingCompetency = competencyRepository.findByIdWithLectureUnitsElseThrow(competency.getId());
-        checkAuthorizationForCompetency(course, existingCompetency);
+        checkCourseForCompetency(course, existingCompetency);
 
         var persistedCompetency = competencyService.updateCompetency(existingCompetency, competency);
         lectureUnitService.linkLectureUnitsToCompetency(persistedCompetency, competency.getLectureUnits(), existingCompetency.getLectureUnits());
@@ -403,7 +403,7 @@ public class CompetencyResource {
 
         var course = courseRepository.findByIdElseThrow(courseId);
         var competency = courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(competencyId);
-        checkAuthorizationForCompetency(course, competency);
+        checkCourseForCompetency(course, competency);
 
         courseCompetencyService.deleteCourseCompetency(competency, course);
 
@@ -426,7 +426,7 @@ public class CompetencyResource {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
         var competency = competencyRepository.findByIdElseThrow(competencyId);
-        checkAuthorizationForCompetency(course, competency);
+        checkCourseForCompetency(course, competency);
 
         CompetencyProgress studentProgress;
         if (refresh) {
@@ -493,9 +493,9 @@ public class CompetencyResource {
         var course = courseRepository.findByIdElseThrow(courseId);
 
         var tailCompetency = courseCompetencyRepository.findByIdElseThrow(tailId);
-        checkAuthorizationForCompetency(course, tailCompetency);
+        checkCourseForCompetency(course, tailCompetency);
         var headCompetency = courseCompetencyRepository.findByIdElseThrow(headId);
-        checkAuthorizationForCompetency(course, headCompetency);
+        checkCourseForCompetency(course, headCompetency);
 
         var createdRelation = competencyRelationService.createCompetencyRelation(tailCompetency, headCompetency, relation.relationType(), course);
 
@@ -516,8 +516,8 @@ public class CompetencyResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         var relation = competencyRelationRepository.findById(competencyRelationId).orElseThrow();
 
-        checkAuthorizationForCompetency(course, relation.getTailCompetency());
-        checkAuthorizationForCompetency(course, relation.getHeadCompetency());
+        checkCourseForCompetency(course, relation.getTailCompetency());
+        checkCourseForCompetency(course, relation.getHeadCompetency());
 
         competencyRelationRepository.delete(relation);
 
@@ -564,7 +564,7 @@ public class CompetencyResource {
      * @param course     The course for which to check the authorization role for
      * @param competency The competency to be accessed by the user
      */
-    private void checkAuthorizationForCompetency(@NotNull Course course, @NotNull CourseCompetency competency) {
+    private void checkCourseForCompetency(@NotNull Course course, @NotNull CourseCompetency competency) {
         if (competency.getCourse() == null) {
             throw new BadRequestAlertException("A competency must belong to a course", ENTITY_NAME, "competencyNoCourse");
         }
