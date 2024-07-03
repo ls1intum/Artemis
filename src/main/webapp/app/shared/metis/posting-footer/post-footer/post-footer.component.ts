@@ -1,4 +1,4 @@
-import { AfterContentChecked, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild, ViewContainerRef } from '@angular/core';
+import { AfterContentChecked, ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, ViewContainerRef } from '@angular/core';
 import { PostingFooterDirective } from 'app/shared/metis/posting-footer/posting-footer.directive';
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -12,7 +12,7 @@ import dayjs from 'dayjs/esm';
     templateUrl: './post-footer.component.html',
     styleUrls: ['./post-footer.component.scss'],
 })
-export class PostFooterComponent extends PostingFooterDirective<Post> implements OnInit, OnDestroy, AfterContentChecked, OnChanges {
+export class PostFooterComponent extends PostingFooterDirective<Post> implements OnInit, OnDestroy, AfterContentChecked {
     @Input() lastReadDate?: dayjs.Dayjs;
     @Input() readOnlyMode = false;
     @Input() previewMode: boolean;
@@ -27,11 +27,11 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
     @ViewChild(AnswerPostCreateEditModalComponent) answerPostCreateEditModal?: AnswerPostCreateEditModalComponent;
     @Input() showAnswers: boolean;
     @Input() isCommunicationPage: boolean;
+    @Input() sortedAnswerPosts: AnswerPost[];
     @Output() openThread = new EventEmitter<void>();
     @Output() userReferenceClicked = new EventEmitter<string>();
     @Output() channelReferenceClicked = new EventEmitter<number>();
 
-    sortedAnswerPosts: AnswerPost[];
     createdAnswerPost: AnswerPost;
     isAtLeastTutorInCourse: boolean;
 
@@ -53,14 +53,6 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
         this.courseId = this.metisService.getCourse().id!;
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
         this.createdAnswerPost = this.createEmptyAnswerPost();
-        this.sortAnswerPosts();
-    }
-
-    /**
-     * on changes: updates the post tags and the context information
-     */
-    ngOnChanges(): void {
-        this.sortAnswerPosts();
     }
 
     /**
@@ -95,21 +87,5 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
      */
     openCreateAnswerPostModal() {
         this.createAnswerPostModalComponent.open();
-    }
-
-    /**
-     * sorts answerPosts by two criteria
-     * 1. criterion: resolvesPost -> true comes first
-     * 2. criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
-     */
-    sortAnswerPosts(): void {
-        if (!this.posting.answers) {
-            this.sortedAnswerPosts = [];
-            return;
-        }
-        this.sortedAnswerPosts = this.posting.answers.sort(
-            (answerPostA, answerPostB) =>
-                Number(answerPostB.resolvesPost) - Number(answerPostA.resolvesPost) || answerPostA.creationDate!.valueOf() - answerPostB.creationDate!.valueOf(),
-        );
     }
 }

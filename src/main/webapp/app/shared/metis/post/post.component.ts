@@ -78,6 +78,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.routerLink = this.metisService.getLinkForPost();
         this.queryParams = this.metisService.getQueryParamsForPost(this.posting);
         this.showAnnouncementIcon = (getAsChannelDTO(this.posting.conversation)?.isAnnouncementChannel && this.showChannelReference) ?? false;
+        this.sortAnswerPosts();
     }
 
     /**
