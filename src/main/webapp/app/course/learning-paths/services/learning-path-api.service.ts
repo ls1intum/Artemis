@@ -32,7 +32,7 @@ export class LearningPathApiService extends BaseApiHttpService {
         params = params.set('learningObjectId', learningObjectId.toString());
         params = params.set('learningObjectType', learningObjectType);
         params = params.set('competencyId', competencyId.toString());
-        return await this.get<LearningPathNavigationDTO>(`learning-path/${learningPathId}/navigation`, { params: params });
+        return await this.get<LearningPathNavigationDTO>(`learning-path/${learningPathId}/relative-navigation`, { params: params });
     }
 
     async generateLearningPath(courseId: number): Promise<number> {

@@ -414,7 +414,7 @@ public class LearningPathResource {
      */
     private void checkLearningPathAccessElseThrow(Optional<Course> optionalCourse, LearningPath learningPath, Optional<User> optionalUser) {
         User user = optionalUser.orElseGet(userRepository::getUserWithGroupsAndAuthorities);
-        if (!user.equals(learningPath.getUser()) && optionalCourse.map(course -> !authorizationCheckService.isAtLeastInstructorInCourse(course, user)).orElse(false)) {
+        if (!user.equals(learningPath.getUser()) && optionalCourse.map(course -> !authorizationCheckService.isAtLeastInstructorInCourse(course, user)).orElse(true)) {
             throw new AccessForbiddenException("You are not allowed to access another user's learning path.");
         }
     }

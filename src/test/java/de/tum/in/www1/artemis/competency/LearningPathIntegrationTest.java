@@ -734,11 +734,8 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
-        final var result = request.get("/api/learning-path/" + learningPath.getId() + "/navigation?learningObjectId=" + textUnit.getId() + "&learningObjectType="
-                + LearningPathNavigationObjectDTO.LearningObjectType.LECTURE, HttpStatus.OK, LearningPathNavigationDTO.class);
-
-        // TODO: currently learning objects connected to more than one competency are provided twice in the learning path
-        // TODO: in the navigation therefore a lecture unit might be the predecessor and the current learning object or similar
+        final var result = request.get("/api/learning-path/" + learningPath.getId() + "/relative-navigation?learningObjectId=" + textUnit.getId() + "&learningObjectType="
+                + LearningPathNavigationObjectDTO.LearningObjectType.LECTURE + "&competencyId=" + competencies[0].getId(), HttpStatus.OK, LearningPathNavigationDTO.class);
 
         verifyNavigationResult(result, null, textUnit, textExercise);
 

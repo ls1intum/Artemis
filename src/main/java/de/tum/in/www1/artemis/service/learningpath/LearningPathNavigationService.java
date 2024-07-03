@@ -2,7 +2,9 @@ package de.tum.in.www1.artemis.service.learningpath;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -44,19 +46,48 @@ public class LearningPathNavigationService {
     public LearningPathNavigationDTO getNavigation(LearningPath learningPath) {
         var recommendationState = learningPathRecommendationService.getRecommendedOrderOfNotMasteredCompetencies(learningPath);
         var currentLearningObject = learningPathRecommendationService.getFirstLearningObject(learningPath.getUser(), recommendationState);
+        Competency competencyOfCurrentLearningObject;
         var recommendationStateWithAllCompetencies = learningPathRecommendationService.getRecommendedOrderOfAllCompetencies(learningPath);
 
         // If all competencies are mastered, get the last completed learning object
         if (currentLearningObject == null) {
             currentLearningObject = learningPathRecommendationService.getLastLearningObject(learningPath.getUser(), recommendationStateWithAllCompetencies);
+
+            // If we still didn't find any learning object, there exists no learning object in the learning path and we can return an empty navigation
+            if (currentLearningObject == null) {
+                return new LearningPathNavigationDTO(null, null, null, learningPath.getProgress());
+            }
+            else {
+                competencyOfCurrentLearningObject = findCorrespondingCompetencyForLearningObject(recommendationStateWithAllCompetencies, currentLearningObject, false);
+            }
         }
-        // If we still didn't find any learning object, there exists no learning object in the learning path and we can return an empty navigation
-        if (currentLearningObject == null) {
-            return new LearningPathNavigationDTO(null, null, null, learningPath.getProgress());
+        else {
+            competencyOfCurrentLearningObject = findCorrespondingCompetencyForLearningObject(recommendationState, currentLearningObject, true);
         }
 
-        long competencyId = recommendationState.recommendedOrderOfCompetencies().getFirst();
-        return getNavigationRelativeToLearningObject(recommendationStateWithAllCompetencies, currentLearningObject, competencyId, learningPath);
+        return getNavigationRelativeToLearningObject(recommendationStateWithAllCompetencies, currentLearningObject, competencyOfCurrentLearningObject.getId(), learningPath);
+    }
+
+    /**
+     * Find the correct competency that contains the given learning object.
+     * Either the first or last competency that contains the learning object is returned depending on the firstCompetency parameter.
+     *
+     * @param recommendationState the recommendation state
+     * @param learningObject      the learning object
+     * @param firstCompetency     whether to find the first or last competency that contains the learning object
+     * @return the competency that contains the learning object
+     */
+    private Competency findCorrespondingCompetencyForLearningObject(RecommendationState recommendationState, LearningObject learningObject, boolean firstCompetency) {
+        Stream<Competency> potentialCompetencies = recommendationState.recommendedOrderOfCompetencies().stream()
+                .map(competencyId -> recommendationState.competencyIdMap().get(competencyId))
+                .filter(competency -> competency.getLectureUnits().contains(learningObject) || competency.getExercises().contains(learningObject));
+
+        if (firstCompetency) {
+            return potentialCompetencies.min(Comparator.comparingInt(competency -> recommendationState.recommendedOrderOfCompetencies().indexOf(competency.getId()))).get();
+        }
+        else {
+            return potentialCompetencies.max(Comparator.comparingInt(competency -> recommendationState.recommendedOrderOfCompetencies().indexOf(competency.getId()))).get();
+        }
     }
 
     /**
@@ -95,7 +126,7 @@ public class LearningPathNavigationService {
             List<LearningObject> learningObjectsInCurrentCompetency, int indexOfCurrentLearningObject, User user) {
         LearningObject predecessorLearningObject = null;
         Competency competencyOfPredecessor = null;
-        if (indexOfCurrentLearningObject == 0) {
+        if (indexOfCurrentLearningObject <= 0) {
             int indexOfCompetencyToSearch = recommendationState.recommendedOrderOfCompetencies().indexOf(currentCompetency.getId()) - 1;
             while (indexOfCompetencyToSearch >= 0 && predecessorLearningObject == null) {
                 long competencyIdToSearchNext = recommendationState.recommendedOrderOfCompetencies().get(indexOfCompetencyToSearch);
@@ -119,7 +150,7 @@ public class LearningPathNavigationService {
             List<LearningObject> learningObjectsInCurrentCompetency, int indexOfCurrentLearningObject, User user) {
         LearningObject successorLearningObject = null;
         Competency competencyOfSuccessor = null;
-        if (indexOfCurrentLearningObject == learningObjectsInCurrentCompetency.size() - 1) {
+        if (indexOfCurrentLearningObject >= learningObjectsInCurrentCompetency.size() - 1) {
             int indexOfCompetencyToSearch = recommendationState.recommendedOrderOfCompetencies().indexOf(currentCompetency.getId()) + 1;
             while (indexOfCompetencyToSearch < recommendationState.recommendedOrderOfCompetencies().size() && successorLearningObject == null) {
                 long competencyIdToSearchNext = recommendationState.recommendedOrderOfCompetencies().get(indexOfCompetencyToSearch);
