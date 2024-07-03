@@ -796,12 +796,12 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         var result = request.getList("/api/learning-path/" + learningPath.getId() + "/competencies/" + competencies[0].getId() + "/learning-objects", HttpStatus.OK,
                 LearningPathNavigationObjectDTO.class);
 
-        assertThat(result).containsExactly(LearningPathNavigationObjectDTO.of(textUnit, true));
+        assertThat(result).containsExactly(LearningPathNavigationObjectDTO.of(textUnit, true, competencies[0].getId()));
 
         result = request.getList("/api/learning-path/" + learningPath.getId() + "/competencies/" + competencies[1].getId() + "/learning-objects", HttpStatus.OK,
                 LearningPathNavigationObjectDTO.class);
 
-        assertThat(result).containsExactly(LearningPathNavigationObjectDTO.of(textExercise, false));
+        assertThat(result).containsExactly(LearningPathNavigationObjectDTO.of(textExercise, false, competencies[1].getId()));
     }
 
     @Test
@@ -827,14 +827,14 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 LearningPathNavigationObjectDTO.class);
 
         assertThat(result).hasSize(d);
-        assertThat(result.subList(0, a))
-                .containsExactlyInAnyOrderElementsOf(completedLectureUnits.stream().map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, true)).toList());
-        assertThat(result.subList(a, b))
-                .containsExactlyInAnyOrderElementsOf(finishedExercises.stream().map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, true)).toList());
-        assertThat(result.subList(b, c))
-                .containsExactlyInAnyOrderElementsOf(uncompletedLectureUnits.stream().map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, false)).toList());
-        assertThat(result.subList(c, d))
-                .containsExactlyInAnyOrderElementsOf(unfinishedExercises.stream().map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, false)).toList());
+        assertThat(result.subList(0, a)).containsExactlyInAnyOrderElementsOf(
+                completedLectureUnits.stream().map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, true, competencies[4].getId())).toList());
+        assertThat(result.subList(a, b)).containsExactlyInAnyOrderElementsOf(
+                finishedExercises.stream().map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, true, competencies[4].getId())).toList());
+        assertThat(result.subList(b, c)).containsExactlyInAnyOrderElementsOf(
+                uncompletedLectureUnits.stream().map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, false, competencies[4].getId())).toList());
+        assertThat(result.subList(c, d)).containsExactlyInAnyOrderElementsOf(
+                unfinishedExercises.stream().map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, false, competencies[4].getId())).toList());
     }
 
     void testGetCompetencyProgressForLearningPath() throws Exception {

@@ -183,19 +183,6 @@ public class LearningPathRecommendationService {
     }
 
     /**
-     * Gets the competency of an uncompleted learning object on a learning path
-     *
-     * @param user                the user that should be analyzed
-     * @param learningObject      the learning object for which to get the competency
-     * @param recommendationState the current state of the learning path recommendation
-     * @return the competency of the given learning object
-     */
-    public Competency getCompetencyOfLearningObjectOnLearningPath(User user, LearningObject learningObject, RecommendationState recommendationState) {
-        return recommendationState.recommendedOrderOfCompetencies.stream().map(recommendationState.competencyIdMap::get)
-                .filter(competency -> getOrderOfLearningObjectsForCompetency(competency, user).contains(learningObject)).findFirst().orElse(null);
-    }
-
-    /**
      * Generates the initial state of the recommendation containing all necessary information for the prediction.
      *
      * @param learningPath the learning path that should be analyzed
