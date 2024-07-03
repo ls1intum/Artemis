@@ -18,7 +18,7 @@ Enabling Communication
 
 Artemis courses will by default enable all the communication features.
 In case you do not want to provide users with these features, you can disable them on course creation by unchecking the
-respective checkbox (``Enable communication features``) - it can also be edited afterwards.
+respective checkbox (``Communication Enabled``) - it can also be edited afterwards. Additionally, you can enable or disable group chats and direct messages by checking the (``Direct Messages Enabled / Group Chats ``) checkbox.
 
 |communication-toggle|
 
@@ -59,14 +59,6 @@ These messages can also be created on the detail page of the exercise they belon
 Exemplary exercise detail page with messages:
 
 |exercise-messages|
-
-Course Communication Overview
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The ``Communication`` space of an Artemis course serves as overview for *all* course-wide messages in a course.
-Here, users can easily query, sort, and filter existing messages.
-
-|communication-page|
 
 Private Communication
 ----------------------
