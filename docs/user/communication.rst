@@ -281,7 +281,7 @@ Announcements can be created in the course messaging overview by selecting the `
 As soon as the announcement is created, all participants who did not actively refrain from being notified will receive an email containing the announcement's content.
 
 .. |communication-toggle| image:: communication/communication-checkbox.png
-    :width: 1000
+    :width: 600
 .. |messaging-page| image:: communication/messaging-page.png
     :width: 1000
 .. |lecture-messages| image:: communication/lecture-messages.png
