@@ -18,16 +18,20 @@ export class LearningPathApiService extends BaseApiHttpService {
         return await this.get<number>(`courses/${courseId}/learning-path-id`);
     }
 
-    async getLearningPathNavigation(
+    async getLearningPathNavigation(learningPathId: number): Promise<LearningPathNavigationDTO> {
+        return await this.get<LearningPathNavigationDTO>(`learning-path/${learningPathId}/navigation`);
+    }
+
+    async getRelativeLearningPathNavigation(
         learningPathId: number,
-        learningObjectId: number | undefined,
-        learningObjectType: LearningObjectType | undefined,
+        learningObjectId: number,
+        learningObjectType: LearningObjectType,
+        competencyId: number,
     ): Promise<LearningPathNavigationDTO> {
         let params = new HttpParams();
-        if (learningObjectId && learningObjectType) {
-            params = params.set('learningObjectId', learningObjectId.toString());
-            params = params.set('learningObjectType', learningObjectType);
-        }
+        params = params.set('learningObjectId', learningObjectId.toString());
+        params = params.set('learningObjectType', learningObjectType);
+        params = params.set('competencyId', competencyId.toString());
         return await this.get<LearningPathNavigationDTO>(`learning-path/${learningPathId}/navigation`, { params: params });
     }
 

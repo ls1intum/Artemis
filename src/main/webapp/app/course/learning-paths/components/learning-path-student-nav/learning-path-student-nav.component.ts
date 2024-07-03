@@ -37,7 +37,7 @@ export class LearningPathNavComponent implements OnInit {
     readonly navOverview: Signal<LearningPathNavOverviewComponent> = viewChild.required(LearningPathNavOverviewComponent);
 
     ngOnInit(): void {
-        this.learningPathNavigationService.loadInitialLearningPathNavigation(this.learningPathId());
+        this.learningPathNavigationService.loadLearningPathNavigation(this.learningPathId());
     }
 
     selectLearningObject(selectedLearningObject: LearningPathNavigationObjectDTO): void {
