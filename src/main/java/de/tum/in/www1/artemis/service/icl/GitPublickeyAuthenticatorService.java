@@ -64,7 +64,7 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
                 log.error("Failed to convert stored public key string to PublicKey object", e);
             }
         }
-        else if (localCIBuildJobQueueService.isPresent() && localCIBuildJobQueueService.orElseThrow().getBuildAgentInformation().stream().anyMatch(agent -> {
+        else if (localCIBuildJobQueueService.isPresent() && localCIBuildJobQueueService.get().getBuildAgentInformation().stream().anyMatch(agent -> {
             if (agent.publicSshKey() == null) {
                 return false;
             }
