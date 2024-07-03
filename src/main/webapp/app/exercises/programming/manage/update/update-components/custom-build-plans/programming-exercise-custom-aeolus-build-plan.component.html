@@ -55,11 +55,13 @@
                             </div>
                         </div>
                     </div>
-                    <div class="card-text">
+                    <div class="card-text d-flex flex-column" [style.height.vh]="40">
                         <label jhiTranslate="artemisApp.programmingExercise.script" class="mb-2"></label>
-                        @if (isScriptAction) {
-                            <jhi-monaco-editor #editor (textChanged)="codeChanged($event)" />
-                        }
+                        <div class="flex-grow-1 flex-shrink-1" [style.max-height.%]="100">
+                            @if (isScriptAction) {
+                                <jhi-monaco-editor #editor (textChanged)="codeChanged($event)" />
+                            }
+                        </div>
                     </div>
                 </div>
             }
