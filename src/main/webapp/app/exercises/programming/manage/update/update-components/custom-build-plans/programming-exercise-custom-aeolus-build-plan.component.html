@@ -58,7 +58,7 @@
                     <div class="card-text">
                         <label jhiTranslate="artemisApp.programmingExercise.script" class="mb-2"></label>
                         @if (isScriptAction) {
-                            <jhi-ace-editor #editor (textChanged)="codeChanged($event)" />
+                            <jhi-monaco-editor #editor (textChanged)="codeChanged($event)" />
                         }
                     </div>
                 </div>
