@@ -25,7 +25,8 @@ to a Jenkins and LocalVC Setup.
    After it Artemis stops automatically (with a ``Application run failed`` message).
    Check the log of Artemis for entries with ``Migration`` to see if there were any problems.
 4. Adjust the credential on your Jenkins, which was previously used to access your GitLab.
-   The same credential ID now have to provide username and password of an administrator account of your Artemis instance.
+   The same credential ID now have to provide username and password of an administrator account of your Artemis instance
+   or dedicated git credential configured in ``build-agent-git-username`` and ``build-agent-git-password`` under ``artemis.version-control``.
 5. Change your Artemis configuration to run with LocalVC instead of GitLab.
 
    1. Adjust ``artemis.version-control.url`` to point to your Artemis instance instead of your GitLab instance.
