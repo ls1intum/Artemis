@@ -3,12 +3,18 @@
         @for (learningObject of learningObjects(); track learningObject) {
             <div
                 (click)="selectLearningObject(learningObject)"
-                class="row p-3 m-0 clickable"
+                class="row p-3 m-0 clickable align-items-center"
                 [ngClass]="{ 'selected-learning-object': currentLearningObject()?.id === learningObject.id && currentLearningObject()?.type === learningObject.type }"
             >
                 <span class="col-md-auto p-0">{{ learningObject.name }}</span>
                 @if (learningObject.completed) {
                     <fa-icon [icon]="faCheckCircle" class="col-md-auto text-success" />
+                } @else if (nextLearningObjectOnPath()?.id === learningObject.id) {
+                    <div class="ms-2 col-md-auto next-learning-object-container">
+                        <small class="font-bold"
+                            ><strong><span jhiTranslate="artemisApp.learningPath.navigation.overview.nextLearningObjectOnPathLabel"></span></strong
+                        ></small>
+                    </div>
                 }
             </div>
             @if (!$last) {

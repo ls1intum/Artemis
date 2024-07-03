@@ -49,7 +49,7 @@ describe('LearningPathApiService', () => {
         const methodCall = learningPathApiService.getRelativeLearningPathNavigation(learningPathId, learningObjectId, learningObjectType, competencyId);
         const response = httpClient.expectOne({
             method: 'GET',
-            url: `${baseUrl}/learning-path/${learningPathId}/navigation?learningObjectId=${learningObjectId}&learningObjectType=${learningObjectType}&competencyId=${competencyId}`,
+            url: `${baseUrl}/learning-path/${learningPathId}/relative-navigation?learningObjectId=${learningObjectId}&learningObjectType=${learningObjectType}&competencyId=${competencyId}`,
         });
         response.flush({});
         await methodCall;

@@ -1,4 +1,4 @@
-import { Component, InputSignal, OnInit, OutputEmitterRef, Signal, WritableSignal, inject, input, output, signal } from '@angular/core';
+import { Component, InputSignal, OnInit, OutputEmitterRef, Signal, WritableSignal, computed, inject, input, output, signal } from '@angular/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { AlertService } from 'app/core/util/alert.service';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
@@ -22,12 +22,18 @@ export class LearningPathNavOverviewLearningObjectsComponent implements OnInit {
     private readonly learningPathApiService: LearningPathApiService = inject(LearningPathApiService);
     private readonly learningPathNavigationService = inject(LearningPathNavigationService);
 
-    readonly learningPathId: InputSignal<number> = input.required<number>();
-    readonly competencyId: InputSignal<number> = input.required<number>();
+    readonly learningPathId: InputSignal<number> = input.required();
+    readonly competencyId: InputSignal<number> = input.required();
+    // competency id of current competency of learning path (not the one of the selected learning object)
+    readonly currentCompetencyId: InputSignal<number | undefined> = input.required();
     readonly currentLearningObject: Signal<LearningPathNavigationObjectDTO | undefined> = this.learningPathNavigationService.currentLearningObject;
 
     readonly isLoading: WritableSignal<boolean> = signal(false);
     readonly learningObjects: WritableSignal<LearningPathNavigationObjectDTO[] | undefined> = signal(undefined);
+
+    readonly nextLearningObjectOnPath: Signal<LearningPathNavigationObjectDTO | undefined> = computed(() =>
+        this.competencyId() === this.currentCompetencyId() ? this.learningObjects()?.find((learningObject) => !learningObject.completed) : undefined,
+    );
 
     readonly onLearningObjectSelected: OutputEmitterRef<void> = output();
 

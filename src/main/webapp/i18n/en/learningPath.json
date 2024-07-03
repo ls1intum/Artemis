@@ -7,7 +7,9 @@
                 "overview": {
                     "title": "Learning path competencies",
                     "showCompetenciesGraphButton": "Competency graph",
-                    "emptyLearningObjectsLabel": "This competency doesn't contain any learning objects yet!"
+                    "emptyLearningObjectsLabel": "This competency doesn't contain any learning objects yet!",
+                    "currentCompetencyOnPathLabel": "Current",
+                    "nextLearningObjectOnPathLabel": "Next"
                 }
             },
             "competencyGraphModal": {

@@ -17,10 +17,21 @@
     } @else if (competencies()) {
         <div ngbAccordion class="nav-overview-competencies accordion-flush">
             @for (competency of competencies(); track competency.id) {
-                <div ngbAccordionItem>
-                    <h2 ngbAccordionHeader>
-                        <button ngbAccordionButton class="px-3">{{ competency.title }}</button>
-                    </h2>
+                <div ngbAccordionItem [collapsed]="currentCompetencyId() !== competency.id">
+                    <div ngbAccordionHeader>
+                        <button ngbAccordionButton class="px-3">
+                            <div>
+                                <span>{{ competency.title }}</span>
+                                @if (competency.id === currentCompetencyOnPath()?.id) {
+                                    <div class="ms-2 current-competency-container d-inline-block">
+                                        <small class="font-bold"
+                                            ><strong><span jhiTranslate="artemisApp.learningPath.navigation.overview.currentCompetencyOnPathLabel"></span></strong
+                                        ></small>
+                                    </div>
+                                }
+                            </div>
+                        </button>
+                    </div>
                     <div ngbAccordionCollapse>
                         <div ngbAccordionBody class="p-0 overflow-hidden">
                             <ng-template>
@@ -28,6 +39,7 @@
                                     (onLearningObjectSelected)="selectLearningObject()"
                                     [learningPathId]="learningPathId()"
                                     [competencyId]="competency.id"
+                                    [currentCompetencyId]="currentCompetencyOnPath()?.id"
                                 />
                             </ng-template>
                         </div>
