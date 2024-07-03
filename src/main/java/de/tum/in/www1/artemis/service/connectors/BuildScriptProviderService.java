@@ -57,7 +57,7 @@ public class BuildScriptProviderService {
      */
     @EventListener(ApplicationReadyEvent.class)
     public void cacheOnBoot() {
-        var resources = this.resourceLoaderService.getResources(Path.of("templates", "aeolus"));
+        var resources = this.resourceLoaderService.getFileResources(Path.of("templates", "aeolus"));
         for (var resource : resources) {
             try {
                 String filename = resource.getFilename();

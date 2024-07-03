@@ -132,7 +132,8 @@ export class LectureManagementPage {
     }
 
     getLectureTitle() {
-        return this.getLectureInfo('Title');
+        const selector = `//dt[span[contains(text(), "Title")]]/following-sibling::jhi-text-detail/dd`;
+        return this.page.locator(selector).first();
     }
 
     getLectureDescription() {

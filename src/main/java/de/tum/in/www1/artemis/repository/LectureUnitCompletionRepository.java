@@ -41,6 +41,7 @@ public interface LectureUnitCompletionRepository extends ArtemisJpaRepository<Le
             SELECT COUNT(lectureUnitCompletion)
             FROM LectureUnitCompletion lectureUnitCompletion
             WHERE lectureUnitCompletion.lectureUnit.id IN :lectureUnitIds
+                AND lectureUnitCompletion.user.id = :userId
             """)
-    int countByLectureUnitIds(@Param("lectureUnitIds") Collection<Long> lectureUnitIds);
+    int countByLectureUnitIdsAndUserId(@Param("lectureUnitIds") Collection<Long> lectureUnitIds, @Param("userId") Long userId);
 }

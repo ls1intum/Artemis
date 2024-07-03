@@ -7,7 +7,7 @@ import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { setUser } from '@sentry/angular-ivy';
+import { setUser } from '@sentry/angular';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
@@ -327,10 +327,25 @@ export class AccountService implements IAccountService {
         this.prefilledUsernameValue = prefilledUsername;
     }
 
+    /**
+     * Sends the added SSH key to the server
+     *
+     * @param sshPublicKey
+     */
     addSshPublicKey(sshPublicKey: string): Observable<void> {
         if (this.userIdentity) {
             this.userIdentity.sshPublicKey = sshPublicKey;
         }
         return this.http.put<void>('api/users/sshpublickey', sshPublicKey);
+    }
+
+    /**
+     * Sends a request to the server to delete the user's current SSH key
+     */
+    deleteSshPublicKey(): Observable<void> {
+        if (this.userIdentity) {
+            this.userIdentity.sshPublicKey = undefined;
+        }
+        return this.http.delete<void>('api/users/sshpublickey');
     }
 }
