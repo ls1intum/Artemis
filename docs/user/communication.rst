@@ -288,8 +288,6 @@ As soon as the announcement is created, all participants who did not actively re
     :width: 1000
 .. |exercise-messages| image:: communication/exercise-messages.png
     :width: 1000
-.. |communication-page| image:: communication/communication-page.png
-    :width: 1000
 .. |message-with-references| image:: communication/message-with-all-references.png
     :width: 750
 .. |resolved-post| image:: communication/resolved-post.png
