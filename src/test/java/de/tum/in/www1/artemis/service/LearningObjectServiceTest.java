@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.service;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
+import java.time.ZonedDateTime;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -76,6 +78,11 @@ class LearningObjectServiceTest extends AbstractSpringIntegrationIndependentTest
             @Override
             public boolean isCompletedFor(User user) {
                 return false;
+            }
+
+            @Override
+            public Optional<ZonedDateTime> getCompletionDate(User user) {
+                return Optional.empty();
             }
 
             @Override

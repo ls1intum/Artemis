@@ -132,4 +132,25 @@ describe('LectureUnitService', () => {
         service.completeLectureUnit(lecture, { lectureUnit: exerciseUnit, completed: false });
         httpMock.expectNone({ method: 'POST', url: 'api/lectures/5/lecture-units/42/completion?completed=false' });
     }));
+
+    it('should get lecture unit by id', fakeAsync(() => {
+        service.getLectureUnitById(videoUnit.id!).subscribe();
+        httpMock.expectOne({ method: 'GET', url: `api/lecture-units/${videoUnit.id!}` });
+    }));
+
+    it('should delete lecture unit by id', fakeAsync(() => {
+        const lectureId = 5;
+        service.delete(videoUnit.id!, lectureId).subscribe();
+        httpMock.expectOne({ method: 'DELETE', url: `api/lectures/${lectureId}/lecture-units/${videoUnit.id!}` });
+    }));
+
+    it('should handle empty response body when converting dates from server on response array', fakeAsync(() => {
+        const convertDateFromServerEntitySpy = jest.spyOn(service, 'convertLectureUnitDateFromServer');
+        const emptyResponse = new HttpResponse<LectureUnit[]>({ body: null });
+
+        const result = service.convertLectureUnitResponseArrayDatesFromServer(emptyResponse);
+
+        expect(convertDateFromServerEntitySpy).not.toHaveBeenCalled();
+        expect(result).toBe(emptyResponse);
+    }));
 });
