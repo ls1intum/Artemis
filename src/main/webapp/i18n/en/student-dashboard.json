@@ -33,7 +33,8 @@
             "manage": "Manage",
             "studentView": "Student view",
             "general": {
-                "noDataFound": "No data found."
+                "noDataFound": "No data found.",
+                "noExercisesFoundWithAppliedFilter": "No exercises were found to which the selected filters apply."
             },
             "sidebar": {
                 "past": "Past",

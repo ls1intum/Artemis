@@ -33,7 +33,8 @@
             "manage": "Verwalten",
             "studentView": "Studentenansicht",
             "general": {
-                "noDataFound": "Keine Einträge gefunden."
+                "noDataFound": "Keine Einträge gefunden.",
+                "noExercisesFoundWithAppliedFilter": "Es wurden keine Aufgaben gefunden auf die die gewählten Filtereigenschaften zutreffen."
             },
             "sidebar": {
                 "past": "Vorangegangen",

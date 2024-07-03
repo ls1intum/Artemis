@@ -126,8 +126,6 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
 
     openFilterExercisesDialog() {
         // TODO uncollapse all groups when a filter is active
-        // TODO display a message if filter options lead to no results
-
         this.initializeFilterOptions();
 
         if (!this.sidebarDataBeforeFiltering) {
@@ -146,8 +144,6 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         this.modalRef.componentInstance.filterApplied.subscribe((exerciseFilterResults: ExerciseFilterResults) => {
             this.sidebarData = exerciseFilterResults.filteredSidebarData!;
             this.exerciseFilters = exerciseFilterResults.appliedExerciseFilters;
-
-            console.log('Filter applied', exerciseFilterResults);
         });
     }
 

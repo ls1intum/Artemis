@@ -3,6 +3,7 @@ import { DifficultyLevel, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { RangeFilter } from 'app/types/exercise-filter';
 import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/participation/participation.utils';
+import { FilterDetails } from 'app/shared/exercise-filter/exercise-filter-modal.component';
 
 export function satisfiesDifficultyFilter(sidebarElement: SidebarCardElement, searchedDifficulties?: DifficultyLevel[]): boolean {
     if (!searchedDifficulties?.length) {
@@ -64,4 +65,14 @@ export function satisfiesPointsFilter(sidebarElement: SidebarCardElement, isPoin
     }
 
     return sidebarElement.exercise.maxPoints <= achievablePointsFilter.selectedMax && sidebarElement.exercise.maxPoints >= achievablePointsFilter.selectedMin;
+}
+
+export function satisfiesFilters(sidebarElement: SidebarCardElement, filterDetails: FilterDetails) {
+    return (
+        satisfiesCategoryFilter(sidebarElement, filterDetails.selectedCategories) &&
+        satisfiesDifficultyFilter(sidebarElement, filterDetails.searchedDifficulties) &&
+        satisfiesTypeFilter(sidebarElement, filterDetails.searchedTypes) &&
+        satisfiesScoreFilter(sidebarElement, filterDetails.isScoreFilterApplied, filterDetails.achievedScore) &&
+        satisfiesPointsFilter(sidebarElement, filterDetails.isPointsFilterApplied, filterDetails.achievablePoints)
+    );
 }

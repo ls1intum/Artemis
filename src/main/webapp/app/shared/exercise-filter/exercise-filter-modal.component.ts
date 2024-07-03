@@ -5,8 +5,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { SidebarData } from 'app/types/sidebar';
-import { DifficultyLevel, ExerciseType } from 'app/entities/exercise.model';
+import { SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { Observable, OperatorFunction, Subject, merge } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge.component';
@@ -19,13 +18,19 @@ import {
     ExerciseTypeFilterOptions,
     RangeFilter,
 } from 'app/types/exercise-filter';
-import {
-    satisfiesCategoryFilter,
-    satisfiesDifficultyFilter,
-    satisfiesPointsFilter,
-    satisfiesScoreFilter,
-    satisfiesTypeFilter,
-} from 'app/shared/exercise-filter/exercise-filter-modal.helper';
+import { satisfiesFilters } from 'app/shared/exercise-filter/exercise-filter-modal.helper';
+import { DifficultyLevel, ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
+
+export type FilterDetails = {
+    searchedTypes: ExerciseType[] | undefined;
+    selectedCategories: ExerciseCategory[];
+    searchedDifficulties: DifficultyLevel[] | undefined;
+    isScoreFilterApplied: boolean;
+    isPointsFilterApplied: boolean;
+    achievedScore: RangeFilter | undefined;
+    achievablePoints: RangeFilter | undefined;
+};
 
 @Component({
     selector: 'jhi-exercise-filter-modal',
@@ -138,28 +143,31 @@ export class ExerciseFilterModalComponent implements OnInit {
         return () => this.removeItem(item);
     }
 
+    getAppliedFilterDetails(): FilterDetails {
+        return {
+            searchedTypes: this.typeFilters?.filter((type) => type.checked).map((type) => type.value),
+            selectedCategories: this.selectedCategoryOptions.map((categoryOption: ExerciseCategoryFilterOption) => categoryOption.category),
+            searchedDifficulties: this.difficultyFilters?.filter((difficulty) => difficulty.checked).map((difficulty) => difficulty.value),
+            isScoreFilterApplied: this.achievedScore?.selectedMin !== this.achievedScore?.generalMin || this.achievedScore?.selectedMax !== this.achievedScore?.generalMax,
+            isPointsFilterApplied:
+                this.achievablePoints?.selectedMin !== this.achievablePoints?.generalMin || this.achievablePoints?.selectedMax !== this.achievablePoints?.generalMax,
+            achievedScore: this.achievedScore,
+            achievablePoints: this.achievablePoints,
+        };
+    }
+
     applyFilter(): void {
         if (!this.sidebarData?.groupedData) {
             return;
         }
 
-        const searchedTypes: ExerciseType[] | undefined = this.typeFilters?.filter((type) => type.checked).map((type) => type.value);
-        const selectedCategories = this.selectedCategoryOptions.map((categoryOption: ExerciseCategoryFilterOption) => categoryOption.category);
-        const searchedDifficulties: DifficultyLevel[] | undefined = this.difficultyFilters?.filter((difficulty) => difficulty.checked).map((difficulty) => difficulty.value);
-        const isScoreFilterApplied = this.achievedScore?.selectedMin !== this.achievedScore?.generalMin || this.achievedScore?.selectedMax !== this.achievedScore?.generalMax;
-        const isPointsFilterApplied =
-            this.achievablePoints?.selectedMin !== this.achievablePoints?.generalMin || this.achievablePoints?.selectedMax !== this.achievablePoints?.generalMax;
-
+        const appliedFilterDetails = this.getAppliedFilterDetails();
         for (const groupedDataKey in this.sidebarData.groupedData) {
-            this.sidebarData.groupedData[groupedDataKey].entityData = this.sidebarData.groupedData[groupedDataKey].entityData.filter(
-                (sidebarElement) =>
-                    satisfiesTypeFilter(sidebarElement, searchedTypes) &&
-                    satisfiesCategoryFilter(sidebarElement, selectedCategories) &&
-                    satisfiesDifficultyFilter(sidebarElement, searchedDifficulties) &&
-                    satisfiesScoreFilter(sidebarElement, isScoreFilterApplied, this.achievedScore) &&
-                    satisfiesPointsFilter(sidebarElement, isPointsFilterApplied, this.achievablePoints),
+            this.sidebarData.groupedData[groupedDataKey].entityData = this.sidebarData.groupedData[groupedDataKey].entityData.filter((sidebarElement) =>
+                satisfiesFilters(sidebarElement, appliedFilterDetails),
             );
         }
+        this.sidebarData.ungroupedData = this.sidebarData.ungroupedData?.filter((sidebarElement: SidebarCardElement) => satisfiesFilters(sidebarElement, appliedFilterDetails));
 
         this.filterApplied.emit({ filteredSidebarData: this.sidebarData!, appliedExerciseFilters: this.exerciseFilters });
 

@@ -12,7 +12,11 @@
             @if (!sidebarData?.ungroupedData || !(sidebarData?.ungroupedData | searchFilter: ['title', 'type'] : searchValue)?.length) {
                 <div
                     [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }"
-                    jhiTranslate="artemisApp.courseOverview.general.noDataFound"
+                    [jhiTranslate]="
+                        (sidebarDataBeforeFiltering?.ungroupedData?.length ?? 0) > 0 && sidebarData.ungroupedData?.length === 0
+                            ? 'artemisApp.courseOverview.general.noExercisesFoundWithAppliedFilter'
+                            : 'artemisApp.courseOverview.general.noDataFound'
+                    "
                     class="mt-2 text-center scrollable-item-content"
                 ></div>
             } @else {
