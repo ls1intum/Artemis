@@ -155,11 +155,6 @@
                     [rowClass]="settings.rowClass"
                     [scrollbarH]="settings.scrollbarH"
                 >
-                    <ngx-datatable-column prop="" [minWidth]="50" [width]="60">
-                        <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex">
-                            {{ rowIndex + 1 }}
-                        </ng-template>
-                    </ngx-datatable-column>
                     <ngx-datatable-column prop="" [sortable]="true" [minWidth]="100" [width]="180">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort(exercise.teamMode ? 'team.name' : 'student.name')">
