@@ -239,7 +239,7 @@ public class LearningPathResource {
      *
      * @param learningPathId     the id of the learning path for which the navigation should be fetched
      * @param learningObjectId   the id of the learning object to navigate to
-     * @param learningObjectType the ype of the learning object to navigate to
+     * @param learningObjectType the type of the learning object to navigate to
      * @param competencyId       the id of the competency the learning object belongs to
      * @return the ResponseEntity with status 200 (OK) and with body the navigation information
      */
@@ -259,7 +259,7 @@ public class LearningPathResource {
      * GET learning-path/:learningPathId/navigation : Gets the navigation information for the learning path.
      * The current learning object is the next uncompleted learning object in the learning path or the last completed learning object if all are completed.
      *
-     * @param learningPathId the id of the learning path for which the navigation should be fetched
+     * @param learningPathId the id of the learning path for which the navigation information should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the navigation information
      */
     @GetMapping("learning-path/{learningPathId}/navigation")

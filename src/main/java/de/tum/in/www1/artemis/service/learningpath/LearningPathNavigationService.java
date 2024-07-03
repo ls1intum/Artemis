@@ -83,11 +83,12 @@ public class LearningPathNavigationService {
                 .filter(competency -> competency.getLectureUnits().contains(learningObject) || competency.getExercises().contains(learningObject));
 
         // There will always be at least one competency that contains the learning object, otherwise the learning object would not be in the learning path
+        Comparator<Competency> comparator = Comparator.comparingInt(competency -> recommendationState.recommendedOrderOfCompetencies().indexOf(competency.getId()));
         if (firstCompetency) {
-            return potentialCompetencies.min(Comparator.comparingInt(competency -> recommendationState.recommendedOrderOfCompetencies().indexOf(competency.getId()))).get();
+            return potentialCompetencies.min(comparator).get();
         }
         else {
-            return potentialCompetencies.max(Comparator.comparingInt(competency -> recommendationState.recommendedOrderOfCompetencies().indexOf(competency.getId()))).get();
+            return potentialCompetencies.max(comparator).get();
         }
     }
 
