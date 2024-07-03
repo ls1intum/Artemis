@@ -90,10 +90,14 @@
                                 <span [jhiTranslate]="action.translationKey"></span>
                             </button>
                             <div class="dropdown-menu" ngbDropdownMenu>
-                                @for (value of action.values; track value.id) {
-                                    <button type="button" class="dropdown-item" (click)="action.executeInCurrentEditor({ selectedItem: value })">
-                                        <span>{{ value.value }}</span>
-                                    </button>
+                                @if (action.values.length) {
+                                    @for (value of action.values; track value.id) {
+                                        <button type="button" class="dropdown-item" (click)="action.executeInCurrentEditor({ selectedItem: value })">
+                                            <span>{{ value.value }}</span>
+                                        </button>
+                                    }
+                                } @else {
+                                    <button type="button" class="dropdown-item" [disabled]="true" jhiTranslate="global.generic.emptyList"></button>
                                 }
                             </div>
                         </div>
