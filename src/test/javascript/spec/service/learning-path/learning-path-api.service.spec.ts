@@ -1,7 +1,8 @@
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { LearningObjectType } from 'app/entities/competency/learning-path.model';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('LearningPathApiService', () => {
     let httpClient: HttpTestingController;
@@ -14,8 +15,7 @@ describe('LearningPathApiService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
-            providers: [LearningPathApiService],
+            providers: [LearningPathApiService, provideHttpClient(), provideHttpClientTesting()],
         });
 
         learningPathApiService = TestBed.inject(LearningPathApiService);
@@ -36,13 +36,20 @@ describe('LearningPathApiService', () => {
     });
 
     it('should get learning path navigation', async () => {
-        const learningObjectId = 2;
+        const methodCall = learningPathApiService.getLearningPathNavigation(learningPathId);
+        const response = httpClient.expectOne({ method: 'GET', url: `${baseUrl}/learning-path/${learningPathId}/navigation` });
+        response.flush({});
+        await methodCall;
+    });
 
+    it('should get relative learning path navigation', async () => {
+        const learningObjectId = 2;
+        const competencyId = 3;
         const learningObjectType = LearningObjectType.LECTURE;
-        const methodCall = learningPathApiService.getLearningPathNavigation(learningPathId, learningObjectId, learningObjectType);
+        const methodCall = learningPathApiService.getRelativeLearningPathNavigation(learningPathId, learningObjectId, learningObjectType, competencyId);
         const response = httpClient.expectOne({
             method: 'GET',
-            url: `${baseUrl}/learning-path/${learningPathId}/navigation?learningObjectId=${learningObjectId}&learningObjectType=${learningObjectType}`,
+            url: `${baseUrl}/learning-path/${learningPathId}/navigation?learningObjectId=${learningObjectId}&learningObjectType=${learningObjectType}&competencyId=${competencyId}`,
         });
         response.flush({});
         await methodCall;
