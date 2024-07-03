@@ -3,7 +3,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteFileChange, FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { IFileDeleteDelegate } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-on-file-delete-delegate';
-import { captureException } from '@sentry/angular-ivy';
+import { captureException } from '@sentry/angular';
 import { faBan, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 
 // Modal -> Delete repository file
