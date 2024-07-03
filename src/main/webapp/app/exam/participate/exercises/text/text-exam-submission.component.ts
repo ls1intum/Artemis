@@ -9,6 +9,7 @@ import { Submission } from 'app/entities/submission.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
+import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 
 @Component({
     selector: 'jhi-text-editor-exam',
@@ -30,6 +31,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     // answer represents the view state
     answer: string;
+    problemStatementHtml: string;
     private textEditorInput = new Subject<string>();
 
     // Icons
@@ -45,6 +47,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     ngOnInit(): void {
         // show submission answers in UI
+        this.problemStatementHtml = htmlForMarkdown(this.exercise?.problemStatement);
         this.updateViewFromSubmission();
     }
 
@@ -56,8 +59,8 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
         return this.exercise;
     }
 
-    updateProblemStatement(newProblemStatement: string): void {
-        this.exercise.problemStatement = newProblemStatement;
+    updateProblemStatement(newProblemStatementHtml: string): void {
+        this.problemStatementHtml = newProblemStatementHtml;
         this.changeDetectorReference.detectChanges();
     }
 

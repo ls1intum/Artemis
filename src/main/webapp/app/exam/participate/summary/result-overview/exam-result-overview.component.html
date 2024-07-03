@@ -133,6 +133,21 @@
                             }}
                         }
                     </div>
+                    @if (studentExamWithGrade?.studentResult?.gradeWithBonus?.finalGrade) {
+                        <div class="h5">
+                            <span jhiTranslate="artemisApp.exam.examSummary.gradeBeforeBonus"></span>
+                            {{ studentExamWithGrade.studentResult.overallGrade }}
+                        </div>
+                        <div class="h5">
+                            <span jhiTranslate="artemisApp.exam.examSummary.gradeAfterBonus"></span>
+                            {{ studentExamWithGrade.studentResult.gradeWithBonus?.finalGrade }}
+                        </div>
+                    } @else {
+                        <div class="h5">
+                            <span jhiTranslate="artemisApp.exam.examSummary.grade"></span>
+                            {{ studentExamWithGrade.studentResult.overallGrade }}
+                        </div>
+                    }
                 </div>
             </div>
         </jhi-collapsible-card>
