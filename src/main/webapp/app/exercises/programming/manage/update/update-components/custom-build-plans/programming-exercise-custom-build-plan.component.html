@@ -10,9 +10,11 @@
                 <jhi-programming-exercise-docker-image [dockerImage]="programmingExercise.windFile.metadata.docker.image" (dockerImageChange)="setDockerImage($event)" />
             }
             <div class="card col-12 col-md-12">
-                <div class="card-text">
+                <div class="card-text d-flex flex-column" [style.height.vh]="40">
                     <label jhiTranslate="artemisApp.programmingExercise.script" class="mb-2"></label>
-                    <jhi-ace-editor #editor (textChanged)="codeChanged($event)" />
+                    <div [style.flex-shrink]="1" [style.flex-grow]="1" [style.max-height.%]="100">
+                        <jhi-monaco-editor #editor (textChanged)="codeChanged($event)" />
+                    </div>
                 </div>
             </div>
         </div>
