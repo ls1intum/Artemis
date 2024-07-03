@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 
 import { LANGUAGES } from './language.constants';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { captureException } from '@sentry/angular-ivy';
+import { captureException } from '@sentry/angular';
 import { SessionStorageService } from 'ngx-webstorage';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 
