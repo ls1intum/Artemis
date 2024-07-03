@@ -1,4 +1,4 @@
-import { AfterContentChecked, ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, ViewContainerRef } from '@angular/core';
+import { AfterContentChecked, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild, ViewContainerRef } from '@angular/core';
 import { PostingFooterDirective } from 'app/shared/metis/posting-footer/posting-footer.directive';
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -12,10 +12,9 @@ import dayjs from 'dayjs/esm';
     templateUrl: './post-footer.component.html',
     styleUrls: ['./post-footer.component.scss'],
 })
-export class PostFooterComponent extends PostingFooterDirective<Post> implements OnInit, OnDestroy, AfterContentChecked {
+export class PostFooterComponent extends PostingFooterDirective<Post> implements OnInit, OnDestroy, AfterContentChecked, OnChanges {
     @Input() lastReadDate?: dayjs.Dayjs;
-    @Input()
-    readOnlyMode = false;
+    @Input() readOnlyMode = false;
     @Input() previewMode: boolean;
     // if the post is previewed in the create/edit modal,
     // we need to pass the ref in order to close it when navigating to the previewed post via post context
@@ -54,6 +53,13 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
         this.courseId = this.metisService.getCourse().id!;
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
         this.createdAnswerPost = this.createEmptyAnswerPost();
+        this.sortAnswerPosts();
+    }
+
+    /**
+     * on changes: updates the post tags and the context information
+     */
+    ngOnChanges(): void {
         this.sortAnswerPosts();
     }
 

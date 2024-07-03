@@ -38,7 +38,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     queryParams = {};
     showAnnouncementIcon = false;
     sortedAnswerPosts: AnswerPost[];
-    tags: string[];
     createdAnswerPost: AnswerPost;
     isAtLeastTutorInCourse: boolean;
 
