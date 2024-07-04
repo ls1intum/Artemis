@@ -95,7 +95,7 @@ public class ProgrammingExercise extends Exercise {
     private Boolean allowOfflineIde;
 
     @Column(name = "allow_online_ide", table = "programming_exercise_details")
-    private Boolean allowOnlineIde;
+    private boolean allowOnlineIde;
 
     @Column(name = "static_code_analysis_enabled", table = "programming_exercise_details")
     private Boolean staticCodeAnalysisEnabled;
