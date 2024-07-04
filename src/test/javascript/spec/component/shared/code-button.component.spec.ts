@@ -7,7 +7,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { CodeButtonComponent } from 'app/shared/components/clone-repo-button/code-button.component';
+import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
