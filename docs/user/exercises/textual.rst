@@ -1,3 +1,5 @@
+.. _textual:
+
 Textual exercise
 ================
 .. contents:: Content of this document
