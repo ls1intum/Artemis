@@ -4,7 +4,7 @@ import {
     isExamExercise,
     round,
     roundScorePercentSpecifiedByCourseSettings,
-    roundUpToNextMultiple,
+    roundToNextMultiple,
     roundValueSpecifiedByCourseSettings,
     stringifyIgnoringFields,
 } from 'app/shared/util/utils';
@@ -123,22 +123,22 @@ describe('isExamExercise', () => {
 
 describe('roundUpToNextMultiple', () => {
     it('should round up to multiple of 5 if value is closer to lower multiple', () => {
-        expect(roundUpToNextMultiple(21, 5, true)).toBe(25);
+        expect(roundToNextMultiple(21, 5, true)).toBe(25);
     });
 
     it('should round up to multiple of 5 if value is right underneath next multiple', () => {
-        expect(roundUpToNextMultiple(24.8, 5, true)).toBe(25);
+        expect(roundToNextMultiple(24.8, 5, true)).toBe(25);
     });
 
     it('should round down to multiple of 5 if value is over next multiple', () => {
-        expect(roundUpToNextMultiple(24.8, 5, false)).toBe(20);
+        expect(roundToNextMultiple(24.8, 5, false)).toBe(20);
     });
 
     it('should return value is it is a multiple', () => {
-        expect(roundUpToNextMultiple(25, 5, true)).toBe(25);
+        expect(roundToNextMultiple(25, 5, true)).toBe(25);
     });
 
     it('should round up to multiple of 1', () => {
-        expect(roundUpToNextMultiple(8.2, 1, true)).toBe(9);
+        expect(roundToNextMultiple(8.2, 1, true)).toBe(9);
     });
 });
