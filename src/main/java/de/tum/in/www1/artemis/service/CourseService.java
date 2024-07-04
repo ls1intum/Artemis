@@ -51,8 +51,6 @@ import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.competency.Competency;
-import de.tum.in.www1.artemis.domain.competency.Prerequisite;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -534,12 +532,8 @@ public class CourseService {
 
     private void deleteCompetenciesOfCourse(Course course) {
         competencyRelationRepository.deleteAllByCourseId(course.getId());
-        for (Prerequisite prerequisite : course.getPrerequisites()) {
-            prerequisiteRepository.deleteById(prerequisite.getId());
-        }
-        for (Competency competency : course.getCompetencies()) {
-            competencyRepository.deleteById(competency.getId());
-        }
+        prerequisiteRepository.deleteAll(course.getPrerequisites());
+        competencyRepository.deleteAll(course.getCompetencies());
     }
 
     /**
