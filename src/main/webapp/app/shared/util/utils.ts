@@ -163,6 +163,6 @@ export function isExamExercise(exercise: Exercise) {
  * @param value    that shall be rounded
  * @param multiple to which we round up
  */
-export function roundToMultiple(value: number, multiple: number) {
-    return Math.round(value / multiple) * multiple;
+export function roundUpToNextMultiple(value: number, multiple: number) {
+    return Math.ceil(value / multiple) * multiple;
 }

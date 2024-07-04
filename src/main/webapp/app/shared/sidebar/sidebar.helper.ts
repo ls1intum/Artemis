@@ -3,7 +3,7 @@ import { SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { DifficultyLevel, ExerciseType, getIcon } from 'app/entities/exercise.model';
 import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/participation/participation.utils';
-import { roundToMultiple } from 'app/shared/util/utils';
+import { roundUpToNextMultiple } from 'app/shared/util/utils';
 
 const POINTS_STEP = 1;
 const SCORE_THRESHOLD_TO_INCREASE_STEP = 20;
@@ -127,15 +127,15 @@ export function getAchievablePointsAndAchievedScoreFilterOptions(
         }
     });
 
-    minAchievablePoints = roundToMultiple(minAchievablePoints, POINTS_STEP);
-    maxAchievablePoints = roundToMultiple(maxAchievablePoints, POINTS_STEP);
+    minAchievablePoints = roundUpToNextMultiple(minAchievablePoints, POINTS_STEP);
+    maxAchievablePoints = roundUpToNextMultiple(maxAchievablePoints, POINTS_STEP);
 
-    minAchievedScore = roundToMultiple(minAchievedScore, SMALL_SCORE_STEP);
-    maxAchievedScore = roundToMultiple(maxAchievedScore, SMALL_SCORE_STEP);
+    minAchievedScore = roundUpToNextMultiple(minAchievedScore, SMALL_SCORE_STEP);
+    maxAchievedScore = roundUpToNextMultiple(maxAchievedScore, SMALL_SCORE_STEP);
 
     if (maxAchievedScore > SCORE_THRESHOLD_TO_INCREASE_STEP) {
-        minAchievedScore = roundToMultiple(minAchievedScore, SCORE_STEP);
-        maxAchievedScore = roundToMultiple(maxAchievedScore, SCORE_STEP);
+        minAchievedScore = roundUpToNextMultiple(minAchievedScore, SCORE_STEP);
+        maxAchievedScore = roundUpToNextMultiple(maxAchievedScore, SCORE_STEP);
     }
 
     return {
