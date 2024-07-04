@@ -15,10 +15,10 @@ import { faDownload, faExternalLink } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-clone-repo-button',
-    templateUrl: './clone-repo-button.component.html',
-    styleUrls: ['./clone-repo-button.component.scss'],
+    templateUrl: './code-button.component.html',
+    styleUrls: ['./code-button.component.scss'],
 })
-export class CloneRepoButtonComponent implements OnInit, OnChanges {
+export class CodeButtonComponent implements OnInit, OnChanges {
     readonly FeatureToggle = FeatureToggle;
     readonly ProgrammingLanguage = ProgrammingLanguage;
 

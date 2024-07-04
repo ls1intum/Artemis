@@ -15,7 +15,7 @@ import { Team } from 'app/entities/team.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
-import { CloneRepoButtonComponent } from 'app/shared/components/clone-repo-button/clone-repo-button.component';
+import { CodeButtonComponent } from 'app/shared/components/clone-repo-button/code-button.component';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { StartPracticeModeButtonComponent } from 'app/shared/components/start-practice-mode-button/start-practice-mode-button.component';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
@@ -79,7 +79,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             declarations: [
                 ExerciseDetailsStudentActionsComponent,
                 MockComponent(ExerciseActionButtonComponent),
-                MockComponent(CloneRepoButtonComponent),
+                MockComponent(CodeButtonComponent),
                 MockComponent(StartPracticeModeButtonComponent),
                 MockPipe(ArtemisTranslatePipe, (query: any, args?: any) => query + (args ? args : '')),
                 ExtensionPointDirective,

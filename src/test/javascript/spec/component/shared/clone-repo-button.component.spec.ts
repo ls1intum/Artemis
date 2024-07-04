@@ -7,7 +7,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { CloneRepoButtonComponent } from 'app/shared/components/clone-repo-button/clone-repo-button.component';
+import { CodeButtonComponent } from 'app/shared/components/clone-repo-button/code-button.component';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
@@ -29,8 +29,8 @@ import { ArtemisTestModule } from '../../test.module';
 import { RouterTestingModule } from '@angular/router/testing';
 
 describe('CloneRepoButtonComponent', () => {
-    let component: CloneRepoButtonComponent;
-    let fixture: ComponentFixture<CloneRepoButtonComponent>;
+    let component: CodeButtonComponent;
+    let fixture: ComponentFixture<CodeButtonComponent>;
     let profileService: ProfileService;
     let accountService: AccountService;
 
@@ -85,7 +85,7 @@ describe('CloneRepoButtonComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ClipboardModule, NgbPopoverModule, RouterTestingModule.withRoutes([])],
             declarations: [
-                CloneRepoButtonComponent,
+                CodeButtonComponent,
                 MockComponent(ExerciseActionButtonComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(SafeUrlPipe),
@@ -102,7 +102,7 @@ describe('CloneRepoButtonComponent', () => {
             ],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(CloneRepoButtonComponent);
+        fixture = TestBed.createComponent(CodeButtonComponent);
         component = fixture.componentInstance;
         profileService = TestBed.inject(ProfileService);
         accountService = TestBed.inject(AccountService);

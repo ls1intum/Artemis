@@ -5,7 +5,7 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { CloneRepoButtonComponent } from 'app/shared/components/clone-repo-button/clone-repo-button.component';
+import { CodeButtonComponent } from 'app/shared/components/clone-repo-button/code-button.component';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
@@ -31,7 +31,7 @@ import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-a
         ConfirmAutofocusButtonComponent,
         ConfirmAutofocusModalComponent,
         ChecklistCheckComponent,
-        CloneRepoButtonComponent,
+        CodeButtonComponent,
         ResetRepoButtonComponent,
         CopyIconButtonComponent,
         StartPracticeModeButtonComponent,
@@ -51,7 +51,7 @@ import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-a
         ButtonComponent,
         HelpIconComponent,
         ConfirmAutofocusButtonComponent,
-        CloneRepoButtonComponent,
+        CodeButtonComponent,
         ChecklistCheckComponent,
         ResetRepoButtonComponent,
         CopyIconButtonComponent,
