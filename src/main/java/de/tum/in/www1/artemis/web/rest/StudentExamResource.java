@@ -511,7 +511,7 @@ public class StudentExamResource {
     }
 
     /**
-     * GET /courses/{courseId}/exams/{examId}/student-exams/grade-summary : Return student exam result, aggregate points, assessment result
+     * GET /courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/grade-summary : Return student exam result, aggregate points, assessment result
      * for a student exam and grade calculations if the exam is assessed. Only instructors can use userId parameter to get exam results of other users,
      * if the caller is a student, userId should either be the user id of the caller or empty.
      * <p>
@@ -519,9 +519,10 @@ public class StudentExamResource {
      * <p>
      * See {@link StudentExamWithGradeDTO} for more explanation.
      *
-     * @param courseId the course to which the student exam belongs to
-     * @param examId   the exam to which the student exam belongs to
-     * @param userId   the user id of the student whose grade summary is requested
+     * @param courseId      the course to which the student exam belongs to
+     * @param examId        the exam to which the student exam belongs to
+     * @param studentExamId the id of the student exam whose grade summary is requested
+     * @param userId        the user id of the student whose grade summary is requested
      * @return the ResponseEntity with status 200 (OK) and with the StudentExamWithGradeDTO instance without the student exam as body
      */
     @GetMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/grade-summary")
