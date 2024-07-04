@@ -8,7 +8,7 @@
     </div>
     <div class="modal-body">
         <div class="form-group">
-            @if (!(categoryFilters?.isDisplayed || typeFilters?.isDisplayed || difficultyFilters?.isDisplayed || achievedScore?.isDisplayed || achievablePoints?.isDisplayed)) {
+            @if (noFiltersAvailable) {
                 <div>
                     <span jhiTranslate="artemisApp.courseOverview.exerciseFilter.noFilterAvailable"></span>
                 </div>
@@ -120,6 +120,12 @@
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" (click)="closeModal()" jhiTranslate="entity.action.cancel"></button>
-        <button type="button" class="btn btn-primary" (click)="applyFilter()" jhiTranslate="artemisApp.courseOverview.exerciseFilter.applyFilter"></button>
+        <button
+            type="button"
+            class="btn btn-primary"
+            (click)="applyFilter()"
+            jhiTranslate="artemisApp.courseOverview.exerciseFilter.applyFilter"
+            [disabled]="noFiltersAvailable"
+        ></button>
     </div>
 </form>

@@ -63,6 +63,8 @@ export class ExerciseFilterModalComponent implements OnInit {
         return this.categoryFilters?.options.filter((categoryFilter) => !categoryFilter.searched) ?? [];
     }
 
+    noFiltersAvailable: boolean = false;
+
     focus$ = new Subject<string>();
     click$ = new Subject<string>();
 
@@ -90,6 +92,14 @@ export class ExerciseFilterModalComponent implements OnInit {
         this.difficultyFilters = this.exerciseFilters?.difficultyFilter;
         this.achievablePoints = this.exerciseFilters?.achievablePoints;
         this.achievedScore = this.exerciseFilters?.achievedScore;
+
+        this.noFiltersAvailable = !(
+            this.categoryFilters?.isDisplayed ||
+            this.typeFilters?.isDisplayed ||
+            this.difficultyFilters?.isDisplayed ||
+            this.achievedScore?.isDisplayed ||
+            this.achievablePoints?.isDisplayed
+        );
     }
 
     closeModal(): void {
