@@ -49,7 +49,6 @@ $slider-thumb-color: $primary;
     background: $slider-thumb-color;
     pointer-events: auto;
     -moz-appearance: none;
-    border: none; // TODO is this needed?
 }
 
 .slider-value {
