@@ -50,7 +50,7 @@
                 (cdkCopyToClipboardCopied)="onCopyFinished($event)"
                 >{{ getHttpOrSshRepositoryUri() }} </pre
             >
-            @if (!localVCEnabled) {
+            @if (!useSsh && !localVCEnabled) {
                 <div class="d-flex align-items-center">
                     <a
                         style="flex: 1"
