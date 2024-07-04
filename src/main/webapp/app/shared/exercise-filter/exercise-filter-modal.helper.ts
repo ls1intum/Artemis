@@ -51,7 +51,7 @@ export function satisfiesScoreFilter(sidebarElement: SidebarCardElement, isFilte
         return false;
     }
 
-    return latestResult.score <= achievedScoreFilter.selectedMax && latestResult.score >= achievedScoreFilter.selectedMin;
+    return latestResult.score <= achievedScoreFilter.filter.selectedMax && latestResult.score >= achievedScoreFilter.filter.selectedMin;
 }
 
 export function satisfiesPointsFilter(sidebarElement: SidebarCardElement, isPointsFilterApplied: boolean, achievablePointsFilter?: RangeFilter): boolean {
@@ -64,7 +64,7 @@ export function satisfiesPointsFilter(sidebarElement: SidebarCardElement, isPoin
         return false;
     }
 
-    return sidebarElement.exercise.maxPoints <= achievablePointsFilter.selectedMax && sidebarElement.exercise.maxPoints >= achievablePointsFilter.selectedMin;
+    return sidebarElement.exercise.maxPoints <= achievablePointsFilter.filter.selectedMax && sidebarElement.exercise.maxPoints >= achievablePointsFilter.filter.selectedMin;
 }
 
 export function satisfiesFilters(sidebarElement: SidebarCardElement, filterDetails: FilterDetails) {

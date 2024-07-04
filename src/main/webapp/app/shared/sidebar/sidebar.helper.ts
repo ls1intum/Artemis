@@ -1,4 +1,4 @@
-import { DifficultyFilterOptions, ExerciseCategoryFilterOption, ExerciseFilterOptions, ExerciseTypeFilterOptions, RangeFilter } from 'app/types/exercise-filter';
+import { DifficultyFilterOption, ExerciseCategoryFilterOption, ExerciseFilterOptions, ExerciseTypeFilterOption, FilterOption, RangeFilter } from 'app/types/exercise-filter';
 import { SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { DifficultyLevel, ExerciseType, getIcon } from 'app/entities/exercise.model';
@@ -11,13 +11,13 @@ const SMALL_SCORE_STEP = 1;
 const SCORE_STEP = 5;
 
 // TODO allow to filter for no difficulty?
-const DEFAULT_DIFFICULTIES_FILTER: DifficultyFilterOptions = [
+const DEFAULT_DIFFICULTIES_FILTER: DifficultyFilterOption[] = [
     { name: 'artemisApp.exercise.easy', value: DifficultyLevel.EASY, checked: false },
     { name: 'artemisApp.exercise.medium', value: DifficultyLevel.MEDIUM, checked: false },
     { name: 'artemisApp.exercise.hard', value: DifficultyLevel.HARD, checked: false },
 ];
 
-const DEFAULT_EXERCISE_TYPES_FILTER: ExerciseTypeFilterOptions = [
+const DEFAULT_EXERCISE_TYPES_FILTER: ExerciseTypeFilterOption[] = [
     { name: 'artemisApp.courseStatistics.programming', value: ExerciseType.PROGRAMMING, checked: false, icon: getIcon(ExerciseType.PROGRAMMING) },
     { name: 'artemisApp.courseStatistics.quiz', value: ExerciseType.QUIZ, checked: false, icon: getIcon(ExerciseType.QUIZ) },
     { name: 'artemisApp.courseStatistics.modeling', value: ExerciseType.MODELING, checked: false, icon: getIcon(ExerciseType.MODELING) },
@@ -25,12 +25,12 @@ const DEFAULT_EXERCISE_TYPES_FILTER: ExerciseTypeFilterOptions = [
     { name: 'artemisApp.courseStatistics.file-upload', value: ExerciseType.FILE_UPLOAD, checked: false, icon: getIcon(ExerciseType.FILE_UPLOAD) },
 ];
 
-export function getExerciseCategoryFilterOptions(exerciseFilters?: ExerciseFilterOptions, sidebarData?: SidebarData): ExerciseCategoryFilterOption[] {
-    if (exerciseFilters?.categoryFilters) {
-        return exerciseFilters?.categoryFilters;
+export function getExerciseCategoryFilterOptions(exerciseFilters?: ExerciseFilterOptions, sidebarData?: SidebarData): FilterOption<ExerciseCategoryFilterOption> {
+    if (exerciseFilters?.categoryFilter) {
+        return exerciseFilters?.categoryFilter;
     }
 
-    return (
+    const categoryOptions =
         sidebarData?.ungroupedData
             ?.filter((sidebarElement: SidebarCardElement) => sidebarElement.exercise?.categories !== undefined)
             .flatMap((sidebarElement: SidebarCardElement) => sidebarElement.exercise?.categories || [])
@@ -38,11 +38,13 @@ export function getExerciseCategoryFilterOptions(exerciseFilters?: ExerciseFilte
             .reduce((unique: ExerciseCategoryFilterOption[], item: ExerciseCategoryFilterOption) => {
                 return unique.some((uniqueItem) => uniqueItem.category.equals(item.category)) ? unique : [...unique, item];
             }, [])
-            .sort((categoryFilterOptionsA, categoryFilterOptionB) => categoryFilterOptionsA.category.compare(categoryFilterOptionB.category)) ?? []
-    );
+            .sort((categoryFilterOptionsA, categoryFilterOptionB) => categoryFilterOptionsA.category.compare(categoryFilterOptionB.category)) ?? [];
+
+    const isDisplayed = !!categoryOptions.length;
+    return { isDisplayed: isDisplayed, options: categoryOptions };
 }
 
-export function getExerciseTypeFilterOptions(exerciseFilters?: ExerciseFilterOptions, sidebarData?: SidebarData) {
+export function getExerciseTypeFilterOptions(exerciseFilters?: ExerciseFilterOptions, sidebarData?: SidebarData): FilterOption<ExerciseTypeFilterOption> {
     if (exerciseFilters?.exerciseTypesFilter) {
         return exerciseFilters?.exerciseTypesFilter;
     }
@@ -51,19 +53,23 @@ export function getExerciseTypeFilterOptions(exerciseFilters?: ExerciseFilterOpt
         ?.filter((sidebarElement: SidebarCardElement) => sidebarElement.type !== undefined)
         .map((sidebarElement: SidebarCardElement) => sidebarElement.type);
 
-    return DEFAULT_EXERCISE_TYPES_FILTER?.filter((exerciseType) => existingExerciseTypes?.includes(exerciseType.value));
+    const availableTypeFilters = DEFAULT_EXERCISE_TYPES_FILTER?.filter((exerciseType) => existingExerciseTypes?.includes(exerciseType.value));
+
+    return { isDisplayed: true, options: availableTypeFilters };
 }
 
-export function getExerciseDifficultyFilterOptions(exerciseFilters?: ExerciseFilterOptions, sidebarData?: SidebarData) {
-    if (exerciseFilters?.difficultyFilters) {
-        return exerciseFilters.difficultyFilters;
+export function getExerciseDifficultyFilterOptions(exerciseFilters?: ExerciseFilterOptions, sidebarData?: SidebarData): FilterOption<DifficultyFilterOption> {
+    if (exerciseFilters?.difficultyFilter) {
+        return exerciseFilters.difficultyFilter;
     }
 
     const existingDifficulties = sidebarData?.ungroupedData
         ?.filter((sidebarElement: SidebarCardElement) => sidebarElement.difficulty !== undefined)
         .map((sidebarElement: SidebarCardElement) => sidebarElement.difficulty);
 
-    return DEFAULT_DIFFICULTIES_FILTER?.filter((difficulty) => existingDifficulties?.includes(difficulty.value));
+    const availableDifficultyFilters = DEFAULT_DIFFICULTIES_FILTER?.filter((difficulty) => existingDifficulties?.includes(difficulty.value));
+
+    return { isDisplayed: true, options: availableDifficultyFilters };
 }
 
 export function getAchievablePointsAndAchievedScoreFilterOptions(
@@ -80,11 +86,11 @@ export function getAchievablePointsAndAchievedScoreFilterOptions(
     }
 
     const isPointsFilterApplied =
-        exerciseFilters?.achievablePoints?.selectedMax === exerciseFilters?.achievablePoints?.generalMax ||
-        exerciseFilters?.achievablePoints?.selectedMin === exerciseFilters?.achievablePoints?.generalMin;
+        exerciseFilters?.achievablePoints?.filter.selectedMax === exerciseFilters?.achievablePoints?.filter.generalMax ||
+        exerciseFilters?.achievablePoints?.filter.selectedMin === exerciseFilters?.achievablePoints?.filter.generalMin;
     const isScoreFilterApplied =
-        exerciseFilters?.achievedScore?.selectedMax === exerciseFilters?.achievedScore?.generalMax ||
-        exerciseFilters?.achievedScore?.selectedMin === exerciseFilters?.achievedScore?.generalMin;
+        exerciseFilters?.achievedScore?.filter.selectedMax === exerciseFilters?.achievedScore?.filter.generalMax ||
+        exerciseFilters?.achievedScore?.filter.selectedMin === exerciseFilters?.achievedScore?.filter.generalMin;
     if (!isPointsFilterApplied && !isScoreFilterApplied) {
         // the scores might change when we work on exercises, so we re-calculate the filter options (but only if the filter is actually applied)
         return;
@@ -135,18 +141,24 @@ export function getAchievablePointsAndAchievedScoreFilterOptions(
 
     return {
         achievablePoints: {
-            generalMin: minAchievablePoints,
-            generalMax: maxAchievablePoints,
-            selectedMin: minAchievablePoints,
-            selectedMax: maxAchievablePoints,
-            step: POINTS_STEP,
+            isDisplayed: true,
+            filter: {
+                generalMin: minAchievablePoints,
+                generalMax: maxAchievablePoints,
+                selectedMin: minAchievablePoints,
+                selectedMax: maxAchievablePoints,
+                step: POINTS_STEP,
+            },
         },
         achievedScore: {
-            generalMin: minAchievedScore,
-            generalMax: maxAchievedScore,
-            selectedMin: minAchievedScore,
-            selectedMax: maxAchievedScore,
-            step: maxAchievedScore <= SCORE_THRESHOLD_TO_INCREASE_STEP ? SMALL_SCORE_STEP : SCORE_STEP,
+            isDisplayed: true,
+            filter: {
+                generalMin: minAchievedScore,
+                generalMax: maxAchievedScore,
+                selectedMin: minAchievedScore,
+                selectedMax: maxAchievedScore,
+                step: maxAchievedScore <= SCORE_THRESHOLD_TO_INCREASE_STEP ? SMALL_SCORE_STEP : SCORE_STEP,
+            },
         },
     };
 }

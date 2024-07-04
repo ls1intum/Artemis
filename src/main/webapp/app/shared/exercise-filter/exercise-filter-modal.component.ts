@@ -11,11 +11,12 @@ import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators'
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge.component';
 import { RangeSliderComponent } from 'app/shared/range-slider/range-slider.component';
 import {
-    DifficultyFilterOptions,
+    DifficultyFilterOption,
     ExerciseCategoryFilterOption,
     ExerciseFilterOptions,
     ExerciseFilterResults,
-    ExerciseTypeFilterOptions,
+    ExerciseTypeFilterOption,
+    FilterOption,
     RangeFilter,
 } from 'app/types/exercise-filter';
 import { satisfiesFilters } from 'app/shared/exercise-filter/exercise-filter-modal.helper';
@@ -55,11 +56,11 @@ export class ExerciseFilterModalComponent implements OnInit {
     @ViewChild('categoriesFilterSelection', { static: false }) instance: NgbTypeahead;
 
     get selectedCategoryOptions(): ExerciseCategoryFilterOption[] {
-        return this.categoryFilters.filter((categoryFilter) => categoryFilter.searched);
+        return this.categoryFilters?.options.filter((categoryFilter) => categoryFilter.searched) ?? [];
     }
 
     get selectableCategoryOptions(): ExerciseCategoryFilterOption[] {
-        return this.categoryFilters.filter((categoryFilter) => !categoryFilter.searched);
+        return this.categoryFilters?.options.filter((categoryFilter) => !categoryFilter.searched) ?? [];
     }
 
     focus$ = new Subject<string>();
@@ -73,9 +74,9 @@ export class ExerciseFilterModalComponent implements OnInit {
 
     sidebarData?: SidebarData;
 
-    categoryFilters: ExerciseCategoryFilterOption[] = [];
-    typeFilters?: ExerciseTypeFilterOptions;
-    difficultyFilters?: DifficultyFilterOptions;
+    categoryFilters?: FilterOption<ExerciseCategoryFilterOption>;
+    typeFilters?: FilterOption<ExerciseTypeFilterOption>;
+    difficultyFilters?: FilterOption<DifficultyFilterOption>;
     achievablePoints?: RangeFilter;
     achievedScore?: RangeFilter;
 
@@ -84,9 +85,9 @@ export class ExerciseFilterModalComponent implements OnInit {
     constructor(private activeModal: NgbActiveModal) {}
 
     ngOnInit() {
-        this.categoryFilters = this.exerciseFilters?.categoryFilters ?? [];
+        this.categoryFilters = this.exerciseFilters?.categoryFilter;
         this.typeFilters = this.exerciseFilters?.exerciseTypesFilter;
-        this.difficultyFilters = this.exerciseFilters?.difficultyFilters;
+        this.difficultyFilters = this.exerciseFilters?.difficultyFilter;
         this.achievablePoints = this.exerciseFilters?.achievablePoints;
         this.achievedScore = this.exerciseFilters?.achievedScore;
     }
@@ -144,12 +145,15 @@ export class ExerciseFilterModalComponent implements OnInit {
 
     getAppliedFilterDetails(): FilterDetails {
         return {
-            searchedTypes: this.typeFilters?.filter((type) => type.checked).map((type) => type.value),
+            searchedTypes: this.typeFilters?.options.filter((type) => type.checked).map((type) => type.value),
             selectedCategories: this.selectedCategoryOptions.map((categoryOption: ExerciseCategoryFilterOption) => categoryOption.category),
-            searchedDifficulties: this.difficultyFilters?.filter((difficulty) => difficulty.checked).map((difficulty) => difficulty.value),
-            isScoreFilterApplied: this.achievedScore?.selectedMin !== this.achievedScore?.generalMin || this.achievedScore?.selectedMax !== this.achievedScore?.generalMax,
+            searchedDifficulties: this.difficultyFilters?.options.filter((difficulty) => difficulty.checked).map((difficulty) => difficulty.value),
+            isScoreFilterApplied:
+                this.achievedScore?.filter.selectedMin !== this.achievedScore?.filter.generalMin ||
+                this.achievedScore?.filter.selectedMax !== this.achievedScore?.filter.generalMax,
             isPointsFilterApplied:
-                this.achievablePoints?.selectedMin !== this.achievablePoints?.generalMin || this.achievablePoints?.selectedMax !== this.achievablePoints?.generalMax,
+                this.achievablePoints?.filter.selectedMin !== this.achievablePoints?.filter.generalMin ||
+                this.achievablePoints?.filter.selectedMax !== this.achievablePoints?.filter.generalMax,
             achievedScore: this.achievedScore,
             achievablePoints: this.achievablePoints,
         };

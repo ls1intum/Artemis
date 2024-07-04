@@ -161,9 +161,9 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         const scoreAndPointsFilterOptions = getAchievablePointsAndAchievedScoreFilterOptions(this.exerciseFilters, this.sidebarData);
 
         this.exerciseFilters = {
-            categoryFilters: getExerciseCategoryFilterOptions(this.exerciseFilters, this.sidebarData),
+            categoryFilter: getExerciseCategoryFilterOptions(this.exerciseFilters, this.sidebarData),
             exerciseTypesFilter: getExerciseTypeFilterOptions(this.exerciseFilters, this.sidebarData),
-            difficultyFilters: getExerciseDifficultyFilterOptions(this.exerciseFilters, this.sidebarData),
+            difficultyFilter: getExerciseDifficultyFilterOptions(this.exerciseFilters, this.sidebarData),
             achievedScore: scoreAndPointsFilterOptions?.achievedScore,
             achievablePoints: scoreAndPointsFilterOptions?.achievablePoints,
         };
