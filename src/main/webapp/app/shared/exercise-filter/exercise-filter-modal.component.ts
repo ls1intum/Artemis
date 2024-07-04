@@ -92,13 +92,6 @@ export class ExerciseFilterModalComponent implements OnInit {
         this.achievedScore = this.exerciseFilters?.achievedScore;
     }
 
-    // TODO do not display difficulties selection if not enough selection options
-
-    // ngAfterViewInit(): void {
-    //     // otherwise the close button will be autofocused, leading to a blue border around the button
-    //     this.firstCheckbox.nativeElement.focus();
-    // }
-
     closeModal(): void {
         this.activeModal.close();
     }

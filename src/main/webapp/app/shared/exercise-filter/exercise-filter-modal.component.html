@@ -8,6 +8,12 @@
     </div>
     <div class="modal-body">
         <div class="form-group">
+            <pre>{{ achievedScore?.isDisplayed }}</pre>
+
+            @if (!achievedScore?.isDisplayed) {
+                <div>No filters available</div>
+            }
+
             @if (selectableCategoryOptions.length || selectedCategoryOptions.length) {
                 <label for="exercise-categories-filter-selection" class="form-control-label h6" jhiTranslate="artemisApp.exercise.categories"></label>
             }
@@ -49,7 +55,7 @@
             <div class="form-group">
                 <label for="exercise-type-filter-selection" class="form-control-label h6" jhiTranslate="artemisApp.ratingList.exerciseType"></label>
                 <div id="exercise-type-filter-selection">
-                    @for (typeFilter of typeFilters.options; track typeFilter) {
+                    @for (typeFilter of typeFilters!.options; track typeFilter) {
                         <div class="form-check form-check-inline">
                             <label>
                                 <input type="checkbox" [(ngModel)]="typeFilter.checked" [name]="typeFilter.value" />
@@ -71,7 +77,7 @@
             <div class="form-group">
                 <label for="difficulty-filter-selection" class="form-control-label h6" jhiTranslate="artemisApp.exercise.difficulty"></label>
                 <div id="difficulty-filter-selection">
-                    @for (difficultyFilter of difficultyFilters.options; track difficultyFilter) {
+                    @for (difficultyFilter of difficultyFilters!.options; track difficultyFilter) {
                         <div class="form-check form-check-inline">
                             <label>
                                 <input type="checkbox" [(ngModel)]="difficultyFilter.checked" [name]="difficultyFilter.value" />
@@ -88,11 +94,11 @@
                 <label class="form-control-label h6" for="achieved-score-range-slider" jhiTranslate="artemisApp.courseOverview.exerciseFilter.achievedScore"></label>
                 <jhi-range-slider
                     id="achieved-score-range-slider"
-                    [generalMinValue]="achievedScore.filter.generalMin"
-                    [generalMaxValue]="achievedScore.filter.generalMax"
-                    [(selectedMinValue)]="achievedScore.filter.selectedMin"
-                    [(selectedMaxValue)]="achievedScore.filter.selectedMax"
-                    [step]="achievedScore.filter.step"
+                    [generalMinValue]="achievedScore!.filter.generalMin"
+                    [generalMaxValue]="achievedScore!.filter.generalMax"
+                    [(selectedMinValue)]="achievedScore!.filter.selectedMin"
+                    [(selectedMaxValue)]="achievedScore!.filter.selectedMax"
+                    [step]="achievedScore!.filter.step"
                     [label]="'%'"
                 />
             </div>
@@ -103,11 +109,11 @@
                 <label class="form-control-label h6" for="achieved-points-range-slider" jhiTranslate="artemisApp.courseOverview.exerciseFilter.achievablePoints"></label>
                 <jhi-range-slider
                     id="achieved-points-range-slider"
-                    [generalMinValue]="achievablePoints.filter.generalMin"
-                    [generalMaxValue]="achievablePoints.filter.generalMax"
-                    [(selectedMinValue)]="achievablePoints.filter.selectedMin"
-                    [(selectedMaxValue)]="achievablePoints.filter.selectedMax"
-                    [step]="achievablePoints.filter.step"
+                    [generalMinValue]="achievablePoints!.filter.generalMin"
+                    [generalMaxValue]="achievablePoints!.filter.generalMax"
+                    [(selectedMinValue)]="achievablePoints!.filter.selectedMin"
+                    [(selectedMaxValue)]="achievablePoints!.filter.selectedMax"
+                    [step]="achievablePoints!.filter.step"
                 />
             </div>
         }
