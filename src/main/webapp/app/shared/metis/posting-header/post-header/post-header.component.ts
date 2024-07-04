@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingHeaderDirective } from 'app/shared/metis/posting-header/posting-header.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -12,7 +12,7 @@ import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
     templateUrl: './post-header.component.html',
     styleUrls: ['../../metis.component.scss'],
 })
-export class PostHeaderComponent extends PostingHeaderDirective<Post> implements OnInit, OnDestroy {
+export class PostHeaderComponent extends PostingHeaderDirective<Post> implements OnInit, OnDestroy, OnChanges {
     @Input()
     readOnlyMode = false;
     @Input() lastReadDate?: dayjs.Dayjs;
@@ -37,6 +37,14 @@ export class PostHeaderComponent extends PostingHeaderDirective<Post> implements
         const mayEditOrDeleteOtherUsersAnswer =
             (isCourseWideChannel && isAtLeastInstructorInCourse) || (getAsChannelDTO(this.metisService.getCurrentConversation())?.hasChannelModerationRights ?? false);
         this.mayEditOrDelete = !this.readOnlyMode && !this.previewMode && (this.isAuthorOfPosting || mayEditOrDeleteOtherUsersAnswer);
+        this.setUserAuthorityIconAndTooltip(this.posting.authorRole);
+    }
+
+    /**
+     * on changes: re-evaluates authority roles
+     */
+    ngOnChanges() {
+        this.setUserAuthorityIconAndTooltip(this.posting.authorRole);
     }
 
     /**

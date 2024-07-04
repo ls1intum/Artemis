@@ -30,7 +30,6 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
         this.isAuthorOfPosting = this.metisService.metisUserIsAuthorOfPosting(this.posting);
         this.postingIsOfToday = dayjs().isSame(this.posting.creationDate, 'day');
         this.todayFlag = this.getTodayFlag();
-        this.setUserAuthorityIconAndTooltip();
     }
 
     /**
@@ -47,16 +46,16 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
     /**
      * assigns suitable icon and tooltip for the author's most privileged authority type
      */
-    setUserAuthorityIconAndTooltip(): void {
+    setUserAuthorityIconAndTooltip(userAuthority: UserRole | undefined): void {
         const toolTipTranslationPath = 'artemisApp.metis.userAuthorityTooltips.';
 
-        if (!this.posting.authorRole || this.posting.authorRole === UserRole.USER) {
+        if (!userAuthority || userAuthority === UserRole.USER) {
             this.userAuthority = 'student';
             this.userAuthorityTooltip = toolTipTranslationPath + 'student';
-        } else if (this.posting.authorRole === UserRole.INSTRUCTOR) {
+        } else if (userAuthority === UserRole.INSTRUCTOR) {
             this.userAuthority = 'instructor';
             this.userAuthorityTooltip = toolTipTranslationPath + 'instructor';
-        } else if (this.posting.authorRole === UserRole.TUTOR) {
+        } else if (userAuthority === UserRole.TUTOR) {
             this.userAuthority = 'tutor';
             this.userAuthorityTooltip = toolTipTranslationPath + 'ta';
         }

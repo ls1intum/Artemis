@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingHeaderDirective } from 'app/shared/metis/posting-header/posting-header.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -11,7 +11,7 @@ import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
     templateUrl: './answer-post-header.component.html',
     styleUrls: ['../../metis.component.scss'],
 })
-export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost> implements OnInit {
+export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost> implements OnInit, OnChanges {
     @Input()
     isReadOnlyMode = false;
 
@@ -40,6 +40,11 @@ export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost
         const mayEditOrDeleteOtherUsersAnswer =
             (isCourseWideChannel && isAtLeastInstructorInCourse) || (getAsChannelDTO(this.metisService.getCurrentConversation())?.hasChannelModerationRights ?? false);
         this.mayEditOrDelete = !this.isReadOnlyMode && (this.isAuthorOfPosting || mayEditOrDeleteOtherUsersAnswer);
+        this.setUserAuthorityIconAndTooltip(this.posting.authorRole);
+    }
+
+    ngOnChanges() {
+        this.setUserAuthorityIconAndTooltip(this.posting.authorRole);
     }
 
     /**
