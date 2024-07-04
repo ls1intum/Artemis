@@ -101,6 +101,20 @@ The online editor displays only visible files, to avoid showing for example ``.g
 This also means that other config files, like SwiftLint's ``.swiftlint.yml`` file, are not shown. Those files currently
 can only be accessed via your own IDE.
 
+Manual Assessment
+-----------------
+
+There are two ways to manually assess programming exercises: with the Orion plugin, you can assess the student's code directly in your JetBrains IDE. Refer to the :ref:`Orion plugin documentation <orion>` for more information.
+Alternatively, you can use the online editor to assess the students' submissions.
+
+.. figure:: programming/code-editor-manual-assessment.png
+   :alt: Manual Assessment in the Online Editor
+   :align: center
+
+   Manual Assessment in the Online Editor
+
+
+
 Repository Access
 -----------------
 
