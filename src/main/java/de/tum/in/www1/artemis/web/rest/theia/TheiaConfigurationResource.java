@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.web.rest.theia;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_THEIA;
 
 import java.util.Map;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
@@ -35,9 +34,9 @@ public class TheiaConfigurationResource {
      */
     @GetMapping("images")
     @EnforceAtLeastInstructor
-    public Optional<Map<String, String>> getImagesForLanguage(@RequestParam("language") String language) {
+    public Map<String, String> getImagesForLanguage(@RequestParam("language") String language) {
         language = language.toLowerCase();
-        return Optional.ofNullable(this.theiaConfiguration.getImagesForLanguage(language));
+        return this.theiaConfiguration.getImagesForLanguage(language);
     }
 
 }
