@@ -8,12 +8,12 @@ import { DebugElement } from '@angular/core';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-
 import { By } from '@angular/platform-browser';
-import { MockModule, MockPipe } from 'ng-mocks';
+import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { RouterModule } from '@angular/router';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('SidebarComponent', () => {
     let component: SidebarComponent;
@@ -22,7 +22,7 @@ describe('SidebarComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(RouterModule)],
+            imports: [ArtemisTestModule, MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(RouterModule), MockDirective(TranslateDirective)],
             declarations: [
                 SidebarComponent,
                 SidebarCardMediumComponent,
@@ -41,10 +41,6 @@ describe('SidebarComponent', () => {
         component = fixture.componentInstance;
         debugElement = fixture.debugElement;
         fixture.detectChanges();
-    });
-
-    it('should create', () => {
-        expect(component).toBeTruthy();
     });
 
     it('should filter sidebar items based on search criteria', () => {
