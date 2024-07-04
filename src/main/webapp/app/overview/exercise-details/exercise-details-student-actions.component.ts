@@ -61,14 +61,14 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     theiaPortalURL: string;
 
     // Icons
-    faFolderOpen = faFolderOpen;
-    faUsers = faUsers;
-    faEye = faEye;
-    faPlayCircle = faPlayCircle;
-    faRedo = faRedo;
-    faCodeBranch = faCodeBranch;
-    faDesktop = faDesktop;
-    faPenSquare = faPenSquare;
+    readonly faFolderOpen = faFolderOpen;
+    readonly faUsers = faUsers;
+    readonly faEye = faEye;
+    readonly faPlayCircle = faPlayCircle;
+    readonly faRedo = faRedo;
+    readonly faCodeBranch = faCodeBranch;
+    readonly faDesktop = faDesktop;
+    readonly faPenSquare = faPenSquare;
 
     private feedbackSent = false;
 

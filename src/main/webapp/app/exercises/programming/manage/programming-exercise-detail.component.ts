@@ -329,17 +329,17 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 {
                     type: DetailType.Boolean,
                     title: 'artemisApp.programmingExercise.allowOfflineIde.title',
-                    data: { boolean: exercise.allowOfflineIde },
+                    data: { boolean: exercise.allowOfflineIde ?? false },
                 },
                 {
                     type: DetailType.Boolean,
                     title: 'artemisApp.programmingExercise.allowOnlineEditor.title',
-                    data: { boolean: exercise.allowOnlineEditor },
+                    data: { boolean: exercise.allowOnlineEditor ?? false },
                 },
                 {
                     type: DetailType.Boolean,
                     title: 'artemisApp.programmingExercise.allowOnlineIde.title',
-                    data: { boolean: exercise.allowOnlineIde },
+                    data: { boolean: exercise.allowOnlineIde ?? false },
                 },
             ],
         };
