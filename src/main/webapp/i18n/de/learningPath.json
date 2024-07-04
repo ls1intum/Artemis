@@ -8,7 +8,6 @@
                     "title": "Lernpfad Kompetenzen",
                     "showCompetenciesGraphButton": "Kompetenzgraph",
                     "emptyLearningObjectsLabel": "Diese Kompetenz enthält bisher noch keine Lernobjekte!",
-                    "currentCompetencyOnPathLabel": "Aktuelle",
                     "nextLearningObjectOnPathLabel": "Nächste"
                 }
             },

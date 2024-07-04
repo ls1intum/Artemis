@@ -25,14 +25,14 @@ export class LearningPathNavOverviewLearningObjectsComponent implements OnInit {
     readonly learningPathId: InputSignal<number> = input.required();
     readonly competencyId: InputSignal<number> = input.required();
     // competency id of current competency of learning path (not the one of the selected learning object)
-    readonly currentCompetencyId: InputSignal<number | undefined> = input.required();
+    readonly currentCompetencyIdOnPath: InputSignal<number | undefined> = input.required();
     readonly currentLearningObject: Signal<LearningPathNavigationObjectDTO | undefined> = this.learningPathNavigationService.currentLearningObject;
 
     readonly isLoading: WritableSignal<boolean> = signal(false);
     readonly learningObjects: WritableSignal<LearningPathNavigationObjectDTO[] | undefined> = signal(undefined);
 
     readonly nextLearningObjectOnPath: Signal<LearningPathNavigationObjectDTO | undefined> = computed(() =>
-        this.competencyId() === this.currentCompetencyId() ? this.learningObjects()?.find((learningObject) => !learningObject.completed) : undefined,
+        this.competencyId() === this.currentCompetencyIdOnPath() ? this.learningObjects()?.find((learningObject) => !learningObject.completed) : undefined,
     );
 
     readonly onLearningObjectSelected: OutputEmitterRef<void> = output();

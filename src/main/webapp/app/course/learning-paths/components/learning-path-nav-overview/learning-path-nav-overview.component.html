@@ -19,17 +19,11 @@
             @for (competency of competencies(); track competency.id) {
                 <div ngbAccordionItem [collapsed]="currentCompetencyId() !== competency.id">
                     <div ngbAccordionHeader>
-                        <button ngbAccordionButton class="px-3">
-                            <div>
-                                <span>{{ competency.title }}</span>
-                                @if (competency.id === currentCompetencyOnPath()?.id) {
-                                    <div class="ms-2 current-competency-container d-inline-block">
-                                        <small class="font-bold"
-                                            ><strong><span jhiTranslate="artemisApp.learningPath.navigation.overview.currentCompetencyOnPathLabel"></span></strong
-                                        ></small>
-                                    </div>
-                                }
-                            </div>
+                        <button ngbAccordionButton class="row px-3 m-0">
+                            <span class="col-md-auto p-0 fw-bold">{{ competency.title }}</span>
+                            @if (competency.masteryProgress === 1) {
+                                <fa-icon [icon]="faCheckCircle" class="col-md-auto text-success" />
+                            }
                         </button>
                     </div>
                     <div ngbAccordionCollapse>
@@ -39,7 +33,7 @@
                                     (onLearningObjectSelected)="selectLearningObject()"
                                     [learningPathId]="learningPathId()"
                                     [competencyId]="competency.id"
-                                    [currentCompetencyId]="currentCompetencyOnPath()?.id"
+                                    [currentCompetencyIdOnPath]="currentCompetencyOnPath()?.id"
                                 />
                             </ng-template>
                         </div>
