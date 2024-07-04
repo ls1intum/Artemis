@@ -267,6 +267,7 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
         void testDoesNotThrowExceptionForInstructors() {
+            studentExam.setId(1L);
             studentExam.setSubmitted(false);
             studentExam.getExam().setPublishResultsDate(ZonedDateTime.now().plusDays(5));
             studentExam.getExam().setTestExam(true); // test runs are an edge case where instructors want to have access before the publishing date of results

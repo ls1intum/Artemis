@@ -42,15 +42,18 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
     @EntityGraph(type = LOAD, attributePaths = { "exercises" })
     Optional<StudentExam> findWithExercisesById(Long studentExamId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "studentParticipations" })
+    Optional<StudentExam> findWithExercisesAndStudentParticipationsById(Long studentExamId);
+
     @Query("""
             SELECT se
             FROM StudentExam se
                 LEFT JOIN FETCH se.exercises e
-                LEFT JOIN FETCH e.submissionPolicy
                 LEFT JOIN FETCH se.examSessions
+                LEFT JOIN FETCH se.studentParticipations
             WHERE se.id = :studentExamId
             """)
-    Optional<StudentExam> findWithExercisesSubmissionPolicyAndSessionsById(@Param("studentExamId") long studentExamId);
+    Optional<StudentExam> findWithExercisesAndSessionsById(@Param("studentExamId") long studentExamId);
 
     @Query("""
             SELECT DISTINCT se
@@ -215,6 +218,38 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             """)
     Optional<StudentExam> findByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
 
+    Optional<StudentExam> findFirstByExamIdAndUserIdOrderByIdDesc(@Param("examId") long examId, @Param("userId") long userId);
+
+    @Query("""
+            SELECT se
+            FROM StudentExam se
+            JOIN se.studentParticipations p
+            WHERE se.exam.id = :examId
+                AND p.id = :participationId
+            """)
+    Optional<StudentExam> findByExamIdAndParticipationId(@Param("examId") long examId, @Param("participationId") long participationId);
+
+    /**
+     * Return the StudentExam for the given examId and userId, if possible. For test exams, the latest Student Exam is returned.
+     *
+     * @param examId   id of the exam
+     * @param userId   id of the user
+     * @param testExam boolean indicating if the exam is a test exam
+     * @return the student exam
+     * @throws EntityNotFoundException if no student exams could be found
+     */
+    default StudentExam findOneByExamIdAndUserIdElseThrow(long examId, long userId, boolean testExam) {
+        Optional<StudentExam> studentExam;
+        if (testExam) {
+            studentExam = this.findFirstByExamIdAndUserIdOrderByIdDesc(examId, userId);
+        }
+        else {
+            studentExam = this.findByExamIdAndUserId(examId, userId);
+        }
+
+        return studentExam.orElseThrow(() -> new EntityNotFoundException("StudentExam for exam " + examId + " and user " + userId + " does not exist"));
+    }
+
     /**
      * Checks if any StudentExam exists for the given user (student) id in the given course.
      *
@@ -280,7 +315,17 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
                 AND se.exam.testExam = TRUE
                 AND se.testRun = FALSE
             """)
-    List<StudentExam> findStudentExamForTestExamsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
+    List<StudentExam> findStudentExamsForTestExamsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
+
+    @Query("""
+            SELECT DISTINCT se
+            FROM StudentExam se
+            WHERE se.user.id = :userId
+                AND se.exam.id = :examId
+                AND se.exam.testExam = TRUE
+                AND se.testRun = FALSE
+            """)
+    List<StudentExam> findStudentExamsForTestExamsByUserIdAndExamId(@Param("userId") Long userId, @Param("examId") Long examId);
 
     @Query("""
             SELECT DISTINCT se
@@ -340,15 +385,20 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
         return findWithExercisesById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam", studentExamId));
     }
 
+    @NotNull
+    default StudentExam findByIdWithExercisesAndStudentParticipationsElseThrow(Long studentExamId) {
+        return findWithExercisesAndStudentParticipationsById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam", studentExamId));
+    }
+
     /**
-     * Get one student exam by id with exercises, programming exercise submission policy and sessions
+     * Get one student exam by id with exercises and sessions
      *
      * @param studentExamId the id of the student exam
      * @return the student exam with exercises
      */
     @NotNull
-    default StudentExam findByIdWithExercisesSubmissionPolicyAndSessionsElseThrow(Long studentExamId) {
-        return findWithExercisesSubmissionPolicyAndSessionsById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam", studentExamId));
+    default StudentExam findByIdWithExercisesAndSessionsElseThrow(Long studentExamId) {
+        return findWithExercisesAndSessionsById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam", studentExamId));
     }
 
     /**

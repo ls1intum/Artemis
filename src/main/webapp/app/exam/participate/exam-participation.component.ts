@@ -199,6 +199,15 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     },
                     error: () => (this.loadingExam = false),
                 });
+            } else if (this.testExam && this.studentExamId) {
+                this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId, this.examId, this.studentExamId).subscribe({
+                    next: (studentExam) => {
+                        this.handleStudentExam(studentExam);
+                    },
+                    error: () => {
+                        this.handleNoStudentExam();
+                    },
+                });
             } else {
                 this.examParticipationService.getOwnStudentExam(this.courseId, this.examId).subscribe({
                     next: (studentExam) => {

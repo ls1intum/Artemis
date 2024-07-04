@@ -17,6 +17,7 @@ import { faBullhorn, faHashtag } from '@fortawesome/free-solid-svg-icons';
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
+import { StudentExam } from 'app/entities/student-exam.model';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -242,6 +243,12 @@ export class CourseOverviewService {
         return exams.map((exam) => this.mapExamToSidebarCardElement(exam));
     }
 
+    mapTestExamAttemptsToSidebarCardElements(attempts?: StudentExam[]) {
+        if (attempts) {
+            return attempts.map((attempts) => this.mapAttemptToSidebarCardElement(attempts));
+        }
+    }
+
     mapConversationsToSidebarCardElements(conversations: ConversationDTO[]) {
         return conversations.map((conversation) => this.mapConversationToSidebarCardElement(conversation));
     }
@@ -302,6 +309,21 @@ export class CourseOverviewService {
             workingTime: exam.workingTime ?? 0,
             attainablePoints: exam.examMaxPoints ?? 0,
             size: 'L',
+            isAttempt: false,
+        };
+        return examCardItem;
+    }
+
+    mapAttemptToSidebarCardElement(attempt: StudentExam): SidebarCardElement {
+        const examCardItem: SidebarCardElement = {
+            title: attempt.exam!.title ?? '',
+            id: attempt.exam!.id ?? '',
+            icon: faGraduationCap,
+            subtitleLeft: 'Attempt',
+            submissionDate: attempt.submissionDate,
+            usedWorkingTime: attempt.workingTime ?? 0,
+            size: 'L',
+            isAttempt: true,
         };
         return examCardItem;
     }

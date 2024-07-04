@@ -6,7 +6,7 @@ import { ConversationDTO } from 'app/entities/metis/conversation/conversation.mo
 
 export type SidebarCardSize = 'S' | 'M' | 'L';
 export type TimeGroupCategory = 'past' | 'current' | 'dueSoon' | 'future' | 'noDate';
-export type ExamGroupCategory = 'real' | 'test';
+export type ExamGroupCategory = 'real' | 'test' | 'attempt';
 export type TutorialGroupCategory = 'all' | 'registered' | 'further';
 export type SidebarTypes = 'exercise' | 'exam' | 'inExam' | 'conversation' | 'default';
 export type AccordionGroups = Record<TimeGroupCategory | TutorialGroupCategory | ExamGroupCategory | ChannelGroupCategory | string, { entityData: SidebarCardElement[] }>;
@@ -120,6 +120,22 @@ export interface SidebarCardElement {
      * Set for Exam, indetifies the current status of an exam exercise for exam sidebar
      */
     rightIcon?: IconProp;
+    /*
+     *
+     */
+    isAttempt?: boolean;
+    /*
+     *
+     */
+    attempts?: number;
+    /*
+     *
+     */
+    submissionDate?: dayjs.Dayjs;
+    /*
+     *
+     */
+    usedWorkingTime?: number;
     /**
      * Set for Conversation. Will be removed after refactoring
      */

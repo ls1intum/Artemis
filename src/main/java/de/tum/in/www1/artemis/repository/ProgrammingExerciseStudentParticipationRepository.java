@@ -75,19 +75,37 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
 
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLogin(long exerciseId, String username);
 
+    Optional<ProgrammingExerciseStudentParticipation> findFirstByExerciseIdAndStudentLoginOrderByIdDesc(long exerciseId, String username);
+
     default ProgrammingExerciseStudentParticipation findByExerciseIdAndStudentLoginOrThrow(long exerciseId, String username) {
         return findByExerciseIdAndStudentLogin(exerciseId, username).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Student Participation", exerciseId));
     }
 
+    default ProgrammingExerciseStudentParticipation findFirstByExerciseIdAndStudentLoginOrThrow(long exerciseId, String username) {
+        return findFirstByExerciseIdAndStudentLoginOrderByIdDesc(exerciseId, username)
+                .orElseThrow(() -> new EntityNotFoundException("Programming Exercise Student Participation", exerciseId));
+    }
+
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
     Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndStudentLogin(long exerciseId, String username);
+
+    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
+    Optional<ProgrammingExerciseStudentParticipation> findFirstWithSubmissionsByExerciseIdAndStudentLoginOrderByIdDesc(long exerciseId, String username);
 
     default ProgrammingExerciseStudentParticipation findWithSubmissionsByExerciseIdAndStudentLoginOrThrow(long exerciseId, String username) {
         return findWithSubmissionsByExerciseIdAndStudentLogin(exerciseId, username)
                 .orElseThrow(() -> new EntityNotFoundException("Programming Exercise Student Participation", exerciseId));
     }
 
+    default ProgrammingExerciseStudentParticipation findFirstWithSubmissionsByExerciseIdAndStudentLoginOrThrow(long exerciseId, String username) {
+        return findFirstWithSubmissionsByExerciseIdAndStudentLoginOrderByIdDesc(exerciseId, username)
+                .orElseThrow(() -> new EntityNotFoundException("Programming Exercise Student Participation", exerciseId));
+    }
+
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLoginAndTestRun(long exerciseId, String username, boolean testRun);
+
+    Optional<ProgrammingExerciseStudentParticipation> findFirstByExerciseIdAndStudentLoginAndTestRunOrderByIdDesc(@Param("exerciseId") long exerciseId,
+            @Param("username") String username, @Param("testRun") boolean testRun);
 
     @EntityGraph(type = LOAD, attributePaths = { "team.students" })
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndTeamId(long exerciseId, long teamId);
@@ -152,6 +170,10 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
                 AND participation.testRun = :testRun
             """)
     Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") long exerciseId,
+            @Param("username") String username, @Param("testRun") boolean testRun);
+
+    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
+    Optional<ProgrammingExerciseStudentParticipation> findFirstWithSubmissionsByExerciseIdAndStudentLoginAndTestRunOrderByIdDesc(@Param("exerciseId") long exerciseId,
             @Param("username") String username, @Param("testRun") boolean testRun);
 
     @Query("""

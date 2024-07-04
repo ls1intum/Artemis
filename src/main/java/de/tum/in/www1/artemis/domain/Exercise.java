@@ -378,6 +378,11 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         return this.exerciseGroup != null;
     }
 
+    @JsonIgnore
+    public boolean isTestExamExercise() {
+        return isExamExercise() && this.getExamViaExerciseGroupOrCourseMember().isTestExam();
+    }
+
     /**
      * Utility method to get the course. Get the course over the exerciseGroup, if one was set, otherwise return
      * the course class member

@@ -323,9 +323,8 @@ public class ResultService {
     private void filterSensitiveFeedbacksInExamExercise(Participation participation, Collection<Result> results, Exercise exercise) {
         Exam exam = exercise.getExerciseGroup().getExam();
         boolean shouldResultsBePublished = exam.resultsPublished();
-        if (!shouldResultsBePublished && exam.isTestExam() && participation instanceof StudentParticipation studentParticipation) {
-            var participant = studentParticipation.getParticipant();
-            var studentExamOptional = studentExamRepository.findByExamIdAndUserId(exam.getId(), participant.getId());
+        if (!shouldResultsBePublished && exam.isTestExam() && participation instanceof StudentParticipation) {
+            var studentExamOptional = studentExamRepository.findByExamIdAndParticipationId(exam.getId(), participation.getId());
             if (studentExamOptional.isPresent()) {
                 shouldResultsBePublished = studentExamOptional.get().areResultsPublishedYet();
             }

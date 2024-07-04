@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, interval } from 'rxjs';
 import { Exam } from 'app/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
@@ -16,11 +16,13 @@ import { cloneDeep } from 'lodash-es';
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     real: { entityData: [] },
     test: { entityData: [] },
+    attempt: { entityData: [] },
 };
 
 const DEFAULT_COLLAPSE_STATE: CollapseState = {
     real: false,
     test: false,
+    attempt: false,
 };
 
 @Component({
@@ -39,6 +41,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     public expandAttemptsMap = new Map<number, boolean>();
     public realExamsOfCourse: Exam[] = [];
     public testExamsOfCourse: Exam[] = [];
+    studentExamState: Subscription;
 
     // Icons
     faAngleUp = faAngleUp;
@@ -47,12 +50,14 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
 
     sortedRealExams?: Exam[];
     sortedTestExams?: Exam[];
+    testExamMap: Map<number, StudentExam[]> = new Map();
     examSelected = true;
     accordionExamGroups: AccordionGroups = DEFAULT_UNIT_GROUPS;
     sidebarData: SidebarData;
     sidebarExams: SidebarCardElement[] = [];
     isCollapsed = false;
     isExamStarted = false;
+    withinWorkingTime: boolean;
 
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
 
@@ -91,13 +96,14 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             .loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(this.courseId)
             .subscribe((response: StudentExam[]) => {
                 this.studentExams = response!;
+                this.prepareSidebarData();
             });
 
         if (this.course?.exams) {
             // The Map is ued to store the boolean value, if the attempt-List for one Exam has been expanded or collapsed
             this.expandAttemptsMap = new Map(this.course.exams.filter((exam) => exam.testExam && this.isVisible(exam)).map((exam) => [exam.id!, false]));
             this.updateExams();
-            this.prepareSidebarData();
+            //this.prepareSidebarData();
         }
 
         // If no exam is selected navigate to the last selected or upcoming Exam
@@ -141,6 +147,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         }
         this.studentExamTestExamUpdateSubscription?.unsubscribe();
         this.examStartedSubscription?.unsubscribe();
+        this.unsubscribeFromExamStateSubscription();
     }
 
     /**
@@ -192,7 +199,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         return 0;
     }
 
-    groupExamsByRealOrTest(realExams: Exam[], testExams: Exam[]): AccordionGroups {
+    groupExamsByRealOrTest(realExams: Exam[], testExams: Exam[], testExamAttempts?: StudentExam[]): AccordionGroups {
         const groupedExamGroups = cloneDeep(DEFAULT_UNIT_GROUPS) as AccordionGroups;
 
         for (const realExam of realExams) {
@@ -202,6 +209,12 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         for (const testExam of testExams) {
             const examCardItem = this.courseOverviewService.mapExamToSidebarCardElement(testExam);
             groupedExamGroups['test'].entityData.push(examCardItem);
+        }
+        if (testExamAttempts) {
+            for (const attempt of testExamAttempts) {
+                const examCardItem = this.courseOverviewService.mapAttemptToSidebarCardElement(attempt);
+                groupedExamGroups['attempt'].entityData.push(examCardItem);
+            }
         }
 
         return groupedExamGroups;
@@ -233,13 +246,21 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
 
         this.sortedRealExams = this.realExamsOfCourse.sort((a, b) => this.sortExamsByStartDate(a, b));
         this.sortedTestExams = this.testExamsOfCourse.sort((a, b) => this.sortExamsByStartDate(a, b));
+        for (const testExam of this.sortedTestExams) {
+            const orderedTestExamAttempts = this.getStudentExamForExamIdOrderedByIdReverse(testExam.id!);
+            orderedTestExamAttempts.forEach((attempt, index) => {
+                this.calculateIndividualWorkingTimeForTestExams(attempt, index === 0);
+            });
+            this.testExamMap.set(testExam.id!, orderedTestExamAttempts);
+        }
 
         const sidebarRealExams = this.courseOverviewService.mapExamsToSidebarCardElements(this.sortedRealExams);
         const sidebarTestExams = this.courseOverviewService.mapExamsToSidebarCardElements(this.sortedTestExams);
+        const sidebarTestExamAttempts = this.courseOverviewService.mapTestExamAttemptsToSidebarCardElements(this.getAllStudentExams());
 
-        this.sidebarExams = [...sidebarRealExams, ...sidebarTestExams];
+        this.sidebarExams = [...sidebarRealExams, ...sidebarTestExams, ...(sidebarTestExamAttempts ?? [])];
 
-        this.accordionExamGroups = this.groupExamsByRealOrTest(this.sortedRealExams, this.sortedTestExams);
+        this.accordionExamGroups = this.groupExamsByRealOrTest(this.sortedRealExams, this.sortedTestExams, this.studentExams);
         this.updateSidebarData();
     }
 
@@ -248,5 +269,86 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             return;
         }
         this.navigateToExam();
+    }
+
+    // Method to iterate through the map and get all StudentExams
+    getAllStudentExams(): StudentExam[] {
+        const allStudentExams: StudentExam[] = [];
+        this.testExamMap.forEach((studentExams) => {
+            studentExams.forEach((studentExam) => {
+                allStudentExams.push(studentExam);
+            });
+        });
+        return allStudentExams;
+    }
+
+    /**
+     * Calculate the individual working time for every submitted StudentExam. As the StudentExam needs to be submitted, the
+     * working time cannot change.
+     * For the latest StudentExam, which is still within the allowed working time, a subscription is used to periodically check this.
+     */
+    calculateIndividualWorkingTimeForTestExams(studentExam: StudentExam, latestExam: boolean) {
+        if (studentExam.started && studentExam.submitted && studentExam.startedDate && studentExam.submissionDate) {
+            this.withinWorkingTime = false;
+        } else if (latestExam) {
+            // A subscription is used here to limit the number of calls for the countdown of the remaining workingTime.
+            this.studentExamState = interval(1000).subscribe(() => {
+                this.isWithinWorkingTime(studentExam, studentExam.exam!);
+                // If the StudentExam is no longer within the working time, the subscription can be unsubscribed, as the state will not change anymore
+                if (!this.withinWorkingTime) {
+                    this.unsubscribeFromExamStateSubscription();
+                }
+            });
+        } else {
+            this.withinWorkingTime = false;
+        }
+    }
+
+    /**
+     * Used to unsubscribe from the studentExamState Subscriptions
+     */
+    unsubscribeFromExamStateSubscription() {
+        this.studentExamState?.unsubscribe();
+    }
+
+    /**
+     * Determines if the given StudentExam is (still) within the working time
+     */
+    isWithinWorkingTime(studentExam: StudentExam, exam: Exam) {
+        if (studentExam.started && !studentExam.submitted && studentExam.startedDate && exam.workingTime) {
+            const endDate = dayjs(studentExam.startedDate).add(exam.workingTime, 'seconds');
+            this.withinWorkingTime = dayjs(endDate).isAfter(dayjs());
+        }
+    }
+
+    /**
+     * Dynamically calculates the remaining working time of an attempt, if the attempt is started, within the working time and not yet submitted
+     */
+    workingTimeLeftInSeconds(studentExam: StudentExam, exam: Exam): number {
+        if (studentExam.started && !studentExam.submitted && studentExam.startedDate && exam.workingTime) {
+            return studentExam.startedDate.add(exam.workingTime, 'seconds').diff(dayjs(), 'seconds');
+        }
+        return 0;
+    }
+
+    /**
+     * do nothing if student didn't submit on time
+     * navigate to /courses/:courseId/exams/:examId/test-exam/:studentExamId if the attempt was submitted
+     * navigate to /courses/:courseId/exams/:examId/test-exam/start if the attempt can be continued
+     * Used to open the corresponding studentExam
+     */
+    openStudentExam(studentExam: StudentExam, exam: Exam): void {
+        // If student didn't submit on time, there's no exam overview
+        if (!this.withinWorkingTime && !studentExam.submitted) {
+            return;
+        }
+        // If exam is submitted navigate to the exam overview
+        if (studentExam.submitted) {
+            this.router.navigate(['courses', this.courseId, 'exams', exam.id, 'test-exam', studentExam.id]); ///
+        }
+        // If exam is not submitted and within working time, resume attempt
+        if (this.withinWorkingTime) {
+            this.router.navigate(['courses', this.courseId, 'exams', exam.id, 'test-exam', 'start']);
+        }
     }
 }
