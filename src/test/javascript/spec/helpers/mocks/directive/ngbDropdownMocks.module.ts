@@ -28,12 +28,18 @@ class NgbDropdownToggleMockDirective {}
 class NgbDropdownMockDirective {
     @Input() autoClose: boolean | 'outside' | 'inside';
     @Input() dropdownClass: string;
-    @Input() open = false;
+    @Input() openState = false;
     @Input() placement: any;
     @Input() popperOptions: (options: Partial<any>) => Partial<any>;
     @Input() container: null | 'body';
     @Input() display: 'dynamic' | 'static';
     @Output() openChange = new EventEmitter<boolean>();
+    open() {
+        this.openState = true;
+    }
+    close() {
+        this.openState = false;
+    }
 }
 
 @Directive({
