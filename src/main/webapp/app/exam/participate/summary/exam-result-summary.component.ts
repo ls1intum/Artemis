@@ -160,7 +160,7 @@ export class ExamResultSummaryComponent implements OnInit {
 
         if (isExamResultPublished(this.isTestRun, this.studentExam.exam, this.serverDateService)) {
             this.examParticipationService
-                .loadStudentExamGradeInfoForSummary(this.courseId, this.studentExam.exam.id, this.studentExam.user.id, this.isTestRun)
+                .loadStudentExamGradeInfoForSummary(this.courseId, this.studentExam.exam.id, this.studentExam.user.id, this.studentExam.id)
                 .subscribe((studentExamWithGrade: StudentExamWithGradeDTO) => {
                     studentExamWithGrade.studentExam = this.studentExam;
                     this.studentExamGradeInfoDTO = studentExamWithGrade;
