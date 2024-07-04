@@ -46,6 +46,7 @@ import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.CompetencyTaxonomy;
 import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
+import de.tum.in.www1.artemis.domain.competency.Prerequisite;
 import de.tum.in.www1.artemis.domain.competency.RelationType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
@@ -509,12 +510,14 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     void deleteCourseShouldAlsoDeleteCompetencyAndRelations() throws Exception {
         Competency competency2 = createCompetency(course);
         CompetencyRelation relation = createRelation(competency, competency2, RelationType.EXTENDS);
+        Prerequisite prerequisite = prerequisiteUtilService.createPrerequisite(course);
 
         request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
 
         assertThat(competencyRepository.existsById(competency.getId())).isFalse();
         assertThat(competencyRepository.existsById(competency2.getId())).isFalse();
         assertThat(competencyRelationRepository.existsById(relation.getId())).isFalse();
+        assertThat(prerequisiteRepository.existsById(prerequisite.getId())).isFalse();
     }
 
     @Nested
