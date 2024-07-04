@@ -38,7 +38,6 @@ describe('SidebarComponent', () => {
     beforeEach(() => {
         fixture = TestBed.createComponent(SidebarComponent);
         component = fixture.componentInstance;
-        debugElement = fixture.debugElement;
         fixture.detectChanges();
     });
 
