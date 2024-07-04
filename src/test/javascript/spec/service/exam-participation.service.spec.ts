@@ -91,7 +91,7 @@ describe('Exam Participation Service', () => {
         };
         const returnedFromService = Object.assign({}, studentExamWithGrade);
         service
-            .loadStudentExamGradeInfoForSummary(1, 1)
+            .loadStudentExamGradeInfoForSummary(1, 1, 1)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: studentExamWithGrade }));
         const req = httpMock.expectOne({ method: 'GET' });
