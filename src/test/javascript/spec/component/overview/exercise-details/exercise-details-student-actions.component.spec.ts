@@ -212,9 +212,9 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         const startExerciseButton = fixture.debugElement.query(By.css('.start-exercise'));
         expect(startExerciseButton).toBeNull();
 
-        // Check that button "Clone repository" is not shown (repo_url is null)
-        const cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-code-button'));
-        expect(cloneRepositoryButton).toBeNull();
+        // Check that button "Code" is not shown (repo_url is null)
+        const codeButton = fixture.debugElement.query(By.css('jhi-code-button'));
+        expect(codeButton).toBeNull();
 
         fixture.destroy();
         flush();
@@ -238,8 +238,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         let startPracticeButton = fixture.debugElement.query(By.css('jhi-start-practice-mode-button'));
         expect(startPracticeButton).not.toBeNull();
 
-        let cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-code-button'));
-        expect(cloneRepositoryButton).toBeNull();
+        let codeButton = fixture.debugElement.query(By.css('jhi-code-button'));
+        expect(codeButton).toBeNull();
 
         comp.exercise.studentParticipations = [initPart];
         comp.practiceParticipation = initPart;
@@ -250,14 +250,14 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         startPracticeButton = fixture.debugElement.query(By.css('jhi-start-practice-mode-button'));
         expect(startPracticeButton).toBeNull();
 
-        cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-code-button'));
-        expect(cloneRepositoryButton).toBeNull();
+        codeButton = fixture.debugElement.query(By.css('jhi-code-button'));
+        expect(codeButton).toBeNull();
 
         fixture.destroy();
         flush();
     }));
 
-    it('should correctly not show the clone repository button for exam test runs', fakeAsync(() => {
+    it('should correctly not show the Code button for exam test runs', fakeAsync(() => {
         testRunParticipation.repositoryUri = undefined;
         testRunExercise.studentParticipations = [testRunParticipation];
 
@@ -271,14 +271,14 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         const startPracticeButton = fixture.debugElement.query(By.css('jhi-start-practice-mode-button'));
         expect(startPracticeButton).toBeNull();
 
-        const cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-code-button'));
-        expect(cloneRepositoryButton).toBeNull();
+        const codeButton = fixture.debugElement.query(By.css('jhi-code-button'));
+        expect(codeButton).toBeNull();
 
         fixture.destroy();
         flush();
     }));
 
-    it('should correctly show the clone repository button for exam test runs', fakeAsync(() => {
+    it('should correctly show the Code button for exam test runs', fakeAsync(() => {
         testRunParticipation.repositoryUri = 'https://clone-me.git';
         testRunExercise.studentParticipations = [testRunParticipation];
 
@@ -292,8 +292,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         const startPracticeButton = fixture.debugElement.query(By.css('jhi-start-practice-mode-button'));
         expect(startPracticeButton).toBeNull();
 
-        const cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-code-button'));
-        expect(cloneRepositoryButton).not.toBeNull();
+        const codeButton = fixture.debugElement.query(By.css('jhi-code-button'));
+        expect(codeButton).not.toBeNull();
 
         fixture.destroy();
         flush();
@@ -327,8 +327,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(startExerciseButton).toBeNull();
         let codeEditorButton = debugElement.query(By.css('jhi-open-code-editor-button'));
         expect(codeEditorButton).toBeNull();
-        let cloneRepoButton = debugElement.query(By.css('jhi-code-button'));
-        expect(cloneRepoButton).toBeNull();
+        let codeButton = debugElement.query(By.css('jhi-code-button'));
+        expect(codeButton).toBeNull();
 
         exercise.allowOfflineIde = true;
 
@@ -339,11 +339,11 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(startExerciseButton).toBeNull();
         codeEditorButton = debugElement.query(By.css('jhi-open-code-editor-button'));
         expect(codeEditorButton).toBeNull();
-        cloneRepoButton = debugElement.query(By.css('jhi-code-button'));
-        expect(cloneRepoButton).toBeNull();
+        codeButton = debugElement.query(By.css('jhi-code-button'));
+        expect(codeButton).toBeNull();
     }));
 
-    it('should show correct buttons in exam mode, including clone repo button', fakeAsync(() => {
+    it('should show correct buttons in exam mode, including code button', fakeAsync(() => {
         const exercise = { type: ExerciseType.PROGRAMMING, allowOfflineIde: false, allowOnlineEditor: true } as ProgrammingExercise;
         exercise.studentParticipations = [
             { initializationState: InitializationState.INITIALIZED, repositoryUri: 'https://clone-me.git' } as ProgrammingExerciseStudentParticipation,
@@ -359,8 +359,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(startExerciseButton).toBeNull();
         let codeEditorButton = debugElement.query(By.css('jhi-open-code-editor-button'));
         expect(codeEditorButton).toBeNull();
-        let cloneRepoButton = debugElement.query(By.css('jhi-code-button'));
-        expect(cloneRepoButton).toBeNull();
+        let codeButton = debugElement.query(By.css('jhi-code-button'));
+        expect(codeButton).toBeNull();
 
         exercise.allowOfflineIde = true;
 
@@ -371,8 +371,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(startExerciseButton).toBeNull();
         codeEditorButton = debugElement.query(By.css('jhi-open-code-editor-button'));
         expect(codeEditorButton).toBeNull();
-        cloneRepoButton = debugElement.query(By.css('jhi-code-button'));
-        expect(cloneRepoButton).not.toBeNull();
+        codeButton = debugElement.query(By.css('jhi-code-button'));
+        expect(codeButton).not.toBeNull();
     }));
 
     // Quiz not supported yet

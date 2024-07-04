@@ -34,9 +34,9 @@ export class ProgrammingExerciseOverviewPage {
     }
 
     async getRepoUrl() {
-        const cloneRepoLocator = this.getCodeButton();
-        await Commands.reloadUntilFound(this.page, cloneRepoLocator, 4000, 20000);
-        await cloneRepoLocator.click();
+        const codeButtonLocator = this.getCodeButton();
+        await Commands.reloadUntilFound(this.page, codeButtonLocator, 4000, 20000);
+        await codeButtonLocator.click();
         await this.page.locator('.popover-body').waitFor({ state: 'visible' });
         return await this.page.locator('.clone-url').innerText();
     }
