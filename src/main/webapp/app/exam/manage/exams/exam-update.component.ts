@@ -450,7 +450,9 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
             dayjs(this.exam.exampleSolutionPublicationDate).isBefore(this.exam.endDate || null)
         );
     }
-
+    /**
+     * Default exam start text, which can be edited by instructors in the text editor
+     */
     get examDefaultStartText(): string {
         const warningForInstructionsText =
             '<!-- PLEASE MAKE SURE TO READ ALL INSTRUCTIONS, CHECK EXAM INFORMATION CAREFULLY, AND ADAPT THEM TO YOUR SPECIFIC USE CASES AS NEEDED -->\n\n';
@@ -476,6 +478,10 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
         );
     }
 
+    /**
+     * Updates max point information in text editor if the max point of the exam is changed in exam edit view
+     * Only works if the instructor decides to use the maxPoint sentence in the default start text
+     */
     updateMaxPointsTextInformation() {
         if (this.exam.startText && this.exam.examMaxPoints) {
             const pattern = new RegExp(`The exam consists of <span class='fw-bold text-primary'>\\d+ points</span>`, 'g');
@@ -484,6 +490,10 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Updates working time information in text editor if the working time of the exam is changed in exam edit view
+     * Only works if the instructor decides to use the workingTime sentence in the default start text
+     */
     updateWorkingTimeTextInformation() {
         if (this.exam.startText && this.exam.workingTime) {
             const pattern = new RegExp(`and is <span class='fw-bold text-primary'>\\d+ minutes</span> long`, 'g');
@@ -492,6 +502,10 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Updates grace period information in text editor if the grace period of the exam is changed in exam edit view
+     * Only works if the instructor decides to use the grace period sentence in the default start text
+     */
     updateGracePeriodTextInformation() {
         if (this.exam.startText && this.exam.gracePeriod) {
             const pattern = new RegExp(`The submission period will close <span>\\d+ seconds</span> following the official end of the exam`, 'g');
