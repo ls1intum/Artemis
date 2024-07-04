@@ -77,8 +77,8 @@ export class ColorSelectorComponent implements OnInit {
          * it as a click outside the colorpicker
          */
         event.stopPropagation();
-
-        const parentElement = (event.target as Element).closest('.ng-trigger') as HTMLElement;
+        const clickedElement = event.target as HTMLElement;
+        const parentElement = clickedElement.closest('.category-chip') as HTMLElement;
 
         this.colorSelectorPosition.left = parentElement ? parentElement.offsetLeft : 0;
         this.colorSelectorPosition.top = marginTop ?? 65;

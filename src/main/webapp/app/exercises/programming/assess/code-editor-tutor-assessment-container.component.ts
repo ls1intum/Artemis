@@ -341,7 +341,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private highlightLines(firstLine: number, lastLine: number) {
-        this.codeEditorContainer.highlightLines(firstLine, lastLine);
+        // We add 1 to make the lines 1-based.
+        this.codeEditorContainer.highlightLines(firstLine + 1, lastLine + 1);
     }
 
     /**
@@ -541,7 +542,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     /**
      * Remove a feedback suggestion because it was accepted or discarded.
-     * The actual feedback creation when accepting happens in code-editor-ace-component/unreferenced-feedback because they have full control over the suggestion cards.
+     * The actual feedback creation when accepting happens in code-editor-monaco-component/unreferenced-feedback because they have full control over the suggestion cards.
      * @param feedback Feedback suggestion that is removed
      */
     removeSuggestion(feedback: Feedback) {
