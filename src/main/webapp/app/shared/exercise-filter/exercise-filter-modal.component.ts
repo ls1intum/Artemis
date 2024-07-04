@@ -35,6 +35,7 @@ export type FilterDetails = {
 @Component({
     selector: 'jhi-exercise-filter-modal',
     templateUrl: './exercise-filter-modal.component.html',
+    styleUrls: ['./exercise-filter-modal.component.scss'],
     standalone: true,
     imports: [
         FormsModule,
@@ -101,7 +102,6 @@ export class ExerciseFilterModalComponent implements OnInit {
         this.activeModal.close();
     }
 
-    // TODO add scroll option if more than 10 items are displayed
     search: OperatorFunction<string, readonly ExerciseCategoryFilterOption[]> = (text$: Observable<string>) => {
         const debouncedText$ = text$.pipe(debounceTime(200), distinctUntilChanged());
         const clicksWithClosedPopup$ = this.click$.pipe(filter(() => !this.instance.isPopupOpen()));
@@ -109,12 +109,11 @@ export class ExerciseFilterModalComponent implements OnInit {
 
         return merge(debouncedText$, inputFocus$, clicksWithClosedPopup$).pipe(
             map((term) =>
-                (term === ''
+                term === ''
                     ? this.selectableCategoryOptions
                     : this.selectableCategoryOptions.filter(
                           (categoryFilter: ExerciseCategoryFilterOption) => categoryFilter.category.category!.toLowerCase().indexOf(term.toLowerCase()) > -1,
-                      )
-                ).slice(0, 10),
+                      ),
             ),
         );
     };
