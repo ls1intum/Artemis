@@ -5,7 +5,6 @@ import { Lecture } from 'app/entities/lecture.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faArrowRight, faCheck, faHandshakeAngle } from '@fortawesome/free-solid-svg-icons';
 import { LectureUpdateWizardUnitsComponent } from 'app/lecture/wizard-mode/lecture-wizard-units.component';
-import { LectureUpdateWizardCompetenciesComponent } from 'app/lecture/wizard-mode/lecture-wizard-competencies.component';
 import { take } from 'rxjs/operators';
 
 @Component({
@@ -21,7 +20,6 @@ export class LectureUpdateWizardComponent implements OnInit {
     @Input() isSaving: boolean;
 
     @ViewChild(LectureUpdateWizardUnitsComponent, { static: false }) unitsComponent: LectureUpdateWizardUnitsComponent;
-    @ViewChild(LectureUpdateWizardCompetenciesComponent, { static: false }) competenciesComponent: LectureUpdateWizardCompetenciesComponent;
 
     currentStep: number;
 
@@ -47,7 +45,7 @@ export class LectureUpdateWizardComponent implements OnInit {
             if (params.step && !isNaN(+params.step)) {
                 this.currentStep = +params.step;
             } else {
-                this.currentStep = this.lecture.id ? 5 : this.lecture.startDate !== undefined || this.lecture.endDate !== undefined ? 2 : 1;
+                this.currentStep = this.lecture.id ? 4 : this.lecture.startDate !== undefined || this.lecture.endDate !== undefined ? 2 : 1;
             }
 
             this.router.navigate([], {
@@ -62,7 +60,7 @@ export class LectureUpdateWizardComponent implements OnInit {
      * Progress to the next step of the wizard mode
      */
     next() {
-        if (this.currentStep === 2 || this.currentStep === 5) {
+        if (this.currentStep === 2 || this.currentStep === 4) {
             this.saveLectureFunction();
             return;
         }
@@ -92,11 +90,11 @@ export class LectureUpdateWizardComponent implements OnInit {
     }
 
     getNextIcon() {
-        return this.currentStep < 5 ? faArrowRight : faCheck;
+        return this.currentStep < 4 ? faArrowRight : faCheck;
     }
 
     getNextText() {
-        return this.currentStep < 5 ? 'artemisApp.lecture.home.nextStepLabel' : 'entity.action.finish';
+        return this.currentStep < 4 ? 'artemisApp.lecture.home.nextStepLabel' : 'entity.action.finish';
     }
 
     toggleWizardMode() {
