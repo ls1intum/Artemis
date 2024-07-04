@@ -2,7 +2,7 @@
     <div class="conversation-header">
         <div class="d-flex justify-content-between flex-wrap">
             <div>
-                <h3 class="conversation-name d-inline-block rounded p-2 info" (click)="openConversationDetailDialog($event, INFO)">
+                <h4 class="conversation-name d-inline-block rounded p-2 info" (click)="openConversationDetailDialog($event, INFO)">
                     @if (activeConversationAsChannel) {
                         <jhi-channel-icon
                             [isPublic]="activeConversationAsChannel.isPublic!"
@@ -14,7 +14,7 @@
                         <jhi-group-chat-icon />
                     }
                     {{ conversationService.getConversationName(activeConversation, true) }}
-                </h3>
+                </h4>
             </div>
             @if (activeConversationAsChannel) {
                 @if (activeConversationAsChannel.tutorialGroupId && activeConversationAsChannel.tutorialGroupTitle) {
@@ -36,15 +36,15 @@
                 <div class="btn-toolbar p-2" role="toolbar">
                     <div class="btn-group me-1" role="group">
                         @if (activeConversationAsChannel?.subTypeReferenceId) {
-                            <a class="btn btn-outline-secondary sub-type-reference" [routerLink]="channelSubTypeReferenceRouterLink">
+                            <a class="btn btn-sm btn-outline-secondary sub-type-reference" [routerLink]="channelSubTypeReferenceRouterLink">
                                 {{ channelSubTypeReferenceTranslationKey | artemisTranslate }}
                             </a>
                         }
-                        <button type="button" class="btn btn-outline-secondary members" (click)="openConversationDetailDialog($event, MEMBERS)">
+                        <button type="button" class="btn btn-sm btn-outline-secondary members" (click)="openConversationDetailDialog($event, MEMBERS)">
                             <fa-icon [icon]="faUserGroup" /> {{ activeConversation.numberOfMembers || 0 }}
                         </button>
                         @if (canAddUsers(activeConversation)) {
-                            <button type="button" class="btn btn-outline-secondary addUsers" (click)="openAddUsersDialog($event)">
+                            <button type="button" class="btn btn-sm btn-outline-secondary addUsers" (click)="openAddUsersDialog($event)">
                                 <fa-icon [icon]="faUserPlus" />
                             </button>
                         }

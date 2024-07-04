@@ -2,11 +2,13 @@
     <div class="conversation-header">
         <div class="d-flex justify-content-between">
             <div>
-                @if (!courseWideSearchConfig.searchTerm) {
-                    <h3 class="conversation-name d-inline-block rounded p-1 info">All Messages</h3>
-                } @else {
-                    <h3 class="conversation-name d-inline-block rounded p-1 info">Search Results for "{{ courseWideSearchConfig.searchTerm }}"</h3>
-                }
+                <h4 class="conversation-name d-inline-block rounded p-1 info">
+                    @if (!courseWideSearchConfig.searchTerm) {
+                        All Messages
+                    } @else {
+                        Search Results for "{{ courseWideSearchConfig.searchTerm }}"
+                    }
+                </h4>
             </div>
         </div>
     </div>
