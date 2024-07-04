@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
@@ -89,5 +90,19 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         final Set<User> usersNotYetExpiredTokens = userRepository.getUsersWithAccessTokenExpirationDateBefore(ZonedDateTime.now());
 
         assertThat(usersNotYetExpiredTokens).doesNotContainAnyElementsOf(users);
+    }
+
+    @Test
+    void testClearVCSTokens() {
+        users.forEach(user -> {
+            user.setVcsAccessToken("valid-token");
+            user.setVcsAccessTokenExpiryDate(ZonedDateTime.now().plusDays(42));
+        });
+        users = userRepository.saveAll(users);
+
+        userRepository.clearVCSTokens();
+
+        List<User> updatedUsers = userRepository.findAllById(users.stream().map(DomainObject::getId).toList());
+        assertThat(updatedUsers.stream().filter(u -> u.getVcsAccessToken() == null && u.getVcsAccessTokenExpiryDate() == null)).hasSize(users.size());
     }
 }
