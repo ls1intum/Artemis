@@ -28,7 +28,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { ArtemisTestModule } from '../../test.module';
 import { RouterTestingModule } from '@angular/router/testing';
 
-describe('CloneRepoButtonComponent', () => {
+describe('CodeButtonComponent', () => {
     let component: CodeButtonComponent;
     let fixture: ComponentFixture<CodeButtonComponent>;
     let profileService: ProfileService;
