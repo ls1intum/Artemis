@@ -317,7 +317,8 @@ export class CourseOverviewService {
     mapAttemptToSidebarCardElement(attempt: StudentExam): SidebarCardElement {
         const examCardItem: SidebarCardElement = {
             title: attempt.exam!.title ?? '',
-            id: attempt.exam!.id ?? '',
+            //id: attempt.exam!.id + '/test-exam/' + attempt.id ?? '',
+            id: attempt.id ?? '',
             icon: faGraduationCap,
             subtitleLeft: 'Attempt',
             submissionDate: attempt.submissionDate,
