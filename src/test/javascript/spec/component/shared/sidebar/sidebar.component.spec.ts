@@ -13,7 +13,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { RouterModule } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { SidebarCardElement } from 'app/types/sidebar';
+import { SidebarCardElement, SidebarData } from 'app/types/sidebar';
 
 describe('SidebarComponent', () => {
     let component: SidebarComponent;
@@ -38,6 +38,10 @@ describe('SidebarComponent', () => {
     beforeEach(() => {
         fixture = TestBed.createComponent(SidebarComponent);
         component = fixture.componentInstance;
+
+        component.sidebarData = {
+            sidebarType: 'default',
+        } as SidebarData;
         fixture.detectChanges();
     });
 
