@@ -117,6 +117,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
                 this.alertService.success('artemisApp.prerequisite.manage.deleted');
                 this.prerequisites = this.prerequisites.filter((prerequisite) => prerequisite.id !== prerequisiteId);
                 this.courseCompetencies = [...this.competencies, ...this.prerequisites];
+                this.relations = this.relations.filter((relation) => relation.tailCompetency?.id !== prerequisiteId && relation.headCompetency?.id !== prerequisiteId);
                 this.dialogErrorSource.next('');
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
@@ -255,8 +256,8 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
         const relation = this.relations.find((relation) => relation.id === relationId);
         const headId = relation?.headCompetency?.id;
         const tailId = relation?.tailCompetency?.id;
-        const titleHead = this.competencies.find((competency) => competency.id === headId)?.title ?? '';
-        const titleTail = this.competencies.find((competency) => competency.id === tailId)?.title ?? '';
+        const titleHead = this.courseCompetencies.find((competency) => competency.id === headId)?.title ?? '';
+        const titleTail = this.courseCompetencies.find((competency) => competency.id === tailId)?.title ?? '';
 
         const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'md' });
         modalRef.componentInstance.title = 'artemisApp.competency.manageCompetencies.deleteRelationModalTitle';
