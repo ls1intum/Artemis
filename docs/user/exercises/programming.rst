@@ -107,13 +107,55 @@ Manual Assessment
 There are two ways to manually assess programming exercises: with the Orion plugin, you can assess the student's code directly in your JetBrains IDE. Refer to the :ref:`Orion plugin documentation <orion>` for more information.
 Alternatively, you can use the online editor to assess the students' submissions.
 
-.. figure:: programming/code-editor-manual-assessment.png
-   :alt: Manual Assessment in the Online Editor
+.. figure:: programming/online-editor-assessment.png
+   :alt: Manual assessment in the online editor
    :align: center
 
-   Manual Assessment in the Online Editor
+   Manual assessment in the online editor
 
+For manual assessment, the online editor provides the following features, tailored to the assessment process:
 
+1. **File browser**: The file browser shows the files in the student's submission and allows you to navigate between them. Changed files are highlighted.
+2. **Build output**: The build output shows the output of the build process, if any. This is useful in case of build errors.
+3. **Read-only editor**: The read-only editor allows you to view the student's code. It highlights all changed lines.
+4. **Instructions**: The instructions provide the problem statement, including the tasks the student has solved successfully as determined by the test cases of the exercise, if any. Furthermore, any structured assessment criteria are listed here.
+
+You can add feedback directly in the source code by first hovering over the line on which you want to comment and then clicking on the |add-feedback-button| button that appears next to the line numbers. You can also add general feedback using the (todo add button) button at the bottom of the page.
+
+.. figure:: programming/online-editor-feedback.png
+   :alt: Feedback in the online editor
+   :align: center
+
+   Editing feedback in the online editor
+
+After clicking the button, you can enter a feedback comment and a score for the selected line. Alternatively, you can drag one of the structured assessment criteria from the instructions to the feedback area to apply it to the feedback widget.
+When you are done, click the |save-feedback-button| button to save your feedback or the |cancel-feedback-button| button to discard it.
+
+.. figure:: programming/online-editor-general-feedback.png
+   :alt: General feedback in the online editor
+   :align: center
+
+   General feedback in the online editor
+
+You can also add general feedback by going scrolling to the bottom of the page. Feedback given this way is not tied to any specific file or line of code.
+
+To save your changes, click the |save-assessment-button| button at the top right of the page. To finalize the assessment, click the |submit-assessment-button| button. Note that you can save your assessment multiple times before submitting it.
+Once submitted, you cannot make any further changes to the assessment unless you are an instructor.
+
+.. |add-feedback-button| image:: programming/online-editor-add-feedback-button.png
+    :scale: 75%
+
+.. |save-feedback-button| image:: programming/online-editor-save-feedback-button.png
+    :scale: 50%
+
+.. |cancel-feedback-button| image:: programming/online-editor-cancel-feedback-button.png
+    :scale: 50%
+
+.. |save-assessment-button| image:: programming/online-editor-save-assessment-button.png
+    :scale: 50%
+
+.. |submit-assessment-button| image:: programming/online-editor-submit-assessment-button.png
+    :scale: 50%
 
 Repository Access
 -----------------
