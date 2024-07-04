@@ -20,9 +20,37 @@ import { ConversationService } from 'app/shared/metis/conversations/conversation
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
+    dueSoon: { entityData: [] },
     current: { entityData: [] },
     past: { entityData: [] },
     noDate: { entityData: [] },
+};
+
+type StartDateGroup = 'none' | 'past' | 'future';
+type EndDateGroup = StartDateGroup | 'soon';
+
+/**
+ * Decides which time category group an exercise should be put into based on its start and end dates.
+ */
+const GROUP_DECISION_MATRIX: Record<StartDateGroup, Record<EndDateGroup, TimeGroupCategory>> = {
+    none: {
+        none: 'noDate',
+        past: 'past',
+        soon: 'dueSoon',
+        future: 'current',
+    },
+    past: {
+        none: 'noDate',
+        past: 'past',
+        soon: 'dueSoon',
+        future: 'current',
+    },
+    future: {
+        none: 'future',
+        past: 'future',
+        soon: 'future',
+        future: 'future',
+    },
 };
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
@@ -59,12 +87,6 @@ export class CourseOverviewService {
             return upcomingLecture;
         }
     }
-    getUpcomingExercise(exercises: Exercise[] | undefined): Exercise | undefined {
-        if (exercises && exercises.length) {
-            const upcomingLecture = exercises?.reduce((a, b) => ((a?.dueDate?.valueOf() ?? 0) > (b?.dueDate?.valueOf() ?? 0) ? a : b));
-            return upcomingLecture;
-        }
-    }
 
     getUpcomingExam(exams: Exam[] | undefined): Exam | undefined {
         if (exams && exams.length) {
@@ -74,22 +96,50 @@ export class CourseOverviewService {
         return undefined;
     }
 
-    getCorrespondingExerciseGroupByDate(date: dayjs.Dayjs | undefined): TimeGroupCategory {
-        if (!date) {
-            return 'noDate';
+    getUpcomingExercise(exercises: Exercise[] | undefined): Exercise | undefined {
+        if (exercises && exercises.length) {
+            const upcomingLecture = exercises?.reduce((a, b) => ((a?.dueDate?.valueOf() ?? 0) > (b?.dueDate?.valueOf() ?? 0) ? a : b));
+            return upcomingLecture;
         }
+    }
 
-        const dueDate = dayjs(date);
+    getCorrespondingExerciseGroupByDate(exercise: Exercise): TimeGroupCategory {
         const now = dayjs();
 
-        const dueDateIsInThePast = dueDate.isBefore(now);
-        if (dueDateIsInThePast) {
+        const startGroup = this.getStartDateGroup(exercise, now);
+        const endGroup = this.getEndDateGroup(exercise, now);
+
+        return GROUP_DECISION_MATRIX[startGroup][endGroup];
+    }
+
+    private getStartDateGroup(exercise: Exercise, now: dayjs.Dayjs): StartDateGroup {
+        const start = exercise.startDate ?? exercise.releaseDate;
+
+        if (start === undefined) {
+            return 'none';
+        }
+
+        if (now.isAfter(dayjs(start))) {
             return 'past';
         }
 
-        const dueDateIsWithinNextWeek = dueDate.isBefore(now.add(1, 'week'));
-        if (dueDateIsWithinNextWeek) {
-            return 'current';
+        return 'future';
+    }
+
+    private getEndDateGroup(exercise: Exercise, now: dayjs.Dayjs): EndDateGroup {
+        const dueDate = exercise.dueDate ? dayjs(exercise.dueDate) : undefined;
+
+        if (dueDate === undefined) {
+            return 'none';
+        }
+
+        if (now.isAfter(dueDate)) {
+            return 'past';
+        }
+
+        const dueDateIsSoon = dueDate.isBefore(now.add(3, 'days'));
+        if (dueDateIsSoon) {
+            return 'soon';
         }
 
         return 'future';
@@ -108,7 +158,7 @@ export class CourseOverviewService {
             return 'past';
         }
 
-        const isDateCurrent = endDate ? startDate.isBefore(now) && endDate.isAfter(now) : isStartDateWithinLastWeek;
+        const isDateCurrent = endDate ? now.isBetween(startDate, endDate, undefined, '[]') : isStartDateWithinLastWeek;
         if (isDateCurrent) {
             return 'current';
         }
@@ -145,7 +195,7 @@ export class CourseOverviewService {
         const groupedExerciseGroups = cloneDeep(DEFAULT_UNIT_GROUPS) as AccordionGroups;
 
         for (const exercise of sortedExercises) {
-            const exerciseGroup = this.getCorrespondingExerciseGroupByDate(exercise.dueDate);
+            const exerciseGroup = this.getCorrespondingExerciseGroupByDate(exercise);
             const exerciseCardItem = this.mapExerciseToSidebarCardElement(exercise);
             groupedExerciseGroups[exerciseGroup].entityData.push(exerciseCardItem);
         }
