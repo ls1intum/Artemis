@@ -74,25 +74,23 @@ export function getExerciseDifficultyFilterOptions(exerciseFilters?: ExerciseFil
 export function getAchievablePointsAndAchievedScoreFilterOptions(
     exerciseFilters?: ExerciseFilterOptions,
     sidebarData?: SidebarData,
-):
-    | {
-          achievablePoints: RangeFilter;
-          achievedScore: RangeFilter;
-      }
-    | undefined {
+): {
+    achievablePoints?: RangeFilter;
+    achievedScore?: RangeFilter;
+} {
     if (!sidebarData?.ungroupedData) {
-        return;
+        return { achievablePoints: undefined, achievedScore: undefined };
     }
 
     const isPointsFilterApplied =
-        exerciseFilters?.achievablePoints?.filter.selectedMax === exerciseFilters?.achievablePoints?.filter.generalMax ||
-        exerciseFilters?.achievablePoints?.filter.selectedMin === exerciseFilters?.achievablePoints?.filter.generalMin;
+        exerciseFilters?.achievablePoints?.filter.selectedMax !== exerciseFilters?.achievablePoints?.filter.generalMax ||
+        exerciseFilters?.achievablePoints?.filter.selectedMin !== exerciseFilters?.achievablePoints?.filter.generalMin;
     const isScoreFilterApplied =
-        exerciseFilters?.achievedScore?.filter.selectedMax === exerciseFilters?.achievedScore?.filter.generalMax ||
-        exerciseFilters?.achievedScore?.filter.selectedMin === exerciseFilters?.achievedScore?.filter.generalMin;
-    if (!isPointsFilterApplied && !isScoreFilterApplied) {
+        exerciseFilters?.achievedScore?.filter.selectedMax !== exerciseFilters?.achievedScore?.filter.generalMax ||
+        exerciseFilters?.achievedScore?.filter.selectedMin !== exerciseFilters?.achievedScore?.filter.generalMin;
+    if (!isPointsFilterApplied && !isScoreFilterApplied && exerciseFilters?.achievablePoints && exerciseFilters?.achievedScore) {
         // the scores might change when we work on exercises, so we re-calculate the filter options (but only if the filter is actually applied)
-        return;
+        return { achievablePoints: exerciseFilters?.achievablePoints, achievedScore: exerciseFilters?.achievedScore };
     }
 
     let minAchievablePoints = Infinity;
@@ -127,15 +125,17 @@ export function getAchievablePointsAndAchievedScoreFilterOptions(
         }
     });
 
-    minAchievablePoints = roundUpToNextMultiple(minAchievablePoints, POINTS_STEP);
-    maxAchievablePoints = roundUpToNextMultiple(maxAchievablePoints, POINTS_STEP);
+    const roundUp = true;
+    const roundDown = false;
+    minAchievablePoints = roundUpToNextMultiple(minAchievablePoints, POINTS_STEP, roundDown);
+    maxAchievablePoints = roundUpToNextMultiple(maxAchievablePoints, POINTS_STEP, roundUp);
 
-    minAchievedScore = roundUpToNextMultiple(minAchievedScore, SMALL_SCORE_STEP);
-    maxAchievedScore = roundUpToNextMultiple(maxAchievedScore, SMALL_SCORE_STEP);
+    minAchievedScore = roundUpToNextMultiple(minAchievedScore, SMALL_SCORE_STEP, roundDown);
+    maxAchievedScore = roundUpToNextMultiple(maxAchievedScore, SMALL_SCORE_STEP, roundUp);
 
     if (maxAchievedScore > SCORE_THRESHOLD_TO_INCREASE_STEP) {
-        minAchievedScore = roundUpToNextMultiple(minAchievedScore, SCORE_STEP);
-        maxAchievedScore = roundUpToNextMultiple(maxAchievedScore, SCORE_STEP);
+        minAchievedScore = roundUpToNextMultiple(minAchievedScore, SCORE_STEP, roundDown);
+        maxAchievedScore = roundUpToNextMultiple(maxAchievedScore, SCORE_STEP, roundUp);
     }
 
     return {
@@ -150,7 +150,7 @@ export function getAchievablePointsAndAchievedScoreFilterOptions(
             },
         },
         achievedScore: {
-            isDisplayed: minAchievedScore < maxAchievedScore,
+            isDisplayed: minAchievedScore < maxAchievedScore && minAchievedScore !== Infinity,
             filter: {
                 generalMin: minAchievedScore,
                 generalMax: maxAchievedScore,

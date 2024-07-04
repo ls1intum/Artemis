@@ -162,7 +162,12 @@ export function isExamExercise(exercise: Exercise) {
  *
  * @param value    that shall be rounded
  * @param multiple to which we round up
+ * @param roundUp  if true, we round up, otherwise we round down
  */
-export function roundUpToNextMultiple(value: number, multiple: number) {
-    return Math.ceil(value / multiple) * multiple;
+export function roundUpToNextMultiple(value: number, multiple: number, roundUp: boolean) {
+    if (roundUp) {
+        return Math.ceil(value / multiple) * multiple;
+    }
+
+    return Math.floor(value / multiple) * multiple;
 }
