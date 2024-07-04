@@ -981,6 +981,15 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     Set<User> getUsersWithAccessTokenNull();
 
     @Query("""
+            SELECT user.login
+            FROM User user
+            WHERE :#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+                AND user.activated = TRUE
+                AND user.isDeleted = FALSE
+            """)
+    Set<String> findAllActiveAdminLogins();
+
+    @Query("""
             SELECT COUNT(user) > 0
             FROM User user
             WHERE user.login = :login

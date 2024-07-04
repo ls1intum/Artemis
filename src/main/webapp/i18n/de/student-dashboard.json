@@ -38,6 +38,7 @@
             "sidebar": {
                 "past": "Vorangegangen",
                 "current": "Aktuell",
+                "dueSoon": "Bald fällig",
                 "future": "Zukünftig",
                 "noDueDate": "Unbefristet",
                 "noDate": "Ohne Datum",
