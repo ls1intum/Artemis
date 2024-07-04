@@ -50,28 +50,30 @@
                 (cdkCopyToClipboardCopied)="onCopyFinished($event)"
                 >{{ getHttpOrSshRepositoryUri() }} </pre
             >
-            @if (!useSsh && !localVCEnabled) {
+            @if (!useSsh) {
                 <div class="d-flex align-items-center">
-                    <a
-                        style="flex: 1"
-                        class="btn btn-secondary btn-sm me-2 open-repository-button"
-                        [href]="getHttpRepositoryUri() | safeUrl"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        <fa-icon [icon]="faExternalLink" />
-                    </a>
+                    @if (!localVCEnabled) {
+                        <a
+                            [style.flex]="1"
+                            class="btn btn-secondary btn-sm me-2 open-repository-button"
+                            [href]="getHttpRepositoryUri() | safeUrl"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <fa-icon [icon]="faExternalLink" />
+                        </a>
+                    } @else if (!!routerLinkForRepositoryView) {
+                        <a
+                            [style.flex]="1"
+                            class="btn btn-secondary btn-sm me-2 open-repository-button"
+                            [routerLink]="routerLinkForRepositoryView"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <fa-icon [icon]="faExternalLink" />
+                        </a>
+                    }
                 </div>
-            } @else if (!useSsh && !!routerLinkForRepositoryView) {
-                <a
-                    style="flex: 1"
-                    class="btn btn-secondary btn-sm me-2 open-repository-button"
-                    [routerLink]="routerLinkForRepositoryView"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    <fa-icon [icon]="faExternalLink" />
-                </a>
             }
         </div>
         @if (repositoryPassword) {
