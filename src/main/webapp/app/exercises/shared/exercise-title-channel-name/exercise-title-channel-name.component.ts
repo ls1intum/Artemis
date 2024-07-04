@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
-import { Course, isMessagingOrCommunicationEnabled } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
 
@@ -51,7 +51,7 @@ export class ExerciseTitleChannelNameComponent implements OnChanges {
      */
     private requiresChannelName(exercise: Exercise, course: Course | undefined, isExamMode: boolean, isImport: boolean): boolean {
         // not required if messaging is disabled or exam mode
-        if (!isMessagingOrCommunicationEnabled(course) || isExamMode) {
+        if (!isCommunicationEnabled(course) || isExamMode) {
             return false;
         }
 

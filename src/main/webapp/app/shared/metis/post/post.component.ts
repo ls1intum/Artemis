@@ -8,7 +8,7 @@ import { faBullhorn, faCheckSquare } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
 import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
-import { isMessagingEnabled, isMessagingOrCommunicationEnabled } from 'app/entities/course.model';
+import { isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { Router } from '@angular/router';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
@@ -152,7 +152,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
      */
     onChannelReferenceClicked(channelId: number) {
         const course = this.metisService.getCourse();
-        if (isMessagingOrCommunicationEnabled(course)) {
+        if (isCommunicationEnabled(course)) {
             if (this.isCommunicationPage) {
                 this.metisConversationService.setActiveConversation(channelId);
             } else {

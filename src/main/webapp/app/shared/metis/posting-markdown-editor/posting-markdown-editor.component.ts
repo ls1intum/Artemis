@@ -17,7 +17,7 @@ import { UserMentionCommand } from 'app/shared/markdown-editor/commands/courseAr
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ChannelMentionCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/channelMentionCommand';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
-import { isMessagingOrCommunicationEnabled } from 'app/entities/course.model';
+import { isCommunicationEnabled } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-posting-markdown-editor',
@@ -52,7 +52,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
      * on initialization: sets commands that will be available as formatting buttons during creation/editing of postings
      */
     ngOnInit(): void {
-        const messagingOnlyCommands = isMessagingOrCommunicationEnabled(this.metisService.getCourse())
+        const messagingOnlyCommands = isCommunicationEnabled(this.metisService.getCourse())
             ? [new UserMentionCommand(this.courseManagementService, this.metisService), new ChannelMentionCommand(this.channelService, this.metisService)]
             : [];
 

@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { isMessagingOrCommunicationEnabled } from 'app/entities/course.model';
+import { isCommunicationEnabled } from 'app/entities/course.model';
 import { Lecture } from 'app/entities/lecture.model';
 
 @Component({
@@ -23,7 +23,7 @@ export class LectureTitleChannelNameComponent implements OnInit {
      */
     private requiresChannelName(lecture: Lecture): boolean {
         // not required if messaging and communication is disabled
-        if (!isMessagingOrCommunicationEnabled(lecture.course)) {
+        if (!isCommunicationEnabled(lecture.course)) {
             return false;
         }
 

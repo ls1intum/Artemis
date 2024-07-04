@@ -2,7 +2,7 @@ import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject, Subscription } from 'rxjs';
-import { Course, isCommunicationEnabled, isMessagingOrCommunicationEnabled } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { EventManager } from 'app/core/util/event-manager.service';
@@ -10,7 +10,6 @@ import {
     faArrowUpRightFromSquare,
     faChartBar,
     faClipboard,
-    faComment,
     faComments,
     faEye,
     faFilePdf,
@@ -67,7 +66,6 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
     faListAlt = faListAlt;
     faChartBar = faChartBar;
     faFilePdf = faFilePdf;
-    faComment = faComment;
     faComments = faComments;
     faClipboard = faClipboard;
     faGraduationCap = faGraduationCap;
@@ -77,7 +75,6 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
     faList = faList;
 
     isCommunicationEnabled = false;
-    isMessagingOrCommunicationEnabled = false;
 
     irisEnabled = false;
     ltiEnabled = false;
@@ -139,7 +136,6 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
         this.courseSub = this.courseManagementService.find(courseId).subscribe((courseResponse) => {
             this.course = courseResponse.body!;
             this.isCommunicationEnabled = isCommunicationEnabled(this.course);
-            this.isMessagingOrCommunicationEnabled = isMessagingOrCommunicationEnabled(this.course);
         });
     }
 

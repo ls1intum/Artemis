@@ -11,7 +11,7 @@ import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
-import { Course, isMessagingOrCommunicationEnabled } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
@@ -84,7 +84,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
 
                 this.course = data.course;
                 this.exam.course = data.course;
-                this.hideChannelNameInput = (!!exam.id && !exam.channelName) || !isMessagingOrCommunicationEnabled(this.course);
+                this.hideChannelNameInput = (!!exam.id && !exam.channelName) || !isCommunicationEnabled(this.course);
             });
     }
 
