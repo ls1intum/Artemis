@@ -130,7 +130,7 @@ describe('roundUpToNextMultiple', () => {
         expect(roundUpToNextMultiple(24.8, 5, true)).toBe(25);
     });
 
-    it('should round down to multiple of 5 if value is right over next multiple', () => {
+    it('should round down to multiple of 5 if value is over next multiple', () => {
         expect(roundUpToNextMultiple(24.8, 5, false)).toBe(20);
     });
 
