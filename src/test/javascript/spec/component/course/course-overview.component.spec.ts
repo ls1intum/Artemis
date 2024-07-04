@@ -649,12 +649,12 @@ describe('CourseOverviewComponent', () => {
     it('should display content of dropdown when dropdownOpen changes', () => {
         itemsDrop.open();
         fixture.detectChanges();
-        expect(component.itemsDrop.openState).toBeTrue();
+        expect(component.itemsDrop.isOpen).toBeTrue();
     });
     it('should hide content of dropdown when dropdownOpen changes', () => {
         itemsDrop.close();
         fixture.detectChanges();
-        expect(component.itemsDrop.openState).toBeFalse();
+        expect(component.itemsDrop.isOpen).toBeFalse();
     });
 
     it('should display more icon and label if at least one item gets hidden in the sidebar', () => {
