@@ -95,7 +95,8 @@
                 "dueDateRange": "Zeitraum der Einreichungsfrist",
                 "achievedScore": "Erreichtes Ergebnis",
                 "achievablePoints": "Erreichbare Punktzahl",
-                "applyFilter": "Filter anwenden"
+                "applyFilter": "Filter anwenden",
+                "noFilterAvailable": "Für die bisherigen Aufgaben gibt es keine unterscheidenden Filteroptionen"
             },
             "exerciseList": {
                 "filter": "Filter ({{ num }})",

@@ -8,10 +8,10 @@
     </div>
     <div class="modal-body">
         <div class="form-group">
-            <pre>{{ achievedScore?.isDisplayed }}</pre>
-
-            @if (!achievedScore?.isDisplayed) {
-                <div>No filters available</div>
+            @if (!(categoryFilters?.isDisplayed || typeFilters?.isDisplayed || difficultyFilters?.isDisplayed || achievedScore?.isDisplayed || achievablePoints?.isDisplayed)) {
+                <div>
+                    <span jhiTranslate="artemisApp.courseOverview.exerciseFilter.noFilterAvailable"></span>
+                </div>
             }
 
             @if (selectableCategoryOptions.length || selectedCategoryOptions.length) {

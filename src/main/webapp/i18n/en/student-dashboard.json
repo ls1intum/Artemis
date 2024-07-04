@@ -95,7 +95,8 @@
                 "dueDateRange": "Due Date Range",
                 "achievedScore": "Achieved Score",
                 "achievablePoints": "Achievable Points",
-                "applyFilter": "Apply filter"
+                "applyFilter": "Apply filter",
+                "noFilterAvailable": "There are no distinguishing filter options for the existing exercises"
             },
             "exerciseList": {
                 "filter": "Filter ({{ num }})",
