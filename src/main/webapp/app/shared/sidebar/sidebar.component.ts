@@ -53,6 +53,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     sidebarDataBeforeFiltering: SidebarData;
 
     exerciseFilters?: ExerciseFilterOptions;
+    isFilterActive: boolean = false;
 
     constructor(
         private route: ActivatedRoute,
@@ -144,6 +145,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         this.modalRef.componentInstance.filterApplied.subscribe((exerciseFilterResults: ExerciseFilterResults) => {
             this.sidebarData = exerciseFilterResults.filteredSidebarData!;
             this.exerciseFilters = exerciseFilterResults.appliedExerciseFilters;
+            this.isFilterActive = exerciseFilterResults.isFilterActive;
         });
     }
 

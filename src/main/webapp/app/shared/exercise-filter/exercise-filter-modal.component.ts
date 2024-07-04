@@ -169,8 +169,22 @@ export class ExerciseFilterModalComponent implements OnInit {
         }
         this.sidebarData.ungroupedData = this.sidebarData.ungroupedData?.filter((sidebarElement: SidebarCardElement) => satisfiesFilters(sidebarElement, appliedFilterDetails));
 
-        this.filterApplied.emit({ filteredSidebarData: this.sidebarData!, appliedExerciseFilters: this.exerciseFilters });
+        this.filterApplied.emit({
+            filteredSidebarData: this.sidebarData!,
+            appliedExerciseFilters: this.exerciseFilters,
+            isFilterActive: this.isFilterActive(appliedFilterDetails),
+        });
 
         this.closeModal();
+    }
+
+    private isFilterActive(filterDetails: FilterDetails): boolean {
+        return (
+            !!filterDetails.selectedCategories.length ||
+            !!filterDetails.searchedTypes?.length ||
+            !!filterDetails.searchedDifficulties?.length ||
+            filterDetails.isScoreFilterApplied ||
+            filterDetails.isPointsFilterApplied
+        );
     }
 }

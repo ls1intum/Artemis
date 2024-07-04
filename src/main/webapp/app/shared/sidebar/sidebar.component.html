@@ -43,6 +43,7 @@
                             [channelTypeIcon]="channelTypeIcon"
                             [collapseState]="collapseState"
                             (onUpdateSidebar)="onUpdateSidebar.emit()"
+                            [isFilterActive]="isFilterActive"
                         />
                     } @else {
                         @for (sidebarItem of sidebarData?.ungroupedData | searchFilter: ['title', 'type'] : searchValue; track sidebarItem; let last = $last) {

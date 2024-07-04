@@ -16,4 +16,4 @@ export type ExerciseFilterOptions = {
     achievablePoints?: RangeFilter;
 };
 
-export type ExerciseFilterResults = { filteredSidebarData?: SidebarData; appliedExerciseFilters?: ExerciseFilterOptions };
+export type ExerciseFilterResults = { filteredSidebarData?: SidebarData; appliedExerciseFilters?: ExerciseFilterOptions; isFilterActive: boolean };
