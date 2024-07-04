@@ -309,16 +309,14 @@ jhi-secured-image {
 }
 
 @media print {
-    .sidebar-container {
-        width: $menu-width-closed !important;
+    mat-sidenav {
+        display: none; /* Hide the sidebar */
     }
 
-    .mat-drawer {
-        width: $menu-width-closed !important;
-    }
-
-    .mat-drawer-content {
-        width: calc(100vw - $menu-width-closed) !important;
-        margin-left: $menu-width-closed !important;
+    .mat-drawer-container {
+        .mat-drawer-content {
+            margin-left: 0 !important; /* Remove any left margin or padding if necessary */
+            width: 100% !important; /* Make the content full width */
+        }
     }
 }

@@ -1,4 +1,4 @@
-<div class="d-flex sidebar rounded-3 px-3 sidebar-width no-print" [ngClass]="{ 'sidebar-height-dev': !isProduction || isTestServer, collapsed: isCollapsed }">
+<div class="d-flex sidebar rounded-3 px-3 sidebar-width hide-on_print" [ngClass]="{ 'sidebar-height-dev': !isProduction || isTestServer, collapsed: isCollapsed }">
     <div class="w-100 bg-module">
         <div class="sidebar-content" [ngClass]="{ collapsed: isCollapsed }">
             @if (searchFieldEnabled) {

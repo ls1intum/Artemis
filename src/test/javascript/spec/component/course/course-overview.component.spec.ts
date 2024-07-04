@@ -1,7 +1,7 @@
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { EMPTY, Observable, Subject, of, throwError } from 'rxjs';
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisTestModule } from '../../test.module';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
@@ -56,7 +56,6 @@ import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { ThemeService } from 'app/core/theme/theme.service';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -147,7 +146,6 @@ describe('CourseOverviewComponent', () => {
     let route: ActivatedRoute;
     let findOneForRegistrationStub: jest.SpyInstance;
     let findAllForDropdownSpy: jest.SpyInstance;
-    let printService: ThemeService;
 
     let metisConversationService: MetisConversationService;
 
@@ -237,8 +235,6 @@ describe('CourseOverviewComponent', () => {
                 findAllForDropdownSpy = jest
                     .spyOn(courseService, 'findAllForDropdown')
                     .mockReturnValue(of(new HttpResponse({ body: coursesDropdown, headers: new HttpHeaders() })));
-                printService = TestBed.inject(ThemeService);
-                (printService as any).isNavbarCollapsed$ = of(true);
             });
     }));
 
@@ -578,6 +574,14 @@ describe('CourseOverviewComponent', () => {
         expect(fixture.nativeElement.querySelector('.container-closed')).toBeNull();
     });
 
+    it('should display course title when navbar is not collapsed', () => {
+        component.isNavbarCollapsed = false;
+        fixture.detectChanges();
+
+        const titleElement = fixture.nativeElement.querySelector('#test-course-title');
+        expect(titleElement.textContent).toContain(component.course?.title);
+    });
+
     it('should display course icon when available', () => {
         fixture.detectChanges();
 
@@ -740,11 +744,4 @@ describe('CourseOverviewComponent', () => {
         expect(courseService.findAllForDropdown).toHaveBeenCalled();
         expect(component.dashboardSubscription.closed).toBeTrue();
     });
-
-    it('should subscribe to printService and update isNavbarCollapsed', fakeAsync(() => {
-        fixture.detectChanges();
-        tick();
-        flush();
-        expect(component.isNavbarCollapsed).toBeTrue();
-    }));
 });

@@ -64,7 +64,6 @@ import { ExamParticipationService } from 'app/exam/participate/exam-participatio
 import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
 import { sortCourses } from 'app/shared/util/course.util';
 import { CourseUnenrollmentModalComponent } from './course-unenrollment-modal.component';
-import { ThemeService } from 'app/core/theme/theme.service';
 
 interface CourseActionItem {
     title: string;
@@ -152,8 +151,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     private controls?: TemplateRef<any>;
     // The current controls configuration from the sub-route component
     public controlConfiguration?: BarControlConfiguration;
-    //If print is called then the sidebar should be hidden
-    printSubscription?: Subscription;
 
     // ng-container mount point extracted from our own template so we can render sth in it
     @ViewChild('controlsViewContainer', { read: ViewContainerRef }) controlsViewContainer: ViewContainerRef;
@@ -197,7 +194,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         private profileService: ProfileService,
         private modalService: NgbModal,
         private examParticipationService: ExamParticipationService,
-        private printService: ThemeService,
     ) {}
 
     async ngOnInit() {
@@ -228,10 +224,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             CourseAccessStorageService.STORAGE_KEY_DROPDOWN,
             CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_DROPDOWN,
         );
-        this.printSubscription = this.printService.isNavbarCollapsed$.subscribe((isCollapsed) => {
-            this.isNavbarCollapsed = isCollapsed;
-            this.changeDetectorRef.detectChanges();
-        });
 
         await firstValueFrom(this.loadCourse());
         await this.initAfterCourseLoad();
@@ -751,7 +743,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.examStartedSubscription?.unsubscribe();
         this.examEndViewSubscription?.unsubscribe();
         this.dashboardSubscription?.unsubscribe();
-        this.printSubscription?.unsubscribe();
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
     }
