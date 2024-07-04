@@ -14,7 +14,7 @@ import { isPracticeMode } from 'app/entities/participation/student-participation
 import { faDownload, faExternalLink } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
-    selector: 'jhi-clone-repo-button',
+    selector: 'jhi-code-button',
     templateUrl: './code-button.component.html',
     styleUrls: ['./code-button.component.scss'],
 })

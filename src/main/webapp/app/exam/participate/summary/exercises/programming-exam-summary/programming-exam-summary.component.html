@@ -4,7 +4,7 @@
             <div class="col-md-4">
                 <div class="mb-4">
                     <h5>{{ 'artemisApp.exam.examSummary.yourSubmission' | artemisTranslate }}</h5>
-                    <jhi-clone-repo-button
+                    <jhi-code-button
                         [smallButtons]="true"
                         [repositoryUri]="participation?.userIndependentRepositoryUri || ''"
                         [routerLinkForRepositoryView]="routerLink + '/exercises/' + exercise.id + '/repository/' + participation.id"
