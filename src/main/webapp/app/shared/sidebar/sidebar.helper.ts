@@ -10,7 +10,6 @@ const SCORE_THRESHOLD_TO_INCREASE_STEP = 20;
 const SMALL_SCORE_STEP = 1;
 const SCORE_STEP = 5;
 
-// TODO allow to filter for no difficulty?
 const DEFAULT_DIFFICULTIES_FILTER: DifficultyFilterOption[] = [
     { name: 'artemisApp.exercise.easy', value: DifficultyLevel.EASY, checked: false },
     { name: 'artemisApp.exercise.medium', value: DifficultyLevel.MEDIUM, checked: false },
@@ -55,7 +54,7 @@ export function getExerciseTypeFilterOptions(exerciseFilters?: ExerciseFilterOpt
 
     const availableTypeFilters = DEFAULT_EXERCISE_TYPES_FILTER?.filter((exerciseType) => existingExerciseTypes?.includes(exerciseType.value));
 
-    return { isDisplayed: true, options: availableTypeFilters };
+    return { isDisplayed: availableTypeFilters.length > 1, options: availableTypeFilters };
 }
 
 export function getExerciseDifficultyFilterOptions(exerciseFilters?: ExerciseFilterOptions, sidebarData?: SidebarData): FilterOption<DifficultyFilterOption> {
@@ -69,7 +68,7 @@ export function getExerciseDifficultyFilterOptions(exerciseFilters?: ExerciseFil
 
     const availableDifficultyFilters = DEFAULT_DIFFICULTIES_FILTER?.filter((difficulty) => existingDifficulties?.includes(difficulty.value));
 
-    return { isDisplayed: true, options: availableDifficultyFilters };
+    return { isDisplayed: !!availableDifficultyFilters.length, options: availableDifficultyFilters };
 }
 
 export function getAchievablePointsAndAchievedScoreFilterOptions(
@@ -141,7 +140,7 @@ export function getAchievablePointsAndAchievedScoreFilterOptions(
 
     return {
         achievablePoints: {
-            isDisplayed: true,
+            isDisplayed: minAchievablePoints < maxAchievablePoints,
             filter: {
                 generalMin: minAchievablePoints,
                 generalMax: maxAchievablePoints,
@@ -151,7 +150,7 @@ export function getAchievablePointsAndAchievedScoreFilterOptions(
             },
         },
         achievedScore: {
-            isDisplayed: true,
+            isDisplayed: minAchievedScore < maxAchievedScore,
             filter: {
                 generalMin: minAchievedScore,
                 generalMax: maxAchievedScore,

@@ -45,11 +45,11 @@
             </div>
         </div>
 
-        @if ((typeFilters?.length ?? 0) > 1) {
+        @if (typeFilters?.isDisplayed) {
             <div class="form-group">
                 <label for="exercise-type-filter-selection" class="form-control-label h6" jhiTranslate="artemisApp.ratingList.exerciseType"></label>
                 <div id="exercise-type-filter-selection">
-                    @for (typeFilter of typeFilters; track typeFilter) {
+                    @for (typeFilter of typeFilters.options; track typeFilter) {
                         <div class="form-check form-check-inline">
                             <label>
                                 <input type="checkbox" [(ngModel)]="typeFilter.checked" [name]="typeFilter.value" />
@@ -67,11 +67,11 @@
         <!--            TODO: Implement Date Range Picker (follow up PR @FlorianGlombik)-->
         <!--        </div>-->
 
-        @if (difficultyFilters?.length) {
+        @if (difficultyFilters?.isDisplayed) {
             <div class="form-group">
                 <label for="difficulty-filter-selection" class="form-control-label h6" jhiTranslate="artemisApp.exercise.difficulty"></label>
                 <div id="difficulty-filter-selection">
-                    @for (difficultyFilter of difficultyFilters; track difficultyFilter) {
+                    @for (difficultyFilter of difficultyFilters.options; track difficultyFilter) {
                         <div class="form-check form-check-inline">
                             <label>
                                 <input type="checkbox" [(ngModel)]="difficultyFilter.checked" [name]="difficultyFilter.value" />
@@ -83,31 +83,31 @@
             </div>
         }
 
-        @if (achievedScore && achievedScore.generalMin < achievedScore.generalMax) {
+        @if (achievedScore?.isDisplayed) {
             <div class="form-group">
                 <label class="form-control-label h6" for="achieved-score-range-slider" jhiTranslate="artemisApp.courseOverview.exerciseFilter.achievedScore"></label>
                 <jhi-range-slider
                     id="achieved-score-range-slider"
-                    [generalMinValue]="achievedScore.generalMin"
-                    [generalMaxValue]="achievedScore.generalMax"
-                    [(selectedMinValue)]="achievedScore.selectedMin"
-                    [(selectedMaxValue)]="achievedScore.selectedMax"
-                    [step]="achievedScore.step"
+                    [generalMinValue]="achievedScore.filter.generalMin"
+                    [generalMaxValue]="achievedScore.filter.generalMax"
+                    [(selectedMinValue)]="achievedScore.filter.selectedMin"
+                    [(selectedMaxValue)]="achievedScore.filter.selectedMax"
+                    [step]="achievedScore.filter.step"
                     [label]="'%'"
                 />
             </div>
         }
 
-        @if (achievablePoints && achievablePoints.generalMin < achievablePoints.generalMax) {
+        @if (achievablePoints?.isDisplayed) {
             <div class="form-group">
                 <label class="form-control-label h6" for="achieved-points-range-slider" jhiTranslate="artemisApp.courseOverview.exerciseFilter.achievablePoints"></label>
                 <jhi-range-slider
                     id="achieved-points-range-slider"
-                    [generalMinValue]="achievablePoints.generalMin"
-                    [generalMaxValue]="achievablePoints.generalMax"
-                    [(selectedMinValue)]="achievablePoints.selectedMin"
-                    [(selectedMaxValue)]="achievablePoints.selectedMax"
-                    [step]="achievablePoints.step"
+                    [generalMinValue]="achievablePoints.filter.generalMin"
+                    [generalMaxValue]="achievablePoints.filter.generalMax"
+                    [(selectedMinValue)]="achievablePoints.filter.selectedMin"
+                    [(selectedMaxValue)]="achievablePoints.filter.selectedMax"
+                    [step]="achievablePoints.filter.step"
                 />
             </div>
         }
