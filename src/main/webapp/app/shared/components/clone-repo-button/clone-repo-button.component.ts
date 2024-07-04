@@ -153,10 +153,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     /**
      * Gets the external link of the repository. For LocalVC, undefined is returned.
      */
-    getHttpRepositoryUri(): string | undefined {
-        if (this.localVCEnabled) {
-            return undefined;
-        }
+    getHttpRepositoryUri(): string {
         return this.isTeamParticipation ? this.repositoryUriForTeam(this.getRepositoryUri()) : this.getRepositoryUri();
     }
 

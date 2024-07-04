@@ -33,7 +33,7 @@ export class ProgrammingExerciseParticipationsPage {
         await participation.locator('.code-button').click();
         // The link opens the repository in a new tab, so we need to wait for the new page to be created.
         const pagePromise = this.page.context().waitForEvent('page');
-        await this.page.locator('#openRepositoryButton').click();
+        await this.page.locator('.open-repository-button').click();
         return new RepositoryPage(await pagePromise);
     }
 
