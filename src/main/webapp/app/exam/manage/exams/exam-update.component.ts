@@ -468,9 +468,9 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
         const workingInstructionText =
             `<div class="fw-bold">Working instructions:</div>\n` +
             `<ul>\n` +
-            `<li><span class='fw-bold text-primary'>Important</span>: Before you start solving an exercise, read the problem statement carefully.</li>\n` +
-            `<li>The exam consists of <span class='fw-bold text-primary'>${this.exam.examMaxPoints} points</span> and is <span class='fw-bold text-primary'>${this.workingTimeInMinutesRounded} minutes</span> long. Use the amount of points to determine the appropriate working time for one exercise.</li>\n` +
-            `<li>It is <span class='fw-bold text-primary'>not</span> allowed to use any artificial intelligence to solve exercises of the exam. In particular the use of OpenAI, ChatGPT, GitHub Copilot, or any similar systems is <span class='fw-bold text-primary'>forbidden</span>!</li>\n` +
+            `  <li><span class='fw-bold text-primary'>Important</span>: Before you start solving an exercise, read the problem statement carefully.</li>\n` +
+            `  <li>The exam consists of <span class='fw-bold text-primary'>${this.exam.examMaxPoints} points</span> and is <span class='fw-bold text-primary'>${this.workingTimeInMinutesRounded} minutes</span> long. Use the amount of points to determine the appropriate working time for one exercise.</li>\n` +
+            `  <li>It is <span class='fw-bold text-primary'>not</span> allowed to use any artificial intelligence to solve exercises of the exam. In particular the use of OpenAI, ChatGPT, GitHub Copilot, or any similar systems is <span class='fw-bold text-primary'>forbidden</span>!</li>\n` +
             `</ul>\n`;
 
         return (
