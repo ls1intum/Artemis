@@ -5,7 +5,6 @@ import { Subscription, distinctUntilChanged } from 'rxjs';
 import { ProfileService } from '../layouts/profiles/profile.service';
 import { ChannelAccordionShowAdd, ChannelTypeIcons, CollapseState, SidebarData } from 'app/types/sidebar';
 import { SidebarEventService } from './sidebar-event.service';
-import { ExerciseFilterModalComponent } from 'app/shared/exercise-filter/exercise-filter-modal.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { cloneDeep } from 'lodash-es';
 import { ExerciseFilterOptions, ExerciseFilterResults } from 'app/types/exercise-filter';
@@ -15,6 +14,7 @@ import {
     getExerciseDifficultyFilterOptions,
     getExerciseTypeFilterOptions,
 } from 'app/shared/sidebar/sidebar.helper';
+import { ExerciseFilterModalComponent } from 'app/shared/exercise-filter/exercise-filter-modal.component';
 
 @Component({
     selector: 'jhi-sidebar',
@@ -126,7 +126,6 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     }
 
     openFilterExercisesDialog() {
-        // TODO uncollapse all groups when a filter is active
         this.initializeFilterOptions();
 
         if (!this.sidebarDataBeforeFiltering) {
@@ -149,11 +148,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         });
     }
 
-    // TODO handle course switching (reset filters when switching courses)
-
-    // TODO dont display the filter option if no filter option is reasonable
-
-    private initializeFilterOptions() {
+    initializeFilterOptions() {
         if (this.exerciseFilters) {
             return;
         }

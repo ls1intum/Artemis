@@ -8,20 +8,32 @@ import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { By } from '@angular/platform-browser';
-import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { RouterModule } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SidebarCardElement, SidebarData } from 'app/types/sidebar';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { ExerciseFilterModalComponent } from 'app/shared/exercise-filter/exercise-filter-modal.component';
+import { ExerciseFilterResults } from 'app/types/exercise-filter';
+import { EventEmitter } from '@angular/core';
 
 describe('SidebarComponent', () => {
     let component: SidebarComponent;
     let fixture: ComponentFixture<SidebarComponent>;
+    let modalService: NgbModal;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(RouterModule), MockDirective(TranslateDirective)],
+            imports: [
+                ArtemisTestModule,
+                MockModule(FormsModule),
+                MockModule(ReactiveFormsModule),
+                MockModule(RouterModule),
+                MockDirective(TranslateDirective),
+                MockComponent(ExerciseFilterModalComponent),
+            ],
             declarations: [
                 SidebarComponent,
                 SidebarCardMediumComponent,
@@ -32,12 +44,14 @@ describe('SidebarComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockRouterLinkDirective,
             ],
+            providers: [MockProvider(NgbModal)],
         }).compileComponents();
     });
 
     beforeEach(() => {
         fixture = TestBed.createComponent(SidebarComponent);
         component = fixture.componentInstance;
+        modalService = TestBed.inject(NgbModal);
 
         component.sidebarData = {
             sidebarType: 'default',
@@ -111,5 +125,44 @@ describe('SidebarComponent', () => {
 
         const size = component.getSize();
         expect(size).toBe('M');
+    });
+
+    describe('openFilterExercisesLink', () => {
+        it('should display the filter link when sidebarType is exercise', () => {
+            component.sidebarData.sidebarType = 'exercise';
+            fixture.detectChanges();
+
+            const filterLink = fixture.debugElement.query(By.css('a.ms-2'));
+
+            expect(filterLink).toBeTruthy();
+        });
+
+        it('should NOT display the filter link when sidebarType is NOT exercise', () => {
+            const filterLink = fixture.debugElement.query(By.css('a.ms-2'));
+
+            expect(filterLink).toBeFalsy();
+        });
+
+        it('should open modal on click with initialized filters', () => {
+            component.sidebarData.sidebarType = 'exercise';
+            fixture.detectChanges();
+            const filterAppliedMock = new EventEmitter<ExerciseFilterResults>();
+            const mockReturnValue = {
+                result: Promise.resolve({}),
+                componentInstance: {
+                    sidebarData: {},
+                    exerciseFilters: {},
+                    filterApplied: filterAppliedMock,
+                },
+            } as NgbModalRef;
+            const openModalSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+            const initFilterOptionsSpy = jest.spyOn(component, 'initializeFilterOptions');
+
+            const filterLink = fixture.debugElement.query(By.css('a.ms-2')).nativeElement;
+            filterLink.click();
+
+            expect(initFilterOptionsSpy).toHaveBeenCalled();
+            expect(openModalSpy).toHaveBeenCalledWith(ExerciseFilterModalComponent, { animation: true, backdrop: 'static', size: 'lg' });
+        });
     });
 });
