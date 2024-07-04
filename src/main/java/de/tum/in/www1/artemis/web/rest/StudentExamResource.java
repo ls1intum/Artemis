@@ -444,9 +444,8 @@ public class StudentExamResource {
     }
 
     @NotNull
-    private StudentExam findStudentExamWithExercisesElseThrow(User user, Long examId, Long courseId, boolean isTestRun) {
-        StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), examId, isTestRun)
-                .orElseThrow(() -> new EntityNotFoundException("No student exam found for examId " + examId + " and userId " + user.getId()));
+    private StudentExam findStudentExamWithExercisesElseThrow(User user, Long examId, Long courseId, Long studentExamId) {
+        StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
         studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, user, studentExam.isTestRun(), false);
         return studentExam;
     }
@@ -520,21 +519,20 @@ public class StudentExamResource {
      * <p>
      * See {@link StudentExamWithGradeDTO} for more explanation.
      *
-     * @param courseId  the course to which the student exam belongs to
-     * @param examId    the exam to which the student exam belongs to
-     * @param userId    the user id of the student whose grade summary is requested
-     * @param isTestRun whether the student exam belongs to a test run by an instructor or not
+     * @param courseId the course to which the student exam belongs to
+     * @param examId   the exam to which the student exam belongs to
+     * @param userId   the user id of the student whose grade summary is requested
      * @return the ResponseEntity with status 200 (OK) and with the StudentExamWithGradeDTO instance without the student exam as body
      */
-    @GetMapping("courses/{courseId}/exams/{examId}/student-exams/grade-summary")
+    @GetMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/grade-summary")
     @EnforceAtLeastStudent
-    public ResponseEntity<StudentExamWithGradeDTO> getStudentExamGradesForSummary(@PathVariable Long courseId, @PathVariable Long examId,
-            @RequestParam(required = false) Long userId, @RequestParam(required = false, defaultValue = "false") boolean isTestRun) {
+    public ResponseEntity<StudentExamWithGradeDTO> getStudentExamGradesForSummary(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
+            @RequestParam(required = false) Long userId) {
         long start = System.currentTimeMillis();
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the student exam grades of user with id {} for exam {} by user {}", userId, examId, currentUser.getLogin());
         User targetUser = userId == null ? currentUser : userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(userId);
-        StudentExam studentExam = findStudentExamWithExercisesElseThrow(targetUser, examId, courseId, isTestRun);
+        StudentExam studentExam = findStudentExamWithExercisesElseThrow(targetUser, examId, courseId, studentExamId);
 
         boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
         if (!isAtLeastInstructor && !currentUser.getId().equals(targetUser.getId())) {
