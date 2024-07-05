@@ -44,6 +44,8 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private Course course;
 
+    private Course courseWithTestRuns;
+
     private static final String STUDENT_OF_COURSE = TEST_PREFIX + "student1";
 
     @BeforeEach
@@ -56,6 +58,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 1, 1);
 
         course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
+        courseWithTestRuns = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResultsAndTestRunsAndTwoUsers(TEST_PREFIX, true);
 
         userUtilService.createAndSaveUser(TEST_PREFIX + "user1337");
     }
@@ -159,15 +162,22 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
         void shouldFindLatestSubmissionDates() throws Exception {
             Set<Long> exerciseIds = new HashSet<Long>();
-            final var exercises = exerciseRepository.findAllExercisesByCourseId(course.getId()).stream()
+            final var exercises = exerciseRepository.findAllExercisesByCourseId(courseWithTestRuns.getId()).stream()
                     .map(exercise -> exerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId()).orElseThrow());
 
             Set<ResourceTimestampDTO> expectedSet = exercises.map(exercise -> {
                 exerciseIds.add(exercise.getId());
-                final var latestSubmissionDate = exercise.getStudentParticipations().stream().flatMap(participation -> participation.getSubmissions().stream())
-                        .map(Submission::getSubmissionDate).max(Comparator.naturalOrder()).orElseThrow();
-                return new ResourceTimestampDTO(exercise.getId(), latestSubmissionDate);
-            }).collect(Collectors.toSet());
+
+                // Filter participations to exclude test runs and then flatten the submissions
+                final var latestSubmissionDate = exercise.getStudentParticipations().stream().filter(participation -> !participation.isTestRun()) // Filter out test run
+                                                                                                                                                  // participations
+                        .flatMap(participation -> participation.getSubmissions().stream()).map(Submission::getSubmissionDate).max(Comparator.naturalOrder());
+
+                // Return an Optional of ResourceTimestampDTO or empty if no valid submissions
+                return latestSubmissionDate.map(date -> new ResourceTimestampDTO(exercise.getId(), date));
+            }).filter(Optional::isPresent) // Filter out exercises without valid submissions
+                    .map(Optional::get) // Get the ResourceTimestampDTO from the Optional
+                    .collect(Collectors.toSet());
 
             Set<ResourceTimestampDTO> result = exerciseMetricsRepository.findLatestSubmissionDates(exerciseIds);
             assertThat(result).isEqualTo(expectedSet);
@@ -177,13 +187,14 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
         void shouldFindLatestSubmissionDatesByUser() throws Exception {
             Set<Long> exerciseIds = new HashSet<Long>();
-            final var exercises = exerciseRepository.findAllExercisesByCourseId(course.getId()).stream()
+            final var exercises = exerciseRepository.findAllExercisesByCourseId(courseWithTestRuns.getId()).stream()
                     .map(exercise -> exerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId()).orElseThrow());
-            final var userID = userUtilService.getUserByLogin(TEST_PREFIX + "user1337").getId();
+            final var userID = userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId();
 
             Set<ResourceTimestampDTO> expectedSet = exercises.flatMap(exercise -> {
                 exerciseIds.add(exercise.getId());
-                final var latestSubmissionDate = exercise.getStudentParticipations().stream()
+                final var latestSubmissionDate = exercise.getStudentParticipations().stream().filter(participation -> !participation.isTestRun()) // Filter out test run
+                                                                                                                                                  // participations
                         .filter(participation -> participation.getStudent().map(student -> student.getId().equals(userID)).orElse(false))
                         .flatMap(participation -> participation.getSubmissions().stream()).map(Submission::getSubmissionDate).max(Comparator.naturalOrder());
 
