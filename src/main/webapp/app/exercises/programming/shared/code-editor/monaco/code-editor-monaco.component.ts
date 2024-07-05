@@ -1,17 +1,4 @@
-import {
-    ChangeDetectorRef,
-    Component,
-    ElementRef,
-    EventEmitter,
-    Input,
-    OnChanges,
-    Output,
-    QueryList,
-    SimpleChanges,
-    ViewChild,
-    ViewChildren,
-    ViewEncapsulation,
-} from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, QueryList, SimpleChanges, ViewChild, ViewChildren, ViewEncapsulation } from '@angular/core';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { CodeEditorRepositoryFileService, ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
@@ -31,7 +18,6 @@ import {
     RenameFileChange,
 } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { fromPairs, pickBy } from 'lodash-es';
-import { faPlusSquare } from '@fortawesome/free-solid-svg-icons';
 import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback-suggestion.component';
 import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
 import { FileTypeService } from 'app/exercises/programming/shared/service/file-type.service';
@@ -48,8 +34,6 @@ export type Annotation = { fileName: string; row: number; column: number; text: 
 export class CodeEditorMonacoComponent implements OnChanges {
     @ViewChild('editor', { static: true })
     editor: MonacoEditorComponent;
-    @ViewChild('addFeedbackButton', { static: true })
-    addFeedbackButton: ElementRef<HTMLDivElement>;
     @ViewChildren(CodeEditorTutorAssessmentInlineFeedbackComponent)
     inlineFeedbackComponents: QueryList<CodeEditorTutorAssessmentInlineFeedbackComponent>;
     @ViewChildren(CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent)
@@ -105,10 +89,8 @@ export class CodeEditorMonacoComponent implements OnChanges {
     newFeedbackLines: number[] = [];
     binaryFileSelected = false;
 
-    faPlusSquare = faPlusSquare;
-
     static readonly CLASS_DIFF_LINE_HIGHLIGHT = 'monaco-diff-line-highlight';
-    static readonly CLASS_DIFF_MARGIN_HIGHLIGHT = 'monaco-diff-margin-highlight';
+    static readonly CLASS_FEEDBACK_HOVER_BUTTON = 'monaco-add-feedback-button';
 
     // Expose to template
     protected readonly Feedback = Feedback;
@@ -203,12 +185,12 @@ export class CodeEditorMonacoComponent implements OnChanges {
     }
 
     highlightLines(startLine: number, endLine: number) {
-        this.editor.highlightLines(startLine, endLine, CodeEditorMonacoComponent.CLASS_DIFF_LINE_HIGHLIGHT, CodeEditorMonacoComponent.CLASS_DIFF_MARGIN_HIGHLIGHT);
+        this.editor.highlightLines(startLine, endLine, CodeEditorMonacoComponent.CLASS_DIFF_LINE_HIGHLIGHT);
         this.onHighlightLines.emit(this.getLineHighlights());
     }
 
     setupAddFeedbackButton(): void {
-        this.editor.setGlyphMarginHoverButton(this.addFeedbackButton.nativeElement, (lineNumber) => this.addNewFeedback(lineNumber));
+        this.editor.setLineDecorationsHoverButton(CodeEditorMonacoComponent.CLASS_FEEDBACK_HOVER_BUTTON, (lineNumber) => this.addNewFeedback(lineNumber));
     }
 
     /**
