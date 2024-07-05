@@ -96,7 +96,7 @@ public class CompetencyProgressService {
      */
     @Async
     public void updateProgressByLearningObjectAsync(LearningObject learningObject, @NotNull Participant participant) {
-        SecurityUtils.setAuthorizationObject(); // required for async
+        setAuthorizationObject();
         updateProgressByLearningObject(learningObject, participant.getParticipants());
     }
 
@@ -107,7 +107,7 @@ public class CompetencyProgressService {
      */
     @Async
     public void updateProgressByLearningObjectAsync(LearningObject learningObject) {
-        SecurityUtils.setAuthorizationObject(); // required for async
+        setAuthorizationObject();
         Set<Long> competencyIds = getCompetencyIdsForLearningObject(learningObject);
 
         for (long competencyId : competencyIds) {
@@ -125,7 +125,7 @@ public class CompetencyProgressService {
      */
     @Async
     public void updateProgressByCompetencyAsync(Competency competency) {
-        SecurityUtils.setAuthorizationObject(); // required for async
+        setAuthorizationObject();
         competencyProgressRepository.findAllByCompetencyId(competency.getId()).stream().map(CompetencyProgress::getUser)
                 .forEach(user -> updateCompetencyProgress(competency.getId(), user));
     }
@@ -155,11 +155,18 @@ public class CompetencyProgressService {
      */
     @Async
     protected void updateProgressByCompetencyIdsAsync(Set<Long> competencyIds) {
-        SecurityUtils.setAuthorizationObject(); // required for async
+        setAuthorizationObject();
         for (long competencyId : competencyIds) {
             competencyProgressRepository.findAllByCompetencyId(competencyId).stream().map(CompetencyProgress::getUser)
                     .forEach(user -> updateCompetencyProgress(competencyId, user));
         }
+    }
+
+    /**
+     * Set the authorization object for asynchronous updates
+     */
+    public void setAuthorizationObject() {
+        SecurityUtils.setAuthorizationObject();
     }
 
     /**

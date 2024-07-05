@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -206,6 +207,8 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateLectureAttachmentUnitWithSameFileName() throws Exception {
+        doNothing().when(competencyProgressService).setAuthorizationObject();
+
         AttachmentUnit attachmentUnit = lectureUtilService.createAttachmentUnit(true);
         lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(attachmentUnit));
 
