@@ -4,7 +4,15 @@ import { NoDataComponent } from 'app/shared/no-data-component';
 
 @Component({
     selector: 'jhi-text-detail',
-    templateUrl: 'text-detail.component.html',
+    template: `
+        <dd id="detail-value-{{ detail.title }}">
+            @if (detail.data.text) {
+                {{ detail.data.text }}
+            } @else {
+                <jhi-no-data />
+            }
+        </dd>
+    `,
     standalone: true,
     imports: [NoDataComponent],
 })

@@ -15,17 +15,8 @@
                     </dt>
                 }
                 @switch (detail.type) {
-                    @case (DetailType.Text) {
+                    @case (DetailType.Text || DetailType.Date) {
                         <div jhiExerciseDetail [detail]="detail"></div>
-                    }
-                    @case (DetailType.Date) {
-                        <dd id="detail-value-{{ detail.title }}">
-                            @if (detail.data.date) {
-                                {{ detail.data.date | artemisDate }}
-                            } @else {
-                                <ng-container *ngTemplateOutlet="noData" />
-                            }
-                        </dd>
                     }
                     @case (DetailType.Link) {
                         <dd id="detail-value-{{ detail.title }}">

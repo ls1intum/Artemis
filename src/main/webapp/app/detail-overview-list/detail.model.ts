@@ -48,7 +48,7 @@ export interface TextDetail extends DetailBase {
     data: { text?: string | number };
 }
 
-interface DateDetail extends DetailBase {
+export interface DateDetail extends DetailBase {
     type: DetailType.Date;
     data: { date?: dayjs.Dayjs };
 }
