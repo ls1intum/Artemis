@@ -404,7 +404,7 @@ public class LectureResource {
 
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         log.debug("REST request to delete Lecture : {}", lectureId);
-        lectureService.delete(lecture);
+        lectureService.delete(lecture, true);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureId.toString())).build();
     }
 }

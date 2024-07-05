@@ -520,7 +520,7 @@ public class CourseService {
 
     private void deleteLecturesOfCourse(Course course) {
         for (Lecture lecture : course.getLectures()) {
-            lectureService.delete(lecture);
+            lectureService.delete(lecture, false);
         }
     }
 

@@ -623,6 +623,8 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLectureShouldUpdateCompetency() throws Exception {
+        doNothing().when(competencyProgressService).setAuthorizationObject();
+
         request.delete("/api/lectures/" + lecture.getId(), HttpStatus.OK);
         Competency competency = request.get("/api/courses/" + course.getId() + "/competencies/" + this.competency.getId(), HttpStatus.OK, Competency.class);
         assertThat(competency.getLectureUnits()).isEmpty();

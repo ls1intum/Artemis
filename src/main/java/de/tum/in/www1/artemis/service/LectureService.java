@@ -141,9 +141,10 @@ public class LectureService {
     /**
      * Deletes the given lecture (with its lecture units).
      *
-     * @param lecture the lecture to be deleted
+     * @param lecture                  the lecture to be deleted
+     * @param updateCompetencyProgress whether the competency progress should be updated
      */
-    public void delete(Lecture lecture) {
+    public void delete(Lecture lecture, boolean updateCompetencyProgress) {
         if (pyrisWebhookService.isPresent()) {
             Lecture lectureWithAttachmentUnits = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture.getId());
             List<AttachmentUnit> attachmentUnitList = lectureWithAttachmentUnits.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit)
@@ -153,8 +154,10 @@ public class LectureService {
             }
         }
 
-        lecture.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit))
-                .forEach(lectureUnit -> competencyProgressService.updateProgressForUpdatedLearningObject(lectureUnit, Optional.empty()));
+        if (updateCompetencyProgress) {
+            lecture.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit))
+                    .forEach(lectureUnit -> competencyProgressService.updateProgressForUpdatedLearningObject(lectureUnit, Optional.empty()));
+        }
 
         Channel lectureChannel = channelRepository.findChannelByLectureId(lecture.getId());
         channelService.deleteChannel(lectureChannel);
