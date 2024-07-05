@@ -113,7 +113,7 @@ Alternatively, you can use the online editor within Artemis to assess the studen
 
    Manual assessment in the online editor
 
-For manual assessment, the online editor provides the following features, tailored to the assessment process:
+For manual assessment, the online editor provides the following features tailored to the assessment process:
 
 1. **File browser**: The file browser shows the files in the student's submission and allows you to navigate between them. Changed files are highlighted in yellow.
 2. **Build output**: The build output shows the output of the build process, if any. This is useful in case of build errors.
