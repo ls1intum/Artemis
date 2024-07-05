@@ -87,12 +87,9 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
                 this.setupSshKeysUrl = profileInfo.sshKeysURL;
             }
         });
-        console.log('lo');
 
         if (this.localVCEnabled && this.activeParticipation?.id) {
             this.accountService.getVcsAccessToken(this.activeParticipation.id).subscribe((fetchedVcsAccessToken) => {
-                console.log(fetchedVcsAccessToken);
-                console.log('lo');
                 this.user.vcsAccessToken = fetchedVcsAccessToken;
             });
         }

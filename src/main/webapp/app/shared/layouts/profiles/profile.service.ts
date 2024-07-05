@@ -30,7 +30,6 @@ export class ProfileService {
                 .pipe(
                     map((res: HttpResponse<ProfileInfo>) => {
                         const data = res.body!;
-                        console.log(data);
                         const profileInfo = new ProfileInfo();
                         profileInfo.activeProfiles = data.activeProfiles;
                         const displayRibbonOnProfiles = data['display-ribbon-on-profiles'].split(',');
