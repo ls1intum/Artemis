@@ -18,7 +18,7 @@ test-job:
         - export ARTEMIS_NOTIFICATION_SECRET=[hidden] # Workaround for overwriting the secret
         - export ARTEMIS_TEST_GIT_TOKEN=[hidden]
         - cargo nextest run --profile ci | tee -a "${ARTEMIS_BUILD_LOGS_FILE}" && echo "ARTEMIS_BUILD_STATUS=success" > .env || echo "ARTEMIS_BUILD_STATUS=failed" > .env
-        - test -e target/nextest/ci/junit.xml && sed -i 's/<testsuites>//g ; s/<\/testsuites>//g' target/nextest/ci/junit.xml  # <testsuites> not supported by notification plugin
+        - test -e target/nextest/ci/junit.xml && sed -i 's/<testsuites[^>]*>//g ; s/<\/testsuites>//g' target/nextest/ci/junit.xml  # <testsuites> not supported by notification plugin
     after_script:
         - echo "ARTEMIS_TEST_GIT_HASH=$(git rev-parse HEAD)" >> .env
         - echo "ARTEMIS_SUBMISSION_GIT_HASH=${CI_COMMIT_SHA}" >> .env
