@@ -2,8 +2,6 @@ stages:
     - test
     - upload
 
-variables:
-    ARTEMIS_TEST_RESULTS_DIR: "target/nextest/ci"
 
 test-job:
     image: ${ARTEMIS_BUILD_DOCKER_IMAGE}
@@ -20,7 +18,7 @@ test-job:
         - export ARTEMIS_NOTIFICATION_SECRET=[hidden] # Workaround for overwriting the secret
         - export ARTEMIS_TEST_GIT_TOKEN=[hidden]
         - cargo nextest run --profile ci | tee -a "${ARTEMIS_BUILD_LOGS_FILE}" && echo "ARTEMIS_BUILD_STATUS=success" > .env || echo "ARTEMIS_BUILD_STATUS=failed" > .env
-        - test -e target/nextest/ci/junit.xml && sed -i 's/<testsuites>//g ; s/<\/testsuites>//g' target/nextest/ci/junit.xml
+        - test -e target/nextest/ci/junit.xml && sed -i 's/<testsuites>//g ; s/<\/testsuites>//g' target/nextest/ci/junit.xml  # <testsuites> not supported by notification plugin
     after_script:
         - echo "ARTEMIS_TEST_GIT_HASH=$(git rev-parse HEAD)" >> .env
         - echo "ARTEMIS_SUBMISSION_GIT_HASH=${CI_COMMIT_SHA}" >> .env
@@ -28,7 +26,7 @@ test-job:
     artifacts:
         paths:
             - ${ARTEMIS_BUILD_LOGS_FILE}
-            - ${ARTEMIS_TEST_RESULTS_DIR}/*.xml
+            - target/nextest/ci/*.xml
         reports:
             dotenv: .env
 
@@ -45,4 +43,5 @@ upload-job:
         GIT_STRATEGY: none
     script:
         - cp -r /notification-plugin/* .
+        - export ARTEMIS_TEST_RESULTS_DIR="target/nextest/ci"  # override project variable
         - gradle run
