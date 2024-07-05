@@ -42,49 +42,26 @@
         (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.FileBrowser)"
     />
     <ng-container editorCenter>
-        @if (!useMonacoEditor) {
-            <jhi-code-editor-ace
-                [selectedFile]="selectedFile!"
-                [sessionId]="participation?.id ?? 'test'"
-                [annotations]="annotations"
-                [commitState]="commitState"
-                [editorState]="editorState"
-                [feedbacks]="participation?.results?.[0]?.feedbacks ?? []"
-                [feedbackSuggestions]="feedbackSuggestions"
-                [readOnlyManualFeedback]="readOnlyManualFeedback"
-                [isTutorAssessment]="isTutorAssessment"
-                [highlightDifferences]="highlightDifferences"
-                [course]="course"
-                [disableActions]="!editable"
-                (onFileContentChange)="onFileContentChange($event)"
-                (onUpdateFeedback)="onUpdateFeedback.emit($event)"
-                (onAcceptSuggestion)="onAcceptSuggestion.emit($event)"
-                (onDiscardSuggestion)="onDiscardSuggestion.emit($event)"
-                (onError)="onError($event)"
-                (onFileLoad)="fileLoad($event)"
-            />
-        } @else {
-            <jhi-code-editor-monaco
-                [commitState]="commitState"
-                [editorState]="editorState"
-                [course]="course"
-                [feedbacks]="participation?.results?.[0]?.feedbacks ?? []"
-                [feedbackSuggestions]="feedbackSuggestions"
-                [readOnlyManualFeedback]="readOnlyManualFeedback"
-                [disableActions]="!editable"
-                [isTutorAssessment]="isTutorAssessment"
-                [highlightDifferences]="highlightDifferences"
-                [selectedFile]="selectedFile"
-                [buildAnnotations]="annotations"
-                [sessionId]="participation?.id ?? 'test'"
-                (onFileContentChange)="onFileContentChange($event)"
-                (onUpdateFeedback)="onUpdateFeedback.emit($event)"
-                (onAcceptSuggestion)="onAcceptSuggestion.emit($event)"
-                (onDiscardSuggestion)="onDiscardSuggestion.emit($event)"
-                (onError)="onError($event)"
-                (onFileLoad)="fileLoad($event)"
-            />
-        }
+        <jhi-code-editor-monaco
+            [commitState]="commitState"
+            [editorState]="editorState"
+            [course]="course"
+            [feedbacks]="participation?.results?.[0]?.feedbacks ?? []"
+            [feedbackSuggestions]="feedbackSuggestions"
+            [readOnlyManualFeedback]="readOnlyManualFeedback"
+            [disableActions]="!editable"
+            [isTutorAssessment]="isTutorAssessment"
+            [highlightDifferences]="highlightDifferences"
+            [selectedFile]="selectedFile"
+            [buildAnnotations]="annotations"
+            [sessionId]="participation?.id ?? 'test'"
+            (onFileContentChange)="onFileContentChange($event)"
+            (onUpdateFeedback)="onUpdateFeedback.emit($event)"
+            (onAcceptSuggestion)="onAcceptSuggestion.emit($event)"
+            (onDiscardSuggestion)="onDiscardSuggestion.emit($event)"
+            (onError)="onError($event)"
+            (onFileLoad)="fileLoad($event)"
+        />
     </ng-container>
     <ng-container editorSidebarRight>
         @if (showEditorInstructions) {
