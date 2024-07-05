@@ -19,7 +19,7 @@ test-job:
         - export ARTEMIS_TEST_GIT_TOKEN=[hidden]
         - npm ci --prefer-offline --no-audit | tee -a "${ARTEMIS_BUILD_LOGS_FILE}"
         - npm run test:ci | tee -a "${ARTEMIS_BUILD_LOGS_FILE}" && echo "ARTEMIS_BUILD_STATUS=success" > .env || echo "ARTEMIS_BUILD_STATUS=failed" > .env
-        - test -e junit.xml && sed -i 's/<testsuites>//g ; s/<\/testsuites>//g' junit.xml  # <testsuites> not supported by notification plugin
+        - test -e junit.xml && sed -i 's/<testsuites[^>]*>//g ; s/<\/testsuites>//g' junit.xml  # <testsuites> not supported by notification plugin
     after_script:
         - echo "ARTEMIS_TEST_GIT_HASH=$(git rev-parse HEAD)" >> .env
         - echo "ARTEMIS_SUBMISSION_GIT_HASH=${CI_COMMIT_SHA}" >> .env
