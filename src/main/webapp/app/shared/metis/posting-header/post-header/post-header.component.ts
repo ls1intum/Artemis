@@ -37,14 +37,14 @@ export class PostHeaderComponent extends PostingHeaderDirective<Post> implements
         const mayEditOrDeleteOtherUsersAnswer =
             (isCourseWideChannel && isAtLeastInstructorInCourse) || (getAsChannelDTO(this.metisService.getCurrentConversation())?.hasChannelModerationRights ?? false);
         this.mayEditOrDelete = !this.readOnlyMode && !this.previewMode && (this.isAuthorOfPosting || mayEditOrDeleteOtherUsersAnswer);
-        this.setUserAuthorityIconAndTooltip(this.posting.authorRole);
+        this.setUserAuthorityIconAndTooltip();
     }
 
     /**
      * on changes: re-evaluates authority roles
      */
     ngOnChanges() {
-        this.setUserAuthorityIconAndTooltip(this.posting.authorRole);
+        this.setUserAuthorityIconAndTooltip();
     }
 
     /**
