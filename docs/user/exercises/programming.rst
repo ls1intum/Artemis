@@ -137,7 +137,7 @@ When you are done, click the |save-feedback-button| button to save your feedback
 
    General feedback in the online editor
 
-You can also add general feedback by going scrolling to the bottom of the page. Feedback given this way is not tied to any specific file or line of code.
+You can also add general feedback by scrolling to the bottom of the page. Feedback given this way is not tied to any specific file or line of code.
 
 To save your changes, click the |save-assessment-button| button at the top right of the page. To finalize the assessment, click the |submit-assessment-button| button. Note that you can save your assessment multiple times before submitting it.
 Once submitted, you cannot make any further changes to the assessment unless you are an instructor.
