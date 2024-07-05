@@ -130,7 +130,7 @@ You can add feedback directly in the source code by first hovering over the line
    Editing feedback in the online editor
 
 After clicking the |add-feedback-button| button, you can enter a feedback comment and assign a score for the selected line. Alternatively, you can drag one of the structured assessment criteria from the instructions to the feedback area to apply it to the feedback widget.
-When you are done, click the |save-feedback-button| button to save your feedback or the |cancel-feedback-button| button to discard it.
+When you are done, click the |save-button| button to save your feedback or the |cancel-feedback-button| button to discard it.
 
 .. figure:: programming/online-editor-general-feedback.png
    :alt: General feedback in the online editor
@@ -140,7 +140,7 @@ When you are done, click the |save-feedback-button| button to save your feedback
 
 You can also add general feedback by scrolling to the bottom of the page and clicking |add-general-feedback-button|. Feedback given this way is not tied to any specific file or line of code.
 
-To save your changes, click the |save-assessment-button| button at the top right of the page. To finalize the assessment, click the |submit-assessment-button| button. Note that you can save your assessment multiple times before submitting it.
+To save your changes, click the |save-button| button at the top right of the page. To finalize the assessment, click the |submit-assessment-button| button. Note that you can save your assessment multiple times before submitting it.
 Once submitted, you cannot make any further changes to the assessment unless you are an instructor.
 
 .. |problem-statement-task| image:: programming/online-editor-problem-statement-task.png
@@ -149,19 +149,16 @@ Once submitted, you cannot make any further changes to the assessment unless you
 .. |add-feedback-button| image:: programming/online-editor-add-feedback-button.png
     :scale: 75%
 
-.. |add-general-feedback-button| image:: programming/online-editor-add-general-feedback-button.png
-
-.. |save-feedback-button| image:: programming/online-editor-save-feedback-button.png
+.. |add-general-feedback-button| image:: general/add-new-feedback-button.png
     :scale: 50%
 
 .. |cancel-feedback-button| image:: programming/online-editor-cancel-feedback-button.png
     :scale: 50%
 
-.. |save-assessment-button| image:: programming/online-editor-save-assessment-button.png
+.. |submit-assessment-button| image:: general/submit-assessment-button.png
     :scale: 50%
 
-.. |submit-assessment-button| image:: programming/online-editor-submit-assessment-button.png
-    :scale: 50%
+.. |save-button| image:: general/save-button.png
 
 Repository Access
 -----------------
