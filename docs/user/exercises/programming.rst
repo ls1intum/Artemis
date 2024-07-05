@@ -105,7 +105,7 @@ Manual Assessment
 -----------------
 
 There are two ways to manually assess programming exercises: with the Orion plugin, you can assess the student's code directly in your JetBrains IDE. Refer to the :ref:`Orion plugin documentation <orion>` for more information.
-Alternatively, you can use the online editor to assess the students' submissions.
+Alternatively, you can use the online editor within Artemis to assess the students' submissions directly in the browser.
 
 .. figure:: programming/online-editor-assessment.png
    :alt: Manual assessment in the online editor
@@ -121,7 +121,7 @@ For manual assessment, the online editor provides the following features, tailor
 4. **Instructions**: The instructions provide the structured grading criteria and the problem statement, including the tasks the student has solved successfully as determined by the test cases of the exercise. You can review the test cases associated with each task by clicking on the number of passing tests next to the task, e.g. |problem-statement-task|
 5. **Result**: The top right corner holds the current result of the student's submission. By clicking on it, you can review the test cases and feedback currently attached to the submission.
 
-You can add feedback directly in the source code by first hovering over the line you want to comment on and then clicking the |add-feedback-button| that appears next to the line number. Students will be able to see feedback added this way in the same location when viewing their assessed submission.
+You can add feedback directly in the source code by first hovering over the line you want to comment on and then clicking the |add-feedback-button| that appears next to the line number. Students will be able to see feedback added this way in the same location when viewing their assessed submission in the online editor.
 
 .. figure:: programming/online-editor-feedback.png
    :alt: Feedback in the online editor
@@ -129,7 +129,7 @@ You can add feedback directly in the source code by first hovering over the line
 
    Editing feedback in the online editor
 
-After clicking the button, you can enter a feedback comment and a score for the selected line. Alternatively, you can drag one of the structured assessment criteria from the instructions to the feedback area to apply it to the feedback widget.
+After clicking the |add-feedback-button| button, you can enter a feedback comment and assign a score for the selected line. Alternatively, you can drag one of the structured assessment criteria from the instructions to the feedback area to apply it to the feedback widget.
 When you are done, click the |save-feedback-button| button to save your feedback or the |cancel-feedback-button| button to discard it.
 
 .. figure:: programming/online-editor-general-feedback.png
