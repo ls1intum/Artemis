@@ -13,7 +13,7 @@ import { cloneDeep } from 'lodash-es';
 import { Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
-import { captureException } from '@sentry/angular-ivy';
+import { captureException } from '@sentry/angular';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { SidebarCardElement } from 'app/types/sidebar';
 import { faLightbulb } from '@fortawesome/free-solid-svg-icons';
@@ -29,6 +29,9 @@ export class ExamParticipationService {
 
     private testRunSubject = new BehaviorSubject<boolean>(false);
     testRunStarted$ = this.testRunSubject.asObservable();
+
+    private examEndViewSubject = new BehaviorSubject<boolean>(false);
+    endViewDisplayed$ = this.examEndViewSubject.asObservable();
 
     private examExerciseIds: number[];
 
@@ -349,6 +352,10 @@ export class ExamParticipationService {
 
     public setExamExerciseIds(examExerciseIds: number[]) {
         this.examExerciseIds = examExerciseIds;
+    }
+
+    setEndView(isEndView: boolean) {
+        this.examEndViewSubject.next(isEndView);
     }
 
     setExamLayout(isExamStarted: boolean = true, isTestRun: boolean = false) {

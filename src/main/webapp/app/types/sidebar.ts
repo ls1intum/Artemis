@@ -5,7 +5,7 @@ import dayjs from 'dayjs/esm';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 
 export type SidebarCardSize = 'S' | 'M' | 'L';
-export type TimeGroupCategory = 'past' | 'current' | 'future' | 'noDate';
+export type TimeGroupCategory = 'past' | 'current' | 'dueSoon' | 'future' | 'noDate';
 export type ExamGroupCategory = 'real' | 'test';
 export type TutorialGroupCategory = 'all' | 'registered' | 'further';
 export type SidebarTypes = 'exercise' | 'exam' | 'inExam' | 'conversation' | 'default';
