@@ -68,8 +68,6 @@ export class ExerciseFilterModalComponent implements OnInit {
     focus$ = new Subject<string>();
     click$ = new Subject<string>();
 
-    // TODO x has a light blue border when opening the modal (the first item in the modal is auto focussed)
-
     form: FormGroup;
 
     model?: string;
