@@ -36,7 +36,7 @@ public interface ParticipationVCSAccessTokenRepository extends ArtemisJpaReposit
     List<ParticipationVCSAccessToken> findByUserIdWithEagerParticipation(@Param("userId") Long userId);
 
     @Query("""
-            SELECT p
+            SELECT DISTINCT p
             FROM ParticipationVCSAccessToken p
                  LEFT JOIN FETCH p.participation
                  Left JOIN FETCH p.user
@@ -47,6 +47,8 @@ public interface ParticipationVCSAccessTokenRepository extends ArtemisJpaReposit
     @Query("""
             SELECT DISTINCT p
             FROM ParticipationVCSAccessToken p
+                LEFT JOIN FETCH p.participation
+                Left JOIN FETCH p.user
             WHERE p.user.id = :userId
             """)
     List<ParticipationVCSAccessToken> findByUserId(@Param("userId") Long userId);

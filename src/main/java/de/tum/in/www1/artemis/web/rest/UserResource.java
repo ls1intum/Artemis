@@ -224,4 +224,21 @@ public class UserResource {
         log.debug("Successfully deleted SSH key of user {}", user.getLogin());
         return ResponseEntity.ok().build();
     }
+
+    /**
+     * GET users/vcsToken : get the vcsToken for of a user for a participation
+     *
+     * @param participationId
+     * @return the versionControlAccessToken belonging to the provided participation and user
+     */
+    @GetMapping("users/vcsToken")
+    @EnforceAtLeastStudent
+    public ResponseEntity<String> getVcsAccessToken(@RequestParam("participationId") Long participationId) {
+        User user = userRepository.getUser();
+
+        log.debug("REST request to get VCS access token of user {} for participation {}", user.getLogin(), participationId);
+        return ResponseEntity.ok(userService.getVcsAccessTokenForUser(user, participationId));
+
+    }
+
 }

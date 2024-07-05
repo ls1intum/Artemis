@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -46,6 +47,7 @@ import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.GuidedTourSettingsRepository;
+import de.tum.in.www1.artemis.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.science.ScienceEventRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -109,10 +111,13 @@ public class UserService {
 
     private final ScienceEventRepository scienceEventRepository;
 
+    private final ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
+
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
-            InstanceMessageSendService instanceMessageSendService, FileService fileService, ScienceEventRepository scienceEventRepository) {
+            InstanceMessageSendService instanceMessageSendService, FileService fileService, ScienceEventRepository scienceEventRepository,
+            ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -126,6 +131,7 @@ public class UserService {
         this.instanceMessageSendService = instanceMessageSendService;
         this.fileService = fileService;
         this.scienceEventRepository = scienceEventRepository;
+        this.participationVCSAccessTokenRepository = participationVCSAccessTokenRepository;
     }
 
     /**
@@ -813,5 +819,15 @@ public class UserService {
         }
 
         return notFoundUsers;
+    }
+
+    public String getVcsAccessTokenForUser(User user, Long participationId) {
+        var vcsAccessToken = participationVCSAccessTokenRepository.findByUserIdAndParticipationId(user.getId(), participationId);
+        if (vcsAccessToken.isEmpty()) {
+            throw new NoSuchElementException();
+        }
+        else {
+            return vcsAccessToken.get().getVcsAccessToken();
+        }
     }
 }

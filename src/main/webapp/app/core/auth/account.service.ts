@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { SessionStorageService } from 'ngx-webstorage';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, lastValueFrom, of } from 'rxjs';
 import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
 import { Course } from 'app/entities/course.model';
@@ -348,5 +348,17 @@ export class AccountService implements IAccountService {
             this.userIdentity.sshPublicKey = undefined;
         }
         return this.http.delete<void>('api/users/sshpublickey');
+    }
+
+    /**
+     * Sends a request to the server to obtain the VCS access token for a specific participation.
+     * Users can use this access token to clone the repository belonging to a participation.
+     *
+     * @param participationId The participation for which the VCS access token is requested
+     */
+    getVcsAccessToken(participationId: number): Observable<string> {
+        const params = new HttpParams().set('participationId', participationId);
+
+        return this.http.get<string>('api/users/vcsToken', { responseType: 'text' as 'json', params });
     }
 }
