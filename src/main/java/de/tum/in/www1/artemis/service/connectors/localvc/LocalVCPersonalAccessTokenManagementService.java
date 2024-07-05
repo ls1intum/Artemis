@@ -10,8 +10,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.web.rest.UserResource;
-
 @Service
 @Profile(PROFILE_LOCALVC)
 public class LocalVCPersonalAccessTokenManagementService {
