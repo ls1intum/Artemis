@@ -38,7 +38,6 @@ import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
-import de.tum.in.www1.artemis.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
@@ -107,14 +106,12 @@ public class ExerciseResource {
 
     private final ExerciseHintService exerciseHintService;
 
-    private final ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
-
     public ExerciseResource(ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ParticipationService participationService,
             UserRepository userRepository, ExamDateService examDateService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             ExampleSubmissionRepository exampleSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository, QuizBatchService quizBatchService,
             ParticipationRepository participationRepository, ExamAccessService examAccessService, Optional<IrisSettingsService> irisSettingsService,
-            PlagiarismCaseService plagiarismCaseService, ExerciseHintService exerciseHintService, ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository) {
+            PlagiarismCaseService plagiarismCaseService, ExerciseHintService exerciseHintService) {
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
@@ -132,7 +129,6 @@ public class ExerciseResource {
         this.irisSettingsService = irisSettingsService;
         this.plagiarismCaseService = plagiarismCaseService;
         this.exerciseHintService = exerciseHintService;
-        this.participationVCSAccessTokenRepository = participationVCSAccessTokenRepository;
     }
 
     /**
