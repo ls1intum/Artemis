@@ -55,7 +55,7 @@ public class GitLabPersonalAccessTokenManagementService extends VcsTokenManageme
      * The config parameter for enabling VCS access tokens.
      */
     @Value("${artemis.version-control.version-control-access-token:#{true}}")
-    private Boolean useVersionControlAccessToken;
+    private boolean useVersionControlAccessToken;
 
     public GitLabPersonalAccessTokenManagementService(UserRepository userRepository, GitLabApi gitlabApi, @Qualifier("gitlabRestTemplate") RestTemplate restTemplate) {
         this.userRepository = userRepository;
