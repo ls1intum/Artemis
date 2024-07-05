@@ -30,6 +30,7 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
         this.isAuthorOfPosting = this.metisService.metisUserIsAuthorOfPosting(this.posting);
         this.postingIsOfToday = dayjs().isSame(this.posting.creationDate, 'day');
         this.todayFlag = this.getTodayFlag();
+        this.setUserAuthorityIconAndTooltip();
     }
 
     /**

@@ -37,7 +37,6 @@ export class PostHeaderComponent extends PostingHeaderDirective<Post> implements
         const mayEditOrDeleteOtherUsersAnswer =
             (isCourseWideChannel && isAtLeastInstructorInCourse) || (getAsChannelDTO(this.metisService.getCurrentConversation())?.hasChannelModerationRights ?? false);
         this.mayEditOrDelete = !this.readOnlyMode && !this.previewMode && (this.isAuthorOfPosting || mayEditOrDeleteOtherUsersAnswer);
-        this.setUserAuthorityIconAndTooltip();
     }
 
     /**

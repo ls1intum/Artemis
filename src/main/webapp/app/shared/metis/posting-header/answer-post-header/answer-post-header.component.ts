@@ -40,7 +40,6 @@ export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost
         const mayEditOrDeleteOtherUsersAnswer =
             (isCourseWideChannel && isAtLeastInstructorInCourse) || (getAsChannelDTO(this.metisService.getCurrentConversation())?.hasChannelModerationRights ?? false);
         this.mayEditOrDelete = !this.isReadOnlyMode && (this.isAuthorOfPosting || mayEditOrDeleteOtherUsersAnswer);
-        this.setUserAuthorityIconAndTooltip();
     }
 
     ngOnChanges() {
