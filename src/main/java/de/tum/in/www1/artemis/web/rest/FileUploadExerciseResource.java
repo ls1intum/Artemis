@@ -48,6 +48,7 @@ import de.tum.in.www1.artemis.service.ExerciseDeletionService;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.FileUploadExerciseImportService;
 import de.tum.in.www1.artemis.service.FileUploadExerciseService;
+import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.export.FileUploadSubmissionExportService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -106,12 +107,14 @@ public class FileUploadExerciseResource {
 
     private final ChannelRepository channelRepository;
 
+    private final CompetencyProgressService competencyProgressService;
+
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository,
             ParticipationRepository participationRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             FileUploadExerciseImportService fileUploadExerciseImportService, FileUploadExerciseService fileUploadExerciseService, ChannelService channelService,
-            ChannelRepository channelRepository) {
+            ChannelRepository channelRepository, CompetencyProgressService competencyProgressService) {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -127,6 +130,7 @@ public class FileUploadExerciseResource {
         this.fileUploadExerciseService = fileUploadExerciseService;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
+        this.competencyProgressService = competencyProgressService;
     }
 
     /**
@@ -156,6 +160,7 @@ public class FileUploadExerciseResource {
 
         channelService.createExerciseChannel(result, Optional.ofNullable(fileUploadExercise.getChannelName()));
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(fileUploadExercise);
+        competencyProgressService.updateProgressByLearningObjectAsync(result);
 
         return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId())).body(result);
     }
@@ -269,7 +274,7 @@ public class FileUploadExerciseResource {
         // Check that the user is authorized to update the exercise
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
-        final var fileUploadExerciseBeforeUpdate = fileUploadExerciseRepository.findByIdElseThrow(fileUploadExercise.getId());
+        final var fileUploadExerciseBeforeUpdate = fileUploadExerciseRepository.findWithEagerCompetenciesByIdElseThrow(fileUploadExercise.getId());
 
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(fileUploadExercise, fileUploadExerciseBeforeUpdate, ENTITY_NAME);
@@ -282,6 +287,7 @@ public class FileUploadExerciseResource {
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedExercise, fileUploadExerciseBeforeUpdate.getDueDate());
 
         exerciseService.notifyAboutExerciseChanges(fileUploadExerciseBeforeUpdate, updatedExercise, notificationText);
+        competencyProgressService.updateProgressForUpdatedLearningObject(fileUploadExerciseBeforeUpdate, Optional.of(fileUploadExercise));
 
         return ResponseEntity.ok(updatedExercise);
     }

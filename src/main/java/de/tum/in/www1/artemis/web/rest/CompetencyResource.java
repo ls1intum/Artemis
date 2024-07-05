@@ -224,6 +224,8 @@ public class CompetencyResource {
         var persistedCompetency = competencyService.updateCompetency(existingCompetency, competency);
         lectureUnitService.linkLectureUnitsToCompetency(persistedCompetency, competency.getLectureUnits(), existingCompetency.getLectureUnits());
 
+        competencyProgressService.updateProgressByCompetencyAsync(competency);
+
         return ResponseEntity.ok(persistedCompetency);
     }
 

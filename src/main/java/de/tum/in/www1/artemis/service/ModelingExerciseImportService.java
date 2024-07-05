@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 
 @Profile(PROFILE_CORE)
@@ -38,11 +39,15 @@ public class ModelingExerciseImportService extends ExerciseImportService {
 
     private final ChannelService channelService;
 
+    private final CompetencyProgressService competencyProgressService;
+
     public ModelingExerciseImportService(ModelingExerciseRepository modelingExerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository, ResultRepository resultRepository, ChannelService channelService, FeedbackService feedbackService) {
+            SubmissionRepository submissionRepository, ResultRepository resultRepository, ChannelService channelService, FeedbackService feedbackService,
+            CompetencyProgressService competencyProgressService) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.channelService = channelService;
+        this.competencyProgressService = competencyProgressService;
     }
 
     /**
@@ -65,6 +70,9 @@ public class ModelingExerciseImportService extends ExerciseImportService {
 
         channelService.createExerciseChannel(newModelingExercise, Optional.ofNullable(importedExercise.getChannelName()));
         newModelingExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise, gradingInstructionCopyTracker));
+
+        competencyProgressService.updateProgressByLearningObjectAsync(newModelingExercise);
+
         return newModelingExercise;
     }
 

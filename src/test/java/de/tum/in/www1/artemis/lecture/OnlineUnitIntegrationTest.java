@@ -1,13 +1,18 @@
 package de.tum.in.www1.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -24,7 +29,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.in.www1.artemis.competency.CompetencyUtilService;
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.OnlineUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
@@ -48,9 +55,14 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @Autowired
     private LectureUtilService lectureUtilService;
 
+    @Autowired
+    private CompetencyUtilService competencyUtilService;
+
     private Lecture lecture1;
 
     private OnlineUnit onlineUnit;
+
+    private Competency competency;
 
     private MockedStatic<Jsoup> jsoupMock;
 
@@ -67,6 +79,8 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
         userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
+
+        competency = competencyUtilService.createCompetency(lecture1.getCourse());
 
         jsoupMock = mockStatic(Jsoup.class);
     }
@@ -97,9 +111,11 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createOnlineUnit_asInstructor_shouldCreateOnlineUnit() throws Exception {
+        onlineUnit.setCompetencies(Set.of(competency));
         onlineUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         var persistedOnlineUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/online-units", onlineUnit, OnlineUnit.class, HttpStatus.CREATED);
         assertThat(persistedOnlineUnit.getId()).isNotNull();
+        verify(competencyProgressService).updateProgressByLearningObjectAsync(any());
     }
 
     @Test
@@ -126,6 +142,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateOnlineUnit_asInstructor_shouldUpdateOnlineUnit() throws Exception {
+        onlineUnit.setCompetencies(Set.of(competency));
         persistOnlineUnitWithLecture();
 
         this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
@@ -133,6 +150,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest
         this.onlineUnit.setDescription("Changed");
         this.onlineUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/online-units", this.onlineUnit, OnlineUnit.class, HttpStatus.OK);
         assertThat(this.onlineUnit.getDescription()).isEqualTo("Changed");
+        verify(competencyProgressService).updateProgressForUpdatedLearningObject(any(), any());
     }
 
     @Test
@@ -242,12 +260,14 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteOnlineUnit_correctId_shouldDeleteOnlineUnit() throws Exception {
+        onlineUnit.setCompetencies(Set.of(competency));
         persistOnlineUnitWithLecture();
 
         this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
         assertThat(this.onlineUnit.getId()).isNotNull();
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + this.onlineUnit.getId(), HttpStatus.OK);
         request.get("/api/lectures/" + lecture1.getId() + "/online-units/" + this.onlineUnit.getId(), HttpStatus.NOT_FOUND, OnlineUnit.class);
+        verify(competencyProgressService).updateProgressForUpdatedLearningObject(any(), eq(Optional.empty()));
     }
 
 }

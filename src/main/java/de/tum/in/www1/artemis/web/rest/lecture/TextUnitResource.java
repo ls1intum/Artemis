@@ -92,18 +92,18 @@ public class TextUnitResource {
             throw new BadRequestAlertException("A text unit must have an ID to be updated", ENTITY_NAME, "idNull");
         }
 
-        var textUnit = textUnitRepository.findByIdWithCompetenciesBidirectional(textUnitForm.getId()).orElseThrow();
+        var existingTextUnit = textUnitRepository.findByIdWithCompetencies(textUnitForm.getId()).orElseThrow();
 
-        if (textUnit.getLecture() == null || textUnit.getLecture().getCourse() == null || !textUnit.getLecture().getId().equals(lectureId)) {
+        if (existingTextUnit.getLecture() == null || existingTextUnit.getLecture().getCourse() == null || !existingTextUnit.getLecture().getId().equals(lectureId)) {
             throw new BadRequestAlertException("Input data not valid", ENTITY_NAME, "inputInvalid");
         }
-        authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, textUnit.getLecture(), null);
+        authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, existingTextUnit.getLecture(), null);
 
-        textUnitForm.setId(textUnit.getId());
-        textUnitForm.setLecture(textUnit.getLecture());
+        textUnitForm.setId(existingTextUnit.getId());
+        textUnitForm.setLecture(existingTextUnit.getLecture());
         TextUnit result = textUnitRepository.save(textUnitForm);
 
-        competencyProgressService.updateProgressByLearningObjectAsync(result);
+        competencyProgressService.updateProgressForUpdatedLearningObject(existingTextUnit, Optional.of(textUnitForm));
 
         return ResponseEntity.ok(result);
     }

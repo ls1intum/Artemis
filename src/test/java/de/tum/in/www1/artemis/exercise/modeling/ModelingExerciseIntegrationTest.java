@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.exercise.modeling;
 
 import static de.tum.in.www1.artemis.util.TestResourceUtils.HalfSecond;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -27,6 +28,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.in.www1.artemis.competency.CompetencyUtilService;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ExampleSubmission;
@@ -36,6 +38,7 @@ import de.tum.in.www1.artemis.domain.GradingInstruction;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.TeamAssignmentConfig;
+import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
@@ -126,9 +129,14 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Autowired
     private PageableSearchUtilService pageableSearchUtilService;
 
+    @Autowired
+    private CompetencyUtilService competencyUtilService;
+
     private ModelingExercise classExercise;
 
     private Set<GradingCriterion> gradingCriteria;
+
+    private Competency competency;
 
     @BeforeEach
     void initTestCase() {
@@ -140,6 +148,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor2");
         userUtilService.createAndSaveUser(TEST_PREFIX + "tutor2");
 
+        competency = competencyUtilService.createCompetency(course);
     }
 
     @Test
@@ -229,6 +238,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         ModelingExercise modelingExercise = ModelingExerciseFactory.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         courseUtilService.enableMessagingForCourse(modelingExercise.getCourseViaExerciseGroupOrCourseMember());
         modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
+        modelingExercise.setCompetencies(Set.of(competency));
 
         ModelingExercise createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(modelingExercise);
@@ -242,9 +252,14 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         assertThat(returnedModelingExercise.getGradingCriteria()).hasSameSizeAs(gradingCriteria);
         verify(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(returnedModelingExercise, notificationText);
         verify(examLiveEventsService, never()).createAndSendProblemStatementUpdateEvent(returnedModelingExercise, notificationText);
+        verify(competencyProgressService).updateProgressForUpdatedLearningObject(any(), any());
+    }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateModelingExerciseWrongCourseId_asInstructor() throws Exception {
         // use an arbitrary course id that was not yet stored on the server to get a bad request in the PUT call
-        modelingExercise = ModelingExerciseFactory.createModelingExercise(Long.MAX_VALUE, classExercise.getId());
+        ModelingExercise modelingExercise = ModelingExerciseFactory.createModelingExercise(Long.MAX_VALUE, classExercise.getId());
         request.put("/api/modeling-exercises", modelingExercise, HttpStatus.CONFLICT);
     }
 
@@ -403,6 +418,17 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteModelingExerciseWithCompetency() throws Exception {
+        classExercise.setCompetencies(Set.of(competency));
+        modelingExerciseRepository.save(classExercise);
+
+        request.delete("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.OK);
+
+        verify(competencyProgressService).updateProgressByCompetencyAsync(competency);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteModelingExerciseWithChannel() throws Exception {
         Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
         ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
@@ -459,14 +485,16 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExerciseToImport.setCourse(course2);
         String uniqueChannelName = "channel-" + UUID.randomUUID().toString().substring(0, 8);
         modelingExerciseToImport.setChannelName(uniqueChannelName);
+        modelingExerciseToImport.setCompetencies(Set.of(competency));
 
         var importedExercise = request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExerciseToImport.getId(), modelingExerciseToImport, ModelingExercise.class,
                 HttpStatus.CREATED);
         assertThat(importedExercise).usingRecursiveComparison().ignoringFields("id", "course", "shortName", "releaseDate", "dueDate", "assessmentDueDate",
-                "exampleSolutionPublicationDate", "channelNameTransient", "plagiarismDetectionConfig.id").isEqualTo(modelingExerciseToImport);
+                "exampleSolutionPublicationDate", "channelNameTransient", "plagiarismDetectionConfig.id", "competencies").isEqualTo(modelingExerciseToImport);
         Channel channelFromDB = channelRepository.findChannelByExerciseId(importedExercise.getId());
         assertThat(channelFromDB).isNotNull();
         assertThat(channelFromDB.getName()).isEqualTo(uniqueChannelName);
+        verify(competencyProgressService).updateProgressByLearningObjectAsync(any());
     }
 
     @Test

@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Optional;
 
 import jakarta.ws.rs.BadRequestException;
 
@@ -89,15 +90,16 @@ public class VideoUnitResource {
         if (videoUnit.getId() == null) {
             throw new BadRequestException();
         }
+        var existingVideoUnit = videoUnitRepository.findByIdWithCompetenciesElseThrow(videoUnit.getId());
 
-        checkVideoUnitCourseAndLecture(videoUnit, lectureId);
+        checkVideoUnitCourseAndLecture(existingVideoUnit, lectureId);
         normalizeVideoUrl(videoUnit);
         lectureUnitService.validateUrlStringAndReturnUrl(videoUnit.getSource());
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, videoUnit.getLecture().getCourse(), null);
 
         VideoUnit result = videoUnitRepository.save(videoUnit);
 
-        competencyProgressService.updateProgressByLearningObjectAsync(result);
+        competencyProgressService.updateProgressForUpdatedLearningObject(existingVideoUnit, Optional.of(videoUnit));
 
         return ResponseEntity.ok(result);
     }

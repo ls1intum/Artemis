@@ -6,6 +6,8 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -30,6 +32,14 @@ public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileU
             """)
     List<FileUploadExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "competencies" })
+    Optional<FileUploadExercise> findWithEagerCompetenciesById(Long exerciseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencies" })
     Optional<FileUploadExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(Long exerciseId);
+
+    @NotNull
+    default FileUploadExercise findWithEagerCompetenciesByIdElseThrow(Long exerciseId) {
+        return getValueElseThrow(findWithEagerCompetenciesById(exerciseId), exerciseId);
+    }
 }

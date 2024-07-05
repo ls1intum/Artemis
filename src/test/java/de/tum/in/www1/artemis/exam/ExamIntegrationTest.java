@@ -1782,7 +1782,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         // The directly returned exam should not contain details like the quiz questions
         assertThat(exercise.getQuizQuestions()).isEmpty();
 
-        exercise = quizExerciseRepository.findWithEagerQuestionsByIdOrElseThrow(exercise.getId());
+        exercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exercise.getId());
         // Quiz questions should get imported into the exam
         assertThat(exercise.getQuizQuestions()).hasSize(3);
     }

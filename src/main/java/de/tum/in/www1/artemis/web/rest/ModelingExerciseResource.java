@@ -51,6 +51,7 @@ import de.tum.in.www1.artemis.service.ExerciseDeletionService;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.ModelingExerciseImportService;
 import de.tum.in.www1.artemis.service.ModelingExerciseService;
+import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.export.SubmissionExportService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -79,6 +80,8 @@ public class ModelingExerciseResource {
     private static final Logger log = LoggerFactory.getLogger(ModelingExerciseResource.class);
 
     private static final String ENTITY_NAME = "modelingExercise";
+
+    private final CompetencyProgressService competencyProgressService;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -122,7 +125,8 @@ public class ModelingExerciseResource {
             ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository,
             ModelingExerciseImportService modelingExerciseImportService, SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService,
             GroupNotificationScheduleService groupNotificationScheduleService, GradingCriterionRepository gradingCriterionRepository,
-            PlagiarismDetectionService plagiarismDetectionService, ChannelService channelService, ChannelRepository channelRepository) {
+            PlagiarismDetectionService plagiarismDetectionService, ChannelService channelService, ChannelRepository channelRepository,
+            CompetencyProgressService competencyProgressService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -140,6 +144,7 @@ public class ModelingExerciseResource {
         this.plagiarismDetectionService = plagiarismDetectionService;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
+        this.competencyProgressService = competencyProgressService;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -177,6 +182,7 @@ public class ModelingExerciseResource {
         channelService.createExerciseChannel(result, Optional.ofNullable(modelingExercise.getChannelName()));
         modelingExerciseService.scheduleOperations(result.getId());
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(modelingExercise);
+        competencyProgressService.updateProgressByLearningObjectAsync(result);
 
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId())).body(result);
     }
@@ -223,7 +229,7 @@ public class ModelingExerciseResource {
         // Check that the user is authorized to update the exercise
         var user = userRepository.getUserWithGroupsAndAuthorities();
         // Important: use the original exercise for permission check
-        final ModelingExercise modelingExerciseBeforeUpdate = modelingExerciseRepository.findByIdElseThrow(modelingExercise.getId());
+        final ModelingExercise modelingExerciseBeforeUpdate = modelingExerciseRepository.findWithEagerCompetenciesByIdElseThrow(modelingExercise.getId());
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, modelingExerciseBeforeUpdate, user);
 
         // Forbid changing the course the exercise belongs to.
@@ -245,6 +251,8 @@ public class ModelingExerciseResource {
         exerciseService.checkExampleSubmissions(updatedModelingExercise);
 
         exerciseService.notifyAboutExerciseChanges(modelingExerciseBeforeUpdate, updatedModelingExercise, notificationText);
+
+        competencyProgressService.updateProgressForUpdatedLearningObject(modelingExerciseBeforeUpdate, Optional.of(modelingExercise));
 
         return ResponseEntity.ok(updatedModelingExercise);
     }

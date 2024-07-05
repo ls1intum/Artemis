@@ -58,7 +58,8 @@ public interface AttachmentUnitRepository extends ArtemisJpaRepository<Attachmen
             SELECT attachmentUnit
             FROM AttachmentUnit attachmentUnit
                 LEFT JOIN FETCH attachmentUnit.slides slides
+                LEFT JOIN FETCH attachmentUnit.competencies
             WHERE attachmentUnit.id = :attachmentUnitId
             """)
-    AttachmentUnit findOneWithSlides(@Param("attachmentUnitId") long attachmentUnitId);
+    AttachmentUnit findOneWithSlidesAndCompetencies(@Param("attachmentUnitId") long attachmentUnitId);
 }

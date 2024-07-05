@@ -69,6 +69,7 @@ import de.tum.in.www1.artemis.service.ExerciseDeletionService;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
@@ -100,12 +101,12 @@ public class QuizExerciseResource {
 
     private static final String ENTITY_NAME = "quizExercise";
 
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
     private final QuizSubmissionService quizSubmissionService;
 
     private final QuizResultService quizResultService;
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
 
     private final QuizExerciseService quizExerciseService;
 
@@ -147,13 +148,15 @@ public class QuizExerciseResource {
 
     private final ChannelRepository channelRepository;
 
+    private final CompetencyProgressService competencyProgressService;
+
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizMessagingService quizMessagingService, QuizExerciseRepository quizExerciseRepository,
             UserRepository userRepository, CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             ExamDateService examDateService, InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService,
             QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService,
             GroupNotificationScheduleService groupNotificationScheduleService, StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService,
             QuizBatchRepository quizBatchRepository, FileService fileService, ChannelService channelService, ChannelRepository channelRepository,
-            QuizSubmissionService quizSubmissionService, QuizResultService quizResultService) {
+            QuizSubmissionService quizSubmissionService, QuizResultService quizResultService, CompetencyProgressService competencyProgressService) {
         this.quizExerciseService = quizExerciseService;
         this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -176,6 +179,7 @@ public class QuizExerciseResource {
         this.channelRepository = channelRepository;
         this.quizSubmissionService = quizSubmissionService;
         this.quizResultService = quizResultService;
+        this.competencyProgressService = competencyProgressService;
     }
 
     /**
@@ -237,6 +241,8 @@ public class QuizExerciseResource {
 
         channelService.createExerciseChannel(result, Optional.ofNullable(quizExercise.getChannelName()));
 
+        competencyProgressService.updateProgressByLearningObjectAsync(result);
+
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
@@ -270,7 +276,7 @@ public class QuizExerciseResource {
         // Valid exercises have set either a course or an exerciseGroup
         quizExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
 
-        final var originalQuiz = quizExerciseRepository.findWithEagerQuestionsByIdOrElseThrow(exerciseId);
+        final var originalQuiz = quizExerciseRepository.findByIdWithQuestionsAndCompetenciesElseThrow(exerciseId);
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
@@ -300,6 +306,8 @@ public class QuizExerciseResource {
         if (updatedChannel != null) {
             quizExercise.setChannelName(updatedChannel.getName());
         }
+        competencyProgressService.updateProgressForUpdatedLearningObject(originalQuiz, Optional.of(quizExercise));
+
         return ResponseEntity.ok(quizExercise);
     }
 
@@ -635,7 +643,7 @@ public class QuizExerciseResource {
     @EnforceAtLeastInstructorInExercise(resourceIdFieldName = "quizExerciseId")
     public ResponseEntity<Void> deleteQuizExercise(@PathVariable Long quizExerciseId) {
         log.info("REST request to delete quiz exercise : {}", quizExerciseId);
-        var quizExercise = quizExerciseRepository.findWithEagerQuestionsByIdOrElseThrow(quizExerciseId);
+        var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndCompetenciesElseThrow(quizExerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
         List<DragAndDropQuestion> dragAndDropQuestions = quizExercise.getQuizQuestions().stream().filter(question -> question instanceof DragAndDropQuestion)
@@ -769,6 +777,7 @@ public class QuizExerciseResource {
 
         final var originalQuizExercise = quizExerciseRepository.findByIdElseThrow(sourceExerciseId);
         final var newQuizExercise = quizExerciseImportService.importQuizExercise(originalQuizExercise, importedExercise);
+
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + newQuizExercise.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newQuizExercise.getId().toString())).body(newQuizExercise);
     }

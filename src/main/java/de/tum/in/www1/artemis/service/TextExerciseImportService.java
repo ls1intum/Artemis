@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 
 @Profile(PROFILE_CORE)
@@ -53,15 +54,19 @@ public class TextExerciseImportService extends ExerciseImportService {
 
     private final ChannelService channelService;
 
+    private final CompetencyProgressService competencyProgressService;
+
     public TextExerciseImportService(TextExerciseRepository textExerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository,
             SubmissionRepository submissionRepository, ResultRepository resultRepository, TextBlockRepository textBlockRepository, FeedbackRepository feedbackRepository,
-            TextSubmissionRepository textSubmissionRepository, ChannelService channelService, FeedbackService feedbackService) {
+            TextSubmissionRepository textSubmissionRepository, ChannelService channelService, FeedbackService feedbackService,
+            CompetencyProgressService competencyProgressService) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
         this.textBlockRepository = textBlockRepository;
         this.textExerciseRepository = textExerciseRepository;
         this.feedbackRepository = feedbackRepository;
         this.textSubmissionRepository = textSubmissionRepository;
         this.channelService = channelService;
+        this.competencyProgressService = competencyProgressService;
     }
 
     /**
@@ -88,6 +93,9 @@ public class TextExerciseImportService extends ExerciseImportService {
 
         channelService.createExerciseChannel(newTextExercise, Optional.ofNullable(importedExercise.getChannelName()));
         newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise, gradingInstructionCopyTracker));
+
+        competencyProgressService.updateProgressByLearningObjectAsync(newTextExercise);
+
         return newExercise;
     }
 

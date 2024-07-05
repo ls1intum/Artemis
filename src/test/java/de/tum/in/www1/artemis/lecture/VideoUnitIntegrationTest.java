@@ -1,8 +1,13 @@
 package de.tum.in.www1.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,7 +16,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.in.www1.artemis.competency.CompetencyUtilService;
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.VideoUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
@@ -34,9 +41,14 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     @Autowired
     private LectureUtilService lectureUtilService;
 
+    @Autowired
+    private CompetencyUtilService competencyUtilService;
+
     private Lecture lecture1;
 
     private VideoUnit videoUnit;
+
+    private Competency competency;
 
     @BeforeEach
     void initTestCase() {
@@ -51,6 +63,8 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest 
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
         userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
+
+        competency = competencyUtilService.createCompetency(lecture1.getCourse());
     }
 
     private void testAllPreAuthorize() throws Exception {
@@ -75,8 +89,10 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createVideoUnit_asInstructor_shouldCreateVideoUnit() throws Exception {
         videoUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
+        videoUnit.setCompetencies(Set.of(competency));
         var persistedVideoUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/video-units", videoUnit, VideoUnit.class, HttpStatus.CREATED);
         assertThat(persistedVideoUnit.getId()).isNotNull();
+        verify(competencyProgressService).updateProgressByLearningObjectAsync(any());
     }
 
     @Test
@@ -103,6 +119,7 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateVideoUnit_asInstructor_shouldUpdateVideoUnit() throws Exception {
+        videoUnit.setCompetencies(Set.of(competency));
         persistVideoUnitWithLecture();
 
         this.videoUnit = (VideoUnit) lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
@@ -110,6 +127,7 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest 
         this.videoUnit.setDescription("Changed");
         this.videoUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/video-units", this.videoUnit, VideoUnit.class, HttpStatus.OK);
         assertThat(this.videoUnit.getDescription()).isEqualTo("Changed");
+        verify(competencyProgressService).updateProgressForUpdatedLearningObject(any(), any());
     }
 
     @Test
@@ -182,12 +200,14 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteVideoUnit_correctId_shouldDeleteVideoUnit() throws Exception {
+        videoUnit.setCompetencies(Set.of(competency));
         persistVideoUnitWithLecture();
 
         this.videoUnit = (VideoUnit) lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
         assertThat(this.videoUnit.getId()).isNotNull();
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + this.videoUnit.getId(), HttpStatus.OK);
         request.get("/api/lectures/" + lecture1.getId() + "/video-units/" + this.videoUnit.getId(), HttpStatus.NOT_FOUND, VideoUnit.class);
+        verify(competencyProgressService).updateProgressForUpdatedLearningObject(any(), eq(Optional.empty()));
     }
 
     @Test

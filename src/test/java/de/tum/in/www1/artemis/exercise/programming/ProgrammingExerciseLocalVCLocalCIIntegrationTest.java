@@ -5,10 +5,12 @@ import static de.tum.in.www1.artemis.config.Constants.LOCALCI_WORKING_DIRECTORY;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
@@ -26,10 +28,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.in.www1.artemis.competency.CompetencyUtilService;
 import de.tum.in.www1.artemis.connector.AeolusRequestMockProvider;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -61,6 +65,9 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
     @Autowired
     private AeolusRequestMockProvider aeolusRequestMockProvider;
 
+    @Autowired
+    private CompetencyUtilService competencyUtilService;
+
     private Course course;
 
     private ProgrammingExercise programmingExercise;
@@ -72,6 +79,8 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
     private LocalRepository testsRepository;
 
     private LocalRepository assignmentRepository;
+
+    private Competency competency;
 
     @Value("${artemis.user-management.internal-admin.username}")
     private String localVCUsername;
@@ -128,6 +137,8 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
 
         // Check that the repository folders were created in the file system for all base repositories.
         localVCLocalCITestService.verifyRepositoryFoldersExist(programmingExercise, localVCBasePath);
+
+        competency = competencyUtilService.createCompetency(course);
     }
 
     @AfterEach
@@ -146,6 +157,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
 
         ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        newExercise.setCompetencies(Set.of(competency));
 
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns a dummy commitHash for both the assignment and the test repository.
         // Note: The stub needs to receive the same object twice because there are two requests to the same method (one for the template participation and one for the solution
@@ -176,16 +188,20 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         // Also check that the template and solution repositories were built successfully.
         localVCLocalCITestService.testLatestSubmission(createdExercise.getTemplateParticipation().getId(), null, 0, false);
         localVCLocalCITestService.testLatestSubmission(createdExercise.getSolutionParticipation().getId(), null, 13, false);
+
+        verify(competencyProgressService).updateProgressByLearningObjectAsync(any());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateProgrammingExercise() throws Exception {
         programmingExercise.setReleaseDate(ZonedDateTime.now().plusHours(1));
+        programmingExercise.setCompetencies(Set.of(competency));
 
         ProgrammingExercise updatedExercise = request.putWithResponseBody("/api/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
 
         assertThat(updatedExercise.getReleaseDate()).isEqualTo(programmingExercise.getReleaseDate());
+        verify(competencyProgressService).updateProgressForUpdatedLearningObject(any(), any());
     }
 
     @Test
@@ -202,6 +218,9 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteProgrammingExercise() throws Exception {
+        programmingExercise.setCompetencies(Set.of(competency));
+        programmingExerciseRepository.save(programmingExercise);
+
         // Delete the exercise
         var params = new LinkedMultiValueMap<String, String>();
         params.add("deleteStudentReposBuildPlans", "true");
@@ -215,6 +234,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         assertThat(solutionRepositoryUri.getLocalRepositoryPath(localVCBasePath)).doesNotExist();
         LocalVCRepositoryUri testsRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getTestRepositoryUri());
         assertThat(testsRepositoryUri.getLocalRepositoryPath(localVCBasePath)).doesNotExist();
+        verify(competencyProgressService).updateProgressByCompetencyAsync(competency);
     }
 
     @Test
@@ -249,6 +269,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "true");
         exerciseToBeImported.setChannelName("testchannel-pe-imported");
+        exerciseToBeImported.setCompetencies(Set.of(competency));
         var importedExercise = request.postWithResponseBody("/api/programming-exercises/import/" + programmingExercise.getId(), exerciseToBeImported, ProgrammingExercise.class,
                 params, HttpStatus.OK);
 
@@ -263,6 +284,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
                 .orElseThrow();
         localVCLocalCITestService.testLatestSubmission(templateParticipation.getId(), null, 0, false);
         localVCLocalCITestService.testLatestSubmission(solutionParticipation.getId(), null, 13, false);
+        verify(competencyProgressService).updateProgressByLearningObjectAsync(any());
     }
 
     @Nested

@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Optional;
 
 import jakarta.ws.rs.BadRequestException;
 
@@ -100,13 +101,17 @@ public class OnlineUnitResource {
             throw new BadRequestException();
         }
 
-        checkOnlineUnitCourseAndLecture(onlineUnit, lectureId);
+        var existingOnlineUnit = onlineUnitRepository.findByIdWithCompetenciesElseThrow(onlineUnit.getId());
+
+        checkOnlineUnitCourseAndLecture(existingOnlineUnit, lectureId);
         lectureUnitService.validateUrlStringAndReturnUrl(onlineUnit.getSource());
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, onlineUnit.getLecture().getCourse(), null);
 
         OnlineUnit result = onlineUnitRepository.save(onlineUnit);
-        competencyProgressService.updateProgressByLearningObjectAsync(result);
+
+        competencyProgressService.updateProgressForUpdatedLearningObject(existingOnlineUnit, Optional.of(onlineUnit));
+
         return ResponseEntity.ok(result);
     }
 
