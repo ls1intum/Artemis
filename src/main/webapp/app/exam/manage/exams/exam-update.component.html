@@ -145,15 +145,7 @@
                 <div class="col-sm-6">
                     <label class="form-check-label" for="gracePeriod" jhiTranslate="artemisApp.examManagement.gracePeriod"></label>
                     <jhi-help-icon text="artemisApp.examManagement.gracePeriodTooltip" />
-                    <input
-                        id="gracePeriod"
-                        name="gracePeriod"
-                        class="form-control"
-                        type="number"
-                        min="0"
-                        [(ngModel)]="exam.gracePeriod"
-                        (ngModelChange)="updateGracePeriodTextInformation()"
-                    />
+                    <input id="gracePeriod" name="gracePeriod" class="form-control" type="number" min="0" [(ngModel)]="exam.gracePeriod" />
                 </div>
             </div>
             <hr />
@@ -163,15 +155,7 @@
                 <div class="col-sm-6">
                     <label class="form-check-label" for="examMaxPoints" jhiTranslate="artemisApp.examManagement.maxPoints.title"></label>
                     <fa-icon [icon]="faExclamationTriangle" class="text-warning" ngbTooltip="{{ 'artemisApp.examManagement.maxPoints.warning' | artemisTranslate }}" />
-                    <input
-                        id="examMaxPoints"
-                        name="examMaxPoints"
-                        class="form-control"
-                        type="number"
-                        min="1"
-                        [(ngModel)]="exam.examMaxPoints"
-                        (ngModelChange)="updateMaxPointsTextInformation()"
-                    />
+                    <input id="examMaxPoints" name="examMaxPoints" class="form-control" type="number" min="1" [(ngModel)]="exam.examMaxPoints" />
                 </div>
                 <div class="col-sm-6">
                     <label class="form-check-label" for="numberOfExercisesInExam" jhiTranslate="artemisApp.examManagement.numberOfExercisesInExam"
