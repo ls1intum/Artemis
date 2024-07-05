@@ -4,9 +4,9 @@ import { Subscription } from 'rxjs';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { MonacoEditorLineWidget } from 'app/shared/monaco-editor/model/monaco-editor-inline-widget.model';
 import { MonacoEditorBuildAnnotation, MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
-import { MonacoEditorGlyphMarginHoverButton } from 'app/shared/monaco-editor/model/monaco-editor-glyph-margin-hover-button.model';
 import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { MonacoEditorLineDecorationsHoverButton } from './model/monaco-editor-line-decorations-hover-button.model';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -26,7 +26,13 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     editorBuildAnnotations: MonacoEditorBuildAnnotation[] = [];
     lineHighlights: MonacoEditorLineHighlight[] = [];
     actions: MonacoEditorAction[] = [];
-    glyphMarginHoverButton?: MonacoEditorGlyphMarginHoverButton;
+    lineDecorationsHoverButton?: MonacoEditorLineDecorationsHoverButton;
+
+    /**
+     * The default width of the line decoration button in the editor. We use the ch unit to avoid fixed pixel sizes.
+     * @private
+     */
+    private static readonly DEFAULT_LINE_DECORATION_BUTTON_WIDTH = '2.3ch';
 
     constructor(
         private readonly themeService: ThemeService,
@@ -212,7 +218,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.disposeWidgets();
         this.disposeLineHighlights();
         this.disposeActions();
-        this.glyphMarginHoverButton?.dispose();
+        this.lineDecorationsHoverButton?.dispose();
     }
 
     disposeWidgets() {
@@ -299,13 +305,24 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Sets a {@link MonacoEditorGlyphMarginHoverButton} on this editor. If there was already such a button on this editor, it will be disposed.
-     * @param domNode The node to use as the button.
-     * @param clickCallback The callback to execute when the button is clicked. It will receive the line number (as shown in the editor) as parameter.
+     * Adds a hover button to the line decorations of the editor. The button is only visible when hovering over the line.
+     * This will disable folding and set the line decorations width to make room for the button.
+     * @param className The CSS class to use for the button. This class must uniquely identify the button. To render content, use the CSS content attribute.
+     * @param clickCallback The callback to invoke when the button is clicked. The line number is passed as an argument.
      */
-    setGlyphMarginHoverButton(domNode: HTMLElement, clickCallback: (lineNumber: number) => void): void {
-        this.glyphMarginHoverButton?.dispose();
-        this.glyphMarginHoverButton = new MonacoEditorGlyphMarginHoverButton(this._editor, 'glyph-margin-hover-button-' + this._editor.getId(), domNode, clickCallback);
+    setLineDecorationsHoverButton(className: string, clickCallback: (lineNumber: number) => void): void {
+        this.lineDecorationsHoverButton?.dispose();
+        this.lineDecorationsHoverButton = new MonacoEditorLineDecorationsHoverButton(
+            this._editor,
+            `line-decorations-hover-button-${this._editor.getId()}`,
+            className,
+            clickCallback,
+        );
+        // Make room for the hover button in the line decorations.
+        this._editor.updateOptions({
+            folding: false,
+            lineDecorationsWidth: MonacoEditorComponent.DEFAULT_LINE_DECORATION_BUTTON_WIDTH,
+        });
     }
 
     /**
