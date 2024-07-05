@@ -87,7 +87,7 @@
                 id="scrollableDiv"
                 #container
                 class="body-bg"
-                [class]="totalNumberOfPosts !== 0 ? 'posting-infinite-scroll-container' : ''"
+                [ngClass]="{ 'posting-infinite-scroll-container': totalNumberOfPosts !== 0 }"
                 infinite-scroll
                 [scrollWindow]="false"
                 (scrolledUp)="fetchNextPage()"

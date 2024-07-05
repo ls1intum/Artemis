@@ -375,11 +375,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         return ChannelSubType.GENERAL;
     }
 
-    getConversationDTO(conversationId: number): ConversationDTO {
-        return this.conversationsOfUser.find((conversation) => conversation.id === conversationId)!;
-    }
-
-    collapseChannelSearch() {
+    toggleChannelSearch() {
         this.channelSearchCollapsed = !this.channelSearchCollapsed;
     }
 }

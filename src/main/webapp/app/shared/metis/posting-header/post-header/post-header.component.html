@@ -1,12 +1,12 @@
 <div class="d-flex justify-content-between my-1">
     <div class="align-items-center">
-        <span class="fs-medium header-author-date">
+        <span class="fs-x-small header-author-date">
             @if (posting.author) {
-                <span class="fs-6" ngbTooltip="{{ userAuthorityTooltip | artemisTranslate }}">
-                    <span id="role-badge" class="badge fs-small p-1 rounded-3" [class]="'badge-' + userAuthority"> </span>
+                <span ngbTooltip="{{ userAuthorityTooltip | artemisTranslate }}" class="badge fs-xx-small p-1 rounded-3" [ngClass]="'badge-' + userAuthority" id="role-badge">
+                    {{ userRoleBadge | artemisTranslate }}
                 </span>
-                <span class="fs-large pe-1 fw-bold">
-                    {{ posting.author!.name }}
+                <span class="fs-small pe-1 fw-bold">
+                    {{ posting.author?.name }}
                 </span>
             }
             <span class="px-1"> - </span>
@@ -29,7 +29,7 @@
             <span class="badge bg-secondary hideAfter5Seconds">{{ 'global.generic.new' | artemisTranslate }}</span>
         }
     </div>
-    <div class="mx-2 my-1">
+    <div class="mx-2 my-1 d-flex">
         @if (mayEditOrDelete) {
             <fa-icon
                 size="xs"

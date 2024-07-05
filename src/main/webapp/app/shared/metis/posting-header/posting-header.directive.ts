@@ -16,6 +16,7 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
     postingIsOfToday: boolean;
     todayFlag: string | undefined;
     userAuthority: string;
+    userRoleBadge: string;
     userAuthorityTooltip: string;
 
     protected constructor(protected metisService: MetisService) {}
@@ -49,16 +50,20 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
      */
     setUserAuthorityIconAndTooltip(): void {
         const toolTipTranslationPath = 'artemisApp.metis.userAuthorityTooltips.';
+        const roleBadgeTranslationPath = 'artemisApp.metis.userRoles.';
 
         if (this.posting.authorRole === UserRole.USER) {
             this.userAuthority = 'student';
-            this.userAuthorityTooltip = toolTipTranslationPath + 'student';
+            this.userRoleBadge = roleBadgeTranslationPath + this.userAuthority;
+            this.userAuthorityTooltip = toolTipTranslationPath + this.userAuthority;
         } else if (this.posting.authorRole === UserRole.INSTRUCTOR) {
             this.userAuthority = 'instructor';
-            this.userAuthorityTooltip = toolTipTranslationPath + 'instructor';
+            this.userRoleBadge = roleBadgeTranslationPath + this.userAuthority;
+            this.userAuthorityTooltip = toolTipTranslationPath + this.userAuthority;
         } else if (this.posting.authorRole === UserRole.TUTOR) {
             this.userAuthority = 'tutor';
-            this.userAuthorityTooltip = toolTipTranslationPath + 'ta';
+            this.userRoleBadge = roleBadgeTranslationPath + this.userAuthority;
+            this.userAuthorityTooltip += toolTipTranslationPath + this.userAuthority;
         }
     }
 

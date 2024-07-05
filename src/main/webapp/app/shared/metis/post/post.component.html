@@ -1,4 +1,4 @@
-<div class="row module-bg mb-1 pb-1 rounded-2" [class]="!isThreadSidebar ? 'mx-0' : ''">
+<div class="row module-bg mb-1 pb-1 rounded-2" [ngClass]="{ 'mx-0': !isThreadSidebar }">
     <div class="align-items-center">
         <jhi-post-header
             [previewMode]="previewMode"
@@ -66,7 +66,7 @@
     @if (displayInlineInput && !readOnlyMode) {
         <jhi-message-inline-input [posting]="posting" (isModalOpen)="displayInlineInput = false" />
     }
-    <div class="me-0 mt-2 row justify-content-between" [ngClass]="previewMode ? 'mb-2' : ''">
+    <div class="me-0 mt-2 row justify-content-between" [ngClass]="{ 'mb-2': previewMode }">
         <!-- Post reactions -->
         @if (!previewMode) {
             <div class="col-auto ps-3 pe-0">

@@ -29,24 +29,12 @@
     background-color: #17a2b8;
 }
 
-.badge-student::before {
-    content: 'Student';
-}
-
 .badge-tutor {
     background-color: darkorange;
 }
 
-.badge-tutor::before {
-    content: 'Tutor';
-}
-
 .badge-instructor {
     background-color: darkred;
-}
-
-.badge-instructor::before {
-    content: 'Instructor';
 }
 
 .reference {
