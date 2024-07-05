@@ -15,7 +15,7 @@ const DEFAULT_ON_CLICK = () => {};
 })
 export class CustomExerciseCategoryBadgeComponent {
     @Input() category: ExerciseCategory;
-    @Input() displayRemoveButton = false;
+    @Input() displayRemoveButton: boolean = false;
     @Input() onClick: () => void = DEFAULT_ON_CLICK;
 
     readonly faTimes = faTimes;

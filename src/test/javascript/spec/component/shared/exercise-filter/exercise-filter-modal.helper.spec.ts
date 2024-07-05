@@ -47,7 +47,7 @@ describe('satisfiesDifficultyFilter', () => {
     });
 
     it('should return true if difficulty filter is []', () => {
-        const difficultyFilter = [];
+        const difficultyFilter: DifficultyLevel[] = [];
 
         const resultItemWithDifficulty = satisfiesDifficultyFilter(SIDEBAR_CARD_ELEMENT_1, difficultyFilter);
         expect(resultItemWithDifficulty).toBeTrue();
@@ -76,7 +76,7 @@ describe('satisfiesDifficultyFilter', () => {
 
 describe('satisfiesCategoryFilter', () => {
     it('should return true if difficulty filter is []', () => {
-        const categoryFilter = [];
+        const categoryFilter: ExerciseCategory[] = [];
 
         const resultItemWithCategory = satisfiesCategoryFilter(SIDEBAR_CARD_ELEMENT_1, categoryFilter);
         expect(resultItemWithCategory).toBeTrue();
@@ -122,6 +122,7 @@ describe('satisfiesScoreFilter', () => {
                 selectedMax: 1,
                 generalMin: 0,
                 generalMax: 1,
+                step: 1,
             },
         };
 
@@ -140,6 +141,7 @@ describe('satisfiesScoreFilter', () => {
                 selectedMax: 10,
                 generalMin: 0,
                 generalMax: 80,
+                step: 1,
             },
         };
 
@@ -155,6 +157,7 @@ describe('satisfiesScoreFilter', () => {
                 selectedMax: 30,
                 generalMin: 0,
                 generalMax: 80,
+                step: 1,
             },
         };
 
@@ -185,6 +188,7 @@ describe('satisfiesPointsFilter', () => {
                 selectedMax: 1,
                 generalMin: 0,
                 generalMax: 1,
+                step: 1,
             },
         };
 
@@ -203,6 +207,7 @@ describe('satisfiesPointsFilter', () => {
                 selectedMax: 10,
                 generalMin: 0,
                 generalMax: 80,
+                step: 1,
             },
         };
 
@@ -218,6 +223,7 @@ describe('satisfiesPointsFilter', () => {
                 selectedMax: 12,
                 generalMin: 0,
                 generalMax: 80,
+                step: 1,
             },
         };
 
@@ -244,6 +250,7 @@ describe('satisfiesFilters', () => {
                     selectedMax: 10,
                     generalMin: 0,
                     generalMax: 80,
+                    step: 1,
                 },
             },
             achievablePoints: {
@@ -253,6 +260,7 @@ describe('satisfiesFilters', () => {
                     selectedMax: 10,
                     generalMin: 0,
                     generalMax: 80,
+                    step: 1,
                 },
             },
         };
@@ -275,6 +283,7 @@ describe('satisfiesFilters', () => {
                     selectedMax: 70,
                     generalMin: 0,
                     generalMax: 80,
+                    step: 1,
                 },
             },
             achievablePoints: {
@@ -284,6 +293,7 @@ describe('satisfiesFilters', () => {
                     selectedMax: 10,
                     generalMin: 0,
                     generalMax: 80,
+                    step: 1,
                 },
             },
         };
