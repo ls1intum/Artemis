@@ -84,6 +84,10 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
 
                 this.course = data.course;
                 this.exam.course = data.course;
+
+                if (!this.exam.startText) {
+                    this.exam.startText = this.examDefaultStartText;
+                }
                 this.hideChannelNameInput = (!!exam.id && !exam.channelName) || !isCommunicationEnabled(this.course);
             });
     }
@@ -444,6 +448,32 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
         return !(
             dayjs(this.exam.exampleSolutionPublicationDate).isBefore(this.exam.visibleDate || null) ||
             dayjs(this.exam.exampleSolutionPublicationDate).isBefore(this.exam.endDate || null)
+        );
+    }
+    /**
+     * Default exam start text, which can be edited by instructors in the text editor
+     */
+    get examDefaultStartText(): string {
+        const warningForInstructionsText = '<!-- Please adapt this text for your exam -->\n\n';
+        const readCarefullyText = "<span class='fw-bold'>Please read the following information carefully!</span>\n\n";
+        const workOnYourOwnText =
+            "You must work on the exam on your own. You <span class='fw-bold text-primary'>must not</span>, in any way, get support from someone else (in person, chat, forum, discussion group, artificial intelligence, etc.) Doing so is classified as <span class='fw-bold text-primary'>cheating</span> (\"Unterschleif\") and leads to consequences as mentioned in the APSO (\"Allgemeine Prüfungs- und Studienordnung\"). In particular, the corresponding module in TUMonline will be marked as <span class='fw-bold text-primary'>failed (w. cheating)</span>, and you will only be allowed to try to pass the module in one final attempt (cf. APSO §24).\n\n";
+        const checkForPlagiarismText =
+            "All your submissions will be checked for plagiarism. You are <span class='fw-bold text-primary'>not allowed</span> to copy code from any external sources, including books, websites, or other students. Any instance of copying will be classified as plagiarism.\n\n";
+        const programmingSubmissionText =
+            "Note that results in programming exercises only indicate whether your submission compiles or not. No actual tests will be run against your submission. All actual tests will be executed after the exam is over. You can only get points for programming exercises if your submission compiles. <span class='fw-bold text-primary'>Compile errors will result in 0 points</span>.\n\n";
+        const submissionPeriodText = `The submission period will close <span><!--Enter your grace period here--> seconds</span> following the official end of the exam to compensate for potential technical problems. We encourage you to upload your submissions regularly and early. <span class='fw-bold text-primary'>Only your final submission will be graded and late submission will not be accepted</span>.\n\n`;
+
+        const workingInstructionText =
+            `<div class="fw-bold">Working instructions:</div>\n` +
+            `<ul>\n` +
+            `  <li><span class='fw-bold text-primary'>Important</span>: Before you start solving an exercise, read the problem statement carefully.</li>\n` +
+            `  <li>The exam consists of <span class='fw-bold text-primary'><!--Enter your number of points here--> points</span> and is <span class='fw-bold text-primary'><!--Enter your working time here--> minutes</span> long. Use the amount of points to determine the appropriate working time for one exercise.</li>\n` +
+            `  <li>It is <span class='fw-bold text-primary'>not</span> allowed to use any artificial intelligence to solve exercises of the exam. In particular the use of OpenAI, ChatGPT, GitHub Copilot, or any similar systems is <span class='fw-bold text-primary'>forbidden</span>!</li>\n` +
+            `</ul>\n`;
+
+        return (
+            warningForInstructionsText + readCarefullyText + workOnYourOwnText + checkForPlagiarismText + programmingSubmissionText + submissionPeriodText + workingInstructionText
         );
     }
 }
