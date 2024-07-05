@@ -142,20 +142,19 @@ describe('QuizExamSubmissionComponent', () => {
     });
 
     it('should trigger navigation towards the corrensponding question of the quiz', () => {
-        const element = document.createElement('exam-navigation-bar');
-        const getNavigationStub = jest.spyOn(document, 'getElementById').mockReturnValue(element);
+        const QUIZ_QUESTION_ID = 'question1';
+        const scrollIntoViewSpy = jest.fn();
 
-        const yOffsetRect = element.getBoundingClientRect() as DOMRect;
-        const yOffsetStub = jest.spyOn(element, 'getBoundingClientRect').mockReturnValue(yOffsetRect);
-
-        const windowSpy = jest.spyOn(window, 'scrollTo');
+        const getElementByIdMock = jest.spyOn(document, 'getElementById').mockReturnValue({
+            scrollIntoView: scrollIntoViewSpy,
+        } as unknown as HTMLElement);
 
         component.quizConfiguration = {};
         component.navigateToQuestion(1);
         fixture.detectChanges();
-        expect(getNavigationStub).toHaveBeenCalledTimes(2);
-        expect(yOffsetStub).toHaveBeenCalledOnce();
-        expect(windowSpy).toHaveBeenCalledOnce();
+
+        expect(getElementByIdMock).toHaveBeenCalledWith(QUIZ_QUESTION_ID);
+        expect(scrollIntoViewSpy).toHaveBeenCalled();
     });
 
     it('should create multiple choice submission from users selection', () => {

@@ -40,20 +40,20 @@ describe('ExamTimerComponent', () => {
 
     it('should update display times', () => {
         let duration = dayjs.duration(15, 'minutes');
-        expect(component.updateDisplayTime(duration)).toBe('15min');
+        expect(component.updateDisplayTime(duration)).toBe('15:00');
         duration = dayjs.duration(-15, 'seconds');
-        expect(component.updateDisplayTime(duration)).toBe('0min 0s');
+        expect(component.updateDisplayTime(duration)).toBe('00');
         duration = dayjs.duration(8, 'minutes');
-        expect(component.updateDisplayTime(duration)).toBe('8min 0s');
+        expect(component.updateDisplayTime(duration)).toBe('08:00');
         duration = dayjs.duration(45, 'seconds');
-        expect(component.updateDisplayTime(duration)).toBe('0min 45s');
+        expect(component.updateDisplayTime(duration)).toBe('45');
     });
 
-    it('should round down to next minute when over 10 minutes', () => {
+    it('should display exact time', () => {
         let duration = dayjs.duration(629, 'seconds');
-        expect(component.updateDisplayTime(duration)).toBe('10min');
+        expect(component.updateDisplayTime(duration)).toBe('10:29');
         duration = dayjs.duration(811, 'seconds');
-        expect(component.updateDisplayTime(duration)).toBe('13min');
+        expect(component.updateDisplayTime(duration)).toBe('13:31');
     });
 
     it('should update time in the template correctly', fakeAsync(() => {
@@ -65,11 +65,11 @@ describe('ExamTimerComponent', () => {
         let timeShownInTemplate = fixture.debugElement.query(By.css('#displayTime')).nativeElement.innerHTML.trim();
         fixture.detectChanges();
         timeShownInTemplate = fixture.debugElement.query(By.css('#displayTime')).nativeElement.innerHTML.trim();
-        expect(timeShownInTemplate).toBe('30min');
+        expect(timeShownInTemplate).toBe('30:00');
         tick(100);
         fixture.detectChanges();
         timeShownInTemplate = fixture.debugElement.query(By.css('#displayTime')).nativeElement.innerHTML.trim();
-        expect(timeShownInTemplate).toBe('25min');
+        expect(timeShownInTemplate).toBe('25:00');
         discardPeriodicTasks();
     }));
 });
