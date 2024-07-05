@@ -115,12 +115,13 @@ Alternatively, you can use the online editor to assess the students' submissions
 
 For manual assessment, the online editor provides the following features, tailored to the assessment process:
 
-1. **File browser**: The file browser shows the files in the student's submission and allows you to navigate between them. Changed files are highlighted.
+1. **File browser**: The file browser shows the files in the student's submission and allows you to navigate between them. Changed files are highlighted in yellow.
 2. **Build output**: The build output shows the output of the build process, if any. This is useful in case of build errors.
 3. **Read-only editor**: The read-only editor allows you to view the student's code. It highlights all changed lines.
-4. **Instructions**: The instructions provide the problem statement, including the tasks the student has solved successfully as determined by the test cases of the exercise, if any. Furthermore, any structured assessment criteria are listed here.
+4. **Instructions**: The instructions provide the structured grading criteria and the problem statement, including the tasks the student has solved successfully as determined by the test cases of the exercise. You can review the test cases associated with each task by clicking on the number of passing tests next to the task, e.g. |problem-statement-task|
+5. **Result**: The top right corner holds the current result of the student's submission. By clicking on it, you can review the test cases and feedback currently attached to the submission.
 
-You can add feedback directly in the source code by first hovering over the line on which you want to comment and then clicking on the |add-feedback-button| button that appears next to the line numbers. You can also add general feedback using the (todo add button) button at the bottom of the page.
+You can add feedback directly in the source code by first hovering over the line you want to comment on and then clicking the |add-feedback-button| that appears next to the line number. Students will be able to see feedback added this way in the same location when viewing their assessed submission.
 
 .. figure:: programming/online-editor-feedback.png
    :alt: Feedback in the online editor
@@ -137,13 +138,18 @@ When you are done, click the |save-feedback-button| button to save your feedback
 
    General feedback in the online editor
 
-You can also add general feedback by scrolling to the bottom of the page. Feedback given this way is not tied to any specific file or line of code.
+You can also add general feedback by scrolling to the bottom of the page and clicking |add-general-feedback-button|. Feedback given this way is not tied to any specific file or line of code.
 
 To save your changes, click the |save-assessment-button| button at the top right of the page. To finalize the assessment, click the |submit-assessment-button| button. Note that you can save your assessment multiple times before submitting it.
 Once submitted, you cannot make any further changes to the assessment unless you are an instructor.
 
+.. |problem-statement-task| image:: programming/online-editor-problem-statement-task.png
+    :scale: 70%
+
 .. |add-feedback-button| image:: programming/online-editor-add-feedback-button.png
     :scale: 75%
+
+.. |add-general-feedback-button| image:: programming/online-editor-add-general-feedback-button.png
 
 .. |save-feedback-button| image:: programming/online-editor-save-feedback-button.png
     :scale: 50%
