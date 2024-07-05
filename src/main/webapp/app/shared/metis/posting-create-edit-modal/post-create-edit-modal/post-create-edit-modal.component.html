@@ -6,7 +6,7 @@
         </div>
         <div class="modal-body">
             <!-- info if announcement is created-->
-            @if (this.editType === EditType.CREATE && isCourseMessagesPage && getAsChannel(posting.conversation)?.isAnnouncementChannel) {
+            @if (this.editType === EditType.CREATE && isCommunicationPage && getAsChannel(posting.conversation)?.isAnnouncementChannel) {
                 <div class="alert alert-warning">
                     {{ 'artemisApp.metis.post.announcementHint' | artemisTranslate }}
                 </div>
@@ -22,7 +22,7 @@
                 </div>
             </div>
             <!-- tags -->
-            @if (pageType !== PageType.PLAGIARISM_CASE_INSTRUCTOR && pageType !== PageType.PLAGIARISM_CASE_STUDENT && !isCourseMessagesPage && !posting.conversation) {
+            @if (pageType !== PageType.PLAGIARISM_CASE_INSTRUCTOR && pageType !== PageType.PLAGIARISM_CASE_STUDENT && !isCommunicationPage && !posting.conversation) {
                 <div class="position-relative mb-3">
                     <div>
                         <label jhiTranslate="artemisApp.metis.post.tags"></label>

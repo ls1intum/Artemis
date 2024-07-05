@@ -9,7 +9,6 @@ services:
     extends:
       file: ./artemis.yml
       service: artemis-app
-    pull_policy: always
     restart: always
     user: 0:0
     depends_on:

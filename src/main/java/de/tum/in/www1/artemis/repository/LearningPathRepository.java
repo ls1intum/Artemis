@@ -30,7 +30,7 @@ public interface LearningPathRepository extends ArtemisJpaRepository<LearningPat
     Optional<LearningPath> findWithEagerUserById(long learningPathId);
 
     default LearningPath findWithEagerUserByIdElseThrow(long learningPathId) {
-        return getValueElseThrow(findWithEagerUserById(learningPathId));
+        return getValueElseThrow(findWithEagerUserById(learningPathId), learningPathId);
     }
 
     @EntityGraph(type = LOAD, attributePaths = { "competencies" })
@@ -44,7 +44,7 @@ public interface LearningPathRepository extends ArtemisJpaRepository<LearningPat
     Optional<LearningPath> findWithEagerCourseAndCompetenciesById(long learningPathId);
 
     default LearningPath findWithEagerCourseAndCompetenciesByIdElseThrow(long learningPathId) {
-        return getValueElseThrow(findWithEagerCourseAndCompetenciesById(learningPathId));
+        return getValueElseThrow(findWithEagerCourseAndCompetenciesById(learningPathId), learningPathId);
     }
 
     @Query("""
@@ -71,6 +71,6 @@ public interface LearningPathRepository extends ArtemisJpaRepository<LearningPat
     Optional<LearningPath> findWithCompetenciesAndLectureUnitsAndExercisesById(long learningPathId);
 
     default LearningPath findWithCompetenciesAndLectureUnitsAndExercisesByIdElseThrow(long learningPathId) {
-        return getValueElseThrow(findWithCompetenciesAndLectureUnitsAndExercisesById(learningPathId));
+        return getValueElseThrow(findWithCompetenciesAndLectureUnitsAndExercisesById(learningPathId), learningPathId);
     }
 }

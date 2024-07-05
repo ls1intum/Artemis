@@ -184,12 +184,9 @@ public class ConversationService {
 
             var groupChatsOfUser = groupChatRepository.findGroupChatsOfUserWithParticipantsAndUserGroups(course.getId(), requestingUser.getId());
             conversationsOfUser.addAll(groupChatsOfUser);
+        }
 
-            channelsOfUser = channelRepository.findChannelsOfUser(course.getId(), requestingUser.getId());
-        }
-        else {
-            channelsOfUser = channelRepository.findCourseWideChannelsInCourse(course.getId());
-        }
+        channelsOfUser = channelRepository.findChannelsOfUser(course.getId(), requestingUser.getId());
 
         // if the user is only a student in the course, we filter out all channels that are not yet open
         var isOnlyStudent = authorizationCheckService.isOnlyStudentInCourse(course, requestingUser);
