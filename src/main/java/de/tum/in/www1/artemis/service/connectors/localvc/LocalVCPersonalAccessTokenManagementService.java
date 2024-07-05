@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.web.rest.UserResource;
 @Profile(PROFILE_LOCALVC)
 public class LocalVCPersonalAccessTokenManagementService {
 
-    private static final Logger log = LoggerFactory.getLogger(UserResource.class);
+    private static final Logger log = LoggerFactory.getLogger(LocalVCPersonalAccessTokenManagementService);
 
     @Value("${artemis.version-control.version-control-access-token:false}")
     private boolean versionControlAccessToken;
