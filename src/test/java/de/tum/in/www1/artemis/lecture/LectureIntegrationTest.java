@@ -1,6 +1,10 @@
 package de.tum.in.www1.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -18,11 +22,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.in.www1.artemis.competency.CompetencyUtilService;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
@@ -34,6 +40,7 @@ import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -70,6 +77,15 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private PageableSearchUtilService pageableSearchUtilService;
 
+    @Autowired
+    private ConversationUtilService conversationUtilService;
+
+    @Autowired
+    private CompetencyUtilService competencyUtilService;
+
+    @Autowired
+    private LectureUnitRepository lectureUnitRepository;
+
     private Attachment attachmentDirectOfLecture;
 
     private Attachment attachmentOfAttachmentUnit;
@@ -80,15 +96,16 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private Lecture lecture1;
 
-    @Autowired
-    private ConversationUtilService conversationUtilService;
+    private AttachmentUnit attachmentUnit;
+
+    private Competency competency;
 
     @BeforeEach
     void initTestCase() throws Exception {
         int numberOfTutors = 2;
         userUtilService.addUsers(TEST_PREFIX, 1, numberOfTutors, 0, 1);
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, numberOfTutors);
-        this.course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.get(0).getId());
+        this.course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
         var lecture = this.course1.getLectures().stream().findFirst().orElseThrow();
         lecture.setTitle("Lecture " + new Random().nextInt()); // needed for search by title
         Channel channel = new Channel();
@@ -98,24 +115,26 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         channel.setIsArchived(false);
         channel.setName("lecture-channel");
         lecture.setTitle("Lecture " + lecture.getId()); // needed for search by title
-        this.lecture1 = lectureRepository.save(lecture);
+        lecture1 = lectureRepository.save(lecture);
         channel.setLecture(this.lecture1);
         channelRepository.save(channel);
-        this.textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().orElseThrow();
+        textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().orElseThrow();
         // Add users that are not in the course
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
 
         // Setting up a lecture with various kinds of content
         ExerciseUnit exerciseUnit = lectureUtilService.createExerciseUnit(textExercise);
-        AttachmentUnit attachmentUnit = lectureUtilService.createAttachmentUnit(true);
-        this.attachmentOfAttachmentUnit = attachmentUnit.getAttachment();
+        attachmentUnit = lectureUtilService.createAttachmentUnit(true);
+        attachmentOfAttachmentUnit = attachmentUnit.getAttachment();
         VideoUnit videoUnit = lectureUtilService.createVideoUnit();
         TextUnit textUnit = lectureUtilService.createTextUnit();
         OnlineUnit onlineUnit = lectureUtilService.createOnlineUnit();
         addAttachmentToLecture();
 
-        this.lecture1 = lectureUtilService.addLectureUnitsToLecture(this.lecture1, List.of(exerciseUnit, attachmentUnit, videoUnit, textUnit, onlineUnit));
+        lecture1 = lectureUtilService.addLectureUnitsToLecture(this.lecture1, List.of(exerciseUnit, attachmentUnit, videoUnit, textUnit, onlineUnit));
+
+        competency = competencyUtilService.createCompetency(course1);
     }
 
     private void addAttachmentToLecture() {
@@ -254,14 +273,14 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThat(filteredLecture.getLectureUnits()).hasSize(1); // we only have one lecture unit which is attachmentUnitWithSlides
         assertThat(filteredLecture.getLectureUnits()).contains(attachmentUnitWithSlides);
-        AttachmentUnit attachmentUnit = (AttachmentUnit) filteredLecture.getLectureUnits().get(0);
+        AttachmentUnit attachmentUnit = (AttachmentUnit) filteredLecture.getLectureUnits().getFirst();
         assertThat(attachmentUnit.getSlides()).hasSize(numberOfSlides);
 
         Lecture lectureWithDetails = request.get("/api/lectures/" + lectureWithSlides.getId() + "/details-with-slides", HttpStatus.OK, Lecture.class);
 
         assertThat(lectureWithDetails.getLectureUnits()).hasSize(1); // we only have one lecture unit which is attachmentUnitWithSlides
         assertThat(lectureWithDetails.getLectureUnits()).contains(attachmentUnitWithSlides);
-        AttachmentUnit attachmentUnitDetails = (AttachmentUnit) lectureWithDetails.getLectureUnits().get(0);
+        AttachmentUnit attachmentUnitDetails = (AttachmentUnit) lectureWithDetails.getLectureUnits().getFirst();
         assertThat(attachmentUnitDetails.getSlides()).hasSize(numberOfSlides);
     }
 
@@ -349,9 +368,15 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLecture_lectureExists_shouldDeleteLecture() throws Exception {
+        attachmentUnit.setCompetencies(Set.of(competency));
+        lectureUnitRepository.save(attachmentUnit);
+
         request.delete("/api/lectures/" + lecture1.getId(), HttpStatus.OK);
         Optional<Lecture> lectureOptional = lectureRepository.findById(lecture1.getId());
         assertThat(lectureOptional).isEmpty();
+
+        // ExerciseUnits do not have competencies, their exercises do
+        verify(competencyProgressService, times(lecture1.getLectureUnits().size() - 1)).updateProgressForUpdatedLearningObject(any(), eq(Optional.empty()));
     }
 
     @Test

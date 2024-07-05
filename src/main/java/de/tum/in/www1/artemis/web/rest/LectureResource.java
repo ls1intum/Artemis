@@ -395,7 +395,7 @@ public class LectureResource {
     @DeleteMapping("lectures/{lectureId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteLecture(@PathVariable Long lectureId) {
-        Lecture lecture = lectureRepository.findByIdElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lectureId);
 
         Course course = lecture.getCourse();
         if (course == null) {
