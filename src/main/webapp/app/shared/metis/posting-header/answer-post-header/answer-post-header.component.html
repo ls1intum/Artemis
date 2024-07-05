@@ -38,7 +38,7 @@
         }
     </div>
     @if (!isAnswerOfAnnouncement) {
-        <div class="col-auto ps-0">
+        <div class="col-auto ps-0 mx-1">
             <div id="toggleElement" class="resolve" [ngClass]="isAtLeastTutorInCourse || isAuthorOfOriginalPost ? 'clickable' : ''" (click)="toggleResolvesPost()">
                 @if (posting.resolvesPost) {
                     <div>
