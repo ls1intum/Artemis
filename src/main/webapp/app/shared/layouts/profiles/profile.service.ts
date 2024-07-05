@@ -23,7 +23,6 @@ export class ProfileService {
 
     getProfileInfo(): Observable<ProfileInfo> {
         if (!this.profileInfo) {
-            console.log(this.infoUrl);
             this.profileInfo = new BehaviorSubject(undefined);
             this.http
                 .get<ProfileInfo>(this.infoUrl, { observe: 'response' })
