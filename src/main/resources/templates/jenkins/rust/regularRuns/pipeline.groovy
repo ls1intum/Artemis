@@ -42,6 +42,10 @@ void postBuildTasks() {
     sh '''
     rm -rf results
     mkdir results
+    if [ -e target/nextest/ci/junit.xml ]
+    then
+        sed -i 's/<testsuites[^>]*>//g ; s/<\\/testsuites>//g' target/nextest/ci/junit.xml
+    fi
     cp target/nextest/ci/junit.xml $WORKSPACE/results/ || true
     sed -i 's/[^[:print:]\t]/�/g' $WORKSPACE/results/*.xml || true
     '''
