@@ -2,6 +2,9 @@ stages:
     - test
     - upload
 
+variables:
+    ARTEMIS_TEST_RESULTS_DIR: "target/nextest/ci"
+
 test-job:
     image: ${ARTEMIS_BUILD_DOCKER_IMAGE}
     stage: test
@@ -11,7 +14,6 @@ test-job:
     allow_failure: true
     variables:
         GIT_STRATEGY: none
-        ARTEMIS_TEST_RESULTS_DIR: "target/nextest/ci"
     script:
         - git clone --branch ${ARTEMIS_TEST_GIT_BRANCH} ${CI_SERVER_PROTOCOL}://${ARTEMIS_TEST_GIT_USER}:${ARTEMIS_TEST_GIT_TOKEN}@${CI_SERVER_HOST}:${CI_SERVER_PORT}/${CI_PROJECT_NAMESPACE}/${ARTEMIS_TEST_GIT_REPOSITORY_SLUG} .
         - git clone --branch ${ARTEMIS_SUBMISSION_GIT_BRANCH} ${CI_SERVER_PROTOCOL}://${ARTEMIS_TEST_GIT_USER}:${ARTEMIS_TEST_GIT_TOKEN}@${CI_SERVER_HOST}:${CI_SERVER_PORT}/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME} assignment
