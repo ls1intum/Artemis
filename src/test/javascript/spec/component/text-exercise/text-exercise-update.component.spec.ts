@@ -23,6 +23,7 @@ import { NgModel } from '@angular/forms';
 import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.component';
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 describe('TextExercise Management Update Component', () => {
     let comp: TextExerciseUpdateComponent;
@@ -363,7 +364,7 @@ describe('TextExercise Management Update Component', () => {
     it('should updateCategories properly by making category available for selection again when removing it', () => {
         comp.textExercise = new TextExercise(undefined, undefined);
         comp.exerciseCategories = [];
-        const newCategories = [{ category: 'Easy' }, { category: 'Hard' }];
+        const newCategories = [new ExerciseCategory(undefined, 'Easy'), new ExerciseCategory(undefined, 'Hard')];
 
         comp.updateCategories(newCategories);
 
