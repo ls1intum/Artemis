@@ -649,6 +649,188 @@ public class CourseUtilService {
     }
 
     /**
+     * Creates and saves course with all exercise types. Also creates participations together with submissions and results.
+     * including test Runs and Late Submissions
+     *
+     * @param userPrefix                 The prefix of the course user groups.
+     * @param hasAssessmentDueDatePassed True, if the assessment due date of the exercises has passed.
+     * @return The created course.
+     */
+    public Course createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResultsAndTestRunsAndTwoUsers(String userPrefix, boolean hasAssessmentDueDatePassed) {
+        var assessmentTimestamp = hasAssessmentDueDatePassed ? ZonedDateTime.now().minusMinutes(10L) : ZonedDateTime.now().plusMinutes(10L);
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, DiagramType.ClassDiagram,
+                course);
+        TextExercise textExercise = TextExerciseFactory.generateTextExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, course);
+        FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, "png", course);
+        ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, course);
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(PAST_TIMESTAMP, assessmentTimestamp, QuizMode.SYNCHRONIZED, course);
+
+        // Set assessment due dates
+        modelingExercise.setAssessmentDueDate(assessmentTimestamp);
+        textExercise.setAssessmentDueDate(assessmentTimestamp);
+        fileUploadExercise.setAssessmentDueDate(assessmentTimestamp);
+        programmingExercise.setAssessmentDueDate(assessmentTimestamp);
+
+        // Add exercises to course
+        course.addExercises(modelingExercise);
+        course.addExercises(textExercise);
+        course.addExercises(fileUploadExercise);
+        course.addExercises(programmingExercise);
+        course.addExercises(quizExercise);
+
+        // Save course and exercises to database
+        Course courseSaved = courseRepo.save(course);
+        modelingExercise = exerciseRepo.save(modelingExercise);
+        textExercise = exerciseRepo.save(textExercise);
+        fileUploadExercise = exerciseRepo.save(fileUploadExercise);
+        programmingExercise = exerciseRepo.save(programmingExercise);
+        quizExercise = exerciseRepo.save(quizExercise);
+
+        // Get user and setup participations
+        User user = (userRepo.findOneByLogin(userPrefix + "student1")).orElseThrow();
+        User user2 = (userRepo.findOneByLogin(userPrefix + "student2")).orElseThrow();
+
+        StudentParticipation participationModeling = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, modelingExercise, user);
+        StudentParticipation participationText = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise, user);
+        participationText.setTestRun(true);
+        StudentParticipation participationText2 = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise, user2);
+        StudentParticipation participationFileUpload = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, fileUploadExercise, user);
+        StudentParticipation participationQuiz = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, quizExercise, user);
+        StudentParticipation participationProgramming = ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, programmingExercise, user);
+
+        // Save participations
+        participationModeling = studentParticipationRepo.save(participationModeling);
+        participationText = studentParticipationRepo.save(participationText);
+        participationText2 = studentParticipationRepo.save(participationText2);
+        participationFileUpload = studentParticipationRepo.save(participationFileUpload);
+        participationQuiz = studentParticipationRepo.save(participationQuiz);
+        participationProgramming = studentParticipationRepo.save(participationProgramming);
+
+        // Setup results
+        Result resultModeling = generateResult(true, 10D);
+        resultModeling.setAssessmentType(AssessmentType.MANUAL);
+        resultModeling.setCompletionDate(ZonedDateTime.now());
+
+        Result resultText = generateResult(true, 12D);
+        resultText.setAssessmentType(AssessmentType.MANUAL);
+        resultText.setCompletionDate(ZonedDateTime.now());
+
+        Result resultFileUpload = generateResult(true, 0D);
+        resultFileUpload.setAssessmentType(AssessmentType.MANUAL);
+        resultFileUpload.setCompletionDate(ZonedDateTime.now());
+
+        Result resultQuiz = generateResult(true, 0D);
+        resultQuiz.setAssessmentType(AssessmentType.AUTOMATIC);
+        resultQuiz.setCompletionDate(ZonedDateTime.now());
+
+        Result resultProgramming = generateResult(true, 20D);
+        resultProgramming.setAssessmentType(AssessmentType.AUTOMATIC);
+        resultProgramming.setCompletionDate(ZonedDateTime.now());
+
+        // Connect participations to results and vice versa
+        resultModeling.setParticipation(participationModeling);
+        resultText.setParticipation(participationText);
+        resultFileUpload.setParticipation(participationFileUpload);
+        resultQuiz.setParticipation(participationQuiz);
+        resultProgramming.setParticipation(participationProgramming);
+
+        participationModeling.addResult(resultModeling);
+        participationText.addResult(resultText);
+        participationFileUpload.addResult(resultFileUpload);
+        participationQuiz.addResult(resultQuiz);
+        participationProgramming.addResult(resultProgramming);
+
+        // Save results and participations
+        resultModeling = resultRepo.save(resultModeling);
+        resultText = resultRepo.save(resultText);
+        resultFileUpload = resultRepo.save(resultFileUpload);
+        resultQuiz = resultRepo.save(resultQuiz);
+        resultProgramming = resultRepo.save(resultProgramming);
+
+        participationModeling = studentParticipationRepo.save(participationModeling);
+        participationText = studentParticipationRepo.save(participationText);
+        participationText2 = studentParticipationRepo.save(participationText2);
+        participationFileUpload = studentParticipationRepo.save(participationFileUpload);
+        participationQuiz = studentParticipationRepo.save(participationQuiz);
+        participationProgramming = studentParticipationRepo.save(participationProgramming);
+
+        // Connect exercises with participations
+        modelingExercise.addParticipation(participationModeling);
+        textExercise.addParticipation(participationText);
+        textExercise.addParticipation(participationText2);
+        fileUploadExercise.addParticipation(participationFileUpload);
+        quizExercise.addParticipation(participationQuiz);
+        programmingExercise.addParticipation(participationProgramming);
+
+        // Setup submissions and connect with participations
+        ModelingSubmission modelingSubmission = ParticipationFactory.generateModelingSubmission("model1", true);
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("text of text submission", Language.ENGLISH, true);
+        TextSubmission lateTextSubmission = ParticipationFactory.generateLateTextSubmission("text of late  text submission", Language.ENGLISH);
+        TextSubmission textSubmission2 = ParticipationFactory.generateTextSubmission("text of text submission", Language.ENGLISH, true);
+        FileUploadSubmission fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
+        QuizSubmission quizSubmission = ParticipationFactory.generateQuizSubmission(true);
+        ProgrammingSubmission programmingSubmission = ParticipationFactory.generateProgrammingSubmission(true);
+
+        // Save submissions
+        modelingSubmission = submissionRepository.save(modelingSubmission);
+        textSubmission = submissionRepository.save(textSubmission);
+        textSubmission2 = submissionRepository.save(textSubmission2);
+        lateTextSubmission = submissionRepository.save(lateTextSubmission);
+        fileUploadSubmission = submissionRepository.save(fileUploadSubmission);
+        quizSubmission = submissionRepository.save(quizSubmission);
+        programmingSubmission = submissionRepository.save(programmingSubmission);
+
+        textSubmission2.setParticipation(participationText2);
+        lateTextSubmission.setParticipation(participationText);
+        modelingSubmission.setParticipation(participationModeling);
+        modelingSubmission.addResult(resultModeling);
+        textSubmission.setParticipation(participationText);
+        textSubmission.addResult(resultText);
+        fileUploadSubmission.setParticipation(participationFileUpload);
+        fileUploadSubmission.addResult(resultFileUpload);
+        quizSubmission.setParticipation(participationQuiz);
+        quizSubmission.addResult(resultQuiz);
+        programmingSubmission.setParticipation(participationProgramming);
+        programmingSubmission.addResult(resultProgramming);
+
+        // Save submissions
+        textSubmission2 = submissionRepository.save(textSubmission2);
+        lateTextSubmission = submissionRepository.save(lateTextSubmission);
+        modelingSubmission = submissionRepository.save(modelingSubmission);
+        textSubmission = submissionRepository.save(textSubmission);
+        fileUploadSubmission = submissionRepository.save(fileUploadSubmission);
+        quizSubmission = submissionRepository.save(quizSubmission);
+        programmingSubmission = submissionRepository.save(programmingSubmission);
+
+        // Save exercises
+        exerciseRepo.save(modelingExercise);
+        exerciseRepo.save(textExercise);
+        exerciseRepo.save(fileUploadExercise);
+        exerciseRepo.save(programmingExercise);
+        exerciseRepo.save(quizExercise);
+
+        // Connect participations with submissions
+        participationModeling.setSubmissions(Set.of(modelingSubmission));
+        participationText.setSubmissions(Set.of(textSubmission));
+        participationText2.setSubmissions(Set.of(textSubmission2));
+        participationFileUpload.setSubmissions(Set.of(fileUploadSubmission));
+        participationQuiz.setSubmissions(Set.of(quizSubmission));
+        participationProgramming.setSubmissions(Set.of(programmingSubmission));
+
+        // Save participations
+        studentParticipationRepo.save(participationModeling);
+        studentParticipationRepo.save(participationText);
+        studentParticipationRepo.save(participationText2);
+        studentParticipationRepo.save(participationFileUpload);
+        studentParticipationRepo.save(participationQuiz);
+        studentParticipationRepo.save(participationProgramming);
+
+        return courseSaved;
+    }
+
+    /**
      * Adds online configuration to a course.
      *
      * @param course The course to which online configuration should be added.
