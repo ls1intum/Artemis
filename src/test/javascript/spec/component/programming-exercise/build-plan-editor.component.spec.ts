@@ -18,7 +18,7 @@ import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.se
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
-import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
+import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 
 describe('Build Plan Editor', () => {
     let fixture: ComponentFixture<BuildPlanEditorComponent>;
@@ -33,8 +33,14 @@ describe('Build Plan Editor', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MonacoEditorModule, NgbTooltipMocksModule],
-            declarations: [BuildPlanEditorComponent, TranslatePipeMock, MockComponent(CodeEditorHeaderComponent), MockComponent(UpdatingResultComponent)],
+            imports: [ArtemisTestModule, NgbTooltipMocksModule],
+            declarations: [
+                BuildPlanEditorComponent,
+                TranslatePipeMock,
+                MockComponent(MonacoEditorComponent),
+                MockComponent(CodeEditorHeaderComponent),
+                MockComponent(UpdatingResultComponent),
+            ],
             providers: [
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: AlertService, useValue: new MockAlertService() },
