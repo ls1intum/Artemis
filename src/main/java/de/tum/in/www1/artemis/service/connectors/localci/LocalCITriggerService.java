@@ -283,7 +283,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         if (programmingExercise.isExamExercise()) {
             boolean isTestExam = programmingExercise.getExerciseGroup().getExam().isTestExam();
             if (isTestExam) {
-                return 3;
+                return 2;
             }
             if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
                 return examDateService.isIndividualExerciseWorkingPeriodOver(programmingExercise.getExamViaExerciseGroupOrCourseMember(), studentParticipation) ? 3 : 1;
