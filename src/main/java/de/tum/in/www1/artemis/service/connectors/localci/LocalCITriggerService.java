@@ -142,8 +142,9 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
 
-        // Exam exercises have a higher priority than normal exercises
-        int priority = programmingExercise.isExamExercise() ? 1 : 2;
+        // Exam exercises have highest priority, Exercises with due date in the past have lowest priority
+        int priority = programmingExercise.isExamExercise() ? 1
+                : (programmingExercise.getDueDate() != null && programmingExercise.getDueDate().isBefore(ZonedDateTime.now())) ? 3 : 2;
 
         ZonedDateTime submissionDate = ZonedDateTime.now();
 
