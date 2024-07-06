@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.config.icl.ssh.HashUtils;
 import de.tum.in.www1.artemis.config.icl.ssh.SshConstants;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.localci.SharedQueueManagementService;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildAgentInformation;
 
 @Profile(PROFILE_LOCALVC)
 @Service
@@ -64,26 +65,29 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
                 log.error("Failed to convert stored public key string to PublicKey object", e);
             }
         }
-        else if (localCIBuildJobQueueService.isPresent() && localCIBuildJobQueueService.get().getBuildAgentInformation().stream().anyMatch(agent -> {
-            if (agent.publicSshKey() == null) {
-                return false;
-            }
-
-            AuthorizedKeyEntry agentKeyEntry = AuthorizedKeyEntry.parseAuthorizedKeyEntry(agent.publicSshKey());
-            PublicKey agentPublicKey;
-            try {
-                agentPublicKey = agentKeyEntry.resolvePublicKey(null, null, null);
-            }
-            catch (IOException | GeneralSecurityException e) {
-                return false;
-            }
-
-            return agentPublicKey.equals(publicKey);
-        })) {
+        else if (localCIBuildJobQueueService.isPresent()
+                && localCIBuildJobQueueService.get().getBuildAgentInformation().stream().anyMatch(agent -> checkPublicKeyMatchesBuildAgentPublicKey(agent, publicKey))) {
             log.info("Authenticating as build agent");
             session.setAttribute(SshConstants.IS_BUILD_AGENT_KEY, true);
             return true;
         }
         return false;
+    }
+
+    private boolean checkPublicKeyMatchesBuildAgentPublicKey(BuildAgentInformation agent, PublicKey publicKey) {
+        if (agent.publicSshKey() == null) {
+            return false;
+        }
+
+        AuthorizedKeyEntry agentKeyEntry = AuthorizedKeyEntry.parseAuthorizedKeyEntry(agent.publicSshKey());
+        PublicKey agentPublicKey;
+        try {
+            agentPublicKey = agentKeyEntry.resolvePublicKey(null, null, null);
+        }
+        catch (IOException | GeneralSecurityException e) {
+            return false;
+        }
+
+        return agentPublicKey.equals(publicKey);
     }
 }
