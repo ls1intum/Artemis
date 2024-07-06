@@ -232,7 +232,7 @@ public class JenkinsBuildPlanService {
     }
 
     /**
-     * Performance a search and replace within the build plan for the specified texts.
+     * Perform a search and replace within the build plan for the specified texts.
      *
      * @param buildProjectKey the project key of the programming exercise
      * @param buildPlanKey    the build plan id of the participation
