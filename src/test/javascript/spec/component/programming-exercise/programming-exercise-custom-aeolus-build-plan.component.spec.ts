@@ -24,6 +24,7 @@ import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.s
 import { PROFILE_AEOLUS } from 'app/app.constants';
 import { Observable } from 'rxjs';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     let mockThemeService: ThemeService;
@@ -39,6 +40,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     let platformAction: PlatformAction = new PlatformAction();
     let mockAeolusService: AeolusService;
     let renderer2: Renderer2;
+    let translateService: TranslateService;
 
     beforeEach(() => {
         programmingExercise = new ProgrammingExercise(course, undefined);
@@ -83,7 +85,9 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
             });
 
         const fixture = TestBed.createComponent(ProgrammingExerciseCustomAeolusBuildPlanComponent);
+        // These are not directly injected into the component, but are needed for the tests.
         renderer2 = fixture.debugElement.injector.get(Renderer2);
+        translateService = fixture.debugElement.injector.get(TranslateService);
         comp = fixture.componentInstance;
 
         comp.programmingExercise = programmingExercise;
@@ -128,7 +132,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     it('should accept editor', () => {
         const elementRef: ElementRef = new ElementRef(document.createElement('div'));
         expect(comp.editor).toBeUndefined();
-        comp.editor = new MonacoEditorComponent(mockThemeService, elementRef, renderer2);
+        comp.editor = new MonacoEditorComponent(mockThemeService, elementRef, renderer2, translateService);
         expect(comp.editor).toBeDefined();
     });
 
@@ -178,7 +182,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
 
     it('should set editor text', () => {
         const elementRef: ElementRef = new ElementRef(document.createElement('div'));
-        comp.editor = new MonacoEditorComponent(mockThemeService, elementRef, renderer2);
+        comp.editor = new MonacoEditorComponent(mockThemeService, elementRef, renderer2, translateService);
         comp.changeActiveAction('gradle');
         expect(comp.editor?.getText()).toBe(gradleBuildAction.script);
     });
