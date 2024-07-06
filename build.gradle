@@ -27,12 +27,12 @@ plugins {
     id "com.github.ben-manes.versions" version "0.51.0"
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
     id "com.gorylenko.gradle-git-properties" version "2.4.2"
-    id "org.owasp.dependencycheck" version "9.2.0"
+    id "org.owasp.dependencycheck" version "10.0.1"
     id "com.adarshr.test-logger" version "4.0.0"
 }
 
 group = "de.tum.in.www1.artemis"
-version = "7.4.0"
+version = "7.4.2"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -231,7 +231,7 @@ dependencies {
     implementation files("libs/jenkins-client-0.4.1.jar")
     // The following 4 dependencies are explicitly integrated as transitive dependencies of jenkins-client-0.4.0.jar
     implementation "org.apache.httpcomponents.client5:httpclient5:5.3.1"
-    implementation "org.apache.httpcomponents.core5:httpcore5:5.2.4"
+    implementation "org.apache.httpcomponents.core5:httpcore5:5.2.5"
     implementation "org.apache.httpcomponents:httpmime:4.5.14"
     implementation("org.dom4j:dom4j:2.1.4") {
         // Note: avoid org.xml.sax.SAXNotRecognizedException: unrecognized feature http://xml.org/sax/features/external-general-entities
@@ -420,7 +420,7 @@ dependencies {
         exclude module: "mapstruct"
     }
     implementation "io.springfox:springfox-bean-validators:3.0.0"
-    implementation "com.mysql:mysql-connector-j:8.4.0"
+    implementation "com.mysql:mysql-connector-j:9.0.0"
     implementation "org.postgresql:postgresql:42.7.3"
 
     implementation "org.zalando:problem-spring-web:0.29.1"
