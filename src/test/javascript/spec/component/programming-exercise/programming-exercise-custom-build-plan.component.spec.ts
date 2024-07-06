@@ -24,6 +24,7 @@ import { ProgrammingExerciseCustomBuildPlanComponent } from 'app/exercises/progr
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { Observable } from 'rxjs';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ProgrammingExercise Custom Build Plan', () => {
     let mockThemeService: ThemeService;
@@ -39,6 +40,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
     let platformAction: PlatformAction = new PlatformAction();
     let mockAeolusService: AeolusService;
     let renderer2: Renderer2;
+    let translateService: TranslateService;
 
     beforeEach(() => {
         programmingExercise = new ProgrammingExercise(course, undefined);
@@ -77,7 +79,9 @@ describe('ProgrammingExercise Custom Build Plan', () => {
 
         const fixture = TestBed.createComponent(ProgrammingExerciseCustomBuildPlanComponent);
         comp = fixture.componentInstance;
+        // These are not directly injected into the component, but are needed for the tests.
         renderer2 = fixture.debugElement.injector.get(Renderer2);
+        translateService = fixture.debugElement.injector.get(TranslateService);
         comp.programmingExercise = programmingExercise;
     });
 
@@ -96,7 +100,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
     it('should accept editor', () => {
         const elementRef: ElementRef = new ElementRef(document.createElement('div'));
         expect(comp.editor).toBeUndefined();
-        comp.editor = new MonacoEditorComponent(mockThemeService, elementRef, renderer2);
+        comp.editor = new MonacoEditorComponent(mockThemeService, elementRef, renderer2, translateService);
         expect(comp.editor).toBeDefined();
     });
 
@@ -228,13 +232,13 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         comp.programmingExercise.id = 1;
         const elementRef: ElementRef = new ElementRef(document.createElement('div'));
         comp.programmingExercise.buildScript = 'buildscript';
-        const editor = new MonacoEditorComponent(mockThemeService, elementRef, renderer2);
+        const editor = new MonacoEditorComponent(mockThemeService, elementRef, renderer2, translateService);
         expect(comp.editor).toBeUndefined();
         comp.editor = editor;
         expect(comp.code).toBe('buildscript');
         expect(comp.editor).toBeDefined();
         comp.programmingExercise.buildScript = undefined;
-        comp.editor = new MonacoEditorComponent(mockThemeService, elementRef, renderer2);
+        comp.editor = new MonacoEditorComponent(mockThemeService, elementRef, renderer2, translateService);
         expect(comp.code).toBe('');
     });
 
