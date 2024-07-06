@@ -37,6 +37,8 @@ interface MarkdownActionsByGroup {
     meta: MonacoEditorAction[];
 }
 
+const EXTERNAL_HEIGHT = 'external';
+
 // TODO: Once the old markdown editor is gone, remove the style url.
 @Component({
     selector: 'jhi-markdown-editor-monaco',
@@ -45,7 +47,7 @@ interface MarkdownActionsByGroup {
 })
 export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterViewInit, OnDestroy {
     @ViewChild(MonacoEditorComponent, { static: false }) monacoEditor: MonacoEditorComponent;
-    @ViewChild('entire', { static: true }) entire: ElementRef<HTMLDivElement>;
+    @ViewChild('fullElement', { static: true }) fullElement: ElementRef<HTMLDivElement>;
     @ViewChild('wrapper', { static: true }) wrapper: ElementRef<HTMLDivElement>;
     @ViewChild('fileUploadFooter', { static: false }) fileUploadFooter?: ElementRef<HTMLDivElement>;
     @ViewChild('resizablePlaceholder', { static: false }) resizePlaceholder?: ElementRef<HTMLDivElement>;
@@ -155,7 +157,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     ngAfterContentInit(): void {
         // Affects the template - done in this method to avoid ExpressionChangedAfterItHasBeenCheckedErrors.
-        this.targetWrapperHeight = this.initialEditorHeight !== 'external' ? this.initialEditorHeight.valueOf() : undefined;
+        this.targetWrapperHeight = this.initialEditorHeight !== EXTERNAL_HEIGHT ? this.initialEditorHeight.valueOf() : undefined;
         this.constrainDragPositionFn = this.constrainDragPosition.bind(this);
         this.displayedActions = {
             standard: this.defaultActions,
@@ -183,8 +185,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         }
         [this.defaultActions, this.headerActions.actions, this.domainActions, ...(this.colorAction ? [this.colorAction] : []), this.metaActions].flat().forEach((action) => {
             if (action instanceof MonacoFullscreenAction) {
-                // Include the entire wrapper to allow using actions in fullscreen mode.
-                action.element = this.initialEditorHeight === 'external' ? this.entire.nativeElement : this.wrapper.nativeElement;
+                // We include the full element if the initial height is set to 'external' so the editor is resized to fill the screen.
+                action.element = this.isInitialHeightExternal() ? this.fullElement.nativeElement : this.wrapper.nativeElement;
             }
             this.monacoEditor.registerAction(action);
         });
@@ -219,6 +221,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * @param event The drag event caused by the user moving the resize handle.
      */
     onResizeMoved(event: CdkDragMove) {
+        // This prevents the element from escaping its boundaries when being dragged. This is necessary because
         event.source.reset();
         // The editor's bottom edge becomes the top edge of the handle.
         this.targetWrapperHeight = event.pointerPosition.y - this.wrapper.nativeElement.getBoundingClientRect().top - this.getElementClientHeight(this.resizePlaceholder) / 2;
@@ -226,19 +229,13 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     /**
      * Computes the height of the editor based on the other elements displayed. We compute this directly to avoid layout issues with the Monaco editor.
-     * The height of the editor is the height of the wrapper minus the height of the file upload footer, action palette, and resize placeholder.
+     * The height of the editor is the height of the wrapper (or the full element, if the height is external) minus the height of the file upload footer and the action palette.
      */
     getEditorHeight(): number {
-        if (this.initialEditorHeight === 'external') {
-            const entireHeight = this.getElementClientHeight(this.entire);
-            const fileUploadFooterHeight = this.getElementClientHeight(this.fileUploadFooter);
-            const actionPaletteHeight = this.getElementClientHeight(this.actionPalette);
-            return entireHeight - fileUploadFooterHeight - actionPaletteHeight;
-        }
-        const wrapperHeight = this.getElementClientHeight(this.wrapper);
+        const elementHeight = this.getElementClientHeight(this.isInitialHeightExternal() ? this.fullElement : this.wrapper);
         const fileUploadFooterHeight = this.getElementClientHeight(this.fileUploadFooter);
         const actionPaletteHeight = this.getElementClientHeight(this.actionPalette);
-        return wrapperHeight - fileUploadFooterHeight - actionPaletteHeight;
+        return elementHeight - fileUploadFooterHeight - actionPaletteHeight;
     }
 
     /**
@@ -250,10 +247,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     }
 
     /**
-     * Computes the width the editor can take up.
+     * Computes the width the editor can take up. Due to the border, we need to subtract 2 pixels.
      */
     getEditorWidth(): number {
-        return this.wrapper?.nativeElement?.clientWidth ?? 0;
+        return this.wrapper?.nativeElement?.clientWidth - 2 ?? 0;
     }
 
     /**
@@ -353,5 +350,13 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         if (colorName) {
             this.colorAction?.executeInCurrentEditor({ color: colorName });
         }
+    }
+
+    /**
+     * Check if the initial height is set to 'external'. This is used to determine if the editor should grow to the available space, rather than managing its own height.
+     * @private
+     */
+    private isInitialHeightExternal(): boolean {
+        return this.initialEditorHeight === EXTERNAL_HEIGHT;
     }
 }
