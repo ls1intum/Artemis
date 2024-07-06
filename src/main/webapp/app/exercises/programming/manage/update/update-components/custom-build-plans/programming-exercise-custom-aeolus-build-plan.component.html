@@ -57,7 +57,7 @@
                     </div>
                     <label jhiTranslate="artemisApp.programmingExercise.script" class="m-2"></label>
                     <div class="card-text d-flex flex-column" [style.height.vh]="40">
-                        <div class="flex-grow-1 flex-shrink-1" [style.max-height.%]="100">
+                        <div class="flex-grow-1 flex-shrink-1 mb-1" [style.max-height.%]="100">
                             @if (isScriptAction) {
                                 <jhi-monaco-editor #editor [shrinkToFit]="false" (textChanged)="codeChanged($event)" />
                             }
