@@ -143,7 +143,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
 
         // Exam exercises have highest priority, Exercises with due date in the past have lowest priority
-        int priority = determinePriority(programmingExercise);
+        int priority = determinePriority(programmingExercise, participation);
 
         ZonedDateTime submissionDate = ZonedDateTime.now();
 
@@ -274,12 +274,24 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
                 staticCodeAnalysisEnabled, sequentialTestRunsEnabled, testwiseCoverageEnabled, resultPaths);
     }
 
-    private int determinePriority(ProgrammingExercise programmingExercise) {
+    private int determinePriority(ProgrammingExercise programmingExercise, ProgrammingExerciseParticipation participation) {
+        ZonedDateTime dueDate = null;
+        // If individual due date is set, use the latter of the two due dates
+        if (programmingExercise.getDueDate() != null && participation.getIndividualDueDate() != null) {
+            dueDate = participation.getIndividualDueDate().isAfter(programmingExercise.getDueDate()) ? participation.getIndividualDueDate() : programmingExercise.getDueDate();
+        }
+        else if (participation.getIndividualDueDate() != null) {
+            dueDate = participation.getIndividualDueDate();
+        }
+        else if (programmingExercise.getDueDate() != null) {
+            dueDate = programmingExercise.getDueDate();
+        }
+
         if (programmingExercise.isExamExercise()) {
             boolean isTestExam = programmingExercise.getExerciseGroup().getExam().isTestExam();
             return isTestExam ? 2 : 1;
         }
-        else if (programmingExercise.getDueDate() != null && programmingExercise.getDueDate().isBefore(ZonedDateTime.now())) {
+        else if (dueDate != null && dueDate.isBefore(ZonedDateTime.now())) {
             return 3;
         }
         else {
