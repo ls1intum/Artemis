@@ -110,7 +110,7 @@
         <div [ngbNavOutlet]="nav"></div>
     </div>
     @if (enableResize) {
-        <div #resizablePlaceholder [style.cursor]="isResizing ? 'ns-resize' : undefined" class="d-flex justify-content-center">
+        <div #resizePlaceholder [style.cursor]="isResizing ? 'ns-resize' : undefined" class="d-flex justify-content-center">
             <fa-icon
                 cdkDrag
                 cdkDragLockAxis="y"
