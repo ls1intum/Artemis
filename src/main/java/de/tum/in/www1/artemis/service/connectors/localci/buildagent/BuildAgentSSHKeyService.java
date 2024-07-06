@@ -11,6 +11,7 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
 
 import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyEncryptionContext;
@@ -25,9 +26,9 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Profile(PROFILE_BUILDAGENT)
-public class BuildAgentSSHKeyService {
+public class BuildAgentSshKeyService {
 
-    private static final Logger log = LoggerFactory.getLogger(BuildAgentSSHKeyService.class);
+    private static final Logger log = LoggerFactory.getLogger(BuildAgentSshKeyService.class);
 
     private KeyPair keyPair;
 
@@ -35,7 +36,7 @@ public class BuildAgentSSHKeyService {
     private Optional<String> gitSshPrivateKeyPath;
 
     @Value("${artemis.version-control.build-agent-use-ssh:false}")
-    private boolean useSSHForBuildAgent;
+    private boolean useSshForBuildAgent;
 
     @Value("${info.contact}")
     private String sshKeyComment;
@@ -45,7 +46,7 @@ public class BuildAgentSSHKeyService {
      */
     @EventListener(ApplicationReadyEvent.class)
     public void applicationReady() {
-        if (!useSSHForBuildAgent) {
+        if (!useSshForBuildAgent) {
             return;
         }
 
@@ -55,9 +56,8 @@ public class BuildAgentSSHKeyService {
             throw new RuntimeException("No SSH private key folder was set but should use SSH for build agent authentication.");
         }
 
-        generateKeyPair();
-
         try {
+            generateKeyPair();
             writePrivateKey();
         }
         catch (IOException | GeneralSecurityException e) {
@@ -65,15 +65,10 @@ public class BuildAgentSSHKeyService {
         }
     }
 
-    private void generateKeyPair() {
-        try {
-            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-            keyGen.initialize(4096);
-            keyPair = keyGen.generateKeyPair();
-        }
-        catch (GeneralSecurityException e) {
-            throw new RuntimeException(e);
-        }
+    private void generateKeyPair() throws NoSuchAlgorithmException {
+        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+        keyGen.initialize(4096);
+        keyPair = keyGen.generateKeyPair();
     }
 
     private void writePrivateKey() throws IOException, GeneralSecurityException {
@@ -94,7 +89,7 @@ public class BuildAgentSSHKeyService {
      * @return the public key
      */
     public String getPublicKeyAsString() {
-        if (!useSSHForBuildAgent) {
+        if (!useSshForBuildAgent) {
             return null;
         }
 

@@ -14,18 +14,18 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
-import de.tum.in.www1.artemis.service.connectors.localci.buildagent.BuildAgentSSHKeyService;
+import de.tum.in.www1.artemis.service.connectors.localci.buildagent.BuildAgentSshKeyService;
 import de.tum.in.www1.artemis.service.connectors.localci.buildagent.SharedQueueProcessingService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildAgentInformation;
 
-class BuildAgentSSHAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+class BuildAgentSshAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
     @Qualifier("hazelcastInstance")
     private HazelcastInstance hazelcastInstance;
 
     @Autowired
-    private BuildAgentSSHKeyService buildAgentSSHKeyService;
+    private BuildAgentSshKeyService buildAgentSSHKeyService;
 
     @Autowired
     private SharedQueueProcessingService sharedQueueProcessingService;

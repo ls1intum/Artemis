@@ -63,7 +63,7 @@ public class SharedQueueProcessingService {
 
     private final AtomicInteger localProcessingJobs = new AtomicInteger(0);
 
-    private final BuildAgentSSHKeyService buildAgentSSHKeyService;
+    private final BuildAgentSshKeyService buildAgentSSHKeyService;
 
     /**
      * Lock to prevent multiple nodes from processing the same build job.
@@ -89,7 +89,7 @@ public class SharedQueueProcessingService {
     private UUID listenerId;
 
     public SharedQueueProcessingService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService,
-            BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap, BuildAgentSSHKeyService buildAgentSSHKeyService) {
+            BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap, BuildAgentSshKeyService buildAgentSSHKeyService) {
         this.hazelcastInstance = hazelcastInstance;
         this.localCIBuildExecutorService = (ThreadPoolExecutor) localCIBuildExecutorService;
         this.buildJobManagementService = buildJobManagementService;
