@@ -38,6 +38,7 @@ interface MarkdownActionsByGroup {
 }
 
 const EXTERNAL_HEIGHT = 'external';
+const BORDER_WIDTH_OFFSET = 2;
 
 // TODO: Once the old markdown editor is gone, remove the style url.
 @Component({
@@ -250,7 +251,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * Computes the width the editor can take up. Due to the border, we need to subtract 2 pixels.
      */
     getEditorWidth(): number {
-        return this.wrapper.nativeElement.clientWidth - 2;
+        return this.wrapper.nativeElement.clientWidth - BORDER_WIDTH_OFFSET;
     }
 
     /**

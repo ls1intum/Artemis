@@ -2,6 +2,11 @@
     background-color: var(--md-editor-background);
 }
 
+.resize-placeholder {
+    border-left: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
+}
+
 .file-upload-footer-input {
     // Cannot hide input[type=file] with display: none, as this may prevent file uploads entirely.
     width: 0.1px;
@@ -15,6 +20,7 @@
 .file-upload-footer-label {
     cursor: pointer;
     width: 100%;
+    border-top: 1px dotted var(--border-color);
     border-bottom: 1px solid var(--border-color);
     border-radius: 0 0.15em 0.15em 0;
 
