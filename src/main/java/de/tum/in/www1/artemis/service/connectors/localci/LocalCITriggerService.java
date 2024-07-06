@@ -143,8 +143,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
 
         // Exam exercises have highest priority, Exercises with due date in the past have lowest priority
-        int priority = programmingExercise.isExamExercise() ? 1
-                : (programmingExercise.getDueDate() != null && programmingExercise.getDueDate().isBefore(ZonedDateTime.now())) ? 3 : 2;
+        int priority = determinePriority(programmingExercise);
 
         ZonedDateTime submissionDate = ZonedDateTime.now();
 
@@ -273,5 +272,18 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
                 staticCodeAnalysisEnabled, sequentialTestRunsEnabled, testwiseCoverageEnabled, resultPaths);
+    }
+
+    private int determinePriority(ProgrammingExercise programmingExercise) {
+        if (programmingExercise.isExamExercise()) {
+            boolean isTestExam = programmingExercise.getExerciseGroup().getExam().isTestExam();
+            return isTestExam ? 2 : 1;
+        }
+        else if (programmingExercise.getDueDate() != null && programmingExercise.getDueDate().isBefore(ZonedDateTime.now())) {
+            return 3;
+        }
+        else {
+            return 2;
+        }
     }
 }
