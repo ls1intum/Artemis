@@ -45,11 +45,11 @@ interface MarkdownActionsByGroup {
 })
 export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterViewInit, OnDestroy {
     @ViewChild(MonacoEditorComponent, { static: false }) monacoEditor: MonacoEditorComponent;
+    @ViewChild('entire', { static: true }) entire: ElementRef<HTMLDivElement>;
     @ViewChild('wrapper', { static: true }) wrapper: ElementRef<HTMLDivElement>;
     @ViewChild('fileUploadFooter', { static: false }) fileUploadFooter?: ElementRef<HTMLDivElement>;
     @ViewChild('resizablePlaceholder', { static: false }) resizePlaceholder?: ElementRef<HTMLDivElement>;
     @ViewChild('actionPalette', { static: false }) actionPalette?: ElementRef<HTMLElement>;
-    @ViewChild('entire', { static: false }) entire?: ElementRef<HTMLDivElement>;
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
 
     @Input()
@@ -184,7 +184,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         [this.defaultActions, this.headerActions.actions, this.domainActions, ...(this.colorAction ? [this.colorAction] : []), this.metaActions].flat().forEach((action) => {
             if (action instanceof MonacoFullscreenAction) {
                 // Include the entire wrapper to allow using actions in fullscreen mode.
-                action.element = this.wrapper.nativeElement;
+                action.element = this.initialEditorHeight === 'external' ? this.entire.nativeElement : this.wrapper.nativeElement;
             }
             this.monacoEditor.registerAction(action);
         });
