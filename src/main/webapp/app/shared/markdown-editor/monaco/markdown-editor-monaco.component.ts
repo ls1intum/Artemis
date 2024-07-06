@@ -49,6 +49,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     @ViewChild('fileUploadFooter', { static: false }) fileUploadFooter?: ElementRef<HTMLDivElement>;
     @ViewChild('resizablePlaceholder', { static: false }) resizePlaceholder?: ElementRef<HTMLDivElement>;
     @ViewChild('actionPalette', { static: false }) actionPalette?: ElementRef<HTMLElement>;
+    @ViewChild('entire', { static: false }) entire?: ElementRef<HTMLDivElement>;
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
 
     @Input()
@@ -228,6 +229,12 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * The height of the editor is the height of the wrapper minus the height of the file upload footer, action palette, and resize placeholder.
      */
     getEditorHeight(): number {
+        if (this.initialEditorHeight === 'external') {
+            const entireHeight = this.getElementClientHeight(this.entire);
+            const fileUploadFooterHeight = this.getElementClientHeight(this.fileUploadFooter);
+            const actionPaletteHeight = this.getElementClientHeight(this.actionPalette);
+            return entireHeight - fileUploadFooterHeight - actionPaletteHeight;
+        }
         const wrapperHeight = this.getElementClientHeight(this.wrapper);
         const fileUploadFooterHeight = this.getElementClientHeight(this.fileUploadFooter);
         const actionPaletteHeight = this.getElementClientHeight(this.actionPalette);
