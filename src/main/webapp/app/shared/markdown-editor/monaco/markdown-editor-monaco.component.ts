@@ -48,7 +48,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     @ViewChild('wrapper', { static: true }) wrapper: ElementRef<HTMLDivElement>;
     @ViewChild('fileUploadFooter', { static: false }) fileUploadFooter?: ElementRef<HTMLDivElement>;
     @ViewChild('resizablePlaceholder', { static: false }) resizePlaceholder?: ElementRef<HTMLDivElement>;
-    @ViewChild('resizeHandle', { static: false }) resizeHandle?: ElementRef<HTMLDivElement>;
     @ViewChild('actionPalette', { static: false }) actionPalette?: ElementRef<HTMLElement>;
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
 
@@ -188,14 +187,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             }
             this.monacoEditor.registerAction(action);
         });
-
-        if (this.resizeHandle && this.resizePlaceholder && this.enableResize) {
-            // The resize handle is positioned absolutely. We move it to its place in the placeholder, from where it can be dragged.
-            const resizeHandleHeight = this.getElementClientHeight(this.resizeHandle);
-            this.resizePlaceholder.nativeElement.style.height = resizeHandleHeight + 'px';
-            this.resizeHandle.nativeElement.style.top =
-                (this.resizePlaceholder?.nativeElement?.getBoundingClientRect()?.top ?? 0) - this.wrapper.nativeElement?.getBoundingClientRect()?.top + -resizeHandleHeight + 'px';
-        }
     }
 
     /**
@@ -227,11 +218,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * @param event The drag event caused by the user moving the resize handle.
      */
     onResizeMoved(event: CdkDragMove) {
+        event.source.reset();
         // The editor's bottom edge becomes the top edge of the handle.
-        this.targetWrapperHeight =
-            event.source.element.nativeElement.getBoundingClientRect().top -
-            this.wrapper.nativeElement.getBoundingClientRect().top +
-            this.getElementClientHeight(this.resizePlaceholder);
+        this.targetWrapperHeight = event.pointerPosition.y - this.wrapper.nativeElement.getBoundingClientRect().top - this.getElementClientHeight(this.resizePlaceholder) / 2;
     }
 
     /**
@@ -242,8 +231,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         const wrapperHeight = this.getElementClientHeight(this.wrapper);
         const fileUploadFooterHeight = this.getElementClientHeight(this.fileUploadFooter);
         const actionPaletteHeight = this.getElementClientHeight(this.actionPalette);
-        const resizePlaceholderHeight = this.getElementClientHeight(this.resizePlaceholder);
-        return wrapperHeight - fileUploadFooterHeight - actionPaletteHeight - resizePlaceholderHeight;
+        return wrapperHeight - fileUploadFooterHeight - actionPaletteHeight;
     }
 
     /**
