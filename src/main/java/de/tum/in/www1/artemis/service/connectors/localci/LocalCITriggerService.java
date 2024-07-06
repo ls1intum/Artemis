@@ -281,6 +281,10 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private int determinePriority(ProgrammingExercise programmingExercise, ProgrammingExerciseParticipation participation) {
         if (programmingExercise.isExamExercise()) {
+            boolean isTestExam = programmingExercise.getExerciseGroup().getExam().isTestExam();
+            if (isTestExam) {
+                return 3;
+            }
             if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
                 return examDateService.isIndividualExerciseWorkingPeriodOver(programmingExercise.getExamViaExerciseGroupOrCourseMember(), studentParticipation) ? 3 : 1;
             }
