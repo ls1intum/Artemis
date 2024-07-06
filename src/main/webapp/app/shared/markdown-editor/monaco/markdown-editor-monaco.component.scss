@@ -3,8 +3,8 @@
 }
 
 .resize-placeholder {
-    border-left: 1px solid var(--border-color);
-    border-right: 1px solid var(--border-color);
+    border: 1px solid var(--border-color);
+    border-bottom: none;
 }
 
 .file-upload-footer-input {
@@ -23,6 +23,7 @@
     border-top: 1px dotted var(--border-color);
     border-bottom: 1px solid var(--border-color);
     border-radius: 0 0.15em 0.15em 0;
+    padding-bottom: 0.15em;
 
     .upload-subtitle {
         font-size: 12px;
