@@ -20,9 +20,6 @@
                             : ('artemisApp.metis.showMultipleAnswers' | artemisTranslate: { number: sortedAnswerPosts.length })
                     }}</span>
                 </button>
-                @if (isCommunicationPage && getShowNewMessageIcon()) {
-                    <span class="badge bg-secondary hideAfter5Seconds">{{ 'global.generic.new' | artemisTranslate }}</span>
-                }
             </div>
         }
         <!-- collapse answers -->
@@ -56,9 +53,6 @@
                                 : ('artemisApp.metis.showMultipleAnswers' | artemisTranslate: { number: sortedAnswerPosts.length })
                         }}</span>
                     </button>
-                    @if (getShowNewMessageIcon()) {
-                        <span class="badge bg-secondary hideAfter5Seconds">{{ 'global.generic.new' | artemisTranslate }}</span>
-                    }
                 </div>
             }
         }
@@ -106,8 +100,8 @@
             />
         }
     </ng-template>
-    @if (displayPriority === DisplayPriority.PINNED || canPin) {
-        <div class="col-auto p-0">
+    <div class="col-auto p-0">
+        @if (displayPriority === DisplayPriority.PINNED || canPin) {
             <button
                 class="reaction-button pin"
                 [class.reaction-button--not-hoverable]="!canPin"
@@ -117,6 +111,9 @@
             >
                 <jhi-emoji [emoji]="pinEmojiId" [ngbTooltip]="pinTooltip | artemisTranslate" [placement]="'auto'" />
             </button>
-        </div>
-    }
+        }
+        @if (getShowNewMessageIcon()) {
+            <span class="badge bg-secondary hideAfter5Seconds">{{ 'global.generic.new' | artemisTranslate }}</span>
+        }
+    </div>
 </div>
