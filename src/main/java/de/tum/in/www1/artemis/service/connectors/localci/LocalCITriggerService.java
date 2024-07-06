@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
@@ -42,6 +43,7 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.JobTimingInfo;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.RepositoryInfo;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 
 /**
@@ -75,11 +77,13 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private IMap<String, ZonedDateTime> dockerImageCleanupInfo;
 
+    private final ExamDateService examDateService;
+
     public LocalCITriggerService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, AeolusTemplateService aeolusTemplateService,
             ProgrammingLanguageConfiguration programmingLanguageConfiguration, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService, Optional<VersionControlService> versionControlService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            LocalCIBuildConfigurationService localCIBuildConfigurationService, GitService gitService) {
+            LocalCIBuildConfigurationService localCIBuildConfigurationService, GitService gitService, ExamDateService examDateService) {
         this.hazelcastInstance = hazelcastInstance;
         this.aeolusTemplateService = aeolusTemplateService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
@@ -89,6 +93,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.localCIBuildConfigurationService = localCIBuildConfigurationService;
         this.gitService = gitService;
+        this.examDateService = examDateService;
     }
 
     @PostConstruct
@@ -275,6 +280,23 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     }
 
     private int determinePriority(ProgrammingExercise programmingExercise, ProgrammingExerciseParticipation participation) {
+        if (programmingExercise.isExamExercise()) {
+            if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
+                return examDateService.isIndividualExerciseWorkingPeriodOver(programmingExercise.getExamViaExerciseGroupOrCourseMember(), studentParticipation) ? 3 : 1;
+            }
+            else {
+                return 2;
+            }
+        }
+        else if (isProgrammingExerciseOver(programmingExercise, participation)) {
+            return 3;
+        }
+        else {
+            return 2;
+        }
+    }
+
+    private boolean isProgrammingExerciseOver(ProgrammingExercise programmingExercise, ProgrammingExerciseParticipation participation) {
         ZonedDateTime dueDate = null;
         // If individual due date is set, use the latter of the two due dates
         if (programmingExercise.getDueDate() != null && participation.getIndividualDueDate() != null) {
@@ -287,15 +309,6 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             dueDate = programmingExercise.getDueDate();
         }
 
-        if (programmingExercise.isExamExercise()) {
-            boolean isTestExam = programmingExercise.getExerciseGroup().getExam().isTestExam();
-            return isTestExam ? 2 : 1;
-        }
-        else if (dueDate != null && dueDate.isBefore(ZonedDateTime.now())) {
-            return 3;
-        }
-        else {
-            return 2;
-        }
+        return dueDate != null && dueDate.isBefore(ZonedDateTime.now());
     }
 }
