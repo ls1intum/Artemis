@@ -9,11 +9,11 @@
             @if (programmingExercise.windFile && programmingExercise.windFile.metadata && programmingExercise.windFile.metadata.docker) {
                 <jhi-programming-exercise-docker-image [dockerImage]="programmingExercise.windFile.metadata.docker.image" (dockerImageChange)="setDockerImage($event)" />
             }
-            <div class="card col-12 col-md-12">
+            <label jhiTranslate="artemisApp.programmingExercise.script" class="mb-2"></label>
+            <div class="ms-1 p-0 card col-12 col-md-12">
                 <div class="card-text d-flex flex-column" [style.height.vh]="40">
-                    <label jhiTranslate="artemisApp.programmingExercise.script" class="mb-2"></label>
-                    <div [style.flex-shrink]="1" [style.flex-grow]="1" [style.max-height.%]="100">
-                        <jhi-monaco-editor #editor (textChanged)="codeChanged($event)" />
+                    <div [style.max-height.%]="100" [style.flex-shrink]="1" [style.flex-grow]="1">
+                        <jhi-monaco-editor [shrinkToFit]="false" #editor (textChanged)="codeChanged($event)" />
                     </div>
                 </div>
             </div>
