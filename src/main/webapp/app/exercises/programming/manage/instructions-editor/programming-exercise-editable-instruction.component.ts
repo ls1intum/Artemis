@@ -10,13 +10,19 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { hasExerciseChanged } from 'app/exercises/shared/exercise/exercise.utils';
-import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
+import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { Result } from 'app/entities/result.model';
 import { faCheckCircle, faCircleNotch, faExclamationTriangle, faGripLines, faSave } from '@fortawesome/free-solid-svg-icons';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/monaco-formula.action';
+import { MonacoTaskAction } from 'app/shared/monaco-editor/model/actions/monaco-task.action';
+import { MonacoTestCaseAction } from 'app/shared/monaco-editor/model/actions/monaco-test-case.action';
+import { MonacoEditorDomainAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action.model';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -35,6 +41,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     testCaseCommand = new TestCaseCommand();
     katexCommand = new KatexCommand();
     domainCommands: DomainCommand[] = [this.katexCommand, this.taskCommand, this.testCaseCommand];
+    testCaseAction = new MonacoTestCaseAction();
+    domainActions: MonacoEditorDomainAction[] = [new MonacoFormulaAction(), new MonacoTaskAction(), this.testCaseAction];
 
     savingInstructions = false;
     unsavedChangesValue = false;
@@ -42,12 +50,13 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     testCaseSubscription: Subscription;
     forceRenderSubscription: Subscription;
 
-    @ViewChild(MarkdownEditorComponent, { static: false }) markdownEditor: MarkdownEditorComponent;
+    @ViewChild(MarkdownEditorMonacoComponent, { static: false }) markdownEditorMonaco?: MarkdownEditorMonacoComponent;
 
     @Input() showStatus = true;
     // If the programming exercise is being created, some features have to be disabled (saving the problemStatement & querying test cases).
     @Input() editMode = true;
     @Input() enableResize = true;
+    @Input({ required: true }) initialEditorHeight: MarkdownEditorHeight | 'external';
     @Input() showSaveButton = false;
     @Input() templateParticipation: Participation;
     @Input() forceRender: Observable<void>;
@@ -93,6 +102,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     faExclamationTriangle = faExclamationTriangle;
     faCircleNotch = faCircleNotch;
     faGripLines = faGripLines;
+
+    protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
@@ -203,7 +214,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                     }),
                     tap((testCaseNames: string[]) => {
                         this.exerciseTestCases = testCaseNames;
-                        this.testCaseCommand.setValues(this.exerciseTestCases.map((value) => ({ value, id: value })));
+                        const cases = this.exerciseTestCases.map((value) => ({ value, id: value }));
+                        this.testCaseCommand.setValues(cases);
+                        this.testCaseAction.setValues(cases);
                     }),
                     catchError(() => of()),
                 )
@@ -234,13 +247,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      */
     onAnalysisUpdate = (analysis: ProblemStatementAnalysis) => {
         const lineWarnings = this.mapAnalysisToWarnings(analysis);
-
-        this.markdownEditor.aceEditorContainer.getEditor().getSession().clearAnnotations();
-        // We need to wait for the annotations to be removed before we can set the new annotations.
-        // Otherwise changes in the editor will trigger the update of the existing annotations.
-        setTimeout(() => {
-            this.markdownEditor.aceEditorContainer.getEditor().getSession().setAnnotations(lineWarnings);
-        }, 0);
+        this.markdownEditorMonaco?.monacoEditor?.setAnnotations(lineWarnings as Annotation[]);
     };
 
     private mapAnalysisToWarnings = (analysis: ProblemStatementAnalysis) => {
