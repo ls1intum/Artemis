@@ -29,7 +29,7 @@
                 </div>
             </div>
             @if (active) {
-                <div class="card col-9 col-md-9">
+                <div class="card p-0 col-9 col-md-9">
                     <div class="card-header">
                         <div class="form-group">
                             <input required type="text" class="form-control" name="actionName" id="field_actionName" [(ngModel)]="active.name" />
@@ -55,11 +55,11 @@
                             </div>
                         </div>
                     </div>
+                    <label jhiTranslate="artemisApp.programmingExercise.script" class="m-2"></label>
                     <div class="card-text d-flex flex-column" [style.height.vh]="40">
-                        <label jhiTranslate="artemisApp.programmingExercise.script" class="mb-2"></label>
                         <div class="flex-grow-1 flex-shrink-1" [style.max-height.%]="100">
                             @if (isScriptAction) {
-                                <jhi-monaco-editor #editor (textChanged)="codeChanged($event)" />
+                                <jhi-monaco-editor #editor [shrinkToFit]="false" (textChanged)="codeChanged($event)" />
                             }
                         </div>
                     </div>
