@@ -37,3 +37,20 @@ $draggable-width: 15px;
     display: flex;
     height: 100%;
 }
+
+/* Target the modeling-assessment class for print media */
+@media print {
+    .modeling-assessment {
+        /* Remove any top margin or padding that might introduce blank spaces */
+        margin-top: 0;
+        padding-top: 0;
+
+        /* Ensure the container does not overflow the print area */
+        overflow: visible;
+        page-break-inside: avoid;
+
+        /* Adjust the size of the container to fit the print area */
+        height: auto;
+        max-height: 100vh;
+    }
+}
