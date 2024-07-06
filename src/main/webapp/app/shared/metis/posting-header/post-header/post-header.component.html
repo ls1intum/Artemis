@@ -2,8 +2,9 @@
     <div class="align-items-center">
         <span class="fs-x-small header-author-date">
             @if (posting.author) {
-                <span ngbTooltip="{{ userAuthorityTooltip | artemisTranslate }}" class="badge fs-xx-small p-1 rounded-3" [ngClass]="'badge-' + userAuthority" id="role-badge">{{ userRoleBadge | artemisTranslate }}</span>
-                </span>
+                <span ngbTooltip="{{ userAuthorityTooltip | artemisTranslate }}" class="badge fs-xx-small p-1 rounded-3" [ngClass]="'badge-' + userAuthority" id="role-badge">{{
+                    userRoleBadge | artemisTranslate
+                }}</span>
                 <span class="fs-small pe-1 fw-bold">
                     {{ posting.author?.name }}
                 </span>
