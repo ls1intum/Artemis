@@ -15,8 +15,7 @@
 .file-upload-footer-label {
     cursor: pointer;
     width: 100%;
-    border: 1px solid var(--border-color);
-    border-top: none;
+    border-bottom: 1px solid var(--border-color);
     border-radius: 0 0.15em 0.15em 0;
 
     .upload-subtitle {
