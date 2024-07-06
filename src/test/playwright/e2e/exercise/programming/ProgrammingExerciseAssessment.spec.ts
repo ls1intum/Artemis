@@ -29,8 +29,8 @@ test.describe('Programming exercise assessment', () => {
         await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
         await courseManagementAPIRequests.addTutorToCourse(course, tutor);
         await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
-        dueDate = dayjs().add(25, 'seconds');
-        assessmentDueDate = dueDate.add(30, 'seconds');
+        dueDate = dayjs().add(15, 'seconds');
+        assessmentDueDate = dueDate.add(20, 'seconds');
         exercise = await exerciseAPIRequests.createProgrammingExercise({
             course,
             recordTestwiseCoverage: false,
@@ -78,7 +78,7 @@ test.describe('Programming exercise assessment', () => {
         }
 
         // Verify assessment as student
-        await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
+        await login(studentOne, `/courses/${course.id!}/exercises/${exercise.id!}`);
         const totalPoints = tutorFeedbackPoints + tutorCodeFeedbackPoints;
         const percentage = totalPoints * 10;
         await exerciseResult.shouldShowExerciseTitle(exercise.title!);
