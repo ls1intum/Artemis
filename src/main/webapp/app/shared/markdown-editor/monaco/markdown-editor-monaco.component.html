@@ -1,10 +1,9 @@
-<div #fullElement [style.height.%]="100">
+<div #fullElement class="h-100">
     <div
         #wrapper
         class="markdown-editor-wrapper"
         [style.overflow]="inPreviewMode ? 'auto' : 'hidden'"
         [style.height.px]="inPreviewMode ? undefined : targetWrapperHeight"
-        [style.height.%]="targetWrapperHeight ? undefined : 100"
         [style.cursor]="isResizing ? 'ns-resize' : undefined"
     >
         <nav ngbNav #actionPalette #nav="ngbNav" class="nav-tabs" [destroyOnHide]="false" (navChange)="onNavChanged($event)">
