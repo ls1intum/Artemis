@@ -29,6 +29,7 @@ import { ArtemisCodeEditorModule } from 'app/exercises/programming/shared/code-e
 import { DetailModule } from 'app/detail-overview-list/detail.module';
 import { IrisModule } from 'app/iris/iris.module';
 import { ArtemisExerciseModule } from 'app/exercises/shared/exercise/exercise.module';
+import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
 
 @NgModule({
     imports: [
@@ -57,6 +58,7 @@ import { ArtemisExerciseModule } from 'app/exercises/shared/exercise/exercise.mo
         ArtemisExerciseModule,
         DetailModule,
         IrisModule,
+        MonacoEditorModule,
     ],
     declarations: [
         ProgrammingExerciseDetailComponent,

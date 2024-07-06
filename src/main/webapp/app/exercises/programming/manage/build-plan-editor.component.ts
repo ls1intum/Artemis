@@ -1,4 +1,3 @@
-import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import { AfterViewInit, Component, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { faCircleNotch, faPlayCircle } from '@fortawesome/free-solid-svg-icons';
 import { onError } from 'app/shared/util/global.utils';
@@ -8,6 +7,7 @@ import { BuildPlan } from 'app/entities/build-plan.model';
 import { ActivatedRoute } from '@angular/router';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 
 @Component({
     selector: 'jhi-build-plan-editor',
@@ -21,9 +21,8 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
     readonly farPlayCircle = faPlayCircle;
 
     @ViewChild('editor', { static: true })
-    editor: AceEditorComponent;
+    editor: MonacoEditorComponent;
     isLoading = false;
-    tabSize = 4;
 
     loadingResults = true;
     exerciseId: number;
@@ -53,10 +52,6 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
      * @desc Sets the theme and other editor options
      */
     ngAfterViewInit(): void {
-        this.editor.getEditor().setOptions({
-            animatedScroll: true,
-            maxLines: 45,
-        });
         this.loadBuildPlan(this.activatedRoute.snapshot.params.exerciseId);
     }
 
@@ -95,14 +90,12 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
 
     private initEditor() {
         this.onBuildPlanUpdate();
-        this.editor.getEditor().resize();
-        this.editor.getEditor().focus();
-        this.editor.getEditor().setShowPrintMargin(false);
+        this.editor.layout();
     }
 
     private onBuildPlanUpdate() {
         const text = this.buildPlan?.buildPlan ?? '';
-        this.editor.getEditor().getSession().setValue(text);
+        this.editor.setText(text);
     }
 
     /**
@@ -128,14 +121,5 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
      */
     onTextChanged(event: any) {
         this.buildPlan!.buildPlan = event as string;
-    }
-
-    /**
-     * @function updateTabSize
-     * Updates the tab size.
-     * @param tabSize The new tab size.
-     */
-    updateTabSize(tabSize: number) {
-        this.tabSize = tabSize;
     }
 }

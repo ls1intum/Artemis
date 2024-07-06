@@ -10,7 +10,6 @@ import { BuildPlan } from 'app/entities/build-plan.model';
 import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { MockBuildPlanService } from '../../helpers/mocks/service/mock-build-plan.service';
-import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
 import { MockComponent } from 'ng-mocks';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
@@ -19,6 +18,7 @@ import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.se
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
+import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
 
 describe('Build Plan Editor', () => {
     let fixture: ComponentFixture<BuildPlanEditorComponent>;
@@ -33,7 +33,7 @@ describe('Build Plan Editor', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, AceEditorModule, NgbTooltipMocksModule],
+            imports: [ArtemisTestModule, MonacoEditorModule, NgbTooltipMocksModule],
             declarations: [BuildPlanEditorComponent, TranslatePipeMock, MockComponent(CodeEditorHeaderComponent), MockComponent(UpdatingResultComponent)],
             providers: [
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
