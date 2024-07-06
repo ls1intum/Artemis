@@ -7,10 +7,13 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { SelectWithSearchComponent } from './select-with-search/select-with-search.component';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 
 @NgModule({
-    imports: [ArtemisSharedModule, AceEditorModule, FormsModule, ArtemisColorSelectorModule, MatMenuModule, MatButtonModule],
-    declarations: [MarkdownEditorComponent, SelectWithSearchComponent],
-    exports: [MarkdownEditorComponent],
+    imports: [ArtemisSharedModule, AceEditorModule, MonacoEditorModule, FormsModule, ArtemisColorSelectorModule, MatMenuModule, MatButtonModule, DragDropModule],
+    declarations: [MarkdownEditorComponent, MarkdownEditorMonacoComponent, SelectWithSearchComponent],
+    exports: [MarkdownEditorComponent, MarkdownEditorMonacoComponent],
 })
 export class ArtemisMarkdownEditorModule {}
