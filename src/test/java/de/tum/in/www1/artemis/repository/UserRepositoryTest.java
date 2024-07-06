@@ -102,7 +102,7 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
 
         userRepository.clearVCSTokens();
 
-        List<User> updatedUsers = userRepository.findAllById(users.stream().map(DomainObject::getId).toList());
-        assertThat(updatedUsers.stream().filter(u -> u.getVcsAccessToken() == null && u.getVcsAccessTokenExpiryDate() == null)).hasSize(users.size());
+        users = userRepository.findAllById(users.stream().map(DomainObject::getId).toList());
+        assertThat(users).allMatch(u -> u.getVcsAccessToken() == null && u.getVcsAccessTokenExpiryDate() == null);
     }
 }
