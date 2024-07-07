@@ -2,6 +2,9 @@ package de.tum.in.www1.artemis.lecture;
 
 import static de.tum.in.www1.artemis.util.RequestUtilService.deleteProgrammingExerciseParamsFalse;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 import java.util.HashSet;
 import java.util.List;
@@ -223,6 +226,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentTe
             request.get("/api/exercises/" + exercise.getId(), HttpStatus.OK, Exercise.class);
         }
 
+        verify(competencyProgressService, never()).updateProgressForUpdatedLearningObjectAsync(any(), any());
     }
 
 }

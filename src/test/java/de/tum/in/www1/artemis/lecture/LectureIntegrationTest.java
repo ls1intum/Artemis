@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.lecture;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
@@ -376,7 +376,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(lectureOptional).isEmpty();
 
         // ExerciseUnits do not have competencies, their exercises do
-        verify(competencyProgressService, times(lecture1.getLectureUnits().size() - 1)).updateProgressForUpdatedLearningObjectAsync(any(), eq(Optional.empty()));
+        verify(competencyProgressService, timeout(1000).times(lecture1.getLectureUnits().size() - 1)).updateProgressForUpdatedLearningObjectAsync(any(), eq(Optional.empty()));
     }
 
     @Test

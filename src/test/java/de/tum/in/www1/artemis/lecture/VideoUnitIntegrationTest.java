@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import java.util.List;
@@ -126,7 +127,7 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest 
         this.videoUnit.setDescription("Changed");
         this.videoUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/video-units", this.videoUnit, VideoUnit.class, HttpStatus.OK);
         assertThat(this.videoUnit.getDescription()).isEqualTo("Changed");
-        verify(competencyProgressService).updateProgressForUpdatedLearningObjectAsync(eq(videoUnit), eq(Optional.of(videoUnit)));
+        verify(competencyProgressService, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(videoUnit), eq(Optional.of(videoUnit)));
     }
 
     @Test
@@ -206,7 +207,7 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(this.videoUnit.getId()).isNotNull();
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + this.videoUnit.getId(), HttpStatus.OK);
         request.get("/api/lectures/" + lecture1.getId() + "/video-units/" + this.videoUnit.getId(), HttpStatus.NOT_FOUND, VideoUnit.class);
-        verify(competencyProgressService).updateProgressForUpdatedLearningObjectAsync(eq(videoUnit), eq(Optional.empty()));
+        verify(competencyProgressService, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(videoUnit), eq(Optional.empty()));
     }
 
     @Test
