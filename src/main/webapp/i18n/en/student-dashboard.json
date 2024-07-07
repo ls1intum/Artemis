@@ -34,7 +34,7 @@
             "studentView": "Student view",
             "general": {
                 "noDataFound": "No data found.",
-                "noExercisesFoundWithAppliedFilter": "No exercises were found to which the selected filters apply."
+                "noExercisesFoundWithAppliedFilter": "No exercises match the selected filters."
             },
             "sidebar": {
                 "past": "Past",
