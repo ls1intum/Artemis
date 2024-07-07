@@ -38,6 +38,12 @@ interface MarkdownActionsByGroup {
 }
 
 const EXTERNAL_HEIGHT = 'external';
+
+/**
+ * The offset (in px) that is subtracted from the editor's width to prevent it from obscuring the border.
+ * This consists of the width of the borders on each side (1px each) and one extra pixel to prevent the editor
+ * from covering the border while shrinking.
+ */
 const BORDER_WIDTH_OFFSET = 3;
 
 // TODO: Once the old markdown editor is gone, remove the style url.
