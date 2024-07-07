@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.exercise.fileupload;
 import static de.tum.in.www1.artemis.util.TestResourceUtils.HalfSecond;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -389,7 +390,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationIndepen
         fileUploadExercise = fileUploadExerciseRepository.save(fileUploadExercise);
         request.delete("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK);
 
-        verify(competencyProgressService).updateProgressByCompetencyAsync(any());
+        verify(competencyProgressService).updateProgressByCompetencyAsync(eq(competency));
     }
 
     @Test
@@ -448,7 +449,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationIndepen
         assertThat(receivedFileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId()).as("courseId was not updated").isEqualTo(course.getId());
         verify(examLiveEventsService, never()).createAndSendProblemStatementUpdateEvent(any(), any());
         verify(groupNotificationScheduleService, times(1)).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any());
-        verify(competencyProgressService).updateProgressForUpdatedLearningObject(any(), any());
+        verify(competencyProgressService).updateProgressForUpdatedLearningObject(eq(fileUploadExercise), eq(Optional.of(fileUploadExercise)));
     }
 
     @Test
@@ -748,7 +749,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationIndepen
         Channel channelFromDB = channelRepository.findChannelByExerciseId(importedFileUploadExercise.getId());
         assertThat(channelFromDB).isNotNull();
         assertThat(channelFromDB.getName()).isEqualTo(uniqueChannelName);
-        verify(competencyProgressService).updateProgressByLearningObjectAsync(any());
+        verify(competencyProgressService).updateProgressByLearningObjectAsync(eq(importedFileUploadExercise));
     }
 
     @Test

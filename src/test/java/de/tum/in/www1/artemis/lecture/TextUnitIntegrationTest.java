@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
@@ -92,7 +91,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         var persistedTextUnit = request.postWithResponseBody("/api/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.CREATED);
         assertThat(persistedTextUnit.getId()).isNotNull();
         assertThat(persistedTextUnit.getName()).isEqualTo("LoremIpsum");
-        verify(competencyProgressService).updateProgressByLearningObjectAsync(any());
+        verify(competencyProgressService).updateProgressByLearningObjectAsync(eq(persistedTextUnit));
     }
 
     @Test
@@ -115,7 +114,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         textUnitFromRequest.setContent("Changed");
         TextUnit updatedTextUnit = request.putWithResponseBody("/api/lectures/" + lecture.getId() + "/text-units", textUnitFromRequest, TextUnit.class, HttpStatus.OK);
         assertThat(updatedTextUnit.getContent()).isEqualTo("Changed");
-        verify(competencyProgressService).updateProgressForUpdatedLearningObject(any(), any());
+        verify(competencyProgressService).updateProgressForUpdatedLearningObject(eq(textUnit), eq(Optional.of(textUnit)));
     }
 
     @Test
@@ -164,7 +163,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(this.textUnit.getId()).isNotNull();
         request.delete("/api/lectures/" + lecture.getId() + "/lecture-units/" + this.textUnit.getId(), HttpStatus.OK);
         request.get("/api/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.NOT_FOUND, TextUnit.class);
-        verify(competencyProgressService).updateProgressForUpdatedLearningObject(any(), eq(Optional.empty()));
+        verify(competencyProgressService).updateProgressForUpdatedLearningObject(eq(textUnit), eq(Optional.empty()));
     }
 
     private void persistTextUnitWithLecture() {

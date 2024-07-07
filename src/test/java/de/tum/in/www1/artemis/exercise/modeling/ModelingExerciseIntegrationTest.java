@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.exercise.modeling;
 
 import static de.tum.in.www1.artemis.util.TestResourceUtils.HalfSecond;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -252,7 +252,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         assertThat(returnedModelingExercise.getGradingCriteria()).hasSameSizeAs(gradingCriteria);
         verify(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(returnedModelingExercise, notificationText);
         verify(examLiveEventsService, never()).createAndSendProblemStatementUpdateEvent(returnedModelingExercise, notificationText);
-        verify(competencyProgressService).updateProgressForUpdatedLearningObject(any(), any());
+        verify(competencyProgressService).updateProgressForUpdatedLearningObject(eq(createdModelingExercise), eq(Optional.of(createdModelingExercise)));
     }
 
     @Test
@@ -424,7 +424,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         request.delete("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.OK);
 
-        verify(competencyProgressService).updateProgressByCompetencyAsync(competency);
+        verify(competencyProgressService).updateProgressByCompetencyAsync(eq(competency));
     }
 
     @Test
@@ -494,7 +494,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         Channel channelFromDB = channelRepository.findChannelByExerciseId(importedExercise.getId());
         assertThat(channelFromDB).isNotNull();
         assertThat(channelFromDB.getName()).isEqualTo(uniqueChannelName);
-        verify(competencyProgressService).updateProgressByLearningObjectAsync(any());
+        verify(competencyProgressService).updateProgressByLearningObjectAsync(eq(importedExercise));
     }
 
     @Test

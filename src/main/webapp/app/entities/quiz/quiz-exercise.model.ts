@@ -69,6 +69,6 @@ export class QuizExercise extends Exercise implements QuizConfiguration, QuizPar
 export function resetQuizForImport(exercise: QuizExercise) {
     resetForImport(exercise);
 
-    this.quizExercise.quizBatches = [];
-    this.quizExercise.isEditable = true;
+    exercise.quizBatches = [];
+    exercise.isEditable = true;
 }

@@ -4,12 +4,14 @@ import static de.tum.in.www1.artemis.config.Constants.LOCALCI_RESULTS_DIRECTORY;
 import static de.tum.in.www1.artemis.config.Constants.LOCALCI_WORKING_DIRECTORY;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.eclipse.jgit.transport.CredentialsProvider;
@@ -189,7 +191,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         localVCLocalCITestService.testLatestSubmission(createdExercise.getTemplateParticipation().getId(), null, 0, false);
         localVCLocalCITestService.testLatestSubmission(createdExercise.getSolutionParticipation().getId(), null, 13, false);
 
-        verify(competencyProgressService).updateProgressByLearningObjectAsync(any());
+        verify(competencyProgressService).updateProgressByLearningObjectAsync(eq(createdExercise));
     }
 
     @Test
@@ -201,7 +203,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         ProgrammingExercise updatedExercise = request.putWithResponseBody("/api/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
 
         assertThat(updatedExercise.getReleaseDate()).isEqualTo(programmingExercise.getReleaseDate());
-        verify(competencyProgressService).updateProgressForUpdatedLearningObject(any(), any());
+        verify(competencyProgressService).updateProgressForUpdatedLearningObject(eq(programmingExercise), eq(Optional.of(programmingExercise)));
     }
 
     @Test
@@ -234,7 +236,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         assertThat(solutionRepositoryUri.getLocalRepositoryPath(localVCBasePath)).doesNotExist();
         LocalVCRepositoryUri testsRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getTestRepositoryUri());
         assertThat(testsRepositoryUri.getLocalRepositoryPath(localVCBasePath)).doesNotExist();
-        verify(competencyProgressService).updateProgressByCompetencyAsync(competency);
+        verify(competencyProgressService).updateProgressByCompetencyAsync(eq(competency));
     }
 
     @Test
@@ -284,7 +286,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
                 .orElseThrow();
         localVCLocalCITestService.testLatestSubmission(templateParticipation.getId(), null, 0, false);
         localVCLocalCITestService.testLatestSubmission(solutionParticipation.getId(), null, 13, false);
-        verify(competencyProgressService).updateProgressByLearningObjectAsync(any());
+        verify(competencyProgressService).updateProgressByLearningObjectAsync(eq(importedExercise));
     }
 
     @Nested

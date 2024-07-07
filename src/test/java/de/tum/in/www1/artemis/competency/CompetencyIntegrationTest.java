@@ -1,9 +1,9 @@
-package de.tum.in.www1.artemis.lecture;
+package de.tum.in.www1.artemis.competency;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.within;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -29,10 +29,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.StudentScoreUtilService;
-import de.tum.in.www1.artemis.competency.CompetencyProgressUtilService;
-import de.tum.in.www1.artemis.competency.CompetencyUtilService;
-import de.tum.in.www1.artemis.competency.PrerequisiteUtilService;
-import de.tum.in.www1.artemis.competency.StandardizedCompetencyUtilService;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
@@ -64,6 +60,7 @@ import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseFactory;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
+import de.tum.in.www1.artemis.lecture.LectureUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
@@ -816,7 +813,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
             var persistedCompetency = request.postWithResponseBody("/api/courses/" + course.getId() + "/competencies", competency, Competency.class, HttpStatus.CREATED);
             assertThat(persistedCompetency.getId()).isNotNull();
-            verify(competencyProgressService).updateProgressByCompetencyAndUsersInCourseAsync(any());
+            verify(competencyProgressService).updateProgressByCompetencyAndUsersInCourseAsync(eq(persistedCompetency));
         }
 
         @Nested
@@ -887,7 +884,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
             assertThat(competencyRepository.findById(importedCompetency.getId())).isNotEmpty();
             assertThat(importedCompetency.getLectureUnits()).containsExactlyInAnyOrderElementsOf(connectedLectureUnits);
-            verify(competencyProgressService).updateProgressByCompetencyAndUsersInCourseAsync(importedCompetency);
+            verify(competencyProgressService).updateProgressByCompetencyAndUsersInCourseAsync(eq(importedCompetency));
         }
 
         @Test

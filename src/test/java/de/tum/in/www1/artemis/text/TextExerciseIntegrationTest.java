@@ -6,6 +6,7 @@ import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus.NONE;
 import static de.tum.in.www1.artemis.util.TestResourceUtils.HalfSecond;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -213,7 +214,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK);
 
-        verify(competencyProgressService).updateProgressByCompetencyAsync(competency);
+        verify(competencyProgressService).updateProgressByCompetencyAsync(eq(competency));
     }
 
     @Test
@@ -443,7 +444,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(updatedTextExercise.getCourseViaExerciseGroupOrCourseMember().getId()).as("courseId was not updated").isEqualTo(course.getId());
         verify(examLiveEventsService, never()).createAndSendProblemStatementUpdateEvent(any(), any());
         verify(groupNotificationScheduleService, times(1)).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any());
-        verify(competencyProgressService).updateProgressForUpdatedLearningObject(any(), any());
+        verify(competencyProgressService).updateProgressForUpdatedLearningObject(eq(textExercise), eq(Optional.of(textExercise)));
     }
 
     @Test
@@ -606,7 +607,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         var newTextExercise = request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
         Channel channel = channelRepository.findChannelByExerciseId(newTextExercise.getId());
         assertThat(channel).isNotNull();
-        verify(competencyProgressService).updateProgressByLearningObjectAsync(any());
+        verify(competencyProgressService).updateProgressByLearningObjectAsync(eq(newTextExercise));
     }
 
     @Test

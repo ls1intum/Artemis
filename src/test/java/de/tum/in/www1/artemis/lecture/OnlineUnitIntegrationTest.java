@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.mock;
@@ -115,7 +114,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest
         onlineUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         var persistedOnlineUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/online-units", onlineUnit, OnlineUnit.class, HttpStatus.CREATED);
         assertThat(persistedOnlineUnit.getId()).isNotNull();
-        verify(competencyProgressService).updateProgressByLearningObjectAsync(any());
+        verify(competencyProgressService).updateProgressByLearningObjectAsync(eq(persistedOnlineUnit));
     }
 
     @Test
@@ -150,7 +149,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest
         this.onlineUnit.setDescription("Changed");
         this.onlineUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/online-units", this.onlineUnit, OnlineUnit.class, HttpStatus.OK);
         assertThat(this.onlineUnit.getDescription()).isEqualTo("Changed");
-        verify(competencyProgressService).updateProgressForUpdatedLearningObject(any(), any());
+        verify(competencyProgressService).updateProgressForUpdatedLearningObject(eq(onlineUnit), eq(Optional.of(onlineUnit)));
     }
 
     @Test
@@ -267,7 +266,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest
         assertThat(this.onlineUnit.getId()).isNotNull();
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + this.onlineUnit.getId(), HttpStatus.OK);
         request.get("/api/lectures/" + lecture1.getId() + "/online-units/" + this.onlineUnit.getId(), HttpStatus.NOT_FOUND, OnlineUnit.class);
-        verify(competencyProgressService).updateProgressForUpdatedLearningObject(any(), eq(Optional.empty()));
+        verify(competencyProgressService).updateProgressForUpdatedLearningObject(eq(onlineUnit), eq(Optional.empty()));
     }
 
 }

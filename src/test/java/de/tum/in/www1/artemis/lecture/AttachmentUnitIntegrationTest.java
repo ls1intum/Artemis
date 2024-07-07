@@ -235,7 +235,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentUnitId(persistedAttachmentUnit.getId())).hasSize(SLIDE_COUNT));
         assertThat(updatedAttachmentUnit.getAttachment()).isEqualTo(persistedAttachment);
         assertThat(updatedAttachmentUnit.getAttachment().getName()).isEqualTo("LoremIpsum");
-        verify(competencyProgressService).updateProgressByLearningObjectAsync(any());
+        verify(competencyProgressService).updateProgressByLearningObjectAsync(eq(updatedAttachmentUnit));
     }
 
     @Test
@@ -281,7 +281,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         attachment = attachmentRepository.findById(attachment.getId()).orElseThrow();
         assertThat(attachmentUnit2.getAttachment()).isEqualTo(attachment);
         assertThat(attachment.getAttachmentUnit()).isEqualTo(attachmentUnit2);
-        verify(competencyProgressService).updateProgressForUpdatedLearningObject(any(), any());
+        verify(competencyProgressService).updateProgressForUpdatedLearningObject(eq(attachmentUnit), eq(Optional.of(attachmentUnit)));
     }
 
     @Test
