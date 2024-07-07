@@ -31,8 +31,6 @@ import de.tum.in.www1.artemis.service.connectors.jenkins.build_plan.JenkinsBuild
 @Profile("jenkins")
 public class MigrationEntryJenkinsToLocalVC extends LocalVCMigrationEntry {
 
-    private final UriService uriService;
-
     private final JenkinsBuildPlanService jenkinsBuildPlanService;
 
     /**
@@ -58,7 +56,6 @@ public class MigrationEntryJenkinsToLocalVC extends LocalVCMigrationEntry {
             JenkinsBuildPlanService jenkinsBuildPlanService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
         super(programmingExerciseRepository, solutionProgrammingExerciseParticipationRepository, templateProgrammingExerciseParticipationRepository,
                 programmingExerciseStudentParticipationRepository, auxiliaryRepositoryRepository);
-        this.uriService = uriService;
         this.jenkinsBuildPlanService = jenkinsBuildPlanService;
     }
 
