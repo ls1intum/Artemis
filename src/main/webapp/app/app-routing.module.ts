@@ -6,6 +6,7 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { AboutIrisComponent } from 'app/iris/about-iris/about-iris.component';
 import { ProblemStatementComponent } from './overview/exercise-details/problem-statement/problem-statement.component';
 import { StandaloneFeedbackComponent } from './exercises/shared/feedback/standalone-feedback/standalone-feedback.component';
+import { PdfPreviewComponent } from 'app/lecture/pdf-preview/pdf-preview.component';
 
 const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
 
@@ -64,6 +65,11 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     path: 'course-management/:courseId/programming-exercises/:exerciseId',
                     loadChildren: () =>
                         import('./exercises/programming/manage/programming-exercise-management-routing.module').then((m) => m.ArtemisProgrammingExerciseManagementRoutingModule),
+                },
+                {
+                    path: 'course-management/:courseId/lectures/:lectureId/attachments/:attachmentId',
+                    pathMatch: 'full',
+                    component: PdfPreviewComponent,
                 },
                 {
                     path: 'courses',

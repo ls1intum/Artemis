@@ -80,6 +80,14 @@
                                                 <td class="text-end">
                                                     <div class="flex-btn-group-container">
                                                         <button
+                                                            [routerLink]="['/course-management', lecture.course?.id, 'lectures', lecture.id, 'attachments', attachment.id]"
+                                                            type="submit"
+                                                            class="btn btn-primary btn-sm me-1"
+                                                        >
+                                                            <fa-icon [icon]="faPencilAlt" />
+                                                            <span class="d-none d-md-inline">Preview</span>
+                                                        </button>
+                                                        <button
                                                             [disabled]="attachmentToBeCreated?.id === attachment?.id"
                                                             type="submit"
                                                             (click)="editAttachment(attachment)"

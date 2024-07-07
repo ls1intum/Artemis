@@ -1,0 +1,18 @@
+<div class="row justify-content-center">
+    <div class="col-12">
+        <div>
+            <div>
+                <hr class="mt-2 mb-2" />
+                <div class="row">
+                    <div class="col-12">
+                        <div class="grid">
+                            @for (imageUrl of imageUrls; track imageUrl) {
+                                <img alt="title" [src]="imageUrl" class="thumbnail" />
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
