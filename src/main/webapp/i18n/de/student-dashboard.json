@@ -34,7 +34,7 @@
             "studentView": "Studentenansicht",
             "general": {
                 "noDataFound": "Keine Einträge gefunden.",
-                "noExercisesFoundWithAppliedFilter": "Es wurden keine Aufgaben gefunden auf die die gewählten Filtereigenschaften zutreffen."
+                "noExercisesFoundWithAppliedFilter": "Keine Aufgaben passen zu den gewählten Filtereigenschaften."
             },
             "sidebar": {
                 "past": "Vorangegangen",

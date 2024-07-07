@@ -89,9 +89,7 @@ describe('SidebarAccordionComponent', () => {
         component.searchValue = 'test';
         component.ngOnChanges();
 
-        fixture.detectChanges();
-
-        expect(component.expandAll).toHaveBeenCalled();
+        expect(component.expandAll).toHaveBeenCalledOnce();
     });
 
     it('should call expandAll when filter is active', () => {
