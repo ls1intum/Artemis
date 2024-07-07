@@ -3,12 +3,24 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.FilePathService.actualPathForPublicPath;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 
+import javax.imageio.ImageIO;
+
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.rendering.PDFRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -210,4 +222,46 @@ public class AttachmentResource {
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, attachmentId.toString())).build();
     }
+
+    public List<String> convertPdfToImageUrls(String pdfFilePath) {
+        List<String> imageUrls = new ArrayList<>();
+        try (PDDocument document = Loader.loadPDF(new File(pdfFilePath))) {
+            PDFRenderer pdfRenderer = new PDFRenderer(document);
+            int lowerDPI = 150; // Reduced from 300 to 150 DPI
+            for (int page = 0; page < document.getNumberOfPages(); ++page) {
+                BufferedImage bim = pdfRenderer.renderImageWithDPI(page, lowerDPI);
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                try {
+                    ImageIO.write(bim, "png", baos);
+                    byte[] imageBytes = baos.toByteArray();
+                    String base64Image = Base64.getEncoder().encodeToString(imageBytes);
+                    imageUrls.add("data:image/png;base64," + base64Image);
+                }
+                catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+        return imageUrls;
+    }
+
+    private String resolveFilePath(String webPath) {
+        String baseDir = "uploads";
+        String prefixToRemove = "/api/files/";
+        String pathWithoutPrefix = webPath.replace(prefixToRemove, "");
+        return Paths.get(baseDir, pathWithoutPrefix).toString();
+    }
+
+    @GetMapping("/attachments/{id}/pdf-to-images")
+    public ResponseEntity<List<String>> convertPdfToImages(@PathVariable Long id) {
+        Attachment attachment = attachmentRepository.findById(id).orElseThrow();
+        String actualFilePath = resolveFilePath(attachment.getLink());
+        File pdfFile = new File(actualFilePath);
+        List<String> imageUrls = convertPdfToImageUrls(pdfFile.getAbsolutePath());
+        return ResponseEntity.ok(imageUrls);
+    }
+
 }
