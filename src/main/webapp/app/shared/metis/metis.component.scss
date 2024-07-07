@@ -26,15 +26,15 @@
 }
 
 .badge-student {
-    background-color: #17a2b8;
+    background-color: var(--metis-student-badge-background-color);
 }
 
 .badge-tutor {
-    background-color: #ff8c00;
+    background-color: var(--metis-tutor-badge-background-color);
 }
 
 .badge-instructor {
-    background-color: #8b0000;
+    background-color: var(--metis-instructor-badge-background-color);
 }
 
 .reference {
