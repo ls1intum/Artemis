@@ -10,7 +10,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -59,8 +58,6 @@ public abstract class ProgrammingExerciseMigrationEntry {
 
     protected static final String ERROR_MESSAGE = "Failed to migrate programming exercises within %d hours. Aborting migration.";
 
-    protected final Logger log = LoggerFactory.getLogger(getSubclass());
-
     protected final CopyOnWriteArrayList<ProgrammingExerciseParticipation> errorList = new CopyOnWriteArrayList<>();
 
     protected ProgrammingExerciseMigrationEntry(ProgrammingExerciseRepository programmingExerciseRepository,
@@ -88,11 +85,11 @@ public abstract class ProgrammingExerciseMigrationEntry {
         var studentCount = programmingExerciseStudentParticipationRepository.findAllWithRepositoryUri(Pageable.unpaged()).getTotalElements();
 
         if (programmingExerciseCount == 0) {
-            log.info("No programming exercises to change");
+            getLogger().info("No programming exercises to change");
             return true;
         }
 
-        log.info("Will migrate {} programming exercises and {} student repositories now. This might take a while", programmingExerciseCount, studentCount);
+        getLogger().info("Will migrate {} programming exercises and {} student repositories now. This might take a while", programmingExerciseCount, studentCount);
 
         final long totalFullBatchCount = programmingExerciseCount / batchSize;
         final long threadCount = Math.max(1, Math.min(totalFullBatchCount, maxThreadCount));
@@ -100,7 +97,7 @@ public abstract class ProgrammingExerciseMigrationEntry {
         final long estimatedTimeStudents = getRestDurationInSeconds(0, studentCount, 1, threadCount);
 
         final long estimatedTime = (estimatedTimeExercise + estimatedTimeStudents);
-        log.info("Using {} threads for migration, and assuming {}s per repository, the migration should take around {}", threadCount, estimatedTimePerRepository,
+        getLogger().info("Using {} threads for migration, and assuming {}s per repository, the migration should take around {}", threadCount, estimatedTimePerRepository,
                 TimeLogUtil.formatDuration(estimatedTime));
 
         // Use fixed thread pool to prevent loading too many exercises into memory at once
@@ -110,11 +107,11 @@ public abstract class ProgrammingExerciseMigrationEntry {
          */
         AtomicInteger solutionCounter = new AtomicInteger(0);
         final var totalNumberOfSolutions = solutionProgrammingExerciseParticipationRepository.count();
-        log.info("Found {} solution participations to migrate.", totalNumberOfSolutions);
+        getLogger().info("Found {} solution participations to migrate.", totalNumberOfSolutions);
         for (int currentPageStart = 0; currentPageStart < totalNumberOfSolutions; currentPageStart += batchSize) {
             Pageable pageable = PageRequest.of(currentPageStart / batchSize, batchSize);
             var solutionParticipationPage = solutionProgrammingExerciseParticipationRepository.findAll(pageable);
-            log.info("Will migrate {} solution participations in batch.", solutionParticipationPage.getNumberOfElements());
+            getLogger().info("Will migrate {} solution participations in batch.", solutionParticipationPage.getNumberOfElements());
             executorService.submit(() -> {
                 migrateSolutions(solutionParticipationPage.toList());
                 solutionCounter.addAndGet(solutionParticipationPage.getNumberOfElements());
@@ -122,17 +119,17 @@ public abstract class ProgrammingExerciseMigrationEntry {
             });
         }
 
-        log.info("Submitted all solution participations to thread pool for migration.");
+        getLogger().info("Submitted all solution participations to thread pool for migration.");
         /*
          * migrate the template participations
          */
         AtomicInteger templateCounter = new AtomicInteger(0);
         var templateCount = templateProgrammingExerciseParticipationRepository.count();
-        log.info("Found {} template participations to migrate", templateCount);
+        getLogger().info("Found {} template participations to migrate", templateCount);
         for (int currentPageStart = 0; currentPageStart < templateCount; currentPageStart += batchSize) {
             Pageable pageable = PageRequest.of(currentPageStart / batchSize, batchSize);
             var templateParticipationPage = templateProgrammingExerciseParticipationRepository.findAll(pageable);
-            log.info("Will migrate {} template programming exercises in batch.", templateParticipationPage.getNumberOfElements());
+            getLogger().info("Will migrate {} template programming exercises in batch.", templateParticipationPage.getNumberOfElements());
             executorService.submit(() -> {
                 migrateTemplates(templateParticipationPage.toList());
                 templateCounter.addAndGet(templateParticipationPage.getNumberOfElements());
@@ -140,17 +137,17 @@ public abstract class ProgrammingExerciseMigrationEntry {
             });
         }
 
-        log.info("Submitted all template participations to thread pool for migration.");
+        getLogger().info("Submitted all template participations to thread pool for migration.");
 
         /*
          * migrate the student participations
          */
         AtomicInteger studentCounter = new AtomicInteger(0);
-        log.info("Found {} student programming exercise participations with build plans to migrate.", studentCount);
+        getLogger().info("Found {} student programming exercise participations with build plans to migrate.", studentCount);
         for (int currentPageStart = 0; currentPageStart < studentCount; currentPageStart += batchSize) {
             Pageable pageable = PageRequest.of(currentPageStart / batchSize, batchSize);
             Page<ProgrammingExerciseStudentParticipation> studentParticipationPage = programmingExerciseStudentParticipationRepository.findAllWithRepositoryUri(pageable);
-            log.info("Will migrate {} student programming exercise participations in batch.", studentParticipationPage.getNumberOfElements());
+            getLogger().info("Will migrate {} student programming exercise participations in batch.", studentParticipationPage.getNumberOfElements());
             executorService.submit(() -> {
                 migrateStudents(studentParticipationPage.toList());
                 studentCounter.addAndGet(studentParticipationPage.getNumberOfElements());
@@ -158,10 +155,10 @@ public abstract class ProgrammingExerciseMigrationEntry {
             });
         }
 
-        log.info("Submitted all student participations to thread pool for migration.");
+        getLogger().info("Submitted all student participations to thread pool for migration.");
 
         shutdown(executorService, timeoutInHours, ERROR_MESSAGE.formatted(timeoutInHours));
-        log.info("Finished migrating programming exercises and student participations");
+        getLogger().info("Finished migrating programming exercises and student participations");
         evaluateErrorList(programmingExerciseRepository);
         return true;
     }
@@ -201,18 +198,17 @@ public abstract class ProgrammingExerciseMigrationEntry {
     protected abstract void migrateStudents(List<ProgrammingExerciseStudentParticipation> participations);
 
     /**
-     * Returns the type of the concrete subclass.
-     * It is used to make the logging related to the subclass, to make the log more readable.
+     * Returns the logger of the explicit subclass, to make the log more readable.
      *
-     * @return Class that is the concrete subclass.
+     * @return Logger for the concrete subclass.
      */
-    protected abstract Class<?> getSubclass();
+    protected abstract Logger getLogger();
 
     protected void logProgress(long doneCount, long totalCount, long threadCount, long reposPerEntry, String migrationType) {
         final double percentage = ((double) doneCount / totalCount) * 100;
-        log.info("Migrated {}/{} {} participations ({}%)", doneCount, totalCount, migrationType, String.format("%.2f", percentage));
-        log.info("Estimated time remaining: {} for {} repositories", TimeLogUtil.formatDuration(getRestDurationInSeconds(doneCount, totalCount, reposPerEntry, threadCount)),
-                migrationType);
+        getLogger().info("Migrated {}/{} {} participations ({}%)", doneCount, totalCount, migrationType, String.format("%.2f", percentage));
+        getLogger().info("Estimated time remaining: {} for {} repositories",
+                TimeLogUtil.formatDuration(getRestDurationInSeconds(doneCount, totalCount, reposPerEntry, threadCount)), migrationType);
     }
 
     protected long getRestDurationInSeconds(final long done, final long total, final long reposPerEntry, final long threads) {
@@ -223,17 +219,17 @@ public abstract class ProgrammingExerciseMigrationEntry {
 
     /**
      * Checks if the repository uri of the given participation is not null
-     * and logs for the case of null.
+     * and getLogger(). for the case of null.
      *
      * @param programmingExerciseParticipation participation which repository uri should be checked.
-     * @param errorMessage                     Message for the error logging, if the uri is null.
+     * @param errorMessage                     Message for the error getLogger().ing, if the uri is null.
      *                                             Including one parameter for the participation id.
      * @return False if the repository uri is null and true otherwise
      */
     protected boolean isRepositoryUriNotNull(ProgrammingExerciseParticipation programmingExerciseParticipation, String errorMessage) {
         boolean result = programmingExerciseParticipation.getRepositoryUri() != null;
         if (!result) {
-            log.error(errorMessage, programmingExerciseParticipation.getId());
+            getLogger().error(errorMessage, programmingExerciseParticipation.getId());
             errorList.add(programmingExerciseParticipation);
         }
         return result;
@@ -246,15 +242,15 @@ public abstract class ProgrammingExerciseMigrationEntry {
         try {
             boolean finished = executorService.awaitTermination(timeoutInHours, TimeUnit.HOURS);
             if (!finished) {
-                log.error(errorMessage);
+                getLogger().error(errorMessage);
                 if (executorService.awaitTermination(1, TimeUnit.MINUTES)) {
-                    log.error("Failed to cancel all migration threads. Some threads are still running.");
+                    getLogger().error("Failed to cancel all migration threads. Some threads are still running.");
                 }
                 throw new RuntimeException(errorMessage);
             }
         }
         catch (InterruptedException e) {
-            log.error(errorMessage);
+            getLogger().error(errorMessage);
             executorService.shutdownNow();
             Thread.currentThread().interrupt();
             throw new RuntimeException(e);
@@ -262,11 +258,11 @@ public abstract class ProgrammingExerciseMigrationEntry {
     }
 
     /**
-     * Evaluates the error map and prints the errors to the log.
+     * Evaluates the error map and prints the errors to the getLogger().
      */
     protected void evaluateErrorList(ProgrammingExerciseRepository programmingExerciseRepository) {
         if (errorList.isEmpty()) {
-            log.info("Successfully migrated all programming exercises");
+            getLogger().info("Successfully migrated all programming exercises");
             return;
         }
 
@@ -277,13 +273,13 @@ public abstract class ProgrammingExerciseMigrationEntry {
         List<Long> failedStudentParticipations = errorList.stream().filter(participation -> participation instanceof ProgrammingExerciseStudentParticipation)
                 .map(ParticipationInterface::getId).toList();
 
-        log.error("{} failures during migration", errorList.size());
+        getLogger().error("{} failures during migration", errorList.size());
         // print each participation in a single line in the long to simplify reviewing the issues
-        log.error("Errors occurred for the following participations: \n{}", errorList.stream().map(Object::toString).collect(Collectors.joining("\n")));
-        log.error("Failed to migrate template build plan for exercises: {}", failedTemplateExercises);
-        log.error("Failed to migrate solution build plan for exercises: {}", failedSolutionExercises);
-        log.error("Failed to migrate students participations: {}", failedStudentParticipations);
-        log.warn("Please check the logs for more information. If the issues are related to the external VCS/CI system, fix the issues and rerun the migration.");
+        getLogger().error("Errors occurred for the following participations: \n{}", errorList.stream().map(Object::toString).collect(Collectors.joining("\n")));
+        getLogger().error("Failed to migrate template build plan for exercises: {}", failedTemplateExercises);
+        getLogger().error("Failed to migrate solution build plan for exercises: {}", failedSolutionExercises);
+        getLogger().error("Failed to migrate students participations: {}", failedStudentParticipations);
+        getLogger().warn("Please check the logs for more information. If the issues are related to the external VCS/CI system, fix the issues and rerun the migration.");
     }
 
     /**
