@@ -1,3 +1,5 @@
+.. _modeling:
+
 Modeling exercise
 =================
 .. contents:: Content of this document
