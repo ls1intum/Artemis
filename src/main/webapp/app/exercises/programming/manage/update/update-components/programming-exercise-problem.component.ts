@@ -3,6 +3,7 @@ import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entit
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
+import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 
 @Component({
     selector: 'jhi-programming-exercise-problem',
@@ -13,6 +14,7 @@ export class ProgrammingExerciseProblemComponent {
     readonly ProgrammingLanguage = ProgrammingLanguage;
     readonly ProjectType = ProjectType;
     readonly AssessmentType = AssessmentType;
+    readonly MarkdownEditorHeight = MarkdownEditorHeight;
 
     programmingExercise: ProgrammingExercise;
 

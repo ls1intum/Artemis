@@ -10,15 +10,6 @@ export class UserService {
     constructor(private http: HttpClient) {}
 
     /**
-     * Call the LDAP server to update the info of a user on the server.
-     * @param userId The id of the user to be updated from the LDAP server.
-     * @return Observable<User> with the updated user as body.
-     */
-    syncLdap(userId: number): Observable<User> {
-        return this.http.put<User>(`${this.resourceUrl}/${userId}/sync-ldap`, { observe: 'response' });
-    }
-
-    /**
      * Search for a user on the server by login or name.
      * @param loginOrName The login or name to search for.
      * @return Observable<HttpResponse<User[]>> with the list of found users as body.

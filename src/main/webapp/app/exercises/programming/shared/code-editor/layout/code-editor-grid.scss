@@ -19,8 +19,8 @@ Code-Editor Layout Styles
     }
 
     .editor-main {
-        display: flex;
-        flex-flow: column nowrap;
+        display: grid;
+        grid-template-rows: auto auto;
         height: 500px;
         margin-bottom: 10px;
 
@@ -297,6 +297,7 @@ Resizable drag elements
 .rg-sidebar-right {
     align-self: center;
     color: var(--code-editor-grid-grip-lines-color);
+    justify-self: center;
 }
 
 .rg-main-bottom {
