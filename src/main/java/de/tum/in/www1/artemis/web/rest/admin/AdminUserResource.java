@@ -32,7 +32,6 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
@@ -83,20 +82,17 @@ public class AdminUserResource {
 
     private final UserCreationService userCreationService;
 
-    private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
-
     private final UserRepository userRepository;
 
     private final AuthorityRepository authorityRepository;
 
     private final Optional<LdapUserService> ldapUserService;
 
-    public AdminUserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, AuthorityRepository authorityRepository, Optional<LdapUserService> ldapUserService) {
+    public AdminUserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, AuthorityRepository authorityRepository,
+            Optional<LdapUserService> ldapUserService) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.userCreationService = userCreationService;
-        this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.authorityRepository = authorityRepository;
         this.ldapUserService = ldapUserService;
     }
@@ -227,9 +223,9 @@ public class AdminUserResource {
         var user = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(userId);
 
         ldapUserService.ifPresent(service -> service.loadUserDetailsFromLdap(user));
-        userCreationService.saveUser(user);
+        var updatedUser = userCreationService.saveUser(user);
 
-        return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "userManagement.updated", userId.toString())).body(new UserDTO(user));
+        return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.updated", user.getLogin())).body(new UserDTO(updatedUser));
     }
 
     /**

@@ -99,4 +99,13 @@ public interface CompetencyRelationRepository extends ArtemisJpaRepository<Compe
     Set<Long> getMatchingCompetenciesByCompetencyId(@Param("competencyId") long competencyId);
 
     Set<CompetencyRelation> findAllByHeadCompetencyIdInAndTailCompetencyIdIn(Set<Long> headCompetencyIds, Set<Long> tailCompetencyIds);
+
+    @Transactional // ok because of delete
+    @Modifying
+    @Query("""
+            DELETE FROM CompetencyRelation cr
+            WHERE cr.headCompetency.course.id = :courseId
+                OR cr.tailCompetency.course.id = :courseId
+            """)
+    void deleteAllByCourseId(@Param("courseId") long courseId);
 }
