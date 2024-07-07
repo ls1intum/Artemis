@@ -2,15 +2,21 @@ package de.tum.in.www1.artemis.architecture;
 
 import static com.tngtech.archunit.core.domain.JavaModifier.ABSTRACT;
 import static com.tngtech.archunit.core.domain.JavaModifier.FINAL;
+import static com.tngtech.archunit.lang.SimpleConditionEvent.violated;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.tngtech.archunit.core.domain.JavaMethod;
+import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
+import com.tngtech.archunit.lang.ConditionEvents;
 
 import de.tum.in.www1.artemis.config.migration.MigrationService;
 import de.tum.in.www1.artemis.management.SecurityMetersService;
@@ -59,5 +65,22 @@ class ServiceArchitectureTest extends AbstractArchitectureTest {
         classes().that().areAnnotatedWith(Service.class).should().notBeAnnotatedWith(Component.class).check(allClasses);
         classes().that().areAnnotatedWith(Service.class).should().notBeAnnotatedWith(RestController.class).check(allClasses);
         classes().that().areAnnotatedWith(Service.class).should().notHaveModifier(FINAL).check(allClasses);
+    }
+
+    @Test
+    void testCorrectAsyncCalls() {
+        var noCallsFromOwnClass = methods().that().areAnnotatedWith(Async.class).should(new ArchCondition<>("not be called within the same class") {
+
+            @Override
+            public void check(JavaMethod javaMethod, ConditionEvents conditionEvents) {
+                var declaredInClass = javaMethod.getOwner();
+                javaMethod.getCallsOfSelf().stream().filter(call -> call.getOriginOwner().equals(declaredInClass) && !call.getOwner().isAnnotatedWith(Async.class))
+                        .forEach(call -> {
+                            conditionEvents.add(violated(javaMethod, "Method %s should only be called from the outside.".formatted(javaMethod.getFullName())));
+                        });
+            }
+        }).because(
+                "Methods annotated with @Async are meant to be executed in a new thread. The thread gets created in a Spring proxy subclass and requires the method to only be called from the outside.");
+        noCallsFromOwnClass.check(productionClasses);
     }
 }

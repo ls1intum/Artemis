@@ -5,21 +5,14 @@ import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.EXERCIS
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.extractNotificationUrl;
 
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Set;
-
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Profile;
-import org.springframework.mail.MailException;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
@@ -36,12 +29,11 @@ import de.tum.in.www1.artemis.domain.notification.NotificationConstants;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.service.TimeService;
-import tech.jhipster.config.JHipsterProperties;
 
 /**
- * Service for sending emails.
+ * Service for preparing and sending emails.
  * <p>
- * We use the @Async annotation to send emails asynchronously.
+ * We use the MailSendingService to send emails asynchronously.
  */
 @Profile(PROFILE_CORE)
 @Service
@@ -62,15 +54,13 @@ public class MailService implements InstantNotificationService {
     @Value("${server.url}")
     private URL artemisServerUrl;
 
-    private final JHipsterProperties jHipsterProperties;
-
-    private final JavaMailSender javaMailSender;
-
     private final MessageSource messageSource;
 
     private final SpringTemplateEngine templateEngine;
 
     private final TimeService timeService;
+
+    private final MailSendingService mailSendingService;
 
     // notification related variables
 
@@ -97,43 +87,11 @@ public class MailService implements InstantNotificationService {
 
     private static final String WEEKLY_SUMMARY_NEW_EXERCISES = "weeklySummaryNewExercises";
 
-    public MailService(JHipsterProperties jHipsterProperties, JavaMailSender javaMailSender, MessageSource messageSource, SpringTemplateEngine templateEngine,
-            TimeService timeService) {
-        this.jHipsterProperties = jHipsterProperties;
-        this.javaMailSender = javaMailSender;
+    public MailService(MessageSource messageSource, SpringTemplateEngine templateEngine, TimeService timeService, MailSendingService mailSendingService) {
         this.messageSource = messageSource;
         this.templateEngine = templateEngine;
         this.timeService = timeService;
-    }
-
-    /**
-     * Sends an e-mail to the specified sender
-     *
-     * @param recipient   who should be contacted.
-     * @param subject     The mail subject
-     * @param content     The content of the mail. Can be enriched with HTML tags
-     * @param isMultipart Whether to create a multipart that supports alternative texts, inline elements
-     * @param isHtml      Whether the mail should support HTML tags
-     */
-    @Async
-    public void sendEmail(User recipient, String subject, String content, boolean isMultipart, boolean isHtml) {
-        log.debug("Send email[multipart '{}' and html '{}'] to '{}' with subject '{}'", isMultipart, isHtml, recipient, subject);
-
-        // Prepare message using a Spring helper
-        MimeMessage mimeMessage = javaMailSender.createMimeMessage();
-        try {
-            MimeMessageHelper message = new MimeMessageHelper(mimeMessage, isMultipart, StandardCharsets.UTF_8.name());
-            message.setTo(recipient.getEmail());
-            message.setFrom(jHipsterProperties.getMail().getFrom());
-            message.setSubject(subject);
-            message.setText(content, isHtml);
-            javaMailSender.send(mimeMessage);
-            log.info("Sent email with subject '{}' to User '{}'", subject, recipient);
-        }
-        catch (MailException | MessagingException e) {
-            log.error("Email could not be sent to user '{}'", recipient, e);
-            // Note: we should not rethrow the exception here, as this would prevent sending out other emails in case multiple users are affected
-        }
+        this.mailSendingService = mailSendingService;
     }
 
     /**
@@ -176,13 +134,13 @@ public class MailService implements InstantNotificationService {
     private void prepareTemplateAndSendEmail(User admin, String templateName, String titleKey, Context context) {
         String content = templateEngine.process(templateName, context);
         String subject = messageSource.getMessage(titleKey, null, context.getLocale());
-        sendEmail(admin, subject, content, false, true);
+        mailSendingService.sendEmail(admin, subject, content, false, true);
     }
 
     private void prepareTemplateAndSendEmailWithArgumentInSubject(User admin, String templateName, String titleKey, String argument, Context context) {
         String content = templateEngine.process(templateName, context);
         String subject = messageSource.getMessage(titleKey, new Object[] { argument }, context.getLocale());
-        sendEmail(admin, subject, content, false, true);
+        mailSendingService.sendEmail(admin, subject, content, false, true);
     }
 
     private Context createBaseContext(User admin, Locale locale) {
@@ -310,8 +268,7 @@ public class MailService implements InstantNotificationService {
         context.setVariable(BASE_URL, artemisServerUrl);
 
         String content = createContentForNotificationEmailByType(notificationType, context);
-
-        sendEmail(user, subject, content, false, true);
+        mailSendingService.sendEmail(user, subject, content, false, true);
     }
 
     /**
@@ -443,7 +400,6 @@ public class MailService implements InstantNotificationService {
         context.setVariable(BASE_URL, artemisServerUrl);
 
         String content = templateEngine.process("mail/weeklySummary", context);
-
-        sendEmail(user, subject, content, false, true);
+        mailSendingService.sendEmail(user, subject, content, false, true);
     }
 }
