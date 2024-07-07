@@ -5,7 +5,6 @@ import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/man
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
 import { ProgrammingExerciseDockerImageComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-docker-image/programming-exercise-docker-image.component';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
-import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 
 @Component({
     selector: 'jhi-programming-exercise-custom-aeolus-build-plan',
@@ -200,6 +199,4 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
         }
         this.programmingExercise.windFile.metadata.docker.image = dockerImage.trim();
     }
-
-    protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 }
