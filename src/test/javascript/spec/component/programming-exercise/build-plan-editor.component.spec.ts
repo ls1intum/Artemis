@@ -170,4 +170,10 @@ describe('Build Plan Editor', () => {
             discardPeriodicTasks();
         }),
     );
+
+    it('should update the tab size', () => {
+        const updateTabSizeSpy = jest.spyOn(comp.editor, 'updateModelIndentationSize');
+        comp.updateTabSize(5);
+        expect(updateTabSizeSpy).toHaveBeenCalledExactlyOnceWith(5);
+    });
 });

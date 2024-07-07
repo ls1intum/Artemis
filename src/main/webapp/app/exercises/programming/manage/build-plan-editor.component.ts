@@ -122,4 +122,12 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
     onTextChanged(event: any) {
         this.buildPlan!.buildPlan = event as string;
     }
+
+    /**
+     * Updates the tab size of the editor.
+     * @param tabSize The new tab size.
+     */
+    updateTabSize(tabSize: number) {
+        this.editor.updateModelIndentationSize(tabSize);
+    }
 }
