@@ -585,8 +585,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Transactional // ok because of modifying query
     @Query("""
             UPDATE User user
-            SET user.vcsAccessToken = null,
-                user.vcsAccessTokenExpiryDate = null
+            SET user.vcsAccessToken = NULL,
+                user.vcsAccessTokenExpiryDate = NULL
             """)
     void clearVCSTokens();
 
