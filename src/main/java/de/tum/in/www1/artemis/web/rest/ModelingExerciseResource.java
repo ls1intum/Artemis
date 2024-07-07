@@ -357,7 +357,7 @@ public class ModelingExerciseResource {
             log.debug("Either the courseId or exerciseGroupId must be set for an import");
             throw new BadRequestAlertException("Either the courseId or exerciseGroupId must be set for an import", ENTITY_NAME, "noCourseIdOrExerciseGroupId");
         }
-        importedExercise.checkCourseAndExerciseGroupExclusivity("Modeling Exercise");
+        importedExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         final var originalModelingExercise = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfigElseThrow(sourceExerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, importedExercise, user);

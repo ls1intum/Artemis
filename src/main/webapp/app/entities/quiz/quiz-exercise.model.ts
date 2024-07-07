@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, resetForImport } from 'app/entities/exercise.model';
 import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { Course } from 'app/entities/course.model';
@@ -64,4 +64,11 @@ export class QuizExercise extends Exercise implements QuizConfiguration, QuizPar
         this.isPracticeModeAvailable = true; // default value (set by client, might need to be computed before evaluated)
         this.isEditable = false; // default value (set by client, might need to be computed before evaluated)
     }
+}
+
+export function resetQuizForImport(exercise: QuizExercise) {
+    resetForImport(exercise);
+
+    this.quizExercise.quizBatches = [];
+    this.quizExercise.isEditable = true;
 }

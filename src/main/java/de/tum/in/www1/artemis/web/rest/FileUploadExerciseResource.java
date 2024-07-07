@@ -186,7 +186,7 @@ public class FileUploadExerciseResource {
         if (sourceId <= 0 || (importedFileUploadExercise.getCourseViaExerciseGroupOrCourseMember() == null && importedFileUploadExercise.getExerciseGroup() == null)) {
             throw new BadRequestAlertException("Either the courseId or exerciseGroupId must be set for an import", ENTITY_NAME, "noCourseIdOrExerciseGroupId");
         }
-        importedFileUploadExercise.checkCourseAndExerciseGroupExclusivity("File Upload Exercise");
+        importedFileUploadExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
 
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         final var originalFileUploadExercise = fileUploadExerciseRepository.findByIdElseThrow(sourceId);
