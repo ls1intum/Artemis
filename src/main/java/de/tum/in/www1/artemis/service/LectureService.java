@@ -156,7 +156,7 @@ public class LectureService {
 
         if (updateCompetencyProgress) {
             lecture.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit))
-                    .forEach(lectureUnit -> competencyProgressService.updateProgressForUpdatedLearningObject(lectureUnit, Optional.empty()));
+                    .forEach(lectureUnit -> competencyProgressService.updateProgressForUpdatedLearningObjectAsync(lectureUnit, Optional.empty()));
         }
 
         Channel lectureChannel = channelRepository.findChannelByLectureId(lecture.getId());

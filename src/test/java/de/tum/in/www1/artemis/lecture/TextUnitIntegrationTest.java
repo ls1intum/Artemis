@@ -114,7 +114,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         textUnitFromRequest.setContent("Changed");
         TextUnit updatedTextUnit = request.putWithResponseBody("/api/lectures/" + lecture.getId() + "/text-units", textUnitFromRequest, TextUnit.class, HttpStatus.OK);
         assertThat(updatedTextUnit.getContent()).isEqualTo("Changed");
-        verify(competencyProgressService).updateProgressForUpdatedLearningObject(eq(textUnit), eq(Optional.of(textUnit)));
+        verify(competencyProgressService).updateProgressForUpdatedLearningObjectAsync(eq(textUnit), eq(Optional.of(textUnit)));
     }
 
     @Test
@@ -163,7 +163,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(this.textUnit.getId()).isNotNull();
         request.delete("/api/lectures/" + lecture.getId() + "/lecture-units/" + this.textUnit.getId(), HttpStatus.OK);
         request.get("/api/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.NOT_FOUND, TextUnit.class);
-        verify(competencyProgressService).updateProgressForUpdatedLearningObject(eq(textUnit), eq(Optional.empty()));
+        verify(competencyProgressService).updateProgressForUpdatedLearningObjectAsync(eq(textUnit), eq(Optional.empty()));
     }
 
     private void persistTextUnitWithLecture() {

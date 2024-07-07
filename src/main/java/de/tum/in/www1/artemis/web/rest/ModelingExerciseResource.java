@@ -252,7 +252,7 @@ public class ModelingExerciseResource {
 
         exerciseService.notifyAboutExerciseChanges(modelingExerciseBeforeUpdate, updatedModelingExercise, notificationText);
 
-        competencyProgressService.updateProgressForUpdatedLearningObject(modelingExerciseBeforeUpdate, Optional.of(modelingExercise));
+        competencyProgressService.updateProgressForUpdatedLearningObjectAsync(modelingExerciseBeforeUpdate, Optional.of(modelingExercise));
 
         return ResponseEntity.ok(updatedModelingExercise);
     }

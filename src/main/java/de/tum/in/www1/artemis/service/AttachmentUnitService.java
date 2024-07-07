@@ -146,7 +146,7 @@ public class AttachmentUnitService {
 
         // Set the original competencies back to the attachment unit so that the progress can be updated correctly
         existingAttachmentUnit.setCompetencies(existingCompetencies);
-        competencyProgressService.updateProgressForUpdatedLearningObject(existingAttachmentUnit, Optional.of(updateUnit));
+        competencyProgressService.updateProgressForUpdatedLearningObjectAsync(existingAttachmentUnit, Optional.of(updateUnit));
 
         return savedAttachmentUnit;
     }

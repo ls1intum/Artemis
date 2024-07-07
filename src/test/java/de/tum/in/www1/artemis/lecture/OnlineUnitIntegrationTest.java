@@ -149,7 +149,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest
         this.onlineUnit.setDescription("Changed");
         this.onlineUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/online-units", this.onlineUnit, OnlineUnit.class, HttpStatus.OK);
         assertThat(this.onlineUnit.getDescription()).isEqualTo("Changed");
-        verify(competencyProgressService).updateProgressForUpdatedLearningObject(eq(onlineUnit), eq(Optional.of(onlineUnit)));
+        verify(competencyProgressService).updateProgressForUpdatedLearningObjectAsync(eq(onlineUnit), eq(Optional.of(onlineUnit)));
     }
 
     @Test
@@ -266,7 +266,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest
         assertThat(this.onlineUnit.getId()).isNotNull();
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + this.onlineUnit.getId(), HttpStatus.OK);
         request.get("/api/lectures/" + lecture1.getId() + "/online-units/" + this.onlineUnit.getId(), HttpStatus.NOT_FOUND, OnlineUnit.class);
-        verify(competencyProgressService).updateProgressForUpdatedLearningObject(eq(onlineUnit), eq(Optional.empty()));
+        verify(competencyProgressService).updateProgressForUpdatedLearningObjectAsync(eq(onlineUnit), eq(Optional.empty()));
     }
 
 }

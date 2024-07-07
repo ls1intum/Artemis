@@ -287,7 +287,7 @@ public class TextExerciseResource {
         exerciseService.checkExampleSubmissions(updatedTextExercise);
         exerciseService.notifyAboutExerciseChanges(textExerciseBeforeUpdate, updatedTextExercise, notificationText);
 
-        competencyProgressService.updateProgressForUpdatedLearningObject(textExerciseBeforeUpdate, Optional.of(textExercise));
+        competencyProgressService.updateProgressForUpdatedLearningObjectAsync(textExerciseBeforeUpdate, Optional.of(textExercise));
 
         return ResponseEntity.ok(updatedTextExercise);
     }

@@ -444,7 +444,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(updatedTextExercise.getCourseViaExerciseGroupOrCourseMember().getId()).as("courseId was not updated").isEqualTo(course.getId());
         verify(examLiveEventsService, never()).createAndSendProblemStatementUpdateEvent(any(), any());
         verify(groupNotificationScheduleService, times(1)).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any());
-        verify(competencyProgressService).updateProgressForUpdatedLearningObject(eq(textExercise), eq(Optional.of(textExercise)));
+        verify(competencyProgressService).updateProgressForUpdatedLearningObjectAsync(eq(textExercise), eq(Optional.of(textExercise)));
     }
 
     @Test

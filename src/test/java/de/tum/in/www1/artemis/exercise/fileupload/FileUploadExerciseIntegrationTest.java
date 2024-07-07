@@ -449,7 +449,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationIndepen
         assertThat(receivedFileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId()).as("courseId was not updated").isEqualTo(course.getId());
         verify(examLiveEventsService, never()).createAndSendProblemStatementUpdateEvent(any(), any());
         verify(groupNotificationScheduleService, times(1)).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any());
-        verify(competencyProgressService).updateProgressForUpdatedLearningObject(eq(fileUploadExercise), eq(Optional.of(fileUploadExercise)));
+        verify(competencyProgressService).updateProgressForUpdatedLearningObjectAsync(eq(fileUploadExercise), eq(Optional.of(fileUploadExercise)));
     }
 
     @Test

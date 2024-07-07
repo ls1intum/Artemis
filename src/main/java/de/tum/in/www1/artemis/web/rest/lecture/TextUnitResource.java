@@ -103,7 +103,7 @@ public class TextUnitResource {
         textUnitForm.setLecture(existingTextUnit.getLecture());
         TextUnit result = textUnitRepository.save(textUnitForm);
 
-        competencyProgressService.updateProgressForUpdatedLearningObject(existingTextUnit, Optional.of(textUnitForm));
+        competencyProgressService.updateProgressForUpdatedLearningObjectAsync(existingTextUnit, Optional.of(textUnitForm));
 
         return ResponseEntity.ok(result);
     }

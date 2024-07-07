@@ -183,7 +183,7 @@ public class LectureUnitService {
 
         if (!(lectureUnitToDelete instanceof ExerciseUnit)) {
             // update associated competency progress objects
-            competencyProgressService.updateProgressForUpdatedLearningObject(lectureUnitToDelete, Optional.empty());
+            competencyProgressService.updateProgressForUpdatedLearningObjectAsync(lectureUnitToDelete, Optional.empty());
         }
     }
 

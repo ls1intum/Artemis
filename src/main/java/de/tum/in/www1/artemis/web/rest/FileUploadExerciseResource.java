@@ -287,7 +287,7 @@ public class FileUploadExerciseResource {
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedExercise, fileUploadExerciseBeforeUpdate.getDueDate());
 
         exerciseService.notifyAboutExerciseChanges(fileUploadExerciseBeforeUpdate, updatedExercise, notificationText);
-        competencyProgressService.updateProgressForUpdatedLearningObject(fileUploadExerciseBeforeUpdate, Optional.of(fileUploadExercise));
+        competencyProgressService.updateProgressForUpdatedLearningObjectAsync(fileUploadExerciseBeforeUpdate, Optional.of(fileUploadExercise));
 
         return ResponseEntity.ok(updatedExercise);
     }

@@ -252,7 +252,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         assertThat(returnedModelingExercise.getGradingCriteria()).hasSameSizeAs(gradingCriteria);
         verify(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(returnedModelingExercise, notificationText);
         verify(examLiveEventsService, never()).createAndSendProblemStatementUpdateEvent(returnedModelingExercise, notificationText);
-        verify(competencyProgressService).updateProgressForUpdatedLearningObject(eq(createdModelingExercise), eq(Optional.of(createdModelingExercise)));
+        verify(competencyProgressService).updateProgressForUpdatedLearningObjectAsync(eq(createdModelingExercise), eq(Optional.of(createdModelingExercise)));
     }
 
     @Test

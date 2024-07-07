@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -101,7 +100,7 @@ public class CompetencyProgressService {
      */
     @Async
     public void updateProgressByLearningObjectForParticipantAsync(LearningObject learningObject, @NotNull Participant participant) {
-        setAuthorizationObject();
+        SecurityUtils.setAuthorizationObject(); // Required for async
         updateProgressByLearningObjectSync(learningObject, participant.getParticipants());
     }
 
@@ -112,7 +111,7 @@ public class CompetencyProgressService {
      */
     @Async
     public void updateProgressByLearningObjectAsync(LearningObject learningObject) {
-        setAuthorizationObject();
+        SecurityUtils.setAuthorizationObject(); // Required for async
         Set<Long> competencyIds = getCompetenciesForLearningObject(learningObject).stream().map(CourseCompetency::getId).collect(Collectors.toSet());
 
         for (long competencyId : competencyIds) {
@@ -130,7 +129,7 @@ public class CompetencyProgressService {
      */
     @Async
     public void updateProgressByCompetencyAsync(Competency competency) {
-        setAuthorizationObject();
+        SecurityUtils.setAuthorizationObject(); // Required for async
         List<CompetencyProgress> existingProgress = competencyProgressRepository.findAllByCompetencyId(competency.getId());
         log.debug("Updating competency progress for {} users.", existingProgress.size());
         existingProgress.stream().map(CompetencyProgress::getUser).forEach(user -> updateCompetencyProgress(competency.getId(), user));
@@ -143,7 +142,7 @@ public class CompetencyProgressService {
      */
     @Async
     public void updateProgressByCompetencyAndUsersInCourseAsync(Competency competency) {
-        setAuthorizationObject();
+        SecurityUtils.setAuthorizationObject(); // Required for async
         Set<User> users = userRepository.getUsersInCourse(competency.getCourse());
         log.debug("Updating competency progress for {} users.", users.size());
         users.forEach(user -> updateCompetencyProgress(competency.getId(), user));
@@ -151,38 +150,30 @@ public class CompetencyProgressService {
 
     /**
      * Asynchronously update the existing progress for all changed competencies linked to the given learning object
-     * The changed competencies are calculated synchronously and then updated asynchronously to allow deletion of the learning object.
      * If new competencies are added, the progress is updated for all users in the course, otherwise only the existing progresses are updated.
      *
      * @param originalLearningObject The original learning object before the update
      * @param updatedLearningObject  The updated learning object after the update (empty if the learning object was deleted)
      */
-    public void updateProgressForUpdatedLearningObject(LearningObject originalLearningObject, Optional<LearningObject> updatedLearningObject) {
+    @Async
+    public void updateProgressForUpdatedLearningObjectAsync(LearningObject originalLearningObject, Optional<LearningObject> updatedLearningObject) {
+        SecurityUtils.setAuthorizationObject(); // Required for async
+
         Set<Long> originalCompetencyIds = originalLearningObject.getCompetencies().stream().map(CourseCompetency::getId).collect(Collectors.toSet());
-        Set<Competency> updatedCompetencies = updatedLearningObject.map(this::getCompetenciesForLearningObject).orElse(Set.of());
+        Set<Competency> updatedCompetencies = updatedLearningObject.map(LearningObject::getCompetencies).orElse(Set.of());
         Set<Long> updatedCompetencyIds = updatedCompetencies.stream().map(CourseCompetency::getId).collect(Collectors.toSet());
 
         Set<Long> removedCompetencyIds = originalCompetencyIds.stream().filter(id -> !updatedCompetencyIds.contains(id)).collect(Collectors.toSet());
         Set<Long> addedCompetencyIds = updatedCompetencyIds.stream().filter(id -> !originalCompetencyIds.contains(id)).collect(Collectors.toSet());
 
-        if (addedCompetencyIds.isEmpty()) {
-            updateProgressByCompetencyIdsAsync(removedCompetencyIds);
-        }
-        else {
-            Set<Long> changedCompetencyIds = Stream.concat(removedCompetencyIds.stream(), addedCompetencyIds.stream()).collect(Collectors.toSet());
+        updateProgressByCompetencyIds(removedCompetencyIds);
+        if (!addedCompetencyIds.isEmpty()) {
             Course course = updatedCompetencies.stream().findAny().map(CourseCompetency::getCourse).orElseThrow();
-            updateProgressByCompetencyIdsAndUsersInCourseAsync(changedCompetencyIds, course);
+            updateProgressByCompetencyIdsAndUsersInCourse(addedCompetencyIds, course);
         }
     }
 
-    /**
-     * Asynchronously update the existing progress for all passed competencies
-     *
-     * @param competencyIds The competencies for which to update all existing student progress
-     */
-    @Async
-    protected void updateProgressByCompetencyIdsAsync(Set<Long> competencyIds) {
-        setAuthorizationObject();
+    private void updateProgressByCompetencyIds(Set<Long> competencyIds) {
         for (long competencyId : competencyIds) {
             List<CompetencyProgress> existingProgress = competencyProgressRepository.findAllByCompetencyId(competencyId);
             log.debug("Updating competency progress for {} users.", existingProgress.size());
@@ -190,27 +181,12 @@ public class CompetencyProgressService {
         }
     }
 
-    /**
-     * Asynchronously update the progress for all users in the course
-     *
-     * @param competencyIds The competencies for which to update the progress of the users
-     * @param course        The course for which to update the progress of the users
-     */
-    @Async
-    protected void updateProgressByCompetencyIdsAndUsersInCourseAsync(Set<Long> competencyIds, Course course) {
-        setAuthorizationObject();
+    private void updateProgressByCompetencyIdsAndUsersInCourse(Set<Long> competencyIds, Course course) {
         for (long competencyId : competencyIds) {
             Set<User> users = userRepository.getUsersInCourse(course);
             log.debug("Updating competency progress for {} users.", users.size());
             users.forEach(user -> updateCompetencyProgress(competencyId, user));
         }
-    }
-
-    /**
-     * Set the authorization object for asynchronous updates
-     */
-    public void setAuthorizationObject() {
-        SecurityUtils.setAuthorizationObject();
     }
 
     /**
@@ -230,12 +206,11 @@ public class CompetencyProgressService {
     }
 
     private Set<Competency> getCompetenciesForLearningObject(LearningObject learningObject) {
-        LearningObject learningObjectWithCompetencies = switch (learningObject) {
-            case Exercise exercise -> exerciseRepository.findWithCompetenciesByIdElseThrow(exercise.getId());
-            case LectureUnit lectureUnit -> lectureUnitRepository.findByIdWithCompetenciesAndSlidesElseThrow(lectureUnit.getId());
+        return switch (learningObject) {
+            case Exercise exercise -> exerciseRepository.findWithCompetenciesById(exercise.getId()).map(LearningObject::getCompetencies).orElse(Set.of());
+            case LectureUnit lectureUnit -> lectureUnitRepository.findWithCompetenciesAndSlidesById(lectureUnit.getId()).map(LearningObject::getCompetencies).orElse(Set.of());
             default -> throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
         };
-        return learningObjectWithCompetencies.getCompetencies();
     }
 
     /**

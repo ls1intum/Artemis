@@ -306,7 +306,7 @@ public class QuizExerciseResource {
         if (updatedChannel != null) {
             quizExercise.setChannelName(updatedChannel.getName());
         }
-        competencyProgressService.updateProgressForUpdatedLearningObject(originalQuiz, Optional.of(quizExercise));
+        competencyProgressService.updateProgressForUpdatedLearningObjectAsync(originalQuiz, Optional.of(quizExercise));
 
         return ResponseEntity.ok(quizExercise);
     }

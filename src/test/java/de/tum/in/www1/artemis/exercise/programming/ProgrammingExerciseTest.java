@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.exercise.programming;
 import static de.tum.in.www1.artemis.util.RequestUtilService.deleteProgrammingExerciseParamsFalse;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -122,8 +121,6 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationJenkinsGitlabTest
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateProgrammingExerciseTwice() throws Exception {
-        doNothing().when(competencyProgressService).setAuthorizationObject();
-
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
                 .orElseThrow();
         updateProgrammingExercise(programmingExercise, "new problem 1", "new title 1");

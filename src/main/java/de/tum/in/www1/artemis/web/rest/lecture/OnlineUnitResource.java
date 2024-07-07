@@ -110,7 +110,7 @@ public class OnlineUnitResource {
 
         OnlineUnit result = onlineUnitRepository.save(onlineUnit);
 
-        competencyProgressService.updateProgressForUpdatedLearningObject(existingOnlineUnit, Optional.of(onlineUnit));
+        competencyProgressService.updateProgressForUpdatedLearningObjectAsync(existingOnlineUnit, Optional.of(onlineUnit));
 
         return ResponseEntity.ok(result);
     }

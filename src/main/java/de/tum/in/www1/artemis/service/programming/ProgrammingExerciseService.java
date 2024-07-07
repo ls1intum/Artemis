@@ -568,7 +568,7 @@ public class ProgrammingExerciseService {
 
         exerciseService.notifyAboutExerciseChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise, notificationText);
 
-        competencyProgressService.updateProgressForUpdatedLearningObject(programmingExerciseBeforeUpdate, Optional.of(updatedProgrammingExercise));
+        competencyProgressService.updateProgressForUpdatedLearningObjectAsync(programmingExerciseBeforeUpdate, Optional.of(updatedProgrammingExercise));
 
         return savedProgrammingExercise;
     }

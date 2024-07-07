@@ -99,7 +99,7 @@ public class VideoUnitResource {
 
         VideoUnit result = videoUnitRepository.save(videoUnit);
 
-        competencyProgressService.updateProgressForUpdatedLearningObject(existingVideoUnit, Optional.of(videoUnit));
+        competencyProgressService.updateProgressForUpdatedLearningObjectAsync(existingVideoUnit, Optional.of(videoUnit));
 
         return ResponseEntity.ok(result);
     }

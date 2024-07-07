@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.exercise.fileupload;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.isA;
 import static org.mockito.Mockito.never;
@@ -125,8 +124,6 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSubmitFileUploadAssessment_asInstructor() throws Exception {
-        doNothing().when(competencyProgressService).setAuthorizationObject();
-
         FileUploadSubmission fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = fileUploadExerciseUtilService.addFileUploadSubmission(afterReleaseFileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
 

@@ -376,7 +376,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(lectureOptional).isEmpty();
 
         // ExerciseUnits do not have competencies, their exercises do
-        verify(competencyProgressService, times(lecture1.getLectureUnits().size() - 1)).updateProgressForUpdatedLearningObject(any(), eq(Optional.empty()));
+        verify(competencyProgressService, times(lecture1.getLectureUnits().size() - 1)).updateProgressForUpdatedLearningObjectAsync(any(), eq(Optional.empty()));
     }
 
     @Test

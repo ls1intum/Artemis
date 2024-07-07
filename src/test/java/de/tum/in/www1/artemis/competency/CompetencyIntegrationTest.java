@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.within;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -623,8 +622,6 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLectureShouldUpdateCompetency() throws Exception {
-        doNothing().when(competencyProgressService).setAuthorizationObject();
-
         request.delete("/api/lectures/" + lecture.getId(), HttpStatus.OK);
         Competency competency = request.get("/api/courses/" + course.getId() + "/competencies/" + this.competency.getId(), HttpStatus.OK, Competency.class);
         assertThat(competency.getLectureUnits()).isEmpty();
@@ -633,8 +630,6 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLectureUnitShouldUpdateCompetency() throws Exception {
-        doNothing().when(competencyProgressService).setAuthorizationObject();
-
         request.delete("/api/lectures/" + lecture.getId() + "/lecture-units/" + idOfTextUnitOfLectureOne, HttpStatus.OK);
         Competency competency = request.get("/api/courses/" + course.getId() + "/competencies/" + this.competency.getId(), HttpStatus.OK, Competency.class);
         assertThat(competency.getLectureUnits()).map(LectureUnit::getId).containsExactly(idOfAttachmentUnitOfLectureOne);

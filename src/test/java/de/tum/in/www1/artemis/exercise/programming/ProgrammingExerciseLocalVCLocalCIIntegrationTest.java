@@ -203,7 +203,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         ProgrammingExercise updatedExercise = request.putWithResponseBody("/api/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
 
         assertThat(updatedExercise.getReleaseDate()).isEqualTo(programmingExercise.getReleaseDate());
-        verify(competencyProgressService).updateProgressForUpdatedLearningObject(eq(programmingExercise), eq(Optional.of(programmingExercise)));
+        verify(competencyProgressService).updateProgressForUpdatedLearningObjectAsync(eq(programmingExercise), eq(Optional.of(programmingExercise)));
     }
 
     @Test
