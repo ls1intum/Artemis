@@ -75,12 +75,10 @@ class ServiceArchitectureTest extends AbstractArchitectureTest {
             public void check(JavaMethod javaMethod, ConditionEvents conditionEvents) {
                 var declaredInClass = javaMethod.getOwner();
                 javaMethod.getCallsOfSelf().stream().filter(call -> call.getOriginOwner().equals(declaredInClass) && !call.getOwner().isAnnotatedWith(Async.class))
-                        .forEach(call -> {
-                            conditionEvents.add(violated(javaMethod, "Method %s should only be called from the outside.".formatted(javaMethod.getFullName())));
-                        });
+                        .forEach(call -> conditionEvents.add(violated(javaMethod, "Method %s should only be called from the outside.".formatted(javaMethod.getFullName()))));
             }
-        }).because(
-                "Methods annotated with @Async are meant to be executed in a new thread. The thread gets created in a Spring proxy subclass and requires the method to only be called from the outside.");
+        }).because("Methods annotated with @Async are meant to be executed in a new thread."
+                + " The thread gets created in a Spring proxy subclass and requires the method to only be called from the outside.");
         noCallsFromOwnClass.check(productionClasses);
     }
 }
