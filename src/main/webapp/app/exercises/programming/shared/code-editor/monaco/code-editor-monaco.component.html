@@ -1,11 +1,4 @@
 <div class="card">
-    <div [hidden]="true">
-        <div #addFeedbackButton>
-            <div class="monaco-add-feedback-button">
-                <fa-icon [icon]="faPlusSquare" />
-            </div>
-        </div>
-    </div>
     <jhi-code-editor-header [showTabSizeSelector]="false" [filename]="selectedFile!" [isLoading]="isLoading" />
     <div class="card-body card-body-monaco">
         @if (selectedFile) {
@@ -57,7 +50,6 @@
             [textChangedEmitDelay]="200"
             #editor
             [id]="'monaco-editor-' + sessionId"
-            class="code-editor-ace__content__editor"
         />
 
         @if (!selectedFile && !isLoading) {

@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Observable } from 'rxjs';
@@ -39,8 +39,8 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
         this.initialAthenaModule = this.exercise.feedbackSuggestionModule;
     }
 
-    ngOnChanges(changes: any) {
-        if (!changes['dueDate'].isFirstChange()) {
+    ngOnChanges(changes: SimpleChanges) {
+        if (changes.dueDate && !changes.dueDate.isFirstChange()) {
             if (this.inputControlsDisabled()) {
                 this.exercise.feedbackSuggestionModule = this.initialAthenaModule;
             }

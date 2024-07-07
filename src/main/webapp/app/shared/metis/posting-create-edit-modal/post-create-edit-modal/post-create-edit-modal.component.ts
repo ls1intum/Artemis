@@ -25,7 +25,7 @@ export interface ContextSelectorOption {
     styleUrls: ['../../metis.component.scss'],
 })
 export class PostCreateEditModalComponent extends PostingCreateEditModalDirective<Post> implements OnInit, OnChanges {
-    @Input() isCourseMessagesPage: boolean;
+    @Input() isCommunicationPage: boolean;
 
     exercises?: Exercise[];
     lectures?: Lecture[];

@@ -2,7 +2,8 @@ import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angu
 import { Subscription } from 'rxjs';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { Diff, DiffMatchPatch, DiffOperation } from 'diff-match-patch-typescript';
+import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import diff from 'html-diff-ts';
 
 @Component({
     selector: 'jhi-exam-exercise-update-highlighter',
@@ -12,11 +13,12 @@ import { Diff, DiffMatchPatch, DiffOperation } from 'diff-match-patch-typescript
 export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy {
     subscriptionToLiveExamExerciseUpdates: Subscription;
     themeSubscription: Subscription;
-    previousProblemStatementUpdate?: string;
-    updatedProblemStatementWithHighlightedDifferences: string;
+    updatedProblemStatementHTML: string;
+    updatedProblemStatementWithHighlightedDifferencesHTML: string;
+    outdatedProblemStatement: string;
     updatedProblemStatement: string;
     showHighlightedDifferences = true;
-    isHidden = false;
+    isHidden = true;
     @Input() exercise: Exercise;
 
     @Output() problemStatementUpdateEvent: EventEmitter<string> = new EventEmitter<string>();
@@ -27,10 +29,6 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
         this.subscriptionToLiveExamExerciseUpdates = this.examExerciseUpdateService.currentExerciseIdAndProblemStatement.subscribe((update) => {
             if (update) {
                 this.updateExerciseProblemStatementById(update.exerciseId, update.problemStatement);
-                this.isHidden = false;
-            } else {
-                // No update so hide the component
-                this.isHidden = true;
             }
         });
     }
@@ -47,13 +45,14 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
     toggleHighlightedProblemStatement(event: MouseEvent): void {
         // prevents the jhi-resizeable-container from collapsing the right panel on a button click
         event.stopPropagation();
+        let problemStatementToEmit;
         if (this.showHighlightedDifferences) {
-            this.exercise.problemStatement = this.updatedProblemStatement;
+            problemStatementToEmit = this.updatedProblemStatementHTML;
         } else {
-            this.exercise.problemStatement = this.updatedProblemStatementWithHighlightedDifferences;
+            problemStatementToEmit = this.updatedProblemStatementWithHighlightedDifferencesHTML;
         }
         this.showHighlightedDifferences = !this.showHighlightedDifferences;
-        this.problemStatementUpdateEvent.emit(this.exercise.problemStatement);
+        this.problemStatementUpdateEvent.emit(problemStatementToEmit);
     }
 
     /**
@@ -64,109 +63,27 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
      */
     updateExerciseProblemStatementById(exerciseId: number, updatedProblemStatement: string) {
         if (updatedProblemStatement != undefined && exerciseId === this.exercise.id) {
+            this.outdatedProblemStatement = this.exercise.problemStatement!;
             this.updatedProblemStatement = updatedProblemStatement;
-            this.exercise.problemStatement = this.highlightProblemStatementDifferences();
+            this.exercise.problemStatement = updatedProblemStatement;
+            this.showHighlightedDifferences = true;
+            // Highlighting of the changes in the problem statement of a programming exercise id handled
+            // in ProgrammingExerciseInstructionComponent
+            if (this.exercise.type !== ExerciseType.PROGRAMMING) {
+                this.highlightProblemStatementDifferences();
+            }
+            this.isHidden = false;
+            this.problemStatementUpdateEvent.emit(this.updatedProblemStatementWithHighlightedDifferencesHTML);
         }
-        this.problemStatementUpdateEvent.emit(this.exercise.problemStatement);
     }
 
     /**
      * Computes the difference between the old and new (updated) problem statement and displays this difference.
      */
     highlightProblemStatementDifferences() {
-        if (!this.updatedProblemStatement) {
-            return;
-        }
-
-        this.showHighlightedDifferences = true;
-
-        // creates the diffMatchPatch library object to be able to modify strings
-        const dmp = new DiffMatchPatch();
-        let outdatedProblemStatement: string;
-
-        // checks if first update i.e. no highlight
-        if (!this.previousProblemStatementUpdate) {
-            outdatedProblemStatement = this.exercise.problemStatement!;
-            // else use previousProblemStatementUpdate as new outdatedProblemStatement to avoid inserted HTML elements
-        } else {
-            outdatedProblemStatement = this.previousProblemStatementUpdate;
-        }
-
-        this.previousProblemStatementUpdate = this.updatedProblemStatement;
-        let removedDiagrams: string[] = [];
-        let diff: Diff[];
-        if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            const updatedProblemStatementAndRemovedDiagrams = this.removeAnyPlantUmlDiagramsInProblemStatement(this.updatedProblemStatement);
-            const outdatedProblemStatementAndRemovedDiagrams = this.removeAnyPlantUmlDiagramsInProblemStatement(outdatedProblemStatement);
-            const updatedProblemStatementWithoutDiagrams = updatedProblemStatementAndRemovedDiagrams.problemStatementWithoutPlantUmlDiagrams;
-            const outdatedProblemStatementWithoutDiagrams = outdatedProblemStatementAndRemovedDiagrams.problemStatementWithoutPlantUmlDiagrams;
-            removedDiagrams = updatedProblemStatementAndRemovedDiagrams.removedDiagrams;
-            diff = dmp.diff_main(outdatedProblemStatementWithoutDiagrams!, updatedProblemStatementWithoutDiagrams);
-        } else {
-            diff = dmp.diff_main(outdatedProblemStatement!, this.updatedProblemStatement);
-        }
-        // finds the initial difference then cleans the text with added html & css elements
-        dmp.diff_cleanupEfficiency(diff);
-        this.updatedProblemStatementWithHighlightedDifferences = this.diffPrettyHtml(diff);
-
-        if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            this.addPlantUmlToProblemStatementWithDiffHighlightAgain(removedDiagrams);
-        }
-        return this.updatedProblemStatementWithHighlightedDifferences;
-    }
-
-    private addPlantUmlToProblemStatementWithDiffHighlightAgain(removedDiagrams: string[]) {
-        removedDiagrams.forEach((text) => {
-            this.updatedProblemStatementWithHighlightedDifferences = this.updatedProblemStatementWithHighlightedDifferences.replace('@startuml', '@startuml\n' + text + '\n');
-        });
-    }
-
-    private removeAnyPlantUmlDiagramsInProblemStatement(problemStatement: string): {
-        problemStatementWithoutPlantUmlDiagrams: string;
-        removedDiagrams: string[];
-    } {
-        // Regular expression to match content between @startuml and @enduml
-        const plantUmlSequenceRegex = /@startuml([\s\S]*?)@enduml/g;
-        const removedDiagrams: string[] = [];
-        const problemStatementWithoutPlantUmlDiagrams = problemStatement.replace(plantUmlSequenceRegex, (match, content) => {
-            removedDiagrams.push(content);
-            // we have to keep the markers, otherwise we cannot add the diagrams back later
-            return '@startuml\n@enduml';
-        });
-        return {
-            problemStatementWithoutPlantUmlDiagrams,
-            removedDiagrams,
-        };
-    }
-
-    /**
-     * Convert a diff array into a pretty HTML report.
-     * Keeps markdown styling intact (not like the original method)
-     * Modified diff_prettHtml() method from DiffMatchPatch
-     * The original library method is intended to be modified
-     * for more info: https://www.npmjs.com/package/diff-match-patch,
-     * https://github.com/google/diff-match-patch/blob/master/javascript/diff_match_patch_uncompressed.js
-     *
-     * @param diffs Array of diff tuples. (from DiffMatchPatch)
-     * @return the HTML representation as string with markdown intact.
-     */
-    private diffPrettyHtml(diffs: Diff[]): string {
-        const html: any[] = [];
-        diffs.forEach((diff: Diff, index: number) => {
-            const op = diffs[index][0]; // Operation (insert, delete, equal)
-            const text = diffs[index][1]; // Text of change.
-            switch (op) {
-                case DiffOperation.DIFF_INSERT:
-                    html[index] = '<ins class="bg-success" ">' + text + '</ins>';
-                    break;
-                case DiffOperation.DIFF_DELETE:
-                    html[index] = '<del class="bg-danger">' + text + '</del>';
-                    break;
-                case DiffOperation.DIFF_EQUAL:
-                    html[index] = text;
-                    break;
-            }
-        });
-        return html.join('');
+        const outdatedProblemStatementHTML = htmlForMarkdown(this.outdatedProblemStatement);
+        const updatedProblemStatementHTML = htmlForMarkdown(this.updatedProblemStatement);
+        this.updatedProblemStatementHTML = updatedProblemStatementHTML;
+        this.updatedProblemStatementWithHighlightedDifferencesHTML = diff(outdatedProblemStatementHTML, updatedProblemStatementHTML);
     }
 }

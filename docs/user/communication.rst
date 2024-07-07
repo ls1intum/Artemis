@@ -18,7 +18,7 @@ Enabling Communication
 
 Artemis courses will by default enable all the communication features.
 In case you do not want to provide users with these features, you can disable them on course creation by unchecking the
-respective checkbox (``Enable communication features``) - it can also be edited afterwards.
+respective checkbox (``Communication Enabled``) - it can also be edited afterwards. Additionally, you can enable or disable group chats and direct messages by checking the (``Direct Messages Enabled / Group Chats``) checkbox.
 
 |communication-toggle|
 
@@ -60,20 +60,12 @@ Exemplary exercise detail page with messages:
 
 |exercise-messages|
 
-Course Communication Overview
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The ``Communication`` space of an Artemis course serves as overview for *all* course-wide messages in a course.
-Here, users can easily query, sort, and filter existing messages.
-
-|communication-page|
-
 Private Communication
 ----------------------
 
 Users of a course can communicate in private via the Messages page. (see image below) The page consists of a collapsible
 Conversation sidebar on the left, where users can search for other participants of the current course and start a conversation
-with them.
+with them. Private communication is only available if the course instructor enables this feature.
 
 If the recipient is browsing another conversation when they receive a new message, an icon with an unread-messages counter is displayed in their
 conversation sidebar, next to the affiliated conversation that the new message was sent to. This way, users become aware of the new message
@@ -120,27 +112,18 @@ On the course communication overview, a user can query *all* existing messages a
 possible combinations:
 
 * Text-based search
-    * Message ID (prepend hashtag ``#`` to message identifier, i.e. #396)
     * Contents of Announcement-Message Title
     * Contents of Message Context
-* Context filters
-    * Lecture
-    * Exercise
-    * Course-wide topic
-        * Announcement
-        * Organization
-        * Random
-        * Tech Support
-* Other message characteristics
+* Message characteristics
     * Unresolved Messages
     * Own (messages current user has authored)
     * Reacted (messages current user has reacted or replied to)
 * Sorting Configurations (ASC/DESC)
     * Creation Date
-    * Number of Votes
-    * Number of Answers
 
 A simplified version of this feature is available on the exercise and lecture details page as well.
+
+To search within a specific channel in the communications module, users can navigate to the desired channel and utilize the search bar located in that channel.
 
 Verify User Authority
 ^^^^^^^^^^^^^^^^^^^^^
@@ -298,14 +281,12 @@ Announcements can be created in the course messaging overview by selecting the `
 As soon as the announcement is created, all participants who did not actively refrain from being notified will receive an email containing the announcement's content.
 
 .. |communication-toggle| image:: communication/communication-checkbox.png
-    :width: 1000
+    :width: 600
 .. |messaging-page| image:: communication/messaging-page.png
     :width: 1000
 .. |lecture-messages| image:: communication/lecture-messages.png
     :width: 1000
 .. |exercise-messages| image:: communication/exercise-messages.png
-    :width: 1000
-.. |communication-page| image:: communication/communication-page.png
     :width: 1000
 .. |message-with-references| image:: communication/message-with-all-references.png
     :width: 750

@@ -1,0 +1,20 @@
+<div class="d-flex flex-row flex-wrap mb-3">
+    @for (informationBoxData of examInformationBoxData; track informationBoxData) {
+        <div class="me-3">
+            <jhi-information-box [informationBoxData]="informationBoxData">
+                <ng-container contentComponent>
+                    @if (informationBoxData.contentComponent === 'formatedDate') {
+                        <span>
+                            {{ informationBoxData.content | artemisDate: 'long-date' }}
+                            -
+                            {{ informationBoxData.content | artemisDate: 'time' }}
+                        </span>
+                    } @else if (informationBoxData.contentComponent === 'workingTime') {
+                        <jhi-student-exam-working-time [studentExam]="studentExam" />
+                    }
+                </ng-container>
+            </jhi-information-box>
+        </div>
+    }
+</div>
+<span class="mt-3" [innerHTML]="formattedStartText"></span>

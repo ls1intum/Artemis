@@ -27,13 +27,13 @@ plugins {
     id "com.github.ben-manes.versions" version "0.51.0"
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
     id "com.gorylenko.gradle-git-properties" version "2.4.2"
-    id "org.owasp.dependencycheck" version "9.2.0"
+    id "org.owasp.dependencycheck" version "10.0.1"
     id "com.adarshr.test-logger" version "4.0.0"
     id "org.springdoc.openapi-gradle-plugin" version "${springdoc_version}"
 }
 
 group = "de.tum.in.www1.artemis"
-version = "7.3.0"
+version = "7.4.2"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -232,7 +232,7 @@ dependencies {
     implementation files("libs/jenkins-client-0.4.1.jar")
     // The following 4 dependencies are explicitly integrated as transitive dependencies of jenkins-client-0.4.0.jar
     implementation "org.apache.httpcomponents.client5:httpclient5:5.3.1"
-    implementation "org.apache.httpcomponents.core5:httpcore5:5.2.4"
+    implementation "org.apache.httpcomponents.core5:httpcore5:5.2.5"
     implementation "org.apache.httpcomponents:httpmime:4.5.14"
     implementation("org.dom4j:dom4j:2.1.4") {
         // Note: avoid org.xml.sax.SAXNotRecognizedException: unrecognized feature http://xml.org/sax/features/external-general-entities
@@ -386,7 +386,7 @@ dependencies {
 
     implementation "io.netty:netty-all:4.1.111.Final"
     implementation "io.projectreactor.netty:reactor-netty:1.1.20"
-    implementation "org.springframework:spring-messaging:6.1.9"
+    implementation "org.springframework:spring-messaging:6.1.10"
     implementation "org.springframework.retry:spring-retry:2.0.6"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
@@ -419,14 +419,14 @@ dependencies {
     implementation "org.springdoc:springdoc-openapi-ui:${springdoc_version}"
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-api:2.5.0"
 
-    implementation "com.mysql:mysql-connector-j:8.4.0"
+    implementation "com.mysql:mysql-connector-j:9.0.0"
     implementation "org.postgresql:postgresql:42.7.3"
 
     implementation "org.zalando:problem-spring-web:0.29.1"
     implementation "org.zalando:jackson-datatype-problem:0.27.1"
     implementation "com.ibm.icu:icu4j-charset:75.1"
     implementation "com.github.seancfoley:ipaddress:5.5.0"
-    implementation "org.apache.maven:maven-model:3.9.7"
+    implementation "org.apache.maven:maven-model:3.9.8"
     // NOTE: 3.0.2 is broken for splitting lecture PDFs
     implementation "org.apache.pdfbox:pdfbox:3.0.1"
     implementation "org.apache.commons:commons-csv:1.11.0"
@@ -436,6 +436,7 @@ dependencies {
     implementation "org.jgrapht:jgrapht-core:1.5.2"
     // use newest version of guava to avoid security issues through outdated dependencies
     implementation "com.google.guava:guava:33.2.1-jre"
+    implementation "com.sun.activation:jakarta.activation:2.0.1"
 
     // use newest version of gson to avoid security issues through outdated dependencies
     implementation "com.google.code.gson:gson:2.11.0"
@@ -468,7 +469,7 @@ dependencies {
     testImplementation "org.assertj:assertj-core:3.26.0"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
-    testImplementation "io.github.classgraph:classgraph:4.8.173"
+    testImplementation "io.github.classgraph:classgraph:4.8.174"
     testImplementation "org.awaitility:awaitility:4.2.1"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
     testImplementation "org.gradle:gradle-tooling-api:8.8"
@@ -479,7 +480,7 @@ dependencies {
         exclude group: "org.testcontainers", module: "mssqlserver"
     }
     testImplementation "com.tngtech.archunit:archunit:1.3.0"
-    testImplementation("org.skyscreamer:jsonassert:1.5.1") {
+    testImplementation("org.skyscreamer:jsonassert:1.5.3") {
         exclude module: "android-json"
     }
     testImplementation("net.bytebuddy:byte-buddy") {

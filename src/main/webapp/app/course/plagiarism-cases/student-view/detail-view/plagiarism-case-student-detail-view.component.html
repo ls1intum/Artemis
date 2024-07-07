@@ -57,7 +57,7 @@
                                     [readOnlyMode]="false"
                                     [posting]="posts[0]"
                                     [showAnswers]="true"
-                                    [isCourseMessagesPage]="false"
+                                    [isCommunicationPage]="false"
                                     [hasChannelModerationRights]="false"
                                 />
                             </div>
@@ -79,7 +79,7 @@
                                                                         'day'
                                                                     )
                                                                   : posts[0].creationDate.add(7, 'day')
-                                                              ).format('DD.MM.YYYY')
+                                                              ).format('DD.MM.YYYY'),
                                                           }
                                             "
                                         ></h5>

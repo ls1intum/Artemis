@@ -14,10 +14,12 @@
             }
             @if (!isOneToOneChat(conversation)) {
                 <button class="setting" ngbDropdownItem (click)="openConversationDetailDialog($event)">
+                    <fa-icon [icon]="faGear" size="sm" class="me-1" />
                     {{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.settings' | artemisTranslate }}
                 </button>
             }
             <button class="mute" ngbDropdownItem (click)="onMuteClicked($event)">
+                <fa-icon [icon]="conversation.isMuted ? faVolumeUp : faVolumeXmark" size="sm" class="me-1" />
                 {{
                     conversation.isMuted
                         ? ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.unmute' | artemisTranslate)
@@ -25,6 +27,7 @@
                 }}
             </button>
             <button class="hide" ngbDropdownItem (click)="onHiddenClicked($event)">
+                <fa-icon [icon]="conversation.isHidden ? faEye : faEyeSlash" size="sm" class="me-1" />
                 {{
                     conversation.isHidden
                         ? ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.show' | artemisTranslate)

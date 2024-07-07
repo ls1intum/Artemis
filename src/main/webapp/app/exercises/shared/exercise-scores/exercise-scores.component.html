@@ -53,7 +53,7 @@
                                     : {
                                           filtered: participationsPerFilter.get(resultCriteria.filterProp),
                                           total: filteredParticipations.length,
-                                          percent: ((participationsPerFilter.get(resultCriteria.filterProp) ?? 0) * 100) / filteredParticipations.length | number: '1.0-1'
+                                          percent: ((participationsPerFilter.get(resultCriteria.filterProp) ?? 0) * 100) / filteredParticipations.length | number: '1.0-1',
                                       }
                         }}
                     </span>
@@ -78,7 +78,7 @@
                                 exercise.exerciseGroup!.id!,
                                 exercise.type + '-exercises',
                                 exercise.id,
-                                'participations'
+                                'participations',
                             ]"
                             class="btn btn-primary btn-sm me-1"
                         >
@@ -155,11 +155,6 @@
                     [rowClass]="settings.rowClass"
                     [scrollbarH]="settings.scrollbarH"
                 >
-                    <ngx-datatable-column prop="" [minWidth]="50" [width]="60">
-                        <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex">
-                            {{ rowIndex + 1 }}
-                        </ng-template>
-                    </ngx-datatable-column>
                     <ngx-datatable-column prop="" [sortable]="true" [minWidth]="100" [width]="180">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort(exercise.teamMode ? 'team.name' : 'student.name')">
@@ -243,27 +238,29 @@
                             </ng-template>
                         </ngx-datatable-column>
                     }
-                    <ngx-datatable-column prop="" [sortable]="true" [minWidth]="100" [width]="100">
-                        <ng-template ngx-datatable-header-template>
-                            <span class="datatable-header-cell-wrapper d-inline-block w-100 text-center" (click)="controls.onSort('results?.last()?.assessmentNote?.note')">
-                                <fa-icon [icon]="faComment" [ngbTooltip]="'artemisApp.assessment.assessmentNote' | artemisTranslate" />
-                                <fa-icon [icon]="controls.iconForSortPropField('results?.last()?.assessmentNote?.note')" />
-                            </span>
-                        </ng-template>
-                        <ng-template ngx-datatable-cell-template let-value="value">
-                            @if (value.results?.last()?.assessmentNote?.note?.trim()) {
-                                <span class="w-100 text-center">
-                                    <fa-icon
-                                        [ngbPopover]="value.results?.last()?.assessmentNote.note"
-                                        [triggers]="'hover'"
-                                        [icon]="faComment"
-                                        [container]="'body'"
-                                        [popoverClass]="'max-vw-30 popover-text-truncate-4-lines'"
-                                    />
+                    @if (exercise.assessmentType === AssessmentType.MANUAL || exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC) {
+                        <ngx-datatable-column prop="" [sortable]="true" [minWidth]="100" [width]="100">
+                            <ng-template ngx-datatable-header-template>
+                                <span class="datatable-header-cell-wrapper d-inline-block w-100 text-center" (click)="controls.onSort('results?.last()?.assessmentNote?.note')">
+                                    <fa-icon [icon]="faComment" [ngbTooltip]="'artemisApp.assessment.assessmentNote' | artemisTranslate" />
+                                    <fa-icon [icon]="controls.iconForSortPropField('results?.last()?.assessmentNote?.note')" />
                                 </span>
-                            }
-                        </ng-template>
-                    </ngx-datatable-column>
+                            </ng-template>
+                            <ng-template ngx-datatable-cell-template let-value="value">
+                                @if (value.results?.last()?.assessmentNote?.note?.trim()) {
+                                    <span class="w-100 text-center">
+                                        <fa-icon
+                                            [ngbPopover]="value.results?.last()?.assessmentNote.note"
+                                            [triggers]="'hover'"
+                                            [icon]="faComment"
+                                            [container]="'body'"
+                                            [popoverClass]="'max-vw-30 popover-text-truncate-4-lines'"
+                                        />
+                                    </span>
+                                }
+                            </ng-template>
+                        </ngx-datatable-column>
+                    }
                     @if (exercise.type === ExerciseType.PROGRAMMING && afterDueDate) {
                         <ngx-datatable-column prop="" [minWidth]="100" [width]="110">
                             <ng-template ngx-datatable-header-template>
