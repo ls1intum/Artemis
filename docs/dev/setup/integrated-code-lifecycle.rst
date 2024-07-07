@@ -121,9 +121,7 @@ To create a course with registered users, you can use the scripts from ``support
     </iframe>
 
 - Make sure that the result of your submission is displayed in the Artemis UI.
-
-.. HINT::
-   At the moment, the Local VC system only supports accessing repositories via HTTP(S) and Basic Auth. We plan to add SSH support in the future. For now, you need to enter your Artemis credentials (username and password) when accessing template, solution, test, and assignment repositories.
+- Users can access their repositories via HTTPS and SSH. For SSH to work, you must first :ref:`configure SSH <configure-ssh-access>`.
 
 For unauthorized access, your Git client will display the respective error message:
 

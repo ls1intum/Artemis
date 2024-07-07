@@ -40,3 +40,16 @@ export class FinishedBuildJob implements StringBaseEntity {
     public commitHash?: string;
     public submissionResult?: Result;
 }
+
+export class BuildJobStatistics {
+    public totalBuilds: number = 0;
+    public successfulBuilds: number = 0;
+    public failedBuilds: number = 0;
+    public cancelledBuilds: number = 0;
+}
+
+export enum SpanType {
+    DAY = 1,
+    WEEK = 7,
+    MONTH = 30,
+}

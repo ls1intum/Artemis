@@ -47,8 +47,7 @@ test.describe('Exam date verification', () => {
             await login(studentOne);
             await page.goto(`/courses/${course.id}`);
             await courseOverview.openExamsTab();
-            await courseOverview.openExam(exam.id!);
-            await page.waitForURL(`**/exams/${exam.id}**`);
+            await page.waitForURL(`**/exams/${exam.id}`);
         });
 
         test('Student can start after start Date', async ({
@@ -76,28 +75,28 @@ test.describe('Exam date verification', () => {
             await examAPIRequests.prepareExerciseStartForExam(exam);
             await login(studentOne);
             await page.goto(`/courses/${course.id}/exams`);
-            await courseOverview.openExam(exam.id!);
-            await page.waitForURL(`**/exams/${exam.id}**`);
+            await courseOverview.openExamsTab();
+            await courseOverview.openExam(exam.title!);
+            await page.waitForURL(`**/exams/${exam.id}`);
             await expect(page.getByText(exam.title!).first()).toBeVisible();
             await examStartEnd.startExam();
-            await examNavigation.openExerciseAtIndex(0);
+
+            await page.hover('.fa-hourglass-half');
+            await expect(page.getByText('Exercise not started')).toBeVisible();
+            await examNavigation.openOrSaveExerciseByTitle(exercise.title!);
             const submission = await Fixtures.get('loremIpsum-short.txt');
             await textExerciseEditor.typeSubmission(exercise.id!, submission!);
-            await examNavigation.clickSave();
+
+            await page.hover('.fa-save-warning');
+            await expect(page.getByText('Exercise not saved')).toBeVisible();
+            await examNavigation.openOrSaveExerciseByTitle(exercise.title!);
+
+            await page.hover('.fa-save-success');
+            await expect(page.getByText('Exercise saved')).toBeVisible();
         });
 
-        test('Exam ends after end time', async ({
-            page,
-            login,
-            examAPIRequests,
-            exerciseAPIRequests,
-            courseOverview,
-            examStartEnd,
-            examNavigation,
-            textExerciseEditor,
-            examParticipation,
-        }) => {
-            const examEnd = dayjs().add(30, 'seconds');
+        test('Exam ends after end time', async ({ page, login, examAPIRequests, exerciseAPIRequests, examStartEnd, examNavigation, textExerciseEditor, examParticipation }) => {
+            const examEnd = dayjs().add(10, 'seconds');
             const examConfig = {
                 course,
                 title: examTitle,
@@ -112,14 +111,15 @@ test.describe('Exam date verification', () => {
             await examAPIRequests.generateMissingIndividualExams(exam);
             await examAPIRequests.prepareExerciseStartForExam(exam);
             await login(studentOne);
-            await page.goto(`/courses/${course.id}/exams`);
-            await courseOverview.openExam(exam.id!);
+            await page.goto(`/courses/${course.id}/exams/${exam.id}`);
+            await page.waitForURL(`**/exams/${exam.id}`);
             await expect(page.getByText(exam.title!).first()).toBeVisible();
             await examStartEnd.startExam();
-            await examNavigation.openExerciseAtIndex(0);
+
+            await examNavigation.openOrSaveExerciseByTitle(exercise.title!);
             const submissionText = await Fixtures.get('loremIpsum-short.txt');
             await textExerciseEditor.typeSubmission(exercise.id!, submissionText!);
-            await examNavigation.clickSave();
+            await examNavigation.openOrSaveExerciseByTitle(exercise.title!);
             if (examEnd.isAfter(dayjs())) {
                 await page.waitForTimeout(examEnd.diff(dayjs()));
             }

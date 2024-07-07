@@ -62,9 +62,6 @@ export class CourseManagementAPIRequests {
             course.courseInformationSharingMessagingCodeOfConduct = 'Code of Conduct';
         } else if (allowCommunication) {
             course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
-        } else if (allowMessaging) {
-            course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.MESSAGING_ONLY;
-            course.courseInformationSharingMessagingCodeOfConduct = 'Code of Conduct';
         } else {
             course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.DISABLED;
         }
