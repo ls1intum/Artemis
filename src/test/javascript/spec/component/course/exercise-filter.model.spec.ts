@@ -6,8 +6,8 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Exercise } from 'app/entities/exercise.model';
 
 describe('Exercise Filter Test', () => {
-    const category1 = new ExerciseCategory(undefined, 'Easy');
-    const category2 = new ExerciseCategory(undefined, 'Hard');
+    const category1 = new ExerciseCategory('Easy', undefined);
+    const category2 = new ExerciseCategory('Hard', undefined);
     const course: Course = { id: 123 } as Course;
     const exercise1 = new ProgrammingExercise(course, undefined);
     exercise1.id = 1;

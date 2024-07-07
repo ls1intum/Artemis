@@ -369,7 +369,7 @@ export class ExerciseService {
         if (exercise?.categories) {
             exercise.categories = exercise.categories.map((category) => {
                 const categoryObj = JSON.parse(category as unknown as string);
-                return new ExerciseCategory(categoryObj.color, categoryObj.category);
+                return new ExerciseCategory(categoryObj.category, categoryObj.color);
             });
         }
     }

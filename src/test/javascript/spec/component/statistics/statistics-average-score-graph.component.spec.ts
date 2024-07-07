@@ -28,35 +28,35 @@ describe('StatisticsAverageScoreGraphComponent', () => {
         exerciseName: 'FacadePattern',
         averageScore: 0,
         exerciseType: ExerciseType.TEXT,
-        categories: [new ExerciseCategory('#347aeb', 'structural pattern')],
+        categories: [new ExerciseCategory('structural pattern', '#347aeb')],
     };
     const exercise2 = {
         exerciseId: 2,
         exerciseName: 'BridgePattern',
         averageScore: 20,
         exerciseType: ExerciseType.PROGRAMMING,
-        categories: [new ExerciseCategory('#347aeb', 'structural pattern')],
+        categories: [new ExerciseCategory('structural pattern', '#347aeb')],
     };
     const exercise3 = {
         exerciseId: 3,
         exerciseName: 'VisitorPattern',
         averageScore: 25,
         exerciseType: ExerciseType.FILE_UPLOAD,
-        categories: [new ExerciseCategory('#c034eb', 'behavioral pattern')],
+        categories: [new ExerciseCategory('behavioral pattern', '#c034eb')],
     };
     const exercise4 = {
         exerciseId: 4,
         exerciseName: 'AdapterPattern',
         averageScore: 35,
         exerciseType: ExerciseType.QUIZ,
-        categories: [new ExerciseCategory('#347aeb', 'structural pattern')],
+        categories: [new ExerciseCategory('structural pattern', '#347aeb')],
     };
     const exercise5 = {
         exerciseId: 5,
         exerciseName: 'ProxyPattern',
         averageScore: 40,
         exerciseType: ExerciseType.MODELING,
-        categories: [new ExerciseCategory('#347aeb', 'structural pattern')],
+        categories: [new ExerciseCategory('structural pattern', '#347aeb')],
     };
     const exercise6 = { exerciseId: 6, exerciseName: 'BuilderPattern', averageScore: 50, exerciseType: ExerciseType.QUIZ };
     const exercise7 = { exerciseId: 7, exerciseName: 'BehaviouralPattern', averageScore: 55, exerciseType: ExerciseType.PROGRAMMING };

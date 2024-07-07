@@ -322,7 +322,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
     it('should updateCategories properly by making category available for selection again when removing it', () => {
         comp.fileUploadExercise = fileUploadExercise;
         comp.exerciseCategories = [];
-        const newCategories = [new ExerciseCategory(undefined, 'Easy'), new ExerciseCategory(undefined, 'Hard')];
+        const newCategories = [new ExerciseCategory('Easy', undefined), new ExerciseCategory('Hard', undefined)];
 
         comp.updateCategories(newCategories);
 

@@ -10,12 +10,12 @@ import { DifficultyLevel, Exercise, ExerciseType, getIcon } from 'app/entities/e
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 
-const EXERCISE_1 = { categories: [new ExerciseCategory('#691b0b', 'category1'), new ExerciseCategory('#1b97ca', 'category2')], maxPoints: 10 } as Exercise;
-const EXERCISE_2 = { categories: [new ExerciseCategory('#0d3cc2', 'category3'), new ExerciseCategory('#6ae8ac', 'category4')], maxPoints: 5 } as Exercise;
-const EXERCISE_3 = { categories: [new ExerciseCategory('#691b0b', 'category5')], maxPoints: 2 } as Exercise;
+const EXERCISE_1 = { categories: [new ExerciseCategory('category1', '#691b0b'), new ExerciseCategory('category2', '#1b97ca')], maxPoints: 10 } as Exercise;
+const EXERCISE_2 = { categories: [new ExerciseCategory('category3', '#0d3cc2'), new ExerciseCategory('category4', '#6ae8ac')], maxPoints: 5 } as Exercise;
+const EXERCISE_3 = { categories: [new ExerciseCategory('category5', '#691b0b')], maxPoints: 2 } as Exercise;
 
 /** contains 1 duplicate categories and maxPoints with {@link EXERCISE_1} */
-const EXERCISE_4 = { categories: [new ExerciseCategory('#691b0b', 'category1'), new ExerciseCategory('#1b97ca', 'category8')], maxPoints: 10 } as Exercise;
+const EXERCISE_4 = { categories: [new ExerciseCategory('category1', '#691b0b'), new ExerciseCategory('category8', '#1b97ca')], maxPoints: 10 } as Exercise;
 const EXERCISE_5 = { categories: [] as ExerciseCategory[], maxPoints: 20 } as Exercise;
 
 const SIDEBAR_CARD_ELEMENT_1 = {
@@ -63,11 +63,11 @@ describe('getExerciseCategoryFilterOptions', () => {
         expect(exerciseCategories).toEqual({
             isDisplayed: true,
             options: [
-                { category: new ExerciseCategory('#691b0b', 'category1'), searched: false },
-                { category: new ExerciseCategory('#1b97ca', 'category2'), searched: false },
-                { category: new ExerciseCategory('#0d3cc2', 'category3'), searched: false },
-                { category: new ExerciseCategory('#6ae8ac', 'category4'), searched: false },
-                { category: new ExerciseCategory('#691b0b', 'category5'), searched: false },
+                { category: new ExerciseCategory('category1', '#691b0b'), searched: false },
+                { category: new ExerciseCategory('category2', '#1b97ca'), searched: false },
+                { category: new ExerciseCategory('category3', '#0d3cc2'), searched: false },
+                { category: new ExerciseCategory('category4', '#6ae8ac'), searched: false },
+                { category: new ExerciseCategory('category5', '#691b0b'), searched: false },
             ],
         });
     });
@@ -82,9 +82,9 @@ describe('getExerciseCategoryFilterOptions', () => {
         expect(exerciseCategories).toEqual({
             isDisplayed: true,
             options: [
-                { category: new ExerciseCategory('#691b0b', 'category1'), searched: false },
-                { category: new ExerciseCategory('#1b97ca', 'category2'), searched: false },
-                { category: new ExerciseCategory('#1b97ca', 'category8'), searched: false },
+                { category: new ExerciseCategory('category1', '#691b0b'), searched: false },
+                { category: new ExerciseCategory('category2', '#1b97ca'), searched: false },
+                { category: new ExerciseCategory('category8', '#1b97ca'), searched: false },
             ],
         });
     });
@@ -99,10 +99,10 @@ describe('getExerciseCategoryFilterOptions', () => {
         expect(exerciseCategories).toEqual({
             isDisplayed: true,
             options: [
-                { category: new ExerciseCategory('#691b0b', 'category1'), searched: false },
-                { category: new ExerciseCategory('#1b97ca', 'category2'), searched: false },
-                { category: new ExerciseCategory('#0d3cc2', 'category3'), searched: false },
-                { category: new ExerciseCategory('#6ae8ac', 'category4'), searched: false },
+                { category: new ExerciseCategory('category1', '#691b0b'), searched: false },
+                { category: new ExerciseCategory('category2', '#1b97ca'), searched: false },
+                { category: new ExerciseCategory('category3', '#0d3cc2'), searched: false },
+                { category: new ExerciseCategory('category4', '#6ae8ac'), searched: false },
             ],
         });
     });

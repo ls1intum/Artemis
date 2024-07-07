@@ -22,7 +22,7 @@ describe('ModelingExercise Service', () => {
     let httpMock: HttpTestingController;
     let elemDefault: ModelingExercise;
     let plagiarismResult: ModelingPlagiarismResult;
-    const category = new ExerciseCategory('red', 'testCategory');
+    const category = new ExerciseCategory('testCategory', 'red');
     const categories = [JSON.stringify(category) as unknown as ExerciseCategory] as ExerciseCategory[];
     beforeEach(() => {
         TestBed.configureTestingModule({

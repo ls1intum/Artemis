@@ -35,7 +35,7 @@ describe('ModelingExerciseUpdateComponent', () => {
     let service: ModelingExerciseService;
     let courseService: CourseManagementService;
     let exerciseService: ExerciseService;
-    const categories = [new ExerciseCategory(undefined, 'testCat'), new ExerciseCategory(undefined, 'testCat2')];
+    const categories = [new ExerciseCategory('testCat', undefined), new ExerciseCategory('testCat2', undefined)];
 
     const categoriesStringified = categories.map((cat) => JSON.stringify(cat));
 
@@ -264,7 +264,7 @@ describe('ModelingExerciseUpdateComponent', () => {
         const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
         modelingExercise.categories = categories;
         comp.modelingExercise = modelingExercise;
-        const newCategories = [new ExerciseCategory(undefined, 'newCat1'), new ExerciseCategory(undefined, 'newCat2')];
+        const newCategories = [new ExerciseCategory('newCat1', undefined), new ExerciseCategory('newCat2', undefined)];
 
         comp.updateCategories(newCategories);
         expect(comp.modelingExercise.categories).toEqual(newCategories);
@@ -288,7 +288,7 @@ describe('ModelingExerciseUpdateComponent', () => {
     it('should updateCategories properly by making category available for selection again when removing it', () => {
         comp.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
         comp.exerciseCategories = [];
-        const newCategories = [new ExerciseCategory(undefined, 'Easy'), new ExerciseCategory(undefined, 'Hard')];
+        const newCategories = [new ExerciseCategory('Easy', undefined), new ExerciseCategory('Hard', undefined)];
 
         comp.updateCategories(newCategories);
 

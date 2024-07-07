@@ -80,7 +80,7 @@ export class StatisticsService {
 
     private static convertExerciseCategoriesOfCourseManagementStatisticsFromServer(res: CourseManagementStatisticsDTO): CourseManagementStatisticsDTO {
         res.averageScoresOfExercises.forEach((avgScoresOfExercise) => {
-            avgScoresOfExercise.categories = avgScoresOfExercise.categories?.map((category) => new ExerciseCategory(category.color, category.category));
+            avgScoresOfExercise.categories = avgScoresOfExercise.categories?.map((category) => new ExerciseCategory(category.category, category.color));
         });
         return res;
     }

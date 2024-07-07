@@ -448,7 +448,7 @@ describe('QuizExerciseUpdateComponent', () => {
         it('should updateCategories properly by making category available for selection again when removing it', () => {
             comp.quizExercise = quizExercise;
             comp.exerciseCategories = [];
-            const newCategories = [new ExerciseCategory(undefined, 'Easy'), new ExerciseCategory(undefined, 'Hard')];
+            const newCategories = [new ExerciseCategory('Easy', undefined), new ExerciseCategory('Hard', undefined)];
 
             comp.updateCategories(newCategories);
 
@@ -584,8 +584,8 @@ describe('QuizExerciseUpdateComponent', () => {
             it('should update categories to given categories', () => {
                 resetQuizExercise();
                 comp.quizExercise = quizExercise;
-                const exerciseCategory1 = new ExerciseCategory('color1', 'category1');
-                const exerciseCategory2 = new ExerciseCategory('color1', 'category1');
+                const exerciseCategory1 = new ExerciseCategory('category1', 'color1');
+                const exerciseCategory2 = new ExerciseCategory('category1', 'color1');
                 const expected = [exerciseCategory1, exerciseCategory2];
                 comp.updateCategories([exerciseCategory1, exerciseCategory2]);
                 expect(comp.quizExercise.categories).toEqual(expected);

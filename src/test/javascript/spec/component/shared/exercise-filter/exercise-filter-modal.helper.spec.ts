@@ -13,9 +13,9 @@ import {
 import { RangeFilter } from 'app/types/exercise-filter';
 import { FilterDetails } from 'app/shared/exercise-filter/exercise-filter-modal.component';
 
-const EXERCISE_1 = { categories: [new ExerciseCategory('#691b0b', 'category1'), new ExerciseCategory('#1b97ca', 'category2')], maxPoints: 10, type: ExerciseType.TEXT } as Exercise;
-const EXERCISE_2 = { categories: [new ExerciseCategory('#0d3cc2', 'category3'), new ExerciseCategory('#6ae8ac', 'category4')], maxPoints: 5 } as Exercise;
-const EXERCISE_4 = { categories: [new ExerciseCategory('#691b0b', 'category1'), new ExerciseCategory('#1b97ca', 'category8')], maxPoints: 10 } as Exercise;
+const EXERCISE_1 = { categories: [new ExerciseCategory('category1', '#691b0b'), new ExerciseCategory('category2', '#1b97ca')], maxPoints: 10, type: ExerciseType.TEXT } as Exercise;
+const EXERCISE_2 = { categories: [new ExerciseCategory('category3', '#0d3cc2'), new ExerciseCategory('category4', '#6ae8ac')], maxPoints: 5 } as Exercise;
+const EXERCISE_4 = { categories: [new ExerciseCategory('category1', '#691b0b'), new ExerciseCategory('category8', '#1b97ca')], maxPoints: 10 } as Exercise;
 const EXERCISE_5 = { maxPoints: 20 } as Exercise;
 
 const SIDEBAR_CARD_ELEMENT_1 = {
@@ -86,14 +86,14 @@ describe('satisfiesCategoryFilter', () => {
     });
 
     it('should return true category is included in difficulty filter', () => {
-        const categoryFilter = [new ExerciseCategory('#691b0b', 'category1')];
+        const categoryFilter = [new ExerciseCategory('category1', '#691b0b')];
 
         const resultItemWithMatchingCategory = satisfiesCategoryFilter(SIDEBAR_CARD_ELEMENT_1, categoryFilter);
         expect(resultItemWithMatchingCategory).toBeTrue();
     });
 
     it('should return false if difficulty is NOT in difficulty filter', () => {
-        const categoryFilter = [new ExerciseCategory('#691b0b', 'notExistingCategory')];
+        const categoryFilter = [new ExerciseCategory('notExistingCategory', '#691b0b')];
 
         const resultItemWithCategory = satisfiesCategoryFilter(SIDEBAR_CARD_ELEMENT_1, categoryFilter);
         expect(resultItemWithCategory).toBeFalse();
@@ -238,7 +238,7 @@ describe('satisfiesPointsFilter', () => {
 describe('satisfiesFilters', () => {
     it('should return true if item satisfies filters', () => {
         const filter: FilterDetails = {
-            selectedCategories: [new ExerciseCategory('#691b0b', 'category1')],
+            selectedCategories: [new ExerciseCategory('category1', '#691b0b')],
             searchedTypes: [ExerciseType.TEXT],
             searchedDifficulties: [DifficultyLevel.HARD],
             isScoreFilterApplied: false,
@@ -271,7 +271,7 @@ describe('satisfiesFilters', () => {
 
     it('should return false if item does not satisfy the score filter', () => {
         const filter: FilterDetails = {
-            selectedCategories: [new ExerciseCategory('#691b0b', 'category1')],
+            selectedCategories: [new ExerciseCategory('category1', '#691b0b')],
             searchedTypes: [ExerciseType.TEXT],
             searchedDifficulties: [DifficultyLevel.HARD],
             isScoreFilterApplied: false,
