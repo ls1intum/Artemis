@@ -1,3 +1,5 @@
+.. _file-upload:
+
 File Upload Exercise
 ====================
 

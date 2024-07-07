@@ -38,6 +38,7 @@
             "sidebar": {
                 "past": "Past",
                 "current": "Current",
+                "dueSoon": "Due soon",
                 "future": "Future",
                 "noDueDate": "No due date",
                 "noDate": "No date",
