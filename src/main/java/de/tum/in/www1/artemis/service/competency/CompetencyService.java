@@ -231,7 +231,10 @@ public class CompetencyService {
 
         var persistedCompetency = competencyRepository.save(competencyToCreate);
 
-        lectureUnitService.linkLectureUnitsToCompetency(persistedCompetency, competency.getLectureUnits(), Set.of());
+        if (!competency.getLectureUnits().isEmpty()) {
+            lectureUnitService.linkLectureUnitsToCompetency(persistedCompetency, competency.getLectureUnits(), Set.of());
+            competencyProgressService.updateProgressByCompetencyAndUsersInCourseAsync(persistedCompetency);
+        }
 
         if (course.getLearningPathsEnabled()) {
             learningPathService.linkCompetencyToLearningPathsOfCourse(persistedCompetency, course.getId());
@@ -255,7 +258,11 @@ public class CompetencyService {
             createdCompetency.setCourse(course);
             createdCompetency = competencyRepository.save(createdCompetency);
 
-            lectureUnitService.linkLectureUnitsToCompetency(createdCompetency, competency.getLectureUnits(), Set.of());
+            if (!competency.getLectureUnits().isEmpty()) {
+                lectureUnitService.linkLectureUnitsToCompetency(createdCompetency, competency.getLectureUnits(), Set.of());
+                competencyProgressService.updateProgressByCompetencyAndUsersInCourseAsync(createdCompetency);
+            }
+
             createdCompetencies.add(createdCompetency);
         }
 
@@ -285,7 +292,7 @@ public class CompetencyService {
         // update competency progress if necessary
         if (competency.getLectureUnits().size() != competencyToUpdate.getLectureUnits().size() || !competencyToUpdate.getLectureUnits().containsAll(competency.getLectureUnits())) {
             log.debug("Linked lecture units changed, updating student progress for competency...");
-            competencyProgressService.updateProgressByCompetencyAsync(persistedCompetency);
+            competencyProgressService.updateProgressByCompetencyAndUsersInCourseAsync(persistedCompetency);
         }
 
         return persistedCompetency;

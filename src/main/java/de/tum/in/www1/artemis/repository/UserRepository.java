@@ -181,6 +181,16 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Set<User> findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(String groupName);
 
+    @Query("""
+            SELECT DISTINCT user
+            FROM User user
+                LEFT JOIN FETCH user.groups userGroup
+                LEFT JOIN FETCH user.authorities userAuthority
+            WHERE user.isDeleted = FALSE
+                AND userGroup IN :groupNames
+            """)
+    Set<User> findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(@Param("groupNames") Set<String> groupNames);
+
     Set<User> findAllByIsDeletedIsFalseAndGroupsContains(String groupName);
 
     @Query("""
@@ -864,6 +874,17 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      */
     default Set<User> getInstructors(Course course) {
         return findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getInstructorGroupName());
+    }
+
+    /**
+     * Get all users for a given course
+     *
+     * @param course The course for which to fetch all users
+     * @return all users in the course
+     */
+    default Set<User> getUsersInCourse(Course course) {
+        Set<String> groupNames = Set.of(course.getStudentGroupName(), course.getTeachingAssistantGroupName(), course.getEditorGroupName(), course.getInstructorGroupName());
+        return findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(groupNames);
     }
 
     /**

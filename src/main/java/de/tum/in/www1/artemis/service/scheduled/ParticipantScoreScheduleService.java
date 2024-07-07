@@ -335,7 +335,7 @@ public class ParticipantScoreScheduleService {
             if (scoreParticipant instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
                 scoreParticipant = teamRepository.findWithStudentsByIdElseThrow(team.getId());
             }
-            competencyProgressService.updateProgressByLearningObject(score.getExercise(), scoreParticipant.getParticipants());
+            competencyProgressService.updateProgressByLearningObjectSync(score.getExercise(), scoreParticipant.getParticipants());
         }
         catch (Exception e) {
             log.error("Exception while processing participant score for exercise {} and participant {} for participant scores:", exerciseId, participantId, e);

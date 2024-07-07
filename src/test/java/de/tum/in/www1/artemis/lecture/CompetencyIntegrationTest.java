@@ -3,7 +3,10 @@ package de.tum.in.www1.artemis.lecture;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.within;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -813,6 +816,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
             var persistedCompetency = request.postWithResponseBody("/api/courses/" + course.getId() + "/competencies", competency, Competency.class, HttpStatus.CREATED);
             assertThat(persistedCompetency.getId()).isNotNull();
+            verify(competencyProgressService).updateProgressByCompetencyAndUsersInCourseAsync(any());
         }
 
         @Nested
@@ -869,6 +873,21 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
             assertThat(importedCompetency.getExercises()).isEmpty();
             assertThat(importedCompetency.getLectureUnits()).isEmpty();
             assertThat(importedCompetency.getUserProgress()).isEmpty();
+            verify(competencyProgressService, never()).updateProgressByCompetencyAsync(importedCompetency);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldImportCompetencyWithLectureUnits() throws Exception {
+            List<LectureUnit> allLectureUnits = lectureUnitRepository.findAll();
+            Set<LectureUnit> connectedLectureUnits = new HashSet<>(allLectureUnits);
+            competency.setLectureUnits(connectedLectureUnits);
+            Competency importedCompetency = request.postWithResponseBody("/api/courses/" + course2.getId() + "/competencies/import", competency, Competency.class,
+                    HttpStatus.CREATED);
+
+            assertThat(competencyRepository.findById(importedCompetency.getId())).isNotEmpty();
+            assertThat(importedCompetency.getLectureUnits()).containsExactlyInAnyOrderElementsOf(connectedLectureUnits);
+            verify(competencyProgressService).updateProgressByCompetencyAndUsersInCourseAsync(importedCompetency);
         }
 
         @Test

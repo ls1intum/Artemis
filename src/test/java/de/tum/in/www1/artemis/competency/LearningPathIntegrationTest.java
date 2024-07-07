@@ -670,7 +670,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
 
-        competencyProgressService.updateProgressByLearningObject(textUnit, Set.of(student));
+        competencyProgressService.updateProgressByLearningObjectSync(textUnit, Set.of(student));
 
         final var result = request.get("/api/learning-path/" + learningPath.getId() + "/navigation", HttpStatus.OK, LearningPathNavigationDTO.class);
 
