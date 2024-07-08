@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.iris.session;
 
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -12,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
@@ -45,7 +44,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
  */
 @Service
 @Profile("iris")
-public class IrisExerciseChatSessionService extends AbstractIrisChatSessionService<IrisExerciseChatSession> implements IrisRateLimitedFeatureInterface {
+public class IrisExerciseChatSessionService extends AbstractIrisChatSessionService<IrisExerciseChatSession, ProgrammingExercise> implements IrisRateLimitedFeatureInterface {
 
     private final IrisMessageService irisMessageService;
 
@@ -95,6 +94,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * @param user     The user the session belongs to
      * @return The created session
      */
+    // TODO: This function is only used in tests. Replace with createSession once the tests are refactored.
     public IrisExerciseChatSession createChatSessionForProgrammingExercise(ProgrammingExercise exercise, User user) {
         if (exercise.isExamExercise()) {
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
@@ -112,10 +112,14 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      */
     @Override
     public void checkHasAccessTo(User user, IrisExerciseChatSession session) {
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, session.getExercise(), user);
+        checkHasTheMinimalRequiredRoleForExerciseElseThrow(user, session.getExercise());
         if (!Objects.equals(session.getUser(), user)) {
             throw new AccessForbiddenException("Iris Session", session.getId());
         }
+    }
+
+    private void checkHasTheMinimalRequiredRoleForExerciseElseThrow(User user, Exercise exercise) {
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
     }
 
     /**
@@ -183,8 +187,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, exercise);
 
         var participant = ((ProgrammingExerciseStudentParticipation) participation).getParticipant();
-        if (participant instanceof User) {
-            var user = (User) participant;
+        if (participant instanceof User user) {
             var session = getCurrentSessionOrCreateIfNotExistsInternal(exercise, user, false);
             CompletableFuture.runAsync(() -> requestAndHandleResponse(session, "submission_failed"));
         }
@@ -203,7 +206,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
     }
 
     /**
-     * Gets the current Iris session for the course and user.
+     * Gets the current Iris session for the exercise and user.
      * If no session exists or if the last session is from a different day, a new one is created.
      *
      * @param exercise                    Programming exercise to get the session for
@@ -220,18 +223,15 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
     private IrisExerciseChatSession getCurrentSessionOrCreateIfNotExistsInternal(ProgrammingExercise exercise, User user, boolean sendInitialMessageIfCreated) {
         var sessionOptional = irisExerciseChatSessionRepository.findLatestByExerciseIdAndUserIdWithMessages(exercise.getId(), user.getId(), Pageable.ofSize(1)).stream()
                 .findFirst();
-        if (sessionOptional.isPresent()) {
-            var session = sessionOptional.get();
 
-            // if session is of today we can continue it; otherwise create a new one
-            if (session.getCreationDate().withZoneSameInstant(ZoneId.systemDefault()).toLocalDate().isEqual(LocalDate.now(ZoneId.systemDefault()))) {
-                checkHasAccessTo(user, session);
-                return session;
-            }
-        }
+        return sessionOptional.orElseGet(() -> createSessionInternal(exercise, user, sendInitialMessageIfCreated));
+    }
 
-        // create a new session with an initial message from Iris
-        return createSessionInternal(exercise, user, sendInitialMessageIfCreated);
+    public IrisExerciseChatSession createSession(ProgrammingExercise exercise, User user, boolean sendInitialMessage) {
+        user.hasAcceptedIrisElseThrow();
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, exercise);
+        checkHasTheMinimalRequiredRoleForExerciseElseThrow(user, exercise);
+        return createSessionInternal(exercise, user, sendInitialMessage);
     }
 
     private IrisExerciseChatSession createSessionInternal(ProgrammingExercise exercise, User user, boolean sendInitialMessage) {

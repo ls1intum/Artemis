@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -46,7 +44,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
  */
 @Service
 @Profile("iris")
-public class IrisCourseChatSessionService extends AbstractIrisChatSessionService<IrisCourseChatSession> {
+public class IrisCourseChatSessionService extends AbstractIrisChatSessionService<IrisCourseChatSession, Course> {
 
     private final IrisMessageService irisMessageService;
 
@@ -65,8 +63,6 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
     private final StudentParticipationRepository studentParticipationRepository;
 
     private final PyrisPipelineService pyrisPipelineService;
-
-    private static final Logger log = LoggerFactory.getLogger(IrisCourseChatSessionService.class);
 
     public IrisCourseChatSessionService(IrisMessageService irisMessageService, IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService,
             AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository, IrisRateLimitService rateLimitService,
@@ -194,8 +190,7 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
             return;
         }
         var participant = ((ProgrammingExerciseStudentParticipation) participation).getParticipant();
-        if (participant instanceof User) {
-            var user = (User) participant;
+        if (participant instanceof User user) {
             setStudentParticipationsToExercise(user.getId(), exercise);
             var session = getCurrentSessionOrCreateIfNotExistsInternal(course, user, false);
             CompletableFuture.runAsync(() -> requestAndHandleResponse(session, "submission_successful", exercise));

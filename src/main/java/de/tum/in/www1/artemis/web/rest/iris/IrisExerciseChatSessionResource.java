@@ -5,7 +5,6 @@ import java.net.URISyntaxException;
 import java.util.List;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,6 +23,7 @@ import de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise.Enforce
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisHealthIndicator;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
+import de.tum.in.www1.artemis.service.iris.session.IrisExerciseChatSessionService;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
@@ -49,9 +49,11 @@ public class IrisExerciseChatSessionResource {
 
     private final IrisExerciseChatSessionRepository irisExerciseChatSessionRepository;
 
+    private final IrisExerciseChatSessionService irisExerciseChatSessionService;
+
     protected IrisExerciseChatSessionResource(IrisExerciseChatSessionRepository irisExerciseChatSessionRepository, UserRepository userRepository,
             ExerciseRepository exerciseRepository, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService, PyrisHealthIndicator pyrisHealthIndicator,
-            IrisRateLimitService irisRateLimitService) {
+            IrisRateLimitService irisRateLimitService, IrisExerciseChatSessionService irisExerciseChatSessionService) {
         this.irisExerciseChatSessionRepository = irisExerciseChatSessionRepository;
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
@@ -59,6 +61,7 @@ public class IrisExerciseChatSessionResource {
         this.pyrisHealthIndicator = pyrisHealthIndicator;
         this.irisRateLimitService = irisRateLimitService;
         this.exerciseRepository = exerciseRepository;
+        this.irisExerciseChatSessionService = irisExerciseChatSessionService;
     }
 
     /**
@@ -76,15 +79,8 @@ public class IrisExerciseChatSessionResource {
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
-        var sessionOptional = irisExerciseChatSessionRepository.findLatestByExerciseIdAndUserIdWithMessages(exercise.getId(), user.getId(), Pageable.ofSize(1)).stream()
-                .findFirst();
-        if (sessionOptional.isPresent()) {
-            var session = sessionOptional.get();
-            irisSessionService.checkHasAccessToIrisSession(session, user);
-            return ResponseEntity.ok(session);
-        }
-
-        return createSessionForExercise(exerciseId);
+        var session = irisExerciseChatSessionService.getCurrentSessionOrCreateIfNotExists((ProgrammingExercise) exercise, user, false);
+        return ResponseEntity.ok(session);
     }
 
     /**
@@ -99,7 +95,7 @@ public class IrisExerciseChatSessionResource {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         ProgrammingExercise programmingExercise = validateExercise(exercise);
 
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, exercise);
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, programmingExercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
         var sessions = irisExerciseChatSessionRepository.findByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
@@ -121,10 +117,10 @@ public class IrisExerciseChatSessionResource {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         ProgrammingExercise programmingExercise = validateExercise(exercise);
 
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, exercise);
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, programmingExercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
-        var session = irisExerciseChatSessionRepository.save(new IrisExerciseChatSession(programmingExercise, user));
+        var session = irisExerciseChatSessionService.createSession((ProgrammingExercise) exercise, user, false);
         var uriString = "/api/iris/sessions/" + session.getId();
 
         return ResponseEntity.created(new URI(uriString)).body(session);
