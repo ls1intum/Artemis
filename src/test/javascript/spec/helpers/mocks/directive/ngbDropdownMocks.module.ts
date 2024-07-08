@@ -36,6 +36,7 @@ class NgbDropdownMockDirective {
     @Output() openChange = new EventEmitter<boolean>();
     open() {
         this.isOpen = true;
+        this.openChange.emit(this.isOpen);
     }
     close() {
         this.isOpen = false;
