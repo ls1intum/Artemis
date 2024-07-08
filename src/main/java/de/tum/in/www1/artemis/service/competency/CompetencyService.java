@@ -231,10 +231,7 @@ public class CompetencyService {
 
         var persistedCompetency = competencyRepository.save(competencyToCreate);
 
-        if (!competency.getLectureUnits().isEmpty()) {
-            lectureUnitService.linkLectureUnitsToCompetency(persistedCompetency, competency.getLectureUnits(), Set.of());
-            competencyProgressService.updateProgressByCompetencyAndUsersInCourseAsync(persistedCompetency);
-        }
+        updateLectureUnits(competency, persistedCompetency);
 
         if (course.getLearningPathsEnabled()) {
             learningPathService.linkCompetencyToLearningPathsOfCourse(persistedCompetency, course.getId());
@@ -258,10 +255,7 @@ public class CompetencyService {
             createdCompetency.setCourse(course);
             createdCompetency = competencyRepository.save(createdCompetency);
 
-            if (!competency.getLectureUnits().isEmpty()) {
-                lectureUnitService.linkLectureUnitsToCompetency(createdCompetency, competency.getLectureUnits(), Set.of());
-                competencyProgressService.updateProgressByCompetencyAndUsersInCourseAsync(createdCompetency);
-            }
+            updateLectureUnits(competency, createdCompetency);
 
             createdCompetencies.add(createdCompetency);
         }
@@ -271,6 +265,13 @@ public class CompetencyService {
         }
 
         return createdCompetencies;
+    }
+
+    private void updateLectureUnits(Competency competency, Competency createdCompetency) {
+        if (!competency.getLectureUnits().isEmpty()) {
+            lectureUnitService.linkLectureUnitsToCompetency(createdCompetency, competency.getLectureUnits(), Set.of());
+            competencyProgressService.updateProgressByCompetencyAndUsersInCourseAsync(createdCompetency);
+        }
     }
 
     /**
