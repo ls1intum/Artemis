@@ -13,8 +13,8 @@ export class PostingThreadComponent {
     @Input() readOnlyMode = false;
     @Input() post: Post;
     @Input() showAnswers: boolean;
-    @Input() isCourseMessagesPage: boolean;
-    @Input() isCommunicationPage?: boolean;
+    @Input() isCommunicationPage: boolean;
+    @Input() showChannelReference?: boolean;
     @Input() hasChannelModerationRights = false;
     @Output() openThread = new EventEmitter<Post>();
 

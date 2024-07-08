@@ -155,7 +155,7 @@ describe('IrisBaseChatbotComponent', () => {
         await fixture.whenStable();
 
         // then
-        expect(component.messages).toContain(createdMessage);
+        expect(component.messages).toContainEqual(createdMessage);
         expect(stub).toHaveBeenCalledWith(content);
     });
 
@@ -180,7 +180,7 @@ describe('IrisBaseChatbotComponent', () => {
         await fixture.whenStable();
 
         // then
-        expect(component.messages).toContain(createdMessage);
+        expect(component.messages).toContainEqual(createdMessage);
         expect(stub).toHaveBeenCalledWith(createdMessage);
     });
 

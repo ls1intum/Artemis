@@ -204,10 +204,11 @@
 .client-chat-error {
     background-color: var(--artemis-alert-danger-background);
     color: var(--bs-body-color);
-    padding: 10px;
-    border: 1px solid var(--artemis-alert-danger-border);
-    border-radius: var(--bs-border-radius-lg);
-    margin-top: 10px;
+    padding: 5px;
+    border-top: 1px solid var(--artemis-alert-danger-border);
+    display: flex;
+    align-content: center;
+    justify-content: center;
 }
 
 pre {

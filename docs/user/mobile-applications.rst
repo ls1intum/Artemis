@@ -16,8 +16,10 @@ Both apps use native user interface components and are adapted to their associat
 
 The mobile applications have been designed to be compatible with all Artemis instances. Therefore, users of all Artemis instances can use the mobile application provided by us. Nevertheless, it is possible to fork our repositories and release your own versions of the mobile applications.
 
-Below, we only explain the functionalities of the mobile applications that differ or are not present in the web application. For all other features, which are supported by both the mobile applications and the web application, please refer to their associated documentation.
+.. note::
 
+    Below, we only explain the functionalities of the mobile applications that differ or are not present in the web application.
+    For all other features, which are supported by both the mobile applications and the web application, please refer to their associated documentation.
 
 Android Application
 -------------------
@@ -138,10 +140,11 @@ The iOS application supports the following features:
     #. Add emoji reactions
     #. Create new conversations
     #. Edit conversation settings
+    #. Restore cached messages drafts. We purge the cache after one day.
 
 .. raw:: html
 
-    <iframe src="https://live.rbg.tum.de/w/artemisintro/35219?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/47329?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
         Video tutorial of the Messaging features on TUM-Live.
     </iframe>
 
@@ -159,7 +162,8 @@ The iOS application supports the following features:
 Installation
 ^^^^^^^^^^^^
 
-The iOS application is currently only available in beta state and can be downloaded over `TestFlight <https://testflight.apple.com/join/WTwsKbjr>`_. Make sure to follow the steps described by TestFlight to install the application.
+The iOS application is available in the `App Store <https://apps.apple.com/de/app/artemis-learning/id6478965616>`_.
+To test the beta version, install Apple's TestFlight app and follow the link `TestFlight <https://testflight.apple.com/join/canwoVCk>`_.
 
 Server Selection
 ^^^^^^^^^^^^^^^^

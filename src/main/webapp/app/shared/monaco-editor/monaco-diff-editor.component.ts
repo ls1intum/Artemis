@@ -120,7 +120,7 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
 
     /**
      * Adjusts the height of the editor to fit the new content height.
-     * @param newContentHeight
+     * @param newContentHeight The new content height of the editor.
      */
     adjustHeightAndLayout(newContentHeight: number) {
         this.monacoDiffEditorContainerElement.style.height = newContentHeight + 'px';
@@ -131,7 +131,9 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
      * Adjusts this editor to fit its container.
      */
     layout(): void {
-        this._editor.layout();
+        const width = this.monacoDiffEditorContainerElement.clientWidth;
+        const height = this.monacoDiffEditorContainerElement.clientHeight;
+        this._editor.layout({ width, height });
     }
 
     /**

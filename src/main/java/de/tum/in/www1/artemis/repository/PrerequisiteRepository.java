@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 public interface PrerequisiteRepository extends JpaRepository<Prerequisite, Long> {
 
-    List<Prerequisite> findByCourseIdOrderById(long courseId);
+    List<Prerequisite> findAllByCourseIdOrderById(long courseId);
 
     Optional<Prerequisite> findByIdAndCourseId(long prerequisiteId, long courseId);
 

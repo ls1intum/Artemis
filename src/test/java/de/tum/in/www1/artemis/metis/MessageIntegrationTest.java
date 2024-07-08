@@ -778,8 +778,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private static List<CourseInformationSharingConfiguration> courseInformationSharingConfigurationProvider() {
-        return List.of(CourseInformationSharingConfiguration.MESSAGING_ONLY, CourseInformationSharingConfiguration.COMMUNICATION_ONLY,
-                CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+        return List.of(CourseInformationSharingConfiguration.COMMUNICATION_ONLY, CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
     }
 
     @Test

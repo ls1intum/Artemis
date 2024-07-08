@@ -144,6 +144,9 @@
             {{ error | artemisTranslate }}
         </div>
     }
+    @if (!active) {
+        <div class="client-chat-error" [jhiTranslate]="IrisErrorMessageKey.IRIS_NOT_AVAILABLE"></div>
+    }
     @if (userAccepted) {
         <div class="chat-input">
             <textarea

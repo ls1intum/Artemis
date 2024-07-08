@@ -124,17 +124,14 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
      * @param questionId
      */
     navigateToQuestion(questionId: number): void {
-        let yOffset = 0;
-        const examNavigationBar = document.getElementById('exam-navigation-bar');
-        if (examNavigationBar) {
-            yOffset = examNavigationBar.clientHeight;
-        }
         // get html element for question
         const element = document.getElementById('question' + questionId);
         if (element) {
-            // scroll to correct y
-            const y = element.getBoundingClientRect().top + window.scrollY - yOffset;
-            window.scrollTo({ top: y, behavior: 'smooth' });
+            element.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start',
+                inline: 'nearest',
+            });
         }
     }
 

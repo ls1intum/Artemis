@@ -498,8 +498,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
      * @return true if the messaging feature is enabled for the course, false otherwise
      */
     default boolean isMessagingEnabled(long courseId) {
-        return informationSharingConfigurationIsOneOf(courseId,
-                Set.of(CourseInformationSharingConfiguration.MESSAGING_ONLY, CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING));
+        return informationSharingConfigurationIsOneOf(courseId, Set.of(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING));
     }
 
     /**
@@ -509,8 +508,8 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
      * @return true if the communication feature is enabled for the course, false otherwise
      */
     default boolean isMessagingOrCommunicationEnabled(long courseId) {
-        return informationSharingConfigurationIsOneOf(courseId, Set.of(CourseInformationSharingConfiguration.COMMUNICATION_ONLY,
-                CourseInformationSharingConfiguration.MESSAGING_ONLY, CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING));
+        return informationSharingConfigurationIsOneOf(courseId,
+                Set.of(CourseInformationSharingConfiguration.COMMUNICATION_ONLY, CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING));
     }
 
     /**

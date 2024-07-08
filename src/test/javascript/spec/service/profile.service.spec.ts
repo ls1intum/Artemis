@@ -145,6 +145,7 @@ describe('Profile Service', () => {
                 },
             },
         },
+        theiaPortalURL: 'http://theia-test.k8s.ase.cit.tum.de',
     };
 
     const expectedProfileInfo: ProfileInfo = {
@@ -259,6 +260,7 @@ describe('Profile Service', () => {
                 },
             },
         },
+        theiaPortalURL: 'http://theia-test.k8s.ase.cit.tum.de',
     };
 
     beforeEach(() => {

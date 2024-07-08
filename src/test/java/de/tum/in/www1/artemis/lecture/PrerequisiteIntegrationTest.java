@@ -16,9 +16,12 @@ import de.tum.in.www1.artemis.competency.PrerequisiteUtilService;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.competency.CompetencyTaxonomy;
+import de.tum.in.www1.artemis.domain.competency.Prerequisite;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.PrerequisiteRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.web.rest.dto.competency.PrerequisiteRequestDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.PrerequisiteResponseDTO;
 
 class PrerequisiteIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -71,7 +74,7 @@ class PrerequisiteIntegrationTest extends AbstractSpringIntegrationIndependentTe
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void shouldReturnPrerequisites() throws Exception {
             prerequisiteUtilService.createPrerequisites(course, 5);
-            var prerequisites = prerequisiteRepository.findByCourseIdOrderById(course.getId());
+            var prerequisites = prerequisiteRepository.findAllByCourseIdOrderById(course.getId());
             var expectedPrerequisites = prerequisites.stream().map(PrerequisiteResponseDTO::of).toList();
 
             List<PrerequisiteResponseDTO> actualPrerequisites = request.getList(url(course.getId()), HttpStatus.OK, PrerequisiteResponseDTO.class);
@@ -86,7 +89,7 @@ class PrerequisiteIntegrationTest extends AbstractSpringIntegrationIndependentTe
             course.setEnrollmentEnabled(true);
             courseRepository.save(course);
             prerequisiteUtilService.createPrerequisites(course, 5);
-            var prerequisites = prerequisiteRepository.findByCourseIdOrderById(course.getId());
+            var prerequisites = prerequisiteRepository.findAllByCourseIdOrderById(course.getId());
             var expectedPrerequisites = prerequisites.stream().map(PrerequisiteResponseDTO::of).toList();
 
             List<PrerequisiteResponseDTO> actualPrerequisites = request.getList(url(course.getId()), HttpStatus.OK, PrerequisiteResponseDTO.class);
@@ -100,6 +103,80 @@ class PrerequisiteIntegrationTest extends AbstractSpringIntegrationIndependentTe
         void shouldNotReturnPrerequisitesForStudentNotInCourse() throws Exception {
             request.get(url(course2.getId()), HttpStatus.FORBIDDEN, PrerequisiteResponseDTO.class);
         }
+    }
+
+    @Nested
+    class GetPrerequisite {
+
+        private static String url(long courseId, long prerequisiteId) {
+            return PrerequisiteIntegrationTest.baseUrl(courseId) + "/" + prerequisiteId;
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldReturnPrerequisite() throws Exception {
+            var prerequisite = prerequisiteUtilService.createPrerequisite(course);
+
+            PrerequisiteResponseDTO actualPrerequisite = request.get(url(course.getId(), prerequisite.getId()), HttpStatus.OK, PrerequisiteResponseDTO.class);
+
+            assertThat(actualPrerequisite).isEqualTo(PrerequisiteResponseDTO.of(prerequisite));
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldReturnNotFoundIfCompetencyDoesNotExistInCourse() throws Exception {
+            var prerequisite = prerequisiteUtilService.createPrerequisite(course);
+
+            // this competency does not exist in course2
+            request.get(url(course2.getId(), prerequisite.getId()), HttpStatus.NOT_FOUND, PrerequisiteResponseDTO.class);
+
+            // this competency does not exist at all
+            request.get(url(course.getId(), -1000L), HttpStatus.NOT_FOUND, PrerequisiteResponseDTO.class);
+        }
+    }
+
+    @Nested
+    class CreatePrerequisite {
+
+        private static String url(long courseId) {
+            return PrerequisiteIntegrationTest.baseUrl(courseId);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        void shouldCreatePrerequisite() throws Exception {
+            var prerequisite = new Prerequisite("title", "description", null, 66, CompetencyTaxonomy.ANALYZE, false);
+            var requestBody = prerequisiteUtilService.prerequisiteToRequestDTO(prerequisite);
+
+            var actualPrerequisite = request.postWithResponseBody(url(course.getId()), requestBody, PrerequisiteResponseDTO.class, HttpStatus.CREATED);
+
+            var expectedPrerequisite = new PrerequisiteResponseDTO(actualPrerequisite.id(), prerequisite.getTitle(), prerequisite.getDescription(), prerequisite.getTaxonomy(),
+                    prerequisite.getSoftDueDate(), prerequisite.getMasteryThreshold(), prerequisite.isOptional(), null);
+            assertThat(actualPrerequisite).usingRecursiveComparison().ignoringFields("id").isEqualTo(expectedPrerequisite);
+        }
+
+    }
+
+    @Nested
+    class UpdatePrerequisite {
+
+        private static String url(long courseId, long prerequisiteId) {
+            return PrerequisiteIntegrationTest.baseUrl(courseId) + "/" + prerequisiteId;
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        void shouldUpdatePrerequisite() throws Exception {
+            var existingPrerequisite = prerequisiteUtilService.createPrerequisite(course);
+            var updateDTO = new PrerequisiteRequestDTO("new title", "new description", CompetencyTaxonomy.ANALYZE, null, 1, true);
+
+            var updatedPrerequisite = request.putWithResponseBody(url(course.getId(), existingPrerequisite.getId()), updateDTO, PrerequisiteResponseDTO.class, HttpStatus.OK);
+
+            assertThat(updatedPrerequisite).usingRecursiveComparison().comparingOnlyFields("title", "description", "taxonomy", "softDueDate", "masteryThreshold", "optional")
+                    .isEqualTo(updateDTO);
+            assertThat(updatedPrerequisite.id()).isEqualTo(existingPrerequisite.getId());
+        }
+
     }
 
     @Nested

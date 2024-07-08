@@ -1,16 +1,22 @@
 @if (exercise) {
+    <h3 class="text-align-left fw-normal">
+        <span>
+            {{ exercise.title }}
+        </span>
+        <!-- prettier-ignore -->
+        <span left-header>&nbsp;({{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}@if (exercise.bonusPoints) {
+            <span
+            >, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>
+            }) @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+            <jhi-included-in-score-badge
+            [includedInOverallScore]="exercise.includedInOverallScore" />
+          }</span>
+    </h3>
+    <hr />
+
     <jhi-resizeable-container class="col-12" [examTimeline]="examTimeline">
         <!--region Left Panel-->
         <span class="exercise-title" left-header>{{ examTimeline ? exercise.title : exercise?.exerciseGroup?.title ?? '-' }}</span>
-        <!-- prettier-ignore -->
-        <span left-header>&nbsp;[{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}@if (exercise.bonusPoints) {
-      <span
-      >, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>
-      }]
-      @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-        <jhi-included-in-score-badge
-        [includedInOverallScore]="exercise.includedInOverallScore" />
-      }</span>
         <div left-body class="submission-container d-flex flex-column ps-2 mt-3 w-100">
             <jhi-fullscreen>
                 <div class="row flex-grow-1">
@@ -39,9 +45,9 @@
             @if (exercise) {
                 <jhi-exam-exercise-update-highlighter [exercise]="exercise" (problemStatementUpdateEvent)="updateProblemStatement($event)" />
             }
-            @if (exercise!.problemStatement) {
+            @if (problemStatementHtml) {
                 <p class="mb-3 markdown-preview">
-                    <span [innerHTML]="exercise!.problemStatement! | htmlForMarkdown"></span>
+                    <span [innerHTML]="problemStatementHtml"></span>
                 </p>
             }
         </ng-container>

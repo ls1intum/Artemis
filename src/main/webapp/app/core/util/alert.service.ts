@@ -5,7 +5,7 @@ import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import { EventManager, EventWithContent } from 'app/core/util/event-manager.service';
 import { AlertError } from 'app/shared/alert/alert-error.model';
 import { Subscription } from 'rxjs';
-import { captureException } from '@sentry/angular-ivy';
+import { captureException } from '@sentry/angular';
 import { IconDefinition, faCheckCircle, faExclamationCircle, faExclamationTriangle, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { HttpErrorResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';

@@ -77,6 +77,9 @@ export class IrisChatService implements OnDestroy {
         }
         this.suggestions.next([]);
 
+        // Trim messages (Spaces, newlines)
+        message = message.trim();
+
         const newMessage = new IrisUserMessage();
         newMessage.content = [new IrisTextMessageContent(message)];
         return this.http.createMessage(this.sessionId, newMessage).pipe(
