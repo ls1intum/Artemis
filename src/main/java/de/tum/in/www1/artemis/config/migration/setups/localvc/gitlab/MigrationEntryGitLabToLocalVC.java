@@ -70,10 +70,6 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
             log.error("Migration failed because the local VC base path is not configured.");
             return true;
         }
-        if (defaultBranch == null) {
-            log.error("Migration failed because the default branch is not configured.");
-            return true;
-        }
         return false;
     }
 
