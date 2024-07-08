@@ -333,7 +333,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest
     void testImportTeamsFromExerciseForbiddenAsInstructorOfOtherCourse() throws Exception {
         // If the instructor is not part of the correct course instructor group anymore, he should not be able to import teams
         course.setInstructorGroupName("Different group name");
-        courseRepo.save(course);
+        courseRepository.save(course);
 
         request.put(importFromSourceExerciseUrl(), null, HttpStatus.FORBIDDEN);
     }
@@ -343,7 +343,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest
     void testImportTeamsFromListForbiddenAsInstructorOfOtherCourse() throws Exception {
         // If the instructor is not part of the correct course instructor group anymore, he should not be able to import teams
         course.setInstructorGroupName("Different group name");
-        courseRepo.save(course);
+        courseRepository.save(course);
 
         request.put(importFromListUrl(), importedTeamsBody, HttpStatus.FORBIDDEN);
     }

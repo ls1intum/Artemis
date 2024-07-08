@@ -190,7 +190,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testCreateTeam_Forbidden_AsTutorOfDifferentCourse() throws Exception {
         // If the TA is not part of the correct course TA group anymore, he should not be able to create a team for an exercise of that course
         course.setTeachingAssistantGroupName("Different group name");
-        courseRepo.save(course);
+        courseRepository.save(course);
 
         Team team = new Team();
         team.setName("Team");
@@ -273,7 +273,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testUpdateTeam_Forbidden_AsTutorOfDifferentCourse() throws Exception {
         // If the TA is not part of the correct course TA group anymore, he should not be able to update a team for an exercise of that course
         course.setTeachingAssistantGroupName("Different group name");
-        courseRepo.save(course);
+        courseRepository.save(course);
 
         Team team = teamUtilService.addTeamForExercise(exercise, tutor);
         team.setName("Updated Team Name");
@@ -344,7 +344,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testGetTeamsForExercise_Forbidden() throws Exception {
         // If the TA is not part of the correct course TA group anymore, he should not be able to get the teams for an exercise of that course
         course.setTeachingAssistantGroupName("Different group name");
-        courseRepo.save(course);
+        courseRepository.save(course);
         teamUtilService.addTeamsForExercise(exercise, 3, tutor);
         request.getList(resourceUrl(), HttpStatus.FORBIDDEN, Team.class);
     }
@@ -374,7 +374,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // If the instructor is not part of the correct course instructor group anymore,
         // he should not be able to delete a team for an exercise of that course
         course.setInstructorGroupName("Different group name");
-        courseRepo.save(course);
+        courseRepository.save(course);
 
         Team team = teamUtilService.addTeamForExercise(exercise, tutor);
         request.delete(resourceUrl() + "/" + team.getId(), HttpStatus.FORBIDDEN);
@@ -445,7 +445,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testSearchUsersInCourse_Forbidden_AsTutorOfDifferentCourse() throws Exception {
         // If the TA is not part of the correct course TA group anymore, he should not be able to search for users in the course
         course.setTeachingAssistantGroupName("Different group name");
-        courseRepo.save(course);
+        courseRepository.save(course);
 
         request.getList(resourceUrlSearchUsersInCourse(TEST_PREFIX + "student"), HttpStatus.FORBIDDEN, TeamSearchUserDTO.class);
     }
@@ -480,7 +480,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         userRepo.save(student);
 
         course.setStudentGroupName(TEST_PREFIX + "student" + "assignedTeam");
-        courseRepo.save(course);
+        courseRepository.save(course);
 
         // Create team that contains student "student1" (Team shortName needs to be empty since it is used as a prefix for the generated student logins)
         Team team = new Team().name(TEST_PREFIX + "Team").shortName(TEST_PREFIX + "team").exercise(exercise)
