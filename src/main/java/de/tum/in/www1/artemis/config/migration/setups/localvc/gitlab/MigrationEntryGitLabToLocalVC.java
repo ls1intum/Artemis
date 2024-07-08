@@ -7,7 +7,6 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
 
 import org.eclipse.jgit.api.Git;
 import org.slf4j.Logger;
@@ -45,7 +44,7 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
 
     private final UserRepository userRepository;
 
-    private final Optional<AbstractVersionControlService> sourceVersionControlService;
+    private final AbstractVersionControlService sourceVersionControlService;
 
     private final UriService uriService;
 
@@ -55,7 +54,7 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            UserRepository userRepository, Optional<AbstractVersionControlService> sourceVersionControlService, UriService uriService) {
+            UserRepository userRepository, AbstractVersionControlService sourceVersionControlService, UriService uriService) {
         super(programmingExerciseRepository, solutionProgrammingExerciseParticipationRepository, templateProgrammingExerciseParticipationRepository,
                 programmingExerciseStudentParticipationRepository, auxiliaryRepositoryRepository);
         this.userRepository = userRepository;
@@ -230,18 +229,13 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
      * @throws URISyntaxException if the repository URL is invalid
      */
     private String cloneRepositoryFromSourceVCSAndMoveToLocalVC(ProgrammingExercise exercise, String repositoryUri, String oldBranch) throws URISyntaxException {
-        if (sourceVersionControlService.isEmpty()) {
-            log.error("Failed to clone repository from source VCS: {}", repositoryUri);
-            log.error("The source VCS service is not available");
-            return null;
-        }
         // repo is already migrated -> return
         if (repositoryUri.startsWith(localVCBaseUrl.toString())) {
             log.info("Repository {} is already in local VC", repositoryUri);
             return repositoryUri;
         }
         // check if the repo exists in the source VCS, if not -> return
-        if (!sourceVersionControlService.get().repositoryUriIsValid(new VcsRepositoryUri(repositoryUri))) {
+        if (!sourceVersionControlService.repositoryUriIsValid(new VcsRepositoryUri(repositoryUri))) {
             log.info("Repository {} is not available in the source VCS, removing the reference in the database", repositoryUri);
             return null;
         }
