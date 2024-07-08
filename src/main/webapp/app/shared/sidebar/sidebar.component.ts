@@ -46,7 +46,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     isProduction = true;
     isTestServer = false;
 
-    private modalRef: NgbModalRef | null;
+    private modalRef?: NgbModalRef;
 
     readonly faFilter = faFilter;
 
@@ -153,7 +153,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
             return;
         }
 
-        const scoreAndPointsFilterOptions = getAchievablePointsAndAchievedScoreFilterOptions(this.exerciseFilters, this.sidebarData);
+        const scoreAndPointsFilterOptions = getAchievablePointsAndAchievedScoreFilterOptions(this.sidebarData, this.exerciseFilters);
 
         this.exerciseFilters = {
             categoryFilter: getExerciseCategoryFilterOptions(this.sidebarData, this.exerciseFilters),

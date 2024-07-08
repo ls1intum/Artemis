@@ -24,13 +24,13 @@ import { DifficultyLevel, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 export type FilterDetails = {
-    searchedTypes: ExerciseType[] | undefined;
+    searchedTypes?: ExerciseType[];
     selectedCategories: ExerciseCategory[];
-    searchedDifficulties: DifficultyLevel[] | undefined;
+    searchedDifficulties?: DifficultyLevel[];
     isScoreFilterApplied: boolean;
     isPointsFilterApplied: boolean;
-    achievedScore: RangeFilter | undefined;
-    achievablePoints: RangeFilter | undefined;
+    achievedScore?: RangeFilter;
+    achievablePoints?: RangeFilter;
 };
 
 @Component({
