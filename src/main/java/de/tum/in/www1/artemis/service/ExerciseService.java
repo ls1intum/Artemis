@@ -775,7 +775,8 @@ public class ExerciseService {
             groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(originalExercise, updatedExercise, notificationText);
         }
         else if (originalExercise.isExamExercise() && !StringUtils.equals(originalExercise.getProblemStatement(), updatedExercise.getProblemStatement())) {
-            this.examLiveEventsService.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText);
+            User instructor = userRepository.getUser();
+            this.examLiveEventsService.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText, instructor);
         }
     }
 }
