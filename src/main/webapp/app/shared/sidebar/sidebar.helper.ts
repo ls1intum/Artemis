@@ -25,9 +25,10 @@ const DEFAULT_EXERCISE_TYPES_FILTER: ExerciseTypeFilterOption[] = [
 ];
 
 /**
- *
- * @param exerciseFilters that have already been defined for the course sidebar
+ * @param exerciseFilters that might already be defined for the course sidebar
  * @param sidebarData that contains the exercises of a course and their information
+ *
+ * @returns already defined category filter options if they exist, otherwise the category filter options based on the sidebar data
  */
 export function getExerciseCategoryFilterOptions(sidebarData?: SidebarData, exerciseFilters?: ExerciseFilterOptions): FilterOption<ExerciseCategoryFilterOption> {
     if (exerciseFilters?.categoryFilter) {
@@ -48,7 +49,12 @@ export function getExerciseCategoryFilterOptions(sidebarData?: SidebarData, exer
     return { isDisplayed: isDisplayed, options: categoryOptions };
 }
 
-export function getExerciseTypeFilterOptions(exerciseFilters?: ExerciseFilterOptions, sidebarData?: SidebarData): FilterOption<ExerciseTypeFilterOption> {
+/**
+ * @param exerciseFilters that might already be defined for the course sidebar
+ * @param sidebarData that contains the exercises of a course and their information
+ * @returns already defined exercise type filter options if they exist, otherwise the exercise type filter options based on the sidebar data
+ */
+export function getExerciseTypeFilterOptions(sidebarData?: SidebarData, exerciseFilters?: ExerciseFilterOptions): FilterOption<ExerciseTypeFilterOption> {
     if (exerciseFilters?.exerciseTypesFilter) {
         return exerciseFilters?.exerciseTypesFilter;
     }

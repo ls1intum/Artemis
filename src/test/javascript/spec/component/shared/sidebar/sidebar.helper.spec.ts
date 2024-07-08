@@ -146,7 +146,7 @@ describe('getExerciseTypeFilterOptions', () => {
             ungroupedData: [SIDEBAR_CARD_ELEMENT_1, SIDEBAR_CARD_ELEMENT_2, SIDEBAR_CARD_ELEMENT_3, SIDEBAR_CARD_ELEMENT_4, SIDEBAR_CARD_ELEMENT_5],
         };
 
-        const exerciseTypesFilter = getExerciseTypeFilterOptions(undefined, sidebarData);
+        const exerciseTypesFilter = getExerciseTypeFilterOptions(sidebarData, undefined);
         expect(exerciseTypesFilter).toEqual({
             isDisplayed: true,
             options: [
@@ -163,7 +163,7 @@ describe('getExerciseTypeFilterOptions', () => {
             ungroupedData: [SIDEBAR_CARD_ELEMENT_1, SIDEBAR_CARD_ELEMENT_2, SIDEBAR_CARD_ELEMENT_5],
         };
 
-        const exerciseTypesFilter = getExerciseTypeFilterOptions(undefined, sidebarData);
+        const exerciseTypesFilter = getExerciseTypeFilterOptions(sidebarData, undefined);
         expect(exerciseTypesFilter).toEqual({
             isDisplayed: true,
             options: [
@@ -179,15 +179,12 @@ describe('getExerciseTypeFilterOptions', () => {
             ungroupedData: [SIDEBAR_CARD_ELEMENT_1, SIDEBAR_CARD_ELEMENT_2],
         };
 
-        const exerciseTypesFilter = getExerciseTypeFilterOptions(
-            {
-                exerciseTypesFilter: {
-                    isDisplayed: false,
-                    options: [],
-                },
+        const exerciseTypesFilter = getExerciseTypeFilterOptions(sidebarData, {
+            exerciseTypesFilter: {
+                isDisplayed: false,
+                options: [],
             },
-            sidebarData,
-        );
+        });
         expect(exerciseTypesFilter).toEqual({
             isDisplayed: false,
             options: [],
