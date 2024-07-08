@@ -111,6 +111,7 @@ public class UserResource {
             user.setLastModifiedDate(null);
             user.setCreatedBy(null);
             user.setCreatedDate(null);
+            user.setIrisAccepted(null);
         });
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
