@@ -30,10 +30,10 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisPipelineExecutionSettingsDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.PyrisChatPipelineExecutionBaseDataDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.PyrisEventDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.course.PyrisCourseChatPipelineExecutionDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.exercise.PyrisExerciseChatPipelineExecutionDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisCourseDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisEventDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisExerciseWithStudentSubmissionsDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisExtendedCourseDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisUserDTO;
@@ -186,18 +186,14 @@ public class PyrisPipelineService {
      * @param <T>           the type of the object
      * @param <U>           the type of the DTO
      */
-    private <T, U extends PyrisEventDTO> void executeCourseChatPipeline(String variant, IrisCourseChatSession session, T eventObject, Class<U> eventDtoClass) {
+    private <T, U> void executeCourseChatPipeline(String variant, IrisCourseChatSession session, T eventObject, Class<U> eventDtoClass) {
         var courseId = session.getCourse().getId();
         var studentId = session.getUser().getId();
-        this.log.debug("Executing course chat pipeline variant {} for course {} and student {}", variant, courseId, studentId);
-        // TODO: Define Pyris event payload.
+        log.debug("Executing course chat pipeline variant {} for course {} and student {}", variant, courseId, studentId);
         executeChatPipeline(variant, session, "course-chat", base -> {
             var fullCourse = loadCourseWithParticipationOfStudent(courseId, studentId);
-            return new PyrisCourseChatPipelineExecutionDTO(PyrisExtendedCourseDTO.of(fullCourse),
-                    learningMetricsService.getStudentCourseMetrics(session.getUser().getId(), courseId),
-                    (eventObject == null || !variant.equals("jol")) ? null : (CompetencyJolDTO) generateDTOFromObjectType(eventDtoClass, eventObject),
-                    (eventObject == null || !variant.equals("submission_successful")) ? null
-                            : (PyrisExerciseWithStudentSubmissionsDTO) generateDTOFromObjectType(eventDtoClass, eventObject),
+            return new PyrisCourseChatPipelineExecutionDTO<>(PyrisExtendedCourseDTO.of(fullCourse),
+                    learningMetricsService.getStudentCourseMetrics(session.getUser().getId(), courseId), generateEventPayloadFromObjectType(eventDtoClass, eventObject),
                     base.chatHistory(), base.user(), base.settings(), base.initialStages());
         }, () -> pyrisJobService.addCourseChatJob(courseId, session.getId()));
     }
@@ -216,7 +212,7 @@ public class PyrisPipelineService {
      * @see PyrisPipelineService#executeChatPipeline for more details on the pipeline execution process.
      */
     public void executeCourseChatPipeline(String variant, IrisCourseChatSession session, Object object) {
-        this.log.debug("Executing course chat pipeline variant {} with object {}", variant, object);
+        log.debug("Executing course chat pipeline variant {} with object {}", variant, object);
         switch (object) {
             case null -> executeCourseChatPipeline(variant, session, null, null);
             case CompetencyJol competencyJol -> executeCourseChatPipeline(variant, session, competencyJol, CompetencyJolDTO.class);
@@ -253,7 +249,7 @@ public class PyrisPipelineService {
     }
 
     /**
-     * Generate a DTO from an object type by invoking the 'of' method of the DTO class.
+     * Generate an PyrisEventDTO from an object type by invoking the 'of' method of the DTO class.
      * The 'of' method must be a static method that accepts the object type as argument and returns a subclass of PyrisEventDTO.
      * <p>
      * This method is used to generate DTOs from object types that are not known at compile time.
@@ -262,13 +258,17 @@ public class PyrisPipelineService {
      * The return type of the 'of' method must be a subclass of PyrisEventDTO.
      * </p>
      *
-     * @param dtoClass
-     * @param object
-     * @param <T>
-     * @param <U>
-     * @return
+     * @param dtoClass the class of the DTO that should be generated
+     * @param object   the object to generate the DTO from
+     * @param <T>      the type of the object
+     * @param <U>      the type of the DTO
+     * @return PyrisEventDTO<U>
      */
-    private <T, U extends PyrisEventDTO> U generateDTOFromObjectType(Class<U> dtoClass, T object) {
+    private <T, U> PyrisEventDTO<U> generateEventPayloadFromObjectType(Class<U> dtoClass, T object) {
+
+        if (object == null) {
+            return null;
+        }
         // Get the 'of' method from the DTO class
         Method ofMethod = null;
         Class<?> currentClass = object.getClass();
@@ -290,15 +290,10 @@ public class PyrisPipelineService {
             throw new UnsupportedOperationException("Failed to find suitable 'of' method in " + dtoClass.getSimpleName() + " for " + object.getClass().getSimpleName());
         }
 
-        // Check if the return type of 'of' method is a subclass of the PyrisEventDTO class
-        if (!PyrisEventDTO.class.isAssignableFrom(ofMethod.getReturnType())) {
-            throw new UnsupportedOperationException("The return type of the 'of' method must be a subclass of PyrisEventDTO");
-        }
-
         // Invoke the 'of' method with the object as argument
         try {
             Object result = ofMethod.invoke(null, object);
-            return dtoClass.cast(result);
+            return new PyrisEventDTO<>(dtoClass.cast(result), object.getClass().getSimpleName());
         }
         catch (IllegalArgumentException e) {
             throw new UnsupportedOperationException("The 'of' method's parameter type doesn't match the provided object", e);

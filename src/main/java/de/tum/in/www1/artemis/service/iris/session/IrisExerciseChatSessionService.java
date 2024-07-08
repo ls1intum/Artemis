@@ -44,7 +44,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
  */
 @Service
 @Profile("iris")
-public class IrisExerciseChatSessionService extends AbstractIrisChatSessionService<IrisExerciseChatSession, ProgrammingExercise> implements IrisRateLimitedFeatureInterface {
+public class IrisExerciseChatSessionService extends AbstractIrisChatSessionService<IrisExerciseChatSession> implements IrisRateLimitedFeatureInterface {
 
     private final IrisMessageService irisMessageService;
 

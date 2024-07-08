@@ -44,7 +44,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
  */
 @Service
 @Profile("iris")
-public class IrisCourseChatSessionService extends AbstractIrisChatSessionService<IrisCourseChatSession, Course> {
+public class IrisCourseChatSessionService extends AbstractIrisChatSessionService<IrisCourseChatSession> {
 
     private final IrisMessageService irisMessageService;
 

@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 
-public abstract class AbstractIrisChatSessionService<S extends IrisChatSession, E> implements IrisChatBasedFeatureInterface<S, E>, IrisRateLimitedFeatureInterface {
+public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> implements IrisChatBasedFeatureInterface<S>, IrisRateLimitedFeatureInterface {
 
     private final IrisSessionRepository irisSessionRepository;
 
