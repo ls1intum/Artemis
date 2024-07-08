@@ -61,14 +61,6 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
         this.uriService = uriService;
     }
 
-    @Override
-    protected boolean areValuesIncomplete() {
-        if (super.areValuesIncomplete()) {
-            return true;
-        }
-        return false;
-    }
-
     /**
      * {@inheritDoc}
      */
