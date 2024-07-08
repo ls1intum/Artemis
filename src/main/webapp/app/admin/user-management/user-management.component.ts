@@ -183,7 +183,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             this.handleNavigation();
         });
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.isLdapProfileActive = profileInfo.activeProfiles && profileInfo.activeProfiles?.includes('ldap');
+            this.isLdapProfileActive = profileInfo.activeProfiles && (profileInfo.activeProfiles?.includes('ldap') || profileInfo.activeProfiles?.includes('ldap-only'));
         });
     }
 
@@ -499,7 +499,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     }
 
     ldapSync(userId: number) {
-        this.userService.syncLdap(userId).subscribe(() => {
+        this.adminUserService.syncLdap(userId).subscribe(() => {
             this.loadAll();
         });
     }

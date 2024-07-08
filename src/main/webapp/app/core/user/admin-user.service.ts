@@ -63,6 +63,15 @@ export class AdminUserService {
     }
 
     /**
+     * Call the LDAP server to update the info of a user on the server.
+     * @param userId The id of the user to be updated from the LDAP server.
+     * @return Observable<User> with the updated user as body.
+     */
+    syncLdap(userId: number): Observable<User> {
+        return this.http.put<User>(`${this.resourceUrl}/${userId}/sync-ldap`, { observe: 'response' });
+    }
+
+    /**
      * Delete a user on the server.
      * @param login The login of the user to delete.
      * @return Observable<HttpResponse<void>>
