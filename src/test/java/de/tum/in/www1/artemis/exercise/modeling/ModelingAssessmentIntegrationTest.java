@@ -61,7 +61,6 @@ import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ModelClusterRepository;
 import de.tum.in.www1.artemis.repository.ModelElementRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
@@ -84,9 +83,6 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
     public static final String API_MODELING_SUBMISSIONS = "/api/modeling-submissions/";
 
     @Autowired
-    private ExerciseRepository exerciseRepo;
-
-    @Autowired
     private UserRepository userRepo;
 
     @Autowired
@@ -106,9 +102,6 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
 
     @Autowired
     private AssessmentService assessmentService;
-
-    @Autowired
-    private ExerciseRepository exerciseRepository;
 
     @Autowired
     private ExamRepository examRepository;
@@ -327,7 +320,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testManualAssessmentSave_noCourse() throws Exception {
         classExercise.setCourse(null);
-        exerciseRepo.save(classExercise);
+        exerciseRepository.save(classExercise);
         ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json",
                 TEST_PREFIX + "student1");
 
@@ -440,7 +433,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         useCaseExercise.setIncludedInOverallScore(includedInOverallScore);
         useCaseExercise.setMaxPoints(10.0);
         useCaseExercise.setBonusPoints(bonus ? 10.0 : 0.0);
-        exerciseRepo.save(useCaseExercise);
+        exerciseRepository.save(useCaseExercise);
 
         // setting up student submission
         ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json",
@@ -980,7 +973,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testOverrideAutomaticAssessment() throws Exception {
         classExercise.setDueDate(ZonedDateTime.now().minusHours(1));
-        exerciseRepo.save(classExercise);
+        exerciseRepository.save(classExercise);
         modelingSubmission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.partial.json",
                 TEST_PREFIX + "student1");
         modelingAssessment = modelingExerciseUtilService.addModelingAssessmentForSubmission(classExercise, modelingSubmission,
@@ -1305,7 +1298,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).orElseThrow();
         exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
         ModelingExercise exercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup1);
-        exercise = exerciseRepo.save(exercise);
+        exercise = exerciseRepository.save(exercise);
         exerciseGroup1.addExercise(exercise);
 
         // add student submission
@@ -1497,7 +1490,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
                 ZonedDateTime.now().plusDays(8), DiagramType.ClassDiagram, course);
         modelingExercise.setMaxPoints(10.0);
         modelingExercise.setBonusPoints(0.0);
-        modelingExercise = exerciseRepo.saveAndFlush(modelingExercise);
+        modelingExercise = exerciseRepository.saveAndFlush(modelingExercise);
 
         // creating participation of student1 by starting the exercise
         User student1 = userRepo.findOneByLogin(TEST_PREFIX + "student1").orElse(null);

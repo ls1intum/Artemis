@@ -18,15 +18,11 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
 
 class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "tutorparticipationresource";
-
-    @Autowired
-    private ExerciseRepository exerciseRepository;
 
     @Autowired
     private TutorParticipationRepository tutorParticipationRepository;

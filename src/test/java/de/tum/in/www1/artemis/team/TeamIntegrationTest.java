@@ -34,7 +34,6 @@ import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilServic
 import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
@@ -42,9 +41,6 @@ import de.tum.in.www1.artemis.web.rest.dto.CoursesForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseDetailsDTO;
 
 class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
-
-    @Autowired
-    private ExerciseRepository exerciseRepo;
 
     @Autowired
     private TeamRepository teamRepo;
@@ -90,7 +86,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         exercise = course.getExercises().iterator().next();
         exercise.setMode(ExerciseMode.TEAM);
         exercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
-        exercise = exerciseRepo.save(exercise);
+        exercise = exerciseRepository.save(exercise);
         students = new HashSet<>(userRepo.searchByLoginOrNameInGroup("tumuser", TEST_PREFIX + "student"));
         tutor = userRepo.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
     }
@@ -124,8 +120,8 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         teamAssignmentConfig.setMinTeamSize(1);
         teamAssignmentConfig.setMaxTeamSize(10);
         exercise.setTeamAssignmentConfig(teamAssignmentConfig);
-        exercise = exerciseRepo.save(exercise);
-        exercise = exerciseRepo.findWithEagerCategoriesAndTeamAssignmentConfigById(exercise.getId()).orElseThrow();
+        exercise = exerciseRepository.save(exercise);
+        exercise = exerciseRepository.findWithEagerCategoriesAndTeamAssignmentConfigById(exercise.getId()).orElseThrow();
         assertThat(exercise.getTeamAssignmentConfig().getMinTeamSize()).isEqualTo(1);
         assertThat(exercise.getTeamAssignmentConfig().getMaxTeamSize()).isEqualTo(10);
         assertThat(exercise.getTeamAssignmentConfig().getId()).isNotNull();
@@ -516,7 +512,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // make exercises team-based
         Stream.of(programmingExercise, textExercise, modelingExercise).forEach(exercise -> {
             exercise.setMode(ExerciseMode.TEAM);
-            exerciseRepo.save(exercise);
+            exerciseRepository.save(exercise);
         });
 
         String shortNamePrefix1 = TEST_PREFIX + "team";

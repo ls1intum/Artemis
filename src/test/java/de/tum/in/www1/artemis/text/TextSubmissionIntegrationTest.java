@@ -42,7 +42,6 @@ import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionVersionRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
@@ -58,9 +57,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "textsubmissionintegration";
-
-    @Autowired
-    private ExerciseRepository exerciseRepo;
 
     @Autowired
     private TextSubmissionRepository submissionRepository;
@@ -367,7 +363,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void submitExercise_beforeDueDate_isTeamMode() throws Exception {
         releasedTextExercise.setMode(ExerciseMode.TEAM);
-        exerciseRepo.save(releasedTextExercise);
+        exerciseRepository.save(releasedTextExercise);
         Team team = new Team();
         team.setName("Team");
         team.setShortName("team");
@@ -407,7 +403,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         Optional<SubmissionVersion> newVersion = submissionVersionRepository.findLatestVersion(submission.getId());
         assertThat(newVersion.orElseThrow().getId()).as("submission version was not created").isEqualTo(version.get().getId());
 
-        exerciseRepo.save(releasedTextExercise.participations(Set.of()));
+        exerciseRepository.save(releasedTextExercise.participations(Set.of()));
     }
 
     @Test

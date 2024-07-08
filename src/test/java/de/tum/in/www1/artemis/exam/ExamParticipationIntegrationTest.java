@@ -67,7 +67,6 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.BonusRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
 import de.tum.in.www1.artemis.repository.ParticipationTestRepository;
@@ -106,9 +105,6 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
 
     @Autowired
     private QuizSubmissionService quizSubmissionService;
-
-    @Autowired
-    private ExerciseRepository exerciseRepo;
 
     @Autowired
     private UserRepository userRepo;
@@ -828,7 +824,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
 
         if (withSecondCorrectionAndStarted) {
             exercisesInExam.forEach(exercise -> exercise.setSecondCorrectionEnabled(true));
-            exerciseRepo.saveAll(exercisesInExam);
+            exerciseRepository.saveAll(exercisesInExam);
         }
 
         // Scores used for all exercise results
@@ -888,7 +884,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         final var exerciseWithNoUsers = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(0));
-        exerciseRepo.save(exerciseWithNoUsers);
+        exerciseRepository.save(exerciseWithNoUsers);
 
         GradingScale gradingScale = gradingScaleUtilService.generateGradingScaleWithStickyStep(new double[] { 60, 25, 15, 50 },
                 Optional.of(new String[] { "5.0", "3.0", "1.0", "1.0" }), true, 1);

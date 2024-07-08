@@ -33,7 +33,6 @@ import de.tum.in.www1.artemis.exercise.modeling.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.dto.ComplaintAction;
@@ -46,9 +45,6 @@ import de.tum.in.www1.artemis.web.rest.dto.AssessmentUpdateDTO;
 class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "assmentteamcomplaint"; // only lower case is supported
-
-    @Autowired
-    private ExerciseRepository exerciseRepo;
 
     @Autowired
     private ResultRepository resultRepo;
@@ -99,7 +95,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
         modelingExercise = (ModelingExercise) course.getExercises().iterator().next();
         modelingExercise.setMode(ExerciseMode.TEAM);
-        modelingExercise = exerciseRepo.save(modelingExercise);
+        modelingExercise = exerciseRepository.save(modelingExercise);
         team = teamUtilService.addTeamForExercise(modelingExercise, userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"), TEST_PREFIX);
         saveModelingSubmissionAndAssessment();
         complaint = new Complaint().result(modelingAssessment).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);

@@ -42,7 +42,6 @@ import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.util.TestResourceUtils;
@@ -62,9 +61,6 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
 
     @Autowired
     private ExampleSubmissionRepository exampleSubmissionRepo;
-
-    @Autowired
-    private ExerciseRepository exerciseRepository;
 
     @Autowired
     private ExerciseUtilService exerciseUtilService;

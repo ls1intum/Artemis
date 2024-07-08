@@ -44,7 +44,6 @@ import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.GradingCriterionUtil;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
 import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
@@ -59,9 +58,6 @@ import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "fileuploaderxercise";
-
-    @Autowired
-    private ExerciseRepository exerciseRepo;
 
     @Autowired
     private FeedbackRepository feedbackRepository;
@@ -350,7 +346,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationIndepen
         for (var exercise : course.getExercises()) {
             request.delete("/api/file-upload-exercises/" + exercise.getId(), HttpStatus.OK);
         }
-        assertThat(exerciseRepo.findByCourseIdWithCategories(course.getId())).isEmpty();
+        assertThat(exerciseRepository.findByCourseIdWithCategories(course.getId())).isEmpty();
     }
 
     @Test
@@ -374,7 +370,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationIndepen
             request.delete("/api/file-upload-exercises/" + exercise.getId(), HttpStatus.FORBIDDEN);
         }
 
-        assertThat(exerciseRepo.findByCourseIdWithCategories(course.getId())).hasSize(course.getExercises().size());
+        assertThat(exerciseRepository.findByCourseIdWithCategories(course.getId())).hasSize(course.getExercises().size());
     }
 
     @Test
@@ -393,7 +389,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationIndepen
         for (var exercise : course.getExercises()) {
             request.delete("/api/file-upload-exercises/" + exercise.getId(), HttpStatus.FORBIDDEN);
         }
-        assertThat(exerciseRepo.findByCourseIdWithCategories(course.getId())).hasSize(3);
+        assertThat(exerciseRepository.findByCourseIdWithCategories(course.getId())).hasSize(3);
     }
 
     @Test
@@ -401,7 +397,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationIndepen
     void deleteExamFileUploadExercise() throws Exception {
         FileUploadExercise fileUploadExercise = fileUploadExerciseUtilService.addCourseExamExerciseGroupWithOneFileUploadExercise();
         request.delete("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK);
-        assertThat(exerciseRepo.findByCourseIdWithCategories(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId())).isEmpty();
+        assertThat(exerciseRepository.findByCourseIdWithCategories(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId())).isEmpty();
     }
 
     @Test

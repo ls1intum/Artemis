@@ -50,7 +50,6 @@ import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilServic
 import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -66,9 +65,6 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private UserRepository userRepository;
-
-    @Autowired
-    private ExerciseRepository exerciseRepository;
 
     @Autowired
     private ExamRepository examRepository;

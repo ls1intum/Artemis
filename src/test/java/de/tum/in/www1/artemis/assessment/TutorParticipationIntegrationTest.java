@@ -31,7 +31,6 @@ import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.exercise.ExerciseFactory;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
 import de.tum.in.www1.artemis.repository.GradingInstructionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -45,9 +44,6 @@ import de.tum.in.www1.artemis.util.TestResourceUtils;
 class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "tutorparticipationintegration";
-
-    @Autowired
-    private ExerciseRepository exerciseRepo;
 
     @Autowired
     private SubmissionService submissionService;
@@ -99,7 +95,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
 
         for (Exercise exercise : new Exercise[] { textExercise, modelingExercise }) {
             exercise.setTitle("exercise name");
-            exerciseRepo.save(exercise);
+            exerciseRepository.save(exercise);
             path = "/api/exercises/" + exercise.getId() + "/assess-example-submission";
         }
 

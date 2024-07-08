@@ -48,7 +48,6 @@ import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
@@ -65,9 +64,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "modelingsubmissionintegration";
-
-    @Autowired
-    private ExerciseRepository exerciseRepo;
 
     @Autowired
     private UserRepository userRepo;
@@ -280,7 +276,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     @WithMockUser(username = TEST_PREFIX + "student1")
     void saveAndSubmitModelingSubmission_isTeamMode() throws Exception {
         useCaseExercise.setMode(ExerciseMode.TEAM);
-        exerciseRepo.save(useCaseExercise);
+        exerciseRepository.save(useCaseExercise);
         Team team = new Team();
         team.setName("Team");
         team.setShortName(TEST_PREFIX + "team");
@@ -773,7 +769,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ActivityDiagram, exerciseGroup);
         exerciseGroup.addExercise(modelingExercise);
         exerciseGroupRepository.save(exerciseGroup);
-        modelingExercise = exerciseRepo.save(modelingExercise);
+        modelingExercise = exerciseRepository.save(modelingExercise);
 
         examRepository.save(exam);
 
@@ -796,7 +792,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ActivityDiagram, exerciseGroup);
         exerciseGroup.addExercise(modelingExercise);
         exerciseGroupRepository.save(exerciseGroup);
-        modelingExercise = exerciseRepo.save(modelingExercise);
+        modelingExercise = exerciseRepository.save(modelingExercise);
 
         exam = examRepository.save(exam);
 

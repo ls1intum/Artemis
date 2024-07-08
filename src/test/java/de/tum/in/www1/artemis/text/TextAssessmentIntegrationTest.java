@@ -71,7 +71,6 @@ import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
@@ -89,9 +88,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     private static final String TEST_PREFIX = "textassessment";
 
     @Autowired
-    private ExerciseRepository exerciseRepo;
-
-    @Autowired
     private ComplaintRepository complaintRepo;
 
     @Autowired
@@ -105,9 +101,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Autowired
     private TextSubmissionRepository textSubmissionRepository;
-
-    @Autowired
-    private ExerciseRepository exerciseRepository;
 
     @Autowired
     private SubmissionRepository submissionRepository;
@@ -158,7 +151,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         textExercise = exerciseUtilService.findTextExerciseWithTitle(course.getExercises(), "Text");
         textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-        exerciseRepo.save(textExercise);
+        exerciseRepository.save(textExercise);
         // every test indirectly uses the submission selection in Athena, so we mock it here
         athenaRequestMockProvider.enableMockingOfRequests();
         athenaRequestMockProvider.mockSelectSubmissionsAndExpect("text", 0); // always select the first submission
@@ -397,7 +390,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     void getParticipationForNonTextExercise() throws Exception {
         FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(now().minusDays(1), now().plusDays(1), now().plusDays(2), "png,pdf",
                 textExercise.getCourseViaExerciseGroupOrCourseMember());
-        exerciseRepo.save(fileUploadExercise);
+        exerciseRepository.save(fileUploadExercise);
 
         FileUploadSubmission fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
         fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1",
@@ -428,7 +421,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     void getDataForTextEditorForNonTextExercise_badRequest() throws Exception {
         FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(now().minusDays(1), now().plusDays(1), now().plusDays(2), "png,pdf",
                 textExercise.getCourseViaExerciseGroupOrCourseMember());
-        exerciseRepo.save(fileUploadExercise);
+        exerciseRepository.save(fileUploadExercise);
 
         FileUploadSubmission fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
         fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1",
@@ -477,7 +470,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
         exerciseGroup.addExercise(textExercise);
         exerciseGroupRepository.save(exerciseGroup);
-        textExercise = exerciseRepo.save(textExercise);
+        textExercise = exerciseRepository.save(textExercise);
 
         examRepository.save(exam);
 
@@ -500,7 +493,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
         exerciseGroup.addExercise(textExercise);
         exerciseGroupRepository.save(exerciseGroup);
-        textExercise = exerciseRepo.save(textExercise);
+        textExercise = exerciseRepository.save(textExercise);
 
         examRepository.save(exam);
 
@@ -532,7 +525,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
         exerciseGroup.addExercise(textExercise);
         exerciseGroupRepository.save(exerciseGroup);
-        textExercise = exerciseRepo.save(textExercise);
+        textExercise = exerciseRepository.save(textExercise);
 
         examRepository.save(exam);
 
@@ -779,7 +772,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(10.0);
-        exerciseRepo.save(textExercise);
+        exerciseRepository.save(textExercise);
 
         // setting up student submission
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
@@ -817,7 +810,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
-        exerciseRepo.save(textExercise);
+        exerciseRepository.save(textExercise);
 
         // setting up student submission
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
@@ -848,7 +841,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
-        exerciseRepo.save(textExercise);
+        exerciseRepository.save(textExercise);
 
         // setting up student submission
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
@@ -879,7 +872,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
-        exerciseRepo.save(textExercise);
+        exerciseRepository.save(textExercise);
 
         // setting up student submission
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
@@ -1052,7 +1045,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().getFirst();
         TextExercise exercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup1);
         exercise.setAssessmentType(assessmentType);
-        exercise = exerciseRepo.save(exercise);
+        exercise = exerciseRepository.save(exercise);
         exerciseGroup1.addExercise(exercise);
 
         // add student submission
@@ -1067,7 +1060,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         // verify setup
         assertThat(exam.getNumberOfCorrectionRoundsInExam()).isEqualTo(2);
         assertThat(exam.getEndDate()).isBefore(now());
-        var optionalFetchedExercise = exerciseRepo.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId());
+        var optionalFetchedExercise = exerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId());
         assertThat(optionalFetchedExercise).isPresent();
         final var exerciseWithParticipation = optionalFetchedExercise.get();
         studentParticipation = exerciseWithParticipation.getStudentParticipations().stream().iterator().next();
