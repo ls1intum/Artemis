@@ -47,7 +47,7 @@ public class MigrationEntryJenkinsToLocalVC extends LocalVCMigrationEntry {
      * URL to the source VCS with a trailing slash.
      * This avoids that a base URL like "http://example.com" also finds "http://example.com:8080".
      */
-    private String sourceVCSRepositoriesBaseUrl;;
+    private String sourceVCSRepositoriesBaseUrl;
 
     private static final Logger log = LoggerFactory.getLogger(MigrationEntryJenkinsToLocalVC.class);
 
@@ -65,7 +65,6 @@ public class MigrationEntryJenkinsToLocalVC extends LocalVCMigrationEntry {
     public void initialize() {
         localVCRepositoriesBaseUrl = localVCBaseUrl + "/git/";
         sourceVCSRepositoriesBaseUrl = sourceVCSBaseUrl.endsWith("/") ? sourceVCSBaseUrl : sourceVCSBaseUrl + "/";
-        ;
     }
 
     /**
