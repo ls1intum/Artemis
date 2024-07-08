@@ -275,7 +275,7 @@ describe('getAchievablePointsAndAchievedScoreFilterOptions', () => {
             ungroupedData: [SIDEBAR_CARD_ELEMENT_1, SIDEBAR_CARD_ELEMENT_2, SIDEBAR_CARD_ELEMENT_3],
         };
 
-        const scoreAndPointsFilterOptions = getAchievablePointsAndAchievedScoreFilterOptions(undefined, sidebarData);
+        const scoreAndPointsFilterOptions = getAchievablePointsAndAchievedScoreFilterOptions(sidebarData, undefined);
         expect(scoreAndPointsFilterOptions).toEqual(expectedFilterForFirstThreePresentExercises);
     });
 
@@ -285,7 +285,7 @@ describe('getAchievablePointsAndAchievedScoreFilterOptions', () => {
             ungroupedData: [SIDEBAR_CARD_ELEMENT_4, SIDEBAR_CARD_ELEMENT_5],
         };
 
-        const scoreAndPointsFilterOptions = getAchievablePointsAndAchievedScoreFilterOptions(undefined, sidebarData);
+        const scoreAndPointsFilterOptions = getAchievablePointsAndAchievedScoreFilterOptions(sidebarData, undefined);
 
         expect(scoreAndPointsFilterOptions).toEqual({
             achievablePoints: {
@@ -317,10 +317,10 @@ describe('getAchievablePointsAndAchievedScoreFilterOptions', () => {
             ungroupedData: [SIDEBAR_CARD_ELEMENT_1],
         };
 
-        const scoreAndPointsFilterOptions = getAchievablePointsAndAchievedScoreFilterOptions(
-            { achievablePoints: expectedFilterForFirstThreePresentExercises.achievablePoints, achievedScore: expectedFilterForFirstThreePresentExercises.achievedScore },
-            sidebarData,
-        );
+        const scoreAndPointsFilterOptions = getAchievablePointsAndAchievedScoreFilterOptions(sidebarData, {
+            achievablePoints: expectedFilterForFirstThreePresentExercises.achievablePoints,
+            achievedScore: expectedFilterForFirstThreePresentExercises.achievedScore,
+        });
         expect(scoreAndPointsFilterOptions).toEqual({
             achievablePoints: expectedFilterForFirstThreePresentExercises.achievablePoints,
             achievedScore: expectedFilterForFirstThreePresentExercises.achievedScore,

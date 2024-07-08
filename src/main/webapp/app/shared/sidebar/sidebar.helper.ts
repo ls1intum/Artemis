@@ -89,9 +89,15 @@ export function getExerciseDifficultyFilterOptions(sidebarData?: SidebarData, ex
     return { isDisplayed: !!availableDifficultyFilters.length, options: availableDifficultyFilters };
 }
 
+/**
+ * @param exerciseFilters that might already be defined for the course sidebar
+ * @param sidebarData that contains the exercises of a course and their information
+ *
+ * @returns already defined achievable points and achieved score filter options if they exist, otherwise the achievable points and achieved score filter options based on the sidebar data
+ */
 export function getAchievablePointsAndAchievedScoreFilterOptions(
-    exerciseFilters?: ExerciseFilterOptions,
     sidebarData?: SidebarData,
+    exerciseFilters?: ExerciseFilterOptions,
 ): {
     achievablePoints?: RangeFilter;
     achievedScore?: RangeFilter;
