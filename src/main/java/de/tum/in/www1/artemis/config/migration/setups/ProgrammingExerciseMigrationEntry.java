@@ -89,7 +89,7 @@ public abstract class ProgrammingExerciseMigrationEntry {
         getLogger().info("Will migrate {} programming exercises and {} student repositories now. This might take a while", programmingExerciseCount, studentCount);
 
         final long totalFullBatchCount = programmingExerciseCount / batchSize;
-        final long threadCount = Math.max(1, Math.min(totalFullBatchCount, maxThreadCount));
+        final long threadCount = Math.clamp(totalFullBatchCount, 1, maxThreadCount);
         final long estimatedTimeExercise = getRestDurationInSeconds(0, programmingExerciseCount, 3, threadCount);
         final long estimatedTimeStudents = getRestDurationInSeconds(0, studentCount, 1, threadCount);
 
