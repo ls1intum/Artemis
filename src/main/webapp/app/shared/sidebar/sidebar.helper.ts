@@ -52,6 +52,7 @@ export function getExerciseCategoryFilterOptions(sidebarData?: SidebarData, exer
 /**
  * @param exerciseFilters that might already be defined for the course sidebar
  * @param sidebarData that contains the exercises of a course and their information
+ *
  * @returns already defined exercise type filter options if they exist, otherwise the exercise type filter options based on the sidebar data
  */
 export function getExerciseTypeFilterOptions(sidebarData?: SidebarData, exerciseFilters?: ExerciseFilterOptions): FilterOption<ExerciseTypeFilterOption> {
@@ -68,7 +69,13 @@ export function getExerciseTypeFilterOptions(sidebarData?: SidebarData, exercise
     return { isDisplayed: availableTypeFilters.length > 1, options: availableTypeFilters };
 }
 
-export function getExerciseDifficultyFilterOptions(exerciseFilters?: ExerciseFilterOptions, sidebarData?: SidebarData): FilterOption<DifficultyFilterOption> {
+/**
+ * @param exerciseFilters that might already be defined for the course sidebar
+ * @param sidebarData that contains the exercises of a course and their information
+ *
+ * @returns already defined difficulty filter options if they exist, otherwise the difficulty filter options based on the sidebar data
+ */
+export function getExerciseDifficultyFilterOptions(sidebarData?: SidebarData, exerciseFilters?: ExerciseFilterOptions): FilterOption<DifficultyFilterOption> {
     if (exerciseFilters?.difficultyFilter) {
         return exerciseFilters.difficultyFilter;
     }

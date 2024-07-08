@@ -199,7 +199,7 @@ describe('getExerciseDifficultyFilterOptions', () => {
             ungroupedData: [SIDEBAR_CARD_ELEMENT_1, SIDEBAR_CARD_ELEMENT_2, SIDEBAR_CARD_ELEMENT_3, SIDEBAR_CARD_ELEMENT_4, SIDEBAR_CARD_ELEMENT_5],
         };
 
-        const difficultyFilter = getExerciseDifficultyFilterOptions(undefined, sidebarData);
+        const difficultyFilter = getExerciseDifficultyFilterOptions(sidebarData, undefined);
         expect(difficultyFilter).toEqual({
             isDisplayed: true,
             options: [
@@ -216,7 +216,7 @@ describe('getExerciseDifficultyFilterOptions', () => {
             ungroupedData: [SIDEBAR_CARD_ELEMENT_1, SIDEBAR_CARD_ELEMENT_2, SIDEBAR_CARD_ELEMENT_5],
         };
 
-        const difficultyFilter = getExerciseDifficultyFilterOptions(undefined, sidebarData);
+        const difficultyFilter = getExerciseDifficultyFilterOptions(sidebarData, undefined);
         expect(difficultyFilter).toEqual({
             isDisplayed: true,
             options: [
@@ -232,15 +232,12 @@ describe('getExerciseDifficultyFilterOptions', () => {
             ungroupedData: [SIDEBAR_CARD_ELEMENT_1, SIDEBAR_CARD_ELEMENT_2],
         };
 
-        const difficultyFilter = getExerciseDifficultyFilterOptions(
-            {
-                difficultyFilter: {
-                    isDisplayed: false,
-                    options: [],
-                },
+        const difficultyFilter = getExerciseDifficultyFilterOptions(sidebarData, {
+            difficultyFilter: {
+                isDisplayed: false,
+                options: [],
             },
-            sidebarData,
-        );
+        });
         expect(difficultyFilter).toEqual({
             isDisplayed: false,
             options: [],
