@@ -99,11 +99,6 @@ class LearningObjectServiceTest extends AbstractSpringIntegrationIndependentTest
         LearningObject unexpectedSubclass = new LearningObject() {
 
             @Override
-            public boolean isCompletedFor(User user) {
-                return false;
-            }
-
-            @Override
             public Optional<ZonedDateTime> getCompletionDate(User user) {
                 return Optional.empty();
             }
