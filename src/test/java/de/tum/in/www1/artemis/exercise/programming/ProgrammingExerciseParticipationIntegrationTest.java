@@ -42,7 +42,6 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.web.rest.dto.CommitInfoDTO;
 
@@ -62,9 +61,6 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
 
     @Autowired
     private ParticipationRepository participationRepository;
-
-    @Autowired
-    private ResultRepository resultRepository;
 
     @Autowired
     private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;

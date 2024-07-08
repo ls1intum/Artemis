@@ -33,7 +33,6 @@ import de.tum.in.www1.artemis.exercise.modeling.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.dto.ComplaintAction;
 import de.tum.in.www1.artemis.service.dto.ComplaintRequestDTO;
@@ -45,9 +44,6 @@ import de.tum.in.www1.artemis.web.rest.dto.AssessmentUpdateDTO;
 class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "assmentteamcomplaint"; // only lower case is supported
-
-    @Autowired
-    private ResultRepository resultRepo;
 
     @Autowired
     private ComplaintRepository complaintRepo;
@@ -115,7 +111,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         request.post(resourceUrl, complaintRequest, HttpStatus.CREATED);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is saved").isPresent();
-        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
+        Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
     }
 
@@ -127,7 +123,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         request.post(resourceUrl, complaintRequest, HttpStatus.BAD_REQUEST);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is not saved").isNotPresent();
-        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
+        Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is false").isFalse();
     }
 
@@ -141,7 +137,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         request.post(resourceUrl, complaintRequest, HttpStatus.CREATED);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is saved").isPresent();
-        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
+        Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
 
         // Only one complaint is possible for exercise regardless of its type
@@ -162,7 +158,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         request.post(resourceUrl, complaintRequest, HttpStatus.CREATED);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is saved").isPresent();
-        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
+        Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
     }
 
@@ -177,7 +173,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         request.post(resourceUrl, complaintRequest, HttpStatus.BAD_REQUEST);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is not saved").isNotPresent();
-        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
+        Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is false").isFalse();
     }
 
@@ -193,7 +189,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         assertThat(complaintResponse.getComplaint().getParticipant()).isNull();
         Complaint storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId()).orElseThrow();
         assertThat(storedComplaint.isAccepted()).as("complaint is not accepted").isFalse();
-        Result storedResult = resultRepo.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(modelingAssessment.getId());
+        Result storedResult = resultRepository.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(modelingAssessment.getId());
         participationUtilService.checkFeedbackCorrectlyStored(modelingAssessment.getFeedbacks(), storedResult.getFeedbacks(), FeedbackType.MANUAL);
         assertThat(storedResult.getSubmission()).isEqualTo(modelingAssessment.getSubmission());
         assertThat(storedResult.getAssessor()).isEqualTo(modelingAssessment.getAssessor());

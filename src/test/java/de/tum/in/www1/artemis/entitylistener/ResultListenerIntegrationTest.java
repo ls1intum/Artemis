@@ -33,7 +33,6 @@ import de.tum.in.www1.artemis.domain.scores.TeamScore;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.StudentScoreRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
@@ -54,9 +53,6 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     private Long idOfTeam1;
 
     private Long idOfStudent1;
-
-    @Autowired
-    private ResultRepository resultRepository;
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;

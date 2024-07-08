@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 
 class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -26,9 +25,6 @@ class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegrationIn
 
     @Autowired
     private SubmissionRepository submissionRepository;
-
-    @Autowired
-    private ResultRepository resultRepository;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;

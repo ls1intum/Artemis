@@ -40,7 +40,6 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.CommitDTO;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestCaseDTO;
@@ -62,9 +61,6 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
 
     @Autowired
     private BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
-
-    @Autowired
-    private ResultRepository resultRepository;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;

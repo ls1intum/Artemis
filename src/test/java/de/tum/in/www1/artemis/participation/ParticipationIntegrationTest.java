@@ -83,7 +83,6 @@ import de.tum.in.www1.artemis.exercise.quiz.QuizExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
@@ -105,9 +104,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Autowired
     private SubmissionRepository submissionRepository;
-
-    @Autowired
-    private ResultRepository resultRepository;
 
     @Autowired
     private FeatureToggleService featureToggleService;

@@ -43,7 +43,6 @@ import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.util.TestResourceUtils;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
 
@@ -52,9 +51,6 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     private static final Logger log = LoggerFactory.getLogger(ExampleSubmissionIntegrationTest.class);
 
     private static final String TEST_PREFIX = "examplesubmissionintegration";
-
-    @Autowired
-    private ResultRepository resultRepo;
 
     @Autowired
     private GradingCriterionRepository gradingCriterionRepo;
@@ -223,7 +219,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
 
         request.putWithResponseBody("/api/modeling-submissions/" + storedExampleSubmission.getId() + "/example-assessment", feedbacks, Result.class, HttpStatus.OK);
 
-        Result storedResult = resultRepo.findDistinctWithFeedbackBySubmissionId(storedExampleSubmission.getSubmission().getId()).orElseThrow();
+        Result storedResult = resultRepository.findDistinctWithFeedbackBySubmissionId(storedExampleSubmission.getSubmission().getId()).orElseThrow();
         participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
     }
@@ -280,7 +276,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         dto.setFeedbacks(feedbacks);
         request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/example-submissions/" + storedExampleSubmission.getId() + "/example-text-assessment", dto,
                 Result.class, HttpStatus.OK);
-        Result storedResult = resultRepo.findDistinctWithFeedbackBySubmissionId(storedExampleSubmission.getSubmission().getId()).orElseThrow();
+        Result storedResult = resultRepository.findDistinctWithFeedbackBySubmissionId(storedExampleSubmission.getSubmission().getId()).orElseThrow();
         participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
     }
@@ -391,7 +387,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         gradingCriterionRepo.saveAll(gradingCriteria);
         var studentParticipation = participationUtilService.addAssessmentWithFeedbackWithGradingInstructionsForExercise(exercise, TEST_PREFIX + "instructor1");
         Submission originalSubmission = studentParticipation.findLatestSubmission().orElseThrow();
-        Optional<Result> orginalResult = resultRepo.findDistinctWithFeedbackBySubmissionId(originalSubmission.getId());
+        Optional<Result> orginalResult = resultRepository.findDistinctWithFeedbackBySubmissionId(originalSubmission.getId());
 
         ExampleSubmission exampleSubmission = importExampleSubmission(exercise.getId(), originalSubmission.getId(), HttpStatus.OK);
         assertThat(exampleSubmission.getSubmission().getResults().get(0).getFeedbacks().get(0).getGradingInstruction().getId())

@@ -68,7 +68,6 @@ import de.tum.in.www1.artemis.repository.ExerciseUnitRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.repository.PrerequisiteRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TextUnitRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -100,9 +99,6 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
     @Autowired
     private SubmissionRepository submissionRepository;
-
-    @Autowired
-    private ResultRepository resultRepository;
 
     @Autowired
     private TextUnitRepository textUnitRepository;

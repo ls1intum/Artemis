@@ -33,7 +33,6 @@ import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
 import de.tum.in.www1.artemis.repository.GradingInstructionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.ExampleSubmissionService;
 import de.tum.in.www1.artemis.service.ResultService;
@@ -47,9 +46,6 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @Autowired
     private SubmissionService submissionService;
-
-    @Autowired
-    private ResultRepository resultRepository;
 
     @Autowired
     private ExampleSubmissionService exampleSubmissionService;

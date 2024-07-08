@@ -35,7 +35,6 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintActivationRepository;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
@@ -47,9 +46,6 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Autowired
     private UserRepository userRepository;
-
-    @Autowired
-    private ResultRepository resultRepository;
 
     @Autowired
     private ExerciseHintRepository exerciseHintRepository;

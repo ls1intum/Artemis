@@ -57,7 +57,6 @@ import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -78,9 +77,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
 
     @Autowired
     private ComplaintRepository complaintRepo;
-
-    @Autowired
-    private ResultRepository resultRepository;
 
     @Autowired
     private ProgrammingSubmissionTestRepository programmingSubmissionRepository;

@@ -116,7 +116,6 @@ import de.tum.in.www1.artemis.repository.ExamUserRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
@@ -150,9 +149,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
 
     @Autowired
     private ExamUserRepository examUserRepository;
-
-    @Autowired
-    private ResultRepository resultRepository;
 
     @Autowired
     private SubmissionRepository submissionRepository;

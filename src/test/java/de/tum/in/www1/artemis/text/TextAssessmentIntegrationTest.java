@@ -71,7 +71,6 @@ import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
@@ -107,9 +106,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Autowired
     private ExampleSubmissionRepository exampleSubmissionRepository;
-
-    @Autowired
-    private ResultRepository resultRepo;
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
@@ -168,7 +164,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, false);
         textSubmission = textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
         textAssessmentService.prepareSubmissionForAssessment(textSubmission, null);
-        var result = resultRepo.findDistinctBySubmissionId(textSubmission.getId());
+        var result = resultRepository.findDistinctBySubmissionId(textSubmission.getId());
         assertThat(result).isPresent();
     }
 
@@ -194,7 +190,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor2");
         Result result = textSubmission.getLatestResult();
         result.setCompletionDate(null); // assessment is still in progress for this test
-        resultRepo.save(result);
+        resultRepository.save(result);
         StudentParticipation participation = request.get("/api/text-submissions/" + textSubmission.getId() + "/for-assessment", HttpStatus.LOCKED, StudentParticipation.class);
         assertThat(participation).as("participation is locked and should not be returned").isNull();
     }
@@ -947,7 +943,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Test123", Language.ENGLISH, true);
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, student, originalAssessor);
         textSubmission.getLatestResult().setCompletionDate(originalAssessmentSubmitted ? now() : null);
-        resultRepo.save(textSubmission.getLatestResult());
+        resultRepository.save(textSubmission.getLatestResult());
         var params = new LinkedMultiValueMap<String, String>();
         params.add("submit", submit);
         List<Feedback> feedbacks = ParticipationFactory.generateFeedback();

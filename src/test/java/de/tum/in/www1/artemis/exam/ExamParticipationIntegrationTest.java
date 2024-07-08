@@ -72,7 +72,6 @@ import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
 import de.tum.in.www1.artemis.repository.ParticipationTestRepository;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
@@ -129,9 +128,6 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
 
     @Autowired
     private SubmissionRepository submissionRepository;
-
-    @Autowired
-    private ResultRepository resultRepository;
 
     @Autowired
     private ParticipationTestRepository participationTestRepository;

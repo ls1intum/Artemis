@@ -52,7 +52,6 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.dto.AssessmentUpdateDTO;
@@ -65,9 +64,6 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
     private static final String TEST_PREFIX = "fileuploadassessment";
 
     public static final String API_FILE_UPLOAD_SUBMISSIONS = "/api/file-upload-submissions/";
-
-    @Autowired
-    private ResultRepository resultRepo;
 
     @Autowired
     private ComplaintRepository complaintRepo;
@@ -373,7 +369,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
         fileUploadSubmission = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessor(afterReleaseFileUploadExercise, fileUploadSubmission, student,
                 originalAssessor);
         fileUploadSubmission.getLatestResult().setCompletionDate(originalAssessmentSubmitted ? ZonedDateTime.now() : null);
-        resultRepo.save(fileUploadSubmission.getLatestResult());
+        resultRepository.save(fileUploadSubmission.getLatestResult());
         var params = new LinkedMultiValueMap<String, String>();
         params.add("submit", submit);
         List<Feedback> feedbacks = ParticipationFactory.generateFeedback();
