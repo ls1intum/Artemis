@@ -224,26 +224,26 @@ test.describe('Exam grading', () => {
 
 test.describe('Exam statistics', () => {
     let exercise: Exercise;
-    const students = [studentOne, studentTwo, studentThree, studentFour];
+    const students = [studentOne, studentTwo];
 
     test.beforeEach('Create exam', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
         await login(admin);
+        examEnd = dayjs().add(10, 'minutes');
         const examConfig = {
             course,
             title: 'exam' + generateUUID(),
             visibleDate: dayjs().subtract(3, 'minutes'),
             startDate: dayjs().subtract(2, 'minutes'),
-            endDate: dayjs().add(1, 'minutes'),
+            endDate: examEnd,
             examMaxPoints: 10,
             numberOfExercisesInExam: 1,
         };
         exam = await examAPIRequests.createExam(examConfig);
         const textFixture = 'loremIpsum.txt';
         exercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture });
-        await examAPIRequests.registerStudentForExam(exam, studentOne);
-        await examAPIRequests.registerStudentForExam(exam, studentTwo);
-        await examAPIRequests.registerStudentForExam(exam, studentThree);
-        await examAPIRequests.registerStudentForExam(exam, studentFour);
+        for (const student of students) {
+            await examAPIRequests.registerStudentForExam(exam, student);
+        }
         await examAPIRequests.generateMissingIndividualExams(exam);
         await examAPIRequests.prepareExerciseStartForExam(exam);
     });
@@ -253,13 +253,16 @@ test.describe('Exam statistics', () => {
         await examAPIRequests.setExamGradingScale(exam, examStatisticsSample.gradingScale);
     });
 
-    test.beforeEach('Participate in exam', async ({ examParticipation, examNavigation }) => {
+    test.beforeEach('Participate in exam', async ({ login, examParticipation, examNavigation, examAPIRequests }) => {
         for (const student of students) {
             await examParticipation.startParticipation(student, course, exam);
             await examNavigation.openOrSaveExerciseByTitle(exercise.title!);
             await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
             await examParticipation.handInEarly();
         }
+        await login(admin);
+        const examTimeLeftInSeconds = dayjs().diff(examEnd, 'seconds');
+        await examAPIRequests.changeExamWorkingTime(course.id!, exam.id!, 0, 0, examTimeLeftInSeconds);
     });
 
     test.beforeEach('Assess a text exercise submission', async ({ login, examManagement, examAssessment, courseAssessment, exerciseAssessment }) => {

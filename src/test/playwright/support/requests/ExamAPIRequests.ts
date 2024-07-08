@@ -4,7 +4,7 @@ import { Exam } from 'app/entities/exam.model';
 import { dayjsToString, generateUUID, titleLowercase } from '../utils';
 import examTemplate from '../../fixtures/exam/template.json';
 import { Page } from '@playwright/test';
-import { COURSE_BASE } from '../constants';
+import { BASE_API, COURSE_BASE } from '../constants';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { UserCredentials } from '../users';
@@ -196,5 +196,24 @@ export class ExamAPIRequests {
     async getGradeSummary(exam: Exam) {
         const response = await this.page.request.get(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/student-exams/grade-summary`);
         return await response.json();
+    }
+
+    /**
+     * Changes the exam working time by the specified amount of hours, minutes, and seconds.
+     * Negative values mean to decrease the working time.
+     * @param courseID - the ID of a course that contains the exam
+     * @param examID - the ID of an exam to change the working time for
+     * @param hours - the number of hours to change from the current working time
+     * @param minutes - the number of minutes to change from the current working time
+     * @param seconds - the number of seconds to change from the current working time
+     */
+    async changeExamWorkingTime(courseID: number, examID: number, hours: number, minutes: number, seconds: number) {
+        const workingTimeChangeInSeconds = hours * 3600 + minutes * 60 + seconds;
+        await this.page.request.patch(`${BASE_API}/courses/${courseID}/exams/${examID}/working-time`, {
+            data: workingTimeChangeInSeconds,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
     }
 }
