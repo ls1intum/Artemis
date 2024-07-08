@@ -27,8 +27,7 @@ class PrerequisiteIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     private static final String TEST_PREFIX = "prerequisiteintegrationtest";
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;

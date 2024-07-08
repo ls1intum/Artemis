@@ -42,8 +42,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @Autowired
     private UserRepository userRepo;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;

@@ -51,8 +51,7 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationJenkinsGi
     @Autowired
     private ProgrammingExerciseGradingService gradingService;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;

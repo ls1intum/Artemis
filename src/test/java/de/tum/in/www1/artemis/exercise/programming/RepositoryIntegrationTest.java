@@ -134,8 +134,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
     @Autowired
     private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;

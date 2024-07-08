@@ -86,8 +86,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Autowired
     private GradingScaleRepository gradingScaleRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CompetencyUtilService competencyUtilService;

@@ -56,8 +56,7 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
     @Autowired
     private PlagiarismComparisonRepository plagiarismComparisonRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;

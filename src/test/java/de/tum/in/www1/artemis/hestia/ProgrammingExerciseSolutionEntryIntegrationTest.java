@@ -45,8 +45,7 @@ class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpringInte
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private ExerciseUtilService exerciseUtilService;

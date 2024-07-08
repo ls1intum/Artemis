@@ -66,8 +66,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
     @Autowired
     private GitlabRequestMockProvider gitlabRequestMockProvider;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;

@@ -76,8 +76,7 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Autowired
     private ExerciseUtilService exerciseUtilService;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private ParticipationUtilService participationUtilService;

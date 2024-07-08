@@ -37,8 +37,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Autowired
     private OrganizationUtilService organizationUtilService;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     /**
      * Test if getting courses a user can enroll in works with multi organization and

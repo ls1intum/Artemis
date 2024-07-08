@@ -42,8 +42,7 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationIndependen
     @Autowired
     private TextAssessmentEventRepository textAssessmentEventRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;

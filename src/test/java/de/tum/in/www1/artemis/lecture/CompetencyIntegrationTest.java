@@ -134,8 +134,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     @Autowired
     private LectureUnitService lectureUnitService;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;

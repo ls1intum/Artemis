@@ -38,8 +38,7 @@ class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends A
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;

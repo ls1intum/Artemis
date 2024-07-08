@@ -67,8 +67,7 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;

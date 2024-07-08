@@ -38,8 +38,7 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationIndepe
 
     private static final String TEST_PREFIX = "exercisescoreschart";
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;

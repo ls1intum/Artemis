@@ -42,8 +42,7 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @Autowired
     private ResultRepository resultRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;

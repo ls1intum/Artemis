@@ -80,8 +80,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationIndepen
     @Autowired
     private ChannelRepository channelRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private FileUploadExerciseUtilService fileUploadExerciseUtilService;

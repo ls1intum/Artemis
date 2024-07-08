@@ -31,8 +31,7 @@ class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegrationIn
     @Autowired
     private ResultRepository resultRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;

@@ -29,8 +29,7 @@ class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrat
     @Autowired
     private NotificationSettingRepository notificationSettingRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;

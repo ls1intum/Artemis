@@ -34,8 +34,7 @@ class TutorLeaderboardServiceIntegrationTest extends AbstractSpringIntegrationIn
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;

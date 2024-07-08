@@ -82,8 +82,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @Autowired
     private ResultService resultService;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;

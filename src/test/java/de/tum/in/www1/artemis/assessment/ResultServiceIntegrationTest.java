@@ -125,8 +125,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     @Autowired
     private GradingCriterionRepository gradingCriterionRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;

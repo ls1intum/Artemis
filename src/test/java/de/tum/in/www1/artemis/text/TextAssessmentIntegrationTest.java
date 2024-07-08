@@ -131,8 +131,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     @Autowired
     private TextAssessmentService textAssessmentService;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private ExerciseUtilService exerciseUtilService;

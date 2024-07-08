@@ -33,8 +33,7 @@ class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractLocalCILoc
     @Autowired
     private CourseUtilService courseUtilService;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     private static final String FILE_NAME = "test.java";
 

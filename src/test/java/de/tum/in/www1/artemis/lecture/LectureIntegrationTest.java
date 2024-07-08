@@ -54,8 +54,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     ChannelRepository channelRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;

@@ -82,8 +82,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private ResultRepository resultRepository;

@@ -49,8 +49,7 @@ class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegrationIn
     @Autowired
     private ProgrammingExerciseTaskService programmingExerciseTaskService;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;

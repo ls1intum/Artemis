@@ -104,8 +104,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Autowired
     private ChannelRepository channelRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private ExerciseUtilService exerciseUtilService;

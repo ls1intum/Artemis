@@ -34,8 +34,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
     @Autowired
     private RatingService ratingService;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;

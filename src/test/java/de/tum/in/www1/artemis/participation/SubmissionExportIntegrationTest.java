@@ -41,8 +41,7 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationIndepende
 
     private static final String TEST_PREFIX = "submissionexportintegration";
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;

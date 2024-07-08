@@ -41,8 +41,7 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;

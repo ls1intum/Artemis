@@ -47,8 +47,7 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentTes
     @Autowired
     private CourseUtilService courseUtilService;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;

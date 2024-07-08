@@ -67,8 +67,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     @Autowired
     private ComplaintResponseRepository complaintResponseRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;

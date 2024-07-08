@@ -53,8 +53,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     @Autowired
     private ExerciseIntegrationTestService exerciseIntegrationTestService;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;

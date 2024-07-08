@@ -70,8 +70,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;

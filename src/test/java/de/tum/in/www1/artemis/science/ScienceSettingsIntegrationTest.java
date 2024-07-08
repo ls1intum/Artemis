@@ -24,8 +24,7 @@ class ScienceSettingsIntegrationTest extends AbstractSpringIntegrationIndependen
     @Autowired
     private ScienceSettingRepository scienceSettingRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     private ScienceSetting settingA;
 

@@ -160,8 +160,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;

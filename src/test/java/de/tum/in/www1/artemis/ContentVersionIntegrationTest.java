@@ -19,8 +19,7 @@ class ContentVersionIntegrationTest extends AbstractSpringIntegrationIndependent
 
     private static final String TEST_PREFIX = "contentversion";
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @BeforeEach
     void initTestCase() {

@@ -84,8 +84,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private ExerciseService exerciseService;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;

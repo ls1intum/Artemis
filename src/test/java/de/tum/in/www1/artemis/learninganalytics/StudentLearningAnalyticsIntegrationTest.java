@@ -28,8 +28,7 @@ class StudentLearningAnalyticsIntegrationTest extends AbstractSpringIntegrationI
     @Autowired
     private CourseTestService courseTestService;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;

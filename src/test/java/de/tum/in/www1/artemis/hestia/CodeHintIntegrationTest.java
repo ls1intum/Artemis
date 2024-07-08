@@ -39,8 +39,7 @@ class CodeHintIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private ProgrammingExerciseSolutionEntryRepository solutionEntryRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;

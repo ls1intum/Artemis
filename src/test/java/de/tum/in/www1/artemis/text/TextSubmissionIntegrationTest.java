@@ -87,8 +87,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @Autowired
     private PostRepository postRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;

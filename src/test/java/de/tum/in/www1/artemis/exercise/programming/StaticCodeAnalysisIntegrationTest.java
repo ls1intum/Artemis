@@ -57,8 +57,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
     @Autowired
     private ProgrammingExerciseFeedbackCreationService feedbackCreationService;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;

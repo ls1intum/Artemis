@@ -52,8 +52,7 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
     @Autowired
     private RequestUtilService request;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private LectureUtilService lectureUtilService;

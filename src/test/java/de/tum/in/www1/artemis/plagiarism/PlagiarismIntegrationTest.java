@@ -50,8 +50,7 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @Autowired
     private PlagiarismResultRepository plagiarismResultRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;

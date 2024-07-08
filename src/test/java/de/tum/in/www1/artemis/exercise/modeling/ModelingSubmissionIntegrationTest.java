@@ -106,8 +106,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     @Autowired
     private PostRepository postRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;

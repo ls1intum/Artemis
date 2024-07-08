@@ -70,8 +70,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     @Autowired
     private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;

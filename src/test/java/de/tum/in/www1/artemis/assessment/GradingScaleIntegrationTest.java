@@ -40,8 +40,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;

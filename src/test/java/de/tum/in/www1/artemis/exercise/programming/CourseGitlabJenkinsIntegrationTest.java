@@ -48,8 +48,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @BeforeEach
     void setup() {

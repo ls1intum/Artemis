@@ -28,8 +28,7 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
     @Autowired
     private ApollonDiagramRepository apollonDiagramRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     private ApollonDiagram apollonDiagram;
 

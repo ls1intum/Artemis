@@ -36,8 +36,7 @@ class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegratio
     @Autowired
     private ExampleSubmissionRepository exampleSubmissionRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;

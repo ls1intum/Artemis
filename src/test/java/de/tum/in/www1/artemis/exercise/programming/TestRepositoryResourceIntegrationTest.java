@@ -54,8 +54,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationJen
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;

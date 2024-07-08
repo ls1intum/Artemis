@@ -66,8 +66,7 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private CourseUtilService courseUtilService;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private ParticipationUtilService participationUtilService;

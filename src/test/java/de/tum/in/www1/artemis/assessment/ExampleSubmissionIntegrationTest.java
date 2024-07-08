@@ -68,8 +68,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     @Autowired
     private ExerciseRepository exerciseRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;

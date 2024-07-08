@@ -47,8 +47,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     @Autowired
     private PasswordService passwordService;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     private void testWithRegistrationDisabled(Executable test) throws Throwable {
         ConfigUtil.testWithChangedConfig(accountService, "registrationEnabled", Optional.of(Boolean.FALSE), test);

@@ -149,8 +149,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     @Autowired
     private ChannelRepository channelRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;

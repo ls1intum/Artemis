@@ -50,8 +50,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Autowired
     private FileUploadExerciseRepository fileUploadExerciseRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;

@@ -46,8 +46,7 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private ExamAccessService examAccessService;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;

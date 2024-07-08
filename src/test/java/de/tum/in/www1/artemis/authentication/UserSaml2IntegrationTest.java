@@ -45,8 +45,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSa
     @Autowired
     private PasswordService passwordService;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @BeforeEach
     void setup() {

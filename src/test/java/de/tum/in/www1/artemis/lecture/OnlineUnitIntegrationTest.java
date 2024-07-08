@@ -42,8 +42,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @Autowired
     private LectureRepository lectureRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private LectureUtilService lectureUtilService;

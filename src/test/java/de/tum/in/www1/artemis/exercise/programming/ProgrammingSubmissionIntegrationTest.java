@@ -89,8 +89,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationJenk
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;

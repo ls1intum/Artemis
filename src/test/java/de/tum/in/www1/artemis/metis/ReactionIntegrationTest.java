@@ -56,8 +56,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;

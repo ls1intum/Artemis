@@ -60,8 +60,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationIndep
     @Autowired
     private ParticipationRepository participationRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private FileUploadExerciseUtilService fileUploadExerciseUtilService;

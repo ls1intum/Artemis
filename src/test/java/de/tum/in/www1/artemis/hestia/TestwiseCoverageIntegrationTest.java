@@ -56,8 +56,7 @@ class TestwiseCoverageIntegrationTest extends AbstractSpringIntegrationIndepende
     @Autowired
     private RequestUtilService request;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;

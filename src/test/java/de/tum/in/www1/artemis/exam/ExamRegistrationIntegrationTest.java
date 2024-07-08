@@ -66,8 +66,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Autowired
     private ChannelRepository channelRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;

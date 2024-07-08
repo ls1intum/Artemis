@@ -50,8 +50,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
     @Autowired
     private LectureUnitCompletionRepository lectureUnitCompletionRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;

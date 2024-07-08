@@ -55,8 +55,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @Autowired
     private PlagiarismCaseRepository plagiarismCaseRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private ConversationUtilService conversationUtilService;

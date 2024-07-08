@@ -45,8 +45,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
     @Autowired
     private DataExportRepository dataExportRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private DataExportService dataExportService;

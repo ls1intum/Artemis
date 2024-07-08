@@ -132,8 +132,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
     @Autowired
     private ModelClusterRepository modelClusterRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;

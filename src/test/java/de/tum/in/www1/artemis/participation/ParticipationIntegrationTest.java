@@ -136,8 +136,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @Autowired
     private GradingScaleService gradingScaleService;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;

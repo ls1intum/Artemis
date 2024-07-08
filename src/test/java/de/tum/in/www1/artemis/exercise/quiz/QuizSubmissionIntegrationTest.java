@@ -108,8 +108,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @Autowired
     private QuizBatchService quizBatchService;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private QuizExerciseUtilService quizExerciseUtilService;

@@ -61,8 +61,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
     @Autowired
     private SlideRepository slideRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private LectureUtilService lectureUtilService;

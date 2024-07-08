@@ -72,8 +72,7 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;

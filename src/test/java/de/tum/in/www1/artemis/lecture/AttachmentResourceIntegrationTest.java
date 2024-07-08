@@ -39,8 +39,7 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationIndepen
     @Autowired
     private LectureRepository lectureRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;

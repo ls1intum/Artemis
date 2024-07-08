@@ -50,8 +50,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     @Autowired
     private PlagiarismCaseRepository plagiarismCaseRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;

@@ -92,8 +92,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private ConversationUtilService conversationUtilService;

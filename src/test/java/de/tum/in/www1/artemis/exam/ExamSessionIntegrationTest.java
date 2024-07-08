@@ -31,8 +31,7 @@ class ExamSessionIntegrationTest extends AbstractSpringIntegrationIndependentTes
     @Autowired
     private ExamSessionService examSessionService;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;

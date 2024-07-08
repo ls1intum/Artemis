@@ -69,8 +69,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
     @Autowired
     private GradingCriterionRepository gradingCriterionRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;

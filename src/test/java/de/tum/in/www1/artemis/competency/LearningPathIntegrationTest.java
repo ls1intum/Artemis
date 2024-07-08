@@ -71,9 +71,6 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private UserRepository userRepository;
 
     @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
     private CourseUtilService courseUtilService;
 
     @Autowired

@@ -53,8 +53,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @Autowired
     private AnswerPostRepository answerPostRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;

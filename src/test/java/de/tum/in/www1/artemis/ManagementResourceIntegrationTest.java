@@ -48,8 +48,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
     @Autowired
     private FeatureToggleService featureToggleService;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;

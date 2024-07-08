@@ -59,8 +59,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private LectureRepository lectureRepo;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private LectureUtilService lectureUtilService;

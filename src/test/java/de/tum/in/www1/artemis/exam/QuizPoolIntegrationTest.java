@@ -41,8 +41,7 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private ExamUtilService examUtilService;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private RequestUtilService request;

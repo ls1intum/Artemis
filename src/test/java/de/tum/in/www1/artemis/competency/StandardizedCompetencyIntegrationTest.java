@@ -56,8 +56,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
     @Autowired
     private SourceRepository sourceRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private StandardizedCompetencyUtilService standardizedCompetencyUtilService;

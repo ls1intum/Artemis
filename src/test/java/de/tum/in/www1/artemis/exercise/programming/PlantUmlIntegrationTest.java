@@ -27,8 +27,7 @@ class PlantUmlIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "plantumlintegration";
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     private static final String UML_DIAGRAM_STRING = "@somePlantUml";
 

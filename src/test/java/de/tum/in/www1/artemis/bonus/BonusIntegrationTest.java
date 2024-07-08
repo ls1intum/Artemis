@@ -51,8 +51,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private GradingScaleRepository gradingScaleRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;

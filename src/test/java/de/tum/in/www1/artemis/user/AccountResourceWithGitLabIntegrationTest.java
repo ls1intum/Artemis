@@ -36,8 +36,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
     @Autowired
     private GitlabRequestMockProvider gitlabRequestMockProvider;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @BeforeEach
     void setUp() {

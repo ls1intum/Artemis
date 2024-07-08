@@ -60,8 +60,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
     @Autowired
     private SubmissionRepository submissionRepository;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;

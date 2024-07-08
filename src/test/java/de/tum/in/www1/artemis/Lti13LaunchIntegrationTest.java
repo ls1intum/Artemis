@@ -51,8 +51,7 @@ class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
     private static final String TEST_PREFIX = "lti13launchintegrationtest";
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private UserRepository userRepository;

@@ -202,8 +202,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Autowired
-    private UserUtilService userUtilService;
+
 
     @Autowired
     private CourseUtilService courseUtilService;
