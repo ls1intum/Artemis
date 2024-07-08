@@ -1,6 +1,6 @@
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
-import { UserCredentials, admin, studentOne, studentThree, studentTwo, users } from '../../../support/users';
+import { UserCredentials, admin, studentOne, studentTwo, users } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';
 import { Exercise, ExerciseType } from '../../../support/constants';
 import dayjs from 'dayjs';
@@ -27,7 +27,6 @@ test.describe('Test Exam - student exams', () => {
 
         await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
         await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
-        await courseManagementAPIRequests.addStudentToCourse(course, studentThree);
 
         const examConfig = {
             course,
