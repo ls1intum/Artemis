@@ -40,6 +40,7 @@ class NgbDropdownMockDirective {
     }
     close() {
         this.isOpen = false;
+        this.openChange.emit(this.isOpen);
     }
 }
 
