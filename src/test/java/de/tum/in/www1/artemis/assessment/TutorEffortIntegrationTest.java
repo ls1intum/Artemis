@@ -14,7 +14,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
@@ -26,7 +25,6 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TextAssessmentEventRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -43,11 +41,6 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
     @Autowired
     private TextAssessmentEventRepository textAssessmentEventRepository;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
-
-
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;

@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractAthenaTest;
 import de.tum.in.www1.artemis.course.CourseTestService;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.TextExercise;
@@ -32,7 +31,6 @@ import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
 
@@ -41,16 +39,11 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-
-
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private ExamUtilService examUtilService;

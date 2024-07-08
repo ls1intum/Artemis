@@ -29,7 +29,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.connector.GitlabRequestMockProvider;
 import de.tum.in.www1.artemis.course.CourseFactory;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -43,7 +42,6 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.tutorialgroups.TutorialGroupUtilService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
@@ -66,13 +64,8 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
     @Autowired
     private GitlabRequestMockProvider gitlabRequestMockProvider;
 
-
-
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private ExerciseUtilService exerciseUtilService;

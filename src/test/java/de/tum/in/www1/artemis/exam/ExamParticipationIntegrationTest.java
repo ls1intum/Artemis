@@ -35,7 +35,6 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.assessment.GradingScaleUtilService;
 import de.tum.in.www1.artemis.bonus.BonusFactory;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.BonusStrategy;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
@@ -86,7 +85,6 @@ import de.tum.in.www1.artemis.service.exam.StudentExamService;
 import de.tum.in.www1.artemis.service.quiz.QuizSubmissionService;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.team.TeamUtilService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ExamPrepareExercisesTestUtil;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
@@ -159,11 +157,6 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
 
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
-
-
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private ExamUtilService examUtilService;

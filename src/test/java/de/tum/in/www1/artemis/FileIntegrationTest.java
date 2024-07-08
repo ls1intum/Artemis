@@ -25,7 +25,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
@@ -40,7 +39,6 @@ import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUserDTO;
 
 class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -59,16 +57,11 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private LectureRepository lectureRepo;
 
-
-
     @Autowired
     private LectureUtilService lectureUtilService;
 
     @Autowired
     private ObjectMapper objectMapper;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private ExamUtilService examUtilService;

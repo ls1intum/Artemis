@@ -27,7 +27,6 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.connector.AeolusRequestMockProvider;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
@@ -54,9 +53,6 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
 
     @Autowired
     private ParticipationUtilService participationUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private AeolusRequestMockProvider aeolusRequestMockProvider;

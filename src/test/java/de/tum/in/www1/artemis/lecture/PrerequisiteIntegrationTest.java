@@ -13,24 +13,17 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.competency.PrerequisiteUtilService;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.competency.CompetencyTaxonomy;
 import de.tum.in.www1.artemis.domain.competency.Prerequisite;
 import de.tum.in.www1.artemis.repository.PrerequisiteRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.competency.PrerequisiteRequestDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.PrerequisiteResponseDTO;
 
 class PrerequisiteIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "prerequisiteintegrationtest";
-
-
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private PrerequisiteUtilService prerequisiteUtilService;

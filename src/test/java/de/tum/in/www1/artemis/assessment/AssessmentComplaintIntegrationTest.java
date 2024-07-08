@@ -17,7 +17,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Complaint;
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
 import de.tum.in.www1.artemis.domain.Course;
@@ -53,7 +52,6 @@ import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.dto.ComplaintAction;
 import de.tum.in.www1.artemis.service.dto.ComplaintRequestDTO;
 import de.tum.in.www1.artemis.service.dto.ComplaintResponseUpdateDTO;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.TestResourceUtils;
 import de.tum.in.www1.artemis.web.rest.dto.AssessmentUpdateDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionWithComplaintDTO;
@@ -76,11 +74,6 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
 
     @Autowired
     private ExamRepository examRepository;
-
-
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private ExerciseUtilService exerciseUtilService;

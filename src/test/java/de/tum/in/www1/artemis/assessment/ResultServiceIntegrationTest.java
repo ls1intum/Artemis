@@ -26,7 +26,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
@@ -75,7 +74,6 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -125,8 +123,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     @Autowired
     private GradingCriterionRepository gradingCriterionRepository;
 
-
-
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
@@ -141,9 +137,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
 
     @Autowired
     private ExamUtilService examUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     private Course course;
 

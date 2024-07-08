@@ -24,7 +24,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
@@ -38,7 +37,6 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -55,11 +53,6 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private UserRepository userRepository;
-
-
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private ConversationUtilService conversationUtilService;

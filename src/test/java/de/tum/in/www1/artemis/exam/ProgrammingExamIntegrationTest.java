@@ -28,7 +28,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
@@ -45,7 +44,6 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ExamPrepareExercisesTestUtil;
 
 class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
@@ -69,11 +67,6 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
 
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
-
-
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private ExamUtilService examUtilService;

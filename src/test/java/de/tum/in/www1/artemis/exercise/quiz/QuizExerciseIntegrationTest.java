@@ -42,7 +42,6 @@ import org.springframework.util.MultiValueMap;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.TeamAssignmentConfig;
@@ -85,7 +84,6 @@ import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.quiz.QuizExerciseService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ExerciseIntegrationTestService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
@@ -130,8 +128,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Autowired
     private ChannelRepository channelRepository;
 
-
-
     @Autowired
     private ExamUtilService examUtilService;
 
@@ -140,9 +136,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Autowired
     private QuizExerciseUtilService quizExerciseUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private PageableSearchUtilService pageableSearchUtilService;

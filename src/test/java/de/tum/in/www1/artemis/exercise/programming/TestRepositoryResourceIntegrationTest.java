@@ -32,7 +32,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.File;
 import de.tum.in.www1.artemis.domain.FileType;
@@ -40,7 +39,6 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
@@ -53,11 +51,6 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationJen
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
-
-
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     private final String testRepoBaseUrl = "/api/test-repository/";
 

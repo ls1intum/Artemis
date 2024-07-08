@@ -45,7 +45,6 @@ import org.springframework.util.MultiValueMap;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
@@ -67,7 +66,6 @@ import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationNotificationRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilterDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
@@ -92,13 +90,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-
-
     @Autowired
     private ConversationUtilService conversationUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private ConversationNotificationRepository conversationNotificationRepository;

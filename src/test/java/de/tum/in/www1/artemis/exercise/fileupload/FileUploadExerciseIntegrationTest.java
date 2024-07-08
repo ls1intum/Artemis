@@ -27,7 +27,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Feedback;
@@ -51,7 +50,6 @@ import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
 import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
@@ -80,8 +78,6 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationIndepen
     @Autowired
     private ChannelRepository channelRepository;
 
-
-
     @Autowired
     private FileUploadExerciseUtilService fileUploadExerciseUtilService;
 
@@ -93,9 +89,6 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @Autowired
     private ParticipationUtilService participationUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private PageableSearchUtilService pageableSearchUtilService;

@@ -35,7 +35,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -71,7 +70,6 @@ import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.quiz.QuizBatchService;
 import de.tum.in.www1.artemis.service.quiz.QuizExerciseService;
 import de.tum.in.www1.artemis.service.quiz.QuizStatisticService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
 
 class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -108,13 +106,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @Autowired
     private QuizBatchService quizBatchService;
 
-
-
     @Autowired
     private QuizExerciseUtilService quizExerciseUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private ExamUtilService examUtilService;

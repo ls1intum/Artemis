@@ -32,7 +32,6 @@ import org.springframework.util.ResourceUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -42,7 +41,6 @@ import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseTestServic
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUserAttendanceCheckDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUserDTO;
@@ -66,11 +64,6 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
 
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
-
-
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private ExamUtilService examUtilService;

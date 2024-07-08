@@ -22,7 +22,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
@@ -56,7 +55,6 @@ import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.TestResourceUtils;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseDetailsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
@@ -83,11 +81,6 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ExerciseService exerciseService;
-
-
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private ExerciseUtilService exerciseUtilService;

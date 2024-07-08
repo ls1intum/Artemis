@@ -28,7 +28,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
@@ -43,7 +42,6 @@ import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.quiz.QuizExerciseService;
 import de.tum.in.www1.artemis.service.quiz.QuizSubmissionService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
 @Isolated
@@ -62,11 +60,6 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private SubmissionRepository submissionRepository;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
-
-
 
     @Autowired
     private ParticipationUtilService participationUtilService;

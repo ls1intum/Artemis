@@ -29,12 +29,10 @@ import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.RSAKey;
 
 import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.lti.Claims;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import io.jsonwebtoken.Jwts;
 
 class LtiDeepLinkingIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -44,13 +42,8 @@ class LtiDeepLinkingIntegrationTest extends AbstractSpringIntegrationIndependent
     @Autowired
     private UserRepository userRepository;
 
-
-
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     private Course course;
 

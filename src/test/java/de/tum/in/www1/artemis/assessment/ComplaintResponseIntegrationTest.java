@@ -16,7 +16,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Complaint;
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
 import de.tum.in.www1.artemis.domain.Course;
@@ -38,7 +37,6 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.dto.ComplaintAction;
 import de.tum.in.www1.artemis.service.dto.ComplaintResponseUpdateDTO;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -66,11 +64,6 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
 
     @Autowired
     private ComplaintResponseRepository complaintResponseRepository;
-
-
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     private Complaint complaint;
 

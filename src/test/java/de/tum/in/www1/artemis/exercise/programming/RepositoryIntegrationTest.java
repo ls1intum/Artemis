@@ -53,7 +53,6 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.FileType;
@@ -88,7 +87,6 @@ import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.util.TestConstants;
@@ -134,8 +132,6 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
     @Autowired
     private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
-
-
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
@@ -150,9 +146,6 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
 
     @Autowired
     private ExamUtilService examUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     private ProgrammingExercise programmingExercise;
 

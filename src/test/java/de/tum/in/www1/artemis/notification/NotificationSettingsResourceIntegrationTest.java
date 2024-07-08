@@ -13,14 +13,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.NotificationSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -28,11 +26,6 @@ class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrat
 
     @Autowired
     private NotificationSettingRepository notificationSettingRepository;
-
-
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private ConversationUtilService conversationUtilService;

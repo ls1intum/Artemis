@@ -13,9 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseTestService;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
 class StudentLearningAnalyticsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -27,11 +25,6 @@ class StudentLearningAnalyticsIntegrationTest extends AbstractSpringIntegrationI
 
     @Autowired
     private CourseTestService courseTestService;
-
-
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private ObjectMapper objectMapper;
