@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config.migration.setups.localvc.gitlab;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_MIGRATE_GITLAB_JENKINS_TO_LOCALVC;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -32,7 +34,7 @@ import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
 
 @Component
-@Profile("gitlab")
+@Profile("gitlab & " + PROFILE_MIGRATE_GITLAB_JENKINS_TO_LOCALVC)
 public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
 
     @Value("${artemis.version-control.default-branch:main}")

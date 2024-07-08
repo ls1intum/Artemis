@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config.migration.setups.localvc.jenkins;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_MIGRATE_GITLAB_JENKINS_TO_LOCALVC;
+
 import java.util.List;
 
 import jakarta.annotation.PostConstruct;
@@ -28,7 +30,7 @@ import de.tum.in.www1.artemis.service.connectors.jenkins.build_plan.JenkinsBuild
  * Migration of Jenkins Build plans when the repositories will move to LocalVC.
  */
 @Component
-@Profile("jenkins")
+@Profile("jenkins & " + PROFILE_MIGRATE_GITLAB_JENKINS_TO_LOCALVC)
 public class MigrationEntryJenkinsToLocalVC extends LocalVCMigrationEntry {
 
     private final JenkinsBuildPlanService jenkinsBuildPlanService;
