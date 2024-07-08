@@ -845,6 +845,8 @@ Server Notification Token
            continuous-integration:
                artemis-authentication-token-value: the.actual.value.of.the.notification.token
 
+.. _Jenkins GitLab Repository Access:
+
 GitLab Repository Access
 ########################
 
