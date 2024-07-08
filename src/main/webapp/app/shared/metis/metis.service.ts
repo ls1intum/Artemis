@@ -180,7 +180,7 @@ export class MetisService implements OnDestroy {
                     // if the context changed, we need to fetch posts and dismiss cached posts
                     this.cachedPosts = res.body!;
                 }
-                this.cachedTotalNumberOfPosts = Number(res.headers.get('X-Total-Count'));
+                this.cachedTotalNumberOfPosts = Number(res.headers.get('X-Total-Count') ?? '0');
                 this.posts$.next(this.cachedPosts);
                 this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                 this.createSubscriptionFromPostContextFilter();
@@ -328,7 +328,7 @@ export class MetisService implements OnDestroy {
                         // Delete the answer if it still exists (might already be deleted due to WebSocket message)
                         const indexOfAnswer = this.cachedPosts[indexOfCachedPost].answers?.findIndex((answer) => answer.id === answerPost.id) ?? -1;
                         if (indexOfAnswer > -1) {
-                            this.cachedPosts[indexOfCachedPost].answers!.splice(indexOfAnswer, 1);
+                            this.cachedPosts[indexOfCachedPost].answers?.splice(indexOfAnswer, 1);
                             this.posts$.next(this.cachedPosts);
                             this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                         }
