@@ -33,6 +33,8 @@ import de.tum.in.www1.artemis.service.connectors.jenkins.build_plan.JenkinsBuild
 @Profile("jenkins & " + PROFILE_MIGRATE_GITLAB_JENKINS_TO_LOCALVC)
 public class MigrationEntryJenkinsToLocalVC extends LocalVCMigrationEntry {
 
+    private static final Logger log = LoggerFactory.getLogger(MigrationEntryJenkinsToLocalVC.class);
+
     private final JenkinsBuildPlanService jenkinsBuildPlanService;
 
     /**
@@ -48,8 +50,6 @@ public class MigrationEntryJenkinsToLocalVC extends LocalVCMigrationEntry {
      * This avoids that a base URL like "http://example.com" also finds "http://example.com:8080".
      */
     private String sourceVCSRepositoriesBaseUrl;
-
-    private static final Logger log = LoggerFactory.getLogger(MigrationEntryJenkinsToLocalVC.class);
 
     public MigrationEntryJenkinsToLocalVC(ProgrammingExerciseRepository programmingExerciseRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,

@@ -36,6 +36,8 @@ import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlServi
 @Profile("gitlab & " + PROFILE_MIGRATE_GITLAB_JENKINS_TO_LOCALVC)
 public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
 
+    private static final Logger log = LoggerFactory.getLogger(MigrationEntryGitLabToLocalVC.class);
+
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
@@ -47,8 +49,6 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
     private final AbstractVersionControlService sourceVersionControlService;
 
     private final UriService uriService;
-
-    private static final Logger log = LoggerFactory.getLogger(MigrationEntryGitLabToLocalVC.class);
 
     public MigrationEntryGitLabToLocalVC(ProgrammingExerciseRepository programmingExerciseRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
