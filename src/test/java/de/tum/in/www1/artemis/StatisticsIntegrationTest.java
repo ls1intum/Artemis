@@ -43,7 +43,6 @@ import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseManagementStatisticsDTO;
 
@@ -71,8 +70,6 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
-
-
 
     @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;

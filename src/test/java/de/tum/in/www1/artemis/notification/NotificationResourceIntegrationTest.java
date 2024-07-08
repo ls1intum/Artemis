@@ -26,7 +26,6 @@ import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 class NotificationResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -38,8 +37,6 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Autowired
     private NotificationSettingRepository notificationSettingRepository;
-
-
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;

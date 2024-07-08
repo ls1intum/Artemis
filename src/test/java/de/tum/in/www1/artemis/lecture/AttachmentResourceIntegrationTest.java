@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -38,8 +37,6 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @Autowired
     private LectureRepository lectureRepository;
-
-
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;

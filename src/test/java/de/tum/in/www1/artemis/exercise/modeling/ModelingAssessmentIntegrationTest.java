@@ -72,7 +72,6 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.compass.CompassService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.AssessmentUpdateDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ModelingAssessmentDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
@@ -131,8 +130,6 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
 
     @Autowired
     private ModelClusterRepository modelClusterRepository;
-
-
 
     @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;

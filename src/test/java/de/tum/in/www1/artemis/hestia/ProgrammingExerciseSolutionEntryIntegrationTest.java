@@ -24,7 +24,6 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -44,8 +43,6 @@ class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpringInte
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-
 
     @Autowired
     private ExerciseUtilService exerciseUtilService;

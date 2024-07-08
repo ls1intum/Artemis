@@ -33,7 +33,6 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -47,8 +46,6 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
 
     @Autowired
     private FeatureToggleService featureToggleService;
-
-
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;

@@ -47,7 +47,6 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.service.FilePathService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -59,8 +58,6 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Autowired
     private ParticipationRepository participationRepository;
-
-
 
     @Autowired
     private FileUploadExerciseUtilService fileUploadExerciseUtilService;

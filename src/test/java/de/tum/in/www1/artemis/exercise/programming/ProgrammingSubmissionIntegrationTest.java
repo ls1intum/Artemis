@@ -61,7 +61,6 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.TestConstants;
 import de.tum.in.www1.artemis.util.TestResourceUtils;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionDTO;
@@ -88,8 +87,6 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationJenk
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
-
-
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;

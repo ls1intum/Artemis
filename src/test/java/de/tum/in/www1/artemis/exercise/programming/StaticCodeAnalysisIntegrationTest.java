@@ -39,7 +39,6 @@ import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisIssue;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseFeedbackCreationService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -56,8 +55,6 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
 
     @Autowired
     private ProgrammingExerciseFeedbackCreationService feedbackCreationService;
-
-
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;

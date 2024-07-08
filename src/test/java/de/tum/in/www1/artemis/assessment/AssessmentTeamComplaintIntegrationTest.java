@@ -40,7 +40,6 @@ import de.tum.in.www1.artemis.service.dto.ComplaintAction;
 import de.tum.in.www1.artemis.service.dto.ComplaintRequestDTO;
 import de.tum.in.www1.artemis.service.dto.ComplaintResponseUpdateDTO;
 import de.tum.in.www1.artemis.team.TeamUtilService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.TestResourceUtils;
 import de.tum.in.www1.artemis.web.rest.dto.AssessmentUpdateDTO;
 
@@ -59,8 +58,6 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
 
     @Autowired
     private SubmissionRepository submissionRepository;
-
-
 
     @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;

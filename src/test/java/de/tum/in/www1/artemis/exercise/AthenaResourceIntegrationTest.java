@@ -49,7 +49,6 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 class AthenaResourceIntegrationTest extends AbstractAthenaTest {
 
@@ -81,8 +80,6 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
-
-
 
     @Autowired
     private ResultRepository resultRepository;

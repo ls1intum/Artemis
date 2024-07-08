@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.SourceRepository;
 import de.tum.in.www1.artemis.repository.competency.KnowledgeAreaRepository;
 import de.tum.in.www1.artemis.repository.competency.StandardizedCompetencyRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaRequestDTO;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaResultDTO;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.SourceDTO;
@@ -55,8 +54,6 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
 
     @Autowired
     private SourceRepository sourceRepository;
-
-
 
     @Autowired
     private StandardizedCompetencyUtilService standardizedCompetencyUtilService;

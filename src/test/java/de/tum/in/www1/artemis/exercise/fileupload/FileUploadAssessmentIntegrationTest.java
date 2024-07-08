@@ -56,7 +56,6 @@ import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.AssessmentUpdateDTO;
 import de.tum.in.www1.artemis.web.rest.dto.FileUploadAssessmentDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
@@ -88,8 +87,6 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
-
-
 
     @Autowired
     private FileUploadExerciseUtilService fileUploadExerciseUtilService;

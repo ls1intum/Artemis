@@ -15,7 +15,6 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.science.ScienceSetting;
 import de.tum.in.www1.artemis.repository.science.ScienceSettingRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ScienceSettingsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -23,8 +22,6 @@ class ScienceSettingsIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Autowired
     private ScienceSettingRepository scienceSettingRepository;
-
-
 
     private ScienceSetting settingA;
 

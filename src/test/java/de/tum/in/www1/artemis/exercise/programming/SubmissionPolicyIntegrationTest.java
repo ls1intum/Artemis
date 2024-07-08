@@ -36,7 +36,6 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.CommitDTO;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
@@ -50,8 +49,6 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationJenkinsGi
 
     @Autowired
     private ProgrammingExerciseGradingService gradingService;
-
-
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;

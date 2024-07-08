@@ -79,7 +79,6 @@ import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.TextAssessmentService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.AssessmentUpdateDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
@@ -130,8 +129,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Autowired
     private TextAssessmentService textAssessmentService;
-
-
 
     @Autowired
     private ExerciseUtilService exerciseUtilService;

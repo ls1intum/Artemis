@@ -41,7 +41,6 @@ import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.SlideRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -60,8 +59,6 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Autowired
     private SlideRepository slideRepository;
-
-
 
     @Autowired
     private LectureUtilService lectureUtilService;

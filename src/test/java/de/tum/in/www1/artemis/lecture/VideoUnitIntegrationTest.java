@@ -16,7 +16,6 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.VideoUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.VideoUnitRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 class VideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -27,8 +26,6 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest 
 
     @Autowired
     private LectureRepository lectureRepository;
-
-
 
     @Autowired
     private LectureUtilService lectureUtilService;

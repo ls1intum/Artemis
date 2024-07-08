@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.domain.Organization;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.OrganizationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.OrganizationCountDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -36,8 +35,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Autowired
     private OrganizationUtilService organizationUtilService;
-
-
 
     /**
      * Test if getting courses a user can enroll in works with multi organization and
