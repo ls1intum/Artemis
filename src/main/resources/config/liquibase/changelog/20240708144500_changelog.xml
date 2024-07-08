@@ -6,7 +6,7 @@
         <sql>
             UPDATE competency_relation
             SET type = type - 1
-            WHERE type > 1;
+            WHERE type > 0;
         </sql>
     </changeSet>
 </databaseChangeLog>
