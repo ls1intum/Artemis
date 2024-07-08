@@ -53,7 +53,7 @@
                     </div>
                 }
                 <!-- no message exist -->
-                @if (!isFetchingPosts && (totalNumberOfPosts === 0 || !_activeConversation)) {
+                @if (!isFetchingPosts && (posts.length === 0 || !_activeConversation)) {
                     <div class="envelope">
                         <fa-icon size="5x" [icon]="faEnvelope" />
                     </div>
@@ -62,7 +62,7 @@
                 <div
                     id="scrollableDiv"
                     #container
-                    class="{{ totalNumberOfPosts !== 0 ? 'posting-infinite-scroll-container' : '' }}"
+                    class="{{ posts.length !== 0 ? 'posting-infinite-scroll-container' : '' }}"
                     infinite-scroll
                     [scrollWindow]="false"
                     (scrolledUp)="fetchNextPage()"
