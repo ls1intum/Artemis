@@ -24,7 +24,12 @@ const DEFAULT_EXERCISE_TYPES_FILTER: ExerciseTypeFilterOption[] = [
     { name: 'artemisApp.courseStatistics.file-upload', value: ExerciseType.FILE_UPLOAD, checked: false, icon: getIcon(ExerciseType.FILE_UPLOAD) },
 ];
 
-export function getExerciseCategoryFilterOptions(exerciseFilters?: ExerciseFilterOptions, sidebarData?: SidebarData): FilterOption<ExerciseCategoryFilterOption> {
+/**
+ *
+ * @param exerciseFilters that have already been defined for the course sidebar
+ * @param sidebarData that contains the exercises of a course and their information
+ */
+export function getExerciseCategoryFilterOptions(sidebarData?: SidebarData, exerciseFilters?: ExerciseFilterOptions): FilterOption<ExerciseCategoryFilterOption> {
     if (exerciseFilters?.categoryFilter) {
         return exerciseFilters?.categoryFilter;
     }

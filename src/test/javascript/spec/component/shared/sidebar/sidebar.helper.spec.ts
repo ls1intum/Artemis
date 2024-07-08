@@ -59,7 +59,7 @@ describe('getExerciseCategoryFilterOptions', () => {
             ungroupedData: [SIDEBAR_CARD_ELEMENT_1, SIDEBAR_CARD_ELEMENT_2, SIDEBAR_CARD_ELEMENT_3],
         };
 
-        const exerciseCategories = getExerciseCategoryFilterOptions(undefined, sidebarData);
+        const exerciseCategories = getExerciseCategoryFilterOptions(sidebarData, undefined);
         expect(exerciseCategories).toEqual({
             isDisplayed: true,
             options: [
@@ -78,7 +78,7 @@ describe('getExerciseCategoryFilterOptions', () => {
             ungroupedData: [SIDEBAR_CARD_ELEMENT_1, SIDEBAR_CARD_ELEMENT_4],
         };
 
-        const exerciseCategories = getExerciseCategoryFilterOptions(undefined, sidebarData);
+        const exerciseCategories = getExerciseCategoryFilterOptions(sidebarData, undefined);
         expect(exerciseCategories).toEqual({
             isDisplayed: true,
             options: [
@@ -95,7 +95,7 @@ describe('getExerciseCategoryFilterOptions', () => {
             ungroupedData: [SIDEBAR_CARD_ELEMENT_2, SIDEBAR_CARD_ELEMENT_1],
         };
 
-        const exerciseCategories = getExerciseCategoryFilterOptions(undefined, sidebarData);
+        const exerciseCategories = getExerciseCategoryFilterOptions(sidebarData, undefined);
         expect(exerciseCategories).toEqual({
             isDisplayed: true,
             options: [
@@ -113,7 +113,7 @@ describe('getExerciseCategoryFilterOptions', () => {
             ungroupedData: [SIDEBAR_CARD_ELEMENT_5],
         };
 
-        const exerciseCategories = getExerciseCategoryFilterOptions(undefined, sidebarData);
+        const exerciseCategories = getExerciseCategoryFilterOptions(sidebarData, undefined);
         expect(exerciseCategories).toEqual({
             isDisplayed: false,
             options: [],
@@ -126,15 +126,12 @@ describe('getExerciseCategoryFilterOptions', () => {
             ungroupedData: [SIDEBAR_CARD_ELEMENT_1, SIDEBAR_CARD_ELEMENT_2],
         };
 
-        const exerciseCategories = getExerciseCategoryFilterOptions(
-            {
-                categoryFilter: {
-                    isDisplayed: false,
-                    options: [],
-                },
+        const exerciseCategories = getExerciseCategoryFilterOptions(sidebarData, {
+            categoryFilter: {
+                isDisplayed: false,
+                options: [],
             },
-            sidebarData,
-        );
+        });
         expect(exerciseCategories).toEqual({
             isDisplayed: false,
             options: [],
