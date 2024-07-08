@@ -38,7 +38,7 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
-    @Value("${artemis.version-control.local-vcs-repo-path:#{null}}")
+    @Value("${artemis.version-control.local-vcs-repo-path}")
     private String localVCBasePath;
 
     private final UserRepository userRepository;
@@ -64,10 +64,6 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
     @Override
     protected boolean areValuesIncomplete() {
         if (super.areValuesIncomplete()) {
-            return true;
-        }
-        if (localVCBasePath == null) {
-            log.error("Migration failed because the local VC base path is not configured.");
             return true;
         }
         return false;
