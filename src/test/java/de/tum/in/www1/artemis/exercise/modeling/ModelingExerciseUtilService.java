@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -57,6 +58,9 @@ public class ModelingExerciseUtilService {
     private static final ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(1);
 
     private static final ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
+
+    @Autowired
+    private CourseRepository courseRepo;
 
     @Autowired
     private ExerciseRepository exerciseRepo;

@@ -68,8 +68,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         course2.setEnrollmentEndDate(futureTimestamp);
         course1.setOrganizations(organizations);
 
-        course1 = courseRepo.save(course1);
-        course2 = courseRepo.save(course2);
+        course1 = courseRepository.save(course1);
+        course2 = courseRepository.save(course2);
 
         List<Course> coursesToEnroll = request.getList("/api/courses/for-enrollment", HttpStatus.OK, Course.class);
         assertThat(coursesToEnroll).contains(course1).contains(course2);
@@ -106,9 +106,9 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         course1.setOrganizations(organizations);
         course3.setOrganizations(otherOrganizations);
 
-        course1 = courseRepo.save(course1);
-        course2 = courseRepo.save(course2);
-        course3 = courseRepo.save(course3);
+        course1 = courseRepository.save(course1);
+        course2 = courseRepository.save(course2);
+        course3 = courseRepository.save(course3);
 
         Set<String> updatedGroups = request.postWithResponseBody("/api/courses/" + course1.getId() + "/enroll", null, Set.class, HttpStatus.OK);
         assertThat(updatedGroups).as("User is enrolled in course").contains(course1.getStudentGroupName());
@@ -129,7 +129,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         organization = organizationRepo.save(organization);
 
         Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
-        course1 = courseRepo.save(course1);
+        course1 = courseRepository.save(course1);
 
         request.postWithoutLocation("/api/admin/organizations/" + organization.getId() + "/courses/" + course1.getId(), null, HttpStatus.OK, null);
 
@@ -144,10 +144,10 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testRemoveCourseToOrganization() throws Exception {
         Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
-        course1 = courseRepo.save(course1);
+        course1 = courseRepository.save(course1);
 
         Organization organization = organizationUtilService.createOrganization();
-        courseRepo.addOrganizationToCourse(course1.getId(), organization);
+        courseRepository.addOrganizationToCourse(course1.getId(), organization);
 
         Organization originalOrganization = request.get("/api/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
         assertThat(originalOrganization.getCourses()).contains(course1);
@@ -264,12 +264,12 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteOrganization() throws Exception {
         Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
-        course1 = courseRepo.save(course1);
+        course1 = courseRepository.save(course1);
 
         Organization organization = organizationUtilService.createOrganization();
         organization = organizationRepo.save(organization);
 
-        courseRepo.addOrganizationToCourse(course1.getId(), organization);
+        courseRepository.addOrganizationToCourse(course1.getId(), organization);
 
         request.delete("/api/admin/organizations/" + organization.getId(), HttpStatus.OK);
         request.get("/api/admin/organizations/" + organization.getId(), HttpStatus.NOT_FOUND, Organization.class);
@@ -297,12 +297,12 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetNumberOfUsersAndCoursesOfAllOrganizations() throws Exception {
         Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
-        course1 = courseRepo.save(course1);
+        course1 = courseRepository.save(course1);
 
         Organization organization = organizationUtilService.createOrganization();
         organization = organizationRepo.save(organization);
 
-        courseRepo.addOrganizationToCourse(course1.getId(), organization);
+        courseRepository.addOrganizationToCourse(course1.getId(), organization);
         User student = userUtilService.createAndSaveUser(TEST_PREFIX + "testGetNumberOfUsersOfAll_");
 
         userRepo.addOrganizationToUser(student.getId(), organization);
@@ -322,12 +322,12 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetNumberOfUsersAndCoursesOfOrganization() throws Exception {
         Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
-        course1 = courseRepo.save(course1);
+        course1 = courseRepository.save(course1);
 
         Organization organization = organizationUtilService.createOrganization();
         organization = organizationRepo.save(organization);
 
-        courseRepo.addOrganizationToCourse(course1.getId(), organization);
+        courseRepository.addOrganizationToCourse(course1.getId(), organization);
         User student = userUtilService.createAndSaveUser(TEST_PREFIX + "testGetNumberOfUsers_");
 
         userRepo.addOrganizationToUser(student.getId(), organization);
@@ -348,8 +348,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         organization = organizationRepo.save(organization);
 
         Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
-        course1 = courseRepo.save(course1);
-        courseRepo.addOrganizationToCourse(course1.getId(), organization);
+        course1 = courseRepository.save(course1);
+        courseRepository.addOrganizationToCourse(course1.getId(), organization);
 
         User student = userUtilService.createAndSaveUser(TEST_PREFIX + "testGetOrganizationById");
 
@@ -376,12 +376,12 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGetAllOrganizationByCourse() throws Exception {
         Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
-        course1 = courseRepo.save(course1);
+        course1 = courseRepository.save(course1);
 
         Organization organization = organizationUtilService.createOrganization();
         organization = organizationRepo.save(organization);
 
-        courseRepo.addOrganizationToCourse(course1.getId(), organization);
+        courseRepository.addOrganizationToCourse(course1.getId(), organization);
 
         List<Organization> result = request.getList("/api/organizations/courses/" + course1.getId(), HttpStatus.OK, Organization.class);
         assertThat(result).contains(organization);

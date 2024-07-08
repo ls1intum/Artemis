@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import org.apache.commons.io.FileUtils;
 import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,6 +58,9 @@ public class LectureUtilService {
     private static final ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
 
     private static final ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
+
+    @Autowired
+    private CourseRepository courseRepo;
 
     @Autowired
     private LectureRepository lectureRepo;

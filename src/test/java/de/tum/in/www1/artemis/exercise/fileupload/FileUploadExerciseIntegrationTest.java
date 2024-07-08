@@ -145,7 +145,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationIndepen
         // make sure the instructor is not instructor for this course anymore by changing the courses' instructor group name
         var course = fileUploadExercise.getCourseViaExerciseGroupOrCourseMember();
         course.setInstructorGroupName("new-instructor-group-name");
-        courseRepo.save(course);
+        courseRepository.save(course);
         fileUploadExercise.setFilePattern(creationFilePattern);
         gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(fileUploadExercise);
         request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.FORBIDDEN);
@@ -327,7 +327,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationIndepen
     void getExamFileUploadExercise_InstructorNotInGroup() throws Exception {
         Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
         course.setInstructorGroupName("new-instructor-group-name");
-        courseRepo.save(course);
+        courseRepository.save(course);
         for (var exercise : course.getExercises()) {
             request.get("/api/file-upload-exercises/" + exercise.getId(), HttpStatus.FORBIDDEN, FileUploadExercise.class);
         }
@@ -397,7 +397,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationIndepen
     void deleteFileUploadExerciseFails_InstructorNotInGroup() throws Exception {
         Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
         course.setInstructorGroupName("new-instructor-group-name");
-        courseRepo.save(course);
+        courseRepository.save(course);
         for (var exercise : course.getExercises()) {
             request.delete("/api/file-upload-exercises/" + exercise.getId(), HttpStatus.FORBIDDEN);
         }
@@ -439,7 +439,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationIndepen
         fileUploadExercise.setDueDate(ZonedDateTime.now().plusDays(10));
         fileUploadExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(11));
         course.setInstructorGroupName("new-instructor-group-name");
-        courseRepo.save(course);
+        courseRepository.save(course);
         request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId(), fileUploadExercise, FileUploadExercise.class, HttpStatus.FORBIDDEN);
     }
 
@@ -556,7 +556,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationIndepen
     void getAllFileUploadExercisesForCourseFails_InstructorNotInGroup() throws Exception {
         var course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
         course.setInstructorGroupName("new-instructor-group-name");
-        courseRepo.save(course);
+        courseRepository.save(course);
         request.getList("/api/courses/" + course.getId() + "/file-upload-exercises", HttpStatus.FORBIDDEN, FileUploadExercise.class);
     }
 
@@ -624,7 +624,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationIndepen
         Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
         FileUploadExercise fileUploadExercise = exerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         course.setInstructorGroupName("test");
-        courseRepo.save(course);
+        courseRepository.save(course);
 
         request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/re-evaluate", fileUploadExercise, FileUploadExercise.class,
                 HttpStatus.FORBIDDEN);

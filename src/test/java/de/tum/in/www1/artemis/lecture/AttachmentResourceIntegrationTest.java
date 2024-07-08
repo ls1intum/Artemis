@@ -164,7 +164,7 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationIndepen
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteAttachment_notInstructorInACourse() throws Exception {
-        var course = courseRepo.save(new Course());
+        var course = courseRepository.save(new Course());
         attachment = attachmentRepository.save(attachment);
         lecture.setCourse(course);
         lectureRepository.save(lecture);

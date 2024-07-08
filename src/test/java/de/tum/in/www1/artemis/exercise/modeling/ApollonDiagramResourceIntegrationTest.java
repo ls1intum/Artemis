@@ -47,8 +47,8 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
 
         course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course2 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        courseRepo.save(course1);
-        courseRepo.save(course2);
+        courseRepository.save(course1);
+        courseRepository.save(course2);
     }
 
     @AfterEach

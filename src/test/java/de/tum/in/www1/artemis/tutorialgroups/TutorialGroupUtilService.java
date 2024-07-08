@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -51,6 +52,9 @@ public class TutorialGroupUtilService {
 
     @Value("${info.guided-tour.course-group-instructors:#{null}}")
     private Optional<String> tutorialGroupInstructors;
+
+    @Autowired
+    private CourseRepository courseRepo;
 
     @Autowired
     private TutorialGroupRepository tutorialGroupRepository;

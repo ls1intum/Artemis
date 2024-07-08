@@ -40,6 +40,7 @@ import java.util.function.BiFunction;
 import java.util.stream.IntStream;
 import java.util.zip.ZipFile;
 
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
@@ -144,6 +145,9 @@ class ProgrammingExerciseIntegrationTestService {
 
     @Autowired
     private GitUtilService gitUtilService;
+
+    @Autowired
+    private CourseRepository courseRepository;
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
