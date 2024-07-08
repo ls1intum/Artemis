@@ -191,4 +191,28 @@ export class ExerciseFilterModalComponent implements OnInit {
             filterDetails.isPointsFilterApplied
         );
     }
+
+    resetFilter() {
+        this.categoryFilters?.options.forEach((categoryOption) => (categoryOption.searched = false));
+        this.typeFilters?.options.forEach((typeOption) => (typeOption.checked = false));
+        this.difficultyFilters?.options.forEach((difficultyOption) => (difficultyOption.checked = false));
+
+        this.resetRangeFilter(this.achievedScore);
+        this.resetRangeFilter(this.achievablePoints);
+    }
+
+    private resetRangeFilter(rangeFilter?: RangeFilter) {
+        if (!rangeFilter?.filter) {
+            return;
+        }
+
+        const filter = rangeFilter.filter;
+
+        if (filter.selectedMin) {
+            filter.selectedMin = filter.generalMin;
+        }
+        if (filter.selectedMax) {
+            filter.selectedMax = filter.generalMax;
+        }
+    }
 }
