@@ -159,7 +159,7 @@ describe('MonacoEditorComponent', () => {
         comp.highlightLines(1, 2, 'test-class-name', 'test-margin-class-name');
         comp.highlightLines(4, 4, 'test-class-name', 'test-margin-class-name');
         // The editor must be large enough to display all lines.
-        comp.layoutWithFixedSize(100, 100);
+        comp.layoutWithFixedSize(400, 400);
         const documentHighlightedLines = document.getElementsByClassName('test-class-name');
         const documentHighlightedMargins = document.getElementsByClassName('test-margin-class-name');
         // Two highlight elements, each representing a range.
