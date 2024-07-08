@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest.metis.conversation;
 
-import java.util.Set;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -36,8 +34,7 @@ public class ConversationManagementResource {
      * @param course the course to check
      */
     void checkMessagingEnabledElseThrow(Course course) {
-        if (!Set.of(CourseInformationSharingConfiguration.MESSAGING_ONLY, CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING)
-                .contains(course.getCourseInformationSharingConfiguration())) {
+        if (course.getCourseInformationSharingConfiguration() != CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Messaging is not enabled for this course");
         }
     }

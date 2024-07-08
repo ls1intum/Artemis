@@ -20,13 +20,6 @@
                 <fa-icon [icon]="faChartBar" />
                 <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.statistics"></span>
             </a>
-            @if (isCommunicationEnabled) {
-                <a class="tab-link" [routerLink]="['/courses', course.id, 'discussion']" routerLinkActive="active">
-                    <fa-icon [icon]="faComment" />
-                    <span class="tab-link-text" jhiTranslate="artemisApp.metis.communication.label"></span>
-                    <fa-icon [icon]="faArrowUpRightFromSquare" />
-                </a>
-            }
             @if (course.isAtLeastInstructor && irisEnabled) {
                 <a class="tab-link" [routerLink]="['/course-management', course.id, 'iris-settings']" id="iris-settings" routerLinkActive="active">
                     <fa-icon [icon]="faRobot" />
@@ -34,9 +27,9 @@
                 </a>
             }
             @if (isMessagingOrCommunicationEnabled) {
-                <a class="tab-link" [routerLink]="['/courses', course.id, 'messages']" routerLinkActive="active">
+                <a class="tab-link" [routerLink]="['/courses', course.id, 'communication']" routerLinkActive="active">
                     <fa-icon [icon]="faComments" />
-                    <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.messages"></span>
+                    <span class="tab-link-text" jhiTranslate="artemisApp.metis.communication.label"></span>
                     <fa-icon [icon]="faArrowUpRightFromSquare" />
                 </a>
             }

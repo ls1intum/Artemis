@@ -96,12 +96,6 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testPostingAllowedIfMessagingOnlySetting() throws Exception {
-        messagingFeatureDisabledTest(CourseInformationSharingConfiguration.MESSAGING_ONLY);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testPostingNotAllowedIfDisabledSetting() throws Exception {
         messagingFeatureDisabledTest(CourseInformationSharingConfiguration.DISABLED);
     }

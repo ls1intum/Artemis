@@ -5,13 +5,13 @@
             [lastReadDate]="lastReadDate"
             [posting]="post"
             [showAnswers]="showAnswers"
-            [isCourseMessagesPage]="isCourseMessagesPage"
             [isCommunicationPage]="isCommunicationPage"
+            [showChannelReference]="showChannelReference"
             [hasChannelModerationRights]="hasChannelModerationRights"
             (openThread)="openThread.emit(post)"
         />
     </div>
 </div>
-@if (!isCourseMessagesPage) {
+@if (!isCommunicationPage) {
     <div class="post-separation-line"></div>
 }
