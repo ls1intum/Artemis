@@ -96,6 +96,7 @@
                 "achievedScore": "Erreichtes Ergebnis",
                 "achievablePoints": "Erreichbare Punktzahl",
                 "applyFilter": "Filter anwenden",
+                "resetFilter": "Filter zurücksetzen",
                 "noFilterAvailable": "Für die bisherigen Aufgaben gibt es keine unterscheidenden Filteroptionen"
             },
             "exerciseList": {

@@ -96,6 +96,7 @@
                 "achievedScore": "Achieved Score",
                 "achievablePoints": "Achievable Points",
                 "applyFilter": "Apply filter",
+                "resetFilter": "Reset filter",
                 "noFilterAvailable": "There are no distinguishing filter options for the existing exercises"
             },
             "exerciseList": {
