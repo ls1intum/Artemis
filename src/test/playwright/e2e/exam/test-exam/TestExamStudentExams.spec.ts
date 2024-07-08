@@ -45,7 +45,6 @@ test.describe('Test Exam - student exams', () => {
 
         await participateInExam(studentOne, course, exam, true, true, examParticipation, examNavigation);
         await participateInExam(studentTwo, course, exam, true, false, examParticipation, examNavigation);
-        await participateInExam(studentThree, course, exam, false, false, examParticipation, examNavigation);
     });
 
     test.beforeEach('Get student names', async ({ login, page }) => {
@@ -53,11 +52,9 @@ test.describe('Test Exam - student exams', () => {
 
         const studentOneInfo = await users.getUserInfo(studentOne.username, page);
         const studentTwoInfo = await users.getUserInfo(studentTwo.username, page);
-        const studentThreeInfo = await users.getUserInfo(studentThree.username, page);
 
         studentNames.set(studentOne, studentOneInfo.name!);
         studentNames.set(studentTwo, studentTwoInfo.name!);
-        studentNames.set(studentThree, studentThreeInfo.name!);
     });
 
     test.describe('Check exam participants and their submissions', () => {
