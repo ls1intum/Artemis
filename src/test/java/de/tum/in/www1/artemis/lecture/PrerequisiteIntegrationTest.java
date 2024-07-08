@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.competency.CompetencyTaxonomy;
 import de.tum.in.www1.artemis.domain.competency.Prerequisite;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.PrerequisiteRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.competency.PrerequisiteRequestDTO;
@@ -39,9 +38,6 @@ class PrerequisiteIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Autowired
     private PrerequisiteRepository prerequisiteRepository;
-
-    @Autowired
-    private CourseRepository courseRepository;
 
     private Course course;
 

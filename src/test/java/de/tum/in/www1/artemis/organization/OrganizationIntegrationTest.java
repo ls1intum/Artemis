@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Organization;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.OrganizationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -28,9 +27,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "organizationtest";
-
-    @Autowired
-    private CourseRepository courseRepo;
 
     @Autowired
     private UserRepository userRepo;

@@ -83,7 +83,6 @@ import de.tum.in.www1.artemis.exercise.quiz.QuizExerciseFactory;
 import de.tum.in.www1.artemis.exercise.quiz.QuizExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -103,9 +102,6 @@ import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
 class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     private static final String TEST_PREFIX = "participationintegration";
-
-    @Autowired
-    private CourseRepository courseRepo;
 
     @Autowired
     private ExerciseRepository exerciseRepo;
@@ -205,7 +201,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), course);
         programmingExercise = exerciseRepo.save(programmingExercise);
         course.addExercises(programmingExercise);
-        course = courseRepo.save(course);
+        course = courseRepository.save(course);
 
         doReturn(defaultBranch).when(versionControlService).getDefaultBranchOfRepository(any());
         doReturn("Success").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
@@ -584,7 +580,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
         course.setRestrictedAthenaModulesAccess(true);
-        this.courseRepo.save(course);
+        this.courseRepository.save(course);
 
         this.programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
         this.exerciseRepo.save(programmingExercise);
@@ -631,7 +627,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
         course.setRestrictedAthenaModulesAccess(true);
-        this.courseRepo.save(course);
+        this.courseRepository.save(course);
 
         this.programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
         this.exerciseRepo.save(programmingExercise);
@@ -773,7 +769,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     void getAllParticipationsForExercise_withLatestResults_forQuizExercise() throws Exception {
         var quizExercise = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), QuizMode.INDIVIDUAL, course);
         course.addExercises(quizExercise);
-        courseRepo.save(course);
+        courseRepository.save(course);
         exerciseRepo.save(quizExercise);
 
         var participation = participationUtilService.createAndSaveParticipationForExercise(quizExercise, TEST_PREFIX + "student1");
@@ -1472,7 +1468,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
         programmingExercise = exerciseRepo.save(ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup1));
         course.addExercises(programmingExercise);
-        course = courseRepo.save(course);
+        course = courseRepository.save(course);
 
         var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));

@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
 import de.tum.in.www1.artemis.repository.ApollonDiagramRepository;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -28,9 +27,6 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
 
     @Autowired
     private ApollonDiagramRepository apollonDiagramRepository;
-
-    @Autowired
-    private CourseRepository courseRepo;
 
     @Autowired
     private UserUtilService userUtilService;

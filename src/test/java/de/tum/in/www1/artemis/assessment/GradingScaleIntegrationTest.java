@@ -21,7 +21,6 @@ import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -40,9 +39,6 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Autowired
     private UserRepository userRepository;
-
-    @Autowired
-    private CourseRepository courseRepository;
 
     @Autowired
     private UserUtilService userUtilService;

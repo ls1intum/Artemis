@@ -32,7 +32,6 @@ import de.tum.in.www1.artemis.domain.lecture.VideoUnit;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
@@ -45,9 +44,6 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private LectureRepository lectureRepository;
-
-    @Autowired
-    private CourseRepository courseRepository;
 
     @Autowired
     private TextExerciseRepository textExerciseRepository;

@@ -45,7 +45,6 @@ import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.GradingCriterionUtil;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
@@ -62,9 +61,6 @@ import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "fileuploaderxercise";
-
-    @Autowired
-    private CourseRepository courseRepo;
 
     @Autowired
     private ExerciseRepository exerciseRepo;

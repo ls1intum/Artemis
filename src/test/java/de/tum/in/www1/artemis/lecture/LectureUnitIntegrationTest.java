@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
 import de.tum.in.www1.artemis.domain.lecture.OnlineUnit;
 import de.tum.in.www1.artemis.domain.lecture.TextUnit;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
 import de.tum.in.www1.artemis.repository.TextUnitRepository;
@@ -38,9 +37,6 @@ import de.tum.in.www1.artemis.web.rest.dto.lectureunit.LectureUnitForLearningPat
 class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "lectureunitintegration";
-
-    @Autowired
-    private CourseRepository courseRepository;
 
     @Autowired
     private UserRepository userRepo;

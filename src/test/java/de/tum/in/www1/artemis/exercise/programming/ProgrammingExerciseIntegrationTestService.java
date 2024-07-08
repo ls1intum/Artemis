@@ -95,7 +95,6 @@ import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.plagiarism.PlagiarismUtilService;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -145,9 +144,6 @@ class ProgrammingExerciseIntegrationTestService {
 
     @Autowired
     private GitUtilService gitUtilService;
-
-    @Autowired
-    private CourseRepository courseRepository;
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;

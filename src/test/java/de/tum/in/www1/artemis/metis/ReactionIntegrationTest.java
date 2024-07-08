@@ -34,7 +34,6 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 import de.tum.in.www1.artemis.domain.metis.Reaction;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
@@ -65,9 +64,6 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ConversationUtilService conversationUtilService;
-
-    @Autowired
-    private CourseRepository courseRepository;
 
     private List<Post> existingPostsWithAnswers;
 

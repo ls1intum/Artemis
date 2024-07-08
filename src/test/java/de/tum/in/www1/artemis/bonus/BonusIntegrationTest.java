@@ -32,7 +32,6 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
 import de.tum.in.www1.artemis.repository.BonusRepository;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
@@ -45,9 +44,6 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private BonusRepository bonusRepository;
-
-    @Autowired
-    private CourseRepository courseRepository;
 
     @Autowired
     private ExamRepository examRepository;

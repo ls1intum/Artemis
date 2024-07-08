@@ -66,7 +66,6 @@ import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.BonusRepository;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
@@ -109,9 +108,6 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
 
     @Autowired
     private QuizSubmissionService quizSubmissionService;
-
-    @Autowired
-    private CourseRepository courseRepo;
 
     @Autowired
     private ExerciseRepository exerciseRepo;
@@ -1183,7 +1179,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
 
         course.setMaxPoints(100);
         course.setPresentationScore(null);
-        courseRepo.save(course);
+        courseRepository.save(course);
 
     }
 
