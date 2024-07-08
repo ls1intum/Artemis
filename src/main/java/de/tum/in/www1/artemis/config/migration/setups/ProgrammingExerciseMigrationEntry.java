@@ -77,16 +77,13 @@ public abstract class ProgrammingExerciseMigrationEntry {
      * @return False if there is a general configuration error, which blocks the whole execution
      *         and true otherwise.
      */
-    public boolean execute() {
-        if (areValuesIncomplete()) {
-            return false;
-        }
+    public void execute() {
         var programmingExerciseCount = programmingExerciseRepository.count();
         var studentCount = programmingExerciseStudentParticipationRepository.findAllWithRepositoryUri(Pageable.unpaged()).getTotalElements();
 
         if (programmingExerciseCount == 0) {
             getLogger().info("No programming exercises to change");
-            return true;
+            return;
         }
 
         getLogger().info("Will migrate {} programming exercises and {} student repositories now. This might take a while", programmingExerciseCount, studentCount);
@@ -160,10 +157,7 @@ public abstract class ProgrammingExerciseMigrationEntry {
         shutdown(executorService, timeoutInHours, ERROR_MESSAGE.formatted(timeoutInHours));
         getLogger().info("Finished migrating programming exercises and student participations");
         evaluateErrorList(programmingExerciseRepository);
-        return true;
     }
-
-    protected abstract boolean areValuesIncomplete();
 
     /**
      * Returns a list of auxiliary repositories for the given exercise.

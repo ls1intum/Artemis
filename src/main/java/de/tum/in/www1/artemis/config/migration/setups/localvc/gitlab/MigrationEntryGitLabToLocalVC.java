@@ -72,12 +72,9 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
     }
 
     @Override
-    public boolean execute() {
-        boolean result = super.execute();
-        if (result) {
-            userRepository.clearVCSTokens();
-        }
-        return result;
+    public void execute() {
+        super.execute();
+        userRepository.clearVCSTokens();
     }
 
     private String migrateTestRepo(ProgrammingExercise programmingExercise) throws URISyntaxException {

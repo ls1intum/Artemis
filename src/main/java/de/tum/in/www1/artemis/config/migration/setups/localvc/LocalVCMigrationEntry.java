@@ -23,9 +23,4 @@ public abstract class LocalVCMigrationEntry extends ProgrammingExerciseMigration
         super(programmingExerciseRepository, solutionProgrammingExerciseParticipationRepository, templateProgrammingExerciseParticipationRepository,
                 programmingExerciseStudentParticipationRepository, auxiliaryRepositoryRepository);
     }
-
-    @Override
-    protected boolean areValuesIncomplete() {
-        return false;
-    }
 }
