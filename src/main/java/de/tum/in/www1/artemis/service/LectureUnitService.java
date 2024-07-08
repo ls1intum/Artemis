@@ -85,7 +85,8 @@ public class LectureUnitService {
             if (existingCompletion.isEmpty()) {
                 LectureUnitCompletion completion = createLectureUnitCompletion(lectureUnit, user);
                 try {
-                    lectureUnitCompletionRepository.save(completion);
+                    // Flush, so that the asynchronous mastery calculation uses the correct completion status
+                    lectureUnitCompletionRepository.saveAndFlush(completion);
                 }
                 catch (DataIntegrityViolationException e) {
                     // In rare instances the completion status might already exist if this method runs in parallel.
@@ -94,7 +95,6 @@ public class LectureUnitService {
             }
         }
         else {
-            // Delete the completion status for this lecture unit (if it exists)
             existingCompletion.ifPresent(lectureUnitCompletionRepository::delete);
         }
     }
