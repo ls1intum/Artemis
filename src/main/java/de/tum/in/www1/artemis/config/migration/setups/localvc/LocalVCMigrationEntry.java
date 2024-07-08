@@ -26,10 +26,6 @@ public abstract class LocalVCMigrationEntry extends ProgrammingExerciseMigration
 
     @Override
     protected boolean areValuesIncomplete() {
-        if (localVCBaseUrl == null) {
-            getLogger().error("Migration failed because the local VC base URL is not configured.");
-            return true;
-        }
         return false;
     }
 }
