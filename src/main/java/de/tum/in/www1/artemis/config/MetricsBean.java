@@ -154,6 +154,8 @@ public class MetricsBean {
 
     private MultiGauge releaseExamStudentMultiplierGauge;
 
+    private MultiGauge activeAdminsGauge;
+
     private boolean scheduledMetricsEnabled = false;
 
     public MetricsBean(MeterRegistry meterRegistry, @Qualifier("taskScheduler") TaskScheduler scheduler, WebSocketMessageBrokerStats webSocketStats, SimpUserRegistry userRegistry,
@@ -213,11 +215,12 @@ public class MetricsBean {
             // Should only be activated if the scheduling profile is present, because these metrics are the same for all instances
             this.scheduledMetricsEnabled = true;
 
-            // Initial calculation is done in constructor to ensure the values are present before the first metrics are calculated
-            calculateCachedActiveUserNames();
-
+            registerActiveAdminMetrics();
             registerExerciseAndExamMetrics();
             registerPublicArtemisMetrics();
+
+            // Initial calculation is done in constructor to ensure the values are present before the first metrics are calculated
+            calculateActiveUserMetrics();
         }
 
         if (profileService.isLocalCiActive()) {
@@ -374,6 +377,10 @@ public class MetricsBean {
                 .description("Number of exams starting within the next minutes multiplied with students in the course").register(meterRegistry);
     }
 
+    private void registerActiveAdminMetrics() {
+        activeAdminsGauge = MultiGauge.builder("artemis.users.admins.active").description("User logins of active admin accounts").register(meterRegistry);
+    }
+
     /**
      * Calculate active users (active within the last 14 days) and store them in a List.
      * The calculation is performed every 60 minutes.
@@ -381,13 +388,15 @@ public class MetricsBean {
      * is called.
      */
     @Scheduled(fixedRate = 60 * 60 * 1000, initialDelay = 60 * 60 * 1000) // Every 60 minutes
-    public void calculateCachedActiveUserNames() {
+    public void calculateActiveUserMetrics() {
         var startDate = System.currentTimeMillis();
 
         // The authorization object has to be set because this method is not called by a user but by the scheduler
         SecurityUtils.setAuthorizationObject();
 
         cachedActiveUserNames = statisticsRepository.getActiveUserNames(ZonedDateTime.now().minusDays(14), ZonedDateTime.now());
+
+        updateActiveAdminsMetrics();
 
         log.debug("calculateCachedActiveUserLogins took {}ms", System.currentTimeMillis() - startDate);
     }
@@ -432,6 +441,20 @@ public class MetricsBean {
         updateMultiGaugeIntegerForMinuteRanges(releaseExamStudentMultiplierGauge, examRepository::countExamUsersInExamsWithStartDateBetween);
 
         log.debug("recalculateMetrics took {}ms", System.currentTimeMillis() - startDate);
+    }
+
+    /**
+     * Get all users that currently have the role ADMIN and update the activeAdminsGauge.
+     */
+    private void updateActiveAdminsMetrics() {
+        var activeAdmins = userRepository.findAllActiveAdminLogins();
+        var results = new ArrayList<MultiGauge.Row<?>>();
+
+        for (var activeAdmin : activeAdmins) {
+            results.add(MultiGauge.Row.of(Tags.of("admin", activeAdmin), 1));
+        }
+
+        activeAdminsGauge.register(results, true);
     }
 
     @FunctionalInterface

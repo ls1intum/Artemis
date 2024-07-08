@@ -319,7 +319,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     /** Navigate to a new Course */
     switchCourse(course: Course) {
         this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
-            this.router.navigate(['courses', course.id]);
+            this.router.navigate(['courses', course.id, 'exercises']);
         });
     }
 
