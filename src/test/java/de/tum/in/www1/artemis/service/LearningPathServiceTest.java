@@ -257,11 +257,6 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
         }
 
         @Test
-        void testSingleRelates() {
-            testSimpleRelation(RelationType.RELATES);
-        }
-
-        @Test
         void testSingleAssumes() {
             testSimpleRelation(RelationType.ASSUMES);
         }
@@ -419,10 +414,10 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
             Competency[] priors2 = competencyUtilService.createCompetencies(course, future(111), future(113), future(115));
 
             for (var competency : priors1) {
-                competencyUtilService.addRelation(competency1, RelationType.RELATES, competency);
+                competencyUtilService.addRelation(competency1, RelationType.ASSUMES, competency);
             }
             for (var competency : priors2) {
-                competencyUtilService.addRelation(competency2, RelationType.RELATES, competency);
+                competencyUtilService.addRelation(competency2, RelationType.ASSUMES, competency);
             }
             masterCompetencies(priors1);
             masterCompetencies(priors2[0]);
