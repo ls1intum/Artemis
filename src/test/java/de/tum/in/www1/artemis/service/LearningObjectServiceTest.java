@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.StudentScoreUtilService;
@@ -19,9 +20,12 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.LearningObject;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.lecture.LectureFactory;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 
 class LearningObjectServiceTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -39,6 +43,9 @@ class LearningObjectServiceTest extends AbstractSpringIntegrationIndependentTest
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
     private User student;
 
     private Course course;
@@ -55,6 +62,22 @@ class LearningObjectServiceTest extends AbstractSpringIntegrationIndependentTest
     void testIsCompletedByUserExercise(boolean completed) {
         var programmingExercise = course.getExercises().stream().findFirst().get();
         studentScoreUtilService.createStudentScore(programmingExercise, student, completed ? 84.0 : 42.0);
+
+        assertThat(learningObjectService.isCompletedByUser(programmingExercise, student)).isEqualTo(completed);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {arguments}")
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testIsCompletedByUserManuallyAssessedExercise(boolean completed) {
+        var programmingExercise = course.getExercises().stream().findFirst().get();
+        programmingExercise.setAssessmentType(AssessmentType.MANUAL);
+        exerciseRepository.save(programmingExercise);
+
+        if (completed) {
+            Participation participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, student.getLogin());
+            programmingExerciseUtilService.createProgrammingSubmission(participation, false);
+        }
 
         assertThat(learningObjectService.isCompletedByUser(programmingExercise, student)).isEqualTo(completed);
     }
