@@ -50,18 +50,19 @@ export class RangeSliderComponent implements OnInit, OnDestroy {
         });
     }
 
-    onSelectedMinValueChanged(event: any): void {
+    onSelectedMinValueChanged(event: Event): void {
         const updatedMinValue = this.ensureMinValueIsSmallerThanMaxValueViceVersa(event);
         this.selectedMinValueChange.emit(updatedMinValue);
     }
 
-    onSelectedMaxValueChanged(event: any): void {
+    onSelectedMaxValueChanged(event: Event): void {
         const updatedMaxValue = this.ensureMinValueIsSmallerThanMaxValueViceVersa(event);
         this.selectedMaxValueChange.emit(updatedMaxValue);
     }
 
-    private ensureMinValueIsSmallerThanMaxValueViceVersa(event: any): number {
-        const minSliderIsUpdated = event.target.className.includes('range-min');
+    private ensureMinValueIsSmallerThanMaxValueViceVersa(event: Event): number {
+        const input = event.target as HTMLInputElement;
+        const minSliderIsUpdated = input.className.includes('range-min');
 
         if (minSliderIsUpdated) {
             if (this.selectedMinValue >= this.selectedMaxValue) {
