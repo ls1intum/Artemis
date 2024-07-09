@@ -128,17 +128,19 @@ describe('SidebarComponent', () => {
     });
 
     describe('openFilterExercisesLink', () => {
+        const FILTER_LINK_SELECTOR = '.link-primary a';
+
         it('should display the filter link when sidebarType is exercise', () => {
             component.sidebarData.sidebarType = 'exercise';
             fixture.detectChanges();
 
-            const filterLink = fixture.debugElement.query(By.css('a.ms-2'));
+            const filterLink = fixture.debugElement.query(By.css(FILTER_LINK_SELECTOR));
 
             expect(filterLink).toBeTruthy();
         });
 
         it('should NOT display the filter link when sidebarType is NOT exercise', () => {
-            const filterLink = fixture.debugElement.query(By.css('a.ms-2'));
+            const filterLink = fixture.debugElement.query(By.css(FILTER_LINK_SELECTOR));
 
             expect(filterLink).toBeFalsy();
         });
@@ -158,7 +160,7 @@ describe('SidebarComponent', () => {
             const openModalSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
             const initFilterOptionsSpy = jest.spyOn(component, 'initializeFilterOptions');
 
-            const filterLink = fixture.debugElement.query(By.css('a.ms-2')).nativeElement;
+            const filterLink = fixture.debugElement.query(By.css(FILTER_LINK_SELECTOR)).nativeElement;
             filterLink.click();
 
             expect(initFilterOptionsSpy).toHaveBeenCalled();

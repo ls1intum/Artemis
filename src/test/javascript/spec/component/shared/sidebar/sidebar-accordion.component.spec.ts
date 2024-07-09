@@ -63,10 +63,6 @@ describe('SidebarAccordionComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should create', () => {
-        expect(component).toBeTruthy();
-    });
-
     it('should toggle collapse state for a group', () => {
         const groupKey = 'noDate';
         component.toggleGroupCategoryCollapse(groupKey);
