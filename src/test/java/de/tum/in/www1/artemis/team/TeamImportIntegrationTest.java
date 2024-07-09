@@ -24,16 +24,12 @@ import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.TeamImportStrategyType;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 
 class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private TeamRepository teamRepo;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     @Autowired
     private TeamUtilService teamUtilService;

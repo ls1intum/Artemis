@@ -72,7 +72,6 @@ import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestionStatistic;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSolution;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSpot;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
@@ -126,9 +125,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Autowired
     private ExamUtilService examUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     @Autowired
     private QuizExerciseUtilService quizExerciseUtilService;

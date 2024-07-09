@@ -60,7 +60,6 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.fileupload.FileUploadExerciseFactory;
 import de.tum.in.www1.artemis.exercise.fileupload.FileUploadExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
@@ -118,9 +117,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Autowired
     private TextAssessmentService textAssessmentService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     @Autowired
     private ParticipationUtilService participationUtilService;

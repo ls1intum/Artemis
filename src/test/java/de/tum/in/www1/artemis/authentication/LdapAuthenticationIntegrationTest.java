@@ -26,7 +26,6 @@ import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -56,9 +55,6 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
 
     @Autowired
     protected CourseUtilService courseUtilService;
-
-    @Autowired
-    protected ExerciseUtilService exerciseUtilService;
 
     private static final String NON_EXISTING_USERNAME = TEST_PREFIX + "na";
 

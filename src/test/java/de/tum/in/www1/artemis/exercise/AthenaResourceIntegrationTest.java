@@ -66,9 +66,6 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     private ModelingExerciseUtilService modelingExerciseUtilService;
 
     @Autowired
-    private ExerciseUtilService exerciseUtilService;
-
-    @Autowired
     private TextSubmissionRepository textSubmissionRepository;
 
     @Autowired
