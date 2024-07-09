@@ -18,6 +18,9 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseFilterModalComponent } from 'app/shared/exercise-filter/exercise-filter-modal.component';
 import { ExerciseFilterResults } from 'app/types/exercise-filter';
 import { EventEmitter } from '@angular/core';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 describe('SidebarComponent', () => {
     let component: SidebarComponent;
@@ -185,6 +188,59 @@ describe('SidebarComponent', () => {
 
             expect(openSpy).toHaveBeenCalledOnce();
             expect(subscribeSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should update variables correctly when filterApplied is emitted', () => {
+            const filterAppliedEmitter = new EventEmitter<ExerciseFilterResults>();
+            const mockModalRef: Partial<NgbModalRef> = {
+                componentInstance: {
+                    filterApplied: filterAppliedEmitter,
+                },
+            };
+            jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+
+            const mockFilterResults: ExerciseFilterResults = {
+                filteredSidebarData: {
+                    sidebarType: 'exercise',
+                    groupByCategory: true,
+                    ungroupedData: [{ title: 'test sidebar card element' } as SidebarCardElement],
+                    groupedData: {
+                        testGroup: {
+                            entityData: [{ title: 'test group element' } as SidebarCardElement],
+                        },
+                    },
+                },
+                appliedExerciseFilters: {
+                    categoryFilter: {
+                        isDisplayed: true,
+                        options: [
+                            {
+                                category: new ExerciseCategory('test', undefined),
+                                searched: true,
+                            },
+                        ],
+                    },
+                    exerciseTypesFilter: {
+                        isDisplayed: true,
+                        options: [
+                            {
+                                name: 'testType',
+                                value: ExerciseType.PROGRAMMING,
+                                checked: true,
+                                icon: 'testIcon' as unknown as IconProp,
+                            },
+                        ],
+                    },
+                },
+                isFilterActive: true,
+            };
+
+            component.openFilterExercisesDialog();
+            filterAppliedEmitter.emit(mockFilterResults);
+
+            expect(component.sidebarData).toEqual(mockFilterResults.filteredSidebarData);
+            expect(component.exerciseFilters).toEqual(mockFilterResults.appliedExerciseFilters);
+            expect(component.isFilterActive).toBeTrue();
         });
     });
 });
