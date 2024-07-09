@@ -615,7 +615,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         verify(programmingMessagingService, timeout(2000).times(2)).notifyUserAboutNewResult(resultCaptor.capture(), any());
 
-        Result invokedResult = resultCaptor.getAllValues().get(0);
+        Result invokedResult = resultCaptor.getAllValues().getFirst();
         assertThat(invokedResult).isNotNull();
         assertThat(invokedResult.getId()).isNotNull();
         assertThat(invokedResult.isSuccessful()).isTrue();
@@ -661,7 +661,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         verify(programmingMessagingService, timeout(2000).times(2)).notifyUserAboutNewResult(resultCaptor.capture(), any());
 
-        Result invokedResult = resultCaptor.getAllValues().get(0);
+        Result invokedResult = resultCaptor.getAllValues().getFirst();
         assertThat(invokedResult).isNotNull();
         assertThat(invokedResult.getId()).isNotNull();
         assertThat(invokedResult.isSuccessful()).isFalse();
@@ -747,7 +747,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var participations = request.getList("/api/exercises/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class, params);
         assertThat(participations).as("Exactly 4 participations are returned").hasSize(4).as("Only participation that has student are returned")
                 .allMatch(p -> p.getStudent().isPresent());
-        StudentParticipation receivedOnlyParticipation = participations.stream().filter(p -> p.getParticipant().equals(students.get(0))).findFirst().orElseThrow();
+        StudentParticipation receivedOnlyParticipation = participations.stream().filter(p -> p.getParticipant().equals(students.getFirst())).findFirst().orElseThrow();
         StudentParticipation receivedParticipationWithResult = participations.stream().filter(p -> p.getParticipant().equals(students.get(1))).findFirst().orElseThrow();
         StudentParticipation receivedParticipationWithOnlySubmission = participations.stream().filter(p -> p.getParticipant().equals(students.get(2))).findFirst().orElseThrow();
         StudentParticipation receivedTestParticipation = participations.stream().filter(p -> p.getParticipant().equals(students.get(3))).findFirst().orElseThrow();
@@ -1034,7 +1034,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
                 StudentParticipation.class, HttpStatus.OK);
 
         assertThat(response).hasSize(1);
-        assertThat(response.get(0).getIndividualDueDate()).isCloseTo(submission.getParticipation().getIndividualDueDate(), HalfSecond());
+        assertThat(response.getFirst().getIndividualDueDate()).isCloseTo(submission.getParticipation().getIndividualDueDate(), HalfSecond());
 
         verify(programmingExerciseScheduleService, never()).updateScheduling(any());
     }
@@ -1061,7 +1061,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
                 StudentParticipation.class, HttpStatus.OK);
 
         assertThat(response).hasSize(1);
-        assertThat(response.get(0).getIndividualDueDate()).isCloseTo(participation.getIndividualDueDate(), HalfSecond());
+        assertThat(response.getFirst().getIndividualDueDate()).isCloseTo(participation.getIndividualDueDate(), HalfSecond());
 
         verify(programmingExerciseScheduleService).updateScheduling(exercise);
         verify(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(participation);
@@ -1269,7 +1269,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         var participations = participationService.findByExerciseAndStudentIdWithEagerSubmissions(exercise, student.getId());
         assertThat(participations).hasSize(1);
-        assertThat(participations.get(0).getId()).isEqualTo(participation.getId());
+        assertThat(participations.getFirst().getId()).isEqualTo(participation.getId());
     }
 
     @Test
@@ -1286,7 +1286,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         var participations = participationService.findByExerciseAndStudentId(exercise, student.getId());
         assertThat(participations).hasSize(1);
-        assertThat(participations.get(0).getId()).isEqualTo(participation.getId());
+        assertThat(participations.getFirst().getId()).isEqualTo(participation.getId());
     }
 
     @Test
@@ -1428,13 +1428,13 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         quizExercise.setQuizPointStatistic(new QuizPointStatistic());
         quizExercise = exerciseRepo.save(quizExercise);
 
-        ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(0);
+        ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().getFirst();
         List<ShortAnswerSpot> spots = saQuestion.getSpots();
         ShortAnswerSubmittedAnswer submittedAnswer = new ShortAnswerSubmittedAnswer();
         submittedAnswer.setQuizQuestion(saQuestion);
 
         ShortAnswerSubmittedText text = new ShortAnswerSubmittedText();
-        text.setSpot(spots.get(0));
+        text.setSpot(spots.getFirst());
         text.setText("test");
         submittedAnswer.addSubmittedTexts(text);
 
@@ -1469,7 +1469,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         Exam examWithExerciseGroups = ExamFactory.generateExamWithExerciseGroup(course, false);
         examRepository.save(examWithExerciseGroups);
-        var exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
+        var exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().getFirst();
         programmingExercise = exerciseRepo.save(ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup1));
         course.addExercises(programmingExercise);
         course = courseRepo.save(course);

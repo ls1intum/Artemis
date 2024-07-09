@@ -53,7 +53,7 @@ class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegratio
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 1, 5, 0, 1);
         var courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 5);
-        course1 = courses.get(0);
+        course1 = courses.getFirst();
         exercise = course1.getExercises().iterator().next();
     }
 
@@ -64,7 +64,7 @@ class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegratio
         assertThat(tutorParticipations).hasSize(5);
 
         User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
-        TutorParticipation tutorParticipation = tutorParticipations.get(0);
+        TutorParticipation tutorParticipation = tutorParticipations.getFirst();
         tutorParticipation.tutor(tutor).assessedExercise(exercise);
         tutorParticipationRepository.save(tutorParticipation);
 

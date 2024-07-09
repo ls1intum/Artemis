@@ -114,7 +114,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         existingPostsWithAnswersCourseWide = existingConversationPostsWithAnswers.stream()
                 .filter(coursePost -> coursePost.getConversation() instanceof Channel channel && channel.getIsCourseWide()).toList();
 
-        Course course = ((Channel) existingPostsWithAnswersInExercise.get(0).getConversation()).getExercise().getCourseViaExerciseGroupOrCourseMember();
+        Course course = ((Channel) existingPostsWithAnswersInExercise.getFirst().getConversation()).getExercise().getCourseViaExerciseGroupOrCourseMember();
         courseUtilService.enableMessagingForCourse(course);
         courseId = course.getId();
     }
@@ -190,7 +190,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     private void testCreateChannelAnswer(Channel channel, NotificationType notificationType, int wantedNumberOfWSMessages) throws Exception {
-        Post message = existingConversationPostsWithAnswers.get(0);
+        Post message = existingConversationPostsWithAnswers.getFirst();
         message.setConversation(channel);
         Post savedMessage = conversationMessageRepository.save(message);
 
@@ -242,7 +242,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testCreateConversationAnswerPostWithUserMentionOfUserNotInConversation() throws Exception {
-        AnswerPost answerPostToSave = createAnswerPost(existingConversationPostsWithAnswers.get(0));
+        AnswerPost answerPostToSave = createAnswerPost(existingConversationPostsWithAnswers.getFirst());
         User mentionedUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         answerPostToSave.setContent("[user]" + mentionedUser.getName() + "(" + mentionedUser.getLogin() + ")[/user]");
 
@@ -268,7 +268,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(persistedCourse.getCourseInformationSharingConfiguration()).isEqualTo(CourseInformationSharingConfiguration.DISABLED);
 
         var countBefore = answerPostRepository.count();
-        AnswerPost postToSave = createAnswerPost(existingConversationPostsWithAnswers.get(0));
+        AnswerPost postToSave = createAnswerPost(existingConversationPostsWithAnswers.getFirst());
 
         AnswerPost notCreatedAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-messages", postToSave, AnswerPost.class, HttpStatus.BAD_REQUEST);
 
@@ -286,7 +286,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateConversationAnswerPost_badRequest() throws Exception {
-        AnswerPost answerPostToSave = createAnswerPost(existingConversationPostsWithAnswers.get(0));
+        AnswerPost answerPostToSave = createAnswerPost(existingConversationPostsWithAnswers.getFirst());
         answerPostToSave.setId(999L);
 
         var countBefore = answerPostRepository.count();
@@ -341,7 +341,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @WithMockUser(username = TEST_PREFIX + "student1")
     void testEditConversationAnswerPostWithUserMention(String userMention, boolean isUserMentionValid) throws Exception {
         // conversation answerPost of student1 must be editable by them
-        AnswerPost conversationAnswerPostToUpdate = existingConversationPostsWithAnswers.get(0).getAnswers().iterator().next();
+        AnswerPost conversationAnswerPostToUpdate = existingConversationPostsWithAnswers.getFirst().getAnswers().iterator().next();
         conversationAnswerPostToUpdate.setContent("User changes one of their conversation answerPosts" + userMention);
 
         if (!isUserMentionValid) {
@@ -358,7 +358,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
         // both conversation participants should be notified
         verify(websocketMessagingService, timeout(2000)).sendMessage(anyString(),
-                (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(existingConversationPostsWithAnswers.get(0))));
+                (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(existingConversationPostsWithAnswers.getFirst())));
     }
 
     @Test
@@ -534,7 +534,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testEditConversationAnswerPost_forbidden() throws Exception {
         // conversation answerPost of student1 must not be editable by tutors
-        AnswerPost conversationAnswerPostToUpdate = existingConversationPostsWithAnswers.get(0).getAnswers().iterator().next();
+        AnswerPost conversationAnswerPostToUpdate = existingConversationPostsWithAnswers.getFirst().getAnswers().iterator().next();
         conversationAnswerPostToUpdate.setContent("Tutor attempts to change some other user's conversation answerPost");
 
         AnswerPost notUpdatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-messages/" + conversationAnswerPostToUpdate.getId(),
@@ -550,7 +550,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testEditAnswerPostWithIdIsNull_badRequest() throws Exception {
         // updated answerMessage and provided answerMessageId should match
-        AnswerPost conversationAnswerPostToUpdate = existingConversationPostsWithAnswers.get(0).getAnswers().iterator().next();
+        AnswerPost conversationAnswerPostToUpdate = existingConversationPostsWithAnswers.getFirst().getAnswers().iterator().next();
         conversationAnswerPostToUpdate.setContent("User changes one of their conversation answerPosts");
 
         var countBefore = answerPostRepository.count();
@@ -568,7 +568,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testEditAnswerPostWithInvalidId_badRequest() throws Exception {
-        AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
+        AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswersCourseWide.getFirst());
 
         AnswerPost updatedAnswerPostServer = request.putWithResponseBody("/api/courses/" + courseId + "/answer-messages/" + answerPostToUpdate.getId(), answerPostToUpdate,
                 AnswerPost.class, HttpStatus.BAD_REQUEST);
@@ -581,7 +581,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testEditAnswerPostWithWrongCourseId_badRequest() throws Exception {
-        AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
+        AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswersCourseWide.getFirst());
         Course dummyCourse = courseUtilService.createCourse();
 
         AnswerPost updatedAnswerPostServer = request.putWithResponseBody("/api/courses/" + dummyCourse.getId() + "/answer-messages/" + answerPostToUpdate.getId(),
@@ -623,7 +623,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testDeleteConversationPost_forbidden() throws Exception {
         // conversation post of student1 must not be deletable by tutors
-        AnswerPost conversationAnswerPostToDelete = existingConversationPostsWithAnswers.get(0).getAnswers().iterator().next();
+        AnswerPost conversationAnswerPostToDelete = existingConversationPostsWithAnswers.getFirst().getAnswers().iterator().next();
         request.delete("/api/courses/" + courseId + "/answer-messages/" + conversationAnswerPostToDelete.getId(), HttpStatus.FORBIDDEN);
 
         assertThat(answerPostRepository.findById(conversationAnswerPostToDelete.getId())).isPresent();

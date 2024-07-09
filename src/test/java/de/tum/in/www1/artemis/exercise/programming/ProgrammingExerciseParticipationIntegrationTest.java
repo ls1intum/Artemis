@@ -363,7 +363,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
 
         addStudentParticipationWithResult(assessmentType, null);
         StudentParticipation participation = studentParticipationRepository
-                .findByExerciseIdAndStudentId(programmingExercise.getId(), userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId()).get(0);
+                .findByExerciseIdAndStudentId(programmingExercise.getId(), userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId()).getFirst();
 
         var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
         assertThat(requestedResult.getFeedbacks()).noneMatch(Feedback::isInvisible);

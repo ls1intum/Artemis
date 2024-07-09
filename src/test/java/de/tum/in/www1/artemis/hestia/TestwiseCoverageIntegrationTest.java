@@ -105,7 +105,7 @@ class TestwiseCoverageIntegrationTest extends AbstractSpringIntegrationIndepende
         assertThat(fullReport.getCoveredLineRatio()).isEqualTo(latestReport.getCoveredLineRatio());
         var fileReports = fullReport.getFileReports();
         assertThat(fileReports).hasSize(1);
-        var fileReport = fileReports.stream().toList().get(0);
+        var fileReport = fileReports.stream().toList().getFirst();
         assertThat(fileReport.getFilePath()).isEqualTo("src/de/tum/in/ase/BubbleSort.java");
         assertThat(fileReport.getCoveredLineCount()).isEqualTo(8);
         assertThat(fileReport.getLineCount()).isEqualTo(20);

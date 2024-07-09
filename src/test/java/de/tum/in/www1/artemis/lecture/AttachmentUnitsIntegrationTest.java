@@ -283,7 +283,7 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
         assertThat(attachmentUnitList).isEqualTo(attachmentUnits);
 
         // first unit
-        String attachmentPathFirstUnit = attachmentUnitList.get(0).getAttachment().getLink();
+        String attachmentPathFirstUnit = attachmentUnitList.getFirst().getAttachment().getLink();
         byte[] fileBytesFirst = request.get(attachmentPathFirstUnit, HttpStatus.OK, byte[].class);
 
         try (PDDocument document = Loader.loadPDF(fileBytesFirst)) {

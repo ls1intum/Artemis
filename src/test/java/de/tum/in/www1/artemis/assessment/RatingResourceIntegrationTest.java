@@ -157,7 +157,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
         final var ratings = request.getList("/api/course/" + course.getId() + "/rating", HttpStatus.OK, Rating.class);
 
         assertThat(ratings).hasSize(1);
-        assertThat(ratings.get(0).getId()).isEqualTo(savedRating.getId());
+        assertThat(ratings.getFirst().getId()).isEqualTo(savedRating.getId());
     }
 
     @Test

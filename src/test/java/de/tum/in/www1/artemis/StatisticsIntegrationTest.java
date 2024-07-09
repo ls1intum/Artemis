@@ -245,7 +245,7 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
         assertThat(firstTextExerciseStatistics.getExerciseName()).isEqualTo(laterTextExercise.getTitle());
 
         // take the first entry as the results are getting sorted for release dates
-        var secondTextExerciseStatistics = result.averageScoresOfExercises().get(0);
+        var secondTextExerciseStatistics = result.averageScoresOfExercises().getFirst();
         assertThat(secondTextExerciseStatistics.getAverageScore()).isEqualTo(40.0);
         assertThat(secondTextExerciseStatistics.getExerciseId()).isEqualTo(earlierTextExerciseId);
         assertThat(secondTextExerciseStatistics.getExerciseName()).isEqualTo(earlierTextExercise.getTitle());

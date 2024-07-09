@@ -251,7 +251,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         PageableSearchDTO<String> pageableSearchDTO = pageableSearchUtilService.configureFinishedJobsSearchDTO();
         var result = request.getList("/api/admin/finished-jobs", HttpStatus.OK, FinishedBuildJobDTO.class, pageableSearchUtilService.searchMapping(pageableSearchDTO, "pageable"));
         assertThat(result).hasSize(2);
-        assertThat(result.get(0).id()).isEqualTo(finishedJob1.getBuildJobId());
+        assertThat(result.getFirst().id()).isEqualTo(finishedJob1.getBuildJobId());
         assertThat(result.get(1).id()).isEqualTo(finishedJob2.getBuildJobId());
     }
 

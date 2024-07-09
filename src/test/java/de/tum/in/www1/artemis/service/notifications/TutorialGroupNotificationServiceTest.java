@@ -103,7 +103,7 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationInde
 
     private void verifyRepositoryCallWithCorrectNotification(int numberOfGroupsAndCalls, String expectedNotificationTitle) {
         List<TutorialGroupNotification> capturedNotifications = tutorialGroupNotificationRepository.findAll();
-        Notification capturedNotification = capturedNotifications.get(0);
+        Notification capturedNotification = capturedNotifications.getFirst();
         assertThat(capturedNotification.getTitle()).isEqualTo(expectedNotificationTitle);
         assertThat(capturedNotifications).hasSize(numberOfGroupsAndCalls);
     }

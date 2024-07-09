@@ -385,7 +385,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
 
         // multiple correct answers are not allowed
-        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
         mc.setSingleChoice(true);
         mc.getAnswerOptions().get(1).setIsCorrect(true);
 
@@ -398,7 +398,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testUpdateQuizExercise_SingleChoiceMC_badRequest(ScoringType scoringType) throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
 
-        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
         mc.setSingleChoice(true);
         mc.setScoringType(scoringType);
 
@@ -527,7 +527,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testUpdateRunningQuizExercise() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().minusHours(1), null, QuizMode.SYNCHRONIZED);
 
-        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
         mc.getAnswerOptions().remove(0);
         mc.getAnswerOptions().add(new AnswerOption().text("C").hint("H3").explanation("E3").isCorrect(true));
 
@@ -631,7 +631,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         List<QuizExercise> quizExercises = request.getList("/api/exams/" + examId + "/quiz-exercises", OK, QuizExercise.class);
         assertThat(quizExercises).as("Quiz exercise was retrieved").hasSize(1);
-        assertThat(quizExercise.getId()).as("Quiz exercise with the right id was retrieved").isEqualTo(quizExercises.get(0).getId());
+        assertThat(quizExercise.getId()).as("Quiz exercise with the right id was retrieved").isEqualTo(quizExercises.getFirst().getId());
     }
 
     @Test
@@ -779,7 +779,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         log.debug("QuizPointStatistic after re-evaluate (without changes): {}", quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
 
         // remove wrong answer option and reevaluate
-        var multipleChoiceQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        var multipleChoiceQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
         multipleChoiceQuestion.getAnswerOptions().remove(1);
 
         reevalQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), OK);
@@ -787,7 +787,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         // load the exercise again after it was re-evaluated
         quizExerciseWithReevaluatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId(), OK, QuizExercise.class);
 
-        var multipleChoiceQuestionAfterReevaluate = (MultipleChoiceQuestion) quizExerciseWithReevaluatedStatistics.getQuizQuestions().get(0);
+        var multipleChoiceQuestionAfterReevaluate = (MultipleChoiceQuestion) quizExerciseWithReevaluatedStatistics.getQuizQuestions().getFirst();
         assertThat(multipleChoiceQuestionAfterReevaluate.getAnswerOptions()).hasSize(1);
 
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic()).isEqualTo(quizExercise.getQuizPointStatistic());
@@ -834,7 +834,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testReevaluateStatistics_Practice() throws Exception {
         QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusSeconds(5), null, QuizMode.SYNCHRONIZED);
         // use the exact other scoring types to cover all combinations in the tests
-        quizExercise.getQuizQuestions().get(0).setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);   // MC
+        quizExercise.getQuizQuestions().getFirst().setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);   // MC
         quizExercise.getQuizQuestions().get(1).setScoringType(ScoringType.ALL_OR_NOTHING);              // DnD
         quizExercise.getQuizQuestions().get(2).setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);   // SA
 
@@ -884,7 +884,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         log.debug("QuizPointStatistic after re-evaluate (without changes): {}", quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
 
         // remove wrong answer option and reevaluate
-        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExerciseWithReevaluatedStatistics.getQuizQuestions().get(0);
+        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExerciseWithReevaluatedStatistics.getQuizQuestions().getFirst();
         mc.getAnswerOptions().remove(1);
 
         quizExerciseWithReevaluatedStatistics = reevalQuizExerciseWithFiles(quizExerciseWithReevaluatedStatistics, quizExercise.getId(), List.of(), OK);
@@ -940,7 +940,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
             newMapping.setInvalid(false);
             newMapping.setShortAnswerSolutionIndex(2);
             newMapping.setSolution(newSolution);
-            newMapping.setSpot(shortAnswerQuestion.getSpots().get(0));
+            newMapping.setSpot(shortAnswerQuestion.getSpots().getFirst());
             newMapping.setShortAnswerSpotIndex(0);
             shortAnswerQuestion.getCorrectMappings().add(newMapping);
             quizExercise.getQuizQuestions().remove(2);
@@ -968,7 +968,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         var newResult = resultRepository.findDistinctBySubmissionId(submission.getId());
         assertThat(newResult).isPresent();
-        assertThat(newResult.get()).isEqualTo(submission.getResults().get(0));
+        assertThat(newResult.get()).isEqualTo(submission.getResults().getFirst());
     }
 
     @Test
@@ -1515,7 +1515,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         int validityThreshold = 500;
         QuizExercise quizExercise = createMultipleChoiceQuizExercise();
 
-        MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
         question.setExplanation("0".repeat(validityThreshold));
 
         createQuizExerciseWithFiles(quizExercise, HttpStatus.CREATED, true);
@@ -1530,7 +1530,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         int validityThreshold = 500;
         QuizExercise quizExercise = createMultipleChoiceQuizExercise();
 
-        MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
         question.setExplanation("0".repeat(validityThreshold + 1));
 
         createQuizExerciseWithFiles(quizExercise, HttpStatus.INTERNAL_SERVER_ERROR, true);
@@ -1545,8 +1545,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         int validityThreshold = 500;
         QuizExercise quizExercise = createMultipleChoiceQuizExercise();
 
-        MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
-        question.getAnswerOptions().get(0).setExplanation("0".repeat(validityThreshold));
+        MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
+        question.getAnswerOptions().getFirst().setExplanation("0".repeat(validityThreshold));
 
         createQuizExerciseWithFiles(quizExercise, HttpStatus.CREATED, true);
     }
@@ -1560,8 +1560,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         int validityThreshold = 500;
         QuizExercise quizExercise = createMultipleChoiceQuizExercise();
 
-        MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
-        question.getAnswerOptions().get(0).setExplanation("0".repeat(validityThreshold + 1));
+        MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
+        question.getAnswerOptions().getFirst().setExplanation("0".repeat(validityThreshold + 1));
 
         createQuizExerciseWithFiles(quizExercise, HttpStatus.INTERNAL_SERVER_ERROR, true);
     }
@@ -1631,7 +1631,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         List<DragAndDropQuestion> dragAndDropQuestions = quizExercise.getQuizQuestions().stream().filter(q -> q instanceof DragAndDropQuestion).map(q -> (DragAndDropQuestion) q)
                 .toList();
-        DragAndDropQuestion question = dragAndDropQuestions.get(0);
+        DragAndDropQuestion question = dragAndDropQuestions.getFirst();
         question.setBackgroundFilePath(newBackgroundFilePath);
         DragItem item = question.getDragItems().get(1);
         item.setPictureFilePath(newPictureFilePath);
@@ -1735,10 +1735,10 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 assertThat(multipleChoiceQuestion.getPoints()).as("Multiple choice question score is correct").isEqualTo(4);
 
                 List<AnswerOption> answerOptions = multipleChoiceQuestion.getAnswerOptions();
-                assertThat(answerOptions.get(0).getText()).as("Text for answer option is correct").isEqualTo("A");
-                assertThat(answerOptions.get(0).getHint()).as("Hint for answer option is correct").isEqualTo("H1");
-                assertThat(answerOptions.get(0).getExplanation()).as("Explanation for answer option is correct").isEqualTo("E1");
-                assertThat(answerOptions.get(0).isIsCorrect()).as("Is correct for answer option is correct").isTrue();
+                assertThat(answerOptions.getFirst().getText()).as("Text for answer option is correct").isEqualTo("A");
+                assertThat(answerOptions.getFirst().getHint()).as("Hint for answer option is correct").isEqualTo("H1");
+                assertThat(answerOptions.getFirst().getExplanation()).as("Explanation for answer option is correct").isEqualTo("E1");
+                assertThat(answerOptions.getFirst().isIsCorrect()).as("Is correct for answer option is correct").isTrue();
                 assertThat(answerOptions.get(1).getText()).as("Text for answer option is correct").isEqualTo("B");
                 assertThat(answerOptions.get(1).getHint()).as("Hint for answer option is correct").isEqualTo("H2");
                 assertThat(answerOptions.get(1).getExplanation()).as("Explanation for answer option is correct").isEqualTo("E2");
@@ -1752,11 +1752,11 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 assertThat(dragAndDropQuestion.getPoints()).as("Drag and drop question score is correct").isEqualTo(3);
 
                 List<DropLocation> dropLocations = dragAndDropQuestion.getDropLocations();
-                assertThat(dropLocations.get(0).getPosX()).as("Pos X for drop location is correct").isEqualTo(10);
-                assertThat(dropLocations.get(0).getPosY()).as("Pos Y for drop location is correct").isEqualTo(10);
-                assertThat(dropLocations.get(0).getWidth()).as("Width for drop location is correct").isEqualTo(10);
-                assertThat(dropLocations.get(0).getHeight()).as("Height for drop location is correct").isEqualTo(10);
-                assertThat(dropLocations.get(0).getQuestion()).isNotNull();
+                assertThat(dropLocations.getFirst().getPosX()).as("Pos X for drop location is correct").isEqualTo(10);
+                assertThat(dropLocations.getFirst().getPosY()).as("Pos Y for drop location is correct").isEqualTo(10);
+                assertThat(dropLocations.getFirst().getWidth()).as("Width for drop location is correct").isEqualTo(10);
+                assertThat(dropLocations.getFirst().getHeight()).as("Height for drop location is correct").isEqualTo(10);
+                assertThat(dropLocations.getFirst().getQuestion()).isNotNull();
                 assertThat(dropLocations.get(1).getPosX()).as("Pos X for drop location is correct").isEqualTo(20);
                 assertThat(dropLocations.get(1).getPosY()).as("Pos Y for drop location is correct").isEqualTo(20);
                 assertThat(dropLocations.get(1).getWidth()).as("Width for drop location is correct").isEqualTo(10);
@@ -1774,8 +1774,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 assertThat(dropLocations.get(3).getQuestion()).isNotNull();
 
                 List<DragItem> dragItems = dragAndDropQuestion.getDragItems();
-                assertThat(dragItems.get(0).getText()).as("Text for drag item is correct").isEqualTo("D1");
-                assertThat(dragItems.get(0).getPictureFilePath()).as("Picture file path for drag item is correct").isNull();
+                assertThat(dragItems.getFirst().getText()).as("Text for drag item is correct").isEqualTo("D1");
+                assertThat(dragItems.getFirst().getPictureFilePath()).as("Picture file path for drag item is correct").isNull();
                 assertThat(dragItems.get(1).getText()).as("Text for drag item is correct").isNull();
                 assertThat(dragItems.get(1).getPictureFilePath()).as("Picture file path for drag item is correct").isNotEmpty();
                 assertThat(dragItems.get(2).getText()).as("Text for drag item is correct").isEqualTo("D3");
@@ -1799,13 +1799,13 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 assertThat(shortAnswerQuestion.getPoints()).as("Short answer question score is correct").isEqualTo(2);
 
                 List<ShortAnswerSpot> spots = shortAnswerQuestion.getSpots();
-                assertThat(spots.get(0).getSpotNr()).as("Spot nr for spot is correct").isZero();
-                assertThat(spots.get(0).getWidth()).as("Width for spot is correct").isEqualTo(1);
+                assertThat(spots.getFirst().getSpotNr()).as("Spot nr for spot is correct").isZero();
+                assertThat(spots.getFirst().getWidth()).as("Width for spot is correct").isEqualTo(1);
                 assertThat(spots.get(1).getSpotNr()).as("Spot nr for spot is correct").isEqualTo(2);
                 assertThat(spots.get(1).getWidth()).as("Width for spot is correct").isEqualTo(2);
 
                 List<ShortAnswerSolution> solutions = shortAnswerQuestion.getSolutions();
-                assertThat(solutions.get(0).getText()).as("Text for solution is correct").isEqualTo("is");
+                assertThat(solutions.getFirst().getText()).as("Text for solution is correct").isEqualTo("is");
                 assertThat(solutions.get(1).getText()).as("Text for solution is correct").isEqualTo("long");
             }
         }
@@ -1825,10 +1825,10 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 assertThat(multipleChoiceQuestion.getPoints()).as("Multiple choice question score is correct").isEqualTo(4);
 
                 List<AnswerOption> answerOptions = multipleChoiceQuestion.getAnswerOptions();
-                assertThat(answerOptions.get(0).getText()).as("Text for answer option is correct").isEqualTo("B");
-                assertThat(answerOptions.get(0).getHint()).as("Hint for answer option is correct").isEqualTo("H2");
-                assertThat(answerOptions.get(0).getExplanation()).as("Explanation for answer option is correct").isEqualTo("E2");
-                assertThat(answerOptions.get(0).isIsCorrect()).as("Is correct for answer option is correct").isFalse();
+                assertThat(answerOptions.getFirst().getText()).as("Text for answer option is correct").isEqualTo("B");
+                assertThat(answerOptions.getFirst().getHint()).as("Hint for answer option is correct").isEqualTo("H2");
+                assertThat(answerOptions.getFirst().getExplanation()).as("Explanation for answer option is correct").isEqualTo("E2");
+                assertThat(answerOptions.getFirst().isIsCorrect()).as("Is correct for answer option is correct").isFalse();
                 assertThat(answerOptions.get(1).getText()).as("Text for answer option is correct").isEqualTo("C");
                 assertThat(answerOptions.get(1).getHint()).as("Hint for answer option is correct").isEqualTo("H3");
                 assertThat(answerOptions.get(1).getExplanation()).as("Explanation for answer option is correct").isEqualTo("E3");
@@ -1846,10 +1846,10 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 assertThat(dragAndDropQuestion.getPoints()).as("Drag and drop question score is correct").isEqualTo(3);
 
                 List<DropLocation> dropLocations = dragAndDropQuestion.getDropLocations();
-                assertThat(dropLocations.get(0).getPosX()).as("Pos X for drop location is correct").isEqualTo(20);
-                assertThat(dropLocations.get(0).getPosY()).as("Pos Y for drop location is correct").isEqualTo(20);
-                assertThat(dropLocations.get(0).getWidth()).as("Width for drop location is correct").isEqualTo(10);
-                assertThat(dropLocations.get(0).getHeight()).as("Height for drop location is correct").isEqualTo(10);
+                assertThat(dropLocations.getFirst().getPosX()).as("Pos X for drop location is correct").isEqualTo(20);
+                assertThat(dropLocations.getFirst().getPosY()).as("Pos Y for drop location is correct").isEqualTo(20);
+                assertThat(dropLocations.getFirst().getWidth()).as("Width for drop location is correct").isEqualTo(10);
+                assertThat(dropLocations.getFirst().getHeight()).as("Height for drop location is correct").isEqualTo(10);
                 assertThat(dropLocations.get(1).getPosX()).as("Pos X for drop location is correct").isEqualTo(30);
                 assertThat(dropLocations.get(1).getPosY()).as("Pos Y for drop location is correct").isEqualTo(30);
                 assertThat(dropLocations.get(1).getWidth()).as("Width for drop location is correct").isEqualTo(10);
@@ -1860,8 +1860,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 assertThat(dropLocations.get(2).getHeight()).as("Height for drop location is correct").isEqualTo(10);
 
                 List<DragItem> dragItems = dragAndDropQuestion.getDragItems();
-                assertThat(dragItems.get(0).getText()).as("Text for drag item is correct").isNull();
-                assertThat(dragItems.get(0).getPictureFilePath()).as("Picture file path for drag item is correct").isNotEmpty();
+                assertThat(dragItems.getFirst().getText()).as("Text for drag item is correct").isNull();
+                assertThat(dragItems.getFirst().getPictureFilePath()).as("Picture file path for drag item is correct").isNotEmpty();
                 assertThat(dragItems.get(1).getText()).as("Text for drag item is correct").isEqualTo("D3");
                 assertThat(dragItems.get(1).getPictureFilePath()).as("Picture file path for drag item is correct").isNull();
                 assertThat(dragItems.get(2).getText()).as("Text for drag item is correct").isNull();
@@ -1875,17 +1875,17 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 assertThat(shortAnswerQuestion.getPoints()).as("Short answer question score is correct").isEqualTo(2);
 
                 List<ShortAnswerSpot> spots = shortAnswerQuestion.getSpots();
-                assertThat(spots.get(0).getSpotNr()).as("Spot nr for spot is correct").isEqualTo(2);
-                assertThat(spots.get(0).getWidth()).as("Width for spot is correct").isEqualTo(2);
+                assertThat(spots.getFirst().getSpotNr()).as("Spot nr for spot is correct").isEqualTo(2);
+                assertThat(spots.getFirst().getWidth()).as("Width for spot is correct").isEqualTo(2);
 
                 List<ShortAnswerSolution> solutions = shortAnswerQuestion.getSolutions();
-                assertThat(solutions.get(0).getText()).as("Text for solution is correct").isEqualTo("long");
+                assertThat(solutions.getFirst().getText()).as("Text for solution is correct").isEqualTo("long");
             }
         }
     }
 
     private void updateMultipleChoice(QuizExercise quizExercise) {
-        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
         mc.getAnswerOptions().remove(0);
         mc.getAnswerOptions().add(new AnswerOption().text("C").hint("H3").explanation("E3").isCorrect(true));
         mc.getAnswerOptions().add(new AnswerOption().text("D").hint("H4").explanation("E4").isCorrect(true));

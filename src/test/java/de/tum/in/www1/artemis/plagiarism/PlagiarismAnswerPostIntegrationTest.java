@@ -70,14 +70,14 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
         // get all answerPosts
         existingAnswerPosts = existingPostsWithAnswers.stream().map(Post::getAnswers).flatMap(Collection::stream).toList();
 
-        courseId = existingPostsWithAnswers.get(0).getPlagiarismCase().getExercise().getCourseViaExerciseGroupOrCourseMember().getId();
+        courseId = existingPostsWithAnswers.getFirst().getPlagiarismCase().getExercise().getCourseViaExerciseGroupOrCourseMember().getId();
     }
 
     @ParameterizedTest
     @MethodSource("userMentionProvider")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateAnswerPostWithUserMention(String userMention, boolean isUserMentionValid) throws Exception {
-        AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswers.get(0));
+        AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswers.getFirst());
         answerPostToSave.setContent(userMention);
 
         if (!isUserMentionValid) {
@@ -106,7 +106,7 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
         persistedCourse = courseRepository.saveAndFlush(persistedCourse);
         assertThat(persistedCourse.getCourseInformationSharingConfiguration()).isEqualTo(courseInformationSharingConfiguration);
 
-        AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswers.get(0));
+        AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswers.getFirst());
 
         var answerPostCount = answerPostRepository.count();
 
@@ -123,7 +123,7 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateExistingAnswerPost_badRequest() throws Exception {
-        AnswerPost existingAnswerPostToSave = existingAnswerPosts.get(0);
+        AnswerPost existingAnswerPostToSave = existingAnswerPosts.getFirst();
 
         var answerPostCount = answerPostRepository.count();
 
@@ -140,7 +140,7 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetPlagiarismPostsForCourse() throws Exception {
         var params = new LinkedMultiValueMap<String, String>();
-        params.add("plagiarismCaseId", existingPostsWithAnswers.get(0).getPlagiarismCase().getId().toString());
+        params.add("plagiarismCaseId", existingPostsWithAnswers.getFirst().getPlagiarismCase().getId().toString());
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
@@ -152,7 +152,7 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     void testGetPlagiarismPostsForCourse_Forbidden() throws Exception {
         // filterToOwn & filterToUnresolved set true; will fetch all unresolved posts of current user
         var params = new LinkedMultiValueMap<String, String>();
-        params.add("plagiarismCaseId", existingPostsWithAnswers.get(0).getPlagiarismCase().getId().toString());
+        params.add("plagiarismCaseId", existingPostsWithAnswers.getFirst().getPlagiarismCase().getId().toString());
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.FORBIDDEN, Post.class, params);
         assertThat(returnedPosts).isNull();
@@ -173,7 +173,7 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER ")
     void testEditAnswerPost_asStudent_Forbidden() throws Exception {
         // update post of student1 (index 0)--> FORBIDDEN
-        AnswerPost answerPostToUpdate = editExistingAnswerPost(existingAnswerPosts.get(0));
+        AnswerPost answerPostToUpdate = editExistingAnswerPost(existingAnswerPosts.getFirst());
 
         AnswerPost updatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPostToUpdate.getId(), answerPostToUpdate, AnswerPost.class,
                 HttpStatus.FORBIDDEN);
@@ -184,7 +184,7 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testEditAnswerPost_asStudent1() throws Exception {
         // update own post (index 0)--> OK
-        AnswerPost answerPostToUpdate = editExistingAnswerPost(existingAnswerPosts.get(0));
+        AnswerPost answerPostToUpdate = editExistingAnswerPost(existingAnswerPosts.getFirst());
 
         AnswerPost updatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPostToUpdate.getId(), answerPostToUpdate, AnswerPost.class,
                 HttpStatus.OK);
@@ -197,7 +197,7 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testEditAnswerPostWithUserMention(String userMention, boolean isUserMentionValid) throws Exception {
         // update own post (index 0)--> OK
-        AnswerPost answerPostToUpdate = editExistingAnswerPost(existingAnswerPosts.get(0));
+        AnswerPost answerPostToUpdate = editExistingAnswerPost(existingAnswerPosts.getFirst());
         answerPostToUpdate.setContent(userMention);
 
         if (!isUserMentionValid) {
@@ -215,7 +215,7 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testEditAnswerPost_asStudent2_forbidden() throws Exception {
         // update post from another student (index 1)--> forbidden
-        AnswerPost answerPostNotToUpdate = editExistingAnswerPost(existingAnswerPosts.get(0));
+        AnswerPost answerPostNotToUpdate = editExistingAnswerPost(existingAnswerPosts.getFirst());
 
         AnswerPost notUpdatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPostNotToUpdate.getId(), answerPostNotToUpdate,
                 AnswerPost.class, HttpStatus.FORBIDDEN);
@@ -225,7 +225,7 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testEditAnswerPostWithIdIsNull_badRequest() throws Exception {
-        AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswers.get(0));
+        AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswers.getFirst());
 
         AnswerPost updatedAnswerPostServer = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPostToUpdate.getId(), answerPostToUpdate,
                 AnswerPost.class, HttpStatus.BAD_REQUEST);
@@ -235,7 +235,7 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testEditAnswerPostWithWrongCourseId_badRequest() throws Exception {
-        AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswers.get(0));
+        AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswers.getFirst());
         Course dummyCourse = courseUtilService.createCourse();
 
         AnswerPost updatedAnswerPostServer = request.putWithResponseBody("/api/courses/" + dummyCourse.getId() + "/answer-posts/" + answerPostToUpdate.getId(), answerPostToUpdate,
@@ -246,7 +246,7 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testToggleResolvesPost() throws Exception {
-        AnswerPost answerPost = existingAnswerPosts.get(0);
+        AnswerPost answerPost = existingAnswerPosts.getFirst();
         AnswerPost answerPost2 = existingAnswerPosts.get(1);
 
         // confirm that answer post resolves the original post
@@ -281,7 +281,7 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testToggleResolvesPost_asPostAuthor() throws Exception {
         // author of the associated original post is instructor1
-        AnswerPost answerPost = existingAnswerPosts.get(0);
+        AnswerPost answerPost = existingAnswerPosts.getFirst();
 
         // confirm that answer post resolves the original post
         answerPost.setResolvesPost(true);
@@ -300,7 +300,7 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testToggleResolvesPost_notAuthor_forbidden() throws Exception {
         // author of the associated original post is student1, author of answer post is also student1
-        AnswerPost answerPost = existingAnswerPosts.get(0);
+        AnswerPost answerPost = existingAnswerPosts.getFirst();
 
         // confirm that answer post resolves the original post
         answerPost.setResolvesPost(true);
@@ -322,7 +322,7 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     void testDeleteAnswerPosts_asStudent1() throws Exception {
         var answerPostCount = answerPostRepository.count();
         // delete own post (index 0)--> OK
-        AnswerPost answerPostToDelete = existingAnswerPosts.get(0);
+        AnswerPost answerPostToDelete = existingAnswerPosts.getFirst();
 
         request.delete("/api/courses/" + courseId + "/answer-posts/" + answerPostToDelete.getId(), HttpStatus.OK);
         var newAnswerPostCount = answerPostRepository.count() - answerPostCount;
@@ -336,7 +336,7 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     void testDeleteAnswerPosts_asStudent2_forbidden() throws Exception {
         var answerPostCount = answerPostRepository.count();
         // delete post from another student (index 0) --> forbidden
-        AnswerPost answerPostToNotDelete = existingAnswerPosts.get(0);
+        AnswerPost answerPostToNotDelete = existingAnswerPosts.getFirst();
 
         request.delete("/api/courses/" + courseId + "/answer-posts/" + answerPostToNotDelete.getId(), HttpStatus.FORBIDDEN);
         var newAnswerPostCount = answerPostRepository.count() - answerPostCount;
@@ -350,7 +350,7 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     void testDeleteAnswerPost() throws Exception {
         var answerPostCount = answerPostRepository.count();
         // delete post from another student (index 0) --> ok
-        AnswerPost answerPostToDelete = existingAnswerPosts.get(0);
+        AnswerPost answerPostToDelete = existingAnswerPosts.getFirst();
 
         request.delete("/api/courses/" + courseId + "/answer-posts/" + answerPostToDelete.getId(), HttpStatus.OK);
         var newAnswerPostCount = answerPostRepository.count() - answerPostCount;
@@ -370,7 +370,7 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDeleteResolvingAnswerPost_asAuthor() throws Exception {
-        AnswerPost answerPostToDeleteWhichResolves = existingAnswerPosts.get(0);
+        AnswerPost answerPostToDeleteWhichResolves = existingAnswerPosts.getFirst();
 
         var countBefore = answerPostRepository.count();
         request.delete("/api/courses/" + courseId + "/answer-posts/" + answerPostToDeleteWhichResolves.getId(), HttpStatus.OK);

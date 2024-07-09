@@ -389,11 +389,11 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
 
                 var competencies = standardizedCompetencyRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
                 competencies = competencies.subList(competencies.size() - 2, competencies.size());
-                var competency1Actual = competencies.get(0);
+                var competency1Actual = competencies.getFirst();
                 var competency2Actual = competencies.get(1);
                 var knowledgeAreas = knowledgeAreaRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
                 knowledgeAreas = knowledgeAreas.subList(knowledgeAreas.size() - 2, knowledgeAreas.size());
-                var knowledgeArea1Actual = knowledgeAreas.get(0);
+                var knowledgeArea1Actual = knowledgeAreas.getFirst();
                 var knowledgeArea2Actual = knowledgeAreas.get(1);
                 var sources = sourceRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
                 sources = sources.subList(sources.size() - 2, sources.size());

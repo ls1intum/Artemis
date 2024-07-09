@@ -76,7 +76,7 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 1, 1);
         course = textExerciseUtilService.addCourseWithOneFinishedTextExercise();
-        textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         textPlagiarismResult = textExerciseUtilService.createTextPlagiarismResultForExercise(textExercise);
         var textSubmission = ParticipationFactory.generateTextSubmission("", Language.GERMAN, true);
 

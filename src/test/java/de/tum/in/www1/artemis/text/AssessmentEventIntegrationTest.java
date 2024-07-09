@@ -157,7 +157,7 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationIndependen
 
         var foundEvents = request.getList("/api/admin/event-insights/text-assessment/events/" + course.getId(), HttpStatus.OK, TextAssessmentEvent.class);
         assertThat(foundEvents).hasSize(1);
-        TextAssessmentEvent foundEvent = foundEvents.get(0);
+        TextAssessmentEvent foundEvent = foundEvents.getFirst();
         assertThat(foundEvent.getId()).isNotNull();
         assertThat(foundEvent.getCourseId()).isEqualTo(course.getId());
         assertThat(foundEvent.getUserId()).isEqualTo(user.getId());

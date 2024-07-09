@@ -753,7 +753,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         request.put("/api/courses/" + examWithModelingEx.getCourse().getId() + "/exams", examWithModelingEx, HttpStatus.OK);
 
         Exam fetchedExam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examWithModelingEx.getId());
-        Exercise exercise = fetchedExam.getExerciseGroups().get(0).getExercises().stream().findFirst().orElseThrow();
+        Exercise exercise = fetchedExam.getExerciseGroups().getFirst().getExercises().stream().findFirst().orElseThrow();
         assertThat(exercise.isExampleSolutionPublished()).isTrue();
     }
 
@@ -781,7 +781,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExam_asInstructor_WithTestRunQuizExerciseSubmissions() throws Exception {
         Exam exam = examUtilService.addExamWithExerciseGroup(course1, true);
-        ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
 
         StudentParticipation studentParticipation = new StudentParticipation();
         studentParticipation.setTestRun(true);
@@ -897,7 +897,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteExamWithExerciseGroupAndTextExercise_asInstructor() throws Exception {
-        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exam2.getExerciseGroups().get(0));
+        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exam2.getExerciseGroups().getFirst());
         exerciseRepository.save(textExercise);
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
         verify(examAccessService).checkCourseAndExamAccessForInstructorElseThrow(course1.getId(), exam2.getId());
@@ -919,7 +919,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testResetExamWithExerciseGroupAndTextExercise_asInstructor() throws Exception {
-        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exam2.getExerciseGroups().get(0));
+        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exam2.getExerciseGroups().getFirst());
         exerciseRepository.save(textExercise);
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/reset", HttpStatus.OK);
         verify(examAccessService).checkCourseAndExamAccessForInstructorElseThrow(course1.getId(), exam2.getId());
@@ -934,7 +934,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testResetExamWithQuizExercise_asInstructor() throws Exception {
-        QuizExercise quizExercise = QuizExerciseFactory.createQuizForExam(exam2.getExerciseGroups().get(0));
+        QuizExercise quizExercise = QuizExerciseFactory.createQuizForExam(exam2.getExerciseGroups().getFirst());
         quizExerciseRepository.save(quizExercise);
 
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/reset", HttpStatus.OK);
@@ -1085,7 +1085,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         Exam receivedExam = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/exam-for-assessment-dashboard", HttpStatus.OK, Exam.class);
 
         // Test that the received exam has two text exercises
-        assertThat(receivedExam.getExerciseGroups().get(0).getExercises()).as("Two exercises are returned").hasSize(2);
+        assertThat(receivedExam.getExerciseGroups().getFirst().getExercises()).as("Two exercises are returned").hasSize(2);
         // Test that the received exam has zero quiz exercises, because quiz exercises do not need to be corrected manually
         assertThat(receivedExam.getExerciseGroups().get(1).getExercises()).as("Zero exercises are returned").isEmpty();
     }
@@ -1499,7 +1499,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamForImportWithExercises_successful() throws Exception {
-        ExerciseGroup quizGroup = exam2.getExerciseGroups().get(0);
+        ExerciseGroup quizGroup = exam2.getExerciseGroups().getFirst();
         QuizExercise quiz = QuizExerciseFactory.generateQuizExerciseForExam(quizGroup);
         QuizExerciseFactory.addAllQuestionTypesToQuizExercise(quiz);
         exerciseRepository.save(quiz);
@@ -1507,7 +1507,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         Exam received = request.get("/api/exams/" + exam2.getId(), HttpStatus.OK, Exam.class);
         assertThat(received).isEqualTo(exam2);
         assertThat(received.getExerciseGroups()).hasSize(1);
-        var group = received.getExerciseGroups().get(0);
+        var group = received.getExerciseGroups().getFirst();
         assertThat(group.getExercises()).hasSize(1);
         QuizExercise receivedExercise = (QuizExercise) group.getExercises().iterator().next();
         // Details like the quiz questions are needed for importing and should be included
@@ -1763,7 +1763,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportExamWithQuizExercise_successfulWithQuestions() throws Exception {
         Exam exam = examUtilService.addExamWithExerciseGroup(course1, false);
-        ExerciseGroup quizGroup = exam.getExerciseGroups().get(0);
+        ExerciseGroup quizGroup = exam.getExerciseGroups().getFirst();
         QuizExercise quiz = QuizExerciseFactory.generateQuizExerciseForExam(quizGroup);
         quiz.addQuestions(QuizExerciseFactory.createMultipleChoiceQuestionWithAllTypesOfAnswerOptions());
         quiz.addQuestions(QuizExerciseFactory.createShortAnswerQuestionWithRealisticText());
@@ -1775,7 +1775,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         final Exam received = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exam-import", exam, Exam.class, CREATED);
         assertThat(received.getExerciseGroups()).hasSize(1);
 
-        ExerciseGroup receivedGroup = received.getExerciseGroups().get(0);
+        ExerciseGroup receivedGroup = received.getExerciseGroups().getFirst();
         assertThat(receivedGroup.getExercises()).hasSize(1);
         QuizExercise exercise = (QuizExercise) receivedGroup.getExercises().iterator().next();
 

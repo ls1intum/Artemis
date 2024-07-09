@@ -423,7 +423,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // Check that a student is found by his login and that he is NOT marked as "assignedToTeam" yet
         List<TeamSearchUserDTO> users2 = request.getList(resourceUrlSearchUsersInCourse(TEST_PREFIX + "student1"), HttpStatus.OK, TeamSearchUserDTO.class);
         assertThat(users2).as("Only user with login " + TEST_PREFIX + "'student1' was found").hasSize(1);
-        assertThat(users2.get(0).assignedTeamId()).as("User was correctly marked as not being assigned to a team yet").isNull();
+        assertThat(users2.getFirst().assignedTeamId()).as("User was correctly marked as not being assigned to a team yet").isNull();
 
         // Check that no student is returned for non-existing login/name
         List<TeamSearchUserDTO> users3 = request.getList(resourceUrlSearchUsersInCourse("chuckNorris"), HttpStatus.OK, TeamSearchUserDTO.class);
@@ -435,7 +435,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         List<TeamSearchUserDTO> users4 = request.getList(resourceUrlSearchUsersInCourse(teamStudent.getLogin()), HttpStatus.OK, TeamSearchUserDTO.class);
         assertThat(users4).as("User from team was found").hasSize(1);
-        assertThat(users4.get(0).assignedTeamId()).as("User from team was correctly marked as being assigned to a team already").isEqualTo(team.getId());
+        assertThat(users4.getFirst().assignedTeamId()).as("User from team was correctly marked as being assigned to a team already").isEqualTo(team.getId());
     }
 
     @Test
@@ -519,7 +519,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getCourseWithExercisesAndParticipationsForTeam_AsTutor() throws Exception {
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, false, 5);
-        Course course = courses.get(0);
+        Course course = courses.getFirst();
 
         ProgrammingExercise programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         TextExercise textExercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
@@ -534,12 +534,12 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         String shortNamePrefix1 = TEST_PREFIX + "team";
         String shortNamePrefix2 = TEST_PREFIX + "otherTeam";
 
-        Team team1a = teamUtilService.addTeamsForExercise(programmingExercise, shortNamePrefix1, TEST_PREFIX + "team1astudent", 1, tutor).get(0);
-        Team team1b = teamUtilService.addTeamsForExercise(textExercise, shortNamePrefix1, TEST_PREFIX + "team1bstudent", 1, tutor).get(0);
-        Team team1c = teamUtilService.addTeamsForExercise(modelingExercise, shortNamePrefix1, TEST_PREFIX + "team1cstudent", 1, tutor).get(0);
+        Team team1a = teamUtilService.addTeamsForExercise(programmingExercise, shortNamePrefix1, TEST_PREFIX + "team1astudent", 1, tutor).getFirst();
+        Team team1b = teamUtilService.addTeamsForExercise(textExercise, shortNamePrefix1, TEST_PREFIX + "team1bstudent", 1, tutor).getFirst();
+        Team team1c = teamUtilService.addTeamsForExercise(modelingExercise, shortNamePrefix1, TEST_PREFIX + "team1cstudent", 1, tutor).getFirst();
 
-        Team team2a = teamUtilService.addTeamsForExercise(programmingExercise, shortNamePrefix2, TEST_PREFIX + "team2astudent", 1, null).get(0);
-        Team team2b = teamUtilService.addTeamsForExercise(textExercise, shortNamePrefix2, TEST_PREFIX + "team2bstudent", 1, null).get(0);
+        Team team2a = teamUtilService.addTeamsForExercise(programmingExercise, shortNamePrefix2, TEST_PREFIX + "team2astudent", 1, null).getFirst();
+        Team team2b = teamUtilService.addTeamsForExercise(textExercise, shortNamePrefix2, TEST_PREFIX + "team2bstudent", 1, null).getFirst();
 
         assertThat(Stream.of(team1a, team1b, team1c).map(Team::getShortName).distinct()).as("Teams 1 need the same short name for this test").hasSize(1);
         assertThat(Stream.of(team2a, team2b).map(Team::getShortName).distinct()).as("Teams 2 need the same short name for this test").hasSize(1);
@@ -596,7 +596,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getCourseWithExercisesAndParticipationsForTeam_AsStudentNotInTeam_Forbidden() throws Exception {
-        Team team = teamUtilService.addTeamsForExercise(exercise, TEST_PREFIX + "team_forb", TEST_PREFIX + "otherStudent", 1, tutor).get(0);
+        Team team = teamUtilService.addTeamsForExercise(exercise, TEST_PREFIX + "team_forb", TEST_PREFIX + "otherStudent", 1, tutor).getFirst();
         request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team), HttpStatus.FORBIDDEN, Course.class);
     }
 }

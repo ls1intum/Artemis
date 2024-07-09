@@ -117,7 +117,7 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
         StudentDTO nonExistingUser = new StudentDTO(new User((long) 1, NON_EXISTING_USERNAME, "", "", "de", ""));
         var output = request.postListWithResponseBody("/api/admin/users/import", List.of(existingUser, nonExistingUser), StudentDTO.class, HttpStatus.OK);
         assertThat(output).hasSize(1);
-        assertThat(output.get(0).login()).isEqualTo(NON_EXISTING_USERNAME);
+        assertThat(output.getFirst().login()).isEqualTo(NON_EXISTING_USERNAME);
     }
 
     @Test

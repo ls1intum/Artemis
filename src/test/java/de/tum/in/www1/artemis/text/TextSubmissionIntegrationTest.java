@@ -218,8 +218,8 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
                 TextSubmission.class);
 
         assertThat(textSubmissions).as("one text submission was found").hasSize(1);
-        assertThat(textSubmissions.get(0).getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
-        assertThat(((StudentParticipation) textSubmissions.get(0).getParticipation()).getStudent()).as(TEST_PREFIX + "student of participation is hidden").isEmpty();
+        assertThat(textSubmissions.getFirst().getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
+        assertThat(((StudentParticipation) textSubmissions.getFirst().getParticipation()).getStudent()).as(TEST_PREFIX + "student of participation is hidden").isEmpty();
     }
 
     @Test
@@ -230,8 +230,8 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         List<TextSubmission> textSubmissions = request.getList("/api/exercises/" + finishedTextExercise.getId() + "/text-submissions", HttpStatus.OK, TextSubmission.class);
 
         assertThat(textSubmissions).as("one text submission was found").hasSize(1);
-        assertThat(textSubmissions.get(0).getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
-        assertThat(((StudentParticipation) textSubmissions.get(0).getParticipation()).getStudent()).as(TEST_PREFIX + "student of participation is hidden").isNotEmpty();
+        assertThat(textSubmissions.getFirst().getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
+        assertThat(((StudentParticipation) textSubmissions.getFirst().getParticipation()).getStudent()).as(TEST_PREFIX + "student of participation is hidden").isNotEmpty();
     }
 
     @Test

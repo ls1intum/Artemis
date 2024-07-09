@@ -143,7 +143,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(result.isRated()).isTrue();
         assertThat(result.getScore()).isEqualTo(60); // total score 3P (60%) because gradingInstructionWithLimit was applied twice but only counts once
         assertThat(result.getFeedbacks()).hasSize(4);
-        assertThat(result.getFeedbacks().get(0).getCredits()).isEqualTo(feedbacks.get(0).getCredits());
+        assertThat(result.getFeedbacks().getFirst().getCredits()).isEqualTo(feedbacks.getFirst().getCredits());
         assertThat(result.getFeedbacks().get(1).getCredits()).isEqualTo(feedbacks.get(1).getCredits());
         assertThat(result.getAssessmentNote().getNote()).isEqualTo("text");
         assertThat(result.getAssessor()).isEqualTo(result.getAssessmentNote().getCreator());
@@ -274,7 +274,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(result.isRated()).isTrue();
         assertThat(((StudentParticipation) result.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
         assertThat(result.getFeedbacks()).hasSize(3);
-        assertThat(result.getFeedbacks().get(0).getCredits()).isEqualTo(feedbacks.get(0).getCredits());
+        assertThat(result.getFeedbacks().getFirst().getCredits()).isEqualTo(feedbacks.getFirst().getCredits());
         assertThat(result.getFeedbacks().get(1).getCredits()).isEqualTo(feedbacks.get(1).getCredits());
     }
 
@@ -456,7 +456,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
         exam = examRepository.save(exam);
 
         Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).orElseThrow();
-        exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
+        exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().getFirst();
         FileUploadExercise exercise = FileUploadExerciseFactory.generateFileUploadExerciseForExam("test.pdf", exerciseGroup1);
         exercise = fileUploadExerciseRepository.save(exercise);
         exerciseGroup1.addExercise(exercise);
@@ -488,8 +488,8 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
                 paramsGetAssessedCR1Tutor1);
 
         assertThat(assessedSubmissionList).hasSize(1);
-        assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
-        assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(0)).isEqualTo(submissionWithoutFirstAssessment.getLatestResult());
+        assertThat(assessedSubmissionList.getFirst().getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
+        assertThat(assessedSubmissionList.getFirst().getResultForCorrectionRound(0)).isEqualTo(submissionWithoutFirstAssessment.getLatestResult());
 
         // assess submission and submit
         List<Feedback> feedbacks = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here"))
@@ -505,8 +505,8 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
                 paramsGetAssessedCR1Tutor1);
 
         assertThat(assessedSubmissionList).hasSize(1);
-        assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
-        assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(0)).isNotNull();
+        assertThat(assessedSubmissionList.getFirst().getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
+        assertThat(assessedSubmissionList.getFirst().getResultForCorrectionRound(0)).isNotNull();
         assertThat(firstSubmittedManualResult.getAssessor().getLogin()).isEqualTo(TEST_PREFIX + "tutor1");
 
         // verify that the result contains the relationship
@@ -525,7 +525,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
         var databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository
                 .findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
         assertThat(databaseRelationshipStateOfResultsOverSubmission).hasSize(1);
-        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.get(0);
+        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.getFirst();
         assertThat(fetchedParticipation.getSubmissions()).hasSize(1);
         assertThat(fetchedParticipation.findLatestSubmission()).isPresent();
         // it should contain the lock for the manual result
@@ -560,7 +560,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
 
         databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
         assertThat(databaseRelationshipStateOfResultsOverSubmission).hasSize(1);
-        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.get(0);
+        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.getFirst();
         assertThat(fetchedParticipation.getSubmissions()).hasSize(1);
         assertThat(fetchedParticipation.findLatestSubmission()).isPresent();
         assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getResults()).hasSize(2);
@@ -584,8 +584,8 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
                 paramsGetAssessedCR2);
 
         assertThat(assessedSubmissionList).hasSize(1);
-        assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutSecondAssessment.getId());
-        assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(1)).isEqualTo(secondSubmittedManualResult);
+        assertThat(assessedSubmissionList.getFirst().getId()).isEqualTo(submissionWithoutSecondAssessment.getId());
+        assertThat(assessedSubmissionList.getFirst().getResultForCorrectionRound(1)).isEqualTo(secondSubmittedManualResult);
 
         // make sure that they do not appear for the first correction round as the tutor only assessed the second correction round
         LinkedMultiValueMap<String, String> paramsGetAssessedCR1 = new LinkedMultiValueMap<>();
@@ -610,9 +610,9 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
         exerciseUtilService.addAssessmentToExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "tutor2"));
 
         var submissions = participationUtilService.getAllSubmissionsOfExercise(exercise);
-        Submission submission = submissions.get(0);
+        Submission submission = submissions.getFirst();
         assertThat(submission.getResults()).hasSize(3);
-        Result firstResult = submission.getResults().get(0);
+        Result firstResult = submission.getResults().getFirst();
         Result lastResult = submission.getLatestResult();
         request.delete("/api/participations/" + submission.getParticipation().getId() + "/file-upload-submissions/" + submission.getId() + "/results/" + firstResult.getId(),
                 HttpStatus.OK);
@@ -631,7 +631,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
         exerciseUtilService.addAssessmentToExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "tutor2"));
 
         var submissions = participationUtilService.getAllSubmissionsOfExercise(exercise);
-        Submission submission1 = submissions.get(0);
+        Submission submission1 = submissions.getFirst();
         Submission submission2 = submissions.get(1);
 
         assertThat(submission1.getResults()).hasSize(3);
@@ -655,7 +655,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
 
         var submissions = participationUtilService.getAllSubmissionsOfExercise(exercise);
 
-        Submission submission = submissions.get(0);
+        Submission submission = submissions.getFirst();
         complaintUtilService.addComplaintToSubmission(submission, TEST_PREFIX + "student1", ComplaintType.COMPLAINT);
         assertThat(submission.getResults()).hasSize(2);
         Result lastResult = submission.getLatestResult();

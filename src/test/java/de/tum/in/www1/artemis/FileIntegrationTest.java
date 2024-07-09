@@ -178,7 +178,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         callAndCheckMergeResult(lecture, 5);
 
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        List<LectureUnit> expectedCompletedUnits = List.of(units.get(0), units.get(2));
+        List<LectureUnit> expectedCompletedUnits = List.of(units.getFirst(), units.get(2));
         for (var unit : expectedCompletedUnits) {
             var completion = lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(unit.getId(), student.getId());
             assertThat(completion).isPresent();
