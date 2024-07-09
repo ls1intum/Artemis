@@ -1,9 +1,8 @@
 import { SidebarCardElement } from 'app/types/sidebar';
 import { DifficultyLevel, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { RangeFilter } from 'app/types/exercise-filter';
+import { FilterDetails, RangeFilter } from 'app/types/exercise-filter';
 import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/participation/participation.utils';
-import { FilterDetails } from 'app/shared/exercise-filter/exercise-filter-modal.component';
 
 export function satisfiesDifficultyFilter(sidebarElement: SidebarCardElement, searchedDifficulties?: DifficultyLevel[]): boolean {
     if (!searchedDifficulties?.length) {

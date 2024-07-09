@@ -28,3 +28,13 @@ export type ExerciseFilterOptions = {
 };
 
 export type ExerciseFilterResults = { filteredSidebarData?: SidebarData; appliedExerciseFilters?: ExerciseFilterOptions; isFilterActive: boolean };
+
+export type FilterDetails = {
+    searchedTypes?: ExerciseType[];
+    selectedCategories: ExerciseCategory[];
+    searchedDifficulties?: DifficultyLevel[];
+    isScoreFilterApplied: boolean;
+    isPointsFilterApplied: boolean;
+    achievedScore?: RangeFilter;
+    achievablePoints?: RangeFilter;
+};

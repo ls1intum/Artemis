@@ -16,22 +16,11 @@ import {
     ExerciseFilterOptions,
     ExerciseFilterResults,
     ExerciseTypeFilterOption,
+    FilterDetails,
     FilterOption,
     RangeFilter,
 } from 'app/types/exercise-filter';
 import { satisfiesFilters } from 'app/shared/exercise-filter/exercise-filter-modal.helper';
-import { DifficultyLevel, ExerciseType } from 'app/entities/exercise.model';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
-
-export type FilterDetails = {
-    searchedTypes?: ExerciseType[];
-    selectedCategories: ExerciseCategory[];
-    searchedDifficulties?: DifficultyLevel[];
-    isScoreFilterApplied: boolean;
-    isPointsFilterApplied: boolean;
-    achievedScore?: RangeFilter;
-    achievablePoints?: RangeFilter;
-};
 
 @Component({
     selector: 'jhi-exercise-filter-modal',
