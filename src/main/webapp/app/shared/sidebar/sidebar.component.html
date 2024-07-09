@@ -7,7 +7,11 @@
                     @if (sidebarData.sidebarType === 'exercise') {
                         <div class="ms-2 mt-1 link-primary">
                             <a (click)="openFilterExercisesDialog()">
-                                <fa-icon [icon]="faFilter" />
+                                @if (isFilterActive) {
+                                    <fa-icon [icon]="faFilterCurrentlyApplied" />
+                                } @else {
+                                    <fa-icon [icon]="faFilter" />
+                                }
                                 <span jhiTranslate="artemisApp.courseOverview.exerciseFilter.filter"></span>
                             </a>
                         </div>

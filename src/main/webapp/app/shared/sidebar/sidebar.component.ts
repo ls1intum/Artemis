@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
-import { faFilter } from '@fortawesome/free-solid-svg-icons';
+import { faFilter, faFilterCircleXmark } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Subscription, distinctUntilChanged } from 'rxjs';
 import { ProfileService } from '../layouts/profiles/profile.service';
@@ -49,6 +49,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     private modalRef?: NgbModalRef;
 
     readonly faFilter = faFilter;
+    readonly faFilterCurrentlyApplied = faFilterCircleXmark;
 
     sidebarDataBeforeFiltering: SidebarData;
 
