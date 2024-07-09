@@ -14,7 +14,7 @@
         container="body"
     ></button>
     <ng-template #popContent>
-        @if (useSsh && !localVCEnabled) {
+        @if (useSsh && (!user.sshPublicKey || gitlabVCEnabled)) {
             <div class="alert alert-warning" [innerHTML]="getSshKeyTip()"></div>
         }
         @if (participations && participations.length > 1) {

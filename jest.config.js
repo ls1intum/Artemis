@@ -20,6 +20,7 @@ const esModules = [
     '@ng-bootstrap/ng-bootstrap',
     '@ngx-translate/core',
     '@ngx-translate/http-loader',
+    '@sentry/angular',
     '@swimlane/ngx-charts',
     '@swimlane/ngx-graph',
     'collapse-white-space',
@@ -101,10 +102,10 @@ module.exports = {
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
-            statements: 86.94,
-            branches: 73.23,
-            functions: 81.28,
-            lines: 87.04,
+            statements: 87.13,
+            branches: 73.36,
+            functions: 81.39,
+            lines: 87.20,
         },
     },
     coverageReporters: ['clover', 'json', 'lcov', 'text-summary'],
@@ -147,7 +148,6 @@ module.exports = {
         '@src/(.*)': '<rootDir>/src/src/$1',
         '@state/(.*)': '<rootDir>/src/app/state/$1',
         '^lodash-es$': 'lodash',
-        '@sentry/angular-ivy': '<rootDir>/node_modules/@sentry/angular-ivy/bundles/sentry-angular-ivy.umd.js',
         '\\.css$': '<rootDir>/stub.js',
         '^monaco-editor$': '<rootDir>/node_modules/monaco-editor/esm/vs/editor/editor.api.js',
     },

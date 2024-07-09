@@ -7,6 +7,7 @@ import { ThemeService } from 'app/core/theme/theme.service';
 import { DOCUMENT } from '@angular/common';
 import { AnalyticsService } from 'app/core/posthog/analytics.service';
 import { Subscription } from 'rxjs';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 
 @Component({
     selector: 'jhi-main',
@@ -20,13 +21,18 @@ export class JhiMainComponent implements OnInit, OnDestroy {
      */
     public showSkeleton = true;
     profileSubscription: Subscription;
+    examStartedSubscription: Subscription;
+    testRunSubscription: Subscription;
     isProduction: boolean = true;
     isTestServer: boolean = false;
+    isExamStarted: boolean = false;
+    isTestRunExam: boolean = false;
 
     constructor(
         private jhiLanguageHelper: JhiLanguageHelper,
         private router: Router,
         private profileService: ProfileService,
+        private examParticipationService: ExamParticipationService,
         private sentryErrorHandler: SentryErrorHandler,
         private analyticsService: AnalyticsService,
         private themeService: ThemeService,
@@ -97,6 +103,14 @@ export class JhiMainComponent implements OnInit, OnDestroy {
             this.isProduction = profileInfo.inProduction;
         });
 
+        this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted) => {
+            this.isExamStarted = isStarted;
+        });
+
+        this.testRunSubscription = this.examParticipationService.testRunStarted$.subscribe((isStarted) => {
+            this.isTestRunExam = isStarted;
+        });
+
         this.themeService.initialize();
     }
 
@@ -112,5 +126,7 @@ export class JhiMainComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.profileSubscription?.unsubscribe();
+        this.examStartedSubscription?.unsubscribe();
+        this.testRunSubscription?.unsubscribe();
     }
 }

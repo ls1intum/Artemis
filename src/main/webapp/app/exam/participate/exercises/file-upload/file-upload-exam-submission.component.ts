@@ -19,6 +19,7 @@ import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exe
 import { Submission } from 'app/entities/submission.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
+import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 
 @Component({
     selector: 'jhi-file-upload-submission-exam',
@@ -35,6 +36,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     studentSubmission: FileUploadSubmission;
     @Input()
     exercise: FileUploadExercise;
+    problemStatementHtml: string;
 
     submittedFileName: string;
     submittedFileExtension: string;
@@ -69,15 +71,16 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
      */
     ngOnInit() {
         // show submission answers in UI
+        this.problemStatementHtml = htmlForMarkdown(this.exercise?.problemStatement);
         this.updateViewFromSubmission();
     }
 
     /**
-     * Updates the problem statement of the currently loaded file upload exercise which is part of the user's student exam.
-     * @param newProblemStatement is the updated problem statement that should be displayed to the user.
+     * Updates the problem statement html of the currently loaded file upload exercise which is part of the user's student exam.
+     * @param newProblemStatementHtml is the updated problem statement html that should be displayed to the user.
      */
-    updateProblemStatement(newProblemStatement: string): void {
-        this.exercise.problemStatement = newProblemStatement;
+    updateProblemStatement(newProblemStatementHtml: string): void {
+        this.problemStatementHtml = newProblemStatementHtml;
         this.changeDetectorReference.detectChanges();
     }
 

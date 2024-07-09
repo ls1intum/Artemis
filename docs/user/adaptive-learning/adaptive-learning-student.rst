@@ -11,7 +11,10 @@ Competencies
 ------------
 Competencies allow students to understand the learning goals of the course and measure their progress toward achieving them.
 
-In Artemis, a competency is considered mastered by a student when they complete all linked learning objects (progress equals 100%) and have an adequate confidence level (average score greater or equal to the mastery threshold set by the instructor).
+Artemis measures two metrics for each competency: **progress** and **mastery**.
+The progress starts at 0% and increases with every completed lecture unit and score achieved in exercises linked to the competency.
+The mastery is a weighted metric of the student's progress. It can be influenced by different factors, e.g. if the latest exercise scores are higher or lower than the student's average score in the competency.
+In Artemis, a competency is considered mastered by a student when the mastery is greater than or equal to the threshold set by the instructor.
 
 In case competencies are defined, students can get an overview of their individual progress and confidence on the competencies tab.
 The page lists all competencies with their title, description, and `taxonomy <https://en.wikipedia.org/wiki/Bloom%27s_taxonomy>`_.
@@ -21,10 +24,11 @@ Expanding the prerequisites section shows the student all competencies the instr
 |students-learning-goals-statistics|
 
 When clicking on a competency, a page opens and displays detailed statistics about the competency together with all linked lecture units and exercises.
-The tripartite rings show the student's advancement:
-The **blue ring describes the progress**, the percentage of completed lecture units and exercises.
-The **green ring visualizes the confidence**, the average score in all linked exercises in relation to the threshold required for mastering the competency (set by the instructor).
-The **red ring is a weighted metric of the student's progress and confidence**, which shows the overall advancement toward competency mastery.
+The two rings show the student's advancement:
+The **green ring describes the progress**, the percentage of completed lecture units and achieved scores exercises.
+The **red ring indicates the mastery**, which shows the overall advancement toward competency completion.
+
+If the mastery diverges from the progress, the student can see the main reason for this divergence as a tooltip next to the mastery value.
 
 |students-learning-goals-statistics-detail|
 

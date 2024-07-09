@@ -42,6 +42,8 @@ import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/ser
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockModule } from 'ng-mocks';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
+import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
+import { VERSION } from '@angular/core';
 
 describe('ProgrammingExerciseInstructionComponent', () => {
     let comp: ProgrammingExerciseInstructionComponent;
@@ -69,6 +71,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 ProgrammingExerciseInstructionStepWizardComponent,
                 ProgrammingExerciseInstructionTaskStatusComponent,
                 TranslatePipeMock,
+                SafeHtmlPipe,
             ],
             providers: [
                 ProgrammingExerciseTaskExtensionWrapper,
@@ -373,7 +376,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(debugElement.queryAll(By.css('.btn-circle'))).toHaveLength(2);
         tick();
         fixture.detectChanges();
-        expect(debugElement.query(By.css('.instructions__content__markdown')).nativeElement.innerHTML).toEqual(problemStatementBubbleSortNotExecutedHtml);
+        const expectedHtml = problemStatementBubbleSortNotExecutedHtml.replaceAll('{{ANGULAR_VERSION}}', VERSION.full);
+        expect(debugElement.query(By.css('.instructions__content__markdown')).nativeElement.innerHTML).toEqual(expectedHtml);
 
         const bubbleSortStep = debugElement.query(By.css('.stepwizard-step--not-executed'));
         const mergeSortStep = debugElement.query(By.css('.stepwizard-step--success'));
@@ -450,7 +454,9 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(debugElement.queryAll(By.css('.btn-circle'))).toHaveLength(2);
         tick();
         fixture.detectChanges();
-        expect(debugElement.query(By.css('.instructions__content__markdown')).nativeElement.innerHTML).toEqual(problemStatementEmptySecondTaskNotExecutedHtml);
+
+        const expectedHtml = problemStatementEmptySecondTaskNotExecutedHtml.replaceAll('{{ANGULAR_VERSION}}', VERSION.full);
+        expect(debugElement.query(By.css('.instructions__content__markdown')).nativeElement.innerHTML).toEqual(expectedHtml);
 
         const bubbleSortStep = debugElement.query(By.css('.stepwizard-step--success'));
         const mergeSortStep = debugElement.query(By.css('.stepwizard-step--not-executed'));
@@ -521,8 +527,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.problemStatement = problemStatement;
         comp.exercise = { problemStatement: updatedProblemStatement } as ProgrammingExercise;
         comp.renderUpdatedProblemStatement();
-        expect(comp.problemStatement).toBe(updatedProblemStatement);
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
+        expect(comp.exercise.problemStatement).toEqual(updatedProblemStatement);
     });
 
     it('should update the markdown on a theme change', () => {
