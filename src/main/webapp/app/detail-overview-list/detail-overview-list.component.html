@@ -15,7 +15,10 @@
                     </dt>
                 }
                 @switch (detail.type) {
-                    @case (DetailType.Text || DetailType.Date) {
+                    @case (DetailType.Text) {
+                        <div jhiExerciseDetail [detail]="detail"></div>
+                    }
+                    @case (DetailType.Date) {
                         <div jhiExerciseDetail [detail]="detail"></div>
                     }
                     @case (DetailType.Link) {
