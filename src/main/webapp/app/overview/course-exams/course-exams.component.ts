@@ -118,7 +118,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             this.router.navigate([lastSelectedExam], { relativeTo: this.route, replaceUrl: true });
         } else if (!examId && upcomingExam) {
             if (upcomingExam.testExam) {
-                this.router.navigate([upcomingExam.id + 'test-exam' + 'start'], { relativeTo: this.route, replaceUrl: true });
+                this.router.navigate([upcomingExam.id + '/test-exam' + '/start'], { relativeTo: this.route, replaceUrl: true });
             } else {
                 this.router.navigate([upcomingExam.id], { relativeTo: this.route, replaceUrl: true });
             }
