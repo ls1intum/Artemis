@@ -100,7 +100,7 @@ describe('SidebarAccordionComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.expandAll).toHaveBeenCalled();
+        expect(component.expandAll).toHaveBeenCalledOnce();
     });
 
     it('should correctly call setStoredCollapseState when searchValue is cleared', () => {
@@ -116,7 +116,7 @@ describe('SidebarAccordionComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.setStoredCollapseState).toHaveBeenCalled();
+        expect(component.setStoredCollapseState).toHaveBeenCalledOnce();
         expect(component.collapseState).toEqual(expectedStateAfterClear);
     });
 

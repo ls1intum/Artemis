@@ -41,7 +41,10 @@ export function getExerciseCategoryFilterOptions(sidebarData?: SidebarData, exer
             .flatMap((sidebarElement: SidebarCardElement) => sidebarElement.exercise?.categories || [])
             .map((category: ExerciseCategory) => ({ category: category, searched: false }))
             .reduce((unique: ExerciseCategoryFilterOption[], item: ExerciseCategoryFilterOption) => {
-                return unique.some((uniqueItem) => uniqueItem.category.equals(item.category)) ? unique : [...unique, item];
+                if (!unique.some((uniqueItem) => uniqueItem.category.equals(item.category))) {
+                    unique.push(item);
+                }
+                return unique;
             }, [])
             .sort((categoryFilterOptionsA, categoryFilterOptionB) => categoryFilterOptionsA.category.compare(categoryFilterOptionB.category)) ?? [];
 

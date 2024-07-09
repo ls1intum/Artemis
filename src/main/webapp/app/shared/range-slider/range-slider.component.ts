@@ -22,7 +22,7 @@ export class RangeSliderComponent implements OnInit, OnDestroy {
     @Output() selectedMaxValueChange: EventEmitter<number> = new EventEmitter<number>();
 
     rangeInputElements?: NodeList;
-    eventListeners: { element: any; listener: any }[] = [];
+    eventListeners: { element: HTMLInputElement; listener: (event: Event) => void }[] = [];
 
     get sliderMinPercentage(): number {
         return ((this.selectedMinValue - this.generalMinValue) / (this.generalMaxValue - this.generalMinValue)) * 100;
@@ -35,8 +35,8 @@ export class RangeSliderComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.rangeInputElements = document.querySelectorAll('.range-input input');
 
-        this.rangeInputElements?.forEach((input) => {
-            const listener = (event: any) => {
+        this.rangeInputElements?.forEach((input: HTMLInputElement) => {
+            const listener = (event: Event) => {
                 this.ensureMinValueIsSmallerThanMaxValueViceVersa(event);
             };
             input.addEventListener('input', listener);

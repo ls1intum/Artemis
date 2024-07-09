@@ -125,14 +125,8 @@
         <button type="button" class="btn btn-secondary" (click)="resetFilter()" jhiTranslate="artemisApp.courseOverview.exerciseFilter.resetFilter"></button>
 
         <div class="ms-auto">
-            <button type="button" class="btn btn-secondary" (click)="closeModal()" jhiTranslate="entity.action.cancel"></button>
-            <button
-                type="button"
-                class="btn btn-primary"
-                (click)="applyFilter()"
-                jhiTranslate="artemisApp.courseOverview.exerciseFilter.applyFilter"
-                [disabled]="noFiltersAvailable"
-            ></button>
+            <button type="button" class="btn btn-secondary" (click)="closeModal()" jhiTranslate="entity.action.cancel" aria-label="Close"></button>
+            <button class="btn btn-primary" (click)="applyFilter()" jhiTranslate="artemisApp.courseOverview.exerciseFilter.applyFilter" [disabled]="noFiltersAvailable"></button>
         </div>
     </div>
 </form>
