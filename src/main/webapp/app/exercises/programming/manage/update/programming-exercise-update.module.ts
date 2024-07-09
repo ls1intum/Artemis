@@ -58,7 +58,6 @@ import { ProgrammingExerciseTheiaComponent } from 'app/exercises/programming/man
         FormsModule,
         ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent,
         ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent,
-        ProgrammingExerciseTheiaComponent,
     ],
     declarations: [
         ProgrammingExerciseUpdateComponent,
@@ -72,6 +71,7 @@ import { ProgrammingExerciseTheiaComponent } from 'app/exercises/programming/man
         ProgrammingExerciseProblemComponent,
         AddAuxiliaryRepositoryButtonComponent,
         RemoveAuxiliaryRepositoryButtonComponent,
+        ProgrammingExerciseTheiaComponent,
     ],
     exports: [ProgrammingExerciseUpdateComponent],
 })
