@@ -182,7 +182,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             if (params['studentExamId']) {
                 // If a new StudentExam should be created, the keyword start is used (and no StudentExam exists)
                 this.testExam = true;
-                if (params['studentExamId'] !== 'start') {
+                if (params['studentExamId'] !== 'start' && params['studentExamId'] !== 'start-attempt') {
                     this.studentExamId = parseInt(params['studentExamId'], 10);
                 }
             }

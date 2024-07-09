@@ -48,6 +48,7 @@
                 "real": "Klausuren",
                 "test": "Testklausuren",
                 "attempt": "Testklausurversuche",
+                "attempts": "Versuche",
                 "start": "Beginn",
                 "workingTime": "Bearbeitungszeit",
                 "attainablePoints": "Erreichbare Punkte",

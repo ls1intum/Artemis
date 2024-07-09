@@ -243,9 +243,9 @@ export class CourseOverviewService {
         return exams.map((exam) => this.mapExamToSidebarCardElement(exam));
     }
 
-    mapTestExamAttemptsToSidebarCardElements(attempts?: StudentExam[]) {
-        if (attempts) {
-            return attempts.map((attempts) => this.mapAttemptToSidebarCardElement(attempts));
+    mapTestExamAttemptsToSidebarCardElements(attempts?: StudentExam[], indices?: number[]) {
+        if (attempts && indices) {
+            return attempts.map((attempt, index) => this.mapAttemptToSidebarCardElement(attempt, index));
         }
     }
 
@@ -299,10 +299,10 @@ export class CourseOverviewService {
         return exerciseCardItem;
     }
 
-    mapExamToSidebarCardElement(exam: Exam): SidebarCardElement {
+    mapExamToSidebarCardElement(exam: Exam, numberOfAttempts?: number): SidebarCardElement {
         const examCardItem: SidebarCardElement = {
             title: exam.title ?? '',
-            id: exam.id ?? '',
+            id: (exam.testExam ? exam.id + '/test-exam/' + 'start' : exam.id) ?? '',
             icon: faGraduationCap,
             subtitleLeft: exam.moduleNumber ?? '',
             startDateWithTime: exam.startDate,
@@ -310,19 +310,20 @@ export class CourseOverviewService {
             attainablePoints: exam.examMaxPoints ?? 0,
             size: 'L',
             isAttempt: false,
+            testExam: exam.testExam,
+            attempts: numberOfAttempts ?? 0,
         };
         return examCardItem;
     }
 
-    mapAttemptToSidebarCardElement(attempt: StudentExam): SidebarCardElement {
+    mapAttemptToSidebarCardElement(attempt: StudentExam, index: number): SidebarCardElement {
         const examCardItem: SidebarCardElement = {
             title: attempt.exam!.title ?? '',
-            //id: attempt.exam!.id + '/test-exam/' + attempt.id ?? '',
-            id: attempt.id ?? '',
+            id: attempt.submitted ? attempt.exam!.id + '/test-exam/' + attempt.id : attempt.exam!.id + '/test-exam/' + 'start-attempt',
             icon: faGraduationCap,
-            subtitleLeft: 'Attempt',
+            subtitleLeft: 'Attempt ' + index,
             submissionDate: attempt.submissionDate,
-            usedWorkingTime: attempt.workingTime ?? 0,
+            usedWorkingTime: this.calculateUsedWorkingTime(attempt),
             size: 'L',
             isAttempt: true,
         };
@@ -377,5 +378,15 @@ export class CourseOverviewService {
 
     setSidebarCollapseState(storageId: string, isCollapsed: boolean) {
         localStorage.setItem('sidebar.collapseState.' + storageId, JSON.stringify(isCollapsed));
+    }
+
+    calculateUsedWorkingTime(studentExam: StudentExam): number {
+        let usedWorkingTime = 0;
+        if (studentExam.exam!.testExam && studentExam.started && studentExam.submitted && studentExam.workingTime && studentExam.startedDate && studentExam.submissionDate) {
+            const regularExamDuration = studentExam.workingTime;
+            // As students may submit during the grace period, the workingTime is limited to the regular exam duration
+            usedWorkingTime = Math.min(regularExamDuration, dayjs(studentExam.submissionDate).diff(dayjs(studentExam.startedDate), 'seconds'));
+        }
+        return usedWorkingTime;
     }
 }

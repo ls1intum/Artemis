@@ -103,7 +103,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             // The Map is ued to store the boolean value, if the attempt-List for one Exam has been expanded or collapsed
             this.expandAttemptsMap = new Map(this.course.exams.filter((exam) => exam.testExam && this.isVisible(exam)).map((exam) => [exam.id!, false]));
             this.updateExams();
-            //this.prepareSidebarData();
+            this.prepareSidebarData();
         }
 
         // If no exam is selected navigate to the last selected or upcoming Exam
@@ -117,7 +117,11 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         if (!examId && lastSelectedExam) {
             this.router.navigate([lastSelectedExam], { relativeTo: this.route, replaceUrl: true });
         } else if (!examId && upcomingExam) {
-            this.router.navigate([upcomingExam.id], { relativeTo: this.route, replaceUrl: true });
+            if (upcomingExam.testExam) {
+                this.router.navigate([upcomingExam.id + 'test-exam' + 'start'], { relativeTo: this.route, replaceUrl: true });
+            } else {
+                this.router.navigate([upcomingExam.id], { relativeTo: this.route, replaceUrl: true });
+            }
         } else {
             this.examSelected = examId ? true : false;
         }
@@ -199,29 +203,37 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         return 0;
     }
 
-    groupExamsByRealOrTest(realExams: Exam[], testExams: Exam[], testExamAttempts?: StudentExam[]): AccordionGroups {
+    groupExamsByRealOrTest(realExams: Exam[], testExams: Exam[]): AccordionGroups {
         const groupedExamGroups = cloneDeep(DEFAULT_UNIT_GROUPS) as AccordionGroups;
 
         for (const realExam of realExams) {
             const examCardItem = this.courseOverviewService.mapExamToSidebarCardElement(realExam);
             groupedExamGroups['real'].entityData.push(examCardItem);
         }
-        for (const testExam of testExams) {
-            const examCardItem = this.courseOverviewService.mapExamToSidebarCardElement(testExam);
+        testExams.forEach((testExam) => {
+            const examCardItem = this.courseOverviewService.mapExamToSidebarCardElement(testExam, this.getNumberOfAttemptsForTestExam(testExam));
             groupedExamGroups['test'].entityData.push(examCardItem);
-        }
-        if (testExamAttempts) {
-            for (const attempt of testExamAttempts) {
-                const examCardItem = this.courseOverviewService.mapAttemptToSidebarCardElement(attempt);
-                groupedExamGroups['attempt'].entityData.push(examCardItem);
+            const testExamAttempts = this.testExamMap.get(testExam.id!);
+            if (testExamAttempts) {
+                testExamAttempts.forEach((attempt, index) => {
+                    const attemptNumber = testExamAttempts.length - index;
+                    const attemptCardItem = this.courseOverviewService.mapAttemptToSidebarCardElement(attempt, attemptNumber);
+                    groupedExamGroups['attempt'].entityData.push(attemptCardItem);
+                });
             }
-        }
-
+        });
         return groupedExamGroups;
     }
 
     getLastSelectedExam(): string | null {
-        return sessionStorage.getItem('sidebar.lastSelectedItem.exam.byCourse.' + this.courseId);
+        let lastSelectedExam = sessionStorage.getItem('sidebar.lastSelectedItem.exam.byCourse.' + this.courseId);
+        if (lastSelectedExam && lastSelectedExam.startsWith('"') && lastSelectedExam.endsWith('"')) {
+            lastSelectedExam = lastSelectedExam.slice(1, -1);
+        }
+        if (lastSelectedExam && lastSelectedExam.endsWith('-attempt')) {
+            lastSelectedExam = lastSelectedExam.slice(0, -8);
+        }
+        return lastSelectedExam;
     }
 
     toggleSidebar() {
@@ -256,11 +268,15 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
 
         const sidebarRealExams = this.courseOverviewService.mapExamsToSidebarCardElements(this.sortedRealExams);
         const sidebarTestExams = this.courseOverviewService.mapExamsToSidebarCardElements(this.sortedTestExams);
-        const sidebarTestExamAttempts = this.courseOverviewService.mapTestExamAttemptsToSidebarCardElements(this.getAllStudentExams());
+        const allStudentExams = this.getAllStudentExams();
+        const sidebarTestExamAttempts = this.courseOverviewService.mapTestExamAttemptsToSidebarCardElements(
+            allStudentExams,
+            this.getIndicesForStudentExams(allStudentExams.length),
+        );
 
         this.sidebarExams = [...sidebarRealExams, ...sidebarTestExams, ...(sidebarTestExamAttempts ?? [])];
 
-        this.accordionExamGroups = this.groupExamsByRealOrTest(this.sortedRealExams, this.sortedTestExams, this.studentExams);
+        this.accordionExamGroups = this.groupExamsByRealOrTest(this.sortedRealExams, this.sortedTestExams);
         this.updateSidebarData();
     }
 
@@ -271,7 +287,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         this.navigateToExam();
     }
 
-    // Method to iterate through the map and get all StudentExams
+    // Method to iterate through the map and get all student exams
     getAllStudentExams(): StudentExam[] {
         const allStudentExams: StudentExam[] = [];
         this.testExamMap.forEach((studentExams) => {
@@ -280,6 +296,20 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             });
         });
         return allStudentExams;
+    }
+
+    // Creating attempt indices for student exams
+    getIndicesForStudentExams(numberOfStudentExams: number): number[] {
+        const indices: number[] = [];
+        for (let i = 1; i <= numberOfStudentExams; i++) {
+            indices.push(i);
+        }
+        return indices;
+    }
+
+    getNumberOfAttemptsForTestExam(exam: Exam): number {
+        const studentExams = this.testExamMap.get(exam.id!);
+        return studentExams ? studentExams.length : 0;
     }
 
     /**
@@ -318,37 +348,6 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         if (studentExam.started && !studentExam.submitted && studentExam.startedDate && exam.workingTime) {
             const endDate = dayjs(studentExam.startedDate).add(exam.workingTime, 'seconds');
             this.withinWorkingTime = dayjs(endDate).isAfter(dayjs());
-        }
-    }
-
-    /**
-     * Dynamically calculates the remaining working time of an attempt, if the attempt is started, within the working time and not yet submitted
-     */
-    workingTimeLeftInSeconds(studentExam: StudentExam, exam: Exam): number {
-        if (studentExam.started && !studentExam.submitted && studentExam.startedDate && exam.workingTime) {
-            return studentExam.startedDate.add(exam.workingTime, 'seconds').diff(dayjs(), 'seconds');
-        }
-        return 0;
-    }
-
-    /**
-     * do nothing if student didn't submit on time
-     * navigate to /courses/:courseId/exams/:examId/test-exam/:studentExamId if the attempt was submitted
-     * navigate to /courses/:courseId/exams/:examId/test-exam/start if the attempt can be continued
-     * Used to open the corresponding studentExam
-     */
-    openStudentExam(studentExam: StudentExam, exam: Exam): void {
-        // If student didn't submit on time, there's no exam overview
-        if (!this.withinWorkingTime && !studentExam.submitted) {
-            return;
-        }
-        // If exam is submitted navigate to the exam overview
-        if (studentExam.submitted) {
-            this.router.navigate(['courses', this.courseId, 'exams', exam.id, 'test-exam', studentExam.id]); ///
-        }
-        // If exam is not submitted and within working time, resume attempt
-        if (this.withinWorkingTime) {
-            this.router.navigate(['courses', this.courseId, 'exams', exam.id, 'test-exam', 'start']);
         }
     }
 }

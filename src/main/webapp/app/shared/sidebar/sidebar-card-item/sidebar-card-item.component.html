@@ -11,7 +11,7 @@
                 </span>
             </div>
             <div class="d-flex justify-content-between mb-1 align-items-baseline">
-                <div class="me-2 text-truncate">
+                <div class="me-2 text-truncate fw-bold">
                     {{ sidebarItem.subtitleLeft }}
                 </div>
             </div>
@@ -38,9 +38,11 @@
             @if (sidebarItem.isAttempt) {
                 <div class="d-flex flex-column align-items-baseline">
                     <small class="me-2 text-truncate fw-semibold small-title-color" jhiTranslate="artemisApp.courseOverview.sidebar.usedWorkingTime"></small>
-                    <small class="me-2 text-truncate fw-semibold">
+                    <small class="me-2 fw-semibold">
                         @if (sidebarItem.usedWorkingTime) {
                             {{ sidebarItem.usedWorkingTime | artemisDurationFromSeconds }}
+                        } @else {
+                            {{ '-' }}
                         }
                     </small>
                 </div>
@@ -54,14 +56,23 @@
                     </small>
                 </div>
                 <hr class="my-1 mx-0" />
-                <div class="d-flex flex-column align-items-baseline">
-                    <small class="me-2 text-truncate fw-semibold small-title-color" jhiTranslate="artemisApp.courseOverview.sidebar.attainablePoints"></small>
-                    <small class="me-2 text-truncate fw-semibold">
-                        @if (sidebarItem.attainablePoints) {
-                            {{ sidebarItem.attainablePoints }}
-                        }
-                    </small>
-                </div>
+                @if (sidebarItem.testExam) {
+                    <div class="d-flex flex-column align-items-baseline">
+                        <small class="me-2 text-truncate fw-semibold small-title-color" jhiTranslate="artemisApp.courseOverview.sidebar.attempts"></small>
+                        <small class="me-2 text-truncate fw-semibold">
+                            {{ sidebarItem.attempts }}
+                        </small>
+                    </div>
+                } @else {
+                    <div class="d-flex flex-column align-items-baseline">
+                        <small class="me-2 text-truncate fw-semibold small-title-color" jhiTranslate="artemisApp.courseOverview.sidebar.attainablePoints"></small>
+                        <small class="me-2 text-truncate fw-semibold">
+                            @if (sidebarItem.attainablePoints) {
+                                {{ sidebarItem.attainablePoints }}
+                            }
+                        </small>
+                    </div>
+                }
             }
         } @else {
             <div class="d-flex justify-content-between mb-1 align-items-baseline">
