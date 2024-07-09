@@ -47,7 +47,7 @@ export function satisfiesScoreFilter(sidebarElement: SidebarCardElement, isFilte
 
     const latestResult = getLatestResultOfStudentParticipation(sidebarElement.studentParticipation, true);
     if (!latestResult?.score) {
-        return false;
+        return achievedScoreFilter.filter.selectedMin === 0;
     }
 
     return latestResult.score <= achievedScoreFilter.filter.selectedMax && latestResult.score >= achievedScoreFilter.filter.selectedMin;

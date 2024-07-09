@@ -166,6 +166,36 @@ describe('satisfiesScoreFilter', () => {
         const resultItemWithoutScore = satisfiesScoreFilter(SIDEBAR_CARD_ELEMENT_4, true, scoreFilter);
         expect(resultItemWithoutScore).toBeFalse();
     });
+
+    it('should return true if score of participation is not defined (not participated) and lower bound is 0', () => {
+        const scoreFilter: RangeFilter = {
+            isDisplayed: true,
+            filter: {
+                selectedMin: 0,
+                selectedMax: 10,
+                generalMin: 0,
+                generalMax: 80,
+                step: 1,
+            },
+        };
+        const resultItemWithScore = satisfiesScoreFilter(SIDEBAR_CARD_ELEMENT_4, true, scoreFilter);
+        expect(resultItemWithScore).toBeTrue();
+    });
+
+    it('should return false if score of participation is not defined (not participated) and lower bound is NOT 0', () => {
+        const scoreFilter: RangeFilter = {
+            isDisplayed: true,
+            filter: {
+                selectedMin: 1,
+                selectedMax: 10,
+                generalMin: 0,
+                generalMax: 80,
+                step: 1,
+            },
+        };
+        const resultItemWithScore = satisfiesScoreFilter(SIDEBAR_CARD_ELEMENT_4, true, scoreFilter);
+        expect(resultItemWithScore).toBeFalse();
+    });
 });
 
 describe('satisfiesPointsFilter', () => {
