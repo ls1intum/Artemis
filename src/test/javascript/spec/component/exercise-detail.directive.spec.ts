@@ -8,7 +8,7 @@ import { DetailType } from 'app/detail-overview-list/detail-overview-list.compon
 import { DateDetailComponent } from 'app/detail-overview-list/components/date-detail.component';
 
 @Component({
-    template: `<div jhiExerciseDetail [detail]="detail"></div>`,
+    template: `<jhi-exercise-detail [detail]="detail" />`,
 })
 class TestDetailHostComponent {
     @ViewChild(ExerciseDetailDirective) directive: ExerciseDetailDirective;
