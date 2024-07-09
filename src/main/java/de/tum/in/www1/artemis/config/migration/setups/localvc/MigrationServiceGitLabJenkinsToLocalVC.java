@@ -33,6 +33,10 @@ public class MigrationServiceGitLabJenkinsToLocalVC {
         this.migrationEntryJenkinsToLocalVC = migrationEntryJenkinsToLocalVC;
     }
 
+    /**
+     * Entry point for this migration service, which triggered at the startup of Artemis.
+     * Performs the migration and shutdown Artemis afterward.
+     */
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationInitialized() {
         log.info("Migration GitLab-Jenkins to LocalVC-Jenkins starting");
