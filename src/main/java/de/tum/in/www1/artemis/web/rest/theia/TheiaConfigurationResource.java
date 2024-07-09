@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -35,9 +36,9 @@ public class TheiaConfigurationResource {
      */
     @GetMapping("images")
     @EnforceAtLeastInstructor
-    public Map<String, String> getImagesForLanguage(@RequestParam("language") ProgrammingLanguage language) {
+    public ResponseEntity<Map<String, String>> getImagesForLanguage(@RequestParam("language") ProgrammingLanguage language) {
         // language = language.toLowerCase();
-        return this.theiaConfiguration.getImagesForLanguage(language);
+        return ResponseEntity.ok(this.theiaConfiguration.getImagesForLanguage(language));
     }
 
 }
