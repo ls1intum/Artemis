@@ -54,11 +54,11 @@
             }
         </div>
 
-        @if (typeFilters?.isDisplayed) {
+        @if (typeFilter?.isDisplayed) {
             <div class="form-group">
                 <label for="exercise-type-filter-selection" class="form-control-label h6" jhiTranslate="artemisApp.ratingList.exerciseType"></label>
                 <div id="exercise-type-filter-selection">
-                    @for (typeFilter of typeFilters!.options; track typeFilter) {
+                    @for (typeFilter of typeFilter!.options; track typeFilter) {
                         <div class="form-check form-check-inline no-left-margin-padding">
                             <label>
                                 <input type="checkbox" [(ngModel)]="typeFilter.checked" [name]="typeFilter.value" />
@@ -76,11 +76,11 @@
         <!--            TODO: Implement Date Range Picker (follow up PR @FlorianGlombik)-->
         <!--        </div>-->
 
-        @if (difficultyFilters?.isDisplayed) {
+        @if (difficultyFilter?.isDisplayed) {
             <div class="form-group">
                 <label for="difficulty-filter-selection" class="form-control-label h6" jhiTranslate="artemisApp.exercise.difficulty"></label>
                 <div id="difficulty-filter-selection">
-                    @for (difficultyFilter of difficultyFilters!.options; track difficultyFilter) {
+                    @for (difficultyFilter of difficultyFilter!.options; track difficultyFilter) {
                         <div class="form-check form-check-inline no-left-margin-padding">
                             <label>
                                 <input type="checkbox" [(ngModel)]="difficultyFilter.checked" [name]="difficultyFilter.value" />

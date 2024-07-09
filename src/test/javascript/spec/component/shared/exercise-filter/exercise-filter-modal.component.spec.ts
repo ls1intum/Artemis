@@ -9,6 +9,31 @@ import { RangeSliderComponent } from 'app/shared/range-slider/range-slider.compo
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
+import { RangeFilter } from 'app/types/exercise-filter';
+import { DifficultyLevel, ExerciseType, getIcon } from 'app/entities/exercise.model';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
+
+const SCORE_FILTER: RangeFilter = {
+    isDisplayed: true,
+    filter: {
+        generalMin: 0,
+        generalMax: 75,
+        selectedMin: 0,
+        selectedMax: 75,
+        step: 5,
+    },
+};
+
+const POINTS_FILTER: RangeFilter = {
+    isDisplayed: true,
+    filter: {
+        generalMin: 0,
+        generalMax: 20,
+        selectedMin: 0,
+        selectedMax: 20,
+        step: 1,
+    },
+};
 
 describe('ExerciseFilterModalComponent', () => {
     let component: ExerciseFilterModalComponent;
@@ -33,7 +58,46 @@ describe('ExerciseFilterModalComponent', () => {
         fixture = TestBed.createComponent(ExerciseFilterModalComponent);
         component = fixture.componentInstance;
         activeModal = TestBed.inject(NgbActiveModal);
+
+        component.exerciseFilters = {
+            exerciseTypesFilter: {
+                isDisplayed: true,
+                options: [
+                    { name: 'artemisApp.courseStatistics.programming', value: ExerciseType.PROGRAMMING, checked: false, icon: getIcon(ExerciseType.PROGRAMMING) },
+                    { name: 'artemisApp.courseStatistics.quiz', value: ExerciseType.QUIZ, checked: false, icon: getIcon(ExerciseType.QUIZ) },
+                    { name: 'artemisApp.courseStatistics.modeling', value: ExerciseType.MODELING, checked: false, icon: getIcon(ExerciseType.MODELING) },
+                    { name: 'artemisApp.courseStatistics.text', value: ExerciseType.TEXT, checked: false, icon: getIcon(ExerciseType.TEXT) },
+                    { name: 'artemisApp.courseStatistics.file-upload', value: ExerciseType.FILE_UPLOAD, checked: false, icon: getIcon(ExerciseType.FILE_UPLOAD) },
+                ],
+            },
+            difficultyFilter: {
+                isDisplayed: true,
+                options: [
+                    { name: 'artemisApp.exercise.easy', value: DifficultyLevel.EASY, checked: false },
+                    { name: 'artemisApp.exercise.medium', value: DifficultyLevel.MEDIUM, checked: false },
+                    { name: 'artemisApp.exercise.hard', value: DifficultyLevel.HARD, checked: false },
+                ],
+            },
+            categoryFilter: {
+                isDisplayed: true,
+                options: [
+                    { category: new ExerciseCategory('category1', undefined), searched: false },
+                    { category: new ExerciseCategory('category2', undefined), searched: false },
+                ],
+            },
+            achievedScore: SCORE_FILTER,
+            achievablePoints: POINTS_FILTER,
+        };
+
         fixture.detectChanges();
+    });
+
+    it('should initialize filters properly', () => {
+        expect(component.categoryFilter).toEqual(component.exerciseFilters?.categoryFilter);
+        expect(component.typeFilter).toEqual(component.exerciseFilters?.exerciseTypesFilter);
+        expect(component.difficultyFilter).toEqual(component.exerciseFilters?.difficultyFilter);
+        expect(component.achievedScore).toEqual(component.exerciseFilters?.achievedScore);
+        expect(component.achievablePoints).toEqual(component.exerciseFilters?.achievablePoints);
     });
 
     describe('should close modal', () => {

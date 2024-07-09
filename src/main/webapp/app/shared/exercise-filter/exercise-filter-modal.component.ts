@@ -45,11 +45,11 @@ export class ExerciseFilterModalComponent implements OnInit {
     @ViewChild('categoriesFilterSelection', { static: false }) instance: NgbTypeahead;
 
     get selectedCategoryOptions(): ExerciseCategoryFilterOption[] {
-        return this.categoryFilters?.options.filter((categoryFilter) => categoryFilter.searched) ?? [];
+        return this.categoryFilter?.options.filter((categoryFilter) => categoryFilter.searched) ?? [];
     }
 
     get selectableCategoryOptions(): ExerciseCategoryFilterOption[] {
-        return this.categoryFilters?.options.filter((categoryFilter) => !categoryFilter.searched) ?? [];
+        return this.categoryFilter?.options.filter((categoryFilter) => !categoryFilter.searched) ?? [];
     }
 
     noFiltersAvailable: boolean = false;
@@ -63,9 +63,9 @@ export class ExerciseFilterModalComponent implements OnInit {
 
     sidebarData?: SidebarData;
 
-    categoryFilters?: FilterOption<ExerciseCategoryFilterOption>;
-    typeFilters?: FilterOption<ExerciseTypeFilterOption>;
-    difficultyFilters?: FilterOption<DifficultyFilterOption>;
+    categoryFilter?: FilterOption<ExerciseCategoryFilterOption>;
+    typeFilter?: FilterOption<ExerciseTypeFilterOption>;
+    difficultyFilter?: FilterOption<DifficultyFilterOption>;
     achievablePoints?: RangeFilter;
     achievedScore?: RangeFilter;
 
@@ -74,16 +74,16 @@ export class ExerciseFilterModalComponent implements OnInit {
     constructor(private activeModal: NgbActiveModal) {}
 
     ngOnInit() {
-        this.categoryFilters = this.exerciseFilters?.categoryFilter;
-        this.typeFilters = this.exerciseFilters?.exerciseTypesFilter;
-        this.difficultyFilters = this.exerciseFilters?.difficultyFilter;
+        this.categoryFilter = this.exerciseFilters?.categoryFilter;
+        this.typeFilter = this.exerciseFilters?.exerciseTypesFilter;
+        this.difficultyFilter = this.exerciseFilters?.difficultyFilter;
         this.achievablePoints = this.exerciseFilters?.achievablePoints;
         this.achievedScore = this.exerciseFilters?.achievedScore;
 
         this.noFiltersAvailable = !(
-            this.categoryFilters?.isDisplayed ||
-            this.typeFilters?.isDisplayed ||
-            this.difficultyFilters?.isDisplayed ||
+            this.categoryFilter?.isDisplayed ||
+            this.typeFilter?.isDisplayed ||
+            this.difficultyFilter?.isDisplayed ||
             this.achievedScore?.isDisplayed ||
             this.achievablePoints?.isDisplayed
         );
@@ -135,9 +135,9 @@ export class ExerciseFilterModalComponent implements OnInit {
 
     getAppliedFilterDetails(): FilterDetails {
         return {
-            searchedTypes: this.typeFilters?.options.filter((type) => type.checked).map((type) => type.value),
+            searchedTypes: this.typeFilter?.options.filter((type) => type.checked).map((type) => type.value),
             selectedCategories: this.selectedCategoryOptions.map((categoryOption: ExerciseCategoryFilterOption) => categoryOption.category),
-            searchedDifficulties: this.difficultyFilters?.options.filter((difficulty) => difficulty.checked).map((difficulty) => difficulty.value),
+            searchedDifficulties: this.difficultyFilter?.options.filter((difficulty) => difficulty.checked).map((difficulty) => difficulty.value),
             isScoreFilterApplied:
                 this.achievedScore?.filter.selectedMin !== this.achievedScore?.filter.generalMin ||
                 this.achievedScore?.filter.selectedMax !== this.achievedScore?.filter.generalMax,
@@ -182,9 +182,9 @@ export class ExerciseFilterModalComponent implements OnInit {
     }
 
     resetFilter() {
-        this.categoryFilters?.options.forEach((categoryOption) => (categoryOption.searched = false));
-        this.typeFilters?.options.forEach((typeOption) => (typeOption.checked = false));
-        this.difficultyFilters?.options.forEach((difficultyOption) => (difficultyOption.checked = false));
+        this.categoryFilter?.options.forEach((categoryOption) => (categoryOption.searched = false));
+        this.typeFilter?.options.forEach((typeOption) => (typeOption.checked = false));
+        this.difficultyFilter?.options.forEach((difficultyOption) => (difficultyOption.checked = false));
 
         this.resetRangeFilter(this.achievedScore);
         this.resetRangeFilter(this.achievablePoints);
