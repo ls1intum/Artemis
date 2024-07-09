@@ -202,7 +202,7 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
                     }
                     else {
                         log.debug("Migrated student participation with id {} to {}", participation.getId(), url);
-                        if (participation.getBranch() != null) {
+                        if (!defaultBranch.equals(participation.getBranch())) {
                             participation.setBranch(defaultBranch);
                             log.debug("Changed branch of student participation with id {} to {}", participation.getId(), participation.getBranch());
                         }
