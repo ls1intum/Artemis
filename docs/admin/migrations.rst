@@ -24,6 +24,7 @@ to a Jenkins and LocalVC Setup.
          which is used to give an overall estimation for one step and to log an estimated percentage progress.
 3. Start Artemis with the additional profile ``migrate-gitlab-jenkins-to-localvc`` to perform the migration.
    As a minimum, the profiles ``core,gitlab,jenkins,migrate-gitlab-jenkins-to-localvc`` are required.
+   Additional profiles may be required for your setup (e.g., profile ``prod`` if you have additional configuration in ``application-prod.yml``).
    You should not yet add ``localvc``.
    After it Artemis stops automatically (with a ``Application run failed`` message).
    Check the log of Artemis for entries with ``Migration`` to see if there were any problems.
