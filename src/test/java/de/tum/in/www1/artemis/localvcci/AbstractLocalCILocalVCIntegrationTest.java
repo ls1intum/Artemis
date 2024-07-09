@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -62,9 +61,6 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
 
     @Autowired
     private StaticCodeAnalysisService staticCodeAnalysisService;
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     protected AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;

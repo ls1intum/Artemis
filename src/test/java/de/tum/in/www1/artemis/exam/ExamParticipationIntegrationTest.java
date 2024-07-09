@@ -76,7 +76,6 @@ import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.exam.StudentExamService;
@@ -104,9 +103,6 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
 
     @Autowired
     private QuizSubmissionService quizSubmissionService;
-
-    @Autowired
-    private UserRepository userRepo;
 
     @Autowired
     private ExamRepository examRepository;
@@ -463,8 +459,8 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         log.debug("testGetStatsForExamAssessmentDashboard: step 1 done");
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
 
-        User examTutor1 = userRepo.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
-        User examTutor2 = userRepo.findOneByLogin(TEST_PREFIX + "tutor2").orElseThrow();
+        User examTutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
+        User examTutor2 = userRepository.findOneByLogin(TEST_PREFIX + "tutor2").orElseThrow();
 
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
         var examStartDate = ZonedDateTime.now().plusMinutes(5);
@@ -671,8 +667,8 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
     private void lockAndAssessForSecondCorrection(Exam exam, Course course, List<StudentExam> studentExams, List<Exercise> exercisesInExam, int numberOfCorrectionRounds)
             throws Exception {
         // Lock all submissions
-        User examInstructor = userRepo.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
-        User examTutor2 = userRepo.findOneByLogin(TEST_PREFIX + "tutor2").orElseThrow();
+        User examInstructor = userRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
+        User examTutor2 = userRepository.findOneByLogin(TEST_PREFIX + "tutor2").orElseThrow();
 
         for (var exercise : exercisesInExam) {
             for (var participation : exercise.getStudentParticipations()) {
@@ -970,7 +966,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         // Compare StudentResult with the generated results
         for (var studentResult : examScores.studentResults()) {
             // Find the original user using the id in StudentResult
-            User originalUser = userRepo.findByIdElseThrow(studentResult.userId());
+            User originalUser = userRepository.findByIdElseThrow(studentResult.userId());
             StudentExam studentExamOfUser = studentExams.stream().filter(studentExam -> studentExam.getUser().equals(originalUser)).findFirst().orElseThrow();
 
             assertThat(studentResult.name()).isEqualTo(originalUser.getName());
@@ -1112,12 +1108,12 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         textExerciseUtilService.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
 
         Exercise teamExercise = textExerciseUtilService.createTeamTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
-        User tutor1 = userRepo.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
+        User tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
         Long teamTextExerciseId = teamExercise.getId();
         Long team1Id = teamUtilService.createTeam(Set.of(student1), tutor1, teamExercise, TEST_PREFIX + "team1").getId();
-        User student2 = userRepo.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
-        User student3 = userRepo.findOneByLogin(TEST_PREFIX + "student3").orElseThrow();
-        User tutor2 = userRepo.findOneByLogin(TEST_PREFIX + "tutor2").orElseThrow();
+        User student2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        User student3 = userRepository.findOneByLogin(TEST_PREFIX + "student3").orElseThrow();
+        User tutor2 = userRepository.findOneByLogin(TEST_PREFIX + "tutor2").orElseThrow();
         Long team2Id = teamUtilService.createTeam(Set.of(student2, student3), tutor2, teamExercise, TEST_PREFIX + "team2").getId();
 
         participationUtilService.createParticipationSubmissionAndResult(individualTextExerciseId, student1, 10.0, 10.0, 50, true);

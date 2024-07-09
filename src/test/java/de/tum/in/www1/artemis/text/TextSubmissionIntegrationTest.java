@@ -46,7 +46,6 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionVersionRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
@@ -69,9 +68,6 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Autowired
     private PlagiarismComparisonRepository plagiarismComparisonRepository;
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private TeamRepository teamRepository;

@@ -23,7 +23,6 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
-import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.user.UserFactory;
@@ -40,9 +39,6 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private PasswordService passwordService;
-
-    @Autowired
-    private ExamAccessService examAccessService;
 
     @Autowired
     private ExamUtilService examUtilService;

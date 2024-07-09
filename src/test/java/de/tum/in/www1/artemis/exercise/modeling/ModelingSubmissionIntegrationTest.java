@@ -53,7 +53,6 @@ import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionVersionRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
@@ -64,9 +63,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "modelingsubmissionintegration";
-
-    @Autowired
-    private UserRepository userRepo;
 
     @Autowired
     private TeamRepository teamRepository;
@@ -281,8 +277,8 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         team.setName("Team");
         team.setShortName(TEST_PREFIX + "team");
         team.setExercise(useCaseExercise);
-        team.addStudents(userRepo.findOneByLogin(TEST_PREFIX + "student1").orElseThrow());
-        team.addStudents(userRepo.findOneByLogin(TEST_PREFIX + "student2").orElseThrow());
+        team.addStudents(userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow());
+        team.addStudents(userRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow());
         teamRepository.save(useCaseExercise, team);
 
         participationUtilService.addTeamParticipationForExercise(useCaseExercise, team.getId());
@@ -471,7 +467,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         plagiarismCase.setExercise(classExercise);
         plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
         Post post = new Post();
-        post.setAuthor(userRepo.getUserByLoginElseThrow(TEST_PREFIX + "instructor1"));
+        post.setAuthor(userRepository.getUserByLoginElseThrow(TEST_PREFIX + "instructor1"));
         post.setTitle("Title Plagiarism Case Post");
         post.setContent("Content Plagiarism Case Post");
         post.setVisibleForStudents(true);

@@ -34,7 +34,6 @@ import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.SlideRepository;
 import de.tum.in.www1.artemis.service.LectureUnitProcessingService;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitSplitDTO;
 
@@ -47,9 +46,6 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Autowired
     private SlideRepository slideRepository;
-
-    @Autowired
-    private RequestUtilService request;
 
     @Autowired
     private LectureUtilService lectureUtilService;

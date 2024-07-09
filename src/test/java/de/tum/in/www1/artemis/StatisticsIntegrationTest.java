@@ -40,7 +40,6 @@ import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementStatisticsDTO;
@@ -52,9 +51,6 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
 
     @Autowired
     private TextExerciseRepository textExerciseRepository;
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private PostRepository postRepository;

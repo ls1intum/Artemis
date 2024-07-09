@@ -52,7 +52,6 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.util.TestResourceUtils;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseDetailsDTO;
@@ -62,9 +61,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "exerciseintegration";
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private ExamRepository examRepository;

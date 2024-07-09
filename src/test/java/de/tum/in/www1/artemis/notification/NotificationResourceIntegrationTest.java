@@ -25,12 +25,8 @@ import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 
 class NotificationResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private NotificationRepository notificationRepository;

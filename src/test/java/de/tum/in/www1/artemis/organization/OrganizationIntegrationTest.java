@@ -19,16 +19,12 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Organization;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.OrganizationRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.web.rest.dto.OrganizationCountDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "organizationtest";
-
-    @Autowired
-    private UserRepository userRepo;
 
     @Autowired
     private OrganizationRepository organizationRepo;
@@ -50,7 +46,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         User student = userUtilService.createAndSaveUser(TEST_PREFIX + "login2");
         student.setOrganizations(organizations);
-        userRepo.save(student);
+        userRepository.save(student);
 
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
@@ -85,7 +81,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         User student = userUtilService.createAndSaveUser(TEST_PREFIX + "login1");
         student.setOrganizations(organizations);
-        userRepo.save(student);
+        userRepository.save(student);
 
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
@@ -301,7 +297,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         courseRepository.addOrganizationToCourse(course1.getId(), organization);
         User student = userUtilService.createAndSaveUser(TEST_PREFIX + "testGetNumberOfUsersOfAll_");
 
-        userRepo.addOrganizationToUser(student.getId(), organization);
+        userRepository.addOrganizationToUser(student.getId(), organization);
 
         List<OrganizationCountDTO> result = request.getList("/api/admin/organizations/count-all", HttpStatus.OK, OrganizationCountDTO.class);
 
@@ -326,7 +322,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         courseRepository.addOrganizationToCourse(course1.getId(), organization);
         User student = userUtilService.createAndSaveUser(TEST_PREFIX + "testGetNumberOfUsers_");
 
-        userRepo.addOrganizationToUser(student.getId(), organization);
+        userRepository.addOrganizationToUser(student.getId(), organization);
 
         OrganizationCountDTO result = request.get("/api/admin/organizations/" + organization.getId() + "/count", HttpStatus.OK, OrganizationCountDTO.class);
 
@@ -349,10 +345,10 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         User student = userUtilService.createAndSaveUser(TEST_PREFIX + "testGetOrganizationById");
 
-        userRepo.addOrganizationToUser(student.getId(), organization);
+        userRepository.addOrganizationToUser(student.getId(), organization);
         // invoked remove to make sure it works correctly
-        userRepo.removeOrganizationFromUser(student.getId(), organization);
-        userRepo.addOrganizationToUser(student.getId(), organization);
+        userRepository.removeOrganizationFromUser(student.getId(), organization);
+        userRepository.addOrganizationToUser(student.getId(), organization);
 
         Organization result = request.get("/api/admin/organizations/" + organization.getId(), HttpStatus.OK, Organization.class);
         Organization resultWithCoursesAndUsers = request.get("/api/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
@@ -393,7 +389,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         organization = organizationRepo.save(organization);
         User student = userUtilService.createAndSaveUser(TEST_PREFIX + "testGetAllOrganizationByUser");
 
-        userRepo.addOrganizationToUser(student.getId(), organization);
+        userRepository.addOrganizationToUser(student.getId(), organization);
 
         List<Organization> result = request.getList("/api/admin/organizations/users/" + student.getId(), HttpStatus.OK, Organization.class);
 

@@ -75,10 +75,8 @@ import de.tum.in.www1.artemis.repository.QuizPoolRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
-import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.quiz.QuizPoolService;
@@ -108,9 +106,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     private QuizExerciseRepository quizExerciseRepository;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private ExamRepository examRepository;
 
     @Autowired
@@ -136,9 +131,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
     private ZipFileTestUtilService zipFileTestUtilService;
-
-    @Autowired
-    private ExamAccessService examAccessService;
 
     @Autowired
     private ChannelRepository channelRepository;

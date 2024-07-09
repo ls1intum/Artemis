@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.web.rest.dto.GradeDTO;
 import de.tum.in.www1.artemis.web.rest.dto.GradeStepsDTO;
@@ -41,9 +40,6 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentTest 
 
     @Autowired
     private ExamRepository examRepository;
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private PlagiarismCaseRepository plagiarismCaseRepository;

@@ -24,7 +24,6 @@ import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestion;
 import de.tum.in.www1.artemis.exercise.quiz.QuizExerciseFactory;
 import de.tum.in.www1.artemis.service.quiz.QuizPoolService;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 
 class QuizPoolIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -35,9 +34,6 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ExamUtilService examUtilService;
-
-    @Autowired
-    private RequestUtilService request;
 
     private Course course;
 

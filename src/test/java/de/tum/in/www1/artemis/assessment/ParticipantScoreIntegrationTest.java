@@ -38,7 +38,6 @@ import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.team.TeamUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.score.ScoreDTO;
@@ -62,9 +61,6 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     private Exam exam;
 
     private User student1;
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private TeamRepository teamRepository;

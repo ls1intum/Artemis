@@ -66,7 +66,6 @@ import de.tum.in.www1.artemis.repository.ModelElementRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.compass.CompassService;
@@ -80,9 +79,6 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
     private static final String TEST_PREFIX = "modelingassessment";
 
     public static final String API_MODELING_SUBMISSIONS = "/api/modeling-submissions/";
-
-    @Autowired
-    private UserRepository userRepo;
 
     @Autowired
     private ModelingSubmissionRepository modelingSubmissionRepo;
@@ -1489,7 +1485,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         modelingExercise = exerciseRepository.saveAndFlush(modelingExercise);
 
         // creating participation of student1 by starting the exercise
-        User student1 = userRepo.findOneByLogin(TEST_PREFIX + "student1").orElse(null);
+        User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElse(null);
         StudentParticipation studentParticipation = participationService.startExercise(modelingExercise, student1, false);
 
         // creating submission of student1
@@ -1501,7 +1497,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         submission = submissionRepository.saveAndFlush(submission);
 
         // creating assessment by tutor1
-        User tutor1 = userRepo.findOneByLogin("tutor1").orElse(null);
+        User tutor1 = userRepository.findOneByLogin("tutor1").orElse(null);
         Result firstResult = ParticipationFactory.generateResult(true, 50);
         firstResult.setAssessor(tutor1);
         firstResult.setHasComplaint(true);

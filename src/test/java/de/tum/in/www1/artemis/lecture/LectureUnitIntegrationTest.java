@@ -29,15 +29,11 @@ import de.tum.in.www1.artemis.domain.lecture.TextUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
 import de.tum.in.www1.artemis.repository.TextUnitRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.web.rest.dto.lectureunit.LectureUnitForLearningPathNodeDetailsDTO;
 
 class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "lectureunitintegration";
-
-    @Autowired
-    private UserRepository userRepo;
 
     @Autowired
     private TextUnitRepository textUnitRepository;
@@ -230,7 +226,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
         LectureUnit lectureUnit = this.lecture1.getLectureUnits().get(0);
 
         assertThat(lectureUnit.getCompletedUsers()).isNotEmpty();
-        assertThat(lectureUnit.isCompletedFor(userRepo.getUser())).isTrue();
+        assertThat(lectureUnit.isCompletedFor(userRepository.getUser())).isTrue();
 
         // Set lecture unit as uncompleted for user
         request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().get(0).getId() + "/completion?completed=false", null,
@@ -240,7 +236,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
         lectureUnit = this.lecture1.getLectureUnits().get(0);
 
         assertThat(lectureUnit.getCompletedUsers()).isEmpty();
-        assertThat(lectureUnit.isCompletedFor(userRepo.getUser())).isFalse();
+        assertThat(lectureUnit.isCompletedFor(userRepository.getUser())).isFalse();
     }
 
     @Test

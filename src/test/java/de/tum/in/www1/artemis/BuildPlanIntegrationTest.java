@@ -16,7 +16,6 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
 
 class BuildPlanIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
@@ -27,9 +26,6 @@ class BuildPlanIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTes
 
     @Autowired
     private BuildPlanRepository buildPlanRepository;
-
-    @Autowired
-    private ProgrammingTriggerService programmingTriggerService;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;

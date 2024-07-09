@@ -24,14 +24,10 @@ import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TextAssessmentEventRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 
 class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "tutoreffort"; // only lower case is supported
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private TextSubmissionRepository textSubmissionRepository;

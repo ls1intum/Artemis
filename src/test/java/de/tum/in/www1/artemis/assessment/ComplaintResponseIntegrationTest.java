@@ -31,7 +31,6 @@ import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.dto.ComplaintAction;
 import de.tum.in.www1.artemis.service.dto.ComplaintResponseUpdateDTO;
@@ -41,9 +40,6 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     private static final Logger log = LoggerFactory.getLogger(ComplaintResponseIntegrationTest.class);
 
     private static final String TEST_PREFIX = "complaintresponseintegration";
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private ParticipationService participationService;

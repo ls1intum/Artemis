@@ -17,12 +17,10 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.repository.UserRepository;
 import io.jsonwebtoken.Jwts;
 
 /**
@@ -49,9 +47,6 @@ class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationIndependentTes
     private static final String VALID_STATE = "validState";
 
     private static final String TEST_PREFIX = "lti13launchintegrationtest";
-
-    @Autowired
-    private UserRepository userRepository;
 
     @BeforeEach
     void init() {

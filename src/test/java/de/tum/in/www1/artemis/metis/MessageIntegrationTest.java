@@ -60,7 +60,6 @@ import de.tum.in.www1.artemis.domain.notification.ConversationNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationNotificationRepository;
@@ -77,9 +76,6 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ConversationMessageRepository conversationMessageRepository;
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private OneToOneChatRepository oneToOneChatRepository;

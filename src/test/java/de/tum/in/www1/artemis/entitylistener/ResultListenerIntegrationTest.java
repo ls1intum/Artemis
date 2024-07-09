@@ -36,7 +36,6 @@ import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.StudentScoreRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
@@ -65,9 +64,6 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
     @Autowired
     private TeamRepository teamRepository;
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private ResultService resultService;

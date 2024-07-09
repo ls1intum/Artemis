@@ -28,7 +28,6 @@ import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipatio
 import de.tum.in.www1.artemis.repository.hestia.CoverageFileReportRepository;
 import de.tum.in.www1.artemis.repository.hestia.CoverageReportRepository;
 import de.tum.in.www1.artemis.repository.hestia.TestwiseCoverageReportEntryRepository;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 
 class TestwiseCoverageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -51,9 +50,6 @@ class TestwiseCoverageIntegrationTest extends AbstractSpringIntegrationIndepende
 
     @Autowired
     private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseRepository;
-
-    @Autowired
-    private RequestUtilService request;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;

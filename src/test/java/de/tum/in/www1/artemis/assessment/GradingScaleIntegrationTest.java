@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 
 class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -34,9 +33,6 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Autowired
     private ExamRepository examRepository;
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private ExamUtilService examUtilService;

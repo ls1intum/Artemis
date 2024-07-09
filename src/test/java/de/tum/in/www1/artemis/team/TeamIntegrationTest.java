@@ -35,7 +35,6 @@ import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.TeamRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CoursesForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseDetailsDTO;
@@ -44,9 +43,6 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private TeamRepository teamRepo;
-
-    @Autowired
-    private UserRepository userRepo;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
@@ -87,8 +83,8 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         exercise.setMode(ExerciseMode.TEAM);
         exercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
         exercise = exerciseRepository.save(exercise);
-        students = new HashSet<>(userRepo.searchByLoginOrNameInGroup("tumuser", TEST_PREFIX + "student"));
-        tutor = userRepo.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
+        students = new HashSet<>(userRepository.searchByLoginOrNameInGroup("tumuser", TEST_PREFIX + "student"));
+        tutor = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
     }
 
     private String resourceUrl() {
@@ -157,7 +153,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testCreateTeam_StudentsAlreadyAssigned_BadRequest() throws Exception {
         // Create team that contains student "student1"
         Team team1 = new Team().name(TEST_PREFIX + "Team 1").shortName(TEST_PREFIX + "team1").exercise(exercise)
-                .students(Set.of(userRepo.findOneByLogin(TEST_PREFIX + "student1").orElseThrow()));
+                .students(Set.of(userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow()));
         teamRepo.save(team1);
 
         // Try to create team with a student that is already assigned to another team
@@ -232,9 +228,9 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testUpdateTeam_StudentsAlreadyAssigned_BadRequest() throws Exception {
-        User student1 = userRepo.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
-        User student2 = userRepo.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
-        User student3 = userRepo.findOneByLogin(TEST_PREFIX + "student3").orElseThrow();
+        User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        User student2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        User student3 = userRepository.findOneByLogin(TEST_PREFIX + "student3").orElseThrow();
 
         Team team1 = new Team().name(TEST_PREFIX + "Team 1").shortName(TEST_PREFIX + "team1").exercise(exercise).students(Set.of(student1, student2));
         team1.setOwner(tutor);
@@ -283,7 +279,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testUpdateTeam_Forbidden_OwnerChanged() throws Exception {
         // It should not be allowed to change a team's owner as a tutor
         Team team = teamUtilService.addTeamForExercise(exercise, tutor);
-        team.setOwner(userRepo.findOneByLogin(TEST_PREFIX + "tutor2").orElseThrow());
+        team.setOwner(userRepository.findOneByLogin(TEST_PREFIX + "tutor2").orElseThrow());
         request.putWithResponseBody(resourceUrl() + "/" + team.getId(), team, Team.class, HttpStatus.FORBIDDEN);
     }
 
@@ -466,14 +462,14 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testAssignedTeamIdOnExerciseForCurrentUser() throws Exception {
         var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         student.setGroups(Set.of(TEST_PREFIX + "student" + "assignedTeam"));
-        userRepo.save(student);
+        userRepository.save(student);
 
         course.setStudentGroupName(TEST_PREFIX + "student" + "assignedTeam");
         courseRepository.save(course);
 
         // Create team that contains student "student1" (Team shortName needs to be empty since it is used as a prefix for the generated student logins)
         Team team = new Team().name(TEST_PREFIX + "Team").shortName(TEST_PREFIX + "team").exercise(exercise)
-                .students(userRepo.findOneByLogin(TEST_PREFIX + "student1").map(Set::of).orElseThrow());
+                .students(userRepository.findOneByLogin(TEST_PREFIX + "student1").map(Set::of).orElseThrow());
         team = teamRepo.save(team);
 
         // Check for endpoint: @GetMapping("courses/for-dashboard")
@@ -573,7 +569,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getCourseWithExercisesAndParticipationsForTeam_AsStudentInTeam_Allowed() throws Exception {
         Team team = teamRepo.save(new Team().name(TEST_PREFIX + "Team").shortName(TEST_PREFIX + "team").exercise(exercise)
-                .students(userRepo.findOneByLogin(TEST_PREFIX + "student1").map(Set::of).orElseThrow()));
+                .students(userRepository.findOneByLogin(TEST_PREFIX + "student1").map(Set::of).orElseThrow()));
         request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team), HttpStatus.OK, Course.class);
     }
 

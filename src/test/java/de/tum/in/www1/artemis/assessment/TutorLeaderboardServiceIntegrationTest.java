@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.exercise.modeling.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.TutorLeaderboardService;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 
@@ -29,9 +28,6 @@ class TutorLeaderboardServiceIntegrationTest extends AbstractSpringIntegrationIn
 
     @Autowired
     private TutorLeaderboardService tutorLeaderboardService;
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;

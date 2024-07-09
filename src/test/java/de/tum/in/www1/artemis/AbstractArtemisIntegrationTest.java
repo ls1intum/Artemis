@@ -26,10 +26,12 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programming.MockDelegate;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.TextBlockService;
@@ -169,6 +171,12 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @Autowired
     protected CourseUtilService courseUtilService;
+
+    @Autowired
+    protected ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    protected UserRepository userRepository;
 
     @Autowired
     protected ExerciseRepository exerciseRepository;

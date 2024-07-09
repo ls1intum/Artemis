@@ -26,10 +26,8 @@ import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
-import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.exam.ExamRegistrationService;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
@@ -44,9 +42,6 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     public static final String STUDENT_111 = TEST_PREFIX + "student111";
 
     @Autowired
-    private UserRepository userRepo;
-
-    @Autowired
     private ExamRepository examRepository;
 
     @Autowired
@@ -57,9 +52,6 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Autowired
     private PasswordService passwordService;
-
-    @Autowired
-    private ExamAccessService examAccessService;
 
     @Autowired
     private ChannelRepository channelRepository;
@@ -108,9 +100,9 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     void testRegisterUserInExam_addedToCourseStudentsGroup() throws Exception {
         User student42 = userUtilService.getUserByLogin(TEST_PREFIX + "student42");
 
-        Set<User> studentsInCourseBefore = userRepo.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course1.getStudentGroupName());
+        Set<User> studentsInCourseBefore = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course1.getStudentGroupName());
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + TEST_PREFIX + "student42", null, HttpStatus.OK, null);
-        Set<User> studentsInCourseAfter = userRepo.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course1.getStudentGroupName());
+        Set<User> studentsInCourseAfter = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course1.getStudentGroupName());
         studentsInCourseBefore.add(student42);
         assertThat(studentsInCourseBefore).containsExactlyInAnyOrderElementsOf(studentsInCourseAfter);
     }
@@ -158,7 +150,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         userUtilService.createAndSaveUser("student99"); // not registered for the course
         userUtilService.setRegistrationNumberOfUserAndSave("student99", registrationNumber99);
 
-        User student99 = userRepo.findOneWithGroupsAndAuthoritiesByLogin("student99").orElseThrow();
+        User student99 = userRepository.findOneWithGroupsAndAuthoritiesByLogin("student99").orElseThrow();
         assertThat(student99.getGroups()).doesNotContain(course1.getStudentGroupName());
 
         // Note: student111 is not yet a user of Artemis and should be retrieved from the LDAP
@@ -209,7 +201,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         for (var examUser : storedExam.getExamUsers()) {
             // all registered users must have access to the course
-            var user = userRepo.findOneWithGroupsAndAuthoritiesByLogin(examUser.getUser().getLogin()).orElseThrow();
+            var user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(examUser.getUser().getLogin()).orElseThrow();
             assertThat(user.getGroups()).contains(course1.getStudentGroupName());
         }
 
@@ -277,7 +269,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     void testAddAllRegisteredUsersToExam() throws Exception {
         Exam exam = examUtilService.addExam(course1);
         Channel channel = examUtilService.addExamChannel(exam, "testchannel");
-        int numberOfStudentsInCourse = userRepo.findAllByIsDeletedIsFalseAndGroupsContains(course1.getStudentGroupName()).size();
+        int numberOfStudentsInCourse = userRepository.findAllByIsDeletedIsFalseAndGroupsContains(course1.getStudentGroupName()).size();
 
         User student99 = userUtilService.createAndSaveUser(TEST_PREFIX + "student99"); // not registered for the course
         student99.setGroups(Collections.singleton("tumuser"));

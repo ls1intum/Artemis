@@ -45,7 +45,6 @@ import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
 import de.tum.in.www1.artemis.repository.LearningPathRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.LectureUnitService;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
@@ -64,9 +63,6 @@ import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "learningpathintegration";
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private CompetencyUtilService competencyUtilService;

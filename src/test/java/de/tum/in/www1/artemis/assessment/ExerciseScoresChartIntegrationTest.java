@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.team.TeamUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresDTO;
@@ -52,9 +51,6 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationIndepe
     private Long idOfIndividualTextExerciseWithoutParticipants;
 
     private Long idOfTeamTextExercise;
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private TeamRepository teamRepository;

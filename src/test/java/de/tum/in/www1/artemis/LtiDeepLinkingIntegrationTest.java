@@ -32,15 +32,11 @@ import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.lti.Claims;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import io.jsonwebtoken.Jwts;
 
 class LtiDeepLinkingIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "ltideeplinkingintegrationtest";
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;

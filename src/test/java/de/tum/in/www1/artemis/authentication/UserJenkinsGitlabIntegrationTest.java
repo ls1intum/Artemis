@@ -51,9 +51,6 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     private PasswordService passwordService;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private JenkinsUserManagementService jenkinsUserManagementService;
 
     @Autowired
