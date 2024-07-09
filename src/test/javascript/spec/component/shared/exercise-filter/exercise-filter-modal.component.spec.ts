@@ -163,4 +163,30 @@ describe('ExerciseFilterModalComponent', () => {
             expect(component.model).toBe('categoryThatIsNotDefinedAndSearchedViaEnter');
         });
     });
+
+    it('should reset all filters when button is clicked', () => {
+        component.categoryFilter!.options[0].searched = true;
+        component.categoryFilter!.options[1].searched = true;
+        component.typeFilter!.options[0].checked = true;
+        component.typeFilter!.options[1].checked = true;
+        component.difficultyFilter!.options[0].checked = true;
+        component.difficultyFilter!.options[1].checked = false;
+        component.achievablePoints!.filter.selectedMax = 10;
+        component.achievedScore!.filter.selectedMin = 10;
+        const resetFilterSpy = jest.spyOn(component, 'resetFilter');
+
+        const resetButton = fixture.debugElement.query(By.css('button[jhiTranslate="artemisApp.courseOverview.exerciseFilter.resetFilter"]'));
+        expect(resetButton).not.toBeNull();
+        resetButton.nativeElement.click();
+
+        expect(resetFilterSpy).toHaveBeenCalledOnce();
+        expect(component.categoryFilter!.options[0].searched).toBeFalse();
+        expect(component.categoryFilter!.options[1].searched).toBeFalse();
+        expect(component.typeFilter!.options[0].checked).toBeFalse();
+        expect(component.typeFilter!.options[1].checked).toBeFalse();
+        expect(component.difficultyFilter!.options[0].checked).toBeFalse();
+        expect(component.difficultyFilter!.options[1].checked).toBeFalse();
+        expect(component.achievablePoints!.filter.selectedMax).toBe(component.achievablePoints?.filter.generalMax);
+        expect(component.achievedScore!.filter.selectedMin).toBe(component.achievedScore?.filter.generalMin);
+    });
 });
