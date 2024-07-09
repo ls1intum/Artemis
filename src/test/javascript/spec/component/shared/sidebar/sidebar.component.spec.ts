@@ -158,13 +158,33 @@ describe('SidebarComponent', () => {
                 },
             } as NgbModalRef;
             const openModalSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+            const openFilterExercisesDialogSpy = jest.spyOn(component, 'openFilterExercisesDialog');
             const initFilterOptionsSpy = jest.spyOn(component, 'initializeFilterOptions');
 
             const filterLink = fixture.debugElement.query(By.css(FILTER_LINK_SELECTOR)).nativeElement;
             filterLink.click();
 
-            expect(initFilterOptionsSpy).toHaveBeenCalled();
+            expect(initFilterOptionsSpy).toHaveBeenCalledOnce();
+            expect(openFilterExercisesDialogSpy).toHaveBeenCalledOnce();
             expect(openModalSpy).toHaveBeenCalledWith(ExerciseFilterModalComponent, { animation: true, backdrop: 'static', size: 'lg' });
+        });
+    });
+
+    describe('openFilterExercisesDialog', () => {
+        it('should subscribe to filterApplied from modal', () => {
+            const filterAppliedEmitter = new EventEmitter<ExerciseFilterResults>();
+            const mockModalRef: Partial<NgbModalRef> = {
+                componentInstance: {
+                    filterApplied: filterAppliedEmitter,
+                },
+            };
+            const openSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+            const subscribeSpy = jest.spyOn(filterAppliedEmitter, 'subscribe');
+
+            component.openFilterExercisesDialog();
+
+            expect(openSpy).toHaveBeenCalledOnce();
+            expect(subscribeSpy).toHaveBeenCalledOnce();
         });
     });
 });
