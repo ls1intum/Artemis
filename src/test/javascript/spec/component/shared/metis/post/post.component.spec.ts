@@ -12,7 +12,16 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PageType } from 'app/shared/metis/metis.util';
 import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
-import { metisChannel, metisCourse, metisPostExerciseUser1, metisPostLectureUser1, metisUser1 } from '../../../../helpers/sample/metis-sample-data';
+import {
+    metisChannel,
+    metisCourse,
+    metisPostExerciseUser1,
+    metisPostLectureUser1,
+    metisUser1,
+    post,
+    sortedAnswerArray,
+    unsortedAnswerArray,
+} from '../../../../helpers/sample/metis-sample-data';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';
 import { RouterTestingModule } from '@angular/router/testing';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -23,6 +32,8 @@ import { of } from 'rxjs';
 import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { HttpResponse } from '@angular/common/http';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
+import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
+import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -50,6 +61,8 @@ describe('PostComponent', () => {
                 MockComponent(PostHeaderComponent),
                 MockComponent(PostingContentComponent),
                 MockComponent(PostFooterComponent),
+                MockComponent(AnswerPostCreateEditModalComponent),
+                MockComponent(PostReactionsBarComponent),
                 MockRouterLinkDirective,
                 MockQueryParamsDirective,
                 TranslatePipeMock,
@@ -77,25 +90,19 @@ describe('PostComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should display resolved icon on resolved post header', () => {
-        component.posting = metisPostExerciseUser1;
-        component.posting.resolved = true;
-
-        component.ngOnInit();
-        fixture.detectChanges();
-
-        expect(getElement(debugElement, '.resolved')).not.toBeNull();
+    it('should sort answers', () => {
+        component.posting = post;
+        component.posting.answers = unsortedAnswerArray;
+        component.sortAnswerPosts();
+        expect(component.sortedAnswerPosts).toEqual(sortedAnswerArray);
     });
 
-    it('should not display resolved icon on unresolved post header', () => {
-        // per default not resolved
-        component.posting = metisPostExerciseUser1;
-        component.posting.resolved = false;
-
-        component.ngOnInit();
-        fixture.detectChanges();
-
-        expect(getElement(debugElement, '.resolved')).toBeNull();
+    it('should not sort empty array of answers', () => {
+        component.posting = post;
+        component.posting.answers = unsortedAnswerArray;
+        component.posting.answers = undefined;
+        component.sortAnswerPosts();
+        expect(component.sortedAnswerPosts).toEqual([]);
     });
 
     it('should contain a post header', () => {
