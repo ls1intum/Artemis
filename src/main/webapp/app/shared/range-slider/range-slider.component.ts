@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 const DEFAULT_STEP = 1;
@@ -32,11 +32,13 @@ export class RangeSliderComponent implements OnInit, OnDestroy {
         return 100 - ((this.selectedMaxValue - this.generalMinValue) / (this.generalMaxValue - this.generalMinValue)) * 100;
     }
 
+    constructor(private elRef: ElementRef) {}
+
     ngOnInit() {
-        this.rangeInputElements = document.querySelectorAll('.range-input input');
+        this.rangeInputElements = this.elRef.nativeElement.querySelectorAll('.range-input input');
 
         this.rangeInputElements?.forEach((input: HTMLInputElement) => {
-            const listener = (event: Event) => {
+            const listener = (event: InputEvent) => {
                 this.ensureMinValueIsSmallerThanMaxValueViceVersa(event);
             };
             input.addEventListener('input', listener);
@@ -50,17 +52,17 @@ export class RangeSliderComponent implements OnInit, OnDestroy {
         });
     }
 
-    onSelectedMinValueChanged(event: Event): void {
+    onSelectedMinValueChanged(event: InputEvent): void {
         const updatedMinValue = this.ensureMinValueIsSmallerThanMaxValueViceVersa(event);
         this.selectedMinValueChange.emit(updatedMinValue);
     }
 
-    onSelectedMaxValueChanged(event: Event): void {
+    onSelectedMaxValueChanged(event: InputEvent): void {
         const updatedMaxValue = this.ensureMinValueIsSmallerThanMaxValueViceVersa(event);
         this.selectedMaxValueChange.emit(updatedMaxValue);
     }
 
-    private ensureMinValueIsSmallerThanMaxValueViceVersa(event: Event): number {
+    private ensureMinValueIsSmallerThanMaxValueViceVersa(event: InputEvent): number {
         const input = event.target as HTMLInputElement;
         const minSliderIsUpdated = input.className.includes('range-min');
 
