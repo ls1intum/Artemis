@@ -126,19 +126,41 @@ describe('ExerciseFilterModalComponent', () => {
         });
     });
 
-    it('should mark a category as selected', () => {
-        expect(component.categoryFilter?.options[0].searched).toBeFalse(); // if it is not false in the beginning we do not test anything here
-        const onSelectItemSpy = jest.spyOn(component, 'onSelectItem');
+    describe('select category', () => {
+        it('should mark a category as selected when category is found', () => {
+            expect(component.categoryFilter?.options[0].searched).toBeFalse(); // if it is not false in the beginning we do not test anything here
+            const onSelectItemSpy = jest.spyOn(component, 'onSelectItem');
 
-        // Simulate selecting an item
-        const event = {
-            item: component.selectableCategoryOptions[0],
-            preventDefault: jest.fn(),
-        };
-        component.onSelectItem(event);
-        fixture.detectChanges();
+            component.model = 'category1';
+            // Simulate selecting an item
+            const event = {
+                item: component.selectableCategoryOptions[0],
+                preventDefault: jest.fn(),
+            };
+            component.onSelectItem(event);
+            fixture.detectChanges();
 
-        expect(onSelectItemSpy).toHaveBeenCalled();
-        expect(component.categoryFilter?.options[0].searched).toBeTrue();
+            expect(onSelectItemSpy).toHaveBeenCalledOnce();
+            expect(component.categoryFilter?.options[0].searched).toBeTrue();
+            expect(component.model).toBeUndefined(); // Clear the input field after selection
+        });
+
+        it('should not change category filter when no item is provided', () => {
+            expect(component.categoryFilter?.options[0].searched).toBeFalse(); // if it is not false in the beginning we do not test anything here
+            const onSelectItemSpy = jest.spyOn(component, 'onSelectItem');
+
+            component.model = 'categoryThatIsNotDefinedAndSearchedViaEnter';
+            const event = {
+                item: undefined,
+                preventDefault: jest.fn(),
+                stopPropagation: jest.fn(),
+            };
+            component.onSelectItem(event);
+            fixture.detectChanges();
+
+            expect(onSelectItemSpy).toHaveBeenCalledOnce();
+            expect(component.categoryFilter?.options[0].searched).toBeFalse();
+            expect(component.model).toBe('categoryThatIsNotDefinedAndSearchedViaEnter');
+        });
     });
 });
