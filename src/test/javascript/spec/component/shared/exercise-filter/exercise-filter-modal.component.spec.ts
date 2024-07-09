@@ -125,4 +125,20 @@ describe('ExerciseFilterModalComponent', () => {
             expect(closeModalSpy).toHaveBeenCalledOnce();
         });
     });
+
+    it('should mark a category as selected', () => {
+        expect(component.categoryFilter?.options[0].searched).toBeFalse(); // if it is not false in the beginning we do not test anything here
+        const onSelectItemSpy = jest.spyOn(component, 'onSelectItem');
+
+        // Simulate selecting an item
+        const event = {
+            item: component.selectableCategoryOptions[0],
+            preventDefault: jest.fn(),
+        };
+        component.onSelectItem(event);
+        fixture.detectChanges();
+
+        expect(onSelectItemSpy).toHaveBeenCalled();
+        expect(component.categoryFilter?.options[0].searched).toBeTrue();
+    });
 });
