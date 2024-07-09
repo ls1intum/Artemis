@@ -69,7 +69,7 @@ export interface CompetencyGraphEdgeDTO {
 
 export interface CompetencyGraphDTO {
     nodes: CompetencyGraphNodeDTO[];
-    edges: CompetencyGraphEdgeDTO[];
+    edges?: CompetencyGraphEdgeDTO[];
 }
 
 export class NgxLearningPathDTO {

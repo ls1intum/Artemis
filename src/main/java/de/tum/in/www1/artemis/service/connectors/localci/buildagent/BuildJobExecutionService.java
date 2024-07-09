@@ -344,7 +344,14 @@ public class BuildJobExecutionService {
                 else {
                     // ugly workaround because in swift result files \n\t breaks the parsing
                     var testResultFileString = xmlString.replace("\n\t", "");
-                    processTestResultFile(testResultFileString, failedTests, successfulTests);
+                    if (!testResultFileString.isBlank()) {
+                        processTestResultFile(testResultFileString, failedTests, successfulTests);
+                    }
+                    else {
+                        String msg = "The file " + fileName + " does not contain any testcases.";
+                        buildLogsMap.appendBuildLogEntry(buildJobId, msg);
+                        log.warn(msg);
+                    }
                 }
             }
             catch (IllegalStateException e) {
