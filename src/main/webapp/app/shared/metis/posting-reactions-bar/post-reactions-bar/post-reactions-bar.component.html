@@ -5,7 +5,7 @@
             <div class="col-auto p-0">
                 <button class="reaction-button clickable reply-btn" (click)="openPostingCreateEditModal.emit()" [disabled]="readOnlyMode">
                     <jhi-emoji [emoji]="speechBalloonId" />
-                    <span class="emoji-count">{{ 'artemisApp.metis.reply' | artemisTranslate }}</span>
+                    <span class="emoji-count" jhiTranslate="artemisApp.metis.reply"></span>
                 </button>
             </div>
         }
@@ -27,7 +27,7 @@
             <div class="col-auto p-0">
                 <button class="reaction-button clickable collapse-answers-btn" [class.reaction-button--reacted]="showAnswers" (click)="showAnswersChange.emit(false)">
                     <jhi-emoji [emoji]="closeCrossId" />
-                    <span class="emoji-count">{{ 'artemisApp.metis.collapseAnswers' | artemisTranslate }}</span>
+                    <span class="emoji-count" jhiTranslate="artemisApp.metis.collapseAnswers"></span>
                 </button>
             </div>
         }
@@ -38,7 +38,7 @@
                 <div class="col-auto p-0">
                     <button class="reaction-button clickable reply-btn" (click)="openThread.emit()">
                         <fa-icon [icon]="faArrowRight" />
-                        <span class="emoji-count px-2">{{ 'artemisApp.conversationsLayout.threadSideBar.reply' | artemisTranslate }} </span>
+                        <span class="emoji-count px-2" jhiTranslate="artemisApp.conversationsLayout.threadSideBar.reply"></span>
                     </button>
                 </div>
             }
@@ -113,7 +113,7 @@
             </button>
         }
         @if (getShowNewMessageIcon()) {
-            <span class="badge bg-secondary hideAfter5Seconds">{{ 'global.generic.new' | artemisTranslate }}</span>
+            <span class="badge bg-secondary hideAfter5Seconds" jhiTranslate="global.generic.new"></span>
         }
     </div>
 </div>
