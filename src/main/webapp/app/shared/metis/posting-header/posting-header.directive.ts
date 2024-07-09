@@ -58,7 +58,7 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
     }
 
     /**
-     * assigns suitable icon and tooltip for the author's most privileged authority type
+     * assigns suitable icon and tooltip for the author's authority type
      */
     setUserAuthorityIconAndTooltip(): void {
         const toolTipTranslationPath = 'artemisApp.metis.userAuthorityTooltips.';
