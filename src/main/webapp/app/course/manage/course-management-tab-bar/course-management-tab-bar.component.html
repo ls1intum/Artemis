@@ -26,7 +26,7 @@
                     <span class="tab-link-text" jhiTranslate="artemisApp.iris.settings.button.course.title"></span>
                 </a>
             }
-            @if (isMessagingOrCommunicationEnabled) {
+            @if (isCommunicationEnabled) {
                 <a class="tab-link" [routerLink]="['/courses', course.id, 'communication']" routerLinkActive="active">
                     <fa-icon [icon]="faComments" />
                     <span class="tab-link-text" jhiTranslate="artemisApp.metis.communication.label"></span>

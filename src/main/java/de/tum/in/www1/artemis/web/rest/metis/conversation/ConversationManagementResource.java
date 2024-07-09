@@ -44,7 +44,7 @@ public class ConversationManagementResource {
      *
      * @param course the course to check
      */
-    void checkMessagingOrCommunicationEnabledElseThrow(Course course) {
+    void checkCommunicationEnabledElseThrow(Course course) {
         if (course.getCourseInformationSharingConfiguration() == CourseInformationSharingConfiguration.DISABLED) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Messaging is not enabled for this course");
         }
@@ -55,8 +55,8 @@ public class ConversationManagementResource {
      *
      * @param courseId the course to check
      */
-    void checkMessagingOrCommunicationEnabledElseThrow(Long courseId) {
-        if (!courseRepository.isMessagingOrCommunicationEnabled(courseId)) {
+    void checkCommunicationEnabledElseThrow(Long courseId) {
+        if (!courseRepository.isCommunicationEnabled(courseId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Messaging is not enabled for this course");
         }
     }
