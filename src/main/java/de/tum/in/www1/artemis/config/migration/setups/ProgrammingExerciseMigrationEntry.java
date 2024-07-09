@@ -73,9 +73,6 @@ public abstract class ProgrammingExerciseMigrationEntry {
 
     /**
      * Executes this migration entry.
-     *
-     * @return False if there is a general configuration error, which blocks the whole execution
-     *         and true otherwise.
      */
     public void execute() {
         var programmingExerciseCount = programmingExerciseRepository.count();
