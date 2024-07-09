@@ -80,14 +80,19 @@ test.describe('Exam date verification', () => {
             await page.waitForURL(`**/exams/${exam.id}`);
             await expect(page.getByText(exam.title!).first()).toBeVisible();
             await examStartEnd.startExam();
-            await expect(page.locator('span[ng-reflect-ngb-tooltip="Exercise not started"]')).toBeVisible();
+
+            await page.hover('.fa-hourglass-half');
+            await expect(page.getByText('Exercise not started')).toBeVisible();
             await examNavigation.openOrSaveExerciseByTitle(exercise.title!);
             const submission = await Fixtures.get('loremIpsum-short.txt');
             await textExerciseEditor.typeSubmission(exercise.id!, submission!);
-            await expect(page.locator('span[ng-reflect-ngb-tooltip="Exercise not saved"]')).toBeVisible();
+
+            await page.hover('.fa-save-warning');
+            await expect(page.getByText('Exercise not saved')).toBeVisible();
             await examNavigation.openOrSaveExerciseByTitle(exercise.title!);
-            await expect(page.locator('span[ng-reflect-ngb-tooltip="Exercise saved"]')).toBeVisible();
-            await examNavigation.openOrSaveExerciseByTitle(exercise.title!);
+
+            await page.hover('.fa-save-success');
+            await expect(page.getByText('Exercise saved')).toBeVisible();
         });
 
         test('Exam ends after end time', async ({ page, login, examAPIRequests, exerciseAPIRequests, examStartEnd, examNavigation, textExerciseEditor, examParticipation }) => {
