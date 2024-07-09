@@ -18,11 +18,13 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisCourseSettings;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
+import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisPipelineExecutionSettingsDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureingestionwebhook.PyrisLectureUnitWebhookDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.IngestionState;
 import de.tum.in.www1.artemis.service.iris.exception.IrisInternalPyrisErrorException;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 
@@ -40,15 +42,18 @@ public class PyrisWebhookService {
 
     private final IrisSettingsRepository irisSettingsRepository;
 
+    private final LectureUnitRepository lectureUnitRepository;
+
     @Value("${server.url}")
     private String artemisBaseUrl;
 
     public PyrisWebhookService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, IrisSettingsService irisSettingsService,
-            IrisSettingsRepository irisSettingsRepository) {
+            IrisSettingsRepository irisSettingsRepository, LectureUnitRepository lectureUnitRepository) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.irisSettingsService = irisSettingsService;
         this.irisSettingsRepository = irisSettingsRepository;
+        this.lectureUnitRepository = lectureUnitRepository;
     }
 
     private boolean lectureIngestionEnabled(Course course) {
@@ -76,15 +81,16 @@ public class PyrisWebhookService {
         String courseTitle = attachmentUnit.getLecture().getCourse().getTitle();
         String courseDescription = attachmentUnit.getLecture().getCourse().getDescription() == null ? "" : attachmentUnit.getLecture().getCourse().getDescription();
         String base64EncodedPdf = attachmentToBase64(attachmentUnit);
-        return new PyrisLectureUnitWebhookDTO(true, artemisBaseUrl, base64EncodedPdf, lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle,
-                courseDescription);
+        attachmentUnit.setPyrisIngestionState(IngestionState.IN_PROGRESS);
+        lectureUnitRepository.save(attachmentUnit);
+        return new PyrisLectureUnitWebhookDTO(true, base64EncodedPdf, lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription);
     }
 
     private PyrisLectureUnitWebhookDTO processAttachmentForDeletion(AttachmentUnit attachmentUnit) {
         Long lectureUnitId = attachmentUnit.getId();
         Long lectureId = attachmentUnit.getLecture().getId();
         Long courseId = attachmentUnit.getLecture().getCourse().getId();
-        return new PyrisLectureUnitWebhookDTO(false, artemisBaseUrl, "", lectureUnitId, "", lectureId, "", courseId, "", "");
+        return new PyrisLectureUnitWebhookDTO(false, "", lectureUnitId, "", lectureId, "", courseId, "", "");
     }
 
     /**

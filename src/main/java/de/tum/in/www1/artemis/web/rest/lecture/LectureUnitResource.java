@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
@@ -187,5 +188,19 @@ public class LectureUnitResource {
         LectureUnit lectureUnit = lectureUnitRepository.findById(lectureUnitId).orElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lectureUnit.getLecture().getCourse(), null);
         return ResponseEntity.ok(LectureUnitForLearningPathNodeDetailsDTO.of(lectureUnit));
+    }
+
+    /**
+     * POST /lectureUnit/{lectureUnitId}/ingest
+     * This endpoint is for starting the ingestion of one lecture Unit.
+     *
+     * @param lectureUnitId The Id of the lecture unit to be ingested.
+     * @return the ResponseEntity with status 200 (OK) and a message success or null if the operation failed
+     */
+    @PostMapping("lecture-units/{lectureUnitId}/ingest")
+    public ResponseEntity<Boolean> ingestLectureUnit(@PathVariable Long lectureUnitId) {
+        log.debug("REST request to ingest lectures of course : {}", lectureUnitId);
+        LectureUnit lectureUnit = lectureUnitRepository.findByIdWithCompetenciesAndSlidesElseThrow(lectureUnitId);
+        return ResponseEntity.ok().body(lectureUnitService.ingestLectureUnitInPyris((AttachmentUnit) lectureUnit));
     }
 }

@@ -150,14 +150,19 @@ export class LectureComponent implements OnInit, OnDestroy {
 
     private loadAll() {
         this.lectureService
-            .findAllByCourseId(this.courseId)
+            .findAllByCourseIdWithSlides(this.courseId)
             .pipe(
                 filter((res: HttpResponse<Lecture[]>) => res.ok),
                 map((res: HttpResponse<Lecture[]>) => res.body),
             )
             .subscribe({
                 next: (res: Lecture[]) => {
-                    this.lectures = res;
+                    this.lectures = res.map((lectureData) => {
+                        const lecture = new Lecture();
+                        Object.assign(lecture, lectureData);
+                        lecture.updateIngestionState();
+                        return lecture;
+                    });
                     this.applyFilters();
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),

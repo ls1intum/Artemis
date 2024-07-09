@@ -232,4 +232,17 @@ public class LectureUnitService {
             throw new BadRequestException();
         }
     }
+
+    /**
+     * Ingest the lectureUnit when triggered by the ingest lectureUnit button
+     *
+     * @param lectureUnit lectureUnit to be ingested
+     * @return returns the job token if the operation is successful else it returns null
+     */
+    public boolean ingestLectureUnitInPyris(AttachmentUnit lectureUnit) {
+        if (pyrisWebhookService.isPresent()) {
+            return pyrisWebhookService.get().addLectureUnitsToPyrisDB(List.of(lectureUnit)) != null;
+        }
+        return false;
+    }
 }

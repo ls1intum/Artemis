@@ -66,9 +66,23 @@
                         }
                     </div>
                     <div class="d-flex gap-1 flex-column justify-content-center col-3 col-sm-2 col-lg-1" role="group">
-                        @if (lecture.course?.id && showCompetencies) {
-                            <jhi-competencies-popover [courseId]="lecture.course!.id!" [competencies]="lectureUnit.competencies || []" [navigateTo]="'competencyManagement'" />
-                        }
+                        <div class="d-flex gap-1 w-100">
+                            @if (lecture.course?.id && showCompetencies) {
+                                <jhi-competencies-popover [courseId]="lecture.course!.id!" [competencies]="lectureUnit.competencies || []" [navigateTo]="'competencyManagement'" />
+                            }
+                            <button
+                                type="button"
+                                class="btn btn-primary btn-sm edit flex-grow-1"
+                                [ngClass]="{
+                                    error: getIcon(lectureUnit) === resendToIris,
+                                    'btn-success': getIcon(lectureUnit) === done,
+                                }"
+                                (click)="onIngestButtonClicked(lectureUnit)"
+                                [ngbTooltip]="'entity.action.sendToIris' | artemisTranslate"
+                            >
+                                <fa-icon [icon]="getIcon(lectureUnit)" />
+                            </button>
+                        </div>
                         <div class="d-flex gap-1 w-100">
                             @if (this.emitEditEvents) {
                                 @if (editButtonAvailable(lectureUnit)) {

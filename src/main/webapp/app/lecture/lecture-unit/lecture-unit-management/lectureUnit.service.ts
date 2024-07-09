@@ -160,4 +160,16 @@ export class LectureUnitService {
             observe: 'response',
         });
     }
+    /**
+     * triggers the ingestion of one Lecture Unit
+     *
+     * @param lectureId The lecture to be ingested in pyris
+     */
+    ingestLectureUnitInPyris(lectureUnitId: number): Observable<HttpResponse<boolean>> {
+        const params = new HttpParams();
+        return this.httpClient.post<boolean>(`api/lecture-units/${lectureUnitId}/ingest`, null, {
+            params: params,
+            observe: 'response',
+        });
+    }
 }

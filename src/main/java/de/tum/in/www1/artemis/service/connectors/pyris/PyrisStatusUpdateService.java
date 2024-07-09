@@ -1,12 +1,15 @@
 package de.tum.in.www1.artemis.service.connectors.pyris;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.List;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
+import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.IngestionState;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageState;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.CourseChatJob;
@@ -25,13 +28,15 @@ public class PyrisStatusUpdateService {
 
     private final IrisCourseChatSessionService courseChatSessionService;
 
-    private static final Logger log = LoggerFactory.getLogger(PyrisStatusUpdateService.class);
+    private final AttachmentUnitRepository attachmentUnitRepository;
 
-    public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisExerciseChatSessionService irisExerciseChatSessionService,
-            IrisCourseChatSessionService courseChatSessionService) {
+    public PyrisStatusUpdateService(PyrisJobService pyrisJobService, AttachmentUnitRepository attachmentUnitRepository,
+            IrisExerciseChatSessionService irisExerciseChatSessionService, IrisCourseChatSessionService courseChatSessionService) {
         this.pyrisJobService = pyrisJobService;
         this.irisExerciseChatSessionService = irisExerciseChatSessionService;
         this.courseChatSessionService = courseChatSessionService;
+        this.attachmentUnitRepository = attachmentUnitRepository;
+
     }
 
     /**
@@ -43,7 +48,7 @@ public class PyrisStatusUpdateService {
     public void handleStatusUpdate(ExerciseChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
         irisExerciseChatSessionService.handleStatusUpdate(job, statusUpdate);
 
-        removeJobIfTerminated(statusUpdate, job.jobId());
+        removeJobIfTerminated(statusUpdate.stages(), job.jobId());
     }
 
     /**
@@ -56,7 +61,7 @@ public class PyrisStatusUpdateService {
     public void handleStatusUpdate(CourseChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
         courseChatSessionService.handleStatusUpdate(job, statusUpdate);
 
-        removeJobIfTerminated(statusUpdate, job.jobId());
+        removeJobIfTerminated(statusUpdate.stages(), job.jobId());
     }
 
     /**
@@ -66,29 +71,40 @@ public class PyrisStatusUpdateService {
      *
      * @see PyrisStageState#isTerminal()
      *
-     * @param statusUpdate the status update
-     * @param job          the job to remove
+     * @param stages the stages of the status update
+     * @param job    the job to remove
      */
-    private void removeJobIfTerminated(PyrisChatStatusUpdateDTO statusUpdate, String job) {
-        var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state).allMatch(PyrisStageState::isTerminal);
+    private boolean removeJobIfTerminated(List<PyrisStageDTO> stages, String job) {
+        var isDone = stages.stream().map(PyrisStageDTO::state).allMatch(PyrisStageState::isTerminal);
         if (isDone) {
             pyrisJobService.removeJob(job);
+            return true;
         }
+        return false;
     }
 
     /**
      * Handles the status update of a lecture ingestion job and logs the results for now => will change later
-     * TODO: Update this method to handle changes beyond logging
+     *
      *
      * @param job          the job that is updated
      * @param statusUpdate the status update
      */
     public void handleStatusUpdate(IngestionWebhookJob job, PyrisLectureIngestionStatusUpdateDTO statusUpdate) {
-        statusUpdate.stages().forEach(stage -> log.info(stage.name() + ":" + stage.message()));
-        boolean isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state)
-                .allMatch(state -> state == PyrisStageState.DONE || state == PyrisStageState.ERROR || state == PyrisStageState.SKIPPED);
-        if (isDone) {
-            pyrisJobService.removeJob(job.jobId());
+        if (removeJobIfTerminated(statusUpdate.stages(), job.jobId())) {
+            for (Long id : statusUpdate.ids()) {
+                if (attachmentUnitRepository.findById(id).isPresent()) {
+                    AttachmentUnit unit = attachmentUnitRepository.findById(id).get();
+                    if (statusUpdate.stages().getLast().state() == PyrisStageState.DONE) {
+                        unit.setPyrisIngestionState(IngestionState.DONE);
+                        attachmentUnitRepository.save(unit);
+                    }
+                    else if (statusUpdate.stages().getLast().state() == PyrisStageState.ERROR) {
+                        unit.setPyrisIngestionState(IngestionState.ERROR);
+                        attachmentUnitRepository.save(unit);
+                    }
+                }
+            }
         }
     }
 }

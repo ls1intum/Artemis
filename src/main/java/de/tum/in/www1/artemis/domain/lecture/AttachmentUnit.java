@@ -8,6 +8,8 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
@@ -16,6 +18,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.Attachment;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.IngestionState;
 
 @Entity
 @DiscriminatorValue("A")
@@ -25,6 +28,10 @@ public class AttachmentUnit extends LectureUnit {
     // Note: Name and Release Date will always be taken from associated attachment
     @Column(name = "description")
     private String description;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "pyris_ingestion_state")
+    private IngestionState pyrisIngestionState = IngestionState.NOT_STARTED;
 
     @OneToOne(mappedBy = "attachmentUnit", cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnoreProperties(value = "attachmentUnit", allowSetters = true)
@@ -58,6 +65,14 @@ public class AttachmentUnit extends LectureUnit {
 
     public void setAttachment(Attachment attachment) {
         this.attachment = attachment;
+    }
+
+    public IngestionState getPyrisIngestionState() {
+        return pyrisIngestionState;
+    }
+
+    public void setPyrisIngestionState(IngestionState pyrisIngestionState) {
+        this.pyrisIngestionState = pyrisIngestionState;
     }
 
     public List<Slide> getSlides() {

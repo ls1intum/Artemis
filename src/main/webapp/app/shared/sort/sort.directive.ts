@@ -36,4 +36,18 @@ export class SortDirective<T> {
         this.ascendingChange.emit(this.ascending);
         this.sortChange.emit({ predicate: this.predicate, ascending: this.ascending });
     }
+
+    getSortedData(data: any[]): any[] {
+        if (typeof this.predicate === 'function') {
+            return [...data].sort((a, b) => {
+                const result = (this.predicate as any)(a) < (this.predicate as any)(b) ? -1 : 1;
+                return this.ascending ? result : -result;
+            });
+        } else {
+            return [...data].sort((a, b) => {
+                const result = a[this.predicate] < b[this.predicate] ? -1 : 1;
+                return this.ascending ? result : -result;
+            });
+        }
+    }
 }
