@@ -126,7 +126,13 @@
 
         <div class="ms-auto">
             <button type="button" class="btn btn-secondary" (click)="closeModal()" jhiTranslate="entity.action.cancel" aria-label="Close"></button>
-            <button class="btn btn-primary" (click)="applyFilter()" jhiTranslate="artemisApp.courseOverview.exerciseFilter.applyFilter" [disabled]="noFiltersAvailable"></button>
+            <button
+                type="button"
+                class="btn btn-primary"
+                (click)="applyFilter()"
+                jhiTranslate="artemisApp.courseOverview.exerciseFilter.applyFilter"
+                [disabled]="noFiltersAvailable"
+            ></button>
         </div>
     </div>
 </form>

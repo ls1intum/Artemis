@@ -10,16 +10,50 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { RangeFilter } from 'app/types/exercise-filter';
-import { DifficultyLevel, ExerciseType, getIcon } from 'app/entities/exercise.model';
+import { DifficultyLevel, Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { SidebarCardElement } from 'app/types/sidebar';
+import { Result } from 'app/entities/result.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+
+const EXERCISE_1 = { categories: [new ExerciseCategory('category1', undefined), new ExerciseCategory('category2', '#1b97ca')], maxPoints: 5, type: ExerciseType.TEXT } as Exercise;
+const EXERCISE_2 = {
+    categories: [new ExerciseCategory('category3', '#0d3cc2'), new ExerciseCategory('category4', '#6ae8ac')],
+    maxPoints: 5,
+    type: ExerciseType.PROGRAMMING,
+} as Exercise;
+const EXERCISE_3 = {
+    categories: [new ExerciseCategory('category1', undefined), new ExerciseCategory('category4', '#6ae8ac')],
+    maxPoints: 8,
+    type: ExerciseType.PROGRAMMING,
+} as Exercise;
+
+const SIDEBAR_CARD_ELEMENT_1 = {
+    exercise: EXERCISE_1,
+    type: ExerciseType.TEXT,
+    difficulty: DifficultyLevel.HARD,
+    studentParticipation: { results: [{ score: 7.7 } as Result] } as StudentParticipation,
+} as SidebarCardElement;
+const SIDEBAR_CARD_ELEMENT_2 = {
+    exercise: EXERCISE_2,
+    type: ExerciseType.PROGRAMMING,
+    difficulty: DifficultyLevel.EASY,
+    studentParticipation: { results: [{ score: 5.0 } as Result] } as StudentParticipation,
+} as SidebarCardElement;
+const SIDEBAR_CARD_ELEMENT_3 = {
+    exercise: EXERCISE_3,
+    type: ExerciseType.PROGRAMMING,
+    difficulty: DifficultyLevel.EASY,
+    studentParticipation: { results: [{ score: 82.3 } as Result] } as StudentParticipation,
+} as SidebarCardElement;
 
 const SCORE_FILTER: RangeFilter = {
     isDisplayed: true,
     filter: {
         generalMin: 0,
-        generalMax: 75,
+        generalMax: 100,
         selectedMin: 0,
-        selectedMax: 75,
+        selectedMax: 100,
         step: 5,
     },
 };
@@ -188,5 +222,40 @@ describe('ExerciseFilterModalComponent', () => {
         expect(component.difficultyFilter!.options[1].checked).toBeFalse();
         expect(component.achievablePoints!.filter.selectedMax).toBe(component.achievablePoints?.filter.generalMax);
         expect(component.achievedScore!.filter.selectedMin).toBe(component.achievedScore?.filter.generalMin);
+    });
+
+    it('should apply filters, emit the correct sidebar data and close the modal', () => {
+        component.sidebarData = {
+            groupByCategory: true,
+            sidebarType: 'exercise',
+            groupedData: {
+                past: { entityData: [SIDEBAR_CARD_ELEMENT_1, SIDEBAR_CARD_ELEMENT_2, SIDEBAR_CARD_ELEMENT_3] },
+            },
+            ungroupedData: [SIDEBAR_CARD_ELEMENT_1, SIDEBAR_CARD_ELEMENT_2, SIDEBAR_CARD_ELEMENT_3],
+        };
+        component.categoryFilter!.options[0].searched = true; // must have 'category1'
+        component.typeFilter!.options[0].checked = true; // must be a programming exercise
+        component.difficultyFilter!.options[0].checked = true; // must be easy
+        component.achievablePoints!.filter.selectedMax = 10;
+        component.achievedScore!.filter.selectedMin = 10;
+
+        const filterAppliedEmitSpy = jest.spyOn(component.filterApplied, 'emit');
+        const applyFilterSpy = jest.spyOn(component, 'applyFilter');
+        const closeModalSpy = jest.spyOn(component, 'closeModal');
+        const applyButton = fixture.debugElement.query(By.css('button[jhiTranslate="artemisApp.courseOverview.exerciseFilter.applyFilter"]'));
+        expect(applyButton).not.toBeNull();
+        applyButton.nativeElement.click();
+
+        expect(applyFilterSpy).toHaveBeenCalledOnce();
+        expect(filterAppliedEmitSpy).toHaveBeenCalledOnce();
+        expect(filterAppliedEmitSpy).toHaveBeenCalledWith({
+            filteredSidebarData: component.sidebarData,
+            appliedExerciseFilters: component.exerciseFilters,
+            isFilterActive: true,
+        });
+        /** only {@link EXERCISE_3} fullfills the filter options and should be emitted in the event */
+        expect(component.sidebarData.ungroupedData?.length).toBe(1);
+
+        expect(closeModalSpy).toHaveBeenCalledOnce();
     });
 });

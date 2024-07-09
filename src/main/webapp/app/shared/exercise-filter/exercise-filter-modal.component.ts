@@ -133,22 +133,6 @@ export class ExerciseFilterModalComponent implements OnInit {
         return () => this.removeItem(item);
     }
 
-    getAppliedFilterDetails(): FilterDetails {
-        return {
-            searchedTypes: this.typeFilter?.options.filter((type) => type.checked).map((type) => type.value),
-            selectedCategories: this.selectedCategoryOptions.map((categoryOption: ExerciseCategoryFilterOption) => categoryOption.category),
-            searchedDifficulties: this.difficultyFilter?.options.filter((difficulty) => difficulty.checked).map((difficulty) => difficulty.value),
-            isScoreFilterApplied:
-                this.achievedScore?.filter.selectedMin !== this.achievedScore?.filter.generalMin ||
-                this.achievedScore?.filter.selectedMax !== this.achievedScore?.filter.generalMax,
-            isPointsFilterApplied:
-                this.achievablePoints?.filter.selectedMin !== this.achievablePoints?.filter.generalMin ||
-                this.achievablePoints?.filter.selectedMax !== this.achievablePoints?.filter.generalMax,
-            achievedScore: this.achievedScore,
-            achievablePoints: this.achievablePoints,
-        };
-    }
-
     applyFilter(): void {
         if (!this.sidebarData?.groupedData) {
             return;
@@ -169,6 +153,22 @@ export class ExerciseFilterModalComponent implements OnInit {
         });
 
         this.closeModal();
+    }
+
+    private getAppliedFilterDetails(): FilterDetails {
+        return {
+            searchedTypes: this.typeFilter?.options.filter((type) => type.checked).map((type) => type.value),
+            selectedCategories: this.selectedCategoryOptions.map((categoryOption: ExerciseCategoryFilterOption) => categoryOption.category),
+            searchedDifficulties: this.difficultyFilter?.options.filter((difficulty) => difficulty.checked).map((difficulty) => difficulty.value),
+            isScoreFilterApplied:
+                this.achievedScore?.filter.selectedMin !== this.achievedScore?.filter.generalMin ||
+                this.achievedScore?.filter.selectedMax !== this.achievedScore?.filter.generalMax,
+            isPointsFilterApplied:
+                this.achievablePoints?.filter.selectedMin !== this.achievablePoints?.filter.generalMin ||
+                this.achievablePoints?.filter.selectedMax !== this.achievablePoints?.filter.generalMax,
+            achievedScore: this.achievedScore,
+            achievablePoints: this.achievablePoints,
+        };
     }
 
     private isFilterActive(filterDetails: FilterDetails): boolean {
