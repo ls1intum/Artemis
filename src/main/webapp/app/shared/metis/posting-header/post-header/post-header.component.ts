@@ -17,7 +17,6 @@ export class PostHeaderComponent extends PostingHeaderDirective<Post> implements
     readOnlyMode = false;
     @Input() lastReadDate?: dayjs.Dayjs;
     @Input() previewMode: boolean;
-    @Input() isThreadSidebar: boolean;
     @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
     isAtLeastInstructorInCourse: boolean;
     mayEditOrDelete = false;
