@@ -507,7 +507,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
      * @param courseId the id of the course
      * @return true if the communication feature is enabled for the course, false otherwise
      */
-    default boolean isMessagingOrCommunicationEnabled(long courseId) {
+    default boolean isCommunicationEnabled(long courseId) {
         return informationSharingConfigurationIsOneOf(courseId,
                 Set.of(CourseInformationSharingConfiguration.COMMUNICATION_ONLY, CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING));
     }
