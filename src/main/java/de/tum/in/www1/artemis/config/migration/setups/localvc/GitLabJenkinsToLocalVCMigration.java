@@ -9,16 +9,16 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.config.migration.setups.localvc.gitlab.MigrationEntryGitLabToLocalVC;
 import de.tum.in.www1.artemis.config.migration.setups.localvc.jenkins.MigrationEntryJenkinsToLocalVC;
 
-@Service
+@Component
 @Profile("gitlab & jenkins & " + PROFILE_MIGRATE_GITLAB_JENKINS_TO_LOCALVC)
-public class MigrationServiceGitLabJenkinsToLocalVC {
+public class GitLabJenkinsToLocalVCMigration {
 
-    private static final Logger log = LoggerFactory.getLogger(MigrationServiceGitLabJenkinsToLocalVC.class);
+    private static final Logger log = LoggerFactory.getLogger(GitLabJenkinsToLocalVCMigration.class);
 
     private final ApplicationContext applicationContext;
 
@@ -26,7 +26,7 @@ public class MigrationServiceGitLabJenkinsToLocalVC {
 
     private final MigrationEntryJenkinsToLocalVC migrationEntryJenkinsToLocalVC;
 
-    public MigrationServiceGitLabJenkinsToLocalVC(ApplicationContext applicationContext, MigrationEntryGitLabToLocalVC migrationEntryGitLabToLocalVC,
+    public GitLabJenkinsToLocalVCMigration(ApplicationContext applicationContext, MigrationEntryGitLabToLocalVC migrationEntryGitLabToLocalVC,
             MigrationEntryJenkinsToLocalVC migrationEntryJenkinsToLocalVC) {
         this.applicationContext = applicationContext;
         this.migrationEntryGitLabToLocalVC = migrationEntryGitLabToLocalVC;
@@ -34,7 +34,7 @@ public class MigrationServiceGitLabJenkinsToLocalVC {
     }
 
     /**
-     * Entry point for this migration service, which triggered at the startup of Artemis.
+     * Entry point for this migration, which is triggered at the startup of Artemis.
      * Performs the migration and shutdown Artemis afterward.
      */
     @EventListener(ApplicationReadyEvent.class)
