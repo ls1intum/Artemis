@@ -55,7 +55,7 @@
                     </div>
                 }
                 <!-- no message exist -->
-                @if (!isFetchingPosts && (totalNumberOfPosts === 0 || !_activeConversation)) {
+                @if (!isFetchingPosts && (posts.length === 0 || !_activeConversation)) {
                     <div class="envelope">
                         <fa-icon size="5x" [icon]="faEnvelope" />
                     </div>
