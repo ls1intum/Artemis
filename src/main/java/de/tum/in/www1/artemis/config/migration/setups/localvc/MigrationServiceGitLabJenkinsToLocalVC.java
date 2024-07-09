@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.config.migration.setups.localvc.jenkins.MigrationE
 @Profile("gitlab & jenkins & " + PROFILE_MIGRATE_GITLAB_JENKINS_TO_LOCALVC)
 public class MigrationServiceGitLabJenkinsToLocalVC {
 
-    private final static Logger log = LoggerFactory.getLogger(MigrationServiceGitLabJenkinsToLocalVC.class);
+    private static final Logger log = LoggerFactory.getLogger(MigrationServiceGitLabJenkinsToLocalVC.class);
 
     private final ApplicationContext applicationContext;
 
