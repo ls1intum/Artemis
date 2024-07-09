@@ -8,14 +8,16 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+
 @Profile(PROFILE_THEIA)
 @Configuration
 @ConfigurationProperties(prefix = "theia")
 public class TheiaConfiguration {
 
-    private Map<String, Map<String, String>> images;
+    private Map<ProgrammingLanguage, Map<String, String>> images;
 
-    public void setImages(final Map<String, Map<String, String>> images) {
+    public void setImages(final Map<ProgrammingLanguage, Map<String, String>> images) {
         this.images = images;
     }
 
@@ -24,7 +26,7 @@ public class TheiaConfiguration {
      *
      * @return a map of language -> [flavor/name -> image-link]
      */
-    public Map<String, Map<String, String>> getImagesForAllLanguages() {
+    public Map<ProgrammingLanguage, Map<String, String>> getImagesForAllLanguages() {
         return images;
     }
 
@@ -34,7 +36,7 @@ public class TheiaConfiguration {
      * @param language the language for which the images should be retrieved
      * @return a map of flavor/name -> image-link
      */
-    public Map<String, String> getImagesForLanguage(String language) {
+    public Map<String, String> getImagesForLanguage(ProgrammingLanguage language) {
         return images.get(language);
     }
 

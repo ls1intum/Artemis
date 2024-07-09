@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.config.TheiaConfiguration;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 
 @Profile(PROFILE_THEIA)
@@ -34,8 +35,8 @@ public class TheiaConfigurationResource {
      */
     @GetMapping("images")
     @EnforceAtLeastInstructor
-    public Map<String, String> getImagesForLanguage(@RequestParam("language") String language) {
-        language = language.toLowerCase();
+    public Map<String, String> getImagesForLanguage(@RequestParam("language") ProgrammingLanguage language) {
+        // language = language.toLowerCase();
         return this.theiaConfiguration.getImagesForLanguage(language);
     }
 

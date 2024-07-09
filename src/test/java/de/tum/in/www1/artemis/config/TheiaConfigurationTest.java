@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 
 class TheiaConfigurationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -26,7 +27,7 @@ class TheiaConfigurationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testFlavorsForLanguage() {
-        Map<String, String> images = theiaConfiguration.getImagesForLanguage("java");
+        Map<String, String> images = theiaConfiguration.getImagesForLanguage(ProgrammingLanguage.valueOf("JAVA"));
         assertThat(images).hasSize(2);
         assertThat(images).containsKey("Java-17");
         assertThat(images).containsValue("ghcr.io/ls1intum/theia/java-17:latest");
@@ -35,6 +36,6 @@ class TheiaConfigurationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testNonExistentLanguage() {
-        assertThat(theiaConfiguration.getImagesForLanguage("non-existent")).isNull();
+        assertThat(theiaConfiguration.getImagesForLanguage(null)).isNull();
     }
 }
