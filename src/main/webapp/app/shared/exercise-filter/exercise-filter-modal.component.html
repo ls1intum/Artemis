@@ -59,7 +59,7 @@
                 <label for="exercise-type-filter-selection" class="form-control-label h6" jhiTranslate="artemisApp.ratingList.exerciseType"></label>
                 <div id="exercise-type-filter-selection">
                     @for (typeFilter of typeFilters!.options; track typeFilter) {
-                        <div class="form-check form-check-inline">
+                        <div class="form-check form-check-inline no-left-margin-padding">
                             <label>
                                 <input type="checkbox" [(ngModel)]="typeFilter.checked" [name]="typeFilter.value" />
                                 <fa-icon [icon]="typeFilter.icon" class="ms-2" />
@@ -81,7 +81,7 @@
                 <label for="difficulty-filter-selection" class="form-control-label h6" jhiTranslate="artemisApp.exercise.difficulty"></label>
                 <div id="difficulty-filter-selection">
                     @for (difficultyFilter of difficultyFilters!.options; track difficultyFilter) {
-                        <div class="form-check form-check-inline">
+                        <div class="form-check form-check-inline no-left-margin-padding">
                             <label>
                                 <input type="checkbox" [(ngModel)]="difficultyFilter.checked" [name]="difficultyFilter.value" />
                                 <span [jhiTranslate]="difficultyFilter.name" class="ms-1"></span>
