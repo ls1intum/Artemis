@@ -42,7 +42,7 @@ export function satisfiesScoreFilter(sidebarElement: SidebarCardElement, isFilte
         return true;
     }
     if (!sidebarElement.studentParticipation) {
-        return false;
+        return achievedScoreFilter.filter.selectedMin === 0;
     }
 
     const latestResult = getLatestResultOfStudentParticipation(sidebarElement.studentParticipation, true);
