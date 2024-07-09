@@ -155,12 +155,16 @@ const routes: Routes = [
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.competencies',
+                    hasSidebar: true,
                     showRefreshButton: true,
                 },
                 children: [
                     {
                         path: '',
-                        loadChildren: () => import('./course-competencies/course-competencies.module').then((m) => m.CourseCompetenciesModule),
+                        loadComponent: () =>
+                            import('app/course/competencies/pages/competencies-student-page/competencies-student-page.component').then(
+                                (mod) => mod.CompetenciesStudentPageComponent,
+                            ),
                     },
                     {
                         path: ':competencyId',

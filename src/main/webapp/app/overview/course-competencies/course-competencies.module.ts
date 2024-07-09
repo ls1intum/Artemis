@@ -7,6 +7,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 import { FireworksModule } from 'app/shared/fireworks/fireworks.module';
+import { CompetenciesStudentPageComponent } from 'app/course/competencies/pages/competencies-student-page/competencies-student-page.component';
 
 const routes: Routes = [
     {
@@ -16,7 +17,7 @@ const routes: Routes = [
             authorities: [Authority.USER],
             pageTitle: 'overview.competencies',
         },
-        component: CourseCompetenciesComponent,
+        component: CompetenciesStudentPageComponent,
         canActivate: [UserRouteAccessService],
     },
 ];

@@ -1,0 +1,9 @@
+<div class="d-flex justify-content-between gap-3 horizontal-scroll">
+    <div [ngClass]="{ 'sidebar-collapsed': isCollapsed() }">
+        <jhi-sidebar [searchFieldEnabled]="false" />
+    </div>
+    <div class="vw-100 module-bg rounded-3">
+        Text
+        <router-outlet />
+    </div>
+</div>
