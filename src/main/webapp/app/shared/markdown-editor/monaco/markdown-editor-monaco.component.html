@@ -1,0 +1,140 @@
+<div
+    #wrapper
+    class="markdown-editor-wrapper"
+    [style.overflow]="inPreviewMode ? 'auto' : 'hidden'"
+    [style.height.px]="inPreviewMode ? undefined : targetWrapperHeight"
+    [style.height.%]="targetWrapperHeight ? undefined : 100"
+    [style.cursor]="isResizing ? 'ns-resize' : undefined"
+>
+    <nav ngbNav #actionPalette #nav="ngbNav" class="nav-tabs" [destroyOnHide]="false" (navChange)="onNavChanged($event)">
+        <!-- TODO if show edit -->
+        <ng-container ngbNavItem="editor_edit">
+            <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0"><span jhiTranslate="entity.action.edit"></span></a>
+            <ng-template ngbNavContent>
+                <div class="markdown-editor markdown-editor-wrapper d-flex flex-column">
+                    <jhi-monaco-editor class="h-100" [shrinkToFit]="false" [stickyScroll]="false" (textChanged)="onTextChanged($event)" (drop)="onFileDrop($event)" />
+                    @if (enableFileUpload) {
+                        <div class="d-flex" #fileUploadFooter>
+                            <input
+                                [id]="'file-upload ' + uniqueMarkdownEditorId"
+                                class="file-upload-footer-input"
+                                type="file"
+                                accept="image/*"
+                                [multiple]="true"
+                                (change)="onFileUpload($event)"
+                            />
+                            <label
+                                [for]="'file-upload ' + uniqueMarkdownEditorId"
+                                class="file-upload-footer-label d-inline"
+                                [style.cursor]="isResizing ? 'ns-resize !important' : undefined"
+                            >
+                                <div class="row mx-0 align-items-baseline">
+                                    <span class="col upload-subtitle" jhiTranslate="artemisApp.markdownEditor.fileUpload"></span>
+                                    <a class="col-auto" href="http://demo.showdownjs.com">
+                                        <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.markdownEditor.guide' | artemisTranslate" />
+                                    </a>
+                                </div>
+                            </label>
+                        </div>
+                    }
+                    @if (enableResize) {
+                        <!-- This placeholder will hold the resize handle. -->
+                        <span #resizablePlaceholder></span>
+                    }
+                </div>
+            </ng-template>
+        </ng-container>
+        <ng-container ngbNavItem="editor_preview">
+            <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0"><span jhiTranslate="entity.action.preview"></span></a>
+            <ng-template ngbNavContent>
+                <ng-content class="overflow-auto" select="[#previewMonaco]" />
+                <!-- TODO preview handling for other exercise types -->
+            </ng-template>
+        </ng-container>
+        @if (!inPreviewMode) {
+            <ng-container ngbNavItem>
+                <div class="d-flex align-items-center" [style.flex-flow]="'row wrap'">
+                    <!-- Standard -->
+                    @for (action of displayedActions.standard; track action.id) {
+                        <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
+                    }
+                    <!-- Headers -->
+                    @if (displayedActions.header.length > 0) {
+                        <div class="btn-group" ngbDropdown role="group" aria-label="Button group with nested dropdown">
+                            <button class="btn btn-sm px-2 py-0" type="button" id="dropdownBasic1" ngbDropdownToggle>
+                                <span [jhiTranslate]="headerActions.translationKey"></span>
+                            </button>
+                            <div class="dropdown-menu" ngbDropdownMenu>
+                                @for (action of headerActions.actions; track action.id) {
+                                    <button type="button" class="dropdown-item" (click)="action.executeInCurrentEditor()">
+                                        <span [jhiTranslate]="action.translationKey"></span>
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    }
+                    @if (displayedActions.color) {
+                        <div class="btn-group col-xs-6">
+                            <div class="color-preview btn btn-sm px-2 py-0" (click)="openColorSelector($event)" [jhiTranslate]="displayedActions.color.translationKey"></div>
+                            <jhi-color-selector [tagColors]="colorSignal()" (selectedColor)="onSelectColor($event)" />
+                        </div>
+                    }
+                    <!-- Domain (without options) -->
+                    @for (action of displayedActions.domain.withoutOptions; track action.id) {
+                        <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
+                    }
+                    <!-- Domain (with options) -->
+                    @for (action of displayedActions.domain.withOptions; track action.id) {
+                        <div class="btn-group" ngbDropdown role="group" aria-label="Button group with nested dropdown">
+                            <button class="btn btn-sm px-2 py-0" type="button" ngbDropdownToggle>
+                                <span [jhiTranslate]="action.translationKey"></span>
+                            </button>
+                            <div class="dropdown-menu" ngbDropdownMenu>
+                                @if (action.values.length) {
+                                    @for (value of action.values; track value.id) {
+                                        <button type="button" class="dropdown-item" (click)="action.executeInCurrentEditor({ selectedItem: value })">
+                                            <span>{{ value.value }}</span>
+                                        </button>
+                                    }
+                                } @else {
+                                    <button type="button" class="dropdown-item" [disabled]="true" jhiTranslate="global.generic.emptyList"></button>
+                                }
+                            </div>
+                        </div>
+                    }
+                    <!-- Meta -->
+                    @for (action of displayedActions.meta; track action.id) {
+                        <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
+                    }
+                </div>
+            </ng-container>
+        }
+    </nav>
+    <div [ngbNavOutlet]="nav"></div>
+</div>
+
+<!-- Resize handle - will be placed in its corresponding placeholder -->
+<span
+    #resizeHandle
+    [hidden]="inPreviewMode || !enableResize"
+    cdkDrag
+    cdkDragLockAxis="y"
+    [cdkDragConstrainPosition]="constrainDragPositionFn"
+    (cdkDragStarted)="isResizing = true"
+    (cdkDragMoved)="onResizeMoved($event)"
+    (cdkDragEnded)="isResizing = false"
+    [style.position]="'absolute'"
+    [style.left.%]="50"
+    [style.cursor]="'ns-resize'"
+    ><fa-icon [icon]="faGripLines" class="rg-bottom md-resize-icon"
+/></span>
+
+<ng-template #simpleActionButton let-action="action">
+    <button type="button" class="btn btn-sm py-0" [ngbTooltip]="action.icon ? (action.translationKey | artemisTranslate) : undefined" (click)="action.executeInCurrentEditor()">
+        @if (action.icon) {
+            <fa-icon [icon]="action.icon" />
+        } @else {
+            <span [jhiTranslate]="action.translationKey"></span>
+        }
+    </button>
+</ng-template>

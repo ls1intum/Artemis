@@ -101,6 +101,65 @@ The online editor displays only visible files, to avoid showing for example ``.g
 This also means that other config files, like SwiftLint's ``.swiftlint.yml`` file, are not shown. Those files currently
 can only be accessed via your own IDE.
 
+Manual Assessment
+-----------------
+
+There are two ways to manually assess programming exercises: with the Orion plugin, you can assess the student's code directly in your JetBrains IDE. Refer to the :ref:`Orion plugin documentation <orion>` for more information.
+Alternatively, you can use the online editor within Artemis to assess the students' submissions directly in the browser.
+
+.. figure:: programming/online-editor-assessment.png
+   :alt: Manual assessment in the online editor
+   :align: center
+
+   Manual assessment in the online editor
+
+For manual assessment, the online editor provides the following features tailored to the assessment process:
+
+1. **File browser**: The file browser shows the files in the student's submission and allows you to navigate between them. Changed files are highlighted in yellow.
+2. **Build output**: The build output shows the output of the build process, if any. This is useful in case of build errors.
+3. **Read-only editor**: The read-only editor allows you to view the student's code. It highlights all changed lines.
+4. **Instructions**: The instructions provide the structured grading criteria and the problem statement, including the tasks the student has solved successfully as determined by the test cases of the exercise. You can review the test cases associated with each task by clicking on the number of passing tests next to the task, e.g. |problem-statement-task|
+5. **Result**: The top right corner holds the current result of the student's submission. By clicking on it, you can review the test cases and feedback currently attached to the submission.
+
+You can add feedback directly in the source code by first hovering over the line you want to comment on and then clicking the |add-feedback-button| that appears next to the line number. Students will be able to see feedback added this way in the same location when viewing their assessed submission in the online editor.
+
+.. figure:: programming/online-editor-feedback.png
+   :alt: Feedback in the online editor
+   :align: center
+
+   Editing feedback in the online editor
+
+After clicking the |add-feedback-button| button, you can enter a feedback comment and assign a score for the selected line. Alternatively, you can drag one of the structured assessment criteria from the instructions to the feedback area to apply it to the feedback widget.
+When you are done, click the |save-button| button to save your feedback or the |cancel-feedback-button| button to discard it.
+
+.. figure:: programming/online-editor-general-feedback.png
+   :alt: General feedback in the online editor
+   :align: center
+
+   General feedback in the online editor
+
+You can also add general feedback by scrolling to the bottom of the page and clicking |add-general-feedback-button|. Feedback given this way is not tied to any specific file or line of code.
+
+To save your changes, click the |save-button| button at the top right of the page. To finalize the assessment, click the |submit-assessment-button| button. Note that you can save your assessment multiple times before submitting it.
+Once submitted, you cannot make any further changes to the assessment unless you are an instructor.
+
+.. |problem-statement-task| image:: programming/online-editor-problem-statement-task.png
+    :scale: 70%
+
+.. |add-feedback-button| image:: programming/online-editor-add-feedback-button.png
+    :scale: 75%
+
+.. |add-general-feedback-button| image:: general/add-new-feedback-button.png
+    :scale: 50%
+
+.. |cancel-feedback-button| image:: programming/online-editor-cancel-feedback-button.png
+    :scale: 50%
+
+.. |submit-assessment-button| image:: general/submit-assessment-button.png
+    :scale: 50%
+
+.. |save-button| image:: general/save-button.png
+
 Repository Access
 -----------------
 
