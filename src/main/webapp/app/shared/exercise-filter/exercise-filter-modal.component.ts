@@ -1,6 +1,6 @@
 import { Component, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
 import { NgbActiveModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
-import { faFilter } from '@fortawesome/free-solid-svg-icons';
+import { faBackward, faFilter } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
@@ -39,6 +39,7 @@ import { satisfiesFilters } from 'app/shared/exercise-filter/exercise-filter-mod
 })
 export class ExerciseFilterModalComponent implements OnInit {
     readonly faFilter = faFilter;
+    readonly faBackward = faBackward;
 
     @Output() filterApplied = new EventEmitter<ExerciseFilterResults>();
 

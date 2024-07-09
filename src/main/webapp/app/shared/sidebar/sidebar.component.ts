@@ -145,13 +145,12 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         this.modalRef.componentInstance.sidebarData = cloneDeep(this.sidebarDataBeforeFiltering);
         this.modalRef.componentInstance.exerciseFilters = cloneDeep(this.exerciseFilters);
 
-        if (!this.filterSubscription) {
-            this.filterSubscription = this.modalRef.componentInstance.filterApplied.subscribe((exerciseFilterResults: ExerciseFilterResults) => {
-                this.sidebarData = exerciseFilterResults.filteredSidebarData!;
-                this.exerciseFilters = exerciseFilterResults.appliedExerciseFilters;
-                this.isFilterActive = exerciseFilterResults.isFilterActive;
-            });
-        }
+        this.filterSubscription?.unsubscribe();
+        this.filterSubscription = this.modalRef.componentInstance.filterApplied.subscribe((exerciseFilterResults: ExerciseFilterResults) => {
+            this.sidebarData = exerciseFilterResults.filteredSidebarData!;
+            this.exerciseFilters = exerciseFilterResults.appliedExerciseFilters;
+            this.isFilterActive = exerciseFilterResults.isFilterActive;
+        });
     }
 
     initializeFilterOptions() {

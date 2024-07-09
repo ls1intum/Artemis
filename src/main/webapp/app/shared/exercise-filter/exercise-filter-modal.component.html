@@ -122,7 +122,10 @@
         }
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="resetFilter()" jhiTranslate="artemisApp.courseOverview.exerciseFilter.resetFilter"></button>
+        <button type="button" class="btn btn-secondary" (click)="resetFilter()">
+            <fa-icon [icon]="faBackward" />&nbsp;
+            <span jhiTranslate="artemisApp.courseOverview.exerciseFilter.resetFilter"></span>
+        </button>
 
         <div class="ms-auto">
             <button type="button" class="btn btn-secondary" (click)="closeModal()" jhiTranslate="entity.action.cancel" aria-label="Close"></button>
