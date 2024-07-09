@@ -98,7 +98,8 @@
                 "achievablePoints": "Achievable Points",
                 "applyFilter": "Apply filter",
                 "resetFilter": "Reset filter",
-                "noFilterAvailable": "There are no distinguishing filter options for the existing exercises"
+                "noFilterAvailable": "There are no distinguishing filter options for the existing exercises",
+                "noMoreOptions": "No more options"
             },
             "exerciseList": {
                 "filter": "Filter ({{ num }})",

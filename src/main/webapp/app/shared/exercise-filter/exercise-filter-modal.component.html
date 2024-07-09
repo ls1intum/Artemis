@@ -16,8 +16,7 @@
 
             @if (selectableCategoryOptions.length || selectedCategoryOptions.length) {
                 <label for="exercise-categories-filter-selection" class="form-control-label h6" jhiTranslate="artemisApp.exercise.categories"></label>
-            }
-            @if (selectableCategoryOptions.length) {
+
                 <input
                     id="exercise-categories-filter-selection"
                     type="text"
@@ -25,7 +24,9 @@
                     name="category-filter-selection"
                     [(ngModel)]="model"
                     [ngbTypeahead]="search"
-                    [placeholder]="'artemisApp.exercise.selectCategories' | artemisTranslate"
+                    [placeholder]="
+                        (!selectableCategoryOptions.length ? 'artemisApp.courseOverview.exerciseFilter.noMoreOptions' : 'artemisApp.exercise.selectCategories') | artemisTranslate
+                    "
                     (focus)="focus$.next($any($event).target.value)"
                     (click)="click$.next($any($event).target.value)"
                     #categoriesFilterSelection="ngbTypeahead"
@@ -33,23 +34,24 @@
                     [inputFormatter]="inputFormatter"
                     [resultFormatter]="resultFormatter"
                     (keydown.enter)="onSelectItem($event)"
+                    [disabled]="!selectableCategoryOptions.length"
                 />
-            }
 
-            <div class="row">
-                <div class="d-flex flex-row flex-wrap">
-                    @for (categoryFilterOption of selectedCategoryOptions; track categoryFilterOption) {
-                        <div class="p-1">
-                            <jhi-custom-exercise-category-badge
-                                [category]="categoryFilterOption.category"
-                                [displayRemoveButton]="true"
-                                [onClick]="getRemoveItemFunction(categoryFilterOption)"
-                                [fontSize]="'0.85rem'"
-                            />
-                        </div>
-                    }
+                <div class="row">
+                    <div class="d-flex flex-row flex-wrap">
+                        @for (categoryFilterOption of selectedCategoryOptions; track categoryFilterOption) {
+                            <div class="p-1">
+                                <jhi-custom-exercise-category-badge
+                                    [category]="categoryFilterOption.category"
+                                    [displayRemoveButton]="true"
+                                    [onClick]="getRemoveItemFunction(categoryFilterOption)"
+                                    [fontSize]="'0.85rem'"
+                                />
+                            </div>
+                        }
+                    </div>
                 </div>
-            </div>
+            }
         </div>
 
         @if (typeFilters?.isDisplayed) {
