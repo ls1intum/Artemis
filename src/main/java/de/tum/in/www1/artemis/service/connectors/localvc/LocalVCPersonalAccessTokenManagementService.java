@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 @Profile(PROFILE_LOCALVC)
 public class LocalVCPersonalAccessTokenManagementService {
 
-    private static final Logger log = LoggerFactory.getLogger(LocalVCPersonalAccessTokenManagementService);
+    private static final Logger log = LoggerFactory.getLogger(LocalVCPersonalAccessTokenManagementService.class);
 
     @Value("${artemis.version-control.version-control-access-token:false}")
     private boolean versionControlAccessToken;
