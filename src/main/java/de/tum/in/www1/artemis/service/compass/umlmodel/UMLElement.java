@@ -118,7 +118,7 @@ public abstract class UMLElement implements Similarity<UMLElement>, Serializable
      * @return the similarity value between 0 and 1
      */
     protected double ensureSimilarityRange(double similarity) {
-        return Math.min(Math.max(similarity, 0), 1);
+        return Math.clamp(similarity, 0, 1);
     }
 
     /**
