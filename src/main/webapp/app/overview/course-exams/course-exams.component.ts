@@ -230,9 +230,6 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         if (lastSelectedExam && lastSelectedExam.startsWith('"') && lastSelectedExam.endsWith('"')) {
             lastSelectedExam = lastSelectedExam.slice(1, -1);
         }
-        if (lastSelectedExam && lastSelectedExam.endsWith('-attempt')) {
-            lastSelectedExam = lastSelectedExam.slice(0, -8);
-        }
         return lastSelectedExam;
     }
 
@@ -263,7 +260,8 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             orderedTestExamAttempts.forEach((attempt, index) => {
                 this.calculateIndividualWorkingTimeForTestExams(attempt, index === 0);
             });
-            this.testExamMap.set(testExam.id!, orderedTestExamAttempts);
+            const submittedAttempts = orderedTestExamAttempts.filter((attempt) => attempt.submitted);
+            this.testExamMap.set(testExam.id!, submittedAttempts);
         }
 
         const sidebarRealExams = this.courseOverviewService.mapExamsToSidebarCardElements(this.sortedRealExams);

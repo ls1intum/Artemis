@@ -319,9 +319,9 @@ export class CourseOverviewService {
     mapAttemptToSidebarCardElement(attempt: StudentExam, index: number): SidebarCardElement {
         const examCardItem: SidebarCardElement = {
             title: attempt.exam!.title ?? '',
-            id: attempt.submitted ? attempt.exam!.id + '/test-exam/' + attempt.id : attempt.exam!.id + '/test-exam/' + 'start-attempt',
+            id: attempt.exam!.id + '/test-exam/' + attempt.id,
             icon: faGraduationCap,
-            subtitleLeft: 'Attempt ' + index,
+            subtitleLeft: this.translate.instant('artemisApp.courseOverview.sidebar.testExamAttempt') + ' ' + index,
             submissionDate: attempt.submissionDate,
             usedWorkingTime: this.calculateUsedWorkingTime(attempt),
             size: 'L',

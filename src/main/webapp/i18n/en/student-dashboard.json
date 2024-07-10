@@ -48,6 +48,7 @@
                 "real": "Exams",
                 "test": "Test Exams",
                 "attempt": "Test Exam Attempts",
+                "testExamAttempt": "Attempt",
                 "attempts": "Attempts",
                 "start": "Start",
                 "workingTime": "Working Time",
