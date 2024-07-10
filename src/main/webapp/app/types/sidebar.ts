@@ -120,23 +120,23 @@ export interface SidebarCardElement {
      * Set for Exam, identifies the current status of an exam exercise for exam sidebar
      */
     rightIcon?: IconProp;
-    /*
+    /**
      * Set for Exam, identifies if it is a test exam attempt
      */
     isAttempt?: boolean;
-    /*
+    /**
      * Set For Exam, identifies the number of attempts for each test exam
      */
     attempts?: number;
-    /*
+    /**
      * Set For Exam, identifies if it is a test exam
      */
     testExam?: boolean;
-    /*
+    /**
      * Set For Exam, identifies the submission date for an attempt of a test exam
      */
     submissionDate?: dayjs.Dayjs;
-    /*
+    /**
      * Set For Exam, identifies used working time of a student for an attempt of a test exam
      */
     usedWorkingTime?: number;
