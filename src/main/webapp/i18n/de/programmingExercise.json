@@ -178,7 +178,7 @@
             "theiaImage": {
                 "title": "Konfiguration für Online IDE",
                 "noImageAvailable": "Die Online IDE ist für diese Programmiersprache noch nicht verfügbar.",
-                "alert": "Es muss ein gültige Konfiguration für die Online IDE ausgewählt werden."
+                "alert": "Es muss eine gültige Konfiguration für die Online IDE ausgewählt werden."
             },
             "appName": "App-Name",
             "templateResult": "Ergebnis der Vorlage",
