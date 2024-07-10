@@ -1,4 +1,5 @@
 import os
+import re
 import select
 import signal
 from datetime import datetime
@@ -154,6 +155,14 @@ def printProg(text: str, addToCache: bool = True):
     __printStdout(msg)
     if addToCache:
         testerOutputCache.append(msg)
+
+def sanitizeXml(text: str):
+    """
+    Removes all characters that are not allowed in XML
+    """
+    # remove ANSI escape sequences first to avoid spurious characters
+    # https://stackoverflow.com/questions/14693701/how-can-i-remove-the-ansi-escape-sequences-from-a-string-in-python
+    return re.sub(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])', "", text)
 
 
 def shortenText(text: str, maxNumChars: int):
