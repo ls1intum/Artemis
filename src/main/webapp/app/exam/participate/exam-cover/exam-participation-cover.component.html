@@ -43,9 +43,8 @@
                 </div>
             </div>
             <hr />
-            <jhi-exam-start-information [exam]="exam" [studentExam]="studentExam" />
-            <span [innerHTML]="formattedGeneralInformation"></span>
-            <div class="d-inline-flex align-items-center mb-5">
+            <jhi-exam-start-information [exam]="exam" [studentExam]="studentExam" [formattedStartText]="formattedGeneralInformation" />
+            <div class="d-inline-flex align-items-center my-4">
                 <div class="ps-1">
                     <input
                         [(ngModel)]="confirmed"

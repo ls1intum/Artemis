@@ -17,22 +17,24 @@
     color: var(--metis-gray);
 }
 
-.posting-header {
-    font-size: 11px;
-
-    .posting-author {
-        font-size: 13px;
-        font-weight: 500;
-        padding-right: 5px;
-    }
-
-    .posting-author-role {
-        font-size: 17px;
-    }
-}
-
 .resolved {
     color: var(--metis-green);
+}
+
+.badge {
+    color: var(--white);
+}
+
+.badge-student {
+    background-color: var(--cyan);
+}
+
+.badge-tutor {
+    background-color: var(--orange);
+}
+
+.badge-instructor {
+    background-color: var(--graph-red);
 }
 
 .reference {
