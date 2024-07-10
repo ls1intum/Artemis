@@ -94,7 +94,7 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "allow_offline_ide", table = "programming_exercise_details")
     private Boolean allowOfflineIde;
 
-    @Column(name = "allow_online_ide", table = "programming_exercise_details")
+    @Column(name = "allow_online_ide", table = "programming_exercise_details", nullable = false)
     private boolean allowOnlineIde = false;
 
     @Column(name = "static_code_analysis_enabled", table = "programming_exercise_details")
@@ -313,11 +313,12 @@ public class ProgrammingExercise extends Exercise {
         this.allowOnlineIde = allowOnlineIde;
     }
 
+    @Nullable
     public String getTheiaImage() {
         return theiaImage;
     }
 
-    public void setTheiaImage(String theiaImage) {
+    public void setTheiaImage(@Nullable String theiaImage) {
         this.theiaImage = theiaImage;
     }
 
@@ -803,7 +804,7 @@ public class ProgrammingExercise extends Exercise {
     public void validateProgrammingSettings() {
 
         // Check if a participation mode was selected
-        if (!Boolean.TRUE.equals(isAllowOnlineEditor()) && !Boolean.TRUE.equals(isAllowOfflineIde()) && !Boolean.TRUE.equals(isAllowOnlineIde())) {
+        if (!Boolean.TRUE.equals(isAllowOnlineEditor()) && !Boolean.TRUE.equals(isAllowOfflineIde()) && !isAllowOnlineIde()) {
             throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor, the offline IDE, or the online IDE", "Exercise",
                     "noParticipationModeAllowed");
         }
@@ -819,7 +820,7 @@ public class ProgrammingExercise extends Exercise {
         }
 
         // Check if theia image was selected if the online IDE is enabled
-        if (Boolean.TRUE.equals(isAllowOnlineIde()) && getTheiaImage() == null) {
+        if (isAllowOnlineIde() && getTheiaImage() == null) {
             throw new BadRequestAlertException("The Theia image must be selected if the online IDE is enabled", "Exercise", "theiaImageNotSet");
         }
     }

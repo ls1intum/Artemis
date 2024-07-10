@@ -140,7 +140,7 @@
             "offlineIde": "IDE",
             "allowOnlineIde": {
                 "title": "Allow Online IDE",
-                "alert": "At least one option (Offline IDE, Online Editor, or Online IDE) must be selected"
+                "alert": "At least one option (Offline IDE, Online Editor, or Online IDE) must be selected."
             },
             "onlineIde": "Online IDE",
             "showTestNamesToStudents": "Show Test Names to Students",
@@ -179,8 +179,8 @@
             "packageName": "Package Name",
             "theiaImage": {
                 "title": "Configuration for Online IDE",
-                "noImageAvailable": "The Online IDE is not yet available for this programming language",
-                "alert": "A valid configuration for the Online IDE must be selected"
+                "noImageAvailable": "The Online IDE is not yet available for this programming language.",
+                "alert": "A valid configuration for the Online IDE must be selected."
             },
             "appName": "App Name",
             "templateResult": "Template Result",

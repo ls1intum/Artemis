@@ -60,6 +60,7 @@
                 </label>
             </div>
         }
+        <!-- only show this for non-exam exercises -->
         @if (programmingExercise.exerciseGroup === undefined) {
             <div class="form-check">
                 <label [class]="!programmingExerciseCreationConfig.validIdeSelection() ? 'form-check-label text-danger' : 'form-check-label'" for="field_allowOnlineIde">

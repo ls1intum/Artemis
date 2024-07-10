@@ -302,12 +302,12 @@ public class ProgrammingExerciseResource {
             throw new BadRequestAlertException("Testwise coverage enabled flag must not be changed", ENTITY_NAME, "testwiseCoverageCannotChange");
         }
         if (!Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOfflineIde())
-                && !Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOnlineIde())) {
+                && !updatedProgrammingExercise.isAllowOnlineIde()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
                     "You need to allow at least one participation mode, the online editor, the offline IDE, or the online IDE", "noParticipationModeAllowed")).body(null);
         }
         // Verify that a theia image is provided when the online IDE is enabled
-        if (Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOnlineIde()) && updatedProgrammingExercise.getTheiaImage() == null) {
+        if (updatedProgrammingExercise.isAllowOnlineIde() && updatedProgrammingExercise.getTheiaImage() == null) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createAlert(applicationName, "You need to provide a Theia image when the online IDE is enabled", "noTheiaImageProvided")).body(null);
         }

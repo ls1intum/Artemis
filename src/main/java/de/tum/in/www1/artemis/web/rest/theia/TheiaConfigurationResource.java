@@ -37,7 +37,6 @@ public class TheiaConfigurationResource {
     @GetMapping("images")
     @EnforceAtLeastInstructor
     public ResponseEntity<Map<String, String>> getImagesForLanguage(@RequestParam("language") ProgrammingLanguage language) {
-        // language = language.toLowerCase();
         return ResponseEntity.ok(this.theiaConfiguration.getImagesForLanguage(language));
     }
 
