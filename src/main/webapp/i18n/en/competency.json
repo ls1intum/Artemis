@@ -188,7 +188,6 @@
                 "selfRelation": "You can not create a relation between a competency and itself.",
                 "relationAlreadyExists": "This relation already exists.",
                 "type": {
-                    "RELATES": "Relates",
                     "ASSUMES": "Assumes",
                     "EXTENDS": "Extends",
                     "MATCHES": "Matches"

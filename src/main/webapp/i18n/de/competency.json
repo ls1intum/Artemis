@@ -188,7 +188,6 @@
                 "selfRelation": "Du kannst keine Beziehung zwischen einer Kompetenz und sich selbst erstellen.",
                 "relationAlreadyExists": "Diese Beziehung existiert bereits.",
                 "type": {
-                    "RELATES": "Bezieht sich auf",
                     "ASSUMES": "Setzt voraus",
                     "EXTENDS": "Erweitert",
                     "MATCHES": "Stimmt überein mit"
