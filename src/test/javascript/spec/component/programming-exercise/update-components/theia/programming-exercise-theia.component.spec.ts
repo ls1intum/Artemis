@@ -6,15 +6,13 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CheckboxControlValueAccessor, DefaultValueAccessor, NgModel, NumberValueAccessor, SelectControlValueAccessor } from '@angular/forms';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-language.component';
-import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
+import { programmingExerciseCreationConfigMock } from '../programming-exercise-creation-config-mock';
 import { ProgrammingExerciseTheiaComponent } from 'app/exercises/programming/manage/update/update-components/theia/programming-exercise-theia.component';
-import { provideHttpClient } from '@angular/common/http';
 import { TheiaService } from 'app/exercises/programming/shared/service/theia.service';
 
-describe('ProgrammingExerciseLanguageComponent', () => {
-    let fixture: ComponentFixture<ProgrammingExerciseLanguageComponent>;
-    let comp: ProgrammingExerciseLanguageComponent;
+describe('ProgrammingExerciseTheiaComponent', () => {
+    let fixture: ComponentFixture<ProgrammingExerciseTheiaComponent>;
+    let comp: ProgrammingExerciseTheiaComponent;
 
     let theiaServiceMock!: { getTheiaImages: jest.Mock };
 
@@ -25,7 +23,6 @@ describe('ProgrammingExerciseLanguageComponent', () => {
         TestBed.configureTestingModule({
             imports: [],
             declarations: [
-                ProgrammingExerciseLanguageComponent,
                 ProgrammingExerciseTheiaComponent,
                 CheckboxControlValueAccessor,
                 DefaultValueAccessor,
@@ -36,7 +33,6 @@ describe('ProgrammingExerciseLanguageComponent', () => {
                 MockPipe(RemoveKeysPipe),
             ],
             providers: [
-                provideHttpClient(),
                 {
                     provide: ActivatedRoute,
                     useValue: { queryParams: of({}) },
@@ -50,10 +46,11 @@ describe('ProgrammingExerciseLanguageComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(ProgrammingExerciseLanguageComponent);
+                fixture = TestBed.createComponent(ProgrammingExerciseTheiaComponent);
                 comp = fixture.componentInstance;
                 comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
                 comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
+                comp.programmingExercise.allowOnlineIde = true;
             });
     });
 
@@ -67,18 +64,38 @@ describe('ProgrammingExerciseLanguageComponent', () => {
         expect(comp).not.toBeNull();
     }));
 
-    it('should not load TheiaComponent when online IDE is not allowed', fakeAsync(() => {
-        comp.programmingExercise.allowOnlineIde = false;
+    it('should have no selectedImage when no image is available', fakeAsync(() => {
+        theiaServiceMock.getTheiaImages.mockReturnValue(of({}));
         fixture.detectChanges();
+        comp.loadTheiaImages();
         tick();
-        expect(comp.programmingExerciseTheiaComponent).toBeUndefined();
+        expect(comp.programmingExercise.theiaImage).toBeUndefined();
     }));
 
-    it('should load TheiaComponent when online IDE is allowed', fakeAsync(() => {
-        theiaServiceMock.getTheiaImages.mockReturnValue(of({}));
-        comp.programmingExercise.allowOnlineIde = true;
+    it('should select first image when none was selected', fakeAsync(() => {
+        theiaServiceMock.getTheiaImages.mockReturnValue(
+            of({
+                'Java-17': 'test-url',
+                'Java-Test': 'test-url-2',
+            }),
+        );
         fixture.detectChanges();
+        comp.loadTheiaImages();
         tick();
-        expect(comp.programmingExerciseTheiaComponent).not.toBeNull();
+        expect(comp.programmingExercise.theiaImage).toMatch('test-url');
+    }));
+
+    it('should not overwrite selected image when others are loaded', fakeAsync(() => {
+        comp.programmingExercise.theiaImage = 'test-url-2';
+        theiaServiceMock.getTheiaImages.mockReturnValue(
+            of({
+                'Java-17': 'test-url',
+                'Java-Test': 'test-url-2',
+            }),
+        );
+        fixture.detectChanges();
+        comp.loadTheiaImages();
+        tick();
+        expect(comp.programmingExercise.theiaImage).toMatch('test-url-2');
     }));
 });
