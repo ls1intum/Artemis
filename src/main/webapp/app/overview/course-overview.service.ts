@@ -17,6 +17,7 @@ import { faBullhorn, faHashtag } from '@fortawesome/free-solid-svg-icons';
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
+import { StudentExam } from 'app/entities/student-exam.model';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -242,6 +243,12 @@ export class CourseOverviewService {
         return exams.map((exam) => this.mapExamToSidebarCardElement(exam));
     }
 
+    mapTestExamAttemptsToSidebarCardElements(attempts?: StudentExam[], indices?: number[]) {
+        if (attempts && indices) {
+            return attempts.map((attempt, index) => this.mapAttemptToSidebarCardElement(attempt, index));
+        }
+    }
+
     mapConversationsToSidebarCardElements(conversations: ConversationDTO[]) {
         return conversations.map((conversation) => this.mapConversationToSidebarCardElement(conversation));
     }
@@ -292,16 +299,33 @@ export class CourseOverviewService {
         return exerciseCardItem;
     }
 
-    mapExamToSidebarCardElement(exam: Exam): SidebarCardElement {
+    mapExamToSidebarCardElement(exam: Exam, numberOfAttempts?: number): SidebarCardElement {
         const examCardItem: SidebarCardElement = {
             title: exam.title ?? '',
-            id: exam.id ?? '',
+            id: (exam.testExam ? exam.id + '/test-exam/' + 'start' : exam.id) ?? '',
             icon: faGraduationCap,
             subtitleLeft: exam.moduleNumber ?? '',
             startDateWithTime: exam.startDate,
             workingTime: exam.workingTime ?? 0,
             attainablePoints: exam.examMaxPoints ?? 0,
             size: 'L',
+            isAttempt: false,
+            testExam: exam.testExam,
+            attempts: numberOfAttempts ?? 0,
+        };
+        return examCardItem;
+    }
+
+    mapAttemptToSidebarCardElement(attempt: StudentExam, index: number): SidebarCardElement {
+        const examCardItem: SidebarCardElement = {
+            title: attempt.exam!.title ?? '',
+            id: attempt.exam!.id + '/test-exam/' + attempt.id,
+            icon: faGraduationCap,
+            subtitleLeft: this.translate.instant('artemisApp.courseOverview.sidebar.testExamAttempt') + ' ' + index,
+            submissionDate: attempt.submissionDate,
+            usedWorkingTime: this.calculateUsedWorkingTime(attempt),
+            size: 'L',
+            isAttempt: true,
         };
         return examCardItem;
     }
@@ -354,5 +378,15 @@ export class CourseOverviewService {
 
     setSidebarCollapseState(storageId: string, isCollapsed: boolean) {
         localStorage.setItem('sidebar.collapseState.' + storageId, JSON.stringify(isCollapsed));
+    }
+
+    calculateUsedWorkingTime(studentExam: StudentExam): number {
+        let usedWorkingTime = 0;
+        if (studentExam.exam!.testExam && studentExam.started && studentExam.submitted && studentExam.workingTime && studentExam.startedDate && studentExam.submissionDate) {
+            const regularExamDuration = studentExam.workingTime;
+            // As students may submit during the grace period, the workingTime is limited to the regular exam duration
+            usedWorkingTime = Math.min(regularExamDuration, dayjs(studentExam.submissionDate).diff(dayjs(studentExam.startedDate), 'seconds'));
+        }
+        return usedWorkingTime;
     }
 }
