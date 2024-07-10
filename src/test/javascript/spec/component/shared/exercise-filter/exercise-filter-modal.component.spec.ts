@@ -86,9 +86,7 @@ describe('ExerciseFilterModalComponent', () => {
             declarations: [ExerciseFilterModalComponent, MockComponent(CustomExerciseCategoryBadgeComponent), MockComponent(RangeSliderComponent)],
             providers: [MockProvider(NgbActiveModal)],
         }).compileComponents();
-    });
 
-    beforeEach(() => {
         fixture = TestBed.createComponent(ExerciseFilterModalComponent);
         component = fixture.componentInstance;
         activeModal = TestBed.inject(NgbActiveModal);
