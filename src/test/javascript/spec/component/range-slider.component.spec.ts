@@ -1,10 +1,21 @@
 import { RangeSliderComponent } from 'app/shared/range-slider/range-slider.component';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MockModule } from 'ng-mocks';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 describe('RangeSliderComponent', () => {
     let component: RangeSliderComponent;
+    let fixture: ComponentFixture<RangeSliderComponent>;
 
     beforeEach(() => {
-        component = new RangeSliderComponent();
+        TestBed.configureTestingModule({
+            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule)],
+            declarations: [RangeSliderComponent],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(RangeSliderComponent);
+        component = fixture.componentInstance;
+
         component.generalMinValue = 0;
         component.generalMaxValue = 100;
         component.selectedMinValue = 20;
