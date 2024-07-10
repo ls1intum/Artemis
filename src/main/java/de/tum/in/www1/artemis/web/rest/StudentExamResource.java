@@ -527,7 +527,7 @@ public class StudentExamResource {
      */
     @GetMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/grade-summary")
     @EnforceAtLeastStudent
-    public ResponseEntity<StudentExamWithGradeDTO> getStudentExamGradesForSummary(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
+    public ResponseEntity<StudentExamWithGradeDTO> getStudentExamGradesForSummary(@PathVariable long courseId, @PathVariable long examId, @PathVariable long studentExamId,
             @RequestParam(required = false) Long userId) {
         long start = System.currentTimeMillis();
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();

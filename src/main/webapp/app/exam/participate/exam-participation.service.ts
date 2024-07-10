@@ -121,7 +121,7 @@ export class ExamParticipationService {
             params = params.set('userId', userId.toString());
         }
 
-        const url = this.getResourceURL(courseId, examId) + '/student-exams/' + studentExamId + '/grade-summary';
+        const url = `${this.getResourceURL(courseId, examId)}/student-exams/${studentExamId}/grade-summary`;
         return this.httpClient.get<StudentExamWithGradeDTO>(url, { params });
     }
 
