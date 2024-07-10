@@ -32,6 +32,8 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
     @Input() submitInProgress = false;
     @Input() attendanceChecked = false;
     @Input() testRunStartTime: dayjs.Dayjs | undefined;
+    @Input() isProduction = true;
+    @Input() isTestServer = false;
     @Output() onExamStarted: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
     @Output() onExamEnded: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
     @Output() onExamContinueAfterHandInEarly = new EventEmitter<void>();
@@ -86,9 +88,11 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
         this.testExam = this.exam.testExam;
 
         if (this.startView) {
+            this.examParticipationService.setEndView(false);
             this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.startText);
             this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationStartText);
         } else {
+            this.examParticipationService.setEndView(true);
             this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.endText);
             this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationEndText);
             // this should be the individual working end + the grace period

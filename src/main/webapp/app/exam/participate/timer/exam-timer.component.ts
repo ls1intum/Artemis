@@ -69,9 +69,9 @@ export class ExamTimerComponent implements OnInit, OnDestroy {
         this.setIsCriticalTime(timeDiff);
 
         if (timeDiff.asMilliseconds() < 0) {
-            return this.timePipe.transform(0, true);
+            return this.timePipe.transform(0, false, true);
         } else {
-            return this.timePipe.transform(round(timeDiff.asSeconds()), true);
+            return this.timePipe.transform(round(timeDiff.asSeconds()), false, true);
         }
     }
 

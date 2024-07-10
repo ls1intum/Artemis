@@ -1,0 +1,26 @@
+.markdown-editor-wrapper {
+    background-color: var(--md-editor-background);
+}
+
+.file-upload-footer-input {
+    // Cannot hide input[type=file] with display: none, as this may prevent file uploads entirely.
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+    z-index: -1;
+}
+
+.file-upload-footer-label {
+    cursor: pointer;
+    width: 100%;
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0.15em 0.15em 0;
+
+    .upload-subtitle {
+        font-size: 12px;
+        color: var(--bs-secondary);
+    }
+}

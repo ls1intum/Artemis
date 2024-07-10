@@ -1,0 +1,81 @@
+<div
+    class="d-flex sidebar justify-content-between flex-column rounded-3"
+    [ngClass]="{ 'sidebar-height-dev content-height-dev': !isProduction || isTestServer, collapsed: isCollapsed, 'sidebar-height-testRun': isTestRun }"
+>
+    <div class="px-3 py-3">
+        <div class="w-100 bg-module">
+            <!-- Since the exam navigation includes lots of functionalities and in-line adjustments, 
+             we use duplicated code here in order to keep the functionality of exam navigation apart from 
+             sidebar-card implementations.
+              -->
+            <div class="sidebar-content" [ngClass]="{ collapsed: isCollapsed }">
+                <div class="scrollable-item-content py-2 px-2 bg-body" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer, 'sidebar-height-testRun': isTestRun }">
+                    <div
+                        class="pointer rounded-3 col-12 px-1 pt-2 pb-1 mb-2 border-5 highlight-card bg-module"
+                        [ngClass]="{ 'bg-selected border-selected': exerciseIndex === -1 }"
+                        (click)="changePage(true, -1)"
+                    >
+                        <div class="d-flex justify-content-between mb-1 align-items-baseline">
+                            <span id="test-sidebar-card-title" class="small fw-semibold text-truncate me-2">
+                                <fa-icon [ngbTooltip]="'artemisApp.examParticipation.exerciseOverview' | artemisTranslate" [fixedWidth]="true" [icon]="faFileLines" />
+                                @if (!isCollapsed) {
+                                    <span class="auto-collapse" jhiTranslate="artemisApp.studentExamDetail.overview"></span>
+                                }
+                            </span>
+                            <span [ngbTooltip]="'artemisApp.examParticipation.numberOfSavedExercises' | artemisTranslate">
+                                <div class="small fw-semibold">{{ numberOfSavedExercises }}/{{ exercises.length }}</div>
+                            </span>
+                        </div>
+                    </div>
+                    @for (sidebarItem of sidebarData?.ungroupedData; track sidebarItem; let last = $last; let i = $index) {
+                        <div [ngClass]="{ 'mb-2': !last }">
+                            <div
+                                class="pointer rounded-3 col-12 px-1 pt-2 pb-1 border-5 highlight-card bg-module"
+                                [ngClass]="{ 'bg-selected border-selected': i === exerciseIndex }"
+                                (click)="changePage(false, i, false)"
+                            >
+                                <div class="d-flex justify-content-between mb-1 align-items-baseline">
+                                    <span id="test-sidebar-card-title" class="small fw-semibold text-truncate me-2" [title]="sidebarItem.title">
+                                        @if (sidebarItem.icon) {
+                                            <fa-icon
+                                                [ngbTooltip]="!examTimeLineView ? (getExerciseIconTooltip(exercises[i]) | artemisTranslate) : ''"
+                                                [fixedWidth]="true"
+                                                [icon]="sidebarItem.icon"
+                                            />
+                                        }
+                                        @if (!isCollapsed) {
+                                            <span class="auto-collapse">
+                                                {{ sidebarItem.title }}
+                                            </span>
+                                        }
+                                    </span>
+                                    <span
+                                        [ngClass]="setExerciseButtonStatus(i)"
+                                        [ngbTooltip]="!examTimeLineView ? ('artemisApp.examParticipation.' + getExerciseButtonTooltip(exercises[i]) | artemisTranslate) : ''"
+                                    >
+                                        @if (sidebarItem.rightIcon) {
+                                            <fa-icon [fixedWidth]="true" [icon]="icon" />
+                                        }
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div
+        id="test-collapse"
+        class="auto-collapse double-arrow mb-2"
+        [ngClass]="{ 'menu-closed': isCollapsed }"
+        [ngbTooltip]="(isCollapsed ? 'Expand' : 'Collapse') + ' Menu (Ctrl + M)'"
+        (click)="toggleCollapseState()"
+    >
+        <div [attr.aria-expanded]="!isCollapsed" aria-controls="collapseBasic">
+            <fa-icon class="me-negative fa-xs" [icon]="faChevronRight" />
+            <fa-icon class="fa-xs" [icon]="faChevronRight" />
+        </div>
+    </div>
+</div>

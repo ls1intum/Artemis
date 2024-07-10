@@ -7,6 +7,7 @@ import { FormControl } from '@angular/forms';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { Observable, map, startWith } from 'rxjs';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 
 const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '#1b97ca', '#0d3cc2', '#0ab84f'];
 
@@ -32,6 +33,8 @@ export class CategorySelectorComponent implements OnChanges {
     @Output() selectedCategories = new EventEmitter<ExerciseCategory[]>();
 
     @ViewChild('categoryInput') categoryInput: ElementRef<HTMLInputElement>;
+
+    @ViewChild(MatAutocompleteTrigger) autocompleteTrigger: MatAutocompleteTrigger;
 
     categoryColors = DEFAULT_COLORS;
     selectedCategory: ExerciseCategory;
@@ -127,6 +130,7 @@ export class CategorySelectorComponent implements OnChanges {
         // Clear the input value
         event.chipInput!.clear();
         this.categoryCtrl.setValue(null);
+        this.autocompleteTrigger.closePanel();
     }
 
     private createCategory(categoryString: string): ExerciseCategory {

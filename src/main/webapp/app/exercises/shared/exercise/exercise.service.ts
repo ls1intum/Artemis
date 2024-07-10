@@ -164,6 +164,8 @@ export class ExerciseService {
                 if (res.body) {
                     res.body.exercise = ExerciseService.convertExerciseDatesFromServer(res.body.exercise)!;
                     ExerciseService.parseExerciseCategories(res.body.exercise);
+                    // Make sure to set the access rights for the exercise
+                    this.accountService.setAccessRightsForExerciseAndReferencedCourse(res.body.exercise);
                     // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
                     if (res.body.exercise.posts === undefined) {
                         res.body.exercise.posts = [];

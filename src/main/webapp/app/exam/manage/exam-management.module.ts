@@ -71,6 +71,8 @@ import { GitDiffReportModule } from 'app/exercises/programming/hestia/git-diff-r
 import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
 import { DetailModule } from 'app/detail-overview-list/detail.module';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { NoDataComponent } from 'app/shared/no-data-component';
+
 const ENTITY_STATES = [...examManagementState];
 
 @NgModule({
@@ -111,6 +113,7 @@ const ENTITY_STATES = [...examManagementState];
         GitDiffReportModule,
         ArtemisProgrammingExerciseModule,
         DetailModule,
+        NoDataComponent,
     ],
     declarations: [
         ExamManagementComponent,

@@ -5,5 +5,5 @@ import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record LearningPathCompetencyGraphDTO(Set<CompetencyProgressDTO> competencies, Set<CompetencyRelationDTO> competencyRelations) {
+public record LearningPathCompetencyGraphDTO(Set<CompetencyGraphNodeDTO> nodes, Set<CompetencyGraphEdgeDTO> edges) {
 }

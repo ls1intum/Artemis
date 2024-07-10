@@ -8,7 +8,7 @@ import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { TranslateService } from '@ngx-translate/core';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { intersection } from 'lodash-es';
-import { CompetencyTaxonomy, CompetencyValidators, DEFAULT_MASTERY_THRESHOLD } from 'app/entities/competency.model';
+import { CompetencyTaxonomy, CourseCompetencyValidators, DEFAULT_MASTERY_THRESHOLD } from 'app/entities/competency.model';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 
@@ -23,12 +23,9 @@ export const titleUniqueValidator = (competencyService: CompetencyService, cours
                 if (initialTitle && title === initialTitle) {
                     return of(null);
                 }
-                return competencyService.getAllForCourse(courseId).pipe(
+                return competencyService.getCourseCompetencyTitles(courseId).pipe(
                     map((res) => {
-                        let competencyTitles: string[] = [];
-                        if (res.body) {
-                            competencyTitles = res.body.map((competency) => competency.title!);
-                        }
+                        const competencyTitles = res.body!;
                         if (title && competencyTitles.includes(title)) {
                             return {
                                 titleUnique: { valid: false },
@@ -90,9 +87,8 @@ export class CompetencyFormComponent implements OnInit, OnChanges {
     @Output()
     onCancel: EventEmitter<any> = new EventEmitter<any>();
 
-    titleUniqueValidator = titleUniqueValidator;
     protected readonly competencyTaxonomy = CompetencyTaxonomy;
-    protected readonly competencyValidators = CompetencyValidators;
+    protected readonly competencyValidators = CourseCompetencyValidators;
 
     @Output()
     formSubmitted: EventEmitter<CompetencyFormData> = new EventEmitter<CompetencyFormData>();
@@ -168,15 +164,11 @@ export class CompetencyFormComponent implements OnInit, OnChanges {
             initialTitle = this.formData.title;
         }
         this.form = this.fb.nonNullable.group({
-            title: [
-                undefined as string | undefined,
-                [Validators.required, Validators.maxLength(255)],
-                [this.titleUniqueValidator(this.competencyService, this.courseId, initialTitle)],
-            ],
+            title: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)], [titleUniqueValidator(this.competencyService, this.courseId, initialTitle)]],
             description: [undefined as string | undefined, [Validators.maxLength(10000)]],
             softDueDate: [undefined],
             taxonomy: [undefined as CompetencyTaxonomy | undefined],
-            masteryThreshold: [undefined, [Validators.min(0), Validators.max(100)]],
+            masteryThreshold: [DEFAULT_MASTERY_THRESHOLD, [Validators.min(0), Validators.max(100)]],
             optional: [false],
         });
         this.selectedLectureUnitsInTable = [];

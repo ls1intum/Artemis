@@ -1,0 +1,22 @@
+{
+    "artemisApp": {
+        "learningPath": {
+            "navigation": {
+                "nextButton": "Next",
+                "previousButton": "Previous",
+                "overview": {
+                    "title": "Learning path competencies",
+                    "showCompetenciesGraphButton": "Competency graph"
+                }
+            },
+            "competencyGraphModal": {
+                "title": "Learning path competency relations"
+            },
+            "generation": {
+                "title": "Welcome to your learning path!",
+                "description": "This feature lets you learn at your own pace with a personalized journey tailored to your performance. It adapts dynamically, ensuring you always have the most relevant content and challenges. Start now and experience a customized path to success!",
+                "generateButton": "Start my learning path"
+            }
+        }
+    }
+}

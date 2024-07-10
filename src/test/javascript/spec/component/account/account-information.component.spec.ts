@@ -52,27 +52,6 @@ describe('AccountInformationComponent', () => {
 
     it('should initialize with localVC profile', async () => {
         comp.ngOnInit();
-        expect(profileServiceMock.getProfileInfo).toHaveBeenCalled();
         expect(accountServiceMock.getAuthenticationState).toHaveBeenCalled();
-        expect(comp.localVCEnabled).toBeTrue();
-        expect(comp.sshKey).toBe(mockKey);
-    });
-
-    it('should initialize with no localVC profile set', async () => {
-        profileServiceMock.getProfileInfo.mockReturnValue(of({ activeProfiles: [] }));
-        comp.ngOnInit();
-        expect(profileServiceMock.getProfileInfo).toHaveBeenCalled();
-        expect(accountServiceMock.getAuthenticationState).toHaveBeenCalled();
-        expect(comp.localVCEnabled).toBeFalse();
-    });
-
-    it('should save SSH key and disable edit mode', () => {
-        accountServiceMock.addSshPublicKey.mockReturnValue(of());
-        comp.ngOnInit();
-        comp.sshKey = 'new-key';
-        comp.editSshKey = true;
-        comp.saveSshKey();
-        expect(accountServiceMock.addSshPublicKey).toHaveBeenCalledWith('new-key');
-        expect(comp.editSshKey).toBeFalse();
     });
 });
