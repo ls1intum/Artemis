@@ -162,6 +162,7 @@ def sanitizeXml(text: str) -> str:
     """
     # remove ANSI escape sequences first to avoid spurious characters
     # https://stackoverflow.com/questions/14693701/how-can-i-remove-the-ansi-escape-sequences-from-a-string-in-python
+    text = re.sub(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])', "", text)
     return re.sub(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])', "", text)
 
 def shortenText(text: str, maxNumChars: int):
