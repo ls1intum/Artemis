@@ -25,6 +25,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
     Long exampleTutorialGroupId;
 
     @BeforeEach
+    @Override
     void setupTestScenario() {
         super.setupTestScenario();
         userUtilService.addUsers(this.testPrefix, 1, 2, 1, 1);

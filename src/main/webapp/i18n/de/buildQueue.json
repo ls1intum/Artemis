@@ -1,7 +1,7 @@
 {
     "artemisApp": {
         "buildQueue": {
-            "title": "Build Warteschlange",
+            "title": "Build Übersicht",
             "pageTitle": "Build Job Informationen",
             "queuedBuildJobs": "Wartende Build Jobs",
             "runningBuildJobs": "Laufende Build Jobs",
@@ -26,7 +26,55 @@
                 "status": "Status",
                 "buildLogs": "Build Logs"
             },
-            "cancelAll": "Alle abbrechen"
+            "cancelAll": "Alle abbrechen",
+            "filter": {
+                "title": "BuildJobs Filter",
+                "buildStatus": {
+                    "title": "Build Status",
+                    "cancelled": "Abgebrochen",
+                    "failed": "Fehlgeschlagen",
+                    "error": "Fehler",
+                    "successful": "Erfolgreich"
+                },
+                "buildAgentAddress": "Build Agent Adresse",
+                "buildStartDate": {
+                    "title": "Build Startdatum",
+                    "from": "Von",
+                    "to": "Bis",
+                    "invalidDate": "Von-Datum muss vor dem Bis-Datum liegen"
+                },
+                "buildDuration": {
+                    "title": "Build Dauer (in Sekunden)",
+                    "lowerBound": "Untere Grenze",
+                    "upperBound": "Obere Grenze",
+                    "invalidState": "Die untere Grenze muss kleiner als die obere Grenze sein"
+                },
+                "search": {
+                    "title": "Suche",
+                    "placeholder": "Suche nach Buildjob",
+                    "loading": "Laden...",
+                    "tooltip": "Die Suche wird auf Benutzerlogin, Kursname und Kurskurzname durchgeführt"
+                },
+                "none": "Keine",
+                "close": "Schließen",
+                "apply": "Anwenden",
+                "open": "Filter ({{ num }})"
+            },
+            "statistics": {
+                "title": "Übersicht",
+                "titleTooltip": "Daten für den definierten Zeitraum werden abgerufen.",
+                "totalBuilds": "Anzahl der Builds:",
+                "successfulBuildsWithColon": "Erfolgreiche Builds:",
+                "successfulBuilds": "Erfolgreiche Builds",
+                "successfulBuildsPercentage": "Erfolgreiche Builds %:",
+                "failedBuilds": "Fehlgeschlagene Builds:",
+                "failedBuildsPercentage": "Fehlgeschlagene Builds %:",
+                "cancelledBuilds": "Abgebrochene Builds:",
+                "cancelledBuildsPercentage": "Abgebrochene Builds %:",
+                "daySpan": "1 Tag",
+                "weekSpan": "7 Tage",
+                "monthSpan": "30 Tage"
+            }
         }
     }
 }

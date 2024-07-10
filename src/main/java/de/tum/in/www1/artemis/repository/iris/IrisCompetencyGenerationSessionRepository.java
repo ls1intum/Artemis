@@ -1,13 +1,12 @@
 package de.tum.in.www1.artemis.repository.iris;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-
 import de.tum.in.www1.artemis.domain.iris.session.IrisCompetencyGenerationSession;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * Repository interface for managing {@link IrisCompetencyGenerationSession} entities.
  */
-public interface IrisCompetencyGenerationSessionRepository extends JpaRepository<IrisCompetencyGenerationSession, Long> {
+public interface IrisCompetencyGenerationSessionRepository extends ArtemisJpaRepository<IrisCompetencyGenerationSession, Long> {
 
     /**
      * Finds the latest {@link IrisCompetencyGenerationSession} based on its course and user.

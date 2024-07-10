@@ -66,7 +66,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     @Output()
     questionMoveDown = new EventEmitter();
 
-    readonly maxCharacterCount = MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH;
+    readonly MAX_CHARACTER_COUNT = MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH;
 
     /** Ace Editor configuration constants **/
     questionEditorText: any = '';
@@ -101,7 +101,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     faAngleRight = faAngleRight;
     faAngleDown = faAngleDown;
 
-    readonly maxPoints = MAX_QUIZ_QUESTION_POINTS;
+    readonly MAX_POINTS = MAX_QUIZ_QUESTION_POINTS;
 
     constructor(
         private artemisMarkdown: ArtemisMarkdownService,

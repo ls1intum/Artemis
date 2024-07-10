@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.pyris;
 
 import java.security.SecureRandom;
+import java.util.concurrent.TimeUnit;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,6 +16,7 @@ import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.service.connectors.pyris.job.CourseChatJob;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.ExerciseChatJob;
+import de.tum.in.www1.artemis.service.connectors.pyris.job.IngestionWebhookJob;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.PyrisJob;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
@@ -67,6 +69,20 @@ public class PyrisJobService {
         var token = generateJobIdToken();
         var job = new CourseChatJob(token, courseId, sessionId);
         jobMap.put(token, job);
+        return token;
+    }
+
+    /**
+     * Adds a new ingestion webhook job to the job map with a timeout.
+     *
+     * @return a unique token identifying the created webhook job
+     */
+    public String addIngestionWebhookJob() {
+        var token = generateJobIdToken();
+        var job = new IngestionWebhookJob(token);
+        long timeoutWebhookJob = 60;
+        TimeUnit unitWebhookJob = TimeUnit.MINUTES;
+        jobMap.put(token, job, timeoutWebhookJob, unitWebhookJob);
         return token;
     }
 

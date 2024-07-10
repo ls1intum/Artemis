@@ -10,7 +10,7 @@ type EntityResponseType = SearchResult<Exam>;
 
 @Injectable({ providedIn: 'root' })
 export class ExamImportPagingService extends PagingService<Exam> {
-    private static readonly resourceUrl = 'api/exams';
+    private static readonly RESOURCE_URL = 'api/exams';
 
     constructor(private http: HttpClient) {
         super();
@@ -24,7 +24,7 @@ export class ExamImportPagingService extends PagingService<Exam> {
     override search(pageable: SearchTermPageableSearch, options: { withExercises: boolean }): Observable<EntityResponseType> {
         const params = this.createHttpParams(pageable);
         return this.http
-            .get(`${ExamImportPagingService.resourceUrl}?withExercises=${options.withExercises}`, { params, observe: 'response' })
+            .get(`${ExamImportPagingService.RESOURCE_URL}?withExercises=${options.withExercises}`, { params, observe: 'response' })
             .pipe(map((resp: HttpResponse<EntityResponseType>) => resp && resp.body!));
     }
 }

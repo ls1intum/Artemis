@@ -256,7 +256,7 @@ test.describe('Exam statistics', () => {
     test.beforeEach('Participate in exam', async ({ examParticipation, examNavigation }) => {
         for (const student of students) {
             await examParticipation.startParticipation(student, course, exam);
-            await examNavigation.openExerciseAtIndex(0);
+            await examNavigation.openOrSaveExerciseByTitle(exercise.title!);
             await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
             await examParticipation.handInEarly();
         }
@@ -302,7 +302,7 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
     const courseList = new CoursesPage(page);
     const courseOverview = new CourseOverviewPage(page);
     const modelingExerciseEditor = new ModelingEditor(page);
-    const programmingExerciseEditor = new OnlineEditorPage(page, courseList, courseOverview);
+    const programmingExerciseEditor = new OnlineEditorPage(page);
     const quizExerciseMultipleChoice = new MultipleChoiceQuiz(page);
     const textExerciseEditor = new TextEditorPage(page);
     const examNavigation = new ExamNavigationBar(page);
@@ -364,7 +364,7 @@ async function makeExamSubmission(
     examStartEnd: ExamStartEndPage,
 ) {
     await examParticipation.startParticipation(studentOne, course, exam);
-    await examNavigation.openExerciseAtIndex(0);
+    await examNavigation.openOrSaveExerciseByTitle(exercise.title!);
     await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
     await page.waitForTimeout(2000);
     await examNavigation.handInEarly();

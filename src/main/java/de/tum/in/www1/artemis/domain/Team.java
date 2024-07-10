@@ -80,6 +80,7 @@ public class Team extends AbstractAuditingEntity implements Participant {
         return this;
     }
 
+    @Override
     public String getName() {
         return name;
     }
@@ -106,6 +107,7 @@ public class Team extends AbstractAuditingEntity implements Participant {
         this.shortName = shortName;
     }
 
+    @Override
     public String getParticipantIdentifier() {
         return shortName;
     }
@@ -176,24 +178,28 @@ public class Team extends AbstractAuditingEntity implements Participant {
 
     @JsonIgnore(false)
     @JsonProperty
+    @Override
     public String getCreatedBy() {
         return super.getCreatedBy();
     }
 
     @JsonIgnore(false)
     @JsonProperty
+    @Override
     public Instant getCreatedDate() {
         return super.getCreatedDate();
     }
 
     @JsonIgnore(false)
     @JsonProperty
+    @Override
     public String getLastModifiedBy() {
         return super.getLastModifiedBy();
     }
 
     @JsonIgnore(false)
     @JsonProperty
+    @Override
     public Instant getLastModifiedDate() {
         return super.getLastModifiedDate();
     }

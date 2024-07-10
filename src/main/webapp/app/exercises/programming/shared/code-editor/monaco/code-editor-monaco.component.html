@@ -1,15 +1,8 @@
 <div class="card">
-    <div [hidden]="true">
-        <div #addFeedbackButton>
-            <div class="monaco-add-feedback-button">
-                <fa-icon [icon]="faPlusSquare" />
-            </div>
-        </div>
-    </div>
     <jhi-code-editor-header [showTabSizeSelector]="false" [filename]="selectedFile!" [isLoading]="isLoading" />
     <div class="card-body card-body-monaco">
         @if (selectedFile) {
-            @for (feedback of filterFeedbackForSelectedFile(feedbacks); track feedback) {
+            @for (feedback of filterFeedbackForSelectedFile(feedbacks); track feedback.id) {
                 <!-- actual, stored feedback -->
                 <jhi-code-editor-tutor-assessment-inline-feedback
                     class="monaco-hidden-element"
@@ -40,7 +33,7 @@
                 />
             }
             <!-- feedback suggestions -->
-            @for (suggestion of filterFeedbackForSelectedFile(feedbackSuggestions); track suggestion) {
+            @for (suggestion of filterFeedbackForSelectedFile(feedbackSuggestions); track suggestion.id) {
                 <jhi-code-editor-tutor-assessment-inline-feedback-suggestion
                     [codeLine]="Feedback.getReferenceLine(suggestion)!"
                     [feedback]="suggestion"
@@ -57,7 +50,6 @@
             [textChangedEmitDelay]="200"
             #editor
             [id]="'monaco-editor-' + sessionId"
-            class="code-editor-ace__content__editor"
         />
 
         @if (!selectedFile && !isLoading) {

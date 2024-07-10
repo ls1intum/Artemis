@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, async } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SidebarCardItemComponent } from 'app/shared/sidebar/sidebar-card-item/sidebar-card-item.component';
 import { SidebarCardSize } from 'app/types/sidebar';
 import { ArtemisTestModule } from '../../../test.module';
@@ -8,12 +8,12 @@ describe('SidebarCardItemComponent', () => {
     let component: SidebarCardItemComponent;
     let fixture: ComponentFixture<SidebarCardItemComponent>;
 
-    beforeEach(async(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [SidebarCardItemComponent],
         }).compileComponents();
-    }));
+    });
 
     beforeEach(() => {
         fixture = TestBed.createComponent(SidebarCardItemComponent);

@@ -354,7 +354,7 @@
                                     @if (hasLoadedPendingSubmissions) {
                                         <jhi-programming-exercise-instructor-trigger-build-button [exercise]="exercise" [participation]="value" class="me-1" />
                                     } @else {
-                                        <fa-icon [icon]="faCircleNotch" [spin]="true" class="text-secondary" />
+                                        <fa-icon [icon]="faCircleNotch" animation="spin" class="text-secondary" />
                                     }
                                 }
                                 @if (exercise.isAtLeastInstructor) {

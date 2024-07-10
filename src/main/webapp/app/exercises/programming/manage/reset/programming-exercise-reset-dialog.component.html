@@ -115,7 +115,7 @@
             <div [style.cursor]="this.resetForm.form.invalid || !this.canSubmit ? 'not-allowed' : 'pointer'">
                 <button type="submit" class="btn btn-danger" [disabled]="this.resetForm.form.invalid || !this.canSubmit">
                     @if (resetInProgress) {
-                        <span><fa-icon [icon]="faSpinner" [spin]="true" />&nbsp;</span>
+                        <span><fa-icon [icon]="faSpinner" animation="spin" />&nbsp;</span>
                     }
                     <fa-icon [icon]="faUndo" />&nbsp;
                     <span jhiTranslate="entity.action.reset"></span>
@@ -125,6 +125,6 @@
     </form>
 } @else {
     <div class="d-flex justify-content-center mt-4 mb-4">
-        <fa-icon [icon]="faCircleNotch" [spin]="true" />
+        <fa-icon [icon]="faCircleNotch" animation="spin" />
     </div>
 }

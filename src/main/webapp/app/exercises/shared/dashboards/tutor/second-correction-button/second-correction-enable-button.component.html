@@ -4,7 +4,7 @@
         <button (click)="triggerSecondCorrectionButton()" class="btn btn-success float-end btn-sm">
             <fa-icon [icon]="faToggleOn" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.exerciseAssessmentDashboard.toggleSecondCorrectionOn' | artemisTranslate }}
             @if (togglingSecondCorrectionButton) {
-                <fa-icon [icon]="faSpinner" [spin]="true" />
+                <fa-icon [icon]="faSpinner" animation="spin" />
             }
         </button>
     }
@@ -13,7 +13,7 @@
         <button (click)="triggerSecondCorrectionButton()" class="btn btn-danger float-end btn-sm">
             <fa-icon [icon]="faToggleOff" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.exerciseAssessmentDashboard.toggleSecondCorrectionOff' | artemisTranslate }}
             @if (togglingSecondCorrectionButton) {
-                <fa-icon [icon]="faSpinner" [spin]="true" />
+                <fa-icon [icon]="faSpinner" animation="spin" />
             }
         </button>
     }

@@ -18,8 +18,8 @@
                                 icon: faPlayCircle,
                                 label: 'artemisApp.exerciseActions.openQuiz',
                                 quizMode: 'live',
-                                hideLabelMobile: false
-                            }
+                                hideLabelMobile: false,
+                            },
                         }"
                     />
                 }
@@ -32,8 +32,8 @@
                                 icon: faPlayCircle,
                                 label: 'artemisApp.exerciseActions.startQuiz',
                                 quizMode: 'live',
-                                hideLabelMobile: false
-                            }
+                                hideLabelMobile: false,
+                            },
                         }"
                     />
                 }
@@ -45,8 +45,8 @@
                                 icon: faEye,
                                 label: 'artemisApp.exerciseActions.viewSubmissions',
                                 quizMode: 'live',
-                                outlined: true
-                            }
+                                outlined: true,
+                            },
                         }"
                     />
                 }
@@ -58,8 +58,8 @@
                                 icon: faEye,
                                 label: 'artemisApp.exerciseActions.viewResults',
                                 quizMode: 'live',
-                                outlined: true
-                            }
+                                outlined: true,
+                            },
                         }"
                     />
                 }
@@ -68,7 +68,7 @@
         <!-- QUIZ EXERCISE ACTIONS END -->
         <!-- PROGRAMMING EXERCISE ACTIONS START -->
         @case (ExerciseType.PROGRAMMING) {
-            <div class="d-flex flex-wrap mb-1 gap-1">
+            <div class="d-flex flex-wrap gap-1">
                 @if (isTeamAvailable) {
                     <button
                         class="view-team"
@@ -137,6 +137,12 @@
                             >
                                 <fa-icon [icon]="faCodeBranch" [fixedWidth]="true" />
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.openRepository"></span>
+                            </a>
+                        }
+                        @if (theiaEnabled) {
+                            <a class="btn btn-primary" [class.btn-sm]="smallButtons" (click)="startOnlineIDE()" target="_blank" rel="noopener noreferrer">
+                                <fa-icon [icon]="faDesktop" [fixedWidth]="true" />
+                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.openOnlineIDE"></span>
                             </a>
                         }
                         @if (exercise.allowFeedbackRequests) {

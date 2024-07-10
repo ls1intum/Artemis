@@ -343,8 +343,8 @@ An example for a simple method is finding a single entity by ID:
 
 .. code-block:: java
 
-    default StudentExam findByIdElseThrow(Long studentExamId) throws EntityNotFoundException {
-       return findById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student Exam", studentExamId));
+    default Course findByIdWithLecturesElseThrow(long courseId) {
+        return getValueElseThrow(findWithEagerLecturesById(courseId), courseId);
     }
 
 

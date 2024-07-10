@@ -54,6 +54,16 @@
                 <fa-icon [icon]="faWrench" />
                 <span class="d-none d-md-inline" jhiTranslate="entity.action.re-evaluate"></span>
             </a>
+            <jhi-button
+                [btnType]="ButtonType.WARNING"
+                [btnSize]="ButtonSize.SMALL"
+                [title]="'artemisApp.quizExercise.evaluateQuizExercise'"
+                [icon]="faClipboardCheck"
+                [isLoading]="isEvaluatingQuizExercise"
+                (onClick)="evaluateQuizExercise()"
+                [hidden]="!quizExercise.quizEnded"
+                class="me-1 mb-1"
+            />
         }
     </div>
     @if (quizExercise.isAtLeastInstructor) {

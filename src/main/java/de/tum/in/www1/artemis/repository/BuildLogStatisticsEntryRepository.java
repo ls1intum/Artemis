@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry.BuildJobPartDuration;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
 
 /**
@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface BuildLogStatisticsEntryRepository extends JpaRepository<BuildLogStatisticsEntry, Long> {
+public interface BuildLogStatisticsEntryRepository extends ArtemisJpaRepository<BuildLogStatisticsEntry, Long> {
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO(

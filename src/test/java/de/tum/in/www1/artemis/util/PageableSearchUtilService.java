@@ -123,6 +123,20 @@ public class PageableSearchUtilService {
      * @return A LinkedMultiValueMap with parameter names as keys and their corresponding values
      */
     public LinkedMultiValueMap<String, String> searchMapping(PageableSearchDTO<String> search) {
+        return searchMapping(search, "");
+    }
+
+    /**
+     * Generates a LinkedMultiValueMap from the given PageableSearchDTO. The map is used for REST calls and maps the parameters to the values.
+     * Converts a PageableSearchDTO into a LinkedMultiValueMap suitable for use with RESTful API calls.
+     * This conversion facilitates the transfer of search parameters and their values in a format
+     * that is acceptable for web requests. The parent key is used to prefix the parameter names.
+     *
+     * @param search    The PageableSearchDTO containing search parameters and values
+     * @param parentKey The parent key to use for the search parameters
+     * @return A LinkedMultiValueMap with parameter names as keys and their corresponding values
+     */
+    public LinkedMultiValueMap<String, String> searchMapping(PageableSearchDTO<String> search, String parentKey) {
         final ObjectMapper objectMapper = new ObjectMapper();
         try {
             // Serialize the DTO into a JSON string and then deserialize it into a Map
@@ -132,7 +146,14 @@ public class PageableSearchUtilService {
 
             // Populate a LinkedMultiValueMap from the Map, mapping parameter names to values
             final LinkedMultiValueMap<String, String> paramMap = new LinkedMultiValueMap<>();
-            params.forEach(paramMap::add);
+            params.forEach((key, value) -> {
+                if (parentKey.isBlank()) {
+                    paramMap.add(key, value);
+                }
+                else {
+                    paramMap.add(parentKey + "." + key, value);
+                }
+            });
             return paramMap;
         }
         catch (Exception e) {

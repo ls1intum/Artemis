@@ -32,6 +32,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
     private Long courseId;
 
     @BeforeEach
+    @Override
     void setupTestScenario() {
         super.setupTestScenario();
         userUtilService.addUsers(this.testPrefix, 1, 2, 1, 1);

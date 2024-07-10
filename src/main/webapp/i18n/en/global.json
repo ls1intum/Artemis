@@ -266,7 +266,8 @@
             "discardChanges": "Discard changes",
             "goBack": "Go back",
             "search": "Search",
-            "select": "Select"
+            "select": "Select",
+            "sendToIris": "Send To Iris"
         },
         "detail": {
             "field": "Field",

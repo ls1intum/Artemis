@@ -5,17 +5,17 @@ import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data repository for the ProgrammingExerciseSolutionEntry entity.
  */
-public interface ProgrammingExerciseSolutionEntryRepository extends JpaRepository<ProgrammingExerciseSolutionEntry, Long> {
+public interface ProgrammingExerciseSolutionEntryRepository extends ArtemisJpaRepository<ProgrammingExerciseSolutionEntry, Long> {
 
     /**
      * Gets a solution entry with its test cases and programming exercise

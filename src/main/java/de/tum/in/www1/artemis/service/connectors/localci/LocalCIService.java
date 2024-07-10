@@ -194,6 +194,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
      * @param participation to use its buildPlanId to find the artifact.
      * @return the html representation of the artifact page.
      */
+    @Override
     public ResponseEntity<byte[]> retrieveLatestArtifact(ProgrammingExerciseParticipation participation) {
         // TODO LOCALVC_CI: Extract artifacts from the container when running the build job, store them on disk, and retrieve them here.
         log.error("Unsupported action: LocalCIService.retrieveLatestArtifact()");

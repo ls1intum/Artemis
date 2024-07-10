@@ -6,12 +6,12 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.competency.CompetencyJol;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyJolDTO;
 
 /**
@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyJolDTO;
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface CompetencyJolRepository extends JpaRepository<CompetencyJol, Long> {
+public interface CompetencyJolRepository extends ArtemisJpaRepository<CompetencyJol, Long> {
 
     @Query("""
             SELECT jol

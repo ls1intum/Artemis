@@ -10,12 +10,12 @@ import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.competency.KnowledgeArea;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface KnowledgeAreaRepository extends JpaRepository<KnowledgeArea, Long> {
+public interface KnowledgeAreaRepository extends ArtemisJpaRepository<KnowledgeArea, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "children", "competencies" })
     Optional<KnowledgeArea> findWithChildrenAndCompetenciesById(long knowledgeAreaId);
@@ -34,11 +34,6 @@ public interface KnowledgeAreaRepository extends JpaRepository<KnowledgeArea, Lo
     @NotNull
     default KnowledgeArea findWithChildrenAndCompetenciesByIdElseThrow(long knowledgeAreaId) throws EntityNotFoundException {
         return findWithChildrenAndCompetenciesById(knowledgeAreaId).orElseThrow(() -> new EntityNotFoundException("KnowledgeArea", knowledgeAreaId));
-    }
-
-    @NotNull
-    default KnowledgeArea findByIdElseThrow(long knowledgeAreaId) throws EntityNotFoundException {
-        return findById(knowledgeAreaId).orElseThrow(() -> new EntityNotFoundException("KnowledgeArea", knowledgeAreaId));
     }
 
     // this method is needed as native MySQL queries do not get automatically cast to boolean

@@ -13,10 +13,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record DockerConfig(String image, String tag, List<String> volumes, List<String> parameters) {
 
+    @Override
     public String image() {
         return image != null ? image.trim() : null;
     }
 
+    @Override
     public String tag() {
         return tag != null ? tag.trim() : null;
     }

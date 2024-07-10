@@ -10,7 +10,7 @@ type EntityResponseType = SearchResult<Submission>;
 
 @Injectable({ providedIn: 'root' })
 export class ExampleSubmissionImportPagingService extends PagingService<Submission> {
-    private static readonly resourceUrl = 'api/exercises';
+    private static readonly RESOURCE_URL = 'api/exercises';
 
     constructor(private http: HttpClient) {
         super();
@@ -24,7 +24,7 @@ export class ExampleSubmissionImportPagingService extends PagingService<Submissi
     override search(pageable: SearchTermPageableSearch, options: { exerciseId: number }): Observable<EntityResponseType> {
         const params = this.createHttpParams(pageable);
         return this.http
-            .get(`${ExampleSubmissionImportPagingService.resourceUrl}/${options.exerciseId}/submissions-for-import`, { params, observe: 'response' })
+            .get(`${ExampleSubmissionImportPagingService.RESOURCE_URL}/${options.exerciseId}/submissions-for-import`, { params, observe: 'response' })
             .pipe(map((resp: HttpResponse<EntityResponseType>) => resp && resp.body!));
     }
 }

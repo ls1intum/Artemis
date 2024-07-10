@@ -118,7 +118,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         // setup result - submission relation
         result.setSubmission(quizSubmission);
         // calculate score and update result accordingly
-        result.evaluateQuizSubmission();
+        result.evaluateQuizSubmission(quizExercise);
         quizSubmission.addResult(result);
         quizSubmission.setParticipation(participation);
 
@@ -175,7 +175,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
             result.setSubmission(quizSubmission);
 
             quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
-            result.evaluateQuizSubmission();
+            result.evaluateQuizSubmission(quizExercise);
 
             quizSubmissionRepository.save(quizSubmission);
             resultRepository.save(result);

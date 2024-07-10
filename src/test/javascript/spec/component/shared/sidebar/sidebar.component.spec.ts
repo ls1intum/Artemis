@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, async } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { SidebarCardMediumComponent } from 'app/shared/sidebar/sidebar-card-medium/sidebar-card-medium.component';
 import { SidebarCardItemComponent } from 'app/shared/sidebar/sidebar-card-item/sidebar-card-item.component';
@@ -20,7 +20,7 @@ describe('SidebarComponent', () => {
     let fixture: ComponentFixture<SidebarComponent>;
     let debugElement: DebugElement;
 
-    beforeEach(async(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(RouterModule)],
             declarations: [
@@ -34,7 +34,7 @@ describe('SidebarComponent', () => {
                 MockRouterLinkDirective,
             ],
         }).compileComponents();
-    }));
+    });
 
     beforeEach(() => {
         fixture = TestBed.createComponent(SidebarComponent);
@@ -76,5 +76,37 @@ describe('SidebarComponent', () => {
         const noDataMessageElement = debugElement.query(By.css('[jhiTranslate$=noDataFound]'));
         expect(noDataMessageElement).toBeTruthy();
         expect(noDataMessageElement.nativeElement.getAttribute('jhiTranslate')).toBe('artemisApp.courseOverview.general.noDataFound');
+    });
+
+    it('should give the correct size for exercises', () => {
+        component.sidebarData = {
+            groupByCategory: true,
+            sidebarType: 'exercise',
+        };
+        fixture.detectChanges();
+
+        const size = component.getSize();
+        expect(size).toBe('M');
+    });
+
+    it('should give the correct size for exams', () => {
+        component.sidebarData = {
+            groupByCategory: true,
+            sidebarType: 'exam',
+        };
+        fixture.detectChanges();
+
+        const size = component.getSize();
+        expect(size).toBe('L');
+    });
+
+    it('should give the correct size for default', () => {
+        component.sidebarData = {
+            groupByCategory: true,
+        };
+        fixture.detectChanges();
+
+        const size = component.getSize();
+        expect(size).toBe('M');
     });
 });

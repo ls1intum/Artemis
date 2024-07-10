@@ -54,7 +54,7 @@ export class ShortAnswerQuestionComponent {
     @Output()
     submittedTextsChange = new EventEmitter<ShortAnswerSubmittedText[]>();
 
-    readonly maxCharacterCount = MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH;
+    readonly MAX_CHARACTER_COUNT = MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH;
 
     showingSampleSolution = false;
     renderedQuestion: RenderedQuizQuestionMarkDownElement;

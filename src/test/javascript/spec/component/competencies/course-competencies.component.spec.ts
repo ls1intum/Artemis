@@ -16,6 +16,7 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { CompetencyCardStubComponent } from './competency-card-stub.component';
+import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 class MockActivatedRoute {
@@ -41,6 +42,7 @@ describe('CourseCompetencies', () => {
     let courseCompetenciesComponentFixture: ComponentFixture<CourseCompetenciesComponent>;
     let courseCompetenciesComponent: CourseCompetenciesComponent;
     let competencyService: CompetencyService;
+    let prerequisiteService: PrerequisiteService;
     const mockCourseStorageService = {
         getCourse: () => {},
         setCourses: () => {},
@@ -74,6 +76,7 @@ describe('CourseCompetencies', () => {
                 courseCompetenciesComponentFixture = TestBed.createComponent(CourseCompetenciesComponent);
                 courseCompetenciesComponent = courseCompetenciesComponentFixture.componentInstance;
                 competencyService = TestBed.inject(CompetencyService);
+                prerequisiteService = TestBed.inject(PrerequisiteService);
                 const accountService = TestBed.inject(AccountService);
                 const user = new User();
                 user.login = 'testUser';
@@ -92,24 +95,20 @@ describe('CourseCompetencies', () => {
     });
 
     it('should load prerequisites and competencies (with associated progress) and display a card for each of them', () => {
-        const competency = new Competency();
+        const competency: Competency = {};
         const textUnit = new TextUnit();
         competency.id = 1;
         competency.description = 'test';
         competency.lectureUnits = [textUnit];
         competency.userProgress = [{ progress: 70, confidence: 45 } as CompetencyProgress];
 
-        const prerequisitesOfCourseResponse: HttpResponse<Competency[]> = new HttpResponse({
-            body: [new Competency()],
-            status: 200,
-        });
         const competenciesOfCourseResponse: HttpResponse<Competency[]> = new HttpResponse({
-            body: [competency, new Competency()],
+            body: [competency, {}],
             status: 200,
         });
 
+        const getAllPrerequisitesForCourseSpy = jest.spyOn(prerequisiteService, 'getAllPrerequisitesForCourse').mockReturnValue(of([{}]));
         jest.spyOn(mockCourseStorageService, 'getCourse').mockReturnValue({ studentCourseAnalyticsDashboardEnabled: true } as any);
-        const getAllPrerequisitesForCourseSpy = jest.spyOn(competencyService, 'getAllPrerequisitesForCourse').mockReturnValue(of(prerequisitesOfCourseResponse));
         const getAllForCourseSpy = jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(competenciesOfCourseResponse));
         const getJoLAllForCourseSpy = jest.spyOn(competencyService, 'getJoLAllForCourse').mockReturnValue(of({} as any));
 

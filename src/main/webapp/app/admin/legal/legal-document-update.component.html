@@ -6,8 +6,8 @@
         <jhi-markdown-editor
             [markdown]="legalDocument.text"
             (markdownChange)="checkUnsavedChanges($event)"
-            [resizableMinHeight]="minHeight"
-            [resizableMaxHeight]="maxHeight"
+            [resizableMinHeight]="MIN_HEIGHT"
+            [resizableMaxHeight]="MAX_HEIGHT"
             [enableFileUpload]="false"
             [minHeightEditor]="700"
             class="markdown-editor"
@@ -44,7 +44,7 @@
                 <fa-icon [icon]="faSave" />
                 <span jhiTranslate="entity.action.save"></span>
             </button>
-            <jhi-mode-picker [options]="languageOptions" [value]="currentLanguage" (valueChange)="onLanguageChange($event!)" />
+            <jhi-mode-picker [options]="LANGUAGE_OPTIONS" [value]="currentLanguage" (valueChange)="onLanguageChange($event!)" />
         </div>
     </div>
 </div>

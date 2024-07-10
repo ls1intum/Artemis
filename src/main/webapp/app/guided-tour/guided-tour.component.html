@@ -96,7 +96,7 @@
                                             <fa-icon [icon]="faICursor" />
                                         }
                                         @if (currentTourStep.userInteractionEvent === UserInteractionEvent.WAIT_FOR_SELECTOR) {
-                                            <fa-icon [spin]="true" [icon]="faCircleNotch" />
+                                            <fa-icon animation="spin" [icon]="faCircleNotch" />
                                         }
                                         @if (currentTourStep.userInteractionEvent === UserInteractionEvent.MODELING && !currentTourStep.modelingTask) {
                                             <fa-icon [icon]="faArrowsAlt" />
@@ -180,7 +180,7 @@
                                     <fa-icon [icon]="faPlayCircle" />
                                 }
                                 @if (guidedTourService.restartIsLoading) {
-                                    <fa-icon class="jhi-btn__loading" [icon]="faCircleNotch" [spin]="true" size="sm" />
+                                    <fa-icon class="jhi-btn__loading" [icon]="faCircleNotch" animation="spin" size="sm" />
                                 }
                                 <span jhiTranslate="global.menu.restartTutorial"></span>
                             </button>
@@ -189,7 +189,7 @@
                             <div class="dotstyle dotstyle--scaleup">
                                 @if (guidedTourService.currentTour && guidedTourService.currentTour.steps.length > 1) {
                                     <ul #dotNavigation [ngStyle]="{ transform: 'translateX(' + transformX + 'px)' }">
-                                        @for (i of guidedTourService.currentTour.steps; track i) {
+                                        @for (i of guidedTourService.currentTour.steps; let index = $index; track index) {
                                             <li
                                                 #dotElements
                                                 class="dot-index-{{ guidedTourService.currentTour.steps.indexOf(i) }}"

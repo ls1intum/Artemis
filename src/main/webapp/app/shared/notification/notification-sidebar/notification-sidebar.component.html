@@ -72,7 +72,7 @@
             }
             @if (loading) {
                 <div class="loading-spinner text-center mx-3 my-2" style="font-size: large">
-                    <fa-icon [icon]="faCircleNotch" [spin]="true" />
+                    <fa-icon [icon]="faCircleNotch" animation="spin" />
                 </div>
             }
             @if (sortedNotifications.length > 0 && sortedNotifications.length >= totalNotifications) {

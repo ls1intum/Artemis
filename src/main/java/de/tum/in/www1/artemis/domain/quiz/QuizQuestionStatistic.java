@@ -58,6 +58,7 @@ public abstract class QuizQuestionStatistic extends QuizStatistic implements Qui
     }
 
     @JsonIgnore
+    @Override
     public void setQuestion(QuizQuestion quizQuestion) {
         setQuizQuestion(quizQuestion);
     }

@@ -80,7 +80,7 @@ describe('LearningPathContainerComponent', () => {
                 exercise = new TextExercise(undefined, undefined);
                 exercise.id = exerciseId;
                 exerciseService = TestBed.inject(ExerciseService);
-                getExerciseDetailsStub = jest.spyOn(exerciseService, 'getExerciseDetails').mockReturnValue(of(new HttpResponse({ body: exercise })));
+                getExerciseDetailsStub = jest.spyOn(exerciseService, 'getExerciseDetails').mockReturnValue(of(new HttpResponse({ body: { exercise: exercise } })));
 
                 historyService = TestBed.inject(LearningPathStorageService);
                 hasNextRecommendationStub = jest.spyOn(historyService, 'hasNextRecommendation');

@@ -8,8 +8,8 @@ import { expect } from '@playwright/test';
  */
 export class ProgrammingExerciseFeedbackPage extends AbstractExerciseFeedback {
     async shouldShowAdditionalFeedback(points: number, feedbackText: string) {
-        await Commands.reloadUntilFound(this.page, this.page.locator(this.additionalFeedbackSelector));
-        await expect(this.page.locator(this.additionalFeedbackSelector).getByText(`${points} Points: ${feedbackText}`)).toBeVisible();
+        await Commands.reloadUntilFound(this.page, this.page.locator(this.ADDITIONAL_FEEDBACK_SELECTOR));
+        await expect(this.page.locator(this.ADDITIONAL_FEEDBACK_SELECTOR).getByText(`${points} Points: ${feedbackText}`)).toBeVisible();
     }
 
     async shouldShowCodeFeedback(exerciseID: number, filename: string, feedback: string, points: string, editorPage: OnlineEditorPage) {

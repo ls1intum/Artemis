@@ -47,7 +47,7 @@ export class CourseDashboardService {
     ): { [key: string]: ExerciseInformation } {
         return Object.keys(exerciseInformation).reduce(
             (acc, key) => {
-                const exerciseCategories = (categories[key] as (string | null)[]).flatMap((category) => (category ? (JSON.parse(category) as ExerciseCategory) : []));
+                const exerciseCategories = categories[key]?.map((category: string) => JSON.parse(category) as ExerciseCategory) || [];
                 const exercise = exerciseInformation[key];
                 acc[key] = {
                     ...exercise,
@@ -82,7 +82,7 @@ export class CourseDashboardService {
         return Object.fromEntries(
             Object.entries(competencyMetrics.currentJolValues ?? {}).filter(([key, value]) => {
                 const progress = competencyMetrics?.progress?.[key] ?? 0;
-                const confidence = competencyMetrics?.confidence?.[key] ?? 0;
+                const confidence = competencyMetrics?.confidence?.[key] ?? 1;
                 return value.competencyProgress === progress && value.competencyConfidence === confidence;
             }),
         );

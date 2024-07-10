@@ -33,7 +33,6 @@ import { By } from '@angular/platform-browser';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { Exam } from 'app/entities/exam.model';
 import { CompetencyService } from 'app/course/competencies/competency.service';
-import { Competency } from 'app/entities/competency.model';
 import { CourseOverviewComponent } from 'app/overview/course-overview.component';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
@@ -53,6 +52,10 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -101,9 +104,9 @@ const course2: Course = {
     exams: [exam2],
     description: 'Short description of course 2',
     shortName: 'shortName2',
-    competencies: [new Competency()],
+    competencies: [{}],
     tutorialGroups: [new TutorialGroup()],
-    prerequisites: [new Competency()],
+    prerequisites: [{}],
     numberOfCompetencies: 1,
     numberOfPrerequisites: 1,
     numberOfTutorialGroups: 1,
@@ -130,6 +133,7 @@ describe('CourseOverviewComponent', () => {
     let fixture: ComponentFixture<CourseOverviewComponent>;
     let courseService: CourseManagementService;
     let courseStorageService: CourseStorageService;
+    let examParticipationService: ExamParticipationService;
     let teamService: TeamService;
     let tutorialGroupsService: TutorialGroupsService;
     let tutorialGroupsConfigurationService: TutorialGroupsConfigurationService;
@@ -193,6 +197,8 @@ describe('CourseOverviewComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
                 { provide: NotificationService, useClass: MockNotificationService },
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
             ],
         })
             .compileComponents()
@@ -202,6 +208,7 @@ describe('CourseOverviewComponent', () => {
                 component = fixture.componentInstance;
                 courseService = TestBed.inject(CourseManagementService);
                 courseStorageService = TestBed.inject(CourseStorageService);
+                examParticipationService = TestBed.inject(ExamParticipationService);
                 teamService = TestBed.inject(TeamService);
                 tutorialGroupsService = TestBed.inject(TutorialGroupsService);
                 tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
@@ -300,7 +307,7 @@ describe('CourseOverviewComponent', () => {
 
         expect(metisConversationServiceStub).toHaveBeenCalledTimes(0);
 
-        const tabs = ['messages', 'exercises', 'messages'];
+        const tabs = ['communication', 'exercises', 'communication'];
         tabs.forEach((tab) => {
             route.snapshot.firstChild!.routeConfig!.path = tab;
             component.onSubRouteActivate({ controlConfiguration: undefined });
@@ -321,7 +328,7 @@ describe('CourseOverviewComponent', () => {
 
         expect(component.hasUnreadMessages).toBe(hasNewMessages);
 
-        const tabs = ['messages', 'exercises', 'messages'];
+        const tabs = ['communication', 'exercises', 'communication'];
         tabs.forEach((tab) => {
             route.snapshot.firstChild!.routeConfig!.path = tab;
             component.onSubRouteActivate({ controlConfiguration: undefined });
@@ -336,7 +343,7 @@ describe('CourseOverviewComponent', () => {
 
         component.course = { courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED };
 
-        const tabs = ['exercises', 'messages', 'exercises', 'messages'];
+        const tabs = ['exercises', 'communication', 'exercises', 'communication'];
         tabs.forEach((tab) => {
             route.snapshot.firstChild!.routeConfig!.path = tab;
             component.onSubRouteActivate({ controlConfiguration: undefined });
@@ -668,6 +675,44 @@ describe('CourseOverviewComponent', () => {
         clickOnMoreItem.click();
 
         expect(component.dropdownOpen).toBeTrue();
+    });
+
+    it('should apply exam-wrapper and exam-is-active if exam is started', () => {
+        (examParticipationService as any).examIsStarted$ = of(true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.exam-wrapper')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('.exam-is-active')).not.toBeNull();
+
+        component.isExamStarted = false;
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.exam-wrapper')).toBeNull();
+        expect(fixture.nativeElement.querySelector('.exam-is-active')).toBeNull();
+    });
+
+    it('should display/hide sidebar if exam is started/over', () => {
+        (examParticipationService as any).examIsStarted$ = of(true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('mat-sidenav').hidden).toBeTrue();
+
+        component.isExamStarted = false;
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('mat-sidenav').hidden).toBeFalse();
+    });
+
+    it('should display/hide course title bar if exam is started/over', () => {
+        (examParticipationService as any).examIsStarted$ = of(true);
+        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
+        getCourseStub.mockReturnValue(course2);
+        fixture.detectChanges();
+        const courseTitleBar = fixture.debugElement.query(By.css('#course-title-bar-test'));
+        const displayStyle = courseTitleBar.nativeElement.style.display;
+        expect(displayStyle).toBe('none');
+
+        component.isExamStarted = false;
+        fixture.detectChanges();
+        const courseTitleBar2 = fixture.debugElement.query(By.css('#course-title-bar-test'));
+        const displayStyle2 = courseTitleBar2.nativeElement.style.display;
+        expect(displayStyle2).toBe('flex');
     });
 
     it('should initialize courses attribute when page is loaded', async () => {

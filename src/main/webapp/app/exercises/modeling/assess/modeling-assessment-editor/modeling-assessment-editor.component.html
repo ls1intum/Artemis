@@ -36,7 +36,7 @@
         }
         @if (isLoading && isFeedbackSuggestionsEnabled) {
             <div class="alert">
-                <fa-icon [icon]="faCircleNotch" size="lg" [spin]="true" class="me-2" />
+                <fa-icon [icon]="faCircleNotch" size="lg" animation="spin" class="me-2" />
                 <span jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentLoading"></span>
             </div>
         }
@@ -116,7 +116,7 @@
     }
     @if (isLoading && isFeedbackSuggestionsEnabled) {
         <div class="alert">
-            <fa-icon [icon]="faCircleNotch" size="lg" [spin]="true" class="me-2" />
+            <fa-icon [icon]="faCircleNotch" size="lg" animation="spin" class="me-2" />
             <span jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentLoading"></span>
         </div>
     }

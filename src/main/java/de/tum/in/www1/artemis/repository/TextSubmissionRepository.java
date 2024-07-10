@@ -10,10 +10,10 @@ import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -22,24 +22,13 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface TextSubmissionRepository extends JpaRepository<TextSubmission, Long> {
+public interface TextSubmissionRepository extends ArtemisJpaRepository<TextSubmission, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "results.feedbacks", "results.assessor", "participation.exercise" })
     Optional<TextSubmission> findWithEagerParticipationExerciseResultAssessorById(long submissionId);
 
     @EntityGraph(type = LOAD, attributePaths = { "results.feedbacks", "results.assessor", "results.assessmentNote", "participation.exercise" })
     Optional<TextSubmission> findWithEagerParticipationExerciseResultAssessorAssessmentNoteById(long submissionId);
-
-    /**
-     * Load text submission only
-     *
-     * @param submissionId the submissionId
-     * @return optional text submission
-     */
-    @NotNull
-    default TextSubmission findByIdElseThrow(long submissionId) {
-        return findById(submissionId).orElseThrow(() -> new EntityNotFoundException("Text Submission", submissionId));
-    }
 
     /**
      * Load text submission with eager Results

@@ -1,9 +1,9 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
 import { faChevronRight, faFilter, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Subscription, distinctUntilChanged } from 'rxjs';
 import { ProfileService } from '../layouts/profiles/profile.service';
-import { SidebarData } from 'app/types/sidebar';
+import { ChannelAccordionShowAdd, ChannelTypeIcons, CollapseState, SidebarData } from 'app/types/sidebar';
 import { SidebarEventService } from './sidebar-event.service';
 
 @Component({
@@ -12,10 +12,16 @@ import { SidebarEventService } from './sidebar-event.service';
     styleUrls: ['./sidebar.component.scss'],
 })
 export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
+    @Output() onSelectConversation = new EventEmitter<number>();
+    @Output() onUpdateSidebar = new EventEmitter<void>();
+    @Output() onPlusPressed = new EventEmitter<string>();
     @Input() searchFieldEnabled: boolean = true;
     @Input() sidebarData: SidebarData;
     @Input() courseId?: number;
     @Input() itemSelected?: boolean;
+    @Input() showAddOption?: ChannelAccordionShowAdd;
+    @Input() channelTypeIcon?: ChannelTypeIcons;
+    @Input() collapseState: CollapseState;
 
     searchValue = '';
     isCollapsed: boolean = false;
@@ -25,6 +31,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     paramSubscription?: Subscription;
     profileSubscription?: Subscription;
     sidebarEventSubscription?: Subscription;
+    sidebarAccordionEventSubscription?: Subscription;
     routeParams: Params;
     isProduction = true;
     isTestServer = false;
@@ -53,6 +60,21 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
             .subscribe((itemId) => {
                 if (itemId) {
                     this.storeLastSelectedItem(itemId);
+                    if (this.sidebarData.sidebarType == 'conversation') {
+                        this.onSelectConversation.emit(+itemId);
+                        this.onUpdateSidebar.emit();
+                    }
+                }
+            });
+
+        this.sidebarAccordionEventSubscription = this.sidebarEventService
+            .sidebarAccordionPlusClickedEventListener()
+            .pipe(
+                distinctUntilChanged(), // This ensures the function is only called when the actual value changes
+            )
+            .subscribe((groupKey) => {
+                if (groupKey) {
+                    this.onPlusPressed.emit(groupKey);
                 }
             });
     }
@@ -76,5 +98,15 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         this.profileSubscription?.unsubscribe();
         this.sidebarEventSubscription?.unsubscribe();
         this.sidebarEventService.emitResetValue();
+    }
+
+    getSize() {
+        const size = {
+            ['exercise']: 'M',
+            ['default']: 'M',
+            ['conversation']: 'S',
+            ['exam']: 'L',
+        };
+        return this.sidebarData.sidebarType ? size[this.sidebarData.sidebarType] : 'M';
     }
 }

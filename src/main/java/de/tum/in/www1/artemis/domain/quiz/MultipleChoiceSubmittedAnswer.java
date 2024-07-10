@@ -89,6 +89,7 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
      *
      * @param quizExercise the changed quizExercise-object
      */
+    @Override
     public void checkAndDeleteReferences(QuizExercise quizExercise) {
 
         if (!quizExercise.getQuizQuestions().contains(getQuizQuestion())) {

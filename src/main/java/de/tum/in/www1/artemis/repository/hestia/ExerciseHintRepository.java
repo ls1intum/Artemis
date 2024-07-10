@@ -8,12 +8,12 @@ import java.util.Set;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface ExerciseHintRepository extends JpaRepository<ExerciseHint, Long> {
+public interface ExerciseHintRepository extends ArtemisJpaRepository<ExerciseHint, Long> {
 
     @Query("""
             SELECT h
@@ -34,11 +34,6 @@ public interface ExerciseHintRepository extends JpaRepository<ExerciseHint, Long
     @NotNull
     default ExerciseHint findByIdWithRelationsElseThrow(long hintId) throws EntityNotFoundException {
         return findByIdWithRelations(hintId).orElseThrow(() -> new EntityNotFoundException("Exercise Hint", hintId));
-    }
-
-    @NotNull
-    default ExerciseHint findByIdElseThrow(long exerciseHintId) throws EntityNotFoundException {
-        return findById(exerciseHintId).orElseThrow(() -> new EntityNotFoundException("Exercise Hint", exerciseHintId));
     }
 
     Set<ExerciseHint> findByExerciseId(Long exerciseId);

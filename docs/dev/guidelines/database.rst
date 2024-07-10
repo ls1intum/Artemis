@@ -142,6 +142,70 @@ Entity relationships often depend on the existence of another entity — for exa
 Not used in Artemis yet.
 
 
+4. Dynamic Fetching
+===================
+In Artemis, we use dynamic fetching to load the relationships of an entity on demand. As we do not want to load all relationships of an entity every time we fetch it from the database, we use as described above ``FetchType.LAZY``.
+In order to load the relationships of an entity on demand, we then use one of 3 methods:
+
+1. **EntityGraph**: The ``@EntityGraph`` annotation is the simplest way to specify a graph of relationships to fetch. It should be used when a query is auto-constructed by Spring Data JPA and does not have a custom ``@Query`` annotation. Example:
+
+ .. code-block:: java
+
+    // CourseRepository.java
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.categories", "exercises.teamAssignmentConfig" })
+    Course findWithEagerExercisesById(long courseId);
+
+2. **JOIN FETCH**: The ``JOIN FETCH`` keyword is used in a custom query to specify a graph of relationships to fetch. It should be used when a query is custom and has a custom ``@Query`` annotation. Example:
+
+ .. code-block:: java
+
+    // ProgrammingExerciseRepository.java
+    @Query("""
+            SELECT pe
+            FROM ProgrammingExercise pe
+                LEFT JOIN FETCH pe.exerciseGroup eg
+                LEFT JOIN FETCH eg.exam e
+            WHERE e.endDate > :dateTime
+            """)
+    List<ProgrammingExercise> findAllWithEagerExamByExamEndDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
+
+3. **DynamicSpecificationRepository**: For repositories that use a lot of different queries with different relationships to fetch, we use the ``DynamicSpecificationRepository``. You can let a repository additionally implement this interface and then use the ``findAllWithEagerRelationships`` and then use the ``getDynamicSpecification(Collection<? extends FetchOptions> fetchOptions)`` method in combination with a custom enum implementing the ``FetchOptions`` interface to dynamically specify which relationships to fetch inside of service methods. Example:
+
+ .. code-block:: java
+
+    // ProgrammingExerciseFetchOptions.java
+    public enum ProgrammingExerciseFetchOptions implements FetchOptions {
+
+        GradingCriteria(Exercise_.GRADING_CRITERIA),
+        AuxiliaryRepositories(Exercise_.AUXILIARY_REPOSITORIES),
+        // ...
+
+        private final String fetchPath;
+
+        ProgrammingExerciseFetchOptions(String fetchPath) {
+            this.fetchPath = fetchPath;
+        }
+
+        public String getFetchPath() {
+            return fetchPath;
+        }
+    }
+
+
+    // ProgrammingExerciseRepository.java
+    @NotNull
+    default ProgrammingExercise findByIdWithDynamicFetchElseThrow(long exerciseId, Collection<ProgrammingExerciseFetchOptions> fetchOptions) throws EntityNotFoundException {
+        var specification = getDynamicSpecification(fetchOptions);
+        return findOneByIdElseThrow(specification, exerciseId, "Programming Exercise");
+    }
+
+
+    // ProgrammingExerciseService.java
+    final Set<ProgrammingExerciseFetchOptions> fetchOptions = withGradingCriteria ? Set.of(GradingCriteria, AuxiliaryRepositories) : Set.of(AuxiliaryRepositories);
+    var programmingExercise = programmingExerciseRepository.findByIdWithDynamicFetchElseThrow(exerciseId, fetchOptions);
+
+
+
 Best Practices
 ==============
 * If you want to create a ``@OneToMany`` relationship or ``@ManyToMany`` relationship, first think about if it is important for the association to be ordered. If you do not need the association to be ordered, then always go for a ``Set`` instead of ``List``. If you are unsure, start with a ``Set``. 

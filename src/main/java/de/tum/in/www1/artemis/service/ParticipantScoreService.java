@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
+import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
 import de.tum.in.www1.artemis.repository.StudentScoreRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.TeamScoreRepository;
@@ -52,14 +53,18 @@ public class ParticipantScoreService {
 
     private final TeamRepository teamRepository;
 
+    private final ParticipantScoreRepository participantScoreRepository;
+
     public ParticipantScoreService(UserRepository userRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
-            GradingScaleService gradingScaleService, PresentationPointsCalculationService presentationPointsCalculationService, TeamRepository teamRepository) {
+            GradingScaleService gradingScaleService, PresentationPointsCalculationService presentationPointsCalculationService, TeamRepository teamRepository,
+            ParticipantScoreRepository participantScoreRepository) {
         this.userRepository = userRepository;
         this.studentScoreRepository = studentScoreRepository;
         this.teamScoreRepository = teamScoreRepository;
         this.gradingScaleService = gradingScaleService;
         this.presentationPointsCalculationService = presentationPointsCalculationService;
         this.teamRepository = teamRepository;
+        this.participantScoreRepository = participantScoreRepository;
     }
 
     /**
@@ -186,24 +191,29 @@ public class ParticipantScoreService {
     }
 
     /**
-     * Gets all participation scores of the exercises for a user.
+     * Gets all achieved points of the exercises for a user.
      *
      * @param user      the user whose scores should be fetched
      * @param exercises the exercises the scores should be fetched from
-     * @return stream of participant latest scores
+     * @return stream of achieved latest points
      */
-    public Stream<Double> getStudentAndTeamParticipationScores(User user, Set<Exercise> exercises) {
-        return getStudentAndTeamParticipations(user, exercises).map(ParticipantScore::getLastScore);
+    public Stream<Double> getStudentAndTeamParticipationPoints(User user, Set<Exercise> exercises) {
+        return getStudentAndTeamParticipations(user, exercises).map(ParticipantScore::getLastPoints);
     }
 
     /**
-     * Gets all participation scores of the exercises for a user.
+     * Gets all achieved points of the exercises for a user.
      *
      * @param user      the user whose scores should be fetched
      * @param exercises the exercises the scores should be fetched from
-     * @return stream of participant latest scores
+     * @return stream of achieved latest points
      */
-    public DoubleStream getStudentAndTeamParticipationScoresAsDoubleStream(User user, Set<Exercise> exercises) {
-        return getStudentAndTeamParticipationScores(user, exercises).mapToDouble(Double::doubleValue);
+    public DoubleStream getStudentAndTeamParticipationPointsAsDoubleStream(User user, Set<Exercise> exercises) {
+        return getStudentAndTeamParticipationPoints(user, exercises).mapToDouble(Double::doubleValue);
+    }
+
+    public double getAverageOfAverageScores(Set<Exercise> exercises) {
+        return participantScoreRepository.findAverageScoreForExercises(exercises).stream().mapToDouble(exerciseInfo -> (double) exerciseInfo.get("averageScore")).average()
+                .orElse(0.0);
     }
 }

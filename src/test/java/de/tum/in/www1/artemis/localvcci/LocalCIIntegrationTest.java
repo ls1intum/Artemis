@@ -381,6 +381,25 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testEmptyResultFile() throws Exception {
+        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        localVCLocalCITestService.mockTestResults(dockerClient, EMPTY_TEST_RESULTS_PATH, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
+        localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 0, true);
+
+        studentParticipation = programmingExerciseStudentParticipationRepository
+                .findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(studentParticipation.getId(), ZonedDateTime.now()).orElseThrow();
+        var result = studentParticipation.getResults().iterator().next();
+
+        var buildLogs = buildLogEntryService.getLatestBuildLogs((ProgrammingSubmission) result.getSubmission());
+
+        assertThat(buildLogs).isNotEmpty().anyMatch(log -> log.getLog().equals("The file results.xml does not contain any testcases.\n"))
+                .noneMatch(log -> log.getLog().contains("Exception"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildLogs() throws IOException {
 
         // Adapt Docker Client mock to return build logs
@@ -389,7 +408,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         doReturn(execStartCmd).when(execStartCmd).withDetach(anyBoolean());
         doAnswer(invocation -> {
             // Use a raw type for the callback to avoid generic type issues
-            ResultCallback callback = invocation.getArgument(0);
+            ResultCallback<Frame> callback = invocation.getArgument(0);
 
             // Simulate receiving log entries.
             Frame logEntryFrame1 = mock(Frame.class);

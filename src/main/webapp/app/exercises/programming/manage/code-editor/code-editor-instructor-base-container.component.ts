@@ -193,7 +193,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         if (domainType === DomainType.PARTICIPATION) {
             this.setSelectedParticipation(domainValue.id);
         } else {
-            this.selectedParticipation = undefined;
+            this.selectedParticipation = this.exercise.templateParticipation!;
             this.selectedRepository = REPOSITORY.TEST;
         }
     }

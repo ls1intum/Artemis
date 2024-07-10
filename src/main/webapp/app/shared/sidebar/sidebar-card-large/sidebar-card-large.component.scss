@@ -8,6 +8,7 @@
 
 .bg-selected {
     background-color: var(--sidebar-card-selected-bg);
+
     &.border-module {
         border-color: var(--sidebar-card-selected-bg) !important;
     }

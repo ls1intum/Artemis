@@ -25,7 +25,7 @@ const defaultActiveFeatureState: ActiveFeatureToggles = Object.values(FeatureTog
 
 @Injectable({ providedIn: 'root' })
 export class FeatureToggleService {
-    private readonly topic = `/topic/management/feature-toggles`;
+    private readonly TOPIC = `/topic/management/feature-toggles`;
     private subject: BehaviorSubject<ActiveFeatureToggles>;
     private subscriptionInitialized = false;
 
@@ -41,9 +41,9 @@ export class FeatureToggleService {
      */
     public subscribeFeatureToggleUpdates() {
         if (!this.subscriptionInitialized) {
-            this.websocketService.subscribe(this.topic);
+            this.websocketService.subscribe(this.TOPIC);
             this.websocketService
-                .receive(this.topic)
+                .receive(this.TOPIC)
                 .pipe(tap((activeFeatures) => this.notifySubscribers(activeFeatures)))
                 .subscribe();
             this.subscriptionInitialized = true;
@@ -55,7 +55,7 @@ export class FeatureToggleService {
      */
     public unsubscribeFeatureToggleUpdates() {
         if (this.subscriptionInitialized) {
-            this.websocketService.unsubscribe(this.topic);
+            this.websocketService.unsubscribe(this.TOPIC);
             this.subscriptionInitialized = false;
         }
     }

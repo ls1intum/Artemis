@@ -5,24 +5,19 @@ import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data repository for the CodeHint entity.
  */
-public interface CodeHintRepository extends JpaRepository<CodeHint, Long> {
+public interface CodeHintRepository extends ArtemisJpaRepository<CodeHint, Long> {
 
     Set<CodeHint> findByExerciseId(Long exerciseId);
-
-    @NotNull
-    default CodeHint findByIdElseThrow(long exerciseHintId) throws EntityNotFoundException {
-        return findById(exerciseHintId).orElseThrow(() -> new EntityNotFoundException("Code Hint", exerciseHintId));
-    }
 
     @NotNull
     default CodeHint findByIdWithSolutionEntriesElseThrow(long exerciseHintId) throws EntityNotFoundException {

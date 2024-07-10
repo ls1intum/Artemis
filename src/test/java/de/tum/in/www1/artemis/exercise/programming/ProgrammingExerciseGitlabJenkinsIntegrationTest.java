@@ -7,7 +7,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.JAVA
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.KOTLIN;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.PYTHON;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.SWIFT;
-import static de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseTestService.studentLogin;
+import static de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseTestService.STUDENT_LOGIN;
 import static de.tum.in.www1.artemis.exercise.programming.ProgrammingSubmissionConstants.GITLAB_PUSH_EVENT_REQUEST;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -287,7 +287,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(ExerciseMode.class)
-    @WithMockUser(username = TEST_PREFIX + studentLogin, roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + STUDENT_LOGIN, roles = "USER")
     void startProgrammingExercise_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
         programmingExerciseTestService.startProgrammingExercise_correctInitializationState(exerciseMode);
     }
@@ -300,34 +300,34 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + studentLogin, roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + STUDENT_LOGIN, roles = "USER")
     void createProgrammingExercise_offlineMode(boolean offlineIde) throws Exception {
         programmingExerciseTestService.startProgrammingExercise(offlineIde);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + studentLogin, roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + STUDENT_LOGIN, roles = "USER")
     void createProgrammingExercise_validExercise_noExplicitOfflineMode() throws Exception {
         programmingExerciseTestService.startProgrammingExercise(null);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(ExerciseMode.class)
-    @WithMockUser(username = TEST_PREFIX + studentLogin, roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + STUDENT_LOGIN, roles = "USER")
     void resumeProgrammingExercise_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
         programmingExerciseTestService.resumeProgrammingExercise_correctInitializationState(exerciseMode);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(ExerciseMode.class)
-    @WithMockUser(username = TEST_PREFIX + studentLogin, roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + STUDENT_LOGIN, roles = "USER")
     void resumeProgrammingExercise_doesNotExist(ExerciseMode exerciseMode) throws Exception {
         programmingExerciseTestService.resumeProgrammingExercise_doesNotExist(exerciseMode);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(ExerciseMode.class)
-    @WithMockUser(username = TEST_PREFIX + studentLogin, roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + STUDENT_LOGIN, roles = "USER")
     void resumeProgrammingExerciseByPushingIntoRepo_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
         Object body = new ObjectMapper().readValue(GITLAB_PUSH_EVENT_REQUEST, Object.class);
         programmingExerciseTestService.resumeProgrammingExerciseByPushingIntoRepo_correctInitializationState(exerciseMode, body);
@@ -335,7 +335,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(ExerciseMode.class)
-    @WithMockUser(username = TEST_PREFIX + studentLogin, roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + STUDENT_LOGIN, roles = "USER")
     void resumeProgrammingExerciseByTriggeringBuild_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
         programmingExerciseTestService.resumeProgrammingExerciseByTriggeringBuild_correctInitializationState(exerciseMode, null);
     }
@@ -349,14 +349,14 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(ExerciseMode.class)
-    @WithMockUser(username = TEST_PREFIX + studentLogin, roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + STUDENT_LOGIN, roles = "USER")
     void resumeProgrammingExerciseByRecreatingAndTriggeringFailedBuild_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
         programmingExerciseTestService.resumeProgrammingExerciseByTriggeringFailedBuild_correctInitializationState(exerciseMode, true);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(ExerciseMode.class)
-    @WithMockUser(username = TEST_PREFIX + studentLogin, roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + STUDENT_LOGIN, roles = "USER")
     void resumeProgrammingExerciseByTriggeringFailedBuild_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
         programmingExerciseTestService.resumeProgrammingExerciseByTriggeringFailedBuild_correctInitializationState(exerciseMode, false);
     }
@@ -369,7 +369,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + studentLogin, roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + STUDENT_LOGIN, roles = "USER")
     void startProgrammingExerciseStudentRetrieveEmptyArtifactPage() throws Exception {
         programmingExerciseTestService.startProgrammingExerciseStudentRetrieveEmptyArtifactPage();
     }

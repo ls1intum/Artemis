@@ -205,7 +205,7 @@ public class ComplaintResponseService {
         // TODO: make this retrieval redundant by proper fetching
         ComplaintResponse complaintResponseFromDatabase = complaintResponseRepository.findByIdElseThrow(complaintResponseId);
         // TODO: make this retrieval redundant by proper fetching
-        Complaint originalComplaint = complaintRepository.findByIdElseThrow(complaintResponseFromDatabase.getComplaint().getId());
+        Complaint originalComplaint = complaintRepository.findWithEagerAssessorByIdElseThrow(complaintResponseFromDatabase.getComplaint().getId());
         User user = this.userRepository.getUserWithGroupsAndAuthorities();
         validateUserPermissionAndLockStatus(originalComplaint, complaintResponseFromDatabase, user);
         validateComplaintResponseEmpty(complaintResponseFromDatabase);

@@ -14,7 +14,9 @@
     }
 
     .posting-infinite-scroll-container {
-        max-height: 700px;
+        --search-channel-header-height: 80px;
+
+        max-height: calc(75vh - var(--header-height) - var(--search-channel-header-height));
         overflow-y: auto;
     }
 

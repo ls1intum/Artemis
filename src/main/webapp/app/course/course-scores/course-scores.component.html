@@ -9,18 +9,17 @@
                     >{{ exercisesOfCourseThatAreIncludedInScoreCalculation.length }} released exercises, {{ students.length }} students with results</small
                 >
             </h4>
-            @if (course && course.isAtLeastInstructor) {
+            @if (course?.isAtLeastInstructor) {
                 <a [routerLink]="['/course-management', course.id, 'grading-system']" class="btn btn-info btn-md">
-                    <fa-icon [icon]="faClipboard" /> <span jhitranslate="artemisApp.course.gradingSystem"></span>
+                    <fa-icon [icon]="faClipboard" /> <span jhiTranslate="artemisApp.course.gradingSystem"></span>
                 </a>
             }
         </div>
         @if (!exportReady) {
-            <span style="color: grey"
-                ><fa-icon [icon]="faSpinner" [spin]="true" />&nbsp;<span jhitranslate="artemisApp.instructorDashboard.loadingStudents"
-                    >Loading the results of all students...</span
-                ></span
-            >
+            <span style="color: grey">
+                <fa-icon [icon]="faSpinner" animation="spin" />&nbsp;
+                <span jhiTranslate="artemisApp.instructorDashboard.loadingStudents"> Loading the results of all students... </span>
+            </span>
         }
         <div class="row d-flex align-items-center">
             <div class="col-lg-9">

@@ -115,6 +115,7 @@ public class DragAndDropMapping extends DomainObject implements QuizQuestionComp
         return question;
     }
 
+    @Override
     public void setQuestion(DragAndDropQuestion dragAndDropQuestion) {
         this.question = dragAndDropQuestion;
     }

@@ -4,7 +4,7 @@ import { DomainTagCommand } from 'app/shared/markdown-editor/domainCommands/doma
 export const hintCommentIdentifier = '[hint]';
 
 export class HintCommand extends DomainTagCommand {
-    public static readonly text = ' Add a hint here (visible during the quiz via ?-Button)';
+    public static readonly TEXT = ' Add a hint here (visible during the quiz via ?-Button)';
 
     buttonTranslationString = 'artemisApp.multipleChoiceQuestion.editor.addHint';
 
@@ -13,7 +13,7 @@ export class HintCommand extends DomainTagCommand {
      * @desc Add a new hint to the answer option or question title in the editor at the location of the cursor
      */
     execute(): void {
-        const text = '\n\t' + this.getOpeningIdentifier() + HintCommand.text;
+        const text = '\n\t' + this.getOpeningIdentifier() + HintCommand.TEXT;
         addTextAtCursor(text, this.aceEditor);
     }
 

@@ -380,7 +380,7 @@
                                         : {
                                               median: this.aggregatedExamResults.medianRelativePassed
                                                   ? roundScoreSpecifiedByCourseSettings(this.aggregatedExamResults.medianRelativePassed, course)
-                                                  : 0
+                                                  : 0,
                                           }
                             }}
                         </label>
@@ -435,7 +435,7 @@
                     </h4>
                     @if (course) {
                         <div class="col mb-3">
-                            @for (exerciseGroup of aggregatedExerciseGroupResults; track exerciseGroup) {
+                            @for (exerciseGroup of aggregatedExerciseGroupResults; track exerciseGroup.exerciseGroupId) {
                                 <div>
                                     <jhi-exam-scores-average-scores-graph [averageScores]="exerciseGroup" [course]="course" />
                                 </div>
@@ -481,9 +481,9 @@
                                     </th>
                                 </tr>
                             </thead>
-                            @for (exerciseGroupResult of aggregatedExerciseGroupResults; track exerciseGroupResult; let i = $index) {
+                            @for (exerciseGroupResult of aggregatedExerciseGroupResults; track exerciseGroupResult.exerciseGroupId; let i = $index) {
                                 <tbody>
-                                    @for (exerciseResult of exerciseGroupResult.exerciseResults; track exerciseResult; let isFirst = $first) {
+                                    @for (exerciseResult of exerciseGroupResult.exerciseResults; track exerciseResult.exerciseId; let isFirst = $first) {
                                         <tr>
                                             @if (isFirst) {
                                                 <td [rowSpan]="exerciseGroupResult.exerciseResults.length">
@@ -569,7 +569,7 @@
                                 <span jhiTranslate="artemisApp.examScores.registrationNumberColumn"></span>
                                 <fa-icon [icon]="faSort" />
                             </th>
-                            @for (exerciseGroup of examScoreDTO.exerciseGroups; track exerciseGroup) {
+                            @for (exerciseGroup of examScoreDTO.exerciseGroups; track exerciseGroup.id) {
                                 <th [jhiSortBy]="'exerciseGroupIdToExerciseResult.' + exerciseGroup.id + '.achievedPoints'">
                                     <span>{{ exerciseGroup.title }}</span>
                                     <fa-icon [icon]="faSort" />
@@ -629,14 +629,14 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @for (studentResult of studentResults; track studentResult; let i = $index) {
+                        @for (studentResult of studentResults; track studentResult.userId; let i = $index) {
                             <tr>
                                 <td>{{ i + 1 }}</td>
                                 <td>{{ studentResult.name }}</td>
                                 <td>{{ studentResult.login }}</td>
                                 <td>{{ studentResult.email ? studentResult.email : '-' }}</td>
                                 <td>{{ studentResult.registrationNumber ? studentResult.registrationNumber : '-' }}</td>
-                                @for (exerciseGroup of examScoreDTO.exerciseGroups; track exerciseGroup) {
+                                @for (exerciseGroup of examScoreDTO.exerciseGroups; track exerciseGroup.id) {
                                     @if (studentResult.exerciseGroupIdToExerciseResult && studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id]) {
                                         <td>
                                             {{ studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].title }}

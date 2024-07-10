@@ -31,6 +31,7 @@ import { ArtemisTextParticipationModule } from 'app/exercises/text/participate/t
 import { ArtemisFileUploadParticipationModule } from 'app/exercises/file-upload/participate/file-upload-participation.module';
 import { ArtemisFeedbackModule } from 'app/exercises/shared/feedback/feedback.module';
 import { CollapsibleCardComponent } from 'app/exam/participate/summary/collapsible-card.component';
+import { NoDataComponent } from 'app/shared/no-data-component';
 
 @NgModule({
     imports: [
@@ -55,6 +56,7 @@ import { CollapsibleCardComponent } from 'app/exam/participate/summary/collapsib
         ArtemisTextParticipationModule,
         ArtemisFileUploadParticipationModule,
         ArtemisFeedbackModule,
+        NoDataComponent,
     ],
     declarations: [
         ExamResultSummaryComponent,

@@ -51,7 +51,6 @@ import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -59,6 +58,7 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
+import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
@@ -70,6 +70,7 @@ import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
+import de.tum.in.www1.artemis.repository.PrerequisiteRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.RatingRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -108,12 +109,14 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 @Service
 public class CourseService {
 
-    private final TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
+    private static final Logger log = LoggerFactory.getLogger(CourseService.class);
 
     @Value("${artemis.course-archives-path}")
     private Path courseArchivesDirPath;
 
-    private static final Logger log = LoggerFactory.getLogger(CourseService.class);
+    private final TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
+
+    private final CompetencyRelationRepository competencyRelationRepository;
 
     private final ExerciseService exerciseService;
 
@@ -144,6 +147,8 @@ public class CourseService {
     private final AuditEventRepository auditEventRepository;
 
     private final CompetencyRepository competencyRepository;
+
+    private final PrerequisiteRepository prerequisiteRepository;
 
     private final GradingScaleRepository gradingScaleRepository;
 
@@ -198,7 +203,8 @@ public class CourseService {
             ParticipantScoreRepository participantScoreRepository, PresentationPointsCalculationService presentationPointsCalculationService,
             TutorialGroupRepository tutorialGroupRepository, PlagiarismCaseRepository plagiarismCaseRepository, ConversationRepository conversationRepository,
             LearningPathService learningPathService, Optional<IrisSettingsService> irisSettingsService, LectureRepository lectureRepository,
-            TutorialGroupNotificationRepository tutorialGroupNotificationRepository, TutorialGroupChannelManagementService tutorialGroupChannelManagementService) {
+            TutorialGroupNotificationRepository tutorialGroupNotificationRepository, TutorialGroupChannelManagementService tutorialGroupChannelManagementService,
+            PrerequisiteRepository prerequisiteRepository, CompetencyRelationRepository competencyRelationRepository) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
@@ -236,6 +242,8 @@ public class CourseService {
         this.lectureRepository = lectureRepository;
         this.tutorialGroupNotificationRepository = tutorialGroupNotificationRepository;
         this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
+        this.prerequisiteRepository = prerequisiteRepository;
+        this.competencyRelationRepository = competencyRelationRepository;
     }
 
     /**
@@ -321,7 +329,7 @@ public class CourseService {
         // NOTE: in this call we only want to know if competencies exist in the course, we will load them when the user navigates into them
         course.setNumberOfCompetencies(competencyRepository.countByCourse(course));
         // NOTE: in this call we only want to know if prerequisites exist in the course, we will load them when the user navigates into them
-        course.setNumberOfPrerequisites(competencyRepository.countPrerequisitesByCourseId(course.getId()));
+        course.setNumberOfPrerequisites(prerequisiteRepository.countByCourse(course));
         // NOTE: in this call we only want to know if tutorial groups exist in the course, we will load them when the user navigates into them
         course.setNumberOfTutorialGroups(tutorialGroupRepository.countByCourse(course));
         if (authCheckService.isOnlyStudentInCourse(course, user)) {
@@ -523,9 +531,9 @@ public class CourseService {
     }
 
     private void deleteCompetenciesOfCourse(Course course) {
-        for (Competency competency : course.getCompetencies()) {
-            competencyRepository.deleteById(competency.getId());
-        }
+        competencyRelationRepository.deleteAllByCourseId(course.getId());
+        prerequisiteRepository.deleteAll(course.getPrerequisites());
+        competencyRepository.deleteAll(course.getCompetencies());
     }
 
     /**

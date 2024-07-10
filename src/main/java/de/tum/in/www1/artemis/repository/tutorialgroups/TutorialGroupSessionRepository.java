@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,11 +18,11 @@ import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSchedule;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 @Profile(PROFILE_CORE)
 @Repository
-public interface TutorialGroupSessionRepository extends JpaRepository<TutorialGroupSession, Long> {
+public interface TutorialGroupSessionRepository extends ArtemisJpaRepository<TutorialGroupSession, Long> {
 
     @Query("""
             SELECT session
@@ -79,10 +78,6 @@ public interface TutorialGroupSessionRepository extends JpaRepository<TutorialGr
                 AND session.tutorialGroup.course = :course
             """)
     Set<TutorialGroupSession> findAllBetween(@Param("course") Course course, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end);
-
-    default TutorialGroupSession findByIdElseThrow(long tutorialGroupSessionId) {
-        return findById(tutorialGroupSessionId).orElseThrow(() -> new EntityNotFoundException("TutorialGroupSession", tutorialGroupSessionId));
-    }
 
     @Transactional // ok because of delete
     @Modifying

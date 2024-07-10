@@ -15,25 +15,27 @@ import { ArtemisTestModule } from '../../../test.module';
 import { NgbModal, NgbModalRef, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
-import { PrerequisiteImportComponent } from 'app/course/competencies/competency-management/prerequisite-import.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { By } from '@angular/platform-browser';
 import '@angular/localize/init';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { CompetencyImportCourseComponent, ImportAllFromCourseResult } from 'app/course/competencies/competency-management/competency-import-course.component';
+import { ImportAllCompetenciesComponent, ImportAllFromCourseResult } from 'app/course/competencies/competency-management/import-all-competencies.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { IrisCourseSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { CompetencyRelationGraphStubComponent } from './competency-relation-graph-stub.component';
+import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
+import { Prerequisite } from 'app/entities/prerequisite.model';
 
 describe('CompetencyManagementComponent', () => {
     let fixture: ComponentFixture<CompetencyManagementComponent>;
     let component: CompetencyManagementComponent;
     let competencyService: CompetencyService;
+    let prerequisiteService: PrerequisiteService;
     let profileService: ProfileService;
     let irisSettingsService: IrisSettingsService;
     let modalService: NgbModal;
@@ -51,8 +53,7 @@ describe('CompetencyManagementComponent', () => {
                 MockHasAnyAuthorityDirective,
                 CompetencyRelationGraphStubComponent,
                 MockComponent(DocumentationButtonComponent),
-                MockComponent(CompetencyImportCourseComponent),
-                MockComponent(PrerequisiteImportComponent),
+                MockComponent(ImportAllCompetenciesComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(HtmlForMarkdownPipe),
                 MockPipe(ArtemisDatePipe),
@@ -80,9 +81,10 @@ describe('CompetencyManagementComponent', () => {
                 fixture = TestBed.createComponent(CompetencyManagementComponent);
                 component = fixture.componentInstance;
                 competencyService = TestBed.inject(CompetencyService);
+                prerequisiteService = TestBed.inject(PrerequisiteService);
                 modalService = fixture.debugElement.injector.get(NgbModal);
 
-                const competency = new Competency();
+                const competency: Competency = {};
                 const textUnit = new TextUnit();
                 competency.id = 1;
                 competency.description = 'test';
@@ -109,14 +111,7 @@ describe('CompetencyManagementComponent', () => {
                         }),
                     ),
                 );
-                getAllPrerequisitesForCourseSpy = jest.spyOn(competencyService, 'getAllPrerequisitesForCourse').mockReturnValue(
-                    of(
-                        new HttpResponse({
-                            body: [{ id: 3 } as Competency],
-                            status: 200,
-                        }),
-                    ),
-                );
+                getAllPrerequisitesForCourseSpy = jest.spyOn(prerequisiteService, 'getAllPrerequisitesForCourse').mockReturnValue(of([{ id: 3 } as Prerequisite]));
                 getCompetencyRelationsSpy = jest
                     .spyOn(competencyService, 'getCompetencyRelations')
                     .mockReturnValue(of(new HttpResponse({ body: [{ id: 1 } as CompetencyRelation], status: 200 })));
@@ -173,43 +168,17 @@ describe('CompetencyManagementComponent', () => {
         expect(deleteSpy).toHaveBeenCalledWith(123, 1);
     });
 
-    it('should remove prerequisite', () => {
-        const removePrerequisiteSpy = jest.spyOn(competencyService, 'removePrerequisite').mockReturnValue(of(new HttpResponse({ body: {}, status: 200 })));
+    it('should delete prerequisite', () => {
+        const deletePrerequisiteSpy = jest.spyOn(prerequisiteService, 'deletePrerequisite').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
         fixture.detectChanges();
 
-        component.removePrerequisite(123);
+        component.deletePrerequisite(123);
 
-        expect(removePrerequisiteSpy).toHaveBeenCalledOnce();
-        expect(removePrerequisiteSpy).toHaveBeenCalledWith(123, 1);
+        expect(deletePrerequisiteSpy).toHaveBeenCalledOnce();
+        expect(deletePrerequisiteSpy).toHaveBeenCalledWith(123, 1);
     });
 
-    it('should open import modal for prerequisites', () => {
-        const importedCompetency: Competency = { id: 456 };
-        const modalRef = {
-            result: Promise.resolve(importedCompetency),
-            componentInstance: {},
-        } as NgbModalRef;
-        const response = new HttpResponse({
-            body: importedCompetency,
-            status: 200,
-        });
-        jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
-        jest.spyOn(competencyService, 'addPrerequisite').mockReturnValue(of(response));
-
-        fixture.detectChanges();
-        const existingPrerequisites = component.prerequisites.length;
-
-        const importButton = fixture.debugElement.query(By.css('#prerequisiteImportButton'));
-        importButton.nativeElement.click();
-
-        expect(modalService.open).toHaveBeenCalledOnce();
-        expect(modalService.open).toHaveBeenCalledWith(PrerequisiteImportComponent, { size: 'lg', backdrop: 'static' });
-        expect(modalRef.componentInstance.disabledIds).toBeArrayOfSize(3);
-        expect(modalRef.componentInstance.disabledIds).toContainAllValues([1, 5, 3]);
-        expect(component.prerequisites).toHaveLength(existingPrerequisites + 1);
-    });
-
-    it('should open and import modal and update values', () => {
+    it('should open import modal and update values', () => {
         const modalResult: ImportAllFromCourseResult = {
             courseForImportDTO: { id: 1 },
             importRelations: false,
@@ -233,7 +202,7 @@ describe('CompetencyManagementComponent', () => {
         const importButton = fixture.debugElement.query(By.css('#competencyImportAllButton'));
         importButton.nativeElement.click();
 
-        expect(modalService.open).toHaveBeenCalledWith(CompetencyImportCourseComponent, { size: 'lg', backdrop: 'static' });
+        expect(modalService.open).toHaveBeenCalledWith(ImportAllCompetenciesComponent, { size: 'lg', backdrop: 'static' });
         expect(modalRef.componentInstance.disabledIds).toEqual([1]);
         expect(component.competencies).toHaveLength(existingCompetencies + 2);
         expect(component.relations).toHaveLength(existingRelations + 1);

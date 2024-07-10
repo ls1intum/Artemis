@@ -54,11 +54,11 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 @Service
 public class ConversationUtilService {
 
-    private static final ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
+    private static final ZonedDateTime PAST_TIMESTAMP = ZonedDateTime.now().minusDays(1);
 
-    private static final ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(1);
+    private static final ZonedDateTime FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(1);
 
-    private static final ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
+    private static final ZonedDateTime FUTURE_FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(2);
 
     @Autowired
     private CourseRepository courseRepo;
@@ -108,7 +108,7 @@ public class ConversationUtilService {
      * @return The created Course
      */
     public Course createCourseWithPostsDisabled() {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
         return courseRepo.save(course);
     }
@@ -128,13 +128,13 @@ public class ConversationUtilService {
 
         Course course1 = courseUtilService.createCourse();
         for (int i = 0; i < 2; i++) {
-            TextExercise textExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
+            TextExercise textExercise = TextExerciseFactory.generateTextExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, course1);
             course1.addExercises(textExercise);
             textExercise = exerciseRepo.save(textExercise);
             Channel exerciseChannel = exerciseUtilService.addChannelToExercise(textExercise);
             testExerciseChannels.add(exerciseChannel);
 
-            Lecture lecture = LectureFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
+            Lecture lecture = LectureFactory.generateLecture(PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, course1);
             course1.addLectures(lecture);
             lecture = lectureRepo.save(lecture);
             Channel lectureChannel = lectureUtilService.addLectureChannel(lecture);

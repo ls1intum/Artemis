@@ -29,7 +29,7 @@
                                 <div class="my-2">
                                     <fa-icon [icon]="faArrowLeft" (click)="resetCurrentPost()" class="back-button me-2 clickable" />
                                     <span class="back-instruction">{{ 'artemisApp.metis.post.showAllPosts' | artemisTranslate }}</span>
-                                    <jhi-posting-thread [post]="currentPost" [showAnswers]="true" [id]="'item-' + currentPost?.id" [isCommunicationPage]="isCommunicationPage" />
+                                    <jhi-posting-thread [post]="currentPost" [showAnswers]="true" [id]="'item-' + currentPost?.id" [showChannelReference]="false" />
                                 </div>
                             } @else {
                                 <div class="row ps-0">
@@ -126,15 +126,15 @@
                                 </form>
                                 <div class="bold-line row mt-1 mb-2"></div>
                                 <div #itemsContainer class="items-container" infinite-scroll [scrollWindow]="false" (scrolledUp)="fetchNextPage()">
-                                    @for (post of posts; track postsTrackByFn($index, post)) {
+                                    @for (post of posts; track post.id) {
                                         <jhi-posting-thread
                                             #postingThread
                                             [id]="'item-' + post.id"
                                             class="item"
                                             [post]="post"
                                             [showAnswers]="posts.length === 1"
-                                            [isCommunicationPage]="isCommunicationPage"
-                                            [isCourseMessagesPage]="false"
+                                            [showChannelReference]="false"
+                                            [isCommunicationPage]="false"
                                         />
                                     }
                                 </div>

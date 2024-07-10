@@ -48,9 +48,9 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationInde
 
     private static final String TEST_PREFIX = "tutorialgroupnotifservice";
 
-    private static final int StudentCount = 5;
+    private static final int STUDENT_COUNT = 5;
 
-    private static final int TutorCount = 1;
+    private static final int TUTOR_COUNT = 1;
 
     @Autowired
     private TutorialGroupNotificationRepository tutorialGroupNotificationRepository;
@@ -82,12 +82,12 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationInde
 
     @BeforeEach
     void setUp() {
-        userUtilService.addUsers(TEST_PREFIX, StudentCount, TutorCount, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, STUDENT_COUNT, TUTOR_COUNT, 0, 1);
         Course course = courseUtilService.createCourse();
         userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
         tutorialGroup = createAndSaveTutorialGroup(course.getId(), "title" + course.getId(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH,
-                userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow(), IntStream.range(1, StudentCount + 1)
+                userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow(), IntStream.range(1, STUDENT_COUNT + 1)
                         .mapToObj((studentId) -> userRepository.findOneByLogin(TEST_PREFIX + "student" + studentId).orElseThrow()).collect(Collectors.toSet()));
 
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
@@ -95,6 +95,7 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationInde
         notificationSettingRepository.deleteAll();
     }
 
+    @Override
     @AfterEach
     protected void resetSpyBeans() {
         super.resetSpyBeans();
@@ -111,7 +112,7 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationInde
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void notifyAboutTutorialGroupUpdate_shouldSaveAndSend(boolean contactTutor) {
-        List<Long> studentSettings = IntStream.range(1, StudentCount + 1).mapToLong((studentId) -> {
+        List<Long> studentSettings = IntStream.range(1, STUDENT_COUNT + 1).mapToLong((studentId) -> {
             var student = userRepository.findOneByLogin(TEST_PREFIX + "student" + studentId).orElseThrow();
             return prepareNotificationSettingForTest(student, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE).getId();
         }).boxed().toList();
@@ -121,10 +122,10 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationInde
         tutorialGroupNotificationService.notifyAboutTutorialGroupUpdate(tutorialGroup, contactTutor, "LoremIpsum");
         verifyRepositoryCallWithCorrectNotification(1, TUTORIAL_GROUP_UPDATED_TITLE);
         if (contactTutor) {
-            verifyEmail(StudentCount + 1);
+            verifyEmail(STUDENT_COUNT + 1);
         }
         else {
-            verifyEmail(StudentCount);
+            verifyEmail(STUDENT_COUNT);
         }
 
         studentSettings.forEach((settingId) -> notificationSettingRepository.deleteById(settingId));
@@ -135,7 +136,7 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationInde
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void notifyAboutTutorialGroupDeletion_shouldSaveAndSend() {
-        List<Long> studentSettings = IntStream.range(1, StudentCount + 1).mapToLong((studentId) -> {
+        List<Long> studentSettings = IntStream.range(1, STUDENT_COUNT + 1).mapToLong((studentId) -> {
             var student = userRepository.findOneByLogin(TEST_PREFIX + "student" + studentId).orElseThrow();
             return prepareNotificationSettingForTest(student, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE).getId();
         }).boxed().toList();
@@ -143,7 +144,7 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationInde
         var settingTutor = prepareNotificationSettingForTest(tutor1, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE);
         tutorialGroupNotificationService.notifyAboutTutorialGroupDeletion(tutorialGroup);
         verifyRepositoryCallWithCorrectNotification(1, TUTORIAL_GROUP_DELETED_TITLE);
-        verifyEmail(StudentCount + 1);
+        verifyEmail(STUDENT_COUNT + 1);
 
         studentSettings.forEach((settingId) -> notificationSettingRepository.deleteById(settingId));
         notificationSettingRepository.deleteById(settingTutor.getId());

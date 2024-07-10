@@ -59,6 +59,7 @@ public class BuildJobGitService extends AbstractGitService {
     }
 
     @PreDestroy
+    @Override
     public void cleanup() {
         super.cleanup();
     }

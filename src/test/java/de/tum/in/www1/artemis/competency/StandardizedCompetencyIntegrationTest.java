@@ -206,7 +206,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
             @WithMockUser(username = "admin", roles = "ADMIN")
             void shouldDeleteCompetencyWithLinkedCompetency() throws Exception {
                 long deletedId = standardizedCompetency.getId();
-                Competency competency = new Competency("title", "description", null, null, null, false);
+                Competency competency = new Competency("title", "description", null, 100, null, false);
                 competency.setLinkedStandardizedCompetency(standardizedCompetency);
                 competency = competencyRepository.save(competency);
 

@@ -7,6 +7,6 @@ import { ExercisePagingService } from 'app/exercises/shared/manage/exercise-pagi
 @Injectable({ providedIn: 'root' })
 export class CodeAnalysisPagingService extends ExercisePagingService<ProgrammingExercise> {
     constructor(http: HttpClient) {
-        super(http, ProgrammingExercisePagingService.resourceUrl + '/with-sca');
+        super(http, ProgrammingExercisePagingService.RESOURCE_URL + '/with-sca');
     }
 }

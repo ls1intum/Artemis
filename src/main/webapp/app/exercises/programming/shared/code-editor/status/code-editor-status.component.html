@@ -4,7 +4,7 @@
             @case (CommitState.UNDEFINED) {
                 <div>
                     <span ngbTooltip="{{ 'artemisApp.editor.changesUndefinedTooltip' | artemisTranslate }}">
-                        <fa-icon [icon]="faCircleNotch" [spin]="true" class="text-info me-1" />
+                        <fa-icon [icon]="faCircleNotch" animation="spin" class="text-info me-1" />
                         <span class="text-info">{{ 'artemisApp.editor.changesUndefined' | artemisTranslate }}</span>
                     </span>
                 </div>
@@ -44,7 +44,7 @@
             @case (CommitState.COMMITTING) {
                 <div>
                     <span ngbTooltip="{{ 'artemisApp.editor.submittingChangesTooltip' | artemisTranslate }}">
-                        <fa-icon [icon]="faCircleNotch" class="text-info me-1" [spin]="true" />
+                        <fa-icon [icon]="faCircleNotch" class="text-info me-1" animation="spin" />
                         <span class="text-info">{{ 'artemisApp.editor.submittingChanges' | artemisTranslate }}</span>
                     </span>
                 </div>

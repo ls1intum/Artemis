@@ -12,12 +12,12 @@ import jakarta.validation.constraints.NotNull;
 
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Organization;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface OrganizationRepository extends JpaRepository<Organization, Long> {
+public interface OrganizationRepository extends ArtemisJpaRepository<Organization, Long> {
 
     @Query("""
             SELECT organization
@@ -127,17 +127,6 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
             }
         });
         return matchingOrganizations;
-    }
-
-    /**
-     * Get an organization by its id, or else throw exception
-     *
-     * @param organizationId the id of the organization to find
-     * @return the organization entity, if it exists
-     */
-    @NotNull
-    default Organization findByIdElseThrow(long organizationId) throws EntityNotFoundException {
-        return findById(organizationId).orElseThrow(() -> new EntityNotFoundException("Organization", organizationId));
     }
 
     /**

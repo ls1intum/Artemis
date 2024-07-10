@@ -78,6 +78,7 @@ import de.tum.in.www1.artemis.service.quiz.QuizBatchService;
 import de.tum.in.www1.artemis.service.quiz.QuizExerciseImportService;
 import de.tum.in.www1.artemis.service.quiz.QuizExerciseService;
 import de.tum.in.www1.artemis.service.quiz.QuizMessagingService;
+import de.tum.in.www1.artemis.service.quiz.QuizResultService;
 import de.tum.in.www1.artemis.service.quiz.QuizStatisticService;
 import de.tum.in.www1.artemis.service.quiz.QuizSubmissionService;
 import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
@@ -100,6 +101,8 @@ public class QuizExerciseResource {
     private static final String ENTITY_NAME = "quizExercise";
 
     private final QuizSubmissionService quizSubmissionService;
+
+    private final QuizResultService quizResultService;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -150,7 +153,7 @@ public class QuizExerciseResource {
             QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService,
             GroupNotificationScheduleService groupNotificationScheduleService, StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService,
             QuizBatchRepository quizBatchRepository, FileService fileService, ChannelService channelService, ChannelRepository channelRepository,
-            QuizSubmissionService quizSubmissionService) {
+            QuizSubmissionService quizSubmissionService, QuizResultService quizResultService) {
         this.quizExerciseService = quizExerciseService;
         this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -172,6 +175,7 @@ public class QuizExerciseResource {
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.quizSubmissionService = quizSubmissionService;
+        this.quizResultService = quizResultService;
     }
 
     /**
@@ -599,6 +603,26 @@ public class QuizExerciseResource {
         // notify websocket channel of changes to the quiz exercise
         quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, quizBatch, action);
         return new ResponseEntity<>(quizExercise, HttpStatus.OK);
+    }
+
+    /**
+     * POST /quiz-exercises/{exerciseId}/evaluate : Evaluate the quiz exercise
+     *
+     * @param quizExerciseId the id of the quiz exercise
+     * @return ResponseEntity void
+     */
+    @PostMapping("quiz-exercises/{quizExerciseId}/evaluate")
+    @EnforceAtLeastInstructorInExercise(resourceIdFieldName = "quizExerciseId")
+    public ResponseEntity<Void> evaluateQuizExercise(@PathVariable Long quizExerciseId) {
+        log.debug("REST request to evaluate quiz exercise {}", quizExerciseId);
+        var quizExercise = quizExerciseRepository.findByIdElseThrow(quizExerciseId);
+        if (!quizExercise.isQuizEnded()) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizNotEndedYet", "Quiz hasn't ended yet.")).build();
+        }
+
+        quizResultService.evaluateQuizAndUpdateStatistics(quizExerciseId);
+        log.debug("Evaluation of quiz exercise {} finished", quizExerciseId);
+        return ResponseEntity.ok().build();
     }
 
     /**

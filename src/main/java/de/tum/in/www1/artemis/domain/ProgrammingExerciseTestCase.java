@@ -227,6 +227,7 @@ public class ProgrammingExerciseTestCase extends DomainObject {
      *
      * @return a clone of the object.
      */
+    @Override
     public ProgrammingExerciseTestCase clone() {
         ProgrammingExerciseTestCase clone = new ProgrammingExerciseTestCase().testName(this.getTestName()).weight(this.getWeight()).active(this.isActive())
                 .bonusPoints(this.getBonusPoints()).bonusMultiplier(this.getBonusMultiplier()).visibility(visibility).exercise(this.exercise);

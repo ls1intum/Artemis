@@ -7,14 +7,23 @@ import { courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercis
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { AccordionGroups, SidebarCardElement, SidebarData } from 'app/types/sidebar';
+import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { CourseOverviewService } from '../course-overview.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
     current: { entityData: [] },
+    dueSoon: { entityData: [] },
     past: { entityData: [] },
     noDate: { entityData: [] },
+};
+
+const DEFAULT_COLLAPSE_STATE: CollapseState = {
+    future: true,
+    current: false,
+    dueSoon: false,
+    past: true,
+    noDate: true,
 };
 
 @Component({
@@ -36,6 +45,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     sidebarData: SidebarData;
     sidebarExercises: SidebarCardElement[] = [];
     isCollapsed: boolean = false;
+    readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
 
     constructor(
         private courseStorageService: CourseStorageService,

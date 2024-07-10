@@ -13,6 +13,8 @@ import { SidebarComponent } from './sidebar.component';
 import { ArtemisSharedCommonModule } from '../shared-common.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { SidebarCardDirective } from 'app/shared/sidebar/sidebar-card.directive';
+import { ConversationOptionsComponent } from 'app/shared/sidebar/conversation-options/conversation-options.component';
+import { AccordionAddOptionsComponent } from 'app/shared/sidebar/accordion-add-options/accordion-add-options.component';
 
 @NgModule({
     imports: [
@@ -25,7 +27,16 @@ import { SidebarCardDirective } from 'app/shared/sidebar/sidebar-card.directive'
         SubmissionResultStatusModule,
         SidebarCardDirective,
     ],
-    declarations: [SidebarAccordionComponent, SidebarCardSmallComponent, SidebarCardMediumComponent, SidebarCardLargeComponent, SidebarCardItemComponent, SidebarComponent],
-    exports: [SidebarComponent, SidebarCardSmallComponent, SidebarCardMediumComponent, SidebarCardLargeComponent],
+    declarations: [
+        SidebarAccordionComponent,
+        SidebarCardSmallComponent,
+        SidebarCardMediumComponent,
+        SidebarCardLargeComponent,
+        SidebarCardItemComponent,
+        SidebarComponent,
+        ConversationOptionsComponent,
+        AccordionAddOptionsComponent,
+    ],
+    exports: [SidebarComponent, SidebarCardSmallComponent, SidebarCardMediumComponent, SidebarCardLargeComponent, ConversationOptionsComponent, AccordionAddOptionsComponent],
 })
 export class ArtemisSidebarModule {}

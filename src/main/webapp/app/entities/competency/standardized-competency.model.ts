@@ -1,10 +1,8 @@
 import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
+import { BaseCompetency } from 'app/entities/competency.model';
 
-export interface StandardizedCompetency extends BaseEntity {
-    title?: string;
-    description?: string;
-    taxonomy?: CompetencyTaxonomy;
+export interface StandardizedCompetency extends BaseCompetency {
     version?: string;
     knowledgeArea?: KnowledgeArea;
     source?: Source;

@@ -96,19 +96,19 @@ public class UserTestService {
 
     private ScienceEvent scienceEvent;
 
-    private static final int numberOfStudents = 2;
+    private static final int NUMBER_OF_STUDENTS = 2;
 
-    private static final int numberOfTutors = 1;
+    private static final int NUMBER_OF_TUTORS = 1;
 
-    private static final int numberOfEditors = 1;
+    private static final int NUMBER_OF_EDITORS = 1;
 
-    private static final int numberOfInstructors = 1;
+    private static final int NUMBER_OF_INSTRUCTORS = 1;
 
     public void setup(String testPrefix, MockDelegate mockDelegate) throws Exception {
         this.TEST_PREFIX = testPrefix;
         this.mockDelegate = mockDelegate;
 
-        List<User> users = userUtilService.addUsers(testPrefix, numberOfStudents, numberOfTutors, numberOfEditors, numberOfInstructors);
+        List<User> users = userUtilService.addUsers(testPrefix, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, NUMBER_OF_EDITORS, NUMBER_OF_INSTRUCTORS);
         student = userRepository.getUserByLoginElseThrow(testPrefix + "student1");
         student.setInternal(true);
         student = userRepository.save(student);
@@ -621,7 +621,7 @@ public class UserTestService {
         params.add("status", "");
         params.add("courseIds", "");
         List<UserDTO> users = request.getList("/api/admin/users", HttpStatus.OK, UserDTO.class, params);
-        assertThat(users).hasSize(numberOfStudents + numberOfTutors + numberOfEditors + numberOfInstructors); // admin is not returned
+        assertThat(users).hasSize(NUMBER_OF_STUDENTS + NUMBER_OF_TUTORS + NUMBER_OF_EDITORS + NUMBER_OF_INSTRUCTORS); // admin is not returned
     }
 
     // Test

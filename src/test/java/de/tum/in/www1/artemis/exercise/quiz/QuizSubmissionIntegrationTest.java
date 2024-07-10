@@ -136,6 +136,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     }
 
     @AfterEach
+    @Override
     protected void resetSpyBeans() {
         super.resetSpyBeans();
     }

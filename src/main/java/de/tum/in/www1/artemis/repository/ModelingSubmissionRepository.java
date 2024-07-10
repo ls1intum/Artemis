@@ -8,12 +8,12 @@ import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubmission, Long> {
+public interface ModelingSubmissionRepository extends ArtemisJpaRepository<ModelingSubmission, Long> {
 
     @Query("""
             SELECT DISTINCT submission
@@ -64,16 +64,6 @@ public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubm
                 AND submission.submitted = TRUE
             """)
     List<ModelingSubmission> findSubmittedByExerciseIdWithEagerResultsAndFeedback(@Param("exerciseId") Long exerciseId);
-
-    /**
-     * Get the modeling submission with the given id from the database. Throws an EntityNotFoundException if no submission could be found for the given id.
-     *
-     * @param submissionId the id of the submission that should be loaded from the database
-     * @return the modeling submission with the given id
-     */
-    default ModelingSubmission findByIdElseThrow(Long submissionId) {
-        return findById(submissionId).orElseThrow(() -> new EntityNotFoundException("Modeling Submission", submissionId));
-    }
 
     /**
      * Get the modeling submission with the given id from the database. The submission is loaded together with its result, the feedback of the result and the assessor of the

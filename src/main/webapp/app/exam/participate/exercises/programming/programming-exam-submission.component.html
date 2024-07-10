@@ -1,3 +1,17 @@
+<h3 class="text-align-left fw-normal">
+    <span>
+        {{ exercise.title }}
+    </span>
+    <!-- prettier-ignore -->
+    <span left-header>&nbsp;({{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}@if (exercise.bonusPoints) {
+        <span
+        >, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>
+        }) @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+        <jhi-included-in-score-badge
+        [includedInOverallScore]="exercise.includedInOverallScore" />
+      }</span>
+</h3>
+<hr />
 <!-- ngIf online-code-editor -->
 @if (exercise.allowOnlineEditor) {
     <div>
@@ -11,7 +25,6 @@
             }
         </div>
         <jhi-code-editor-container
-            [useMonacoEditor]="true"
             [editable]="!repositoryIsLocked"
             [participation]="studentParticipation"
             [showEditorInstructions]="showEditorInstructions"
@@ -20,16 +33,6 @@
             (onCommitStateChange)="onCommitStateChange($event)"
             (onFileChanged)="onFileChanged()"
         >
-            <div editorTitle>
-                <span class="exercise-title">{{ exercise?.exerciseGroup?.title ?? '-' }}</span>
-                <!-- prettier-ignore -->
-                <span>&nbsp;[{{ exercise?.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}@if (exercise.bonusPoints) {
-                    <span>, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>
-                }]
-                @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                    <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore"/>
-                }</span>
-            </div>
             <div submissionPolicy class="mt-3">
                 <jhi-programming-submission-policy-status [exercise]="exercise" [submissionCount]="submissionCount" />
             </div>
@@ -63,16 +66,8 @@
 <!-- ngIf Offline IDE clone button start -->
 @if (!exercise.allowOnlineEditor && exercise.allowOfflineIde) {
     <div>
-        <h4 class="mb-3">
-            <span class="exercise-title">{{ exercise?.exerciseGroup?.title ?? '-' }}</span>
-            <span>&nbsp;[{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}]</span>
-        </h4>
-        <jhi-exercise-details-student-actions [exercise]="exercise" [courseId]="courseId" [examMode]="true" />
         <div class="d-flex gap-3 my-3 ms-1 align-items-center">
-            <jhi-programming-submission-policy-status [exercise]="exercise" [submissionCount]="submissionCount" class="flex-grow-1" />
-            @if (repositoryIsLocked) {
-                <jhi-code-editor-repository-is-locked class="me-3" />
-            }
+            <jhi-exercise-details-student-actions [exercise]="exercise" [courseId]="courseId" [examMode]="true" />
             @if (studentParticipation) {
                 <jhi-updating-result
                     [exercise]="exercise"
@@ -80,8 +75,14 @@
                     [showBadge]="true"
                     [participation]="studentParticipation"
                     [personalParticipation]="true"
-                    class="me-2"
+                    class="me-1"
                 />
+            }
+        </div>
+        <div class="d-flex gap-3 my-3 ms-1 align-items-center">
+            <jhi-programming-submission-policy-status [exercise]="exercise" [submissionCount]="submissionCount" class="flex-grow-1" />
+            @if (repositoryIsLocked) {
+                <jhi-code-editor-repository-is-locked class="me-1" />
             }
         </div>
         @if (exercise) {

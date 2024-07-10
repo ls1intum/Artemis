@@ -1,3 +1,24 @@
 .wrap-long-text {
     word-break: break-all; /* This will break the text at any character */
 }
+
+.finished-build-jobs-filter-border-bottom {
+    border-bottom: 2px solid var(--overview-blue-border-color);
+}
+
+.finished-build-jobs-filter-background-accent {
+    background: var(--user-management-background-color);
+}
+
+.form-item-prepend {
+    width: 13%;
+}
+
+.result-card {
+    width: 8vw;
+    min-width: 115px;
+}
+
+.stats-column {
+    min-width: 230px;
+}

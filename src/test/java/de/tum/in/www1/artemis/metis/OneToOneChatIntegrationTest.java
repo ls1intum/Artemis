@@ -27,6 +27,7 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
     private static final String TEST_PREFIX = "ootest";
 
     @BeforeEach
+    @Override
     void setupTestScenario() throws Exception {
         super.setupTestScenario();
         userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);

@@ -1,12 +1,12 @@
 @if (!isExamReviewPage) {
     <div class="modal-header feedback-header">
-        <h3 class="modal-title">
-            @if (taskName) {
-                {{ 'artemisApp.result.detail.feedbackForTask' | artemisTranslate: { taskName } }}
-            } @else {
+        @if (taskName) {
+            <h3 class="modal-title" [innerHTML]="'artemisApp.result.detail.feedbackForTask' | artemisTranslate: { taskName }"></h3>
+        } @else {
+            <h3 class="modal-title">
                 {{ 'artemisApp.result.detail.feedback' | artemisTranslate }}
-            }
-        </h3>
+            </h3>
+        }
 
         @if (activeModal) {
             <button type="button" class="feedback-header__close" data-dismiss="modal" aria-hidden="true" (click)="activeModal.close()">
@@ -30,7 +30,7 @@
     <!-- Loading state -->
     @if (isLoading) {
         <div class="text-body-secondary d-flex justify-content-center" id="result-detail-spinner">
-            <fa-icon [spin]="true" size="lg" [icon]="faCircleNotch" />
+            <fa-icon animation="spin" size="lg" [icon]="faCircleNotch" />
         </div>
     } @else {
         @if (!loadingFailed && feedbackItemNodes?.length) {
@@ -56,7 +56,7 @@
                                                         | artemisTranslate
                                                             : {
                                                                   score: roundValueSpecifiedByCourseSettings(result.score ?? 0, course),
-                                                                  points: roundValueSpecifiedByCourseSettings(((result.score ?? 0) * exercise.maxPoints) / 100, course)
+                                                                  points: roundValueSpecifiedByCourseSettings(((result.score ?? 0) * exercise.maxPoints) / 100, course),
                                                               }
                                                 }}
                                             </span>

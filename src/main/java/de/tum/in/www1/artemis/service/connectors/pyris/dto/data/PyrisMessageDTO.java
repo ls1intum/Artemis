@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.pyris.dto.data;
 
-import static de.tum.in.www1.artemis.service.util.ZonedDateTimeUtil.toInstant;
+import static de.tum.in.www1.artemis.service.util.TimeUtil.toInstant;
 
 import java.time.Instant;
 import java.util.List;

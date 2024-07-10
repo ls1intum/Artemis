@@ -243,7 +243,6 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
         assertThat(lectureUnit.getCompletedUsers()).isNotEmpty();
         assertThat(lectureUnit.isCompletedFor(userRepo.getUser())).isTrue();
-        assertThat(lectureUnit.getCompletionDate(userRepo.getUser())).isNotNull();
 
         // Set lecture unit as uncompleted for user
         request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().get(0).getId() + "/completion?completed=false", null,
@@ -254,7 +253,6 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
         assertThat(lectureUnit.getCompletedUsers()).isEmpty();
         assertThat(lectureUnit.isCompletedFor(userRepo.getUser())).isFalse();
-        assertThat(lectureUnit.getCompletionDate(userRepo.getUser())).isEmpty();
     }
 
     @Test

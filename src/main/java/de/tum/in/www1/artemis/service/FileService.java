@@ -109,21 +109,6 @@ public class FileService implements DisposableBean {
     public static final String PICTURE_FILE_SUBPATH = "/api/files/drag-and-drop/drag-items/";
 
     /**
-     * Filenames for which the template filename differs from the filename it should have in the repository.
-     */
-    // @formatter:off
-    private static final Map<String, String> FILENAME_REPLACEMENTS = Map.ofEntries(
-        Map.entry("git.ignore.file", ".gitignore"),
-        Map.entry("git.attributes.file", ".gitattributes"),
-        Map.entry("Makefile.file", "Makefile"),
-        Map.entry("dune.file", "dune"),
-        Map.entry("Fast.file", "Fastfile"),
-        Map.entry("App.file", "Appfile"),
-        Map.entry("Scan.file", "Scanfile"),
-        Map.entry("gradlew.file", "gradlew"));
-    // @formatter:on
-
-    /**
      * These directories get falsely marked as files and should be ignored during copying.
      */
     private static final List<String> IGNORED_DIRECTORY_SUFFIXES = List.of(".xcassets", ".colorset", ".appiconset", ".xcworkspace", ".xcodeproj", ".swiftpm", ".tests", ".mvn");
@@ -421,8 +406,7 @@ public class FileService implements DisposableBean {
             filePath = Path.of(url);
         }
 
-        final Path targetPath = generateTargetPath(filePath, prefix, targetDirectory, keepParentDirectory);
-        return applyFilenameReplacements(targetPath);
+        return generateTargetPath(filePath, prefix, targetDirectory, keepParentDirectory);
     }
 
     /**
@@ -465,19 +449,6 @@ public class FileService implements DisposableBean {
         }
 
         return elements;
-    }
-
-    /**
-     * Replaces filenames where the template name differs from the name the file should have in the repository.
-     *
-     * @param originalTargetPath The path to a file.
-     * @return The path with replacements applied where necessary.
-     */
-    private Path applyFilenameReplacements(final Path originalTargetPath) {
-        final Path filename = originalTargetPath.getFileName();
-
-        final String newFilename = FILENAME_REPLACEMENTS.getOrDefault(filename.toString(), filename.toString());
-        return originalTargetPath.getParent().resolve(newFilename);
     }
 
     /**

@@ -104,9 +104,8 @@ describe('LearningPathLectureUnitViewComponent', () => {
         comp.lectureUnit = attachment;
         lecture.course = new Course();
         fixture.detectChanges();
-        const instance = { lecture: undefined, isCommunicationPage: undefined } as DiscussionSectionComponent;
+        const instance = { lecture: undefined } as DiscussionSectionComponent;
         comp.onChildActivate(instance);
         expect(instance.lecture).toEqual(lecture);
-        expect(instance.isCommunicationPage).toBeFalsy();
     });
 });

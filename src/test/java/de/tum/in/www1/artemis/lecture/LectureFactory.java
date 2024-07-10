@@ -94,4 +94,24 @@ public class LectureFactory {
         attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, entityId).toString());
         return attachment;
     }
+
+    /**
+     * Generates an Attachment with AttachmentType FILE and a link to a pdf file.
+     *
+     * @param startDate The optional upload and release date of the Attachment
+     * @return The generated Attachment
+     */
+    public static Attachment generateAttachmentWithPdfFile(ZonedDateTime startDate, Long entityId, boolean forUnit) {
+        Attachment attachment = generateAttachment(startDate);
+        String testFileName = "test_" + UUID.randomUUID().toString().substring(0, 8) + ".pdf";
+        Path savePath = (forUnit ? FilePathService.getAttachmentUnitFilePath() : FilePathService.getLectureAttachmentFilePath()).resolve(entityId.toString()).resolve(testFileName);
+        try {
+            FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/Infun.pdf"), savePath.toFile());
+        }
+        catch (IOException ex) {
+            fail("Failed while copying test attachment files", ex);
+        }
+        attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, entityId).toString());
+        return attachment;
+    }
 }

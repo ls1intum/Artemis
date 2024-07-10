@@ -131,7 +131,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     faAngleDown = faAngleDown;
     faUpload = faUpload;
 
-    readonly maxPoints = MAX_QUIZ_QUESTION_POINTS;
+    readonly MAX_POINTS = MAX_QUIZ_QUESTION_POINTS;
 
     constructor(
         private dragAndDropQuestionUtil: DragAndDropQuestionUtil,

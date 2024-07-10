@@ -117,6 +117,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     private ModelingSubmission modelingSubmission;
 
     @BeforeEach
+    @Override
     protected void initTestCase() {
         super.initTestCase();
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 0);

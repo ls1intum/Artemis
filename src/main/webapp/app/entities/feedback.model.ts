@@ -88,8 +88,8 @@ export class Feedback implements BaseEntity {
 
     public isSubsequent?: boolean; // helper attribute to find feedback which is not included in the total score on the client
 
-    private static readonly programmingReferencePrefix = 'file:';
-    private static readonly programmingReferenceLineSeparator = '_line:';
+    private static readonly PROGRAMMING_REFERENCE_PREFIX = 'file:';
+    private static readonly PROGRAMMING_REFERENCE_LINE_SEPERATOR = '_line:';
 
     constructor() {
         this.credits = 0;
@@ -173,13 +173,13 @@ export class Feedback implements BaseEntity {
      * Example output in this case: `src/com/example/package/MyClass.java`
      */
     public static getReferenceFilePath(feedback: Feedback): string | undefined {
-        if (!feedback.reference?.startsWith(this.programmingReferencePrefix)) {
+        if (!feedback.reference?.startsWith(this.PROGRAMMING_REFERENCE_PREFIX)) {
             // Find "file:" prefix
             // No programming feedback
             return undefined;
         }
-        const indexOfLine = feedback.reference?.lastIndexOf(this.programmingReferenceLineSeparator);
-        return feedback.reference.substring(this.programmingReferencePrefix.length, indexOfLine); // Split after "_line:"
+        const indexOfLine = feedback.reference?.lastIndexOf(this.PROGRAMMING_REFERENCE_LINE_SEPERATOR);
+        return feedback.reference.substring(this.PROGRAMMING_REFERENCE_PREFIX.length, indexOfLine); // Split after "_line:"
     }
 
     /**
@@ -188,13 +188,13 @@ export class Feedback implements BaseEntity {
      * Example output in this case: 13
      */
     public static getReferenceLine(feedback: Feedback): number | undefined {
-        if (!feedback.reference?.startsWith(this.programmingReferencePrefix)) {
+        if (!feedback.reference?.startsWith(this.PROGRAMMING_REFERENCE_PREFIX)) {
             // Find "file:" prefix
             // No programming feedback
             return undefined;
         }
-        const indexOfLine = feedback.reference.lastIndexOf(this.programmingReferenceLineSeparator); // Split before "_line:"
-        const line = parseInt(feedback.reference.substring(indexOfLine + this.programmingReferenceLineSeparator.length));
+        const indexOfLine = feedback.reference.lastIndexOf(this.PROGRAMMING_REFERENCE_LINE_SEPERATOR); // Split before "_line:"
+        const line = parseInt(feedback.reference.substring(indexOfLine + this.PROGRAMMING_REFERENCE_LINE_SEPERATOR.length));
         if (isNaN(line)) {
             return undefined;
         }
