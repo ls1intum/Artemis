@@ -305,11 +305,11 @@ public class ProgrammingExercise extends Exercise {
         this.allowOfflineIde = allowOfflineIde;
     }
 
-    public Boolean isAllowOnlineIde() {
+    public boolean isAllowOnlineIde() {
         return allowOnlineIde;
     }
 
-    public void setAllowOnlineIde(Boolean allowOnlineIde) {
+    public void setAllowOnlineIde(boolean allowOnlineIde) {
         this.allowOnlineIde = allowOnlineIde;
     }
 
