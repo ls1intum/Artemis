@@ -5,7 +5,7 @@ import { TextDetailComponent } from 'app/detail-overview-list/components/text-de
 import { DateDetailComponent } from 'app/detail-overview-list/components/date-detail.component';
 
 @Directive({
-    selector: 'jhi-exercise-detail',
+    selector: '[jhiExerciseDetail]',
     standalone: true,
 })
 export class ExerciseDetailDirective implements OnInit, OnDestroy {

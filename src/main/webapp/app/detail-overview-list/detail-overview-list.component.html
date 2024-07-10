@@ -16,10 +16,10 @@
                 }
                 @switch (detail.type) {
                     @case (DetailType.Text) {
-                        <jhi-exercise-detail [detail]="detail" />
+                        <div jhiExerciseDetail [detail]="detail"></div>
                     }
                     @case (DetailType.Date) {
-                        <jhi-exercise-detail [detail]="detail" />
+                        <div jhiExerciseDetail [detail]="detail"></div>
                     }
                     @case (DetailType.Link) {
                         <dd id="detail-value-{{ detail.title }}">
