@@ -11,7 +11,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { PROFILE_GITLAB, PROFILE_LOCALVC } from 'app/app.constants';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
-import { faDownload, faExternalLink } from '@fortawesome/free-solid-svg-icons';
+import { faCode, faExternalLink } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-code-button',
@@ -53,8 +53,8 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     isPracticeMode: boolean | undefined;
 
     // Icons
-    faDownload = faDownload;
-    faExternalLink = faExternalLink;
+    readonly faCode = faCode;
+    readonly faExternalLink = faExternalLink;
 
     constructor(
         private translateService: TranslateService,
