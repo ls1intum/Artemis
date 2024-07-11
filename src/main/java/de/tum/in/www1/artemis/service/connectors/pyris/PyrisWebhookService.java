@@ -75,16 +75,17 @@ public class PyrisWebhookService {
         Long courseId = attachmentUnit.getLecture().getCourse().getId();
         String courseTitle = attachmentUnit.getLecture().getCourse().getTitle();
         String courseDescription = attachmentUnit.getLecture().getCourse().getDescription() == null ? "" : attachmentUnit.getLecture().getCourse().getDescription();
+        String lectureUnitLink = artemisBaseUrl + attachmentUnit.getAttachment().getLink();
         String base64EncodedPdf = attachmentToBase64(attachmentUnit);
         return new PyrisLectureUnitWebhookDTO(true, artemisBaseUrl, base64EncodedPdf, lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle,
-                courseDescription);
+                courseDescription, lectureUnitLink);
     }
 
     private PyrisLectureUnitWebhookDTO processAttachmentForDeletion(AttachmentUnit attachmentUnit) {
         Long lectureUnitId = attachmentUnit.getId();
         Long lectureId = attachmentUnit.getLecture().getId();
         Long courseId = attachmentUnit.getLecture().getCourse().getId();
-        return new PyrisLectureUnitWebhookDTO(false, artemisBaseUrl, "", lectureUnitId, "", lectureId, "", courseId, "", "");
+        return new PyrisLectureUnitWebhookDTO(false, artemisBaseUrl, "", lectureUnitId, "", lectureId, "", courseId, "", "", "");
     }
 
     /**

@@ -9,5 +9,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisLectureUnitWebhookDTO(Boolean toUpdate, String artemisBaseUrl, String pdfFile, Long lectureUnitId, String lectureUnitName, Long lectureId, String lectureName,
-        Long courseId, String courseName, String courseDescription) {
+        Long courseId, String courseName, String courseDescription, String lectureUnitLink) {
 }
