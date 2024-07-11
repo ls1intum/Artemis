@@ -15,7 +15,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -31,9 +30,6 @@ import de.tum.in.www1.artemis.web.rest.dto.metrics.StudentMetricsDTO;
 class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "metricsintegration";
-
-    @Autowired
-    private ParticipantScoreScheduleService participantScoreScheduleService;
 
     private Course course;
 

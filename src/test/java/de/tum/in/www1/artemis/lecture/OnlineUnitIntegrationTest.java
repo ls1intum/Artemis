@@ -29,7 +29,6 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.OnlineUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.OnlineUnitRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.OnlineResourceDTO;
 
 class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -41,9 +40,6 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest
 
     @Autowired
     private LectureRepository lectureRepository;
-
-    @Autowired
-    private UserUtilService userUtilService;
 
     @Autowired
     private LectureUtilService lectureUtilService;
