@@ -180,9 +180,9 @@
             },
             "relation": {
                 "competencyRelations": "Beziehungen zwischen Kompetenzen",
-                "tailCompetency": "Kompetenz Schluss",
+                "tailCompetency": "Schlusskompetenz",
                 "relationType": "Beziehungstyp",
-                "headCompetency": "Kompetenz Start",
+                "headCompetency": "Startkompetenz",
                 "createRelation": "Beziehung erstellen",
                 "createsCircularRelation": "Du kannst keine kreisförmigen Beziehungen zwischen Kompetenzen erstellen.",
                 "selfRelation": "Du kannst keine Beziehung zwischen einer Kompetenz und sich selbst erstellen.",
@@ -191,6 +191,11 @@
                     "ASSUMES": "Setzt voraus",
                     "EXTENDS": "Erweitert",
                     "MATCHES": "Stimmt überein mit"
+                },
+                "typeExplanation": {
+                    "ASSUMES": "Die Startkompetenz setzt das Wissen aus der Schlusskompetenz voraus und bringt neues Wissen bei, das auf der Schlusskompetenz aufbaut.",
+                    "EXTENDS": "Die Startkompetenz setzt das Wissen aus der Schlusskompetenz voraus und vertieft dieses Wissen weiter.",
+                    "MATCHES": "Die Start- und Schlusskompetenz sind gleichwertig und umfassen dasselbe Wissen."
                 }
             }
         },

@@ -29,7 +29,10 @@
                             </div>
                             <div class="col">
                                 <div class="form-group">
-                                    <label for="type">{{ 'artemisApp.competency.relation.relationType' | artemisTranslate }}</label>
+                                    <label for="type">
+                                        {{ 'artemisApp.competency.relation.relationType' | artemisTranslate }}
+                                        <jhi-help-icon text="artemisApp.competency.relation.typeExplanation" />
+                                    </label>
                                     <select
                                         [ngClass]="{ 'border-danger': relationError }"
                                         class="form-select"
@@ -39,7 +42,10 @@
                                         (change)="validate()"
                                     >
                                         @for (relationType of competencyRelationType | keyvalue: keepOrder; track relationType) {
-                                            <option [ngValue]="relationType.key">{{ 'artemisApp.competency.relation.type.' + relationType.value | artemisTranslate }}</option>
+                                            <option
+                                                [jhiTranslate]="'artemisApp.competency.relation.type.' + relationType.value"
+                                                [title]="'artemisApp.competency.relation.typeExplanation.' + relationType.value | artemisTranslate"
+                                            ></option>
                                         }
                                     </select>
                                 </div>
