@@ -40,17 +40,14 @@ import de.tum.in.www1.artemis.exercise.modeling.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 class AthenaResourceIntegrationTest extends AbstractAthenaTest {
 
@@ -69,9 +66,6 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     private ModelingExerciseUtilService modelingExerciseUtilService;
 
     @Autowired
-    private ExerciseUtilService exerciseUtilService;
-
-    @Autowired
     private TextSubmissionRepository textSubmissionRepository;
 
     @Autowired
@@ -84,12 +78,6 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private ResultRepository resultRepository;
-
-    @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
@@ -100,9 +88,6 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
 
     @Autowired
     private FeedbackRepository feedbackRepository;
-
-    @Autowired
-    private CourseRepository courseRepository;
 
     private TextExercise textExercise;
 

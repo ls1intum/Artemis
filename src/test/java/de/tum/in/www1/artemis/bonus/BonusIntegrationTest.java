@@ -19,7 +19,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.assessment.GradingScaleFactory;
 import de.tum.in.www1.artemis.assessment.GradingScaleUtilService;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Bonus;
 import de.tum.in.www1.artemis.domain.BonusStrategy;
 import de.tum.in.www1.artemis.domain.Course;
@@ -32,11 +31,8 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
 import de.tum.in.www1.artemis.repository.BonusRepository;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.BonusExampleDTO;
 
 class BonusIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -47,28 +43,16 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private BonusRepository bonusRepository;
 
     @Autowired
-    private CourseRepository courseRepository;
-
-    @Autowired
     private ExamRepository examRepository;
 
     @Autowired
     private GradingScaleRepository gradingScaleRepository;
 
     @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
-
-    @Autowired
     private ExamUtilService examUtilService;
 
     @Autowired
     private GradingScaleUtilService gradingScaleUtilService;
-
-    @Autowired
-    private ExerciseRepository exerciseRepository;
 
     private Bonus courseBonus;
 

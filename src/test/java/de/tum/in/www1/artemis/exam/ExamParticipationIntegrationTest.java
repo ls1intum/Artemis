@@ -35,7 +35,6 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.assessment.GradingScaleUtilService;
 import de.tum.in.www1.artemis.bonus.BonusFactory;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.BonusStrategy;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
@@ -66,28 +65,23 @@ import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.BonusRepository;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
 import de.tum.in.www1.artemis.repository.ParticipationTestRepository;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.exam.StudentExamService;
 import de.tum.in.www1.artemis.service.quiz.QuizSubmissionService;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.team.TeamUtilService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ExamPrepareExercisesTestUtil;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
@@ -111,15 +105,6 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
     private QuizSubmissionService quizSubmissionService;
 
     @Autowired
-    private CourseRepository courseRepo;
-
-    @Autowired
-    private ExerciseRepository exerciseRepo;
-
-    @Autowired
-    private UserRepository userRepo;
-
-    @Autowired
     private ExamRepository examRepository;
 
     @Autowired
@@ -141,9 +126,6 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
     private SubmissionRepository submissionRepository;
 
     @Autowired
-    private ResultRepository resultRepository;
-
-    @Autowired
     private ParticipationTestRepository participationTestRepository;
 
     @Autowired
@@ -163,12 +145,6 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
 
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private ExamUtilService examUtilService;
@@ -483,8 +459,8 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         log.debug("testGetStatsForExamAssessmentDashboard: step 1 done");
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
 
-        User examTutor1 = userRepo.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
-        User examTutor2 = userRepo.findOneByLogin(TEST_PREFIX + "tutor2").orElseThrow();
+        User examTutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
+        User examTutor2 = userRepository.findOneByLogin(TEST_PREFIX + "tutor2").orElseThrow();
 
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
         var examStartDate = ZonedDateTime.now().plusMinutes(5);
@@ -691,8 +667,8 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
     private void lockAndAssessForSecondCorrection(Exam exam, Course course, List<StudentExam> studentExams, List<Exercise> exercisesInExam, int numberOfCorrectionRounds)
             throws Exception {
         // Lock all submissions
-        User examInstructor = userRepo.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
-        User examTutor2 = userRepo.findOneByLogin(TEST_PREFIX + "tutor2").orElseThrow();
+        User examInstructor = userRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
+        User examTutor2 = userRepository.findOneByLogin(TEST_PREFIX + "tutor2").orElseThrow();
 
         for (var exercise : exercisesInExam) {
             for (var participation : exercise.getStudentParticipations()) {
@@ -840,7 +816,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
 
         if (withSecondCorrectionAndStarted) {
             exercisesInExam.forEach(exercise -> exercise.setSecondCorrectionEnabled(true));
-            exerciseRepo.saveAll(exercisesInExam);
+            exerciseRepository.saveAll(exercisesInExam);
         }
 
         // Scores used for all exercise results
@@ -900,7 +876,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         final var exerciseWithNoUsers = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().getFirst());
-        exerciseRepo.save(exerciseWithNoUsers);
+        exerciseRepository.save(exerciseWithNoUsers);
 
         GradingScale gradingScale = gradingScaleUtilService.generateGradingScaleWithStickyStep(new double[] { 60, 25, 15, 50 },
                 Optional.of(new String[] { "5.0", "3.0", "1.0", "1.0" }), true, 1);
@@ -990,7 +966,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         // Compare StudentResult with the generated results
         for (var studentResult : examScores.studentResults()) {
             // Find the original user using the id in StudentResult
-            User originalUser = userRepo.findByIdElseThrow(studentResult.userId());
+            User originalUser = userRepository.findByIdElseThrow(studentResult.userId());
             StudentExam studentExamOfUser = studentExams.stream().filter(studentExam -> studentExam.getUser().equals(originalUser)).findFirst().orElseThrow();
 
             assertThat(studentResult.name()).isEqualTo(originalUser.getName());
@@ -1132,12 +1108,12 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         textExerciseUtilService.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
 
         Exercise teamExercise = textExerciseUtilService.createTeamTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
-        User tutor1 = userRepo.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
+        User tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
         Long teamTextExerciseId = teamExercise.getId();
         Long team1Id = teamUtilService.createTeam(Set.of(student1), tutor1, teamExercise, TEST_PREFIX + "team1").getId();
-        User student2 = userRepo.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
-        User student3 = userRepo.findOneByLogin(TEST_PREFIX + "student3").orElseThrow();
-        User tutor2 = userRepo.findOneByLogin(TEST_PREFIX + "tutor2").orElseThrow();
+        User student2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        User student3 = userRepository.findOneByLogin(TEST_PREFIX + "student3").orElseThrow();
+        User tutor2 = userRepository.findOneByLogin(TEST_PREFIX + "tutor2").orElseThrow();
         Long team2Id = teamUtilService.createTeam(Set.of(student2, student3), tutor2, teamExercise, TEST_PREFIX + "team2").getId();
 
         participationUtilService.createParticipationSubmissionAndResult(individualTextExerciseId, student1, 10.0, 10.0, 50, true);
@@ -1183,7 +1159,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
 
         course.setMaxPoints(100);
         course.setPresentationScore(null);
-        courseRepo.save(course);
+        courseRepository.save(course);
 
     }
 
