@@ -11,4 +11,5 @@ import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 @Profile(PROFILE_CORE)
 @Repository
 public interface ProgrammingExerciseBuildConfigRepository extends ArtemisJpaRepository<ProgrammingExerciseBuildConfig, Long> {
+
 }

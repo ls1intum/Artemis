@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismDetectionConfig;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
@@ -59,6 +60,8 @@ public class ProgrammingExerciseImportBasicService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     private final ProgrammingExerciseService programmingExerciseService;
 
     private final StaticCodeAnalysisService staticCodeAnalysisService;
@@ -81,7 +84,8 @@ public class ProgrammingExerciseImportBasicService {
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseService programmingExerciseService, StaticCodeAnalysisService staticCodeAnalysisService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyRepository submissionPolicyRepository,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
-            ProgrammingExerciseSolutionEntryRepository solutionEntryRepository, ChannelService channelService) {
+            ProgrammingExerciseSolutionEntryRepository solutionEntryRepository, ChannelService channelService,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.exerciseHintService = exerciseHintService;
         this.exerciseHintRepository = exerciseHintRepository;
         this.versionControlService = versionControlService;
@@ -97,6 +101,7 @@ public class ProgrammingExerciseImportBasicService {
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.solutionEntryRepository = solutionEntryRepository;
         this.channelService = channelService;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     /**
@@ -138,6 +143,7 @@ public class ProgrammingExerciseImportBasicService {
         // Hints, tasks, test cases and static code analysis categories
         final Map<Long, Long> newHintIdByOldId = exerciseHintService.copyExerciseHints(originalProgrammingExercise, newProgrammingExercise);
 
+        programmingExerciseBuildConfigRepository.save(newProgrammingExercise.getBuildConfig());
         final ProgrammingExercise importedExercise = programmingExerciseRepository.save(newProgrammingExercise);
 
         final Map<Long, Long> newTestCaseIdByOldId = importTestCases(originalProgrammingExercise, importedExercise);

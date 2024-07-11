@@ -60,6 +60,7 @@ import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExercisePa
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -120,6 +121,8 @@ public class ProgrammingExerciseService {
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseService.class);
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     private final GitService gitService;
 
@@ -196,7 +199,8 @@ public class ProgrammingExerciseService {
             SubmissionPolicyService submissionPolicyService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, ChannelService channelService,
             ProgrammingSubmissionService programmingSubmissionService, Optional<IrisSettingsService> irisSettingsService, Optional<AeolusTemplateService> aeolusTemplateService,
             Optional<BuildScriptGenerationService> buildScriptGenerationService,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProfileService profileService, ExerciseService exerciseService) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProfileService profileService, ExerciseService exerciseService,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -229,6 +233,7 @@ public class ProgrammingExerciseService {
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.profileService = profileService;
         this.exerciseService = exerciseService;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     /**
@@ -266,6 +271,8 @@ public class ProgrammingExerciseService {
         programmingExercise.setTemplateParticipation(null);
 
         // We save once in order to generate an id for the programming exercise
+        var buildConfig = programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
+        programmingExercise.setBuildConfig(buildConfig);
         var savedProgrammingExercise = programmingExerciseRepository.saveForCreation(programmingExercise);
 
         // Step 1: Setting constant facts for a programming exercise
@@ -283,6 +290,7 @@ public class ProgrammingExerciseService {
         // Step 4b: Connecting base participations with the exercise
         connectBaseParticipationsToExerciseAndSave(savedProgrammingExercise);
 
+        programmingExerciseBuildConfigRepository.saveAndFlush(savedProgrammingExercise.getBuildConfig());
         savedProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
 
         // Step 4c: Connect auxiliary repositories
@@ -303,7 +311,7 @@ public class ProgrammingExerciseService {
             Windfile windfile = aeolusTemplateService.get().getDefaultWindfileFor(savedProgrammingExercise);
             if (windfile != null) {
                 savedProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
-                savedProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+                programmingExerciseBuildConfigRepository.saveAndFlush(savedProgrammingExercise.getBuildConfig());
             }
             else {
                 log.warn("No windfile for the settings of exercise {}", savedProgrammingExercise.getId());
@@ -466,7 +474,7 @@ public class ProgrammingExerciseService {
             String script = buildScriptGenerationService.get().getScript(programmingExercise);
             programmingExercise.getBuildConfig().setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
             programmingExercise.getBuildConfig().setBuildScript(script);
-            programmingExercise = programmingExerciseRepository.saveForCreation(programmingExercise);
+            programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
         }
 
         // if the exercise is imported from a file, the changes fixing the project name will trigger a first build anyway, so

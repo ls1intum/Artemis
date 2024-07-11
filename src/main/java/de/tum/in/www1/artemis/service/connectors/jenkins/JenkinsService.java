@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.JenkinsException;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
@@ -69,9 +70,12 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     public JenkinsService(JenkinsServer jenkinsServer, @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate,
             JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService, JenkinsInternalUrlService jenkinsInternalUrlService,
-            Optional<AeolusTemplateService> aeolusTemplateService, ProfileService profileService, ProgrammingExerciseRepository programmingExerciseRepository) {
+            Optional<AeolusTemplateService> aeolusTemplateService, ProfileService profileService, ProgrammingExerciseRepository programmingExerciseRepository,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanService = jenkinsBuildPlanService;
         this.jenkinsJobService = jenkinsJobService;
@@ -80,6 +84,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         this.aeolusTemplateService = aeolusTemplateService;
         this.profileService = profileService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     @Override
@@ -121,7 +126,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
             exercise.getBuildConfig().setBuildPlanConfiguration(mapper.writeValueAsString(windfile));
         }
         if (profileService.isAeolusActive()) {
-            programmingExerciseRepository.save(exercise);
+            programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig());
         }
     }
 
