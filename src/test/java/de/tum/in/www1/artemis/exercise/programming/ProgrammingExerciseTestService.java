@@ -499,7 +499,7 @@ public class ProgrammingExerciseTestService {
 
         exercise.getBuildConfig().setBuildPlanConfiguration(validWindfile);
         if (programmingLanguage == C) {
-            exercise.setProjectType(ProjectType.FACT);
+            exercise.getBuildConfig().setProjectType(ProjectType.FACT);
         }
         exercise.setChannelName("testchannel-pe");
         setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
@@ -521,7 +521,7 @@ public class ProgrammingExerciseTestService {
         if (language == SWIFT) {
             exercise.setPackageName("swiftTest");
         }
-        exercise.setProjectType(programmingLanguageFeature.projectTypes().isEmpty() ? null : programmingLanguageFeature.projectTypes().getFirst());
+        exercise.getBuildConfig().setProjectType(programmingLanguageFeature.projectTypes().isEmpty() ? null : programmingLanguageFeature.projectTypes().getFirst());
         mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
         exercise.setChannelName("testchannel-pe");
         validateProgrammingExercise(request.postWithResponseBody("/api/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED));
@@ -542,7 +542,7 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockConnectorRequestForImportFromFile(exercise);
         Resource resource = new ClassPathResource("test-data/import-from-file/valid-import.zip");
         if (scaEnabled) {
-            exercise.setStaticCodeAnalysisEnabled(true);
+            exercise.getBuildConfig().setStaticCodeAnalysisEnabled(true);
         }
 
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
@@ -553,23 +553,23 @@ public class ProgrammingExerciseTestService {
         assertThat(importedExercise).isNotNull();
         assertThat(importedExercise.getProgrammingLanguage()).isEqualTo(JAVA);
         assertThat(importedExercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
-        assertThat(importedExercise.getProjectType()).isEqualTo(ProjectType.PLAIN_MAVEN);
+        assertThat(importedExercise.getBuildConfig().getProjectType()).isEqualTo(ProjectType.PLAIN_MAVEN);
         if (scaEnabled) {
-            assertThat(importedExercise.isStaticCodeAnalysisEnabled()).isTrue();
+            assertThat(importedExercise.getBuildConfig().isStaticCodeAnalysisEnabled()).isTrue();
         }
         else {
-            assertThat(importedExercise.isStaticCodeAnalysisEnabled()).isFalse();
+            assertThat(importedExercise.getBuildConfig().isStaticCodeAnalysisEnabled()).isFalse();
         }
         var savedExercise = programmingExerciseRepository.findById(importedExercise.getId()).orElseThrow();
         assertThat(savedExercise).isNotNull();
         assertThat(savedExercise.getProgrammingLanguage()).isEqualTo(JAVA);
         assertThat(savedExercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
-        assertThat(savedExercise.getProjectType()).isEqualTo(ProjectType.PLAIN_MAVEN);
+        assertThat(savedExercise.getBuildConfig().getProjectType()).isEqualTo(ProjectType.PLAIN_MAVEN);
         if (scaEnabled) {
-            assertThat(savedExercise.isStaticCodeAnalysisEnabled()).isTrue();
+            assertThat(savedExercise.getBuildConfig().isStaticCodeAnalysisEnabled()).isTrue();
         }
         else {
-            assertThat(savedExercise.isStaticCodeAnalysisEnabled()).isFalse();
+            assertThat(savedExercise.getBuildConfig().isStaticCodeAnalysisEnabled()).isFalse();
         }
         assertThat(importedExercise.getCourseViaExerciseGroupOrCourseMember()).isEqualTo(course);
     }
@@ -578,12 +578,12 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockConnectorRequestForImportFromFile(exercise);
         Resource resource = null;
         exercise.programmingLanguage(language);
-        exercise.setProjectType(null);
+        exercise.getBuildConfig().setProjectType(null);
         switch (language) {
             case PYTHON -> resource = new ClassPathResource("test-data/import-from-file/valid-import-python.zip");
             case C -> {
                 resource = new ClassPathResource("test-data/import-from-file/valid-import-c.zip");
-                exercise.setProjectType(ProjectType.FACT);
+                exercise.getBuildConfig().setProjectType(ProjectType.FACT);
             }
             case HASKELL -> resource = new ClassPathResource("test-data/import-from-file/valid-import-haskell.zip");
             case OCAML -> resource = new ClassPathResource("test-data/import-from-file/valid-import-ocaml.zip");
@@ -676,17 +676,17 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     void createProgrammingExercise_validExercise_withStaticCodeAnalysis(ProgrammingLanguage language, ProgrammingLanguageFeature programmingLanguageFeature) throws Exception {
-        exercise.setStaticCodeAnalysisEnabled(true);
+        exercise.getBuildConfig().setStaticCodeAnalysisEnabled(true);
         exercise.setProgrammingLanguage(language);
         if (language == SWIFT) {
             exercise.setPackageName("swiftTest");
         }
         // Exclude ProjectType FACT as SCA is not supported
         if (language == C) {
-            exercise.setProjectType(ProjectType.GCC);
+            exercise.getBuildConfig().setProjectType(ProjectType.GCC);
         }
         else {
-            exercise.setProjectType(programmingLanguageFeature.projectTypes().isEmpty() ? null : programmingLanguageFeature.projectTypes().getFirst());
+            exercise.getBuildConfig().setProjectType(programmingLanguageFeature.projectTypes().isEmpty() ? null : programmingLanguageFeature.projectTypes().getFirst());
         }
         mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
         exercise.setChannelName("testchannel-pe");
@@ -755,8 +755,8 @@ public class ProgrammingExerciseTestService {
     void createAndImportJavaProgrammingExercise(boolean staticCodeAnalysisEnabled) throws Exception {
         setupRepositoryMocks(exercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
         mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
-        exercise.setProjectType(ProjectType.MAVEN_MAVEN);
-        exercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
+        exercise.getBuildConfig().setProjectType(ProjectType.MAVEN_MAVEN);
+        exercise.getBuildConfig().setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
         exercise.setChannelName("testchannel-pe");
         var sourceExercise = request.postWithResponseBody("/api/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
@@ -781,7 +781,7 @@ public class ProgrammingExerciseTestService {
 
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", exercise,
                 courseUtilService.addEmptyCourse());
-        exerciseToBeImported.setStaticCodeAnalysisEnabled(false);
+        exerciseToBeImported.getBuildConfig().setStaticCodeAnalysisEnabled(false);
 
         // TODO: at the moment, it does not work that the copied repositories include the same files as ones that have been created originally
         // this is probably the case, because the actual copy is not executed due to mocks
@@ -819,13 +819,13 @@ public class ProgrammingExerciseTestService {
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(programmingLanguage);
         sourceExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
         sourceExercise = programmingExerciseRepository.save(sourceExercise);
-        sourceExercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
+        sourceExercise.getBuildConfig().setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
         programmingExerciseUtilService.addHintsToExercise(sourceExercise);
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
                 courseUtilService.addEmptyCourse());
-        exerciseToBeImported.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
+        exerciseToBeImported.getBuildConfig().setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
         if (addAuxRepos) {
             addAuxiliaryRepositoryToProgrammingExercise(sourceExercise);
         }
@@ -882,14 +882,14 @@ public class ProgrammingExerciseTestService {
             boolean staticCodeAnalysisEnabled = true;
             // Setup exercises for import
             ProgrammingExercise sourceExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(JAVA);
-            sourceExercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
+            sourceExercise.getBuildConfig().setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
             sourceExercise.generateAndSetBuildPlanAccessSecret();
             programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
             programmingExerciseUtilService.addHintsToExercise(sourceExercise);
             sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
             ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
                     courseUtilService.addEmptyCourse());
-            exerciseToBeImported.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
+            exerciseToBeImported.getBuildConfig().setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
 
             // Mock requests
             setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
@@ -1067,9 +1067,9 @@ public class ProgrammingExerciseTestService {
                 HttpStatus.OK);
 
         // Assertions
-        assertThat(exerciseToBeImported.isStaticCodeAnalysisEnabled()).isTrue();
+        assertThat(exerciseToBeImported.getBuildConfig().isStaticCodeAnalysisEnabled()).isTrue();
         assertThat(exerciseToBeImported.getStaticCodeAnalysisCategories()).isEmpty();
-        assertThat(exerciseToBeImported.getMaxStaticCodeAnalysisPenalty()).isNull();
+        assertThat(exerciseToBeImported.getBuildConfig().getMaxStaticCodeAnalysisPenalty()).isNull();
     }
 
     void testImportProgrammingExercise_scaChange_activated() throws Exception {
@@ -1079,8 +1079,8 @@ public class ProgrammingExerciseTestService {
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
                 courseUtilService.addEmptyCourse());
-        exerciseToBeImported.setStaticCodeAnalysisEnabled(true);
-        exerciseToBeImported.setMaxStaticCodeAnalysisPenalty(80);
+        exerciseToBeImported.getBuildConfig().setStaticCodeAnalysisEnabled(true);
+        exerciseToBeImported.getBuildConfig().setMaxStaticCodeAnalysisPenalty(80);
 
         // Mock requests
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, true, false);
@@ -1097,13 +1097,13 @@ public class ProgrammingExerciseTestService {
 
         // Assertions
         var staticCodeAnalysisCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(exerciseToBeImported.getId());
-        assertThat(exerciseToBeImported.isStaticCodeAnalysisEnabled()).isTrue();
+        assertThat(exerciseToBeImported.getBuildConfig().isStaticCodeAnalysisEnabled()).isTrue();
         ProgrammingExercise finalSourceExercise = sourceExercise;
         var defaultCategories = StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().get(sourceExercise.getProgrammingLanguage()).stream()
                 .map(s -> s.toStaticCodeAnalysisCategory(finalSourceExercise)).collect(Collectors.toSet());
         assertThat(staticCodeAnalysisCategories).usingRecursiveFieldByFieldElementComparatorOnFields("name", "state", "penalty", "maxPenalty")
                 .containsExactlyInAnyOrderElementsOf(defaultCategories);
-        assertThat(exerciseToBeImported.getMaxStaticCodeAnalysisPenalty()).isEqualTo(80);
+        assertThat(exerciseToBeImported.getBuildConfig().getMaxStaticCodeAnalysisPenalty()).isEqualTo(80);
     }
 
     void testImportProgrammingExerciseLockRepositorySubmissionPolicyChange() throws Exception {
@@ -1173,7 +1173,7 @@ public class ProgrammingExerciseTestService {
         Exam sourceExam = examUtilService.addExamWithExerciseGroup(course, true);
 
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addProgrammingExerciseToExam(sourceExam, 0);
-        sourceExercise.setStaticCodeAnalysisEnabled(false);
+        sourceExercise.getBuildConfig().setStaticCodeAnalysisEnabled(false);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
         programmingExerciseUtilService.addHintsToExercise(sourceExercise);
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);

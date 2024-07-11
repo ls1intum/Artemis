@@ -45,6 +45,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.User;
@@ -361,13 +362,15 @@ public class ProgrammingExerciseService {
         validatePackageName(programmingExercise, programmingLanguageFeature);
         validateProjectType(programmingExercise, programmingLanguageFeature);
 
+        ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+
         // Check if checkout solution repository is enabled
-        if (programmingExercise.getBuildConfig().getCheckoutSolutionRepository() && !programmingLanguageFeature.checkoutSolutionRepositoryAllowed()) {
+        if (buildConfig.getCheckoutSolutionRepository() && !programmingLanguageFeature.checkoutSolutionRepositoryAllowed()) {
             throw new BadRequestAlertException("Checkout solution repository is not supported for this programming language", "Exercise", "checkoutSolutionRepositoryNotSupported");
         }
 
         // Check if testwise coverage analysis is enabled
-        if (Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled()) && !programmingLanguageFeature.testwiseCoverageAnalysisSupported()) {
+        if (Boolean.TRUE.equals(buildConfig.isTestwiseCoverageEnabled()) && !programmingLanguageFeature.testwiseCoverageAnalysisSupported()) {
             throw new BadRequestAlertException("Testwise coverage analysis is not supported for this language", "Exercise", "testwiseCoverageAnalysisNotSupported");
         }
 
@@ -382,14 +385,15 @@ public class ProgrammingExerciseService {
     private void validateProjectType(ProgrammingExercise programmingExercise, ProgrammingLanguageFeature programmingLanguageFeature) {
         // Check if project type is selected
         if (!programmingLanguageFeature.projectTypes().isEmpty()) {
-            if (programmingExercise.getProjectType() == null) {
+            ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+            if (buildConfig.getProjectType() == null) {
                 throw new BadRequestAlertException("The project type is not set", "Exercise", "projectTypeNotSet");
             }
-            if (!programmingLanguageFeature.projectTypes().contains(programmingExercise.getProjectType())) {
+            if (!programmingLanguageFeature.projectTypes().contains(buildConfig.getProjectType())) {
                 throw new BadRequestAlertException("The project type is not supported for this programming language", "Exercise", "projectTypeNotSupported");
             }
         }
-        else if (programmingExercise.getProjectType() != null) {
+        else if (programmingExercise.getBuildConfig().getProjectType() != null) {
             throw new BadRequestAlertException("The project type is set but not supported", "Exercise", "projectTypeSet");
         }
     }
@@ -423,7 +427,7 @@ public class ProgrammingExerciseService {
     public void validateStaticCodeAnalysisSettings(ProgrammingExercise programmingExercise) {
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.orElseThrow()
                 .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
-        programmingExercise.validateStaticCodeAnalysisSettings(programmingLanguageFeature);
+        programmingExercise.getBuildConfig().validateStaticCodeAnalysisSettings(programmingLanguageFeature);
     }
 
     /**

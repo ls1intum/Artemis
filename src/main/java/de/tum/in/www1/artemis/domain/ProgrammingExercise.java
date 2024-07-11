@@ -54,7 +54,6 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
@@ -89,12 +88,6 @@ public class ProgrammingExercise extends Exercise {
 
     @Column(name = "allow_offline_ide", table = "programming_exercise_details")
     private Boolean allowOfflineIde;
-
-    @Column(name = "static_code_analysis_enabled", table = "programming_exercise_details")
-    private Boolean staticCodeAnalysisEnabled;
-
-    @Column(name = "max_static_code_analysis_penalty", table = "programming_exercise_details")
-    private Integer maxStaticCodeAnalysisPenalty;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "programming_language")
@@ -149,16 +142,8 @@ public class ProgrammingExercise extends Exercise {
     @JsonIgnoreProperties("programmingExercise")
     private SubmissionPolicy submissionPolicy;
 
-    @Nullable
-    @Enumerated(EnumType.ORDINAL)
-    @Column(name = "project_type", table = "programming_exercise_details")
-    private ProjectType projectType;
-
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<ExerciseHint> exerciseHints = new HashSet<>();
-
-    @Column(name = "testwise_coverage_enabled", table = "programming_exercise_details")
-    private boolean testwiseCoverageEnabled;
 
     @Column(name = "release_tests_with_example_solution", table = "programming_exercise_details")
     private boolean releaseTestsWithExampleSolution;
@@ -278,22 +263,6 @@ public class ProgrammingExercise extends Exercise {
 
     public void setAllowOfflineIde(Boolean allowOfflineIde) {
         this.allowOfflineIde = allowOfflineIde;
-    }
-
-    public Boolean isStaticCodeAnalysisEnabled() {
-        return this.staticCodeAnalysisEnabled;
-    }
-
-    public void setStaticCodeAnalysisEnabled(Boolean staticCodeAnalysisEnabled) {
-        this.staticCodeAnalysisEnabled = staticCodeAnalysisEnabled;
-    }
-
-    public Integer getMaxStaticCodeAnalysisPenalty() {
-        return maxStaticCodeAnalysisPenalty;
-    }
-
-    public void setMaxStaticCodeAnalysisPenalty(Integer maxStaticCodeAnalysisPenalty) {
-        this.maxStaticCodeAnalysisPenalty = maxStaticCodeAnalysisPenalty;
     }
 
     public String getProjectKey() {
@@ -614,23 +583,6 @@ public class ProgrammingExercise extends Exercise {
         return super.getAssessmentType();
     }
 
-    @Nullable
-    public ProjectType getProjectType() {
-        return projectType;
-    }
-
-    public void setProjectType(@Nullable ProjectType projectType) {
-        this.projectType = projectType;
-    }
-
-    public Boolean isTestwiseCoverageEnabled() {
-        return testwiseCoverageEnabled;
-    }
-
-    public void setTestwiseCoverageEnabled(Boolean testwiseCoverageEnabled) {
-        this.testwiseCoverageEnabled = testwiseCoverageEnabled;
-    }
-
     /**
      * set all sensitive information to null, so no info with respect to the solution gets leaked to students through json
      */
@@ -741,56 +693,13 @@ public class ProgrammingExercise extends Exercise {
         }
 
         // Check if Xcode has no online code editor enabled
-        if (ProjectType.XCODE.equals(getProjectType()) && Boolean.TRUE.equals(isAllowOnlineEditor())) {
+        if (ProjectType.XCODE.equals(getBuildConfig().getProjectType()) && Boolean.TRUE.equals(isAllowOnlineEditor())) {
             throw new BadRequestAlertException("The online editor is not allowed for Xcode programming exercises", "Exercise", "noParticipationModeAllowed");
         }
 
         // Check if programming language is set
         if (getProgrammingLanguage() == null) {
             throw new BadRequestAlertException("No programming language was specified", "Exercise", "programmingLanguageNotSet");
-        }
-    }
-
-    /**
-     * Validates the static code analysis settings of the programming exercise
-     * 1. The flag staticCodeAnalysisEnabled must not be null
-     * 2. Static code analysis and sequential test runs can't be active at the same time
-     * 3. Static code analysis can only be enabled for supported programming languages
-     * 4. Static code analysis max penalty must only be set if static code analysis is enabled
-     * 5. Static code analysis max penalty must be positive
-     *
-     * @param programmingLanguageFeature describes the features available for the programming language of the programming exercise
-     */
-    public void validateStaticCodeAnalysisSettings(ProgrammingLanguageFeature programmingLanguageFeature) {
-        // Check if the static code analysis flag was set
-        if (isStaticCodeAnalysisEnabled() == null) {
-            throw new BadRequestAlertException("The static code analysis flag must be set to true or false", "Exercise", "staticCodeAnalysisFlagNotSet");
-        }
-
-        // Check that programming exercise doesn't have sequential test runs and static code analysis enabled
-        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && buildConfig.hasSequentialTestRuns()) {
-            throw new BadRequestAlertException("The static code analysis with sequential test runs is not supported at the moment", "Exercise", "staticCodeAnalysisAndSequential");
-        }
-
-        // Check if the programming language supports static code analysis
-        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && !programmingLanguageFeature.staticCodeAnalysis()) {
-            throw new BadRequestAlertException("The static code analysis is not supported for this programming language", "Exercise", "staticCodeAnalysisNotSupportedForLanguage");
-        }
-
-        // Check that FACT has no SCA enabled
-        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && ProjectType.FACT.equals(getProjectType())) {
-            throw new BadRequestAlertException("The static code analysis is not supported for FACT programming exercises", "Exercise", "staticCodeAnalysisNotSupportedForLanguage");
-        }
-
-        // Static code analysis max penalty must only be set if static code analysis is enabled
-        if (Boolean.FALSE.equals(isStaticCodeAnalysisEnabled()) && getMaxStaticCodeAnalysisPenalty() != null) {
-            throw new BadRequestAlertException("Max static code analysis penalty must only be set if static code analysis is enabled", "Exercise",
-                    "staticCodeAnalysisDisabledButPenaltySet");
-        }
-
-        // Static code analysis max penalty must be positive
-        if (getMaxStaticCodeAnalysisPenalty() != null && getMaxStaticCodeAnalysisPenalty() < 0) {
-            throw new BadRequestAlertException("The static code analysis penalty must not be negative", "Exercise", "staticCodeAnalysisPenaltyNotNegative");
         }
     }
 

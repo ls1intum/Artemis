@@ -24,6 +24,7 @@ import com.hazelcast.map.IMap;
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
@@ -246,12 +247,14 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             throw new LocalCIException("Error while getting branch of participation", e);
         }
 
+        ProgrammingExerciseBuildConfig buildConfig = participation.getProgrammingExercise().getBuildConfig();
+
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
-        ProjectType projectType = programmingExercise.getProjectType();
-        boolean staticCodeAnalysisEnabled = programmingExercise.isStaticCodeAnalysisEnabled();
-        boolean sequentialTestRunsEnabled = programmingExercise.getBuildConfig().hasSequentialTestRuns();
-        boolean testwiseCoverageEnabled = programmingExercise.isTestwiseCoverageEnabled();
+        ProjectType projectType = buildConfig.getProjectType();
+        boolean staticCodeAnalysisEnabled = buildConfig.isStaticCodeAnalysisEnabled();
+        boolean sequentialTestRunsEnabled = buildConfig.hasSequentialTestRuns();
+        boolean testwiseCoverageEnabled = buildConfig.isTestwiseCoverageEnabled();
 
         Windfile windfile;
         String dockerImage;
@@ -262,7 +265,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         catch (NullPointerException e) {
             log.warn("Could not retrieve windfile for programming exercise {}. Using default windfile instead.", programmingExercise.getId());
             windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
-            dockerImage = programmingLanguageConfiguration.getImage(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType()));
+            dockerImage = programmingLanguageConfiguration.getImage(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(buildConfig.getProjectType()));
         }
 
         List<String> resultPaths = getTestResultPaths(windfile);

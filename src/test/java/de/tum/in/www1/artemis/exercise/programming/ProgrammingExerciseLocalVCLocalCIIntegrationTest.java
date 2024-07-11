@@ -96,7 +96,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         String projectKey = programmingExercise.getProjectKey();
-        programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        programmingExercise.getBuildConfig().setProjectType(ProjectType.PLAIN_GRADLE);
         programmingExercise.setTestRepositoryUri(localVCBaseUrl + "/git/" + projectKey + "/" + projectKey.toLowerCase() + "-tests.git");
         programmingExerciseRepository.save(programmingExercise);
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
@@ -145,7 +145,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         doReturn(ZonedDateTime.now().minusSeconds(2)).when(versionControlService).getPushDate(any(), any(), any());
 
         ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
-        newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        newExercise.getBuildConfig().setProjectType(ProjectType.PLAIN_GRADLE);
 
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns a dummy commitHash for both the assignment and the test repository.
         // Note: The stub needs to receive the same object twice because there are two requests to the same method (one for the template participation and one for the solution

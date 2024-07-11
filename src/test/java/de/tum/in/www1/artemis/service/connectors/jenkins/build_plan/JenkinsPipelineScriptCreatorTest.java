@@ -12,6 +12,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.BuildPlan;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
@@ -39,10 +40,11 @@ class JenkinsPipelineScriptCreatorTest extends AbstractSpringIntegrationJenkinsG
 
         programmingExercise = new ProgrammingExercise();
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
-        programmingExercise.setProjectType(ProjectType.MAVEN_MAVEN);
-        programmingExercise.setStaticCodeAnalysisEnabled(true);
+        programmingExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
+        programmingExercise.getBuildConfig().setProjectType(ProjectType.MAVEN_MAVEN);
+        programmingExercise.getBuildConfig().setStaticCodeAnalysisEnabled(true);
         programmingExercise.getBuildConfig().setSequentialTestRuns(false);
-        programmingExercise.setTestwiseCoverageEnabled(false);
+        programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(false);
         programmingExercise.setReleaseDate(null);
         course.addExercises(programmingExercise);
 
@@ -73,7 +75,7 @@ class JenkinsPipelineScriptCreatorTest extends AbstractSpringIntegrationJenkinsG
         assertThat(oldBuildPlan.getBuildPlan()).contains("isStaticCodeAnalysisEnabled = true");
 
         // change exercise attributes
-        programmingExercise.setStaticCodeAnalysisEnabled(false);
+        programmingExercise.getBuildConfig().setStaticCodeAnalysisEnabled(false);
         jenkinsPipelineScriptCreator.createBuildPlanForExercise(programmingExercise);
 
         BuildPlan newBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(programmingExercise.getId()).orElseThrow();

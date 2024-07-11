@@ -94,7 +94,7 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
 
     private void addStaticCodeAnalysisFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult, ProgrammingExercise programmingExercise) {
         final var staticCodeAnalysisReports = buildResult.getStaticCodeAnalysisReports();
-        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null && !staticCodeAnalysisReports.isEmpty()) {
+        if (Boolean.TRUE.equals(programmingExercise.getBuildConfig().isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null && !staticCodeAnalysisReports.isEmpty()) {
             List<Feedback> scaFeedbackList = feedbackCreationService.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
             result.addFeedbacks(scaFeedbackList);
             result.setCodeIssueCount(scaFeedbackList.size());
@@ -102,7 +102,7 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
     }
 
     private void addTestwiseCoverageReportToResult(Result result, AbstractBuildResultNotificationDTO buildResult, ProgrammingExercise programmingExercise) {
-        if (Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled())) {
+        if (Boolean.TRUE.equals(programmingExercise.getBuildConfig().isTestwiseCoverageEnabled())) {
             var report = buildResult.getTestwiseCoverageReports();
             if (report != null) {
                 // since the test cases are not saved to the database yet, the test case is null for the entries

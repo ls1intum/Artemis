@@ -17,6 +17,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -78,8 +79,9 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
         }
         String script = buildScriptProviderService.getScriptFor(exercise);
         Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(exercise);
-        exercise.getBuildConfig().setBuildScript(script);
-        exercise.getBuildConfig().setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
+        ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
+        buildConfig.setBuildScript(script);
+        buildConfig.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
         // recreating the build plans for the exercise means we need to store the updated exercise in the database
         programmingExerciseRepository.save(exercise);
     }

@@ -107,7 +107,7 @@ public class ProgrammingExerciseImportFromFileService {
             programmingExerciseService.validateNewProgrammingExerciseSettings(originalProgrammingExercise, course);
             // TODO: creating the whole exercise (from template) is a bad solution in this case, we do not want the template content, instead we want the file content of the zip
             newProgrammingExercise = programmingExerciseService.createProgrammingExercise(originalProgrammingExercise, true);
-            if (Boolean.TRUE.equals(originalProgrammingExercise.isStaticCodeAnalysisEnabled())) {
+            if (Boolean.TRUE.equals(originalProgrammingExercise.getBuildConfig().isStaticCodeAnalysisEnabled())) {
                 staticCodeAnalysisService.createDefaultCategories(newProgrammingExercise);
             }
             Path pathToDirectoryWithImportedContent = exerciseFilePath.toAbsolutePath().getParent().resolve(FilenameUtils.getBaseName(exerciseFilePath.toString()));

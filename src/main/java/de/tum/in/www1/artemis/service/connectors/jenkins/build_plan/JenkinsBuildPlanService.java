@@ -37,6 +37,7 @@ import com.offbytwo.jenkins.JenkinsServer;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
@@ -132,10 +133,11 @@ public class JenkinsBuildPlanService {
         final JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs internalRepositoryUris = getInternalRepositoryUris(exercise, repositoryUri);
 
         final ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
-        final var configBuilder = builderFor(programmingLanguage, exercise.getProjectType());
+        final ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
+        final var configBuilder = builderFor(programmingLanguage, buildConfig.getProjectType());
         final String buildPlanUrl = jenkinsPipelineScriptCreator.generateBuildPlanURL(exercise);
         final boolean checkoutSolution = exercise.getBuildConfig().getCheckoutSolutionRepository();
-        final Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofNullable(exercise.getProjectType()), internalRepositoryUris, checkoutSolution,
+        final Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofNullable(buildConfig.getProjectType()), internalRepositoryUris, checkoutSolution,
                 buildPlanUrl);
 
         final String jobFolder = exercise.getProjectKey();
@@ -495,10 +497,10 @@ public class JenkinsBuildPlanService {
             return null;
         }
         try {
-            Windfile windfile = programmingExercise.getBuildConfig().getWindfile();
+            ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+            Windfile windfile = buildConfig.getWindfile();
             Map<String, AeolusRepository> repositories = aeolusBuildPlanService.get().createRepositoryMapForWindfile(programmingExercise.getProgrammingLanguage(),
-                    programmingExercise.getBuildConfig().getBranch(), programmingExercise.getBuildConfig().getCheckoutSolutionRepository(), repositoryUri, testRepositoryUri,
-                    solutionRepositoryUri, List.of());
+                    buildConfig.getBranch(), buildConfig.getCheckoutSolutionRepository(), repositoryUri, testRepositoryUri, solutionRepositoryUri, List.of());
 
             String resultHookUrl = artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH;
             windfile.setPreProcessingMetadata(buildPlanId, programmingExercise.getProjectName(), this.vcsCredentials, resultHookUrl, "planDescription", repositories,

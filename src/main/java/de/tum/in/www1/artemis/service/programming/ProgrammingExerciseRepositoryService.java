@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
@@ -127,7 +128,7 @@ public class ProgrammingExerciseRepositoryService {
      */
     private RepositoryResources getRepositoryResources(final ProgrammingExercise programmingExercise, final RepositoryType repositoryType) throws GitAPIException {
         final String programmingLanguage = programmingExercise.getProgrammingLanguage().toString().toLowerCase(Locale.ROOT);
-        final ProjectType projectType = programmingExercise.getProjectType();
+        final ProjectType projectType = programmingExercise.getBuildConfig().getProjectType();
         final Path projectTypeTemplateDir = getTemplateDirectoryForRepositoryType(repositoryType);
 
         final VcsRepositoryUri repoUri = programmingExercise.getRepositoryURL(repositoryType);
@@ -304,7 +305,8 @@ public class ProgrammingExerciseRepositoryService {
      */
     private void setupJVMTestTemplateAndPush(final RepositoryResources resources, final ProgrammingExercise programmingExercise, final User user)
             throws IOException, GitAPIException {
-        final ProjectType projectType = programmingExercise.getProjectType();
+        ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+        final ProjectType projectType = buildConfig.getProjectType();
         final Path repoLocalPath = getRepoAbsoluteLocalPath(resources.repository);
 
         // First get files that are not dependent on the project type
@@ -328,9 +330,9 @@ public class ProgrammingExerciseRepositoryService {
 
         final Map<String, Boolean> sectionsMap = new HashMap<>();
         // Keep or delete static code analysis configuration in the build configuration file
-        sectionsMap.put("static-code-analysis", Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()));
+        sectionsMap.put("static-code-analysis", Boolean.TRUE.equals(buildConfig.isStaticCodeAnalysisEnabled()));
         // Keep or delete testwise coverage configuration in the build file
-        sectionsMap.put("record-testwise-coverage", Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled()));
+        sectionsMap.put("record-testwise-coverage", Boolean.TRUE.equals(buildConfig.isTestwiseCoverageEnabled()));
 
         if (programmingExercise.getBuildConfig().hasSequentialTestRuns()) {
             setupTestTemplateSequentialTestRuns(resources, templatePath, projectTemplatePath, projectType, sectionsMap);
@@ -369,7 +371,7 @@ public class ProgrammingExerciseRepositoryService {
      */
     private void setupJVMTestTemplateProjectTypeResources(final RepositoryResources resources, final ProgrammingExercise programmingExercise, final Path repoLocalPath)
             throws IOException {
-        final ProjectType projectType = programmingExercise.getProjectType();
+        final ProjectType projectType = programmingExercise.getBuildConfig().getProjectType();
         final Path projectTypeTemplatePath = ProgrammingExerciseService.getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), projectType)
                 .resolve(TEST_DIR);
         final Path projectTypeProjectTemplatePath = projectTypeTemplatePath.resolve("projectTemplate");
@@ -394,7 +396,8 @@ public class ProgrammingExerciseRepositoryService {
      */
     private void setupTestTemplateRegularTestRuns(final RepositoryResources resources, final ProgrammingExercise programmingExercise, final Path templatePath,
             final Map<String, Boolean> sectionsMap) throws IOException {
-        final ProjectType projectType = programmingExercise.getProjectType();
+        ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+        final ProjectType projectType = buildConfig.getProjectType();
         final Path repoLocalPath = getRepoAbsoluteLocalPath(resources.repository);
         final Path testFilePath = templatePath.resolve(TEST_FILES_PATH);
         final Resource[] testFileResources = resourceLoaderService.getFileResources(testFilePath);
@@ -405,7 +408,7 @@ public class ProgrammingExerciseRepositoryService {
 
         setupBuildToolProjectFile(repoLocalPath, projectType, sectionsMap);
 
-        if (programmingExercise.getProjectType() != ProjectType.MAVEN_BLACKBOX) {
+        if (buildConfig.getProjectType() != ProjectType.MAVEN_BLACKBOX) {
             fileService.copyResources(testFileResources, resources.prefix, packagePath, false);
         }
 
@@ -414,7 +417,7 @@ public class ProgrammingExerciseRepositoryService {
         }
 
         // Copy static code analysis config files
-        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
+        if (Boolean.TRUE.equals(buildConfig.isStaticCodeAnalysisEnabled())) {
             setupStaticCodeAnalysisConfigFiles(resources, templatePath, repoLocalPath);
         }
     }
@@ -445,7 +448,7 @@ public class ProgrammingExerciseRepositoryService {
     }
 
     private void overwriteProjectTypeSpecificFiles(final RepositoryResources resources, final ProgrammingExercise programmingExercise, final Path packagePath) throws IOException {
-        final ProjectType projectType = programmingExercise.getProjectType();
+        final ProjectType projectType = programmingExercise.getBuildConfig().getProjectType();
         final Path projectTypeTemplatePath = ProgrammingExerciseService.getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), projectType)
                 .resolve(TEST_DIR);
 
@@ -626,13 +629,13 @@ public class ProgrammingExerciseRepositoryService {
         // So usually, the name should not change.
         final String cleanPackageName = packageName.replaceAll("[^a-zA-Z\\d]", "");
 
-        if (ProjectType.PLAIN.equals(programmingExercise.getProjectType())) {
+        if (ProjectType.PLAIN.equals(programmingExercise.getBuildConfig().getProjectType())) {
             fileService.replaceVariablesInDirectoryName(repositoryLocalPath, PACKAGE_NAME_FOLDER_PLACEHOLDER, cleanPackageName);
             fileService.replaceVariablesInFilename(repositoryLocalPath, PACKAGE_NAME_FILE_PLACEHOLDER, cleanPackageName);
 
             replacements.put(PACKAGE_NAME_PLACEHOLDER, cleanPackageName);
         }
-        else if (ProjectType.XCODE.equals(programmingExercise.getProjectType())) {
+        else if (ProjectType.XCODE.equals(programmingExercise.getBuildConfig().getProjectType())) {
             fileService.replaceVariablesInDirectoryName(repositoryLocalPath, APP_NAME_PLACEHOLDER, cleanPackageName);
             fileService.replaceVariablesInFilename(repositoryLocalPath, APP_NAME_PLACEHOLDER, cleanPackageName);
 

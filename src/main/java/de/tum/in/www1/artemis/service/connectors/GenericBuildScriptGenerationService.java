@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 
 /**
  * Service for generating build scripts for programming exercises
@@ -31,9 +32,9 @@ public class GenericBuildScriptGenerationService extends BuildScriptGenerationSe
     @Override
     public String getScript(ProgrammingExercise programmingExercise) {
         try {
-            return buildScriptProviderService.getScriptFor(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType()),
-                    programmingExercise.isStaticCodeAnalysisEnabled(), programmingExercise.getBuildConfig().hasSequentialTestRuns(),
-                    programmingExercise.isTestwiseCoverageEnabled());
+            ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+            return buildScriptProviderService.getScriptFor(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(buildConfig.getProjectType()),
+                    buildConfig.isStaticCodeAnalysisEnabled(), programmingExercise.getBuildConfig().hasSequentialTestRuns(), buildConfig.isTestwiseCoverageEnabled());
         }
         catch (IOException e) {
             log.error("Failed to generate build script for programming exercise " + programmingExercise.getId(), e);

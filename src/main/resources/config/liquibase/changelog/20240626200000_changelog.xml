@@ -17,6 +17,10 @@
             <column name="timeout_seconds" type="INT"/>
             <column name="docker_flags" type="VARCHAR(255)"/>
             <column name="programming_exercise_id" type="BIGINT"/>
+            <column name="static_code_analysis_enabled" type="BOOLEAN"/>
+            <column name="max_static_code_analysis_penalty" type="INT"/>
+            <column name="project_type" type="INT"/>
+            <column name="testwise_coverage_enabled" type="BOOLEAN"/>
         </createTable>
 
         <!-- Add a new column to the programming_exercise table to reference the programming_exercise_build_config -->
@@ -43,10 +47,10 @@
     <!-- Move data from programming_exercise to programming_exercise_build_config and remove the column from programming_exercise -->
     <changeSet id="20240626200000_2" author="bbesrour">
         <sql>
-            INSERT INTO programming_exercise_build_config (sequential_test_runs, branch, build_plan_configuration, build_script, checkout_solution_repository, programming_exercise_id)
-            SELECT e.sequential_test_runs, ped.branch, ped.build_plan_configuration, ped.build_script, ped.checkout_solution_repository, e.id
-            FROM exercise e JOIN programming_exercise_details ped ON e.id = ped.id
-            WHERE e.discriminator = 'P';
+            INSERT INTO programming_exercise_build_config (sequential_test_runs, branch, build_plan_configuration, build_script, checkout_solution_repository, programming_exercise_id, static_code_analysis_enabled, max_static_code_analysis_penalty, project_type, testwise_coverage_enabled)
+            SELECT exercise.sequential_test_runs, programming_exercise_details.branch, programming_exercise_details.build_plan_configuration, programming_exercise_details.build_script, programming_exercise_details.checkout_solution_repository, exercise.id, programming_exercise_details.static_code_analysis_enabled, programming_exercise_details.max_static_code_analysis_penalty, programming_exercise_details.project_type, programming_exercise_details.testwise_coverage_enabled
+            FROM exercise JOIN programming_exercise_details ON exercise.id = programming_exercise_details.id
+            WHERE exercise.discriminator = 'P';
 
             UPDATE programming_exercise_details SET programming_exercise_build_config_id = (
                 SELECT id
@@ -59,6 +63,10 @@
             ALTER TABLE programming_exercise_details DROP COLUMN build_plan_configuration;
             ALTER TABLE programming_exercise_details DROP COLUMN build_script;
             ALTER TABLE programming_exercise_details DROP COLUMN checkout_solution_repository;
+            ALTER TABLE programming_exercise_details DROP COLUMN static_code_analysis_enabled;
+            ALTER TABLE programming_exercise_details DROP COLUMN max_static_code_analysis_penalty;
+            ALTER TABLE programming_exercise_details DROP COLUMN project_type;
+            ALTER TABLE programming_exercise_details DROP COLUMN testwise_coverage_enabled;
         </sql>
     </changeSet>
 </databaseChangeLog>

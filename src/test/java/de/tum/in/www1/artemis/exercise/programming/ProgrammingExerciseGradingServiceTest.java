@@ -222,7 +222,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
             ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(group);
             // Adjust settings so that exam and course exercises can use the same tests
             programmingExercise.setMaxPoints(42.0);
-            programmingExercise.setMaxStaticCodeAnalysisPenalty(40);
+            programmingExercise.getBuildConfig().setMaxStaticCodeAnalysisPenalty(40);
             programmingExercise = super.programmingExerciseRepository.save(programmingExercise);
             programmingExercise = super.programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
             programmingExercise = super.programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -1108,7 +1108,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         }
 
         // Also remove max penalty from exercise
-        programmingExerciseSCAEnabled.setMaxStaticCodeAnalysisPenalty(null);
+        programmingExerciseSCAEnabled.getBuildConfig().setMaxStaticCodeAnalysisPenalty(null);
         programmingExerciseRepository.save(programmingExerciseSCAEnabled);
 
         // create results for tests without any limits
@@ -1183,7 +1183,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         }
 
         // Remove max penalty from exercise
-        programmingExerciseSCAEnabled.setMaxStaticCodeAnalysisPenalty(null);
+        programmingExerciseSCAEnabled.getBuildConfig().setMaxStaticCodeAnalysisPenalty(null);
         programmingExerciseRepository.save(programmingExerciseSCAEnabled);
 
         // Remove category penalty limits
@@ -1231,7 +1231,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCalculateScoreWithStaticCodeAnalysisPenalties_cappedByExerciseMaxPenalty() {
-        programmingExerciseSCAEnabled.setMaxStaticCodeAnalysisPenalty(20);
+        programmingExerciseSCAEnabled.getBuildConfig().setMaxStaticCodeAnalysisPenalty(20);
         programmingExerciseSCAEnabled = exerciseRepository.save(programmingExerciseSCAEnabled);
 
         activateAllTestCases(false);

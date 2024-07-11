@@ -57,7 +57,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         programmingExercise = (ProgrammingExercise) course.getExercises().iterator().next();
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
-        programmingExercise.setProjectType(ProjectType.PLAIN_MAVEN);
+        programmingExercise.getBuildConfig().setProjectType(ProjectType.PLAIN_MAVEN);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
     }
@@ -114,7 +114,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
                 org.opentest4j.AssertionFailedError: expected:
                     something else""";
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.KOTLIN);
-        programmingExercise.setProjectType(null);
+        programmingExercise.getBuildConfig().setProjectType(null);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         String actualFeedback = createFeedbackFromTestCase("test2", List.of(msgMatchMultiple), false);
         assertThat(actualFeedback).isEqualTo("""

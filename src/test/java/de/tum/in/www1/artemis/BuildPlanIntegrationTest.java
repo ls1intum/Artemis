@@ -12,6 +12,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.BuildPlan;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
@@ -51,10 +52,11 @@ class BuildPlanIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTes
 
         programmingExercise = new ProgrammingExercise();
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
-        programmingExercise.setProjectType(ProjectType.MAVEN_MAVEN);
-        programmingExercise.setStaticCodeAnalysisEnabled(true);
+        programmingExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
+        programmingExercise.getBuildConfig().setProjectType(ProjectType.MAVEN_MAVEN);
+        programmingExercise.getBuildConfig().setStaticCodeAnalysisEnabled(true);
         programmingExercise.getBuildConfig().setSequentialTestRuns(false);
-        programmingExercise.setTestwiseCoverageEnabled(false);
+        programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(false);
         programmingExercise.setReleaseDate(null);
         course.addExercises(programmingExercise);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);

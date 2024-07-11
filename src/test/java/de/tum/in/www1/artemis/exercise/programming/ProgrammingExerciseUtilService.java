@@ -61,6 +61,7 @@ import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestRepository;
@@ -99,6 +100,9 @@ public class ProgrammingExerciseUtilService {
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Autowired
     private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepo;
@@ -460,6 +464,7 @@ public class ProgrammingExerciseUtilService {
         programmingExercise.setAssessmentDueDate(assessmentDueDate);
         programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
 
+        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         course.addExercises(programmingExercise);
         programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -542,7 +547,7 @@ public class ProgrammingExerciseUtilService {
      * @param programmingExercise The programming exercise to which static code analysis categories should be added.
      */
     public void addStaticCodeAnalysisCategoriesToProgrammingExercise(ProgrammingExercise programmingExercise) {
-        programmingExercise.setStaticCodeAnalysisEnabled(true);
+        programmingExercise.getBuildConfig().setStaticCodeAnalysisEnabled(true);
         programmingExerciseRepository.save(programmingExercise);
         var category1 = ProgrammingExerciseFactory.generateStaticCodeAnalysisCategory(programmingExercise, "Bad Practice", CategoryState.GRADED, 3D, 10D);
         var category2 = ProgrammingExerciseFactory.generateStaticCodeAnalysisCategory(programmingExercise, "Code Style", CategoryState.GRADED, 5D, 10D);

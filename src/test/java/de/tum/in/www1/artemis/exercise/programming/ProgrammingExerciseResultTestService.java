@@ -355,7 +355,7 @@ public class ProgrammingExerciseResultTestService {
     // Test
     public void shouldGenerateTestwiseCoverageFileReports(AbstractBuildResultNotificationDTO resultNotification) throws GitAPIException {
         // set testwise coverage analysis for programming exercise
-        programmingExercise.setTestwiseCoverageEnabled(true);
+        programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(true);
         programmingExerciseRepository.save(programmingExercise);
         solutionParticipation.setProgrammingExercise(programmingExercise);
         solutionProgrammingExerciseRepository.save(solutionParticipation);

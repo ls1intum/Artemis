@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -116,20 +117,23 @@ public class ProgrammingExerciseFactory {
     private static void populateUnreleasedProgrammingExercise(ProgrammingExercise programmingExercise, ProgrammingLanguage programmingLanguage) {
         programmingExercise.generateAndSetProjectKey();
         programmingExercise.setAllowOfflineIde(true);
-        programmingExercise.setStaticCodeAnalysisEnabled(false);
-        programmingExercise.setTestwiseCoverageEnabled(false);
+        if (programmingExercise.getBuildConfig() == null) {
+            programmingExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
+        }
+        programmingExercise.getBuildConfig().setStaticCodeAnalysisEnabled(false);
+        programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(false);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setProgrammingLanguage(programmingLanguage);
         programmingExercise.getBuildConfig().setBuildScript("Some script");
         programmingExercise.getBuildConfig().setBuildPlanConfiguration("{\"api\":\"v0.0.1\",\"metadata\":{},\"actions\":[]}");
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
-            programmingExercise.setProjectType(ProjectType.PLAIN_MAVEN);
+            programmingExercise.getBuildConfig().setProjectType(ProjectType.PLAIN_MAVEN);
         }
         else if (programmingLanguage == ProgrammingLanguage.SWIFT) {
-            programmingExercise.setProjectType(ProjectType.PLAIN);
+            programmingExercise.getBuildConfig().setProjectType(ProjectType.PLAIN);
         }
         else {
-            programmingExercise.setProjectType(null);
+            programmingExercise.getBuildConfig().setProjectType(null);
         }
         programmingExercise.setPackageName(programmingLanguage == ProgrammingLanguage.SWIFT ? "swiftTest" : "de.test");
         final var repoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
@@ -149,6 +153,7 @@ public class ProgrammingExerciseFactory {
      */
     public static ProgrammingExercise generateToBeImportedProgrammingExercise(String title, String shortName, ProgrammingExercise template, Course targetCourse) {
         ProgrammingExercise toBeImported = new ProgrammingExercise();
+        toBeImported.setBuildConfig(new ProgrammingExerciseBuildConfig());
         toBeImported.setCourse(targetCourse);
         toBeImported.setTitle(title);
         toBeImported.setShortName(shortName);
@@ -173,8 +178,8 @@ public class ProgrammingExerciseFactory {
         toBeImported.setPackageName(template.getPackageName());
         toBeImported.setAllowOnlineEditor(template.isAllowOnlineEditor());
         toBeImported.setAllowOfflineIde(template.isAllowOfflineIde());
-        toBeImported.setStaticCodeAnalysisEnabled(template.isStaticCodeAnalysisEnabled());
-        toBeImported.setTestwiseCoverageEnabled(template.isTestwiseCoverageEnabled());
+        toBeImported.getBuildConfig().setStaticCodeAnalysisEnabled(template.getBuildConfig().isStaticCodeAnalysisEnabled());
+        toBeImported.getBuildConfig().setTestwiseCoverageEnabled(template.getBuildConfig().isTestwiseCoverageEnabled());
         toBeImported.setTutorParticipations(null);
         toBeImported.setPosts(null);
         toBeImported.setStudentParticipations(null);
@@ -182,7 +187,7 @@ public class ProgrammingExerciseFactory {
         toBeImported.setExampleSubmissions(null);
         toBeImported.setTestRepositoryUri(template.getTestRepositoryUri());
         toBeImported.setProgrammingLanguage(template.getProgrammingLanguage());
-        toBeImported.setProjectType(template.getProjectType());
+        toBeImported.getBuildConfig().setProjectType(template.getBuildConfig().getProjectType());
         toBeImported.setAssessmentDueDate(template.getAssessmentDueDate());
         toBeImported.setAttachments(null);
         toBeImported.setDueDate(template.getDueDate());
@@ -406,24 +411,27 @@ public class ProgrammingExerciseFactory {
         programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
         programmingExercise.setGradingInstructions("Lorem Ipsum");
         programmingExercise.setTitle(title);
+        if (programmingExercise.getBuildConfig() == null) {
+            programmingExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
+        }
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
-            programmingExercise.setProjectType(ProjectType.PLAIN_MAVEN);
+            programmingExercise.getBuildConfig().setProjectType(ProjectType.PLAIN_MAVEN);
         }
         else if (programmingLanguage == ProgrammingLanguage.SWIFT) {
-            programmingExercise.setProjectType(ProjectType.PLAIN);
+            programmingExercise.getBuildConfig().setProjectType(ProjectType.PLAIN);
         }
         else if (programmingLanguage == ProgrammingLanguage.C) {
-            programmingExercise.setProjectType(ProjectType.GCC);
+            programmingExercise.getBuildConfig().setProjectType(ProjectType.GCC);
         }
         else {
-            programmingExercise.setProjectType(null);
+            programmingExercise.getBuildConfig().setProjectType(null);
         }
         programmingExercise.setAllowOnlineEditor(true);
-        programmingExercise.setStaticCodeAnalysisEnabled(enableStaticCodeAnalysis);
+        programmingExercise.getBuildConfig().setStaticCodeAnalysisEnabled(enableStaticCodeAnalysis);
         if (enableStaticCodeAnalysis) {
-            programmingExercise.setMaxStaticCodeAnalysisPenalty(40);
+            programmingExercise.getBuildConfig().setMaxStaticCodeAnalysisPenalty(40);
         }
-        programmingExercise.setTestwiseCoverageEnabled(enableTestwiseCoverageAnalysis);
+        programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(enableTestwiseCoverageAnalysis);
         // Note: no separators are allowed for Swift package names
         if (programmingLanguage == ProgrammingLanguage.SWIFT) {
             programmingExercise.setPackageName("swiftTest");

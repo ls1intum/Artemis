@@ -151,7 +151,7 @@ public class StaticCodeAnalysisResource {
     }
 
     private void checkSCAEnabledForExerciseElseThrow(ProgrammingExercise programmingExercise) {
-        if (!Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
+        if (!Boolean.TRUE.equals(programmingExercise.getBuildConfig().isStaticCodeAnalysisEnabled())) {
             throw new BadRequestAlertException("Static code analysis is not enabled", ENTITY_NAME, "staticCodeAnalysisNotEnabled");
         }
     }

@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
@@ -39,7 +40,8 @@ public class LocalCIBuildConfigurationService {
         buildScript.append("#!/bin/bash\n");
         buildScript.append("cd ").append(LOCALCI_WORKING_DIRECTORY).append("/testing-dir\n");
 
-        String customScript = programmingExercise.getBuildConfig().getBuildScript();
+        ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+        String customScript = buildConfig.getBuildScript();
         // Todo: get default script if custom script is null before trying to get actions from windfile
         if (customScript != null) {
             buildScript.append(customScript);
@@ -47,7 +49,7 @@ public class LocalCIBuildConfigurationService {
         else {
             List<ScriptAction> actions;
 
-            Windfile windfile = programmingExercise.getBuildConfig().getWindfile();
+            Windfile windfile = buildConfig.getWindfile();
 
             if (windfile == null) {
                 windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);

@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
@@ -127,9 +128,11 @@ public class ProgrammingExerciseImportBasicService {
         setupTestRepository(newProgrammingExercise);
         programmingExerciseService.initParticipations(newProgrammingExercise);
 
+        ProgrammingExerciseBuildConfig originalBuildConfig = originalProgrammingExercise.getBuildConfig();
+
         if (newProgrammingExercise.getBuildConfig().getBuildPlanConfiguration() == null) {
             // this means the user did not override the build plan config when importing the exercise and want to reuse it from the existing exercise
-            newProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(originalProgrammingExercise.getBuildConfig().getBuildPlanConfiguration());
+            newProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(originalBuildConfig.getBuildPlanConfiguration());
         }
 
         // Hints, tasks, test cases and static code analysis categories
@@ -152,10 +155,10 @@ public class ProgrammingExerciseImportBasicService {
         programmingExerciseTaskService.updateTestIds(importedExercise, newTestCaseIdByOldId);
 
         // Copy or create SCA categories
-        if (Boolean.TRUE.equals(importedExercise.isStaticCodeAnalysisEnabled() && Boolean.TRUE.equals(originalProgrammingExercise.isStaticCodeAnalysisEnabled()))) {
+        if (Boolean.TRUE.equals(importedExercise.getBuildConfig().isStaticCodeAnalysisEnabled() && Boolean.TRUE.equals(originalBuildConfig.isStaticCodeAnalysisEnabled()))) {
             importStaticCodeAnalysisCategories(originalProgrammingExercise, importedExercise);
         }
-        else if (Boolean.TRUE.equals(importedExercise.isStaticCodeAnalysisEnabled()) && !Boolean.TRUE.equals(originalProgrammingExercise.isStaticCodeAnalysisEnabled())) {
+        else if (Boolean.TRUE.equals(importedExercise.getBuildConfig().isStaticCodeAnalysisEnabled()) && !Boolean.TRUE.equals(originalBuildConfig.isStaticCodeAnalysisEnabled())) {
             staticCodeAnalysisService.createDefaultCategories(importedExercise);
         }
 

@@ -40,6 +40,7 @@ import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.GradingCriterion;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -247,7 +248,7 @@ public class ProgrammingExerciseResource {
             ProgrammingExercise newProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExercise, false);
 
             // Create default static code analysis categories
-            if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
+            if (Boolean.TRUE.equals(programmingExercise.getBuildConfig().isStaticCodeAnalysisEnabled())) {
                 staticCodeAnalysisService.createDefaultCategories(newProgrammingExercise);
             }
 
@@ -292,13 +293,14 @@ public class ProgrammingExerciseResource {
         checkProgrammingExerciseForError(updatedProgrammingExercise);
 
         var programmingExerciseBeforeUpdate = programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(updatedProgrammingExercise.getId());
+        ProgrammingExerciseBuildConfig buildConfigBeforeUpdate = programmingExerciseBeforeUpdate.getBuildConfig();
         if (!Objects.equals(programmingExerciseBeforeUpdate.getShortName(), updatedProgrammingExercise.getShortName())) {
             throw new BadRequestAlertException("The programming exercise short name cannot be changed", ENTITY_NAME, "shortNameCannotChange");
         }
-        if (!Objects.equals(programmingExerciseBeforeUpdate.isStaticCodeAnalysisEnabled(), updatedProgrammingExercise.isStaticCodeAnalysisEnabled())) {
+        if (!Objects.equals(buildConfigBeforeUpdate.isStaticCodeAnalysisEnabled(), updatedProgrammingExercise.getBuildConfig().isStaticCodeAnalysisEnabled())) {
             throw new BadRequestAlertException("Static code analysis enabled flag must not be changed", ENTITY_NAME, "staticCodeAnalysisCannotChange");
         }
-        if (!Objects.equals(programmingExerciseBeforeUpdate.isTestwiseCoverageEnabled(), updatedProgrammingExercise.isTestwiseCoverageEnabled())) {
+        if (!Objects.equals(buildConfigBeforeUpdate.isTestwiseCoverageEnabled(), updatedProgrammingExercise.getBuildConfig().isTestwiseCoverageEnabled())) {
             throw new BadRequestAlertException("Testwise coverage enabled flag must not be changed", ENTITY_NAME, "testwiseCoverageCannotChange");
         }
         if (!Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {

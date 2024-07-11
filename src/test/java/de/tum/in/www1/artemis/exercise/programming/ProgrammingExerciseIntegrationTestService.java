@@ -888,15 +888,15 @@ class ProgrammingExerciseIntegrationTestService {
 
     void updateProgrammingExercise_staticCodeAnalysisMustNotChange_falseToTrue_badRequest() throws Exception {
         mockBuildPlanAndRepositoryCheck(programmingExercise);
-        programmingExercise.setStaticCodeAnalysisEnabled(true);
+        programmingExercise.getBuildConfig().setStaticCodeAnalysisEnabled(true);
         request.put("/api/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     void updateProgrammingExercise_staticCodeAnalysisMustNotChange_trueToFalse_badRequest() throws Exception {
         mockBuildPlanAndRepositoryCheck(programmingExercise);
-        programmingExercise.setStaticCodeAnalysisEnabled(true);
+        programmingExercise.getBuildConfig().setStaticCodeAnalysisEnabled(true);
         programmingExerciseRepository.save(programmingExercise);
-        programmingExercise.setStaticCodeAnalysisEnabled(false);
+        programmingExercise.getBuildConfig().setStaticCodeAnalysisEnabled(false);
         request.put("/api/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
@@ -969,7 +969,7 @@ class ProgrammingExerciseIntegrationTestService {
         mockBuildPlanAndRepositoryCheck(programmingExercise);
 
         ProgrammingExercise updatedExercise = programmingExercise;
-        updatedExercise.setStaticCodeAnalysisEnabled(true);
+        updatedExercise.getBuildConfig().setStaticCodeAnalysisEnabled(true);
 
         request.put("/api/programming-exercises", updatedExercise, HttpStatus.BAD_REQUEST);
     }
@@ -981,7 +981,7 @@ class ProgrammingExerciseIntegrationTestService {
         mockBuildPlanAndRepositoryCheck(programmingExercise);
 
         ProgrammingExercise updatedExercise = programmingExercise;
-        updatedExercise.setTestwiseCoverageEnabled(true);
+        updatedExercise.getBuildConfig().setTestwiseCoverageEnabled(true);
 
         request.put("/api/programming-exercises", updatedExercise, HttpStatus.BAD_REQUEST);
     }
@@ -1192,7 +1192,7 @@ class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setId(null);
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName("NewShortname");
-        programmingExercise.setStaticCodeAnalysisEnabled(null);
+        programmingExercise.getBuildConfig().setStaticCodeAnalysisEnabled(null);
         request.post("/api/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
@@ -1200,7 +1200,7 @@ class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setId(null);
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName("NewShortname");
-        programmingExercise.setStaticCodeAnalysisEnabled(true);
+        programmingExercise.getBuildConfig().setStaticCodeAnalysisEnabled(true);
         programmingExercise.getBuildConfig().setSequentialTestRuns(true);
         request.post("/api/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
     }
@@ -1209,9 +1209,9 @@ class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setId(null);
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName("NewShortname");
-        programmingExercise.setStaticCodeAnalysisEnabled(true);
+        programmingExercise.getBuildConfig().setStaticCodeAnalysisEnabled(true);
         programmingExercise.programmingLanguage(ProgrammingLanguage.C);
-        programmingExercise.setProjectType(ProjectType.FACT);
+        programmingExercise.getBuildConfig().setProjectType(ProjectType.FACT);
         request.post("/api/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
@@ -1219,8 +1219,8 @@ class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setId(null);
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName("NewShortname");
-        programmingExercise.setStaticCodeAnalysisEnabled(false);
-        programmingExercise.setMaxStaticCodeAnalysisPenalty(20);
+        programmingExercise.getBuildConfig().setStaticCodeAnalysisEnabled(false);
+        programmingExercise.getBuildConfig().setMaxStaticCodeAnalysisPenalty(20);
         request.post("/api/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
@@ -1228,8 +1228,8 @@ class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setId(null);
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName("NewShortname");
-        programmingExercise.setStaticCodeAnalysisEnabled(true);
-        programmingExercise.setMaxStaticCodeAnalysisPenalty(-20);
+        programmingExercise.getBuildConfig().setStaticCodeAnalysisEnabled(true);
+        programmingExercise.getBuildConfig().setMaxStaticCodeAnalysisPenalty(-20);
         request.post("/api/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
@@ -1263,7 +1263,7 @@ class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName("NewShortname");
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
-        programmingExercise.setProjectType(null);
+        programmingExercise.getBuildConfig().setProjectType(null);
         request.post("/api/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
@@ -1272,7 +1272,7 @@ class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName("NewShortname");
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
-        programmingExercise.setProjectType(ProjectType.MAVEN_MAVEN);
+        programmingExercise.getBuildConfig().setProjectType(ProjectType.MAVEN_MAVEN);
         request.post("/api/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
@@ -1281,7 +1281,7 @@ class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName("NewShortname");
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.SWIFT);
-        programmingExercise.setProjectType(ProjectType.XCODE);
+        programmingExercise.getBuildConfig().setProjectType(ProjectType.XCODE);
         programmingExercise.setAllowOnlineEditor(true);
         request.post("/api/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
     }
@@ -1322,11 +1322,11 @@ class ProgrammingExerciseIntegrationTestService {
 
     void createProgrammingExercise_testwiseCoverageAnalysisNotSupported_badRequest(ProgrammingLanguage programmingLanguage) throws Exception {
         programmingExercise.setId(null);
-        programmingExercise.setProjectType(null);
+        programmingExercise.getBuildConfig().setProjectType(null);
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName("NewShortname");
         programmingExercise.setProgrammingLanguage(programmingLanguage);
-        programmingExercise.setTestwiseCoverageEnabled(true);
+        programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(true);
         request.post("/api/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
@@ -1389,7 +1389,7 @@ class ProgrammingExerciseIntegrationTestService {
     void importProgrammingExercise_staticCodeAnalysisMustBeSet_badRequest() throws Exception {
         var id = programmingExercise.getId();
         programmingExercise.setId(null);
-        programmingExercise.setStaticCodeAnalysisEnabled(null);
+        programmingExercise.getBuildConfig().setStaticCodeAnalysisEnabled(null);
         request.post("/api/programming-exercises/import/" + id, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
@@ -1407,14 +1407,14 @@ class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setId(null);
         programmingExercise.setTitle("NewTitle1");
         programmingExercise.setShortName("NewShortname1");
-        programmingExercise.setStaticCodeAnalysisEnabled(true);
+        programmingExercise.getBuildConfig().setStaticCodeAnalysisEnabled(true);
         request.postWithResponseBody("/api/programming-exercises/import/" + sourceId, programmingExercise, ProgrammingExercise.class, params, HttpStatus.BAD_REQUEST);
 
         // true -> false
         sourceId = programmingExerciseSca.getId();
         programmingExerciseSca.setId(null);
-        programmingExerciseSca.setStaticCodeAnalysisEnabled(false);
-        programmingExerciseSca.setMaxStaticCodeAnalysisPenalty(null);
+        programmingExerciseSca.getBuildConfig().setStaticCodeAnalysisEnabled(false);
+        programmingExerciseSca.getBuildConfig().setMaxStaticCodeAnalysisPenalty(null);
         programmingExerciseSca.setTitle("NewTitle2");
         programmingExerciseSca.setShortName("NewShortname2");
         request.postWithResponseBody("/api/programming-exercises/import/" + sourceId, programmingExerciseSca, ProgrammingExercise.class, params, HttpStatus.BAD_REQUEST);

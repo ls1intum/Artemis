@@ -186,7 +186,7 @@ public class ProgrammingExerciseGradingService {
 
             if (buildResult.hasLogs()) {
                 var programmingLanguage = exercise.getProgrammingLanguage();
-                var projectType = exercise.getProjectType();
+                var projectType = exercise.getBuildConfig().getProjectType();
                 var buildLogs = buildResult.extractBuildLogs();
 
                 ciResultService.extractAndPersistBuildLogStatistics(latestSubmission, programmingLanguage, projectType, buildLogs);
@@ -913,8 +913,8 @@ public class ProgrammingExerciseGradingService {
     private double calculateTotalPenalty(ScoreCalculationData scoreCalculationData, boolean applySubmissionPolicy) {
         double penalty = 0;
         var exercise = scoreCalculationData.exercise();
-        int maxStaticCodeAnalysisPenalty = Optional.ofNullable(exercise.getMaxStaticCodeAnalysisPenalty()).orElse(100);
-        if (Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()) && maxStaticCodeAnalysisPenalty > 0) {
+        int maxStaticCodeAnalysisPenalty = Optional.ofNullable(exercise.getBuildConfig().getMaxStaticCodeAnalysisPenalty()).orElse(100);
+        if (Boolean.TRUE.equals(exercise.getBuildConfig().isStaticCodeAnalysisEnabled()) && maxStaticCodeAnalysisPenalty > 0) {
             penalty += calculateStaticCodeAnalysisPenalty(scoreCalculationData.staticCodeAnalysisFeedback(), exercise);
         }
 
@@ -936,7 +936,8 @@ public class ProgrammingExerciseGradingService {
      */
     private double calculateStaticCodeAnalysisPenalty(final List<Feedback> staticCodeAnalysisFeedback, final ProgrammingExercise programmingExercise) {
         final var feedbackByCategory = staticCodeAnalysisFeedback.stream().collect(Collectors.groupingBy(Feedback::getStaticCodeAnalysisCategory));
-        final double maxExercisePenaltyPoints = Objects.requireNonNullElse(programmingExercise.getMaxStaticCodeAnalysisPenalty(), 100) / 100.0 * programmingExercise.getMaxPoints();
+        final double maxExercisePenaltyPoints = Objects.requireNonNullElse(programmingExercise.getBuildConfig().getMaxStaticCodeAnalysisPenalty(), 100) / 100.0
+                * programmingExercise.getMaxPoints();
         double overallPenaltyPoints = 0;
 
         for (var category : staticCodeAnalysisCategoryRepository.findByExerciseId(programmingExercise.getId())) {
