@@ -9,7 +9,9 @@ import { CompetencyApiService } from 'app/course/competencies/services/competenc
 import { AlertService } from 'app/core/util/alert.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { Competency, getIcon } from 'app/entities/competency.model';
-import { DifficultyLevel } from 'app/entities/exercise.model';
+import { PrerequisiteApiService } from 'app/course/competencies/services/prerequisite-api.service';
+import { onError } from 'app/shared/util/global.utils';
+import { Prerequisite } from 'app/entities/prerequisite.model';
 
 @Component({
     selector: 'jhi-competencies-student-page',
@@ -18,11 +20,12 @@ import { DifficultyLevel } from 'app/entities/exercise.model';
     templateUrl: './competencies-student-page.component.html',
 })
 export class CompetenciesStudentPageComponent {
-    private readonly competenciesKey = 'competencies';
+    private readonly courseCompetenciesKey = 'course-competencies';
 
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly alertService = inject(AlertService);
     private readonly competencyApiService = inject(CompetencyApiService);
+    private readonly prerequisiteApiService = inject(PrerequisiteApiService);
     private readonly courseOverviewService = inject(CourseOverviewService);
 
     readonly collapseState = signal(<CollapseState>{
@@ -31,13 +34,15 @@ export class CompetenciesStudentPageComponent {
 
     private readonly courseId = toSignal(this.activatedRoute.parent!.params.pipe(map((params) => Number(params.courseId))), { requireSync: true });
 
-    readonly isCollapsed = signal<boolean>(this.courseOverviewService.getSidebarCollapseStateFromStorage(this.competenciesKey));
+    readonly isCollapsed = signal<boolean>(this.courseOverviewService.getSidebarCollapseStateFromStorage(this.courseCompetenciesKey));
     readonly isLoading = signal<boolean>(false);
+
     readonly competencies = signal<Competency[]>([]);
+    readonly prerequisites = signal<Prerequisite[]>([]);
 
     constructor() {
         // Fetch competencies when the course id is available
-        effect(() => this.loadCompetencies(this.courseId()), { allowSignalWrites: true });
+        effect(() => this.loadData(this.courseId()), { allowSignalWrites: true });
     }
 
     private readonly competencySidebarCards = computed(() => {
@@ -48,38 +53,61 @@ export class CompetenciesStudentPageComponent {
                     title: competency.title,
                     size: 'M',
                     icon: getIcon(competency.taxonomy),
-                    difficulty: DifficultyLevel.EASY,
+                },
+        );
+    });
+
+    private readonly prerequisitesSidebarCards = computed(() => {
+        return this.prerequisites().map(
+            (prerequisite) =>
+                <SidebarCardElement>{
+                    id: prerequisite.id,
+                    title: prerequisite.title,
+                    size: 'M',
+                    icon: getIcon(prerequisite.taxonomy),
                 },
         );
     });
 
     readonly sidebarData = computed(() => {
         return <SidebarData>{
-            storageId: 'competency',
+            storageId: 'course-competency',
             groupByCategory: true,
-            ungroupedData: this.competencySidebarCards(),
+            ungroupedData: [...this.competencySidebarCards(), ...this.prerequisitesSidebarCards()],
             groupedData: <AccordionGroups>{
                 competencies: {
                     entityData: this.competencySidebarCards(),
+                },
+                prerequisites: {
+                    entityData: this.prerequisitesSidebarCards(),
                 },
             },
         };
     });
 
-    async loadCompetencies(courseId: number): Promise<void> {
+    async loadData(courseId: number): Promise<void> {
         try {
             this.isLoading.set(true);
-            const competencies = await this.competencyApiService.getCompetenciesByCourseId(courseId);
-            this.competencies.set(competencies);
+            await Promise.all([this.loadCompetencies(courseId), this.loadPrerequisites(courseId)]);
         } catch (error) {
-            this.alertService.error(error);
+            onError(this.alertService, error);
         } finally {
             this.isLoading.set(false);
         }
     }
 
+    private async loadPrerequisites(courseId: number): Promise<void> {
+        const prerequisites = await this.prerequisiteApiService.getPrerequisitesByCourseId(courseId);
+        this.prerequisites.set(prerequisites);
+    }
+
+    private async loadCompetencies(courseId: number): Promise<void> {
+        const competencies = await this.competencyApiService.getCompetenciesByCourseId(courseId);
+        this.competencies.set(competencies);
+    }
+
     toggleSidebar(): void {
         this.isCollapsed.update((isCollapsed) => !isCollapsed);
-        this.courseOverviewService.setSidebarCollapseState(this.competenciesKey, this.isCollapsed());
+        this.courseOverviewService.setSidebarCollapseState(this.courseCompetenciesKey, this.isCollapsed());
     }
 }

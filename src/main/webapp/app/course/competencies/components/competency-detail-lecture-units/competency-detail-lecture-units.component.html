@@ -1,4 +1,4 @@
-@for (unit of units(); track unit) {
+@for (unit of units(); track unit.id) {
     <div class="col-12 col-lg-11">
         @switch (unit.type) {
             @case (LectureUnitType.EXERCISE) {

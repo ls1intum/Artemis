@@ -7,10 +7,13 @@ import { ConversationDTO } from 'app/entities/metis/conversation/conversation.mo
 export type SidebarCardSize = 'S' | 'M' | 'L';
 export type TimeGroupCategory = 'past' | 'current' | 'dueSoon' | 'future' | 'noDate';
 export type ExamGroupCategory = 'real' | 'test';
-export type CompetencyGroupCategory = 'competencies';
+export type CourseCompetencyCategory = 'competencies' | 'prerequisites';
 export type TutorialGroupCategory = 'all' | 'registered' | 'further';
 export type SidebarTypes = 'exercise' | 'exam' | 'inExam' | 'conversation' | 'default';
-export type AccordionGroups = Record<TimeGroupCategory | TutorialGroupCategory | ExamGroupCategory | ChannelGroupCategory | string, { entityData: SidebarCardElement[] }>;
+export type AccordionGroups = Record<
+    TimeGroupCategory | TutorialGroupCategory | ExamGroupCategory | ChannelGroupCategory | CourseCompetencyCategory | string,
+    { entityData: SidebarCardElement[] }
+>;
 export type ChannelGroupCategory =
     | 'favoriteChannels'
     | 'generalChannels'
@@ -25,7 +28,7 @@ export type CollapseState =
     | Record<ChannelGroupCategory, boolean>
     | Record<ExamGroupCategory, boolean>
     | Record<TutorialGroupCategory, boolean>
-    | Record<CompetencyGroupCategory, boolean>;
+    | Record<CourseCompetencyCategory, boolean>;
 export type ChannelAccordionShowAdd = Record<ChannelGroupCategory, boolean>;
 export type ChannelTypeIcons = Record<ChannelGroupCategory, IconProp>;
 

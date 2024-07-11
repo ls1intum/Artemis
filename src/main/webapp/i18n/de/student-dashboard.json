@@ -67,7 +67,8 @@
                 "groupChats": "Gruppen-Chats",
                 "directMessages": "Direktnachrichten",
                 "filterConversationPlaceholder": "Konversationen filtern",
-                "competencies": "Kompetenzen"
+                "competencies": "Kompetenzen",
+                "prerequisites": "Voraussetzungen"
             },
             "menu": {
                 "exercises": "Aufgaben",
