@@ -374,7 +374,13 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
     default List<StudentExam> createRandomStudentExams(Exam exam, Set<User> users, ExamQuizQuestionsGenerator examQuizQuestionsGenerator) {
         List<StudentExam> studentExams = new ArrayList<>();
         SecureRandom random = new SecureRandom();
-        long numberOfOptionalExercises = exam.getNumberOfExercisesInExam() - exam.getExerciseGroups().stream().filter(ExerciseGroup::getIsMandatory).count();
+        long numberOfOptionalExercises = 0;
+        try {
+            numberOfOptionalExercises = exam.getNumberOfExercisesInExam() - exam.getExerciseGroups().stream().filter(ExerciseGroup::getIsMandatory).count();
+        }
+        catch (NullPointerException e) {
+            throw new EntityNotFoundException("The number of exercises in the exam " + exam.getId() + " does not exist");
+        }
 
         // Determine the default working time by computing the duration between start and end date of the exam
         int defaultWorkingTime = exam.getWorkingTime();
