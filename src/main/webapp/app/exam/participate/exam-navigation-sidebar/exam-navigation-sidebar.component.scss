@@ -2,7 +2,7 @@ $collapse-container-height: 35px;
 $breadcrumb-height: 38px;
 $sidebar-width-open: 275px;
 $sidebar-width-closed: 100px;
-$management-header-height: 220px;
+$management-header-height: 230px;
 
 .scrollable-item-content {
     height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height) - $collapse-container-height);
@@ -13,14 +13,14 @@ $management-header-height: 220px;
     }
 
     &.sidebar-height-testRun {
-        height: calc(100vh - $collapse-container-height - 390px);
+        height: calc(100vh - $collapse-container-height - 410px);
 
         @media (max-width: 1349px) {
-            height: calc(100vh - $collapse-container-height - 420px) !important;
+            height: calc(100vh - $collapse-container-height - 440px) !important;
         }
 
         @media (max-width: 768px) {
-            height: calc(100vh - $collapse-container-height - 380px) !important;
+            height: calc(100vh - $collapse-container-height - 400px) !important;
         }
     }
 
