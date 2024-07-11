@@ -22,7 +22,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.LinkPreviewDTO;
 
 class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -33,9 +32,6 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
     private static final String GOOGLE_URL = "https://google.com";
 
     private static final String MOCK_FILE_PATH_PREFIX = "src/test/java/de/tum/in/www1/artemis/metis/linkpreview/mockFiles/";
-
-    @Autowired
-    private UserUtilService userUtilService;
 
     @Autowired
     private CacheManager cacheManager;

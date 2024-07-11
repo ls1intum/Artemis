@@ -23,7 +23,6 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.TextUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.TextUnitRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -34,9 +33,6 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private LectureRepository lectureRepository;
-
-    @Autowired
-    private UserUtilService userUtilService;
 
     @Autowired
     private LectureUtilService lectureUtilService;

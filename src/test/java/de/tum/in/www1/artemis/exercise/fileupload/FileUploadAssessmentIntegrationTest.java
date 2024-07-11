@@ -43,17 +43,13 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.AssessmentUpdateDTO;
 import de.tum.in.www1.artemis.web.rest.dto.FileUploadAssessmentDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
@@ -65,16 +61,10 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
     public static final String API_FILE_UPLOAD_SUBMISSIONS = "/api/file-upload-submissions/";
 
     @Autowired
-    private ResultRepository resultRepo;
-
-    @Autowired
     private ComplaintRepository complaintRepo;
 
     @Autowired
     private FileUploadExerciseRepository fileUploadExerciseRepository;
-
-    @Autowired
-    private ExerciseRepository exerciseRepository;
 
     @Autowired
     private SubmissionRepository submissionRepository;
@@ -86,13 +76,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
     private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
     private FileUploadExerciseUtilService fileUploadExerciseUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -376,7 +360,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
         fileUploadSubmission = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessor(afterReleaseFileUploadExercise, fileUploadSubmission, student,
                 originalAssessor);
         fileUploadSubmission.getLatestResult().setCompletionDate(originalAssessmentSubmitted ? ZonedDateTime.now() : null);
-        resultRepo.save(fileUploadSubmission.getLatestResult());
+        resultRepository.save(fileUploadSubmission.getLatestResult());
         var params = new LinkedMultiValueMap<String, String>();
         params.add("submit", submit);
         List<Feedback> feedbacks = ParticipationFactory.generateFeedback();

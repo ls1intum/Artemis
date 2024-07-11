@@ -123,7 +123,7 @@ export class MetisConversationService implements OnDestroy {
                 (conversationInCache) => conversationInCache.id === (parameterJustId ? conversationIdentifier : conversationIdentifier.id),
             );
         }
-        if (!cachedConversation) {
+        if (!cachedConversation && conversationIdentifier) {
             this.alertService.addAlert({
                 type: AlertType.WARNING,
                 message: 'artemisApp.metis.channel.notAMember',
