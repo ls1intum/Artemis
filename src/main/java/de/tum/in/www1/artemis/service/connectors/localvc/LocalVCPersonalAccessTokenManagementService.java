@@ -16,7 +16,7 @@ public class LocalVCPersonalAccessTokenManagementService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCPersonalAccessTokenManagementService.class);
 
-    @Value("${artemis.version-control.version-control-access-token:false}")
+    @Value("${artemis.version-control.use-localvc-version-control-access-token:false}")
     private boolean versionControlAccessToken;
 
     @Value("${artemis.version-control.vc-access-token-max-lifetime-in-days:365}")

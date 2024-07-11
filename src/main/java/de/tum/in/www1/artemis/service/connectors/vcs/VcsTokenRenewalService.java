@@ -45,7 +45,7 @@ public class VcsTokenRenewalService {
     private final boolean useVersionControlAccessToken;
 
     // note: we inject the configuration value here to easily test with different ones
-    public VcsTokenRenewalService(@Value("${artemis.version-control.version-control-access-token:#{false}}") boolean versionControlAccessToken,
+    public VcsTokenRenewalService(@Value("${artemis.version-control.use-gitlab-version-control-access-token:#{false}}") boolean versionControlAccessToken,
             Optional<VcsTokenManagementService> vcsTokenManagementService, UserRepository userRepository) {
         this.useVersionControlAccessToken = versionControlAccessToken;
         this.vcsTokenManagementService = vcsTokenManagementService;

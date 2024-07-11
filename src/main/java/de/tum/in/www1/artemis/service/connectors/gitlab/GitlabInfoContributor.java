@@ -24,8 +24,8 @@ public class GitlabInfoContributor implements InfoContributor {
     @Value("${artemis.version-control.ssh-keys-url-path:#{null}}")
     private Optional<String> gitlabSshKeysUrlPath;
 
-    @Value("${artemis.version-control.version-control-access-token:#{false}}")
-    private Boolean versionControlAccessToken;
+    @Value("${artemis.version-control.use-gitlab-version-control-access-token:#{false}}")
+    private Boolean useVersionControlAccessToken;
 
     @Override
     public void contribute(Info.Builder builder) {
@@ -49,6 +49,6 @@ public class GitlabInfoContributor implements InfoContributor {
             }
         }
 
-        builder.withDetail(Constants.INFO_VERSION_CONTROL_ACCESS_TOKEN_DETAIL, versionControlAccessToken);
+        builder.withDetail(Constants.INFO_VERSION_CONTROL_ACCESS_TOKEN_DETAIL, useVersionControlAccessToken);
     }
 }
