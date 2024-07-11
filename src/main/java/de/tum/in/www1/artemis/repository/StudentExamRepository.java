@@ -375,6 +375,8 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
         List<StudentExam> studentExams = new ArrayList<>();
         SecureRandom random = new SecureRandom();
         long numberOfOptionalExercises = 0;
+
+        // In case the total number of exercises in the exam is not set by the instructor
         try {
             numberOfOptionalExercises = exam.getNumberOfExercisesInExam() - exam.getExerciseGroups().stream().filter(ExerciseGroup::getIsMandatory).count();
         }
