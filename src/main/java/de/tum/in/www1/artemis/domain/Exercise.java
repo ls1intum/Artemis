@@ -246,6 +246,11 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         return latestResult.map(result -> result.getScore() >= MIN_SCORE_GREEN).orElse(false);
     }
 
+    @Override
+    public Optional<ZonedDateTime> getCompletionDate(User user) {
+        return this.getStudentParticipations().stream().filter((participation) -> participation.getStudents().contains(user)).map(Participation::getInitializationDate).findFirst();
+    }
+
     public boolean getAllowFeedbackRequests() {
         return allowFeedbackRequests;
     }

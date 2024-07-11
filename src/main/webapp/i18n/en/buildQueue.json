@@ -1,7 +1,7 @@
 {
     "artemisApp": {
         "buildQueue": {
-            "title": "Build Queue",
+            "title": "Build Overview",
             "pageTitle": "Build Job Information",
             "queuedBuildJobs": "Queued Build Jobs",
             "runningBuildJobs": "Running Build Jobs",

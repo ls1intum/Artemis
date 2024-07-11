@@ -325,8 +325,8 @@ export class PlagiarismInspectorComponent implements OnInit {
             this.showRunDetails = true;
         }
 
-        this.plagiarismResult = result.plagiarismResult;
-        this.plagiarismResultStats = result.plagiarismResultStats;
+        this.plagiarismResult = result?.plagiarismResult;
+        this.plagiarismResultStats = result?.plagiarismResultStats;
         this.visibleComparisons = result?.plagiarismResult?.comparisons;
     }
 

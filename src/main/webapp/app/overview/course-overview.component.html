@@ -129,6 +129,7 @@
                     'exam-wrapper': isExamStarted,
                     'exam-height-dev': isExamStarted && (!isProduction || isTestServer),
                     'sidenav-height-dev': !isProduction || isTestServer,
+                    'exam-end-view': isExamEndView,
                 }"
             >
                 <div class="dropdown-content" [hidden]="!dropdownOpen" [style.top.px]="dropdownOffset" [ngClass]="{ fixedContentSize: hiddenItems.length >= 3 }">
@@ -238,7 +239,7 @@
         [id]="sidebarItem.testId ?? ''"
         [ngClass]="{
             'guided-tour': sidebarItem.guidedTour,
-            newMessage: !messagesRouteLoaded && hasUnreadMessages && sidebarItem.title === 'Messages',
+            newMessage: !communicationRouteLoaded && hasUnreadMessages && sidebarItem.title === 'Communication',
             collapsed: isNavbarCollapsed,
             'py-1': extraPadding,
         }"
@@ -259,7 +260,7 @@
         [id]="sidebarItem.testId ?? ''"
         [ngClass]="{
             'guided-tour': sidebarItem.guidedTour,
-            newMessage: !messagesRouteLoaded && hasUnreadMessages && sidebarItem.title === 'Messages',
+            newMessage: !communicationRouteLoaded && hasUnreadMessages && sidebarItem.title === 'Communication',
             collapsed: isNavbarCollapsed,
             'py-1': extraPadding,
         }"

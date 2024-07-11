@@ -25,7 +25,6 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
 export class DiscussionSectionComponent extends CourseDiscussionDirective implements OnInit, AfterViewInit, OnDestroy {
     @Input() exercise?: Exercise;
     @Input() lecture?: Lecture;
-    @Input() isCommunicationPage?: boolean;
 
     @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
     @ViewChildren('postingThread') messages: QueryList<any>;
@@ -203,9 +202,6 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
 
         this.messages.changes.pipe(takeUntil(this.ngUnsubscribe)).subscribe(() => {
             this.handleScrollOnNewMessage();
-            if (this.isCommunicationPage) {
-                this.metisConversationService.markAsRead(this.channel.id!);
-            }
         });
     }
 

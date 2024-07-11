@@ -516,7 +516,7 @@ export class MetisService implements OnDestroy {
         let displayName = '';
         if (post.conversation) {
             displayName = getAsChannelDTO(post.conversation)?.name ?? '';
-            routerLinkComponents = ['/courses', this.courseId, 'messages'];
+            routerLinkComponents = ['/courses', this.courseId, 'communication'];
             queryParams = { conversationId: post.conversation.id! };
         }
         return { routerLinkComponents, displayName, queryParams };
@@ -547,6 +547,7 @@ export class MetisService implements OnDestroy {
     }
 
     private handleNewOrUpdatedMessage = (postDTO: MetisPostDTO): void => {
+        postDTO.post = this.cachedPosts.find((post) => post.id === postDTO.post.id) ?? postDTO.post;
         const postConvId = postDTO.post.conversation?.id;
         const postIsNotFromCurrentConversation = this.currentPostContextFilter.conversationId && postConvId !== this.currentPostContextFilter.conversationId;
         const postIsNotFromCurrentPlagiarismCase =

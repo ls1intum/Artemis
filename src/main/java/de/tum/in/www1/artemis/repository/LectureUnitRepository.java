@@ -64,6 +64,18 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
             """)
     Set<LectureUnit> findAllByIdWithCompetenciesBidirectional(@Param("lectureUnitIds") Iterable<Long> longs);
 
+    @Query("""
+            SELECT lu
+            FROM LectureUnit lu
+                LEFT JOIN FETCH lu.completedUsers
+            WHERE lu.id = :lectureUnitId
+            """)
+    Optional<LectureUnit> findByIdWithCompletedUsers(@Param("lectureUnitId") long lectureUnitId);
+
+    default LectureUnit findByIdWithCompletedUsersElseThrow(long lectureUnitId) {
+        return findByIdWithCompletedUsers(lectureUnitId).orElseThrow(() -> new EntityNotFoundException("LectureUnit", lectureUnitId));
+    }
+
     default LectureUnit findByIdWithCompetenciesBidirectionalElseThrow(long lectureUnitId) {
         return findByIdWithCompetenciesBidirectional(lectureUnitId).orElseThrow(() -> new EntityNotFoundException("LectureUnit", lectureUnitId));
     }

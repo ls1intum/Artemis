@@ -8,7 +8,6 @@ import { ModelingExerciseAssessmentEditor } from './assessment/ModelingExerciseA
 import { ProgrammingExerciseAssessmentPage } from './assessment/ProgrammingExerciseAssessmentPage';
 import { StudentAssessmentPage } from './assessment/StudentAssessmentPage';
 import { TextExerciseAssessmentPage } from './assessment/TextExerciseAssessmentPage';
-import { CourseCommunicationPage } from './course/CourseCommunication';
 import { CourseCreationPage } from './course/CourseCreationPage';
 import { CourseManagementExercisesPage } from './course/CourseManagementExercisesPage';
 import { CourseManagementPage } from './course/CourseManagementPage';
@@ -61,7 +60,6 @@ export class ArtemisPageobjects {
         managementExercises: new CourseManagementExercisesPage(),
         list: new CoursesPage(),
         overview: new CourseOverviewPage(),
-        communication: new CourseCommunicationPage(),
         messages: new CourseMessagesPage(),
     };
     exam = {

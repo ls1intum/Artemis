@@ -100,11 +100,11 @@
             "courseCommunicationSetting": {
                 "communicationEnabled": {
                     "label": "Communication Enabled",
-                    "tooltip": "Enables communication between students, tutors and instructors through a question and answer system. Students can interact with peers and ask questions while moderators can provide course information and answer content-related questions. The communication can happen directly on the page of the respective exercise or lecture or in the dedicated communication space of the course."
+                    "tooltip": "Enables communication between course users in private or public channels which can only be created by instructors and tutors. Students can interact with peers and ask questions while moderators can provide course information and answer content-related questions. The communication can happen directly on the page of the respective exercise or lecture or in the dedicated communication space of the course."
                 },
                 "messagingEnabled": {
-                    "label": "Messaging Enabled",
-                    "tooltip": "Enables messaging between course users in private or public channels, group chats or direct messages. Channels can only be created by instructors and tutors. Users can self-join public channels and must be invited to private channels. Every user can start a private group chat and add other users. A group chat is limited to 10 members. Every user can start a private one-to-one chat with another user. The chats happens in the messaging space of the course.",
+                    "label": "Direct Messages / Group Chats Enabled",
+                    "tooltip": "Enables messaging between course users in group chats or direct messages. Every user can start a direct message, private group chat and add other users. A group chat is limited to 10 members. The chats happens in the communication space of the course.",
                     "codeOfConduct": "Messaging Code of Conduct"
                 }
             },

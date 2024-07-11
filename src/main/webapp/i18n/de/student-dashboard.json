@@ -38,6 +38,7 @@
             "sidebar": {
                 "past": "Vorangegangen",
                 "current": "Aktuell",
+                "dueSoon": "Bald fällig",
                 "future": "Zukünftig",
                 "noDueDate": "Unbefristet",
                 "noDate": "Ohne Datum",
@@ -85,7 +86,6 @@
                 "exams": "Klausuren",
                 "testExam": "Testklausur",
                 "communication": "Kommunikation",
-                "messages": "Nachrichten",
                 "plagiarismCases": "Plagiatsfälle",
                 "gradingSystem": "Notenschlüssel"
             },
