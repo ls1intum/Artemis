@@ -1,0 +1,39 @@
+<jhi-fireworks [active]="showFireworks()" />
+<div class="col h-100">
+    @if (competency(); as competency) {
+        <jhi-competency-detail-header [competency]="competency" [isMastered]="isMastered()" [courseId]="courseId()" />
+        <div class="row w-100 m-0 p-3">
+            <jhi-competency-detail-lecture-units class="col-lg-9 col-md-8" [competency]="competency" (onLectureUnitCompletion)="onLectureUnitCompletion()" />
+            <div class="col-lg-3 col-md-4">
+                <div class="w-50 mx-auto my-2">
+                    <jhi-competency-rings
+                        [mastery]="mastery()"
+                        [progress]="progress()"
+                        [hideProgress]="!judgementOfLearningEnabled() && promptForJolRating() && !judgementOfLearning()"
+                    />
+                </div>
+                <jhi-side-panel class="d-block mt-3" [panelHeader]="'artemisApp.competency.table.panelHeader' | artemisTranslate">
+                    <div class="row mb-1 g-0">
+                        <div class="col-7"><span jhiTranslate="artemisApp.competency.mastery"></span><jhi-help-icon text="artemisApp.competency.masteryDescription" /></div>
+                        <div class="col-5">
+                            <span> {{ mastery() }} %</span>
+                            @if (userProgress().confidenceReason && userProgress().confidenceReason !== ConfidenceReason.NO_REASON) {
+                                <jhi-help-icon text="{{ 'artemisApp.competency.confidenceReasons.' + userProgress().confidenceReason }}" />
+                            }
+                        </div>
+                    </div>
+                    <div class="row mb-1 g-0">
+                        <div class="col-7"><span jhiTranslate="artemisApp.competency.progress"></span><jhi-help-icon text="artemisApp.competency.progressDescription" /></div>
+                        <div class="col-5">{{ progress() }} %</div>
+                    </div>
+                </jhi-side-panel>
+            </div>
+        </div>
+    } @else if (isLoading()) {
+        <div class="row justify-content-center align-items-center h-100">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only" jhiTranslate="loading"></span>
+            </div>
+        </div>
+    }
+</div>

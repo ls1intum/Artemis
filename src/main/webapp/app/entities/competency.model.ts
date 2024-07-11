@@ -107,6 +107,11 @@ export class CompetencyJol {
     }
 }
 
+export interface CompetencyJoLResponse {
+    current: CompetencyJol;
+    prior?: CompetencyJol;
+}
+
 export interface CompetencyImportResponseDTO extends BaseEntity {
     title?: string;
     description?: string;

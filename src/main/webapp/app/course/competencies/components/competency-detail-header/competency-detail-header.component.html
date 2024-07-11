@@ -1,0 +1,45 @@
+<div class="col">
+    <div class="course-info-bar w-100 m-0 py-3 row justify-content-between">
+        <div class="row justify-content-between w-100 m-0 p-0">
+            <div class="col-md-auto p-0 d-flex align-items-center">
+                <fa-icon
+                    [icon]="getIcon(competency().taxonomy)"
+                    size="lg"
+                    [fixedWidth]="true"
+                    [ngbTooltip]="'artemisApp.competency.taxonomies.' + (competency().taxonomy ?? 'none') | artemisTranslate"
+                    container="body"
+                />
+                <h4 class="my-0 ms-2">{{ competency().title }}</h4>
+                @if (isMastered()) {
+                    <span class="badge text-white text-bg-success ms-2" jhiTranslate="artemisApp.competency.mastered"></span>
+                }
+                @if (competency().optional) {
+                    <span class="badge text-white bg-warning ms-2" jhiTranslate="artemisApp.competency.optional"></span>
+                }
+            </div>
+            <div class="col-md-auto d-flex align-items-center">
+                @if (competency().softDueDate) {
+                    <div class="d-flex align-items-center">
+                        <span jhiTranslate="artemisApp.competency.competencyCard.softDueDate"></span>
+                        <span class="badge ms-2" [ngClass]="softDueDatePassed() ? 'bg-danger' : 'bg-success'" id="date-badge">
+                            {{ competency().softDueDate | artemisTimeAgo }}
+                        </span>
+                    </div>
+                }
+                <!--            TODO: Add authorization-->
+                <!--                        @if (competency().course?.isAtLeastInstructor) {-->
+                <button (click)="navigateToEditPage()" class="ms-4 btn btn-sm btn-warning">
+                    <fa-icon [icon]="faPencilAlt" />
+                    <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
+                </button>
+                <!--                        }-->
+            </div>
+        </div>
+    </div>
+    @if (competency().description) {
+        <div class="p-3 pb-0">
+            <div class="markdown-preview" [innerHTML]="competency().description | htmlForMarkdown"></div>
+            <hr />
+        </div>
+    }
+</div>

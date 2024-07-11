@@ -152,6 +152,8 @@ const routes: Routes = [
             },
             {
                 path: 'competencies',
+                loadComponent: () =>
+                    import('../course/competencies/pages/competencies-student-page/competencies-student-page.component').then((c) => c.CompetenciesStudentPageComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.competencies',
@@ -160,15 +162,11 @@ const routes: Routes = [
                 },
                 children: [
                     {
-                        path: '',
-                        loadComponent: () =>
-                            import('app/course/competencies/pages/competencies-student-page/competencies-student-page.component').then(
-                                (mod) => mod.CompetenciesStudentPageComponent,
-                            ),
-                    },
-                    {
                         path: ':competencyId',
-                        loadChildren: () => import('../overview/course-competencies/course-competencies-details.module').then((m) => m.ArtemisCourseCompetenciesDetailsModule),
+                        loadComponent: () =>
+                            import('../course/competencies/pages/competency-detail-student-page/competency-detail-student-page.component').then(
+                                (mod) => mod.CompetencyDetailStudentPageComponent,
+                            ),
                     },
                 ],
             },

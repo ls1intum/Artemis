@@ -66,7 +66,8 @@
                 "browseChannels": "Kanäle durchsuchen",
                 "groupChats": "Gruppen-Chats",
                 "directMessages": "Direktnachrichten",
-                "filterConversationPlaceholder": "Konversationen filtern"
+                "filterConversationPlaceholder": "Konversationen filtern",
+                "competencies": "Kompetenzen"
             },
             "menu": {
                 "exercises": "Aufgaben",
