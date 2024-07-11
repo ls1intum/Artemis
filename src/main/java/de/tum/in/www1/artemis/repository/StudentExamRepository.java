@@ -374,13 +374,13 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
     default List<StudentExam> createRandomStudentExams(Exam exam, Set<User> users, ExamQuizQuestionsGenerator examQuizQuestionsGenerator) {
         List<StudentExam> studentExams = new ArrayList<>();
         SecureRandom random = new SecureRandom();
-        long numberOfOptionalExercises = 0;
+        long numberOfOptionalExercises;
 
         // In case the total number of exercises in the exam is not set by the instructor
-        try {
+        if (exam.getNumberOfExercisesInExam() != null) {
             numberOfOptionalExercises = exam.getNumberOfExercisesInExam() - exam.getExerciseGroups().stream().filter(ExerciseGroup::getIsMandatory).count();
         }
-        catch (NullPointerException e) {
+        else {
             throw new EntityNotFoundException("The number of exercises in the exam " + exam.getId() + " does not exist");
         }
 
