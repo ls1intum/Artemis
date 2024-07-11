@@ -30,7 +30,12 @@
                 <small class="me-2 text-truncate fw-semibold small-title-color" jhiTranslate="artemisApp.courseOverview.sidebar.workingTime"></small>
                 <small class="me-2 text-truncate fw-semibold">
                     @if (sidebarItem.workingTime) {
-                        {{ sidebarItem.workingTime | artemisDurationFromSeconds }}
+                        <span>
+                            {{ sidebarItem.workingTime | artemisDurationFromSeconds }}
+                            @if (sidebarItem.percentDifference && sidebarItem.percentDifference !== 0) {
+                                ({{ sidebarItem.percentDifference > 0 ? '+' : '' }}{{ sidebarItem.percentDifference }}&thinsp;%)
+                            }
+                        </span>
                     }
                 </small>
             </div>
