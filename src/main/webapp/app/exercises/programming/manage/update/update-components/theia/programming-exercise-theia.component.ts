@@ -18,10 +18,8 @@ export class ProgrammingExerciseTheiaComponent implements OnChanges {
     constructor(private theiaService: TheiaService) {}
 
     ngOnChanges(changes: SimpleChanges) {
-        if (changes.programmingExerciseCreationConfig || changes.programmingExercise) {
-            if (this.shouldReloadTemplate()) {
-                this.loadTheiaImages();
-            }
+        if ((changes.programmingExerciseCreationConfig || changes.programmingExercise) && this.shouldReloadTemplate()) {
+            this.loadTheiaImages();
         }
     }
 
@@ -54,12 +52,14 @@ export class ProgrammingExerciseTheiaComponent implements OnChanges {
 
         this.theiaService.getTheiaImages(this.programmingLanguage).subscribe({
             next: (images) => {
-                this.theiaImages = images;
-
-                // Remove selection if no image is available
-                if (images == null) {
+                if (!images) {
+                    // Remove selection if no image is available
+                    this.theiaImages = {};
                     this.resetImageSelection();
+                    return;
                 }
+
+                this.theiaImages = images;
 
                 // Set the first image as default if none is selected
                 if (this.programmingExercise && !this.programmingExercise.theiaImage && Object.values(images).length > 0) {

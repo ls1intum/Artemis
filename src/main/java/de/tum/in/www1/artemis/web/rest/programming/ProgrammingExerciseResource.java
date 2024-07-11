@@ -303,13 +303,12 @@ public class ProgrammingExerciseResource {
         }
         if (!Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOfflineIde())
                 && !updatedProgrammingExercise.isAllowOnlineIde()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
-                    "You need to allow at least one participation mode, the online editor, the offline IDE, or the online IDE", "noParticipationModeAllowed")).body(null);
+            throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor, the offline IDE, or the online IDE", ENTITY_NAME,
+                    "noParticipationModeAllowed");
         }
         // Verify that a theia image is provided when the online IDE is enabled
         if (updatedProgrammingExercise.isAllowOnlineIde() && updatedProgrammingExercise.getTheiaImage() == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "You need to provide a Theia image when the online IDE is enabled", "noTheiaImageProvided")).body(null);
+            throw new BadRequestAlertException("You need to provide a Theia image when the online IDE is enabled", ENTITY_NAME, "noTheiaImageProvided");
         }
         // Forbid changing the course the exercise belongs to.
         if (!Objects.equals(programmingExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId(),
