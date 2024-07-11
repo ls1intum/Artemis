@@ -44,37 +44,35 @@
                 class="clone-url"
                 [ngClass]="{
                     'url-box-remove-line-left': sshEnabled,
-                    'url-box-remove-line-right': !localVCEnabled || (!useSsh && !!routerLinkForRepositoryView),
+                    'url-box-remove-line-right': !localVCEnabled || !!routerLinkForRepositoryView,
                 }"
                 [cdkCopyToClipboard]="getHttpOrSshRepositoryUri(false)"
                 (cdkCopyToClipboardCopied)="onCopyFinished($event)"
                 >{{ getHttpOrSshRepositoryUri() }} </pre
             >
-            @if (!useSsh) {
-                <div class="d-flex align-items-center">
-                    @if (!localVCEnabled) {
-                        <a
-                            [style.flex]="1"
-                            class="btn btn-secondary btn-sm me-2 open-repository-button"
-                            [href]="getHttpRepositoryUri() | safeUrl"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            <fa-icon [icon]="faExternalLink" />
-                        </a>
-                    } @else if (!!routerLinkForRepositoryView) {
-                        <a
-                            [style.flex]="1"
-                            class="btn btn-secondary btn-sm me-2 open-repository-button"
-                            [routerLink]="routerLinkForRepositoryView"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            <fa-icon [icon]="faExternalLink" />
-                        </a>
-                    }
-                </div>
-            }
+            <div class="d-flex align-items-center">
+                @if (!localVCEnabled) {
+                    <a
+                        [style.flex]="1"
+                        class="btn btn-secondary btn-sm me-2 open-repository-button"
+                        [href]="getHttpRepositoryUri() | safeUrl"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <fa-icon [icon]="faExternalLink" />
+                    </a>
+                } @else if (!!routerLinkForRepositoryView) {
+                    <a
+                        [style.flex]="1"
+                        class="btn btn-secondary btn-sm me-2 open-repository-button"
+                        [routerLink]="routerLinkForRepositoryView"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <fa-icon [icon]="faExternalLink" />
+                    </a>
+                }
+            </div>
         </div>
         @if (repositoryPassword) {
             <p>
