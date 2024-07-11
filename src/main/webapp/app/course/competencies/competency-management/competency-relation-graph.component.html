@@ -29,10 +29,7 @@
                             </div>
                             <div class="col">
                                 <div class="form-group">
-                                    <label for="type">
-                                        {{ 'artemisApp.competency.relation.relationType' | artemisTranslate }}
-                                        <jhi-help-icon text="artemisApp.competency.relation.typeExplanation" />
-                                    </label>
+                                    <label for="type">{{ 'artemisApp.competency.relation.relationType' | artemisTranslate }}</label>
                                     <select
                                         [ngClass]="{ 'border-danger': relationError }"
                                         class="form-select"
