@@ -209,7 +209,7 @@ public class TeamUtilService {
      * @return The created Team
      */
     public Team addTeamForExercise(Exercise exercise, User owner) {
-        return addTeamsForExercise(exercise, 1, owner).get(0);
+        return addTeamsForExercise(exercise, 1, owner).getFirst();
     }
 
     /**
@@ -221,7 +221,7 @@ public class TeamUtilService {
      * @return The created Team
      */
     public Team addTeamForExercise(Exercise exercise, User owner, String loginPrefix) {
-        return addTeamsForExercise(exercise, "team", loginPrefix, 1, owner).get(0);
+        return addTeamsForExercise(exercise, "team", loginPrefix, 1, owner).getFirst();
     }
 
     /**

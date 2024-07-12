@@ -100,7 +100,7 @@ class TestwiseCoverageReportServiceTest extends AbstractLocalCILocalVCIntegratio
 
         var reports = coverageReportRepository.getLatestCoverageReportsWithLegalSubmissionsForProgrammingExercise(programmingExercise.getId(), Pageable.ofSize(1));
         assertThat(reports).hasSize(1);
-        var report = reports.get(0);
+        var report = reports.getFirst();
         // 18/50 lines covered = 32%
         assertThat(report.getCoveredLineRatio()).isEqualTo(0.32);
 

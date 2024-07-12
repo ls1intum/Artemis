@@ -11,7 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ExampleSubmission;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -19,28 +18,17 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "tutorparticipationresource";
 
     @Autowired
-    private ExerciseRepository exerciseRepository;
-
-    @Autowired
     private TutorParticipationRepository tutorParticipationRepository;
 
     @Autowired
     private ExampleSubmissionRepository exampleSubmissionRepository;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -53,7 +41,7 @@ class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegratio
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 1, 5, 0, 1);
         var courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 5);
-        course1 = courses.get(0);
+        course1 = courses.getFirst();
         exercise = course1.getExercises().iterator().next();
     }
 
@@ -64,7 +52,7 @@ class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegratio
         assertThat(tutorParticipations).hasSize(5);
 
         User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
-        TutorParticipation tutorParticipation = tutorParticipations.get(0);
+        TutorParticipation tutorParticipation = tutorParticipations.getFirst();
         tutorParticipation.tutor(tutor).assessedExercise(exercise);
         tutorParticipationRepository.save(tutorParticipation);
 

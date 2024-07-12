@@ -121,8 +121,8 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationIndependentTest {
         sortedTasks = programmingExerciseTaskService.getSortedTasks(exercise);
 
         hints = new ArrayList<>(exerciseHintRepository.findByExerciseId(exercise.getId()));
-        exerciseHint = hints.get(0);
-        exerciseHint.setProgrammingExerciseTask(sortedTasks.get(0));
+        exerciseHint = hints.getFirst();
+        exerciseHint.setProgrammingExerciseTask(sortedTasks.getFirst());
         hints.get(1).setProgrammingExerciseTask(sortedTasks.get(1));
         hints.get(2).setProgrammingExerciseTask(sortedTasks.get(2));
         exerciseHintRepository.saveAll(hints);
@@ -169,8 +169,8 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testGetAvailableExerciseHintsEmpty4() {
-        addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
-        addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
+        addResultWithSuccessfulTestCases(sortedTasks.getFirst().getTestCases());
+        addResultWithSuccessfulTestCases(sortedTasks.getFirst().getTestCases());
         addResultWithFailedTestCases(sortedTasks.get(2).getTestCases());
         addResultWithFailedTestCases(sortedTasks.get(2).getTestCases());
         var availableExerciseHints = exerciseHintService.getAvailableExerciseHints(exercise, student);
@@ -188,9 +188,9 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testGetAvailableExerciseHints2() {
-        addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
-        addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
-        addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
+        addResultWithSuccessfulTestCases(sortedTasks.getFirst().getTestCases());
+        addResultWithSuccessfulTestCases(sortedTasks.getFirst().getTestCases());
+        addResultWithSuccessfulTestCases(sortedTasks.getFirst().getTestCases());
         var availableExerciseHints = exerciseHintService.getAvailableExerciseHints(exercise, student);
         assertThat(availableExerciseHints).containsExactly(hints.get(1));
     }
@@ -245,7 +245,7 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationIndependentTest {
         exerciseHint.setDisplayThreshold((short) 0);
         exerciseHintRepository.save(exerciseHint);
         addResultWithFailedTestCases(exercise.getTestCases());
-        addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
+        addResultWithSuccessfulTestCases(sortedTasks.getFirst().getTestCases());
         var availableExerciseHints = exerciseHintService.getAvailableExerciseHints(exercise, student);
         assertThat(availableExerciseHints).containsExactly(exerciseHint);
     }
@@ -276,7 +276,7 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationIndependentTest {
         addResultWithFailedTestCases(exercise.getTestCases());
         addResultWithFailedTestCases(exercise.getTestCases());
 
-        assertThat(exerciseHintService.activateHint(hints.get(0), student)).isTrue();
+        assertThat(exerciseHintService.activateHint(hints.getFirst(), student)).isTrue();
         assertThat(exerciseHintService.activateHint(hints.get(1), student)).isFalse();
         assertThat(exerciseHintService.activateHint(hints.get(2), student)).isFalse();
         Set<ExerciseHintActivation> exerciseHintActivations = exerciseHintActivationRepository.findByExerciseAndUserWithExerciseHintRelations(exercise.getId(), student.getId());
@@ -285,11 +285,11 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testActivateExerciseHint2() {
-        addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
-        addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
-        addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
+        addResultWithSuccessfulTestCases(sortedTasks.getFirst().getTestCases());
+        addResultWithSuccessfulTestCases(sortedTasks.getFirst().getTestCases());
+        addResultWithSuccessfulTestCases(sortedTasks.getFirst().getTestCases());
 
-        assertThat(exerciseHintService.activateHint(hints.get(0), student)).isFalse();
+        assertThat(exerciseHintService.activateHint(hints.getFirst(), student)).isFalse();
         assertThat(exerciseHintService.activateHint(hints.get(1), student)).isTrue();
         assertThat(exerciseHintService.activateHint(hints.get(2), student)).isFalse();
         Set<ExerciseHintActivation> exerciseHintActivations = exerciseHintActivationRepository.findByExerciseAndUserWithExerciseHintRelations(exercise.getId(), student.getId());
@@ -302,7 +302,7 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationIndependentTest {
         addResultWithFailedTestCases(sortedTasks.get(2).getTestCases());
         addResultWithFailedTestCases(sortedTasks.get(2).getTestCases());
 
-        assertThat(exerciseHintService.activateHint(hints.get(0), student)).isFalse();
+        assertThat(exerciseHintService.activateHint(hints.getFirst(), student)).isFalse();
         assertThat(exerciseHintService.activateHint(hints.get(1), student)).isFalse();
         assertThat(exerciseHintService.activateHint(hints.get(2), student)).isTrue();
         Set<ExerciseHintActivation> exerciseHintActivations = exerciseHintActivationRepository.findByExerciseAndUserWithExerciseHintRelations(exercise.getId(), student.getId());
@@ -315,7 +315,7 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationIndependentTest {
         addResultWithSuccessfulTestCases(exercise.getTestCases());
         addResultWithSuccessfulTestCases(exercise.getTestCases());
 
-        assertThat(exerciseHintService.activateHint(hints.get(0), student)).isFalse();
+        assertThat(exerciseHintService.activateHint(hints.getFirst(), student)).isFalse();
         assertThat(exerciseHintService.activateHint(hints.get(1), student)).isFalse();
         assertThat(exerciseHintService.activateHint(hints.get(2), student)).isFalse();
         Set<ExerciseHintActivation> exerciseHintActivations = exerciseHintActivationRepository.findByExerciseAndUserWithExerciseHintRelations(exercise.getId(), student.getId());

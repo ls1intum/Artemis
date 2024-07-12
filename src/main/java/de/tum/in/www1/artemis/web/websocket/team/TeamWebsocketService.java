@@ -46,6 +46,7 @@ public class TeamWebsocketService {
      */
     public void sendTeamAssignmentUpdate(Exercise exercise, @Nullable Team existingTeam, @Nullable Team updatedTeam, List<StudentParticipation> participationsOfUpdatedTeam) {
         // Users in the existing team that are no longer in the updated team were unassigned => inform them
+        // TODO: do we really need participations with submissions and results for the team assignment payload?
         if (existingTeam != null) {
             TeamAssignmentPayload payload = new TeamAssignmentPayload(exercise, null, List.of());
             Set<User> unassignedUsers = new HashSet<>(existingTeam.getStudents());
