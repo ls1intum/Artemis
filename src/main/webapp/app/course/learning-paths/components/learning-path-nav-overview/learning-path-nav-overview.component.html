@@ -17,10 +17,15 @@
     } @else if (competencies()) {
         <div ngbAccordion class="nav-overview-competencies accordion-flush">
             @for (competency of competencies(); track competency.id) {
-                <div ngbAccordionItem>
-                    <h2 ngbAccordionHeader>
-                        <button ngbAccordionButton class="px-3">{{ competency.title }}</button>
-                    </h2>
+                <div ngbAccordionItem [collapsed]="currentCompetencyId() !== competency.id">
+                    <div ngbAccordionHeader>
+                        <button ngbAccordionButton class="row px-3 m-0">
+                            <span class="col-md-auto p-0 fw-bold">{{ competency.title }}</span>
+                            @if (competency.masteryProgress === 1) {
+                                <fa-icon [icon]="faCheckCircle" class="col-md-auto text-success" />
+                            }
+                        </button>
+                    </div>
                     <div ngbAccordionCollapse>
                         <div ngbAccordionBody class="p-0 overflow-hidden">
                             <ng-template>
@@ -28,6 +33,7 @@
                                     (onLearningObjectSelected)="selectLearningObject()"
                                     [learningPathId]="learningPathId()"
                                     [competencyId]="competency.id"
+                                    [currentCompetencyIdOnPath]="currentCompetencyOnPath()?.id"
                                 />
                             </ng-template>
                         </div>

@@ -221,7 +221,7 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testVerifyExamUserAttendance() throws Exception {
         List<StudentExam> studentExams = prepareStudentExamsForConduction(false, true);
-        long examId = studentExams.get(0).getExam().getId();
+        long examId = studentExams.getFirst().getExam().getId();
 
         final HttpHeaders headers = new HttpHeaders();
         headers.set("User-Agent", "foo");
@@ -369,7 +369,7 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
         }
 
         var studentExams = programmingExerciseTestService.prepareStudentExamsForConduction(TEST_PREFIX, visibleDate, startDate, endDate, registeredStudents, studentRepos);
-        Exam exam = examRepository.findByIdElseThrow(studentExams.get(0).getExam().getId());
+        Exam exam = examRepository.findByIdElseThrow(studentExams.getFirst().getExam().getId());
         Course course = exam.getCourse();
 
         if (!early) {

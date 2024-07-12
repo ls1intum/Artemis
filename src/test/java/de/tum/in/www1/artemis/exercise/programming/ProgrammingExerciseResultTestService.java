@@ -203,7 +203,7 @@ public class ProgrammingExerciseResultTestService {
         assertThat(semiAutoResult.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
         // Assert that the SEMI_AUTOMATIC result has two feedbacks whereas the last one is the automatic one
         assertThat(semiAutoResult.getFeedbacks()).hasSize(2);
-        assertThat(semiAutoResult.getFeedbacks().get(0).getType()).isEqualTo(FeedbackType.MANUAL);
+        assertThat(semiAutoResult.getFeedbacks().getFirst().getType()).isEqualTo(FeedbackType.MANUAL);
         assertThat(semiAutoResult.getFeedbacks().get(1).getType()).isEqualTo(FeedbackType.AUTOMATIC);
     }
 
@@ -441,7 +441,7 @@ public class ProgrammingExerciseResultTestService {
             if (resultDTO.feedbacks().size() != 1) {
                 return false;
             }
-            var feedback = resultDTO.feedbacks().get(0);
+            var feedback = resultDTO.feedbacks().getFirst();
             return feedback.id() != null && feedback.positive();
         }));
     }
@@ -457,7 +457,7 @@ public class ProgrammingExerciseResultTestService {
 
         // ensure that the test case is set but the name does not get send to the student
         verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(userPrefix + "student1"), eq(NEW_RESULT_TOPIC),
-                argThat(arg -> arg instanceof ResultDTO resultDTO && resultDTO.feedbacks().size() == 1 && resultDTO.feedbacks().get(0).testCase().testName() == null));
+                argThat(arg -> arg instanceof ResultDTO resultDTO && resultDTO.feedbacks().size() == 1 && resultDTO.feedbacks().getFirst().testCase().testName() == null));
     }
 
     // Test
