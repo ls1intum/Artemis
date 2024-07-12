@@ -18,11 +18,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabPersonalAccessTokenManagementService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
@@ -30,7 +29,6 @@ import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsUserManagementSe
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.user.UserFactory;
 import de.tum.in.www1.artemis.user.UserTestService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
@@ -53,19 +51,10 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     private PasswordService passwordService;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private JenkinsUserManagementService jenkinsUserManagementService;
 
     @Autowired
     private GitLabUserManagementService gitLabUserManagementService;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;

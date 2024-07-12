@@ -21,6 +21,7 @@
             "visibility": {
                 "Always": "Immer",
                 "AfterDueDate": "Nach Einreichungsfrist",
+                "AfterReleaseDateOfResults": "Nach Veröffentlichung der Ergebnisse",
                 "Never": "Nie"
             },
             "type": {

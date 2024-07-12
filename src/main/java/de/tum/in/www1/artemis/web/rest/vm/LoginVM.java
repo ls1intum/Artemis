@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.web.rest.vm;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.config.Constants.PASSWORD_MAX_LENGTH;
+import static de.tum.in.www1.artemis.config.Constants.PASSWORD_MIN_LENGTH;
+import static de.tum.in.www1.artemis.config.Constants.USERNAME_MAX_LENGTH;
+import static de.tum.in.www1.artemis.config.Constants.USERNAME_MIN_LENGTH;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;

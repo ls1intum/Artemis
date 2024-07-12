@@ -16,16 +16,13 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -36,15 +33,6 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Autowired
     private PostRepository postRepository;
-
-    @Autowired
-    private CourseRepository courseRepository;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private ConversationUtilService conversationUtilService;
@@ -92,12 +80,6 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
         // should increment answer count
         assertThat(postRepository.findPostByIdElseThrow(answerPostToSave.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToSave.getPost().getAnswerCount());
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testPostingAllowedIfMessagingOnlySetting() throws Exception {
-        messagingFeatureDisabledTest(CourseInformationSharingConfiguration.MESSAGING_ONLY);
     }
 
     @Test

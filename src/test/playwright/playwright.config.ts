@@ -1,6 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
-import * as process from 'process';
 import { parseNumber } from './support/utils';
 
 /**
@@ -21,6 +20,7 @@ export default defineConfig({
     workers: parseNumber(process.env.TEST_WORKER_PROCESSES) ?? 3,
     /* Reporter to use. See https://playwright.dev/docs/test-reporters */
     reporter: [['junit', { outputFile: './test-reports/results.xml' }]],
+
     /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
     use: {
         /* Base URL to use in actions like `await page.goto('/')`. */

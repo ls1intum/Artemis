@@ -1,6 +1,7 @@
 import { of } from 'rxjs';
 import { ProgrammingExerciseInstructorRepositoryType } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { Participation } from 'app/entities/participation/participation.model';
+import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 
 export class MockProgrammingExerciseService {
     updateProblemStatement = (exerciseId: number, problemStatement: string) => of();
@@ -11,6 +12,7 @@ export class MockProgrammingExerciseService {
     getProgrammingExerciseTestCaseState = (exerciseId: number) => of({ body: { released: true, hasStudentResult: true, testCasesChanged: false } });
     exportInstructorExercise = (exerciseId: number) => of({ body: undefined });
     exportInstructorRepository = (exerciseId: number, repositoryType: ProgrammingExerciseInstructorRepositoryType) => of({ body: undefined });
+    exportStudentRepository = (exerciseId: number, participationId: number) => of({ body: undefined });
     exportStudentRequestedRepository = (exerciseId: number, includeTests: boolean) => of({ body: undefined });
     getTasksAndTestsExtractedFromProblemStatement = (exerciseId: number) => of();
     deleteTasksWithSolutionEntries = (exerciseId: number) => of();
@@ -25,4 +27,5 @@ export class MockProgrammingExerciseService {
     generateStructureOracle = (exerciseId: number) => of({});
     unlockAllRepositories = (exerciseId: number) => of({});
     getDiffReportForCommits = (exerciseId: number, participationId: number, olderCommitHash: string, newerCommitHash: string, repositoryType: string) => of({});
+    getCheckoutDirectoriesForProgrammingLanguage = (programmingLanguage: ProgrammingLanguage, checkoutSolution: boolean) => of();
 }

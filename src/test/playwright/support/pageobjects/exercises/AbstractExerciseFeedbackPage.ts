@@ -8,16 +8,15 @@ import { Commands } from '../../commands';
 export abstract class AbstractExerciseFeedback {
     protected readonly page: Page;
 
-    readonly resultSelector = '#result';
-    readonly additionalFeedbackSelector = '#additional-feedback';
-    readonly complainButtonSelector = '#complain';
+    readonly RESULT_SELECTOR = '#result';
+    readonly ADDITIONAL_FEEDBACK_SELECTOR = '#additional-feedback';
 
     constructor(page: Page) {
         this.page = page;
     }
 
     async shouldShowAdditionalFeedback(points: number, feedbackText: string) {
-        const additionalFeedbackElement = this.page.locator(this.additionalFeedbackSelector);
+        const additionalFeedbackElement = this.page.locator(this.ADDITIONAL_FEEDBACK_SELECTOR);
         if (Math.abs(points) === 1) {
             await expect(additionalFeedbackElement.getByText(`${points} Point: ${feedbackText}`)).toBeVisible();
         } else {
@@ -26,13 +25,14 @@ export abstract class AbstractExerciseFeedback {
     }
 
     async shouldShowScore(percentage: number) {
-        const resultPercentage = this.page.locator(this.resultSelector, { hasText: `${percentage}%` });
+        const resultPercentage = this.page.locator(this.RESULT_SELECTOR, { hasText: `${percentage}%` });
         await expect(resultPercentage).toBeVisible();
     }
 
     async complain(complaint: string) {
-        await Commands.reloadUntilFound(this.page, this.complainButtonSelector);
-        await this.page.locator(this.complainButtonSelector).click();
+        const complainButton = this.page.locator('#complain');
+        await Commands.reloadUntilFound(this.page, complainButton);
+        await complainButton.click();
         await this.page.locator('#complainTextArea').fill(complaint);
         const responsePromise = this.page.waitForResponse(`${BASE_API}/complaints`);
         await this.page.locator('#submit-complaint').click();

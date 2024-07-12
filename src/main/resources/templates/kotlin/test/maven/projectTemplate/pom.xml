@@ -14,7 +14,8 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <argLine>-Dfile.encoding=UTF-8</argLine>
-        <kotlin.version>1.7.10</kotlin.version>
+        <kotlin.version>1.9.23</kotlin.version>
+        <teamscale.version>33.1.2</teamscale.version>
 	</properties>
     <dependencies>
         <dependency>
@@ -49,7 +50,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.1.2</version>
+                <version>3.2.5</version>
             </plugin>
             <plugin>
                 <groupId>org.jetbrains.kotlin</groupId>
@@ -78,7 +79,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
+                <version>3.13.0</version>
                 <executions>
                     <execution>
                         <id>compile</id>
@@ -103,7 +104,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.4.1</version>
                 <executions>
                     <execution>
                         <id>enforce-no-student-code-in-trusted-packages</id>
@@ -160,7 +161,7 @@
                 <dependency>
                     <groupId>com.teamscale</groupId>
                     <artifactId>impacted-test-engine</artifactId>
-                    <version>30.1.1</version>
+                    <version>${teamscale.version}</version>
                 </dependency>
             </dependencies>
             <build>
@@ -168,7 +169,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
-                        <version>3.1.2</version>
+                        <version>3.2.5</version>
                         <configuration>
                             <systemPropertyVariables>
                                 <ares.security.trustedpackages>okhttp3,com.teamscale,retrofit2,shadow,com.squareup,okio</ares.security.trustedpackages>
@@ -178,7 +179,7 @@
                     <plugin>
                         <groupId>com.teamscale</groupId>
                         <artifactId>teamscale-maven-plugin</artifactId>
-                        <version>30.1.1</version>
+                        <version>${teamscale.version}</version>
                         <configuration>
                             <teamscaleUrl>http://localhost</teamscaleUrl>
                             <accessToken>dummy</accessToken>

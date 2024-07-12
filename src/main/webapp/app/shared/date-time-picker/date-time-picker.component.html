@@ -19,7 +19,8 @@
         #dateInput="ngModel"
         class="form-control position-relative ps-5"
         id="date-input-field"
-        [ngClass]="{ 'is-invalid': error }"
+        [ngClass]="{ 'is-invalid': error || dateInput.invalid || (requiredField && !dateInput.value) }"
+        [class.ng-invalid]="error || dateInput.invalid || (requiredField && !dateInput.value)"
         [ngModel]="value"
         [disabled]="disabled"
         [min]="minDate"
@@ -31,5 +32,14 @@
     <button [owlDateTimeTrigger]="dt" class="btn position-absolute" type="button">
         <fa-icon [icon]="faCalendarAlt" />
     </button>
+    <div class="position-relative">
+        <button class="btn position-absolute" type="button" style="right: 0" (click)="clearDate()">
+            <fa-icon [icon]="faCircleXmark" />
+        </button>
+    </div>
+
     <owl-date-time [startAt]="startDate" #dt />
 </div>
+@if (dateInput.invalid || (requiredField && !dateInput.value)) {
+    <div class="invalid-feedback">{{ 'entity.dateMissingOrNotValid' | artemisTranslate: { labelName: labelName } }}</div>
+}

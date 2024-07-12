@@ -4,7 +4,7 @@
             <div class="card-body">
                 @if (loadingParticipation) {
                     <span>
-                        <fa-icon [icon]="faCircleNotch" [spin]="true" />
+                        <fa-icon [icon]="faCircleNotch" animation="spin" />
                         <p class="d-inline" jhiTranslate="artemisApp.editor.fetchingParticipation"></p>
                     </span>
                 }
@@ -33,12 +33,10 @@
         >
             <div editorTitle>
                 <span>{{ exercise?.title }}</span>
-                <span
-                    >&nbsp;[{{ exercise?.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}
-                    @if (exercise.bonusPoints) {
+                <!-- prettier-ignore -->
+                <span>&nbsp;[{{ exercise?.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}@if (exercise.bonusPoints) {
                         <span>, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>
-                    }
-                    ]
+                    }]
                     @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
                         <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore" />
                     }

@@ -1,6 +1,10 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -111,6 +115,7 @@ public class DragAndDropMapping extends DomainObject implements QuizQuestionComp
         return question;
     }
 
+    @Override
     public void setQuestion(DragAndDropQuestion dragAndDropQuestion) {
         this.question = dragAndDropQuestion;
     }

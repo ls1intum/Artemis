@@ -147,7 +147,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
 
         this.isOnlyCompilationTested = isOnlyCompilationTested(this.result, evaluateTemplateStatus(this.exercise, this.result.participation, this.result, false));
 
-        // Get active profiles, to distinguish between Bitbucket and GitLab for the commit link of the result
+        // Get active profiles, to distinguish between VC systems for the commit link of the result
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.commitHashURLTemplate = profileInfo?.commitHashURLTemplate;
             this.commitUrl = this.getCommitUrl(this.result, this.exercise as ProgrammingExercise, this.commitHashURLTemplate);
@@ -213,7 +213,6 @@ export class FeedbackComponent implements OnInit, OnChanges {
 
                         const filteredFeedback = this.feedbackService.filterFeedback(feedbacks, this.feedbackFilter);
                         checkSubsequentFeedbackInAssessment(filteredFeedback);
-
                         const feedbackItems = this.feedbackItemService.create(filteredFeedback, this.showTestDetails);
                         this.feedbackItemNodes = this.feedbackItemService.group(feedbackItems, this.exercise!);
                         if (this.isExamReviewPage) {
@@ -223,6 +222,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
 
                     // If we don't receive a submission or the submission is marked with buildFailed, fetch the build logs.
                     if (
+                        this.result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA &&
                         this.exerciseType === ExerciseType.PROGRAMMING &&
                         this.result.participation &&
                         (!this.result.submission || (this.result.submission as ProgrammingSubmission).buildFailed)

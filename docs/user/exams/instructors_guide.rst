@@ -190,7 +190,10 @@ During the exam creation and configuration, you can create your exam and configu
 
 
     - In the *Configure Grading* screen, you can tweak the ``weight`` of the tests, the ``bonus multiplier`` and add ``bonus points``.
-    - You can hide tests so that they are not executed during the exam conduction. Students can not receive feedback from hidden tests during the exam conduction.
+    - You can hide tests so that they are not executed during the exam conduction by setting the test case visibility to `After Release Date of Results.` Students can not receive feedback from hidden tests during the exam conduction. This option is set by default when creating new programming exercises within an exam.
+
+    .. note::
+        When importing exercises, the test case visibility of imported exercise will equal the visibility of the original exercise. You can adjust the test case visibility in the import `Assessment` section to be set to `After Release Date of Results`.
 
     .. note::
         If you hide all tests, the students will only be able to see if their submission compiles during the conduction. Set the ``Run Tests once after Due Date`` after the

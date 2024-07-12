@@ -10,12 +10,12 @@ import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface ExerciseGroupRepository extends JpaRepository<ExerciseGroup, Long> {
+public interface ExerciseGroupRepository extends ArtemisJpaRepository<ExerciseGroup, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "exercises" })
     Optional<ExerciseGroup> findWithExercisesById(Long exerciseGroupId);
@@ -39,18 +39,6 @@ public interface ExerciseGroupRepository extends JpaRepository<ExerciseGroup, Lo
             """)
     // INDEX() is used to retrieve the order saved by @OrderColumn, see https://en.wikibooks.org/wiki/Java_Persistence/JPQL#Special_Operators
     List<ExerciseGroup> findWithExamAndExercisesByExamId(@Param("examId") Long examId);
-
-    /**
-     * Get one exerciseGroup by id with the corresponding exam.
-     *
-     * @param exerciseGroupId the id of the entity
-     * @return the entity
-     */
-    @NotNull
-    default ExerciseGroup findByIdElseThrow(long exerciseGroupId) {
-        // Note: exam is loaded eagerly anyway
-        return findById(exerciseGroupId).orElseThrow(() -> new EntityNotFoundException("ExerciseGroup", exerciseGroupId));
-    }
 
     /**
      * Get one exerciseGroup by id with all exercises.

@@ -47,7 +47,11 @@ describe('ProgrammingExerciseUtils URL utils', () => {
             participantIdentifier,
             repositoryUri,
             programmingExercise: exercise,
-        } as Participation & { programmingExercise: ProgrammingExercise; repositoryUri: string | undefined; participantIdentifier: string | undefined };
+        } as Participation & {
+            programmingExercise: ProgrammingExercise;
+            repositoryUri: string | undefined;
+            participantIdentifier: string | undefined;
+        };
         submission = {
             id: 3,
             submissionExerciseType: SubmissionExerciseType.PROGRAMMING,
@@ -62,18 +66,18 @@ describe('ProgrammingExerciseUtils URL utils', () => {
     }
 
     beforeEach(() => {
-        commitHashURLTemplate = 'https://bitbucket.ase.in.tum.de/projects/{projectKey}/repos/{repoSlug}/commits/{commitHash}';
+        commitHashURLTemplate = 'https://gitlab.ase.in.tum.de/projects/{projectKey}/repos/{repoSlug}/commits/{commitHash}';
         submissionType = SubmissionType.MANUAL;
         participationType = ParticipationType.PROGRAMMING;
         commitHash = '123456789';
         projectKey = 'somekey';
         participantIdentifier = 'student42';
-        repositoryUri = 'https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-student42';
+        repositoryUri = 'https://gitlab.ase.in.tum.de/projects/somekey/repos/somekey-student42';
     });
 
     it('should return correct commit url for student submission', () => {
         generateParticipationAndSubmission();
-        expect(createCommitUrlResult()).toBe('https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-student42/commits/123456789');
+        expect(createCommitUrlResult()).toBe('https://gitlab.ase.in.tum.de/projects/somekey/repos/somekey-student42/commits/123456789');
     });
 
     it('should return correct commit url with different commit hash url template for student submission', () => {
@@ -85,75 +89,75 @@ describe('ProgrammingExerciseUtils URL utils', () => {
     it('should return correct commit url for student submission and convert project key to lowercase', () => {
         projectKey = 'SOMEKEY';
         generateParticipationAndSubmission();
-        expect(createCommitUrlResult()).toBe('https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-student42/commits/123456789');
+        expect(createCommitUrlResult()).toBe('https://gitlab.ase.in.tum.de/projects/somekey/repos/somekey-student42/commits/123456789');
     });
 
     it('should return correct commit url for template submission', () => {
         participantIdentifier = undefined;
         participationType = ParticipationType.TEMPLATE;
         generateParticipationAndSubmission();
-        expect(createCommitUrlResult()).toBe('https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-exercise/commits/123456789');
+        expect(createCommitUrlResult()).toBe('https://gitlab.ase.in.tum.de/projects/somekey/repos/somekey-exercise/commits/123456789');
     });
 
     it('should return correct commit url for solution submission', () => {
         participantIdentifier = undefined;
         participationType = ParticipationType.SOLUTION;
         generateParticipationAndSubmission();
-        expect(createCommitUrlResult()).toBe('https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-solution/commits/123456789');
+        expect(createCommitUrlResult()).toBe('https://gitlab.ase.in.tum.de/projects/somekey/repos/somekey-solution/commits/123456789');
     });
 
     it('should return generic commits url with undefined commit hash', () => {
         commitHash = undefined;
         generateParticipationAndSubmission();
-        expect(createCommitUrlResult()).toBe('https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-student42/commits/');
+        expect(createCommitUrlResult()).toBe('https://gitlab.ase.in.tum.de/projects/somekey/repos/somekey-student42/commits/');
     });
 
     it('should return template commit url with undefined submission type for template participation', () => {
         participationType = ParticipationType.TEMPLATE;
         submissionType = undefined;
         generateParticipationAndSubmission();
-        expect(createCommitUrlResult()).toBe('https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-exercise/commits/123456789');
+        expect(createCommitUrlResult()).toBe('https://gitlab.ase.in.tum.de/projects/somekey/repos/somekey-exercise/commits/123456789');
     });
 
     it('should return solution commit url with undefined submission type for solution participation', () => {
         participationType = ParticipationType.SOLUTION;
         submissionType = undefined;
         generateParticipationAndSubmission();
-        expect(createCommitUrlResult()).toBe('https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-solution/commits/123456789');
+        expect(createCommitUrlResult()).toBe('https://gitlab.ase.in.tum.de/projects/somekey/repos/somekey-solution/commits/123456789');
     });
 
     it('should return test commit url with submission type TEST for template participation', () => {
         participationType = ParticipationType.TEMPLATE;
         submissionType = SubmissionType.TEST;
         generateParticipationAndSubmission();
-        expect(createCommitUrlResult()).toBe('https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-tests/commits/123456789');
+        expect(createCommitUrlResult()).toBe('https://gitlab.ase.in.tum.de/projects/somekey/repos/somekey-tests/commits/123456789');
     });
 
     it('should return test commit url with submission type TEST for solution participation', () => {
         participationType = ParticipationType.SOLUTION;
         submissionType = SubmissionType.TEST;
         generateParticipationAndSubmission();
-        expect(createCommitUrlResult()).toBe('https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-tests/commits/123456789');
+        expect(createCommitUrlResult()).toBe('https://gitlab.ase.in.tum.de/projects/somekey/repos/somekey-tests/commits/123456789');
     });
 
     it('should return generic commit url with undefined submission for student participation', () => {
         generateParticipationAndSubmission();
         submission = undefined;
-        expect(createCommitUrlResult()).toBe('https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-student42/commits/');
+        expect(createCommitUrlResult()).toBe('https://gitlab.ase.in.tum.de/projects/somekey/repos/somekey-student42/commits/');
     });
 
     it('should return generic commit url with undefined submission for template participation', () => {
         participationType = ParticipationType.TEMPLATE;
         generateParticipationAndSubmission();
         submission = undefined;
-        expect(createCommitUrlResult()).toBe('https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-exercise/commits/');
+        expect(createCommitUrlResult()).toBe('https://gitlab.ase.in.tum.de/projects/somekey/repos/somekey-exercise/commits/');
     });
 
     it('should return generic commit url with undefined submission for solution participation', () => {
         participationType = ParticipationType.SOLUTION;
         generateParticipationAndSubmission();
         submission = undefined;
-        expect(createCommitUrlResult()).toBe('https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-solution/commits/');
+        expect(createCommitUrlResult()).toBe('https://gitlab.ase.in.tum.de/projects/somekey/repos/somekey-solution/commits/');
     });
 
     it('should return undefined commit url with non-programming participation type', () => {

@@ -1,45 +1,21 @@
 package de.tum.in.www1.artemis.domain.exam;
 
-import java.nio.file.Path;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PostLoad;
-import jakarta.persistence.PostPersist;
-import jakarta.persistence.PostRemove;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.AbstractAuditingEntity;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.service.EntityFileHelper;
-import de.tum.in.www1.artemis.service.FilePathService;
-import de.tum.in.www1.artemis.service.FileService;
 
 @Entity
 @Table(name = "exam_user")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ExamUser extends AbstractAuditingEntity {
-
-    @Transient
-    private final transient FileService fileService = new FileService();
-
-    @Transient
-    private final transient EntityFileHelper entityFileService = new EntityFileHelper(fileService);
-
-    @Transient
-    private String prevSigningImagePath;
-
-    @Transient
-    private String prevStudentImagePath;
 
     @Column(name = "actual_room")
     private String actualRoom;
@@ -177,77 +153,4 @@ public class ExamUser extends AbstractAuditingEntity {
         this.studentImagePath = studentImagePath;
     }
 
-    /**
-     * Initialisation of the ExamUser on Server start
-     */
-    @PostLoad
-    public void onLoad() {
-        // replace placeholder with actual id if necessary (this is needed because changes made in afterCreate() are not persisted)
-        if (signingImagePath != null && signingImagePath.contains(Constants.FILEPATH_ID_PLACEHOLDER)) {
-            signingImagePath = signingImagePath.replace(Constants.FILEPATH_ID_PLACEHOLDER, getId().toString());
-        }
-        prevSigningImagePath = signingImagePath; // save current path as old path (needed to know old path in onUpdate() and onDelete())
-
-        // replace placeholder with actual id if necessary (this is needed because changes made in afterCreate() are not persisted)
-        if (studentImagePath != null && studentImagePath.contains(Constants.FILEPATH_ID_PLACEHOLDER)) {
-            studentImagePath = studentImagePath.replace(Constants.FILEPATH_ID_PLACEHOLDER, getId().toString());
-        }
-        prevStudentImagePath = studentImagePath; // save current path as old path (needed to know old path in onUpdate() and onDelete())
-    }
-
-    /**
-     * Will be called before the entity is persisted (saved).
-     * Manages files by taking care of file system changes for this entity.
-     */
-    @PrePersist
-    public void beforeCreate() {
-        if (signingImagePath != null) {
-            signingImagePath = entityFileService.moveTempFileBeforeEntityPersistence(signingImagePath, FilePathService.getExamUserSignatureFilePath(), false);
-        }
-        if (studentImagePath != null) {
-            studentImagePath = entityFileService.moveTempFileBeforeEntityPersistence(studentImagePath, FilePathService.getStudentImageFilePath(), false);
-        }
-    }
-
-    /**
-     * Will be called after the entity is persisted (saved).
-     * Manages files by taking care of file system changes for this entity.
-     */
-    @PostPersist
-    public void afterCreate() {
-        // replace placeholder with actual id if necessary (id is no longer null at this point)
-        if (signingImagePath != null && signingImagePath.contains(Constants.FILEPATH_ID_PLACEHOLDER)) {
-            signingImagePath = signingImagePath.replace(Constants.FILEPATH_ID_PLACEHOLDER, getId().toString());
-        }
-
-        if (studentImagePath != null && studentImagePath.contains(Constants.FILEPATH_ID_PLACEHOLDER)) {
-            studentImagePath = studentImagePath.replace(Constants.FILEPATH_ID_PLACEHOLDER, getId().toString());
-        }
-    }
-
-    /**
-     * Will be called before the entity is flushed.
-     * Manages files by taking care of file system changes for this entity.
-     */
-    @PreUpdate
-    public void onUpdate() {
-        signingImagePath = entityFileService.handlePotentialFileUpdateBeforeEntityPersistence(getId(), prevSigningImagePath, signingImagePath,
-                FilePathService.getExamUserSignatureFilePath(), false);
-        studentImagePath = entityFileService.handlePotentialFileUpdateBeforeEntityPersistence(getId(), prevStudentImagePath, studentImagePath,
-                FilePathService.getStudentImageFilePath(), false);
-    }
-
-    /**
-     * Will be called after the entity is removed (deleted).
-     * Manages files by taking care of file system changes for this entity.
-     */
-    @PostRemove
-    public void onDelete() {
-        if (signingImagePath != null) {
-            fileService.schedulePathForDeletion(Path.of(prevSigningImagePath), 0);
-        }
-        if (studentImagePath != null) {
-            fileService.schedulePathForDeletion(Path.of(prevStudentImagePath), 0);
-        }
-    }
 }

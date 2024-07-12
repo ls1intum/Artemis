@@ -1,7 +1,7 @@
 {
     "artemisApp": {
         "course": {
-            "searchForCourse": "Suchen Sie nach einem Kurs",
+            "searchForCourse": "Suche nach einem Kurs",
             "home": {
                 "title": "Kurse",
                 "createLabel": "Kurs erstellen",
@@ -55,7 +55,7 @@
             },
             "customizeGroupNames": {
                 "title": "Passe Gruppennamen an",
-                "description": "Stelle sicher, dass die Gruppen in der externen Verwaltung von Nutzer:innen existieren, wenn du diese Option aktivierst. Die Gruppen werden dann nicht automatisch erzeugt."
+                "description": "Das Anpassen der Gruppennamen sollte nicht nötig sein und kann dazu führen, dass Nutzer:innen den Zugang zum Kurs verlieren. Stelle sicher, dass du einen guten Grund für das Anpassen der Gruppennamen hast."
             },
             "studentGroupName": "Gruppe der Studierenden",
             "teachingAssistantGroupName": "Gruppe der Tutor:innen",
@@ -85,6 +85,10 @@
                 "label": "Lernpfade aktiviert",
                 "tooltip": "Ermöglicht es aus Kompetenzen und deren Lerninhalten einen individuellen Lernpfad für Studierende zu generieren."
             },
+            "dashboard": {
+                "label": "Übersichtsseite zur Kursanalyse für Studierende aktiviert",
+                "tooltip": "Aktiviert die Übersichtsseite zur Kursanalyse für Studierende, Tutor:innen und Lehrende. Die Übersichtsseite ermöglicht es den Nutzern, ihren Fortschritt und ihre Leistung im Kurs zu verfolgen."
+            },
             "restrictedAthenaModulesAccess": {
                 "label": "Zugriff auf geschützte Athena-Module aktiviert",
                 "tooltip": "Wenn diese Option ausgewählt ist, können die Übungen des Kurses auch geschützte Athena-Module für die Feedbackerstellung verwenden."
@@ -96,21 +100,21 @@
             "courseCommunicationSetting": {
                 "communicationEnabled": {
                     "label": "Kommunikation aktiviert",
-                    "tooltip": "Ermöglicht die Kommunikation zwischen Studierenden, Tutor:innen und Lehrenden durch ein Frage- und Antwortsystem. Die Studierenden können mit anderen Studierenden interagieren und Fragen stellen, während Moderator:innen Kursinformationen bereitstellen und inhaltliche Fragen beantworten können. Die Kommunikation kann direkt auf der Seite der jeweiligen Übung oder Vorlesung oder im speziellen Kommunikationsbereich des Kurses erfolgen."
+                    "tooltip": "Ermöglicht die Kommunikation zwischen Nutzer:innen in privaten oder öffentlichen Kanälen, die nur von Lehrenden und Tutor:innen erstellt werden können. Die Studierenden können mit anderen Studierenden interagieren und Fragen stellen, während Moderator:innen Kursinformationen bereitstellen und inhaltliche Fragen beantworten können. Die Kommunikation kann direkt auf der Seite der jeweiligen Übung oder Vorlesung oder im speziellen Kommunikationsbereich des Kurses erfolgen."
                 },
                 "messagingEnabled": {
-                    "label": "Nachrichten aktiviert",
-                    "tooltip": "Ermöglicht den Nachrichtenaustausch zwischen Nutzer:innen in privaten oder öffentlichen Kanälen, Gruppenchats oder Direktnachrichten. Kanäle können nur von Lehrenden und Tutor:innen erstellt werden. Nutzer:innen können selbst öffentlichen Kanälen beitreten und müssen zu privaten Kanälen hinzugefügt werden. Alle Nutzer:innen können einen privaten Gruppenchat starten und andere Nutzer:innen hinzufügen. Ein Gruppenchat ist auf zehn Mitglieder:innen begrenzt. Alle Nutzer:innen können Direktnachrichten an andere Nutzer:innen senden. Die Chats finden im Nachrichtenbereich des Kurses statt.",
+                    "label": "Direktnachrichten / Gruppen-Chats aktiviert",
+                    "tooltip": "Ermöglicht den Nachrichtenaustausch in Gruppenchats oder Direktnachrichten. Alle Nutzer:innen können Direktnachrichten oder einen privaten Gruppenchat starten und andere Nutzer:innen hinzufügen. Ein Gruppenchat ist auf zehn Mitglieder:innen begrenzt. Die Chats finden im Kommunikationbereich des Kurses statt.",
                     "codeOfConduct": "Nachrichten: Code of Conduct"
                 }
             },
-            "registrationEnabled": {
-                "title": "Kursregistrierung für Studierende aktiviert",
-                "description": "Aktiviere diese Checkbox, damit sich Studierende selbständig im Kurs registrieren können, sofern dieser aktiv ist (zwischen Start und Ende des Kurses). Du kannst optional eine Nachricht eingeben, die Studierende bei der Registrierung bestätigen müssen."
+            "enrollmentEnabled": {
+                "title": "Kurseinschreibung für Studierende aktiviert",
+                "description": "Aktiviere diese Checkbox, damit sich Studierende selbständig im Kurs einschreiben können, sofern dieser aktiv ist (zwischen Start und Ende des Kurses). Du kannst optional eine Nachricht eingeben, die Studierende bei der Einschreibung bestätigen müssen."
             },
             "enrollmentStartDate": "Einschreibungs Start",
             "enrollmentEndDate": "Einschreibungs Ende",
-            "registrationConfirmationMessage": "Nachricht zur Bestätigung der Registrierung",
+            "enrollmentConfirmationMessage": "Nachricht zur Bestätigung der Einschreibung",
             "unenrollmentEnabled": {
                 "title": "Austragen aus dem Kurs für Studierende aktiviert",
                 "description": "Aktiviere diese Checkbox, damit sich Studierende selbstständig vom Kurs austragen können. Du kannst das späteste Datum hierfür einstellen, andernfalls ist es den Studenten bis zum Ende des Kurses möglich sich auszutragen."
@@ -228,7 +232,11 @@
             "activeStudents": "Aktive Studierende: {{ students }}",
             "notStartedYet": "Der Kurs hat noch nicht offiziell begonnen. Offizieller Kursstart:",
             "noOrganizations": "Keine Organisationen",
-            "organizationAddingHint": "Administratoren können Organisationen zu Kursen hinzufügen."
+            "organizationAddingHint": "Administratoren können Organisationen zu Kursen hinzufügen.",
+            "imageCropper": {
+                "title": "Bild zuschneiden",
+                "uploadTitle": "Ein Bild hinzufügen"
+            }
         },
         "courseStatistics": {
             "statistics": "Statistiken",

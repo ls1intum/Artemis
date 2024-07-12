@@ -413,7 +413,7 @@ public class CourseScoreCalculationService {
         }
 
         if (ratedResultsWithCompletionDate.size() == 1) {
-            return ratedResultsWithCompletionDate.get(0);
+            return ratedResultsWithCompletionDate.getFirst();
         }
 
         // Sort the list in descending order to have the latest result at the beginning.
@@ -421,7 +421,7 @@ public class CourseScoreCalculationService {
 
         if (dueDate == null) {
             // If the due date is null, you can always submit something, and it will always ge graded. Just take the latest graded result.
-            return resultsList.get(0);
+            return resultsList.getFirst();
         }
 
         // The due date is set and we need to find the latest result that was completed before the due date.

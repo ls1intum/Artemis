@@ -47,21 +47,18 @@ describe('IrisEnabledComponent', () => {
         expect(comp).toBeDefined();
     });
 
-    it.each([IrisSubSettingsType.CHAT, IrisSubSettingsType.HESTIA, IrisSubSettingsType.CODE_EDITOR, IrisSubSettingsType.COMPETENCY_GENERATION])(
-        'should load exercise',
-        async (subSettingstype) => {
-            const getExerciseSettingsSpy = jest.spyOn(irisSettingsService, 'getUncombinedProgrammingExerciseSettings').mockReturnValue(of(irisSettings));
-            comp.exercise = exercise;
-            comp.irisSubSettingsType = subSettingstype;
-            fixture.detectChanges();
-            expect(getExerciseSettingsSpy).toHaveBeenCalledOnce();
-            await Promise.resolve();
-            expect(comp.irisSettings).toBe(irisSettings);
-            expect(comp.irisSubSettings).toBeDefined();
-        },
-    );
+    it.each([IrisSubSettingsType.CHAT, IrisSubSettingsType.HESTIA, IrisSubSettingsType.COMPETENCY_GENERATION])('should load exercise', async (subSettingstype) => {
+        const getExerciseSettingsSpy = jest.spyOn(irisSettingsService, 'getUncombinedProgrammingExerciseSettings').mockReturnValue(of(irisSettings));
+        comp.exercise = exercise;
+        comp.irisSubSettingsType = subSettingstype;
+        fixture.detectChanges();
+        expect(getExerciseSettingsSpy).toHaveBeenCalledOnce();
+        await Promise.resolve();
+        expect(comp.irisSettings).toBe(irisSettings);
+        expect(comp.irisSubSettings).toBeDefined();
+    });
 
-    it.each([IrisSubSettingsType.CHAT, IrisSubSettingsType.HESTIA, IrisSubSettingsType.CODE_EDITOR, IrisSubSettingsType.COMPETENCY_GENERATION])(
+    it.each([IrisSubSettingsType.CHAT, IrisSubSettingsType.HESTIA, IrisSubSettingsType.COMPETENCY_GENERATION, IrisSubSettingsType.LECTURE_INGESTION])(
         'should load course',
         async (subSettingstype) => {
             const getExerciseSettingsSpy = jest.spyOn(irisSettingsService, 'getUncombinedCourseSettings').mockReturnValue(of(irisSettings));

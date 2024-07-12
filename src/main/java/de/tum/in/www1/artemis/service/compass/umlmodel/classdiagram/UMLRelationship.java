@@ -1,7 +1,8 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
 import static de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity.nameEqualsSimilarity;
-import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.*;
+import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.RELATION_MULTIPLICITY_WEIGHT;
+import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.RELATION_ROLE_WEIGHT;
 
 import java.io.Serializable;
 import java.util.Objects;

@@ -143,7 +143,7 @@
                             </span>
                         </ng-template>
                         <ng-template ngx-datatable-cell-template let-row="row">
-                            <a [href]="routerLink + '/' + row.id + '/repository'" class="btn btn-sm btn-primary ms-2">
+                            <a [routerLink]="['./', row.id, 'repository']" class="btn btn-sm btn-primary ms-2">
                                 <fa-icon [icon]="faCodeBranch" />
                                 <span jhiTranslate="artemisApp.exerciseActions.openRepository"></span>
                             </a>
@@ -354,7 +354,7 @@
                                     @if (hasLoadedPendingSubmissions) {
                                         <jhi-programming-exercise-instructor-trigger-build-button [exercise]="exercise" [participation]="value" class="me-1" />
                                     } @else {
-                                        <fa-icon [icon]="faCircleNotch" [spin]="true" class="text-secondary" />
+                                        <fa-icon [icon]="faCircleNotch" animation="spin" class="text-secondary" />
                                     }
                                 }
                                 @if (exercise.isAtLeastInstructor) {

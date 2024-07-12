@@ -7,31 +7,19 @@ import java.util.List;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.DataExport;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data JPA repository for a data export entity.
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface DataExportRepository extends JpaRepository<DataExport, Long> {
-
-    /**
-     * Find a data export by its ID and throw an {@link EntityNotFoundException} if it could not be found.
-     *
-     * @param dataExportId the id of the data export to find
-     * @return the data export for the given id
-     * @throws EntityNotFoundException if the data export could not be found
-     */
-    default DataExport findByIdElseThrow(long dataExportId) {
-        return findById(dataExportId).orElseThrow(() -> new EntityNotFoundException("Could not find data export with id: " + dataExportId));
-    }
+public interface DataExportRepository extends ArtemisJpaRepository<DataExport, Long> {
 
     /**
      * Find all data exports that need to be created. This includes all data exports that are currently in the state IN_CREATION (the export was not completed then) or

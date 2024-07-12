@@ -5,8 +5,6 @@ Aeolus is a service that provides a REST API for the Artemis platform to generat
 programming exercises. It is designed to be used in combination with the Artemis platform to provide
 build plans in multiple CI systems, currently Jenkins and LocalCI.
 
-Aeolus can also translate existing build plans from Bamboo into its own platform independent format.
-
 This section outlines how to set up Aeolus in your own Artemis instance.
 
 Prerequisites
@@ -20,7 +18,7 @@ Enable the ``aeolus`` Spring profile
 
 ::
 
-   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling,aeolus
+   --spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,local,aeolus
 
 Configure the Aeolus Endpoint
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

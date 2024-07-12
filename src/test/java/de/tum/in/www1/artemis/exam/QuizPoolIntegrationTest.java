@@ -13,7 +13,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -23,10 +22,8 @@ import de.tum.in.www1.artemis.domain.quiz.QuizGroup;
 import de.tum.in.www1.artemis.domain.quiz.QuizPool;
 import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestion;
-import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
-import de.tum.in.www1.artemis.service.QuizPoolService;
-import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.exercise.quiz.QuizExerciseFactory;
+import de.tum.in.www1.artemis.service.quiz.QuizPoolService;
 
 class QuizPoolIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -36,16 +33,7 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private QuizPoolService quizPoolService;
 
     @Autowired
-    private CourseUtilService courseUtilService;
-
-    @Autowired
     private ExamUtilService examUtilService;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private RequestUtilService request;
 
     private Course course;
 

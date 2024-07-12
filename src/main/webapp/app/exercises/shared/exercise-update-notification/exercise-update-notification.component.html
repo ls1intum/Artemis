@@ -1,6 +1,11 @@
-@if (!isCreation && !isImport) {
-    <div class="form-group">
-        <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text"></label>
-        <input minlength="3" type="text" class="form-control" name="notificationText" id="field_notification_text" (change)="onInputChanged()" [(ngModel)]="notificationText" />
-    </div>
-}
+<input
+    placeholder="{{ 'artemisApp.exercise.notificationText' | artemisTranslate }}"
+    title="{{ 'artemisApp.exercise.notificationText' | artemisTranslate }}"
+    minlength="3"
+    type="text"
+    class="form-control form-control-sm"
+    name="notificationText"
+    id="field_notification_text"
+    (change)="onInputChanged()"
+    [(ngModel)]="notificationText"
+/>

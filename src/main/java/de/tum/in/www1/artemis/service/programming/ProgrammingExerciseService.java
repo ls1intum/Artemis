@@ -3,6 +3,10 @@ package de.tum.in.www1.artemis.service.programming;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
+import static de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository.ProgrammingExerciseFetchOptions.AuxiliaryRepositories;
+import static de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository.ProgrammingExerciseFetchOptions.GradingCriteria;
+import static de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository.SolutionParticipationFetchOptions;
+import static de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository.TemplateParticipationFetchOptions;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -35,8 +39,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.Course;
@@ -64,6 +68,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
+import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.ExerciseSpecificationService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.ProfileService;
@@ -175,6 +180,8 @@ public class ProgrammingExerciseService {
 
     private final ProfileService profileService;
 
+    private final ExerciseService exerciseService;
+
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
@@ -188,7 +195,7 @@ public class ProgrammingExerciseService {
             SubmissionPolicyService submissionPolicyService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, ChannelService channelService,
             ProgrammingSubmissionService programmingSubmissionService, Optional<IrisSettingsService> irisSettingsService, Optional<AeolusTemplateService> aeolusTemplateService,
             Optional<BuildScriptGenerationService> buildScriptGenerationService,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProfileService profileService) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProfileService profileService, ExerciseService exerciseService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -220,6 +227,7 @@ public class ProgrammingExerciseService {
         this.buildScriptGenerationService = buildScriptGenerationService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.profileService = profileService;
+        this.exerciseService = exerciseService;
     }
 
     /**
@@ -229,7 +237,6 @@ public class ProgrammingExerciseService {
      * <li>All repositories (test, exercise, solution)</li>
      * <li>The template and solution participation</li>
      * <li>VCS webhooks</li>
-     * <li>Bamboo build plans</li>
      * </ul>
      * The exercise gets set up in the following order:
      * <ol>
@@ -344,7 +351,7 @@ public class ProgrammingExerciseService {
 
         programmingExercise.validateGeneralSettings();
         programmingExercise.validateProgrammingSettings();
-        programmingExercise.validateManualFeedbackSettings();
+        programmingExercise.validateSettingsForFeedbackRequest();
         auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
         submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
 
@@ -357,10 +364,6 @@ public class ProgrammingExerciseService {
         // Check if checkout solution repository is enabled
         if (programmingExercise.getCheckoutSolutionRepository() && !programmingLanguageFeature.checkoutSolutionRepositoryAllowed()) {
             throw new BadRequestAlertException("Checkout solution repository is not supported for this programming language", "Exercise", "checkoutSolutionRepositoryNotSupported");
-        }
-        // Check if publish build plan URL is enabled
-        if (Boolean.TRUE.equals(programmingExercise.isPublishBuildPlanUrl()) && !programmingLanguageFeature.publishBuildPlanUrlAllowed()) {
-            throw new BadRequestAlertException("Publishing the build plan URL is not supported for this language", "Exercise", "publishBuildPlanUrlNotSupported");
         }
 
         // Check if testwise coverage analysis is enabled
@@ -435,7 +438,7 @@ public class ProgrammingExerciseService {
      * @param isImportedFromFile  defines if the programming exercise is imported from a file, if the
      *                                exercise is imported, the build plans will not be triggered to prevent erroneous builds
      */
-    public void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise, boolean isImportedFromFile) {
+    public void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise, boolean isImportedFromFile) throws JsonProcessingException {
         String projectKey = programmingExercise.getProjectKey();
         // Get URLs for repos
         var exerciseRepoUri = programmingExercise.getVcsTemplateRepositoryUri();
@@ -457,7 +460,7 @@ public class ProgrammingExerciseService {
         Windfile windfile = programmingExercise.getWindfile();
         if (windfile != null && buildScriptGenerationService.isPresent() && programmingExercise.getBuildScript() == null) {
             String script = buildScriptGenerationService.get().getScript(programmingExercise);
-            programmingExercise.setBuildPlanConfiguration(new Gson().toJson(windfile));
+            programmingExercise.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
             programmingExercise.setBuildScript(script);
             programmingExercise = programmingExerciseRepository.saveForCreation(programmingExercise);
         }
@@ -539,7 +542,7 @@ public class ProgrammingExerciseService {
      * @return the updates programming exercise from the database
      */
     public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise,
-            @Nullable String notificationText) {
+            @Nullable String notificationText) throws JsonProcessingException {
         setURLsForAuxiliaryRepositoriesOfExercise(updatedProgrammingExercise);
         connectAuxiliaryRepositoriesToExercise(updatedProgrammingExercise);
 
@@ -555,9 +558,13 @@ public class ProgrammingExerciseService {
 
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedProgrammingExercise, programmingExerciseBeforeUpdate.getDueDate());
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
-        // TODO: in case of an exam exercise, this is not necessary
-        scheduleOperations(updatedProgrammingExercise.getId());
-        groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText);
+
+        if (programmingExerciseBeforeUpdate.isCourseExercise()) {
+            scheduleOperations(updatedProgrammingExercise.getId());
+        }
+
+        exerciseService.notifyAboutExerciseChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise, notificationText);
+
         return savedProgrammingExercise;
     }
 
@@ -568,7 +575,7 @@ public class ProgrammingExerciseService {
      * @param programmingExerciseBeforeUpdate the original programming exercise with its old values
      * @param updatedProgrammingExercise      the changed programming exercise with its new values
      */
-    private void updateBuildPlanForExercise(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
+    private void updateBuildPlanForExercise(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) throws JsonProcessingException {
         if (continuousIntegrationService.isEmpty()
                 || Objects.equals(programmingExerciseBeforeUpdate.getBuildPlanConfiguration(), updatedProgrammingExercise.getBuildPlanConfiguration())) {
             return;
@@ -662,13 +669,17 @@ public class ProgrammingExerciseService {
     public ProgrammingExercise updateProblemStatement(ProgrammingExercise programmingExercise, String problemStatement, @Nullable String notificationText)
             throws EntityNotFoundException {
 
+        String oldProblemStatement = programmingExercise.getProblemStatement();
         programmingExercise.setProblemStatement(problemStatement);
         programmingExerciseTaskService.replaceTestNamesWithIds(programmingExercise);
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
+        // Set the old problem statement again for notifyAboutExerciseChanges method, but don't save it
+        programmingExercise.setProblemStatement(oldProblemStatement);
+
         programmingExerciseTaskService.updateTasksFromProblemStatement(updatedProgrammingExercise);
 
-        groupNotificationService.notifyAboutExerciseUpdate(programmingExercise, notificationText);
+        exerciseService.notifyAboutExerciseChanges(programmingExercise, updatedProgrammingExercise, notificationText);
 
         return updatedProgrammingExercise;
     }
@@ -946,5 +957,39 @@ public class ProgrammingExerciseService {
 
     private void resetAllStudentBuildPlanIdsForExercise(ProgrammingExercise programmingExercise) {
         programmingExerciseStudentParticipationRepository.unsetBuildPlanIdForExercise(programmingExercise.getId());
+    }
+
+    /**
+     * Load a programming exercise with eager
+     * - auxiliary repositories
+     * - template participation with submissions (and results if withSubmissionResults is true)
+     * - solution participation with submissions (and results if withSubmissionResults is true)
+     * - grading criteria (only if withGradingCriteria is true)
+     *
+     * @param exerciseId            the ID of the programming exercise to load
+     * @param withSubmissionResults a flag indicating whether to include submission results
+     * @param withGradingCriteria   a flag indicating whether to include grading criteria
+     * @return the loaded programming exercise entity
+     */
+    public ProgrammingExercise loadProgrammingExercise(long exerciseId, boolean withSubmissionResults, boolean withGradingCriteria) {
+        // 1. Load programming exercise, optionally with grading criteria
+        final Set<ProgrammingExerciseRepository.ProgrammingExerciseFetchOptions> fetchOptions = withGradingCriteria ? Set.of(GradingCriteria, AuxiliaryRepositories)
+                : Set.of(AuxiliaryRepositories);
+        var programmingExercise = programmingExerciseRepository.findByIdWithDynamicFetchElseThrow(exerciseId, fetchOptions);
+
+        // 2. Load template and solution participation, either with only submissions or with submissions and results
+        final var templateFetchOptions = withSubmissionResults ? Set.of(TemplateParticipationFetchOptions.SubmissionsAndResults)
+                : Set.of(TemplateParticipationFetchOptions.Submissions);
+        final var templateParticipation = templateProgrammingExerciseParticipationRepository.findByExerciseIdWithDynamicFetchElseThrow(exerciseId, templateFetchOptions);
+
+        final var solutionFetchOptions = withSubmissionResults ? Set.of(SolutionParticipationFetchOptions.SubmissionsAndResults)
+                : Set.of(SolutionParticipationFetchOptions.Submissions);
+        final var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByExerciseIdWithDynamicFetchElseThrow(exerciseId, solutionFetchOptions);
+
+        programmingExercise.setSolutionParticipation(solutionParticipation);
+        programmingExercise.setTemplateParticipation(templateParticipation);
+
+        programmingExerciseTaskService.replaceTestIdsWithNames(programmingExercise);
+        return programmingExercise;
     }
 }

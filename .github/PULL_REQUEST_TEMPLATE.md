@@ -5,11 +5,11 @@
 #### General
 <!-- Remove tasks that are not applicable for your PR. Please only put the PR into ready for review, if all relevant tasks are checked! -->
 <!-- You only need to choose one of the first two check items: Generally, test on the test servers. -->
-<!-- If it's only a small change, testing it locally is acceptable and you may remove the first checkmark. If you are unsure, please test on the test servers. -->
+<!-- If it's only a small change, testing it locally is acceptable, and you may remove the first checkmark. If you are unsure, please test on the test servers. -->
 - [ ] I tested **all** changes and their related features with **all** corresponding user types on a test server.
 - [ ] This is a small issue that I tested locally and was confirmed by another developer on a test server.
 - [ ] Language: I followed the [guidelines for inclusive, diversity-sensitive, and appreciative language](https://docs.artemis.cit.tum.de/dev/guidelines/language-guidelines/).
-- [ ] I chose a title conforming to the [naming conventions for pull requests](https://docs.artemis.cit.tum.de/dev/development-process/#naming-conventions-for-github-pull-requests).
+- [ ] I chose a title conforming to the [naming conventions for pull requests](https://docs.artemis.cit.tum.de/dev/development-process/development-process.html#naming-conventions-for-github-pull-requests).
 
 
 #### Server
@@ -74,14 +74,15 @@ Prerequisites:
 > [!NOTE]
 > These badges show the state of the test servers.
 > Green = Currently available, Red = Currently locked
+> Click on the badges to get to the test servers.
 
-![](https://byob.yarr.is/ls1intum/Artemis/artemis-test1)
-![](https://byob.yarr.is/ls1intum/Artemis/artemis-test2)
-![](https://byob.yarr.is/ls1intum/Artemis/artemis-test3)
-![](https://byob.yarr.is/ls1intum/Artemis/artemis-test4)
-![](https://byob.yarr.is/ls1intum/Artemis/artemis-test5)
-![](https://byob.yarr.is/ls1intum/Artemis/artemis-test6)
-![](https://byob.yarr.is/ls1intum/Artemis/artemis-test9)
+[![](https://byob.yarr.is/ls1intum/Artemis/artemis-test1)](https://artemis-test1.artemis.cit.tum.de)
+[![](https://byob.yarr.is/ls1intum/Artemis/artemis-test2)](https://artemis-test2.artemis.cit.tum.de)
+[![](https://byob.yarr.is/ls1intum/Artemis/artemis-test3)](https://artemis-test3.artemis.cit.tum.de)
+[![](https://byob.yarr.is/ls1intum/Artemis/artemis-test4)](https://artemis-test4.artemis.cit.tum.de)
+[![](https://byob.yarr.is/ls1intum/Artemis/artemis-test5)](https://artemis-test5.artemis.cit.tum.de)
+[![](https://byob.yarr.is/ls1intum/Artemis/artemis-test6)](https://artemis-test6.artemis.cit.tum.de)
+[![](https://byob.yarr.is/ls1intum/Artemis/artemis-test9)](https://artemis-test9.artemis.cit.tum.de)
 
 ### Review Progress
 <!-- Each PR should be reviewed by at least two other developers. The code, the functionality (= manual test) and the exam mode need to be reviewed. -->

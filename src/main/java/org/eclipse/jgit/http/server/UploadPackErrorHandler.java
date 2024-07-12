@@ -58,16 +58,16 @@ public interface UploadPackErrorHandler {
     /**
      * Upload pack
      *
-     * @param req
+     * @param request
      *                The HTTP request
-     * @param rsp
+     * @param response
      *                The HTTP response
-     * @param r
+     * @param runnable
      *                A continuation that handles a git-upload-pack request.
      * @throws IOException
      *                         if an IO error occurred
      */
-    void upload(HttpServletRequest req, HttpServletResponse rsp, UploadPackRunnable r) throws IOException;
+    void upload(HttpServletRequest request, HttpServletResponse response, UploadPackRunnable runnable) throws IOException;
 
     /** Process a git-upload-pack request. */
     interface UploadPackRunnable {

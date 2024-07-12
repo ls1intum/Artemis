@@ -261,6 +261,25 @@ Generic styles
     width: 60% !important;
 }
 
+.max-vw-30 {
+    max-width: 30vw !important;
+}
+
+// Should be used with a width restriction of your choice.
+.popover-text-truncate-4-lines > .popover-body {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    // Show only the first four lines (limiting height with something else than lines is not possible).
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+    -webkit-box-orient: vertical;
+    // Add a margin at the bottom and solve problem in Chromium-based browsers,
+    // that an additional line after the ellipsis end is shown.
+    margin-bottom: 1em;
+    padding-bottom: 0;
+}
+
 .mt-n3 {
     margin-top: -1rem;
 }
@@ -282,7 +301,13 @@ Generic styles
     overflow-y: auto;
     overflow-x: hidden;
     background-color: var(--bs-body-bg);
-    padding-bottom: var(--footer-height);
+    padding-bottom: var(--footer-height-prod);
+    @media (max-width: 768px) {
+        padding-bottom: var(--footer-height-prod) !important;
+    }
+    &.footer-height-dev {
+        padding-bottom: var(--footer-height-dev);
+    }
 }
 
 .main-container {
@@ -307,6 +332,21 @@ a:hover {
 .hand,
 [jhisortby] {
     cursor: pointer;
+}
+
+/* Styles for rotating chevron icons */
+
+.rotate-icon {
+    transition: transform 0.3s ease;
+}
+
+.rotated {
+    transform: rotate(90deg);
+}
+
+.chevron-position {
+    display: inline-block;
+    vertical-align: middle;
 }
 
 /* ==========================================================================
@@ -695,9 +735,12 @@ code.password:hover {
     background: $displaycolor-background;
 }
 
-// This puts the owl-datetime-picker on top of the ngbootstrap modal
+// This positions the owl-datetime-picker above the ngbootstrap modal, accounting for a 10px margin which reduces width and height by 20px.
 .cdk-overlay-container {
     z-index: 1060;
+    margin: 10px;
+    width: calc(100% - 20px);
+    height: calc(100% - 20px);
 }
 
 .not-allowed {
@@ -761,6 +804,7 @@ Course Info Bar
 
 [id^='plantUml-'] > * {
     height: 100% !important;
+    max-width: 100%;
 }
 
 .ngb-tooltip-window {
@@ -881,6 +925,10 @@ Course Info Bar
 
 /* Custom fixes for printing */
 @media print {
+    /* Without this property only the first page is printed and the scroll bar is visible in the pdf */
+    * {
+        overflow: visible !important;
+    }
     .container {
         min-width: 0 !important;
     }
@@ -1012,4 +1060,46 @@ Course Info Bar
 
 body.transparent-background {
     background: transparent;
+}
+
+.tooltip-wide .tooltip-inner {
+    max-width: 600px !important;
+    width: 600px !important;
+}
+
+/* Course Overview Content Pages with Sidebar */
+.module-bg {
+    background-color: var(--module-bg);
+}
+
+.body-bg {
+    background-color: var(--bs-body-bg);
+}
+
+.scrollable-content {
+    height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height));
+    overflow-y: auto;
+
+    &.content-height-dev {
+        height: calc(100vh - var(--sidebar-footer-height-dev) - var(--header-height));
+    }
+    @media (max-width: 768px) {
+        height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height)) !important;
+    }
+}
+
+.sidebar-collapsed {
+    display: none;
+}
+
+.fs-xx-small {
+    font-size: 0.625rem;
+}
+
+.fs-x-small {
+    font-size: 0.75rem;
+}
+
+.fs-small {
+    font-size: 0.875rem;
 }

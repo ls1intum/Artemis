@@ -54,20 +54,24 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
 import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
-import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
+import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
@@ -77,6 +81,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AssessmentDashboardService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ComplaintService;
 import de.tum.in.www1.artemis.service.ConductAgreementService;
 import de.tum.in.www1.artemis.service.CourseScoreCalculationService;
 import de.tum.in.www1.artemis.service.CourseService;
@@ -124,7 +129,11 @@ public class CourseResource {
 
     private static final String ENTITY_NAME = "course";
 
+    private static final String COMPLAINT_ENTITY_NAME = "complaint";
+
     private static final Logger log = LoggerFactory.getLogger(CourseResource.class);
+
+    private static final int MAX_TITLE_LENGTH = 255;
 
     private final UserRepository userRepository;
 
@@ -171,13 +180,18 @@ public class CourseResource {
 
     private final ExamRepository examRepository;
 
+    private final ComplaintService complaintService;
+
+    private final TeamRepository teamRepository;
+
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
             FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, GradingScaleService gradingScaleService,
             CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, LearningPathService learningPathService,
-            ConductAgreementService conductAgreementService, Optional<AthenaModuleService> athenaModuleService, ExamRepository examRepository) {
+            ConductAgreementService conductAgreementService, Optional<AthenaModuleService> athenaModuleService, ExamRepository examRepository, ComplaintService complaintService,
+            TeamRepository teamRepository) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -199,6 +213,8 @@ public class CourseResource {
         this.conductAgreementService = conductAgreementService;
         this.athenaModuleService = athenaModuleService;
         this.examRepository = examRepository;
+        this.complaintService = complaintService;
+        this.teamRepository = teamRepository;
     }
 
     /**
@@ -241,17 +257,7 @@ public class CourseResource {
         Set<String> changedGroupNames = new HashSet<>(newGroupNames);
         changedGroupNames.removeAll(existingGroupNames);
 
-        if (authCheckService.isAdmin(user)) {
-            // if an admin changes a group, we need to check that the changed group exists
-            try {
-                changedGroupNames.forEach(courseService::checkIfGroupsExists);
-            }
-            catch (ArtemisAuthenticationException ex) {
-                // a specified group does not exist, notify the client
-                throw new BadRequestAlertException(ex.getMessage(), Course.ENTITY_NAME, "groupNotFound", true);
-            }
-        }
-        else {
+        if (!authCheckService.isAdmin(user)) {
             // this means the user must be an instructor, who has NO Admin rights.
             // instructors are not allowed to change group names, because this would lead to security problems
             if (!changedGroupNames.isEmpty()) {
@@ -261,6 +267,10 @@ public class CourseResource {
             if (athenaModuleAccessChanged) {
                 throw new BadRequestAlertException("You are not allowed to change the access to restricted Athena modules of a course", Course.ENTITY_NAME,
                         "restrictedAthenaModulesAccessCannotChange", true);
+            }
+            // instructors are not allowed to change the dashboard settings
+            if (existingCourse.getStudentCourseAnalyticsDashboardEnabled() != courseUpdate.getStudentCourseAnalyticsDashboardEnabled()) {
+                throw new BadRequestAlertException("You are not allowed to change the dashboard settings of a course", Course.ENTITY_NAME, "dashboardSettingsCannotChange", true);
             }
         }
 
@@ -280,6 +290,10 @@ public class CourseResource {
         courseUpdate.setPrerequisites(existingCourse.getPrerequisites());
         courseUpdate.setTutorialGroupsConfiguration(existingCourse.getTutorialGroupsConfiguration());
         courseUpdate.setOnlineCourseConfiguration(existingCourse.getOnlineCourseConfiguration());
+
+        if (courseUpdate.getTitle().length() > MAX_TITLE_LENGTH) {
+            throw new BadRequestAlertException("The course title is too long", Course.ENTITY_NAME, "courseTitleTooLong");
+        }
 
         courseUpdate.validateEnrollmentConfirmationMessage();
         courseUpdate.validateComplaintsAndRequestMoreFeedbackConfig();
@@ -455,11 +469,11 @@ public class CourseResource {
      * GET /courses : get all courses for administration purposes.
      *
      * @param onlyActive if true, only active courses will be considered in the result
-     * @return the list of courses (the user has access to)
+     * @return the ResponseEntity with status 200 (OK) and with body the list of courses (the user has access to)
      */
     @GetMapping("courses")
     @EnforceAtLeastTutor
-    public List<Course> getCourses(@RequestParam(defaultValue = "false") boolean onlyActive) {
+    public ResponseEntity<List<Course>> getCourses(@RequestParam(defaultValue = "false") boolean onlyActive) {
         log.debug("REST request to get all Courses the user has access to");
         User user = userRepository.getUserWithGroupsAndAuthorities();
         // TODO: we should avoid findAll() and instead try to filter this directly in the database, in case of admins, we should load batches of courses, e.g. per semester
@@ -470,7 +484,7 @@ public class CourseResource {
             // only include courses that have NOT been finished
             userCourses = userCourses.filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now()));
         }
-        return userCourses.toList();
+        return ResponseEntity.ok(userCourses.toList());
     }
 
     /**
@@ -492,18 +506,18 @@ public class CourseResource {
     /**
      * GET /courses/courses-with-quiz : get all courses with quiz exercises for administration purposes.
      *
-     * @return the list of courses
+     * @return the ResponseEntity with status 200 (OK) and with body the list of courses
      */
     @GetMapping("courses/courses-with-quiz")
     @EnforceAtLeastEditor
-    public List<Course> getCoursesWithQuizExercises() {
+    public ResponseEntity<List<Course>> getCoursesWithQuizExercises() {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (authCheckService.isAdmin(user)) {
-            return courseRepository.findAllWithQuizExercisesWithEagerExercises();
+            return ResponseEntity.ok(courseRepository.findAllWithQuizExercisesWithEagerExercises());
         }
         else {
             var userGroups = new ArrayList<>(user.getGroups());
-            return courseRepository.getCoursesWithQuizExercisesForWhichUserHasAtLeastEditorAccess(userGroups);
+            return ResponseEntity.ok(courseRepository.getCoursesWithQuizExercisesForWhichUserHasAtLeastEditorAccess(userGroups));
         }
     }
 
@@ -511,32 +525,33 @@ public class CourseResource {
      * GET /courses/with-user-stats : get all courses for administration purposes with user stats.
      *
      * @param onlyActive if true, only active courses will be considered in the result
-     * @return the list of courses (the user has access to)
+     * @return the ResponseEntity with status 200 (OK) and with body the list of courses (the user has access to)
      */
     @GetMapping("courses/with-user-stats")
     @EnforceAtLeastTutor
-    public List<Course> getCoursesWithUserStats(@RequestParam(defaultValue = "false") boolean onlyActive) {
+    public ResponseEntity<List<Course>> getCoursesWithUserStats(@RequestParam(defaultValue = "false") boolean onlyActive) {
         log.debug("get courses with user stats, only active: {}", onlyActive);
-        List<Course> courses = getCourses(onlyActive);
+        // TODO: we should avoid using an endpoint in such cases and instead call a service method
+        List<Course> courses = getCourses(onlyActive).getBody();
         for (Course course : courses) {
             course.setNumberOfInstructors(userRepository.countUserInGroup(course.getInstructorGroupName()));
             course.setNumberOfTeachingAssistants(userRepository.countUserInGroup(course.getTeachingAssistantGroupName()));
             course.setNumberOfEditors(userRepository.countUserInGroup(course.getEditorGroupName()));
             course.setNumberOfStudents(userRepository.countUserInGroup(course.getStudentGroupName()));
         }
-        return courses;
+        return ResponseEntity.ok(courses);
     }
 
     /**
      * GET /courses/course-overview : get all courses for the management overview
      *
      * @param onlyActive if true, only active courses will be considered in the result
-     * @return a list of courses (the user has access to)
+     * @return the ResponseEntity with status 200 (OK) and with body a list of courses (the user has access to)
      */
     @GetMapping("courses/course-management-overview")
     @EnforceAtLeastTutor
-    public List<Course> getCoursesForManagementOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
-        return courseService.getAllCoursesForManagementOverview(onlyActive);
+    public ResponseEntity<List<Course>> getCoursesForManagementOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
+        return ResponseEntity.ok(courseService.getAllCoursesForManagementOverview(onlyActive));
     }
 
     /**
@@ -561,14 +576,15 @@ public class CourseResource {
      * GET /courses/for-enrollment : get all courses that the current user can enroll in.
      * Decided by the start and end date and if the enrollmentEnabled flag is set correctly
      *
-     * @return the list of courses which are active
+     * @return the ResponseEntity with status 200 (OK) and with body the list of courses which are active
      */
     @GetMapping("courses/for-enrollment")
     @EnforceAtLeastStudent
-    public List<Course> getCoursesForEnrollment() {
+    public ResponseEntity<List<Course>> getCoursesForEnrollment() {
         log.debug("REST request to get all currently active courses that are not online courses");
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
-        return courseService.findAllEnrollableForUser(user).stream().filter(course -> authCheckService.isUserAllowedToSelfEnrollInCourse(user, course)).toList();
+        final var courses = courseService.findAllEnrollableForUser(user).stream().filter(course -> authCheckService.isUserAllowedToSelfEnrollInCourse(user, course)).toList();
+        return ResponseEntity.ok(courses);
     }
 
     /**
@@ -616,15 +632,36 @@ public class CourseResource {
     }
 
     /**
+     * GET /courses/for-dropdown
+     *
+     * @return contains all courses the user has access to with id, title and icon
+     */
+    @GetMapping("courses/for-dropdown")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Set<CourseDropdownDTO>> getCoursesForDropdown() {
+        long start = System.nanoTime();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        final var courses = courseService.findAllActiveForUser(user);
+        final var response = courses.stream().map(course -> new CourseDropdownDTO(course.getId(), course.getTitle(), course.getCourseIcon())).collect(Collectors.toSet());
+        log.info("GET /courses/for-dropdown took {} for {} courses for user {}", TimeLogUtil.formatDurationFrom(start), courses.size(), user.getLogin());
+        return ResponseEntity.ok(response);
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record CourseDropdownDTO(Long id, String title, String courseIcon) {
+    }
+
+    /**
      * GET /courses/for-dashboard
      *
-     * @return a DTO containing a list of courses (the user has access to) including all exercises with participation, submission and result, etc. for the user. In addition, the
+     * @return the ResponseEntity with status 200 (OK) and with body a DTO containing a list of courses (the user has access to) including all exercises with participation,
+     *         submission and result, etc. for the user. In addition, the
      *         DTO contains the total scores for the course, the scores per exercise
      *         type for each exercise, and the participation result for each participation.
      */
     @GetMapping("courses/for-dashboard")
     @EnforceAtLeastStudent
-    public CoursesForDashboardDTO getCoursesForDashboard() {
+    public ResponseEntity<CoursesForDashboardDTO> getCoursesForDashboard() {
         long timeNanoStart = System.nanoTime();
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("Request to get all courses user {} has access to with exams, lectures, exercises, participations, submissions and results + calculated scores", user.getLogin());
@@ -652,7 +689,8 @@ public class CourseResource {
             coursesForDashboard.add(courseForDashboardDTO);
         }
         logDuration(courses, user, timeNanoStart, "courses/for-dashboard (multiple courses)");
-        return new CoursesForDashboardDTO(coursesForDashboard, activeExams);
+        final var dto = new CoursesForDashboardDTO(coursesForDashboard, activeExams);
+        return ResponseEntity.ok(dto);
     }
 
     private void logDuration(Collection<Course> courses, User user, long timeNanoStart, String path) {
@@ -669,14 +707,14 @@ public class CourseResource {
     /**
      * GET /courses/for-notifications
      *
-     * @return the set of courses (the user has access to)
+     * @return the ResponseEntity with status 200 (OK) and with body the set of courses (the user has access to)
      */
     @GetMapping("courses/for-notifications")
     @EnforceAtLeastStudent
-    public Set<Course> getCoursesForNotifications() {
+    public ResponseEntity<Set<Course>> getCoursesForNotifications() {
         log.debug("REST request to get all Courses the user has access to");
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        return courseService.findAllActiveForUser(user);
+        return ResponseEntity.ok(courseService.findAllActiveForUser(user));
     }
 
     /**
@@ -835,20 +873,20 @@ public class CourseResource {
     @GetMapping("courses/stats-for-management-overview")
     @EnforceAtLeastTutor
     public ResponseEntity<List<CourseManagementOverviewStatisticsDTO>> getExerciseStatsForCourseOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
+        log.debug("REST request to get statistics for the courses of the user");
         final List<CourseManagementOverviewStatisticsDTO> courseDTOs = new ArrayList<>();
         for (final var course : courseService.getAllCoursesForManagementOverview(onlyActive)) {
             final var courseId = course.getId();
-            final var courseDTO = new CourseManagementOverviewStatisticsDTO();
-            courseDTO.setCourseId(courseId);
-
             var studentsGroup = course.getStudentGroupName();
             var amountOfStudentsInCourse = Math.toIntExact(userRepository.countUserInGroup(studentsGroup));
-            courseDTO.setExerciseDTOS(exerciseService.getStatisticsForCourseManagementOverview(courseId, amountOfStudentsInCourse));
+            var exerciseStatistics = exerciseService.getStatisticsForCourseManagementOverview(courseId, amountOfStudentsInCourse);
 
             var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
             var endDate = courseService.determineEndDateForActiveStudents(course);
             var timeSpanSize = courseService.determineTimeSpanSizeForActiveStudents(course, endDate, 4);
-            courseDTO.setActiveStudents(courseService.getActiveStudents(exerciseIds, 0, timeSpanSize, endDate));
+            var activeStudents = courseService.getActiveStudents(exerciseIds, 0, timeSpanSize, endDate);
+
+            final var courseDTO = new CourseManagementOverviewStatisticsDTO(courseId, activeStudents, exerciseStatistics);
             courseDTOs.add(courseDTO);
         }
 
@@ -867,7 +905,7 @@ public class CourseResource {
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Void> archiveCourse(@PathVariable Long courseId) {
         log.info("REST request to archive Course : {}", courseId);
-        final Course course = courseRepository.findByIdWithExercisesAndLecturesElseThrow(courseId);
+        final Course course = courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         // Archiving a course is only possible after the course is over
         if (now().isBefore(course.getEndDate())) {
@@ -1385,5 +1423,33 @@ public class CourseResource {
         log.debug("REST request to add {} as {} to course {}", studentDtos, courseGroup, courseId);
         List<StudentDTO> notFoundStudentsDtos = courseService.registerUsersForCourseGroup(courseId, studentDtos, courseGroup);
         return ResponseEntity.ok().body(notFoundStudentsDtos);
+    }
+
+    /**
+     * GET courses/{courseId}/allowed-complaints: Get the number of complaints that a student or team is still allowed to submit in the given course.
+     * It is determined by the max. complaint limit and the current number of open or rejected complaints of the student or team in the course.
+     * Students use their personal complaints for individual exercises and team complaints for team-based exercises, i.e. each student has
+     * maxComplaints for personal complaints and additionally maxTeamComplaints for complaints by their team in the course.
+     *
+     * @param courseId the id of the course for which we want to get the number of allowed complaints
+     * @param teamMode whether to return the number of allowed complaints per team (instead of per student)
+     * @return the ResponseEntity with status 200 (OK) and the number of still allowed complaints
+     */
+    @GetMapping("courses/{courseId}/allowed-complaints")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Long> getNumberOfAllowedComplaintsInCourse(@PathVariable Long courseId, @RequestParam(defaultValue = "false") Boolean teamMode) {
+        log.debug("REST request to get the number of unaccepted Complaints associated to the current user in course : {}", courseId);
+        User user = userRepository.getUser();
+        Participant participant = user;
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        if (!course.getComplaintsEnabled()) {
+            throw new BadRequestAlertException("Complaints are disabled for this course", COMPLAINT_ENTITY_NAME, "complaintsDisabled");
+        }
+        if (teamMode) {
+            Optional<Team> team = teamRepository.findAllByCourseIdAndUserIdOrderByIdDesc(course.getId(), user.getId()).stream().findFirst();
+            participant = team.orElseThrow(() -> new BadRequestAlertException("You do not belong to a team in this course.", COMPLAINT_ENTITY_NAME, "noAssignedTeamInCourse"));
+        }
+        long unacceptedComplaints = complaintService.countUnacceptedComplaintsByParticipantAndCourseId(participant, courseId);
+        return ResponseEntity.ok(Math.max(complaintService.getMaxComplaintsPerParticipant(course, participant) - unacceptedComplaints, 0));
     }
 }

@@ -34,7 +34,7 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
      * Defines if the participation is locked, i.e. if the student can currently not make any submissions.
      * This takes into account: the start date of the exercise (or the exam), the (individual) due date, and the lock repository policy.
      * Course exercise practice repositories and instructor exam test run repositories will never be locked.
-     *
+     * <p>
      * Important: this boolean flag must only be used for course programming exercises and is irrelevant for exam programming exercises!!!
      *
      */
@@ -50,18 +50,22 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
         this.branch = branch;
     }
 
+    @Override
     public String getRepositoryUri() {
         return repositoryUri;
     }
 
+    @Override
     public void setRepositoryUri(String repositoryUri) {
         this.repositoryUri = repositoryUri;
     }
 
+    @Override
     public String getBuildPlanId() {
         return buildPlanId;
     }
 
+    @Override
     public void setBuildPlanId(String buildPlanId) {
         this.buildPlanId = buildPlanId;
     }

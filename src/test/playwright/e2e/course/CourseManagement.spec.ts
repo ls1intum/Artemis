@@ -4,6 +4,8 @@ import { Course } from 'app/entities/course.model';
 import { admin, studentOne } from '../../support/users';
 import { convertBooleanToCheckIconClass, dayjsToString, generateUUID, trimDate } from '../../support/utils';
 import { expect } from '@playwright/test';
+import { Fixtures } from '../../fixtures/fixtures';
+import { base64StringToBlob } from '../../support/utils';
 
 // Common primitives
 const courseData = {
@@ -239,6 +241,53 @@ test.describe('Course management', () => {
             await courseManagement.openCourse(course.id!);
             await courseManagement.deleteCourse(course);
             await expect(courseManagement.getCourse(course.id!)).toBeHidden();
+        });
+    });
+
+    test.describe('Course icon deletion', () => {
+        test.describe('Course within icon', () => {
+            let course: Course;
+
+            test.beforeEach('Creates course with icon', async ({ login, courseManagementAPIRequests }) => {
+                await login(admin, '/');
+                const courseIcon = await Fixtures.get('course/icon.png', 'base64');
+                const iconBlob = base64StringToBlob(courseIcon!);
+                course = await courseManagementAPIRequests.createCourse({ iconFileName: 'icon.png', iconFile: iconBlob });
+            });
+
+            test('Deletes an existing course icon', async ({ navigationBar, courseManagement }) => {
+                await navigationBar.openCourseManagement();
+                await courseManagement.openCourse(course.id!);
+                await courseManagement.clickEditCourse();
+                await courseManagement.removeIconFromCourse();
+                await courseManagement.updateCourse(course);
+                await courseManagement.clickEditCourse();
+                await courseManagement.checkCourseHasNoIcon();
+            });
+
+            test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
+                await courseManagementAPIRequests.deleteCourse(course, admin);
+            });
+        });
+
+        test.describe('Course without icon', () => {
+            let course: Course;
+
+            test.beforeEach('Creates course without icon', async ({ login, courseManagementAPIRequests }) => {
+                await login(admin, '/');
+                course = await courseManagementAPIRequests.createCourse();
+            });
+
+            test('Deletes not existing course icon', async ({ navigationBar, courseManagement }) => {
+                await navigationBar.openCourseManagement();
+                await courseManagement.openCourse(course.id!);
+                await courseManagement.clickEditCourse();
+                await courseManagement.checkCourseHasNoIcon();
+            });
+
+            test.afterEach('Delete courses', async ({ courseManagementAPIRequests }) => {
+                await courseManagementAPIRequests.deleteCourse(course, admin);
+            });
         });
     });
 });

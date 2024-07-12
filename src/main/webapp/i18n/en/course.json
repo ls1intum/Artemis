@@ -55,7 +55,7 @@
             },
             "customizeGroupNames": {
                 "title": "Customize group names",
-                "description": "Make sure that the groups exist in the external user management if you enable this option. The groups are not created automatically then."
+                "description": "Customizing the group names should not be necessary and may cause users to lose access to this course. Make sure you have a good reason for customizing the group names."
             },
             "studentGroupName": "Students",
             "teachingAssistantGroupName": "Tutors",
@@ -85,6 +85,10 @@
                 "label": "Learning Paths Enabled",
                 "tooltip": "Enables generation of individualized learning paths for students consisting of competencies and their linked learning materials."
             },
+            "dashboard": {
+                "label": "Student Course Analytics Dashboard Enabled",
+                "tooltip": "Activates the course analytics dashboard for the course for students, tutors and instructors. The dashboard enables users to track their progress and performance in the course."
+            },
             "restrictedAthenaModulesAccess": {
                 "label": "Access to Restricted Athena Modules Enabled",
                 "tooltip": "If this option is selected, the course's exercises can also use restricted Athena modules for feedback generation."
@@ -96,21 +100,21 @@
             "courseCommunicationSetting": {
                 "communicationEnabled": {
                     "label": "Communication Enabled",
-                    "tooltip": "Enables communication between students, tutors and instructors through a question and answer system. Students can interact with peers and ask questions while moderators can provide course information and answer content-related questions. The communication can happen directly on the page of the respective exercise or lecture or in the dedicated communication space of the course."
+                    "tooltip": "Enables communication between course users in private or public channels which can only be created by instructors and tutors. Students can interact with peers and ask questions while moderators can provide course information and answer content-related questions. The communication can happen directly on the page of the respective exercise or lecture or in the dedicated communication space of the course."
                 },
                 "messagingEnabled": {
-                    "label": "Messaging Enabled",
-                    "tooltip": "Enables messaging between course users in private or public channels, group chats or direct messages. Channels can only be created by instructors and tutors. Users can self-join public channels and must be invited to private channels. Every user can start a private group chat and add other users. A group chat is limited to 10 members. Every user can start a private one-to-one chat with another user. The chats happens in the messaging space of the course.",
+                    "label": "Direct Messages / Group Chats Enabled",
+                    "tooltip": "Enables messaging between course users in group chats or direct messages. Every user can start a direct message, private group chat and add other users. A group chat is limited to 10 members. The chats happens in the communication space of the course.",
                     "codeOfConduct": "Messaging Code of Conduct"
                 }
             },
-            "registrationEnabled": {
-                "title": "Student Course Registration Enabled",
-                "description": "Activate this checkbox to allow students to register independently in the course if it is active (between start and end of the course). You can optionally enter a message that students have to confirm during registration."
+            "enrollmentEnabled": {
+                "title": "Student Course Enrollment Enabled",
+                "description": "Activate this checkbox to allow students to enroll independently in the course if it is active (between start and end of the course). You can optionally enter a message that students have to confirm during enrollment."
             },
             "enrollmentStartDate": "Enrollment Start",
             "enrollmentEndDate": "Enrollment End",
-            "registrationConfirmationMessage": "Registration Confirmation Message",
+            "enrollmentConfirmationMessage": "Enrollment Confirmation Message",
             "unenrollmentEnabled": {
                 "title": "Student Course Unenrollment Enabled",
                 "description": "Activate this checkbox to allow students to unenroll independently in the course. You can specify the latest date for unenrollment, otherwise the students can do so until the end of the course."
@@ -228,7 +232,11 @@
             "activeStudents": "Active students: {{ students }}",
             "notStartedYet": "The course has not officially started yet. Official course start:",
             "noOrganizations": "No Organizations",
-            "organizationAddingHint": "Administrators can add organizations to courses."
+            "organizationAddingHint": "Administrators can add organizations to courses.",
+            "imageCropper": {
+                "title": "Crop your image",
+                "uploadTitle": "Add an icon"
+            }
         },
         "courseStatistics": {
             "statistics": "Statistics",

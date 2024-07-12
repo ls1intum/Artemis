@@ -145,6 +145,10 @@ export class CourseManagementService {
             .pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
     }
 
+    findAllForDropdown(): Observable<HttpResponse<Course[]>> {
+        return this.http.get<Course[]>(`${this.resourceUrl}/for-dropdown`, { observe: 'response' });
+    }
+
     /**
      * finds all courses using a GET request
      */
@@ -677,5 +681,15 @@ export class CourseManagementService {
         course?.lectures?.forEach((lecture) => this.entityTitleService.setTitle(EntityType.LECTURE, [lecture.id], lecture.title));
         course?.exams?.forEach((exam) => this.entityTitleService.setTitle(EntityType.EXAM, [exam.id], exam.title));
         course?.organizations?.forEach((org) => this.entityTitleService.setTitle(EntityType.ORGANIZATION, [org.id], org.name));
+    }
+
+    /**
+     * Get number of allowed complaints in this course.
+     * @param courseId
+     * @param teamMode If true, the number of allowed complaints for the user's team is returned
+     */
+    getNumberOfAllowedComplaintsInCourse(courseId: number, teamMode = false): Observable<number> {
+        // Note: 0 is the default value in case the server returns something that does not make sense
+        return this.http.get<number>(`${this.resourceUrl}/${courseId}/allowed-complaints?teamMode=${teamMode}`) ?? 0;
     }
 }

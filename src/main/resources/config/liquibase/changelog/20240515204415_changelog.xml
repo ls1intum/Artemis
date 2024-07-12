@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20240515204415" author="krusche">
+        <createIndex indexName="idx_build_job_docker_image_build_start_date" tableName="build_job">
+            <column name="docker_image"/>
+            <column name="build_start_date"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

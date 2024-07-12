@@ -2,49 +2,25 @@ package de.tum.in.www1.artemis.service.connectors.aeolus;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * Represents a Docker configuration that can be defined in a {@link Windfile}
  */
-public class DockerConfig {
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record DockerConfig(String image, String tag, List<String> volumes, List<String> parameters) {
 
-    private String image;
-
-    private String tag;
-
-    private List<String> volumes;
-
-    private List<String> parameters;
-
-    public String getImage() {
-        return image;
+    @Override
+    public String image() {
+        return image != null ? image.trim() : null;
     }
 
-    public void setImage(String image) {
-        this.image = image;
-    }
-
-    public String getTag() {
-        return tag;
-    }
-
-    public void setTag(String tag) {
-        this.tag = tag;
-    }
-
-    public List<String> getVolumes() {
-        return volumes;
-    }
-
-    public void setVolumes(List<String> volumes) {
-        this.volumes = volumes;
-    }
-
-    public List<String> getParameters() {
-        return parameters;
-    }
-
-    public void setParameters(List<String> parameters) {
-        this.parameters = parameters;
+    @Override
+    public String tag() {
+        return tag != null ? tag.trim() : null;
     }
 
     /**
@@ -53,7 +29,10 @@ public class DockerConfig {
      *
      * @return the full image name including the tag
      */
+    @JsonIgnore
     public String getFullImageName() {
+        var image = image();
+        var tag = tag();
         if (image == null) {
             return null;
         }

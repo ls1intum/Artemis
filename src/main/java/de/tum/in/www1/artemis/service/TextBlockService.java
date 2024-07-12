@@ -4,7 +4,10 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static java.lang.Integer.compare;
 
 import java.text.BreakIterator;
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;

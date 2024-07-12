@@ -3,7 +3,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { merge } from 'rxjs';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseInstructorRepositoryType, ProgrammingExerciseService } from './services/programming-exercise.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
@@ -39,7 +39,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
-import { PROFILE_LOCALVC } from 'app/app.constants';
+import { PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -52,8 +52,9 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     FeatureToggle = FeatureToggle;
     solutionParticipationType = ProgrammingExerciseParticipationType.SOLUTION;
     templateParticipationType = ProgrammingExerciseParticipationType.TEMPLATE;
-    // Used to make the repository links download the repositories instead of linking to Bitbucket/GitLab.
+    // Used to make the repository links download the repositories instead of linking to GitLab.
     localVCEnabled = false;
+    localCIEnabled = false;
 
     // extension points, see shared/extension-point
     @ContentChild('overrideRepositoryAndBuildPlan') overrideRepositoryAndBuildPlan: TemplateRef<any>;
@@ -87,7 +88,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         private accountService: AccountService,
         private alertService: AlertService,
         private modalService: NgbModal,
-        private router: Router,
         private sortService: SortService,
         private profileService: ProfileService,
         courseService: CourseManagementService,
@@ -110,6 +110,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                 this.profileService.getProfileInfo().subscribe((profileInfo) => {
                     this.buildPlanLinkTemplate = profileInfo.buildPlanURLTemplate;
                     this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
+                    this.localCIEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALCI);
                 });
                 // reconnect exercise with course
                 this.programmingExercises.forEach((exercise) => {

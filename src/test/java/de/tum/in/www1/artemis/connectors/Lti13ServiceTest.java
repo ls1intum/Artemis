@@ -3,8 +3,19 @@ package de.tum.in.www1.artemis.connectors;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.mockito.ArgumentCaptor.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentCaptor.forClass;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 import java.util.List;
@@ -27,14 +38,29 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.LtiPlatformConfiguration;
+import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.lti.LtiResourceLaunch;
 import de.tum.in.www1.artemis.domain.lti.Scopes;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.Lti13ResourceLaunchRepository;
+import de.tum.in.www1.artemis.repository.LtiPlatformConfigurationRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.lti.Lti13TokenRetriever;
 import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
@@ -120,8 +146,8 @@ class Lti13ServiceTest {
         when(oidcIdToken.getClaim("sub")).thenReturn("1");
         when(oidcIdToken.getClaim("iss")).thenReturn("https://otherDomain.com");
         when(oidcIdToken.getClaim(Claims.LTI_DEPLOYMENT_ID)).thenReturn("1");
-        JsonObject jsonObject = new JsonObject();
-        jsonObject.addProperty("id", "resourceLinkUrl");
+        ObjectNode jsonObject = new ObjectMapper().createObjectNode();
+        jsonObject.put("id", "resourceLinkUrl");
         when(oidcIdToken.getClaim(Claims.RESOURCE_LINK)).thenReturn(jsonObject);
         prepareForPerformLaunch(result.courseId(), result.exerciseId());
 
@@ -391,7 +417,7 @@ class Lti13ServiceTest {
     }
 
     @Test
-    void onNewResult() {
+    void onNewResult() throws JsonProcessingException {
         Result result = new Result();
         double scoreGiven = 60D;
         result.setScore(scoreGiven);
@@ -439,15 +465,15 @@ class Lti13ServiceTest {
         assertThat(authHeaders).as("Score publish request must contain an Authorization header").isNotNull();
         assertThat(authHeaders).as("Score publish request must contain the corresponding Authorization Bearer token").contains("Bearer " + accessToken);
 
-        JsonObject body = JsonParser.parseString(Objects.requireNonNull(httpEntity.getBody())).getAsJsonObject();
-        assertThat(body.get("userId").getAsString()).as("Invalid parameter in score publish request: userId").isEqualTo(launch.getSub());
-        assertThat(body.get("timestamp").getAsString()).as("Parameter missing in score publish request: timestamp").isNotNull();
-        assertThat(body.get("activityProgress").getAsString()).as("Parameter missing in score publish request: activityProgress").isNotNull();
-        assertThat(body.get("gradingProgress").getAsString()).as("Parameter missing in score publish request: gradingProgress").isNotNull();
+        JsonNode body = new ObjectMapper().readTree(Objects.requireNonNull(httpEntity.getBody()));
+        assertThat(body.get("userId").asText()).as("Invalid parameter in score publish request: userId").isEqualTo(launch.getSub());
+        assertThat(body.get("timestamp").asText()).as("Parameter missing in score publish request: timestamp").isNotNull();
+        assertThat(body.get("activityProgress").asText()).as("Parameter missing in score publish request: activityProgress").isNotNull();
+        assertThat(body.get("gradingProgress").asText()).as("Parameter missing in score publish request: gradingProgress").isNotNull();
 
-        assertThat(body.get("comment").getAsString()).as("Invalid parameter in score publish request: comment").isEqualTo("Good job. Not so good");
-        assertThat(body.get("scoreGiven").getAsDouble()).as("Invalid parameter in score publish request: scoreGiven").isEqualTo(scoreGiven);
-        assertThat(body.get("scoreMaximum").getAsDouble()).as("Invalid parameter in score publish request: scoreMaximum").isEqualTo(100d);
+        assertThat(body.get("comment").asText()).as("Invalid parameter in score publish request: comment").isEqualTo("Good job. Not so good");
+        assertThat(body.get("scoreGiven").asDouble()).as("Invalid parameter in score publish request: scoreGiven").isEqualTo(scoreGiven);
+        assertThat(body.get("scoreMaximum").asDouble()).as("Invalid parameter in score publish request: scoreMaximum").isEqualTo(100d);
 
         assertThat(launch.getScoreLineItemUrl() + "/scores").as("Score publish request was sent to a wrong URI").isEqualTo(urlCapture.getValue());
 

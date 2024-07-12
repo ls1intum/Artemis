@@ -51,7 +51,7 @@
                 "text": "<a href={{ learningAnalyticsUrl }}>Lernanalytik:</a> Statistiken, mit denen sich die Studierenden mit dem Kursdurchschnitt vergleichen können. Bewerten der durchschnittliche Leistung der Studierenden anhand von Aufgaben und Kompetenzen."
             },
             "adaptiveLearning": {
-                "text": "<a href={{ adaptiveLearningUrl }}>Adaptives Lernen:</a> Definieren Sie Kompetenzen und Lernziele. Verfolgen Sie den Fortschritt der Studierenden und geben Sie individuelles Feedback."
+                "text": "<a href={{ adaptiveLearningUrl }}>Adaptives Lernen:</a> Definiere Kompetenzen und Lernziele. Verfolge den Fortschritt der Studierenden und gib individuelles Feedback."
             },
             "tutorialGroups": {
                 "text": "<a href={{ tutorialGroupsUrl }}>Übungsgruppen:</a> Verwaltung der Übungsgruppen eines Kurses. Planung der Sitzungen, Zuweisung der verantwortlichen Tutor:innen, Registrierung der Studierenden und Verfolgung der Anwesenheit."

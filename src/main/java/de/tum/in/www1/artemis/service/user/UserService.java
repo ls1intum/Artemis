@@ -11,13 +11,16 @@ import static de.tum.in.www1.artemis.config.Constants.USER_LAST_NAME_AFTER_SOFT_
 import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
 import static de.tum.in.www1.artemis.security.Role.ADMIN;
 import static de.tum.in.www1.artemis.security.Role.STUDENT;
+import static org.apache.commons.lang3.StringUtils.lowerCase;
 
+import java.net.URI;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -39,14 +42,15 @@ import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.AccountRegistrationBlockedException;
-import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.GuidedTourSettingsRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
+import de.tum.in.www1.artemis.repository.science.ScienceEventRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.FilePathService;
+import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.connectors.ci.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.ldap.LdapAuthenticationProvider;
 import de.tum.in.www1.artemis.service.connectors.vcs.VcsUserManagementService;
@@ -69,9 +73,6 @@ import tech.jhipster.security.RandomUtil;
 public class UserService {
 
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
-
-    @Value("${artemis.user-management.use-external}")
-    private Boolean useExternalUserManagement;
 
     @Value("${artemis.user-management.internal-admin.username:#{null}}")
     private Optional<String> artemisInternalAdminUsername;
@@ -96,8 +97,6 @@ public class UserService {
 
     private final Optional<CIUserManagementService> optionalCIUserManagementService;
 
-    private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
-
     private final CacheManager cacheManager;
 
     private final AuthorityRepository authorityRepository;
@@ -106,10 +105,14 @@ public class UserService {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
+    private final FileService fileService;
+
+    private final ScienceEventRepository scienceEventRepository;
+
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, InstanceMessageSendService instanceMessageSendService) {
+            InstanceMessageSendService instanceMessageSendService, FileService fileService, ScienceEventRepository scienceEventRepository) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -120,8 +123,9 @@ public class UserService {
         this.passwordService = passwordService;
         this.optionalVcsUserManagementService = optionalVcsUserManagementService;
         this.optionalCIUserManagementService = optionalCIUserManagementService;
-        this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.instanceMessageSendService = instanceMessageSendService;
+        this.fileService = fileService;
+        this.scienceEventRepository = scienceEventRepository;
     }
 
     /**
@@ -386,7 +390,7 @@ public class UserService {
 
     /**
      * Searches the (optional) LDAP service for a user with the given unique user identifier (e.g. login, email, registration number) and supplier function
-     * and returns a new Artemis user. Also creates the user in the external user management (e.g. JIRA), in case this is activated
+     * and returns a new Artemis user. Also creates the user in the external user management, in case this is activated
      * Note: this method should only be used if the user does not yet exist in the database
      *
      * @param userIdentifier       the userIdentifier of the user (e.g. login, email, registration number)
@@ -413,12 +417,9 @@ public class UserService {
                     }
                 }
 
-                // Use empty password, so that we don't store the credentials of Jira users in the Artemis DB
+                // Use empty password, so that we don't store the credentials of external users in the Artemis DB
                 User user = userCreationService.createUser(ldapUser.getUsername(), "", null, ldapUser.getFirstName(), ldapUser.getLastName(), ldapUser.getEmail(),
                         ldapUser.getRegistrationNumber(), null, "en", false);
-                if (useExternalUserManagement) {
-                    artemisAuthenticationProvider.createUserInExternalUserManagement(user);
-                }
                 return Optional.of(user);
             }
             else {
@@ -446,14 +447,6 @@ public class UserService {
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(oldUserLogin, user, removedGroups, addedGroups, newPassword));
         optionalCIUserManagementService
                 .ifPresent(ciUserManagementService -> ciUserManagementService.updateUserAndGroups(oldUserLogin, user, newPassword, addedGroups, removedGroups));
-
-        removedGroups.forEach(group -> artemisAuthenticationProvider.removeUserFromGroup(user, group)); // e.g. Jira
-        try {
-            addedGroups.forEach(group -> artemisAuthenticationProvider.addUserToGroup(user, group)); // e.g. JIRA
-        }
-        catch (ArtemisAuthenticationException e) {
-            // This might throw exceptions, for example if the group does not exist on the authentication service. We can safely ignore it
-        }
     }
 
     /**
@@ -479,10 +472,12 @@ public class UserService {
         final String originalLogin = user.getLogin();
         final Set<String> originalGroups = user.getGroups();
         final String randomPassword = RandomUtil.generatePassword();
+        final String userImageString = user.getImageUrl();
+        final String anonymizedLogin = lowerCase(RandomUtil.generateRandomAlphanumericString(), Locale.ENGLISH);
 
         user.setFirstName(USER_FIRST_NAME_AFTER_SOFT_DELETE);
         user.setLastName(USER_LAST_NAME_AFTER_SOFT_DELETE);
-        user.setLogin(RandomUtil.generateRandomAlphanumericString());
+        user.setLogin(anonymizedLogin);
         user.setPassword(randomPassword);
         user.setEmail(RandomUtil.generateRandomAlphanumericString() + USER_EMAIL_DOMAIN_AFTER_SOFT_DELETE);
         user.setRegistrationNumber(null);
@@ -493,6 +488,12 @@ public class UserService {
         userRepository.save(user);
         clearUserCaches(user);
         userRepository.flush();
+
+        scienceEventRepository.renameIdentity(originalLogin, anonymizedLogin);
+
+        if (userImageString != null) {
+            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPath(URI.create(userImageString)), 0);
+        }
 
         updateUserInConnectorsAndAuthProvider(user, originalLogin, originalGroups, randomPassword);
     }
@@ -620,7 +621,6 @@ public class UserService {
      * @param groupName the name of the group which should be deleted
      */
     public void deleteGroup(String groupName) {
-        artemisAuthenticationProvider.deleteGroup(groupName);
         removeGroupFromUsers(groupName);
     }
 
@@ -647,12 +647,6 @@ public class UserService {
      */
     public void addUserToGroup(User user, String group) {
         addUserToGroupInternal(user, group); // internal Artemis database
-        try {
-            artemisAuthenticationProvider.addUserToGroup(user, group);  // e.g. JIRA
-        }
-        catch (ArtemisAuthenticationException e) {
-            // This might throw exceptions, for example if the group does not exist on the authentication service. We can safely ignore it
-        }
         // e.g. Gitlab: TODO: include the role to distinguish more cases
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, Set.of(), Set.of(group)));
         optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.addUserToGroups(user.getLogin(), Set.of(group)));
@@ -681,7 +675,6 @@ public class UserService {
      */
     public void removeUserFromGroup(User user, String group) {
         removeUserFromGroupInternal(user, group); // internal Artemis database
-        artemisAuthenticationProvider.removeUserFromGroup(user, group); // e.g. JIRA
         // e.g. Gitlab
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, Set.of(group), Set.of()));
         // e.g. Jenkins

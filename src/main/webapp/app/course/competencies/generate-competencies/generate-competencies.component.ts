@@ -14,6 +14,7 @@ import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-au
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 export type CompetencyFormControlsWithViewed = {
     competency: FormGroup<CompetencyFormControls>;
@@ -43,6 +44,7 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
 
     //Other constants
     protected readonly ButtonType = ButtonType;
+    readonly documentationType: DocumentationType = 'GenerateCompetencies';
 
     constructor(
         private competencyService: CompetencyService,

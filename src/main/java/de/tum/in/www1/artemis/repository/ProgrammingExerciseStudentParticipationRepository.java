@@ -8,13 +8,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,6 +17,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -29,7 +25,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface ProgrammingExerciseStudentParticipationRepository extends JpaRepository<ProgrammingExerciseStudentParticipation, Long> {
+public interface ProgrammingExerciseStudentParticipationRepository extends ArtemisJpaRepository<ProgrammingExerciseStudentParticipation, Long> {
 
     @Query("""
             SELECT p
@@ -61,7 +57,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
                         OR (pr.completionDate IS NOT NULL
                             AND (p.exercise.assessmentDueDate IS NULL
                                 OR p.exercise.assessmentDueDate < :#{#dateTime}))) OR pr.id IS NULL)
-             """)
+            """)
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllResultsAndRelatedSubmissions(@Param("participationId") long participationId,
             @Param("dateTime") ZonedDateTime dateTime);
 
@@ -168,16 +164,8 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             """)
     List<ProgrammingExerciseStudentParticipation> findAllWithSubmissionsByExerciseIdAndStudentLogin(@Param("exerciseId") long exerciseId, @Param("username") String username);
 
-    @EntityGraph(type = LOAD, attributePaths = "student")
-    Optional<ProgrammingExerciseStudentParticipation> findWithStudentById(long participationId);
-
     @EntityGraph(type = LOAD, attributePaths = "team.students")
     Optional<ProgrammingExerciseStudentParticipation> findWithTeamStudentsById(long participationId);
-
-    @NotNull
-    default ProgrammingExerciseStudentParticipation findByIdElseThrow(long participationId) {
-        return findById(participationId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Student Participation", participationId));
-    }
 
     default Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithLatestResultAndFeedbacksAndRelatedSubmissions(long participationId) {
         return findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId, ZonedDateTime.now());
@@ -199,21 +187,6 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             WHERE p.id = :participationId
             """)
     void updateLockedById(@Param("participationId") long participationId, @Param("locked") boolean locked);
-
-    @Query("""
-            SELECT DISTINCT p
-            FROM ProgrammingExerciseStudentParticipation p
-            WHERE p.buildPlanId IS NOT NULL
-            """)
-    Page<ProgrammingExerciseStudentParticipation> findAllWithBuildPlanId(Pageable pageable);
-
-    @Query("""
-            SELECT DISTINCT p
-            FROM ProgrammingExerciseStudentParticipation p
-            WHERE p.buildPlanId IS NOT NULL
-                OR p.repositoryUri IS NOT NULL
-            """)
-    Page<ProgrammingExerciseStudentParticipation> findAllWithRepositoryUriOrBuildPlanId(Pageable pageable);
 
     /**
      * Remove the build plan id from all participations of the given exercise.

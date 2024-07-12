@@ -18,11 +18,11 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { Result } from 'app/entities/result.model';
 import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
-import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { CodeEditorSubmissionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-submission.service';
+import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 
 describe('CodeEditorBuildOutputComponent', () => {
     let comp: CodeEditorBuildOutputComponent;
@@ -42,9 +42,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         },
         {
             time: '2019-05-15T10:32:11+02:00',
-            log:
-                '[ERROR] /var/atlassian/application-data/bamboo/xml-data/build-dir/COURSEPROGSHORT-BASE-JOB1/' +
-                'assignment/src/todo/main/BubbleSort.java:[8,12] cannot find symbol',
+            log: '[ERROR] /var/application-data/jenkins/xml-data/build-dir/COURSEPROGSHORT-BASE-JOB1/' + 'assignment/src/todo/main/BubbleSort.java:[8,12] cannot find symbol',
         },
         {
             time: '2019-05-15T10:32:11+02:00',

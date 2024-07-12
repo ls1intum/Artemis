@@ -4,7 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
-import java.util.*;
+import java.util.List;
 
 import jakarta.mail.internet.MimeMessage;
 
@@ -23,15 +23,32 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
-import de.tum.in.www1.artemis.exercise.programmingexercise.MockDelegate;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programming.MockDelegate;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.ModelingSubmissionService;
+import de.tum.in.www1.artemis.service.TextBlockService;
+import de.tum.in.www1.artemis.service.TextSubmissionService;
+import de.tum.in.www1.artemis.service.UriService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
+import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
-import de.tum.in.www1.artemis.service.notifications.*;
+import de.tum.in.www1.artemis.service.notifications.ConversationNotificationService;
+import de.tum.in.www1.artemis.service.notifications.GeneralInstantNotificationService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
+import de.tum.in.www1.artemis.service.notifications.MailService;
+import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
+import de.tum.in.www1.artemis.service.notifications.TutorialGroupNotificationService;
 import de.tum.in.www1.artemis.service.notifications.push_notifications.ApplePushNotificationService;
 import de.tum.in.www1.artemis.service.notifications.push_notifications.FirebasePushNotificationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
@@ -40,8 +57,8 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.ScheduleService;
-import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.user.UserFactory;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.HibernateQueryInterceptor;
 import de.tum.in.www1.artemis.util.QueryCountAssert;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -144,13 +161,31 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected TextBlockService textBlockService;
 
     @Autowired
-    protected QuizScheduleService quizScheduleService;
-
-    @Autowired
     protected RequestUtilService request;
 
     @Autowired
     protected HibernateQueryInterceptor queryInterceptor;
+
+    @Autowired
+    protected UserUtilService userUtilService;
+
+    @Autowired
+    protected CourseUtilService courseUtilService;
+
+    @Autowired
+    protected ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    protected UserRepository userRepository;
+
+    @Autowired
+    protected ExerciseRepository exerciseRepository;
+
+    @Autowired
+    protected ResultRepository resultRepository;
+
+    @Autowired
+    protected CourseRepository courseRepository;
 
     @BeforeEach
     void mockMailService() {
@@ -159,8 +194,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @AfterEach
     void stopQuizScheduler() {
-        quizScheduleService.stopSchedule();
-        quizScheduleService.clearAllQuizData();
+        scheduleService.clearAllTasks();
     }
 
     @AfterEach

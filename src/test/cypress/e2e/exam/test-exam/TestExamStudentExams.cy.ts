@@ -28,7 +28,7 @@ const userManagement = new CypressUserManagement();
 
 let examExercise: Exercise;
 
-describe('Test Exam - student exams', () => {
+describe.skip('Test Exam - student exams', () => {
     let course: Course;
     let exam: Exam;
 

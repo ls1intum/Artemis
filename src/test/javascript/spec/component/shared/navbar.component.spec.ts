@@ -52,6 +52,7 @@ describe('NavbarComponent', () => {
     let entityTitleServiceStub: jest.SpyInstance;
     let exerciseService: ExerciseService;
     let entityTitleService: EntityTitleService;
+    let examParticipationService: ExamParticipationService;
 
     const router = new MockRouter();
     router.setUrl('');
@@ -130,7 +131,7 @@ describe('NavbarComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(NavbarComponent);
                 component = fixture.componentInstance;
-
+                examParticipationService = TestBed.inject(ExamParticipationService);
                 entityTitleService = fixture.debugElement.injector.get(EntityTitleService);
                 entityTitleServiceStub = jest
                     .spyOn(entityTitleService, 'getTitle')
@@ -254,6 +255,20 @@ describe('NavbarComponent', () => {
         expect(component.breadcrumbs).toHaveLength(1);
 
         expect(component.breadcrumbs[0]).toEqual({ label: 'route-without-translation', translate: false, uri: '/admin/route-without-translation/' } as MockBreadcrumb);
+    });
+
+    it('should hide breadcrumb when exam is started', () => {
+        (examParticipationService as any).examIsStarted$ = of(true);
+        component.isExamActive = true;
+        const testUrl = '/courses/1/exams/2';
+        router.setUrl(testUrl);
+
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.breadcrumb')).toBeNull();
+
+        component.isExamStarted = false;
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.breadcrumb')).not.toBeNull();
     });
 
     it('should have correct git info', fakeAsync(() => {
@@ -633,25 +648,22 @@ describe('NavbarComponent', () => {
     });
 
     describe('Special student route breadcrumb cases', () => {
-        it.each(['programming-exercises', 'modeling-exercises', 'text-exercises'])(
-            'should replace exercise types in URI with just "exercise" on backlinking breadcrumbs',
-            (exType: string) => {
-                const testUrl = `/courses/1/${exType}/2`;
-                router.setUrl(testUrl);
+        it.each(['programming-exercises', 'modeling-exercises', 'text-exercises'])('should not show exercise types in URI on backlinking breadcrumbs', (exType: string) => {
+            const testUrl = `/courses/1/exercises/${exType}/2`;
+            router.setUrl(testUrl);
 
-                fixture.detectChanges();
+            fixture.detectChanges();
 
-                expect(entityTitleServiceStub).toHaveBeenCalledTimes(2);
-                expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.COURSE, [1]);
-                expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.EXERCISE, [2]);
+            expect(entityTitleServiceStub).toHaveBeenCalledTimes(2);
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.COURSE, [1]);
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.EXERCISE, [2]);
 
-                expect(component.breadcrumbs).toHaveLength(4);
-                expect(component.breadcrumbs[0]).toMatchObject({ uri: '/courses/', label: 'artemisApp.course.home.title' });
-                expect(component.breadcrumbs[1]).toMatchObject({ uri: '/courses/1/', label: 'Test Course' });
-                expect(component.breadcrumbs[2]).toMatchObject({ uri: '/courses/1/exercises/', label: 'artemisApp.courseOverview.menu.exercises' });
-                expect(component.breadcrumbs[3]).toMatchObject({ uri: '/courses/1/exercises/2/', label: 'Test Exercise' });
-            },
-        );
+            expect(component.breadcrumbs).toHaveLength(4);
+            expect(component.breadcrumbs[0]).toMatchObject({ uri: '/courses/', label: 'artemisApp.course.home.title' });
+            expect(component.breadcrumbs[1]).toMatchObject({ uri: '/courses/1/', label: 'Test Course' });
+            expect(component.breadcrumbs[2]).toMatchObject({ uri: '/courses/1/exercises/', label: 'artemisApp.courseOverview.menu.exercises' });
+            expect(component.breadcrumbs[3]).toMatchObject({ uri: '/courses/1/exercises/2/', label: 'Test Exercise' });
+        });
     });
 
     it.each([

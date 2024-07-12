@@ -65,7 +65,7 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
                 PushNotificationDeviceType.FIREBASE);
 
         assertThat(deviceConfigurations).hasSize(1);
-        PushNotificationDeviceConfiguration config = deviceConfigurations.get(0);
+        PushNotificationDeviceConfiguration config = deviceConfigurations.getFirst();
         assertThat(config.getDeviceType()).isEqualTo(PushNotificationDeviceType.FIREBASE);
         assertThat(config.getExpirationDate()).isInTheFuture();
     }

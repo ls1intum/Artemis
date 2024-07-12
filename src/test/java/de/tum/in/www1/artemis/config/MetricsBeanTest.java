@@ -22,12 +22,11 @@ import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
-import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.quiz.QuizExerciseFactory;
+import de.tum.in.www1.artemis.exercise.quiz.QuizExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
@@ -79,9 +78,6 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ExamRepository examRepository;
-
-    @Autowired
-    private CourseRepository courseRepository;
 
     @Autowired
     private SubmissionRepository submissionRepository;
@@ -351,7 +347,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
                 users.get(0).getLogin());
 
         // We have to first refresh the active users and then the metrics to ensure the data is updated correctly
-        metricsBean.calculateCachedActiveUserNames();
+        metricsBean.calculateActiveUserMetrics();
         metricsBean.recalculateMetrics();
 
         // Should now have one active user
@@ -366,7 +362,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
                 users.get(1).getLogin());
 
         // We have to first refresh the active users and then the metrics to ensure the data is updated correctly
-        metricsBean.calculateCachedActiveUserNames();
+        metricsBean.calculateActiveUserMetrics();
         metricsBean.recalculateMetrics();
 
         // Should now have two active users

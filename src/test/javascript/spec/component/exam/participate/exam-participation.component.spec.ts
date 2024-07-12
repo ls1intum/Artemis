@@ -54,6 +54,10 @@ import { MockExamParticipationLiveEventsService } from '../../../helpers/mocks/s
 import { ExamPage } from 'app/entities/exam-page.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { UMLDiagramType } from '@ls1intum/apollon';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
+import { ExamBarComponent } from 'app/exam/participate/exam-bar/exam-bar.component';
+import { ExamNavigationSidebarComponent } from 'app/exam/participate/exam-navigation-sidebar/exam-navigation-sidebar.component';
 
 describe('ExamParticipationComponent', () => {
     let fixture: ComponentFixture<ExamParticipationComponent>;
@@ -66,9 +70,27 @@ describe('ExamParticipationComponent', () => {
     let alertService: AlertService;
     let artemisServerDateService: ArtemisServerDateService;
     let examParticipationLiveEventsService: ExamParticipationLiveEventsService;
+    let examExerciseUpdateService: ExamExerciseUpdateService;
     let translateService: TranslateService;
     let courseService: CourseManagementService;
     let courseStorageService: CourseStorageService;
+    let examManagementService: ExamManagementService;
+
+    function setupActivatedRouteMock() {
+        const activatedRouteMock = {
+            parent: {
+                parent: {
+                    parent: {
+                        params: of({}),
+                    },
+                    params: of({ courseId: '1' }),
+                },
+                params: of({}),
+            },
+            params: of({ examId: '2', testRunId: '3' }),
+        };
+        return activatedRouteMock;
+    }
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -78,6 +100,8 @@ describe('ExamParticipationComponent', () => {
                 ExamParticipationComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(ExamParticipationCoverComponent),
+                MockComponent(ExamBarComponent),
+                MockComponent(ExamNavigationSidebarComponent),
                 MockComponent(ExamNavigationBarComponent),
                 MockComponent(QuizExamSubmissionComponent),
                 MockComponent(TextExamSubmissionComponent),
@@ -95,9 +119,7 @@ describe('ExamParticipationComponent', () => {
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 {
                     provide: ActivatedRoute,
-                    useValue: {
-                        params: of({ courseId: '1', examId: '2', testRunId: '3' }),
-                    },
+                    useValue: setupActivatedRouteMock(),
                 },
                 { provide: ExamParticipationLiveEventsService, useClass: MockExamParticipationLiveEventsService },
                 MockProvider(ExamParticipationService),
@@ -110,6 +132,7 @@ describe('ExamParticipationComponent', () => {
                 MockProvider(AlertService),
                 MockProvider(CourseExerciseService),
                 MockProvider(ArtemisDatePipe),
+                MockProvider(ExamManagementService),
             ],
         })
             .compileComponents()
@@ -124,9 +147,11 @@ describe('ExamParticipationComponent', () => {
                 alertService = TestBed.inject(AlertService);
                 artemisServerDateService = TestBed.inject(ArtemisServerDateService);
                 examParticipationLiveEventsService = TestBed.inject(ExamParticipationLiveEventsService);
+                examExerciseUpdateService = TestBed.inject(ExamExerciseUpdateService);
                 translateService = TestBed.inject(TranslateService);
                 courseService = TestBed.inject(CourseManagementService);
                 courseStorageService = TestBed.inject(CourseStorageService);
+                examManagementService = TestBed.inject(ExamManagementService);
                 fixture.detectChanges();
                 comp.exam = new Exam();
             });
@@ -536,6 +561,48 @@ describe('ExamParticipationComponent', () => {
         });
     });
 
+    describe('websocket problem statement update subscription', () => {
+        beforeEach(() => {
+            comp.studentExam = new StudentExam();
+            comp.exam = new Exam();
+            const textExercise = new TextExercise(new Course(), undefined);
+            textExercise.id = 1;
+            textExercise.problemStatement = 'old problem statement text exercise';
+            const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+            programmingExercise.id = 2;
+            programmingExercise.problemStatement = 'old problem statement programming exercise';
+            comp.studentExam.exercises = [textExercise, programmingExercise];
+        });
+
+        it('should correctly update problem statement if exercise was not opened yet', () => {
+            const event = {
+                problemStatement: 'new problem statement',
+                exerciseId: 2,
+                exerciseName: 'exercise1',
+            } as any as ExamLiveEvent;
+            jest.spyOn(examParticipationLiveEventsService, 'observeNewEventsAsSystem').mockReturnValue(of(event));
+            jest.spyOn(examExerciseUpdateService, 'updateLiveExamExercise');
+            comp.examStarted(comp.studentExam);
+            comp['subscribeToProblemStatementUpdates']();
+            expect(examExerciseUpdateService.updateLiveExamExercise).not.toHaveBeenCalled();
+            expect(comp.studentExam.exercises![1].problemStatement).toBe('new problem statement');
+        });
+
+        it('should correctly update problem statement if exercise was previously opened', () => {
+            const event = {
+                problemStatement: 'new problem statement',
+                exerciseId: 2,
+                exerciseName: 'exercise1',
+            } as any as ExamLiveEvent;
+            jest.spyOn(examParticipationLiveEventsService, 'observeNewEventsAsSystem').mockReturnValue(of(event));
+            jest.spyOn(examExerciseUpdateService, 'updateLiveExamExercise');
+            comp.examStarted(comp.studentExam);
+            comp.pageComponentVisited[1] = true;
+            comp['subscribeToProblemStatementUpdates']();
+            expect(examExerciseUpdateService.updateLiveExamExercise).toHaveBeenCalledExactlyOnceWith(2, 'new problem statement');
+        });
+    });
+
     describe('trigger save', () => {
         let textSubmissionUpdateSpy: jest.SpyInstance;
         let modelingSubmissionUpdateSpy: jest.SpyInstance;
@@ -863,7 +930,7 @@ describe('ExamParticipationComponent', () => {
         });
     });
 
-    describe('toggleHandInEarly', () => {
+    describe('handleHandInEarly', () => {
         it('should reset pageComponentVisited after the hand-in-early window is closed', () => {
             // Create exercises
             const exercise1 = new ProgrammingExercise(new Course(), undefined);
@@ -892,7 +959,7 @@ describe('ExamParticipationComponent', () => {
             const resetPageComponentVisitedSpy = jest.spyOn<any, any>(comp, 'resetPageComponentVisited');
 
             // Call toggleHandInEarly to change the handInEarly state
-            comp.toggleHandInEarly();
+            comp.handleHandInEarly();
 
             // Verify that resetPageComponentVisited has been called with the correct index
             expect(resetPageComponentVisitedSpy).toHaveBeenCalledExactlyOnceWith(1);
@@ -905,9 +972,67 @@ describe('ExamParticipationComponent', () => {
         it('should trigger save', () => {
             const triggerSaveSpy = jest.spyOn(comp, 'triggerSave').mockImplementation(() => {});
             comp.handInEarly = false;
-            comp.toggleHandInEarly();
+            comp.handleHandInEarly();
 
             expect(triggerSaveSpy).toHaveBeenCalledOnce();
+        });
+    });
+
+    describe('toggleHandInEarly', () => {
+        it('should not fetch attendance check status if exam is a test exam', () => {
+            comp.exam = new Exam();
+            comp.exam.testExam = true;
+
+            // Spy on the method isAttendanceChecked
+            const attendanceCheckSpy = jest.spyOn<any, any>(examManagementService, 'isAttendanceChecked');
+
+            // Call toggleHandInEarly to change the handInEarly state
+            comp.toggleHandInEarly();
+
+            // Verify that isAttendanceChecked has not been called
+            expect(attendanceCheckSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not fetch attendance check status if exam is not an exam with attendance check', () => {
+            comp.exam = new Exam();
+            comp.exam.examWithAttendanceCheck = false;
+
+            // Spy on the method isAttendanceChecked
+            const attendanceCheckSpy = jest.spyOn<any, any>(examManagementService, 'isAttendanceChecked');
+
+            // Call toggleHandInEarly to change the handInEarly state
+            comp.toggleHandInEarly();
+
+            // Verify that isAttendanceChecked has not been called
+            expect(attendanceCheckSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not fetch attendance check status if user clicks continue', () => {
+            comp.handInEarly = true;
+
+            // Spy on the method isAttendanceChecked
+            const attendanceCheckSpy = jest.spyOn<any, any>(examManagementService, 'isAttendanceChecked');
+
+            // Call toggleHandInEarly to change the handInEarly state
+            comp.toggleHandInEarly();
+
+            // Verify that isAttendanceChecked has not been called
+            expect(attendanceCheckSpy).not.toHaveBeenCalled();
+        });
+
+        it('should fetch attendance check status if exam is an exam with attendance check', () => {
+            comp.exam = new Exam();
+            comp.exam.examWithAttendanceCheck = true;
+
+            // Spy on the method isAttendanceChecked
+            const attendanceCheckSpy = jest.spyOn<any, any>(examManagementService, 'isAttendanceChecked').mockReturnValue(of(new HttpResponse({ body: true })));
+
+            // Call toggleHandInEarly to change the handInEarly state
+            comp.toggleHandInEarly();
+
+            // Verify that isAttendanceChecked has been called
+            expect(attendanceCheckSpy).toHaveBeenCalledOnce();
+            expect(comp.attendanceChecked).toBeTrue();
         });
     });
 
@@ -932,5 +1057,92 @@ describe('ExamParticipationComponent', () => {
 
             expect(comp.activePageIndex).toBe(1);
         });
+    });
+
+    it('should return the index of the active page', () => {
+        const exercise0 = new QuizExercise(undefined, undefined);
+        exercise0.id = 5;
+        const exercise1 = new ProgrammingExercise(undefined, undefined);
+        exercise1.id = 6;
+
+        comp.activeExamPage = new ExamPage();
+        comp.activeExamPage.exercise = exercise1;
+
+        comp.studentExam = new StudentExam();
+        comp.studentExam.exercises = [exercise0, exercise1];
+
+        expect(comp.activePageIndex).toBe(1);
+    });
+
+    it('should set Exam Layout if the exam is started', () => {
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+        const examLayoutStub = jest.spyOn(examParticipationService, 'setExamLayout');
+        const exercise0 = new QuizExercise(undefined, undefined);
+        exercise0.id = 5;
+        const exercise1 = new ProgrammingExercise(undefined, undefined);
+        exercise1.id = 6;
+        comp.studentExam = new StudentExam();
+        comp.studentExam.exercises = [exercise0, exercise1];
+        comp.ngOnInit();
+        comp.examStarted(comp.studentExam);
+        expect(examLayoutStub).toHaveBeenCalledOnce();
+    });
+
+    it('should reset Exam Layout if the summary is loaded and displayed', () => {
+        const examLayoutStub = jest.spyOn(examParticipationService, 'resetExamLayout');
+
+        const studentExam = new StudentExam();
+        studentExam.exam = new Exam();
+        studentExam.exam.testExam = false;
+        studentExam.exam.startDate = dayjs().subtract(2000, 'seconds');
+        studentExam.workingTime = 100;
+        studentExam.id = 3;
+        const studentExamWithExercises = new StudentExam();
+        studentExamWithExercises.id = 3;
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2', studentExamId: '3' });
+        jest.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExam));
+        jest.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExamWithExercises));
+
+        comp.ngOnInit();
+        comp.loadAndDisplaySummary();
+
+        expect(examLayoutStub).toHaveBeenCalledOnce();
+    });
+
+    it('should not reset Exam Layout in loadAndDisplaySummary if it is a test exam', () => {
+        const examLayoutStub = jest.spyOn(examParticipationService, 'resetExamLayout');
+        const studentExam = new StudentExam();
+        studentExam.exam = new Exam();
+        studentExam.exam.testExam = true;
+        studentExam.exam.startDate = dayjs().subtract(2000, 'seconds');
+        studentExam.workingTime = 100;
+        studentExam.id = 3;
+        const studentExamWithExercises = new StudentExam();
+        studentExamWithExercises.id = 3;
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2', studentExamId: '3' });
+        jest.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExam));
+        jest.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExamWithExercises));
+
+        comp.ngOnInit();
+        comp.loadAndDisplaySummary();
+
+        expect(examLayoutStub).not.toHaveBeenCalledOnce();
+    });
+
+    it('should reset Exam Layout in onExamEndConfirmed if it is a test exam', () => {
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+        const examLayoutStub = jest.spyOn(examParticipationService, 'resetExamLayout');
+        const studentExam = new StudentExam();
+
+        jest.spyOn(examParticipationService, 'loadTestRunWithExercisesForConduction').mockReturnValue(of(studentExam));
+        jest.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(of(undefined));
+        jest.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExam));
+        jest.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExam));
+        examParticipationService.currentlyLoadedStudentExam = new Subject<StudentExam>();
+        comp.ngOnInit();
+        comp.testExam = true;
+        comp.onExamEndConfirmed();
+
+        expect(examLayoutStub).toHaveBeenCalledOnce();
     });
 });

@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs/esm';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
@@ -6,7 +6,6 @@ import { ActivatedRoute } from '@angular/router';
 import { NgModel } from '@angular/forms';
 import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { BehaviorSubject, Subject, of } from 'rxjs';
-import * as ace from 'brace';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
@@ -57,7 +56,6 @@ import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-e
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
-import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
@@ -69,17 +67,16 @@ import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code
 import { CodeEditorFileBrowserFolderComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-folder.component';
 import { CodeEditorFileBrowserFileComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-file.component';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
-import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
 import { TreeviewItemComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview-item/treeview-item.component';
 import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
+import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
+import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 
 describe('CodeEditorContainerIntegration', () => {
-    // needed to make sure ace is defined
-    ace.acequire('ace/ext/modelist');
     let container: CodeEditorContainerComponent;
     let containerFixture: ComponentFixture<CodeEditorContainerComponent>;
     let containerDebugElement: DebugElement;
@@ -103,7 +100,7 @@ describe('CodeEditorContainerIntegration', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, AceEditorModule, MockDirective(NgbDropdown), MockModule(NgbTooltipModule)],
+            imports: [ArtemisTestModule, MonacoEditorModule, MockDirective(NgbDropdown), MockModule(NgbTooltipModule)],
             declarations: [
                 CodeEditorContainerComponent,
                 MockComponent(CodeEditorGridComponent),
@@ -117,7 +114,7 @@ describe('CodeEditorContainerIntegration', () => {
                 CodeEditorActionsComponent,
                 CodeEditorFileBrowserComponent,
                 CodeEditorBuildOutputComponent,
-                CodeEditorAceComponent,
+                CodeEditorMonacoComponent,
                 MockComponent(CodeEditorFileBrowserCreateNodeComponent),
                 MockComponent(CodeEditorFileBrowserFolderComponent),
                 MockComponent(CodeEditorFileBrowserFileComponent),
@@ -233,9 +230,9 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.fileBrowser.errorFiles).toEqual(extractedErrorFiles);
         expect(container.fileBrowser.unsavedFiles).toHaveLength(0);
 
-        // ace editor
-        expect(container.aceEditor.isLoading).toBeFalse();
-        expect(container.aceEditor.commitState).toBe(CommitState.CLEAN);
+        // monaco editor
+        expect(container.monacoEditor.isLoading).toBeFalse();
+        expect(container.monacoEditor.commitState).toBe(CommitState.CLEAN);
 
         // actions
         expect(container.actions.commitState).toBe(CommitState.CLEAN);
@@ -259,9 +256,10 @@ describe('CodeEditorContainerIntegration', () => {
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id!, participation.results![0]);
     };
 
-    const loadFile = (fileName: string, fileContent: string) => {
+    const loadFile = async (fileName: string, fileContent: string) => {
         getFileStub.mockReturnValue(of({ fileContent }));
         container.fileBrowser.selectedFile = fileName;
+        await container.monacoEditor.selectFileInEditor(fileName);
     };
 
     it('should initialize all components correctly if all server calls are successful', fakeAsync(() => {
@@ -307,10 +305,10 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.fileBrowser.errorFiles).toEqual(extractedErrorFiles);
         expect(container.fileBrowser.unsavedFiles).toHaveLength(0);
 
-        // ace editor
-        expect(container.aceEditor.isLoading).toBeFalse();
-        expect(container.aceEditor.annotationsArray.map((a) => omit(a, 'hash'))).toEqual(extractedBuildLogErrors);
-        expect(container.aceEditor.commitState).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
+        // monaco editor
+        expect(container.monacoEditor.isLoading).toBeFalse();
+        expect(container.monacoEditor.annotationsArray?.map((a) => omit(a, 'hash'))).toEqual(extractedBuildLogErrors);
+        expect(container.monacoEditor.commitState).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
 
         // actions
         expect(container.actions.commitState).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
@@ -338,36 +336,34 @@ describe('CodeEditorContainerIntegration', () => {
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
     }));
 
-    it('should update the file browser and ace editor on file selection', waitForAsync(async () => {
+    it('should update the file browser and monaco editor on file selection', async () => {
         cleanInitialize();
         const selectedFile = Object.keys(container.fileBrowser.repositoryFiles)[0];
         const fileContent = 'lorem ipsum';
-        loadFile(selectedFile, fileContent);
+        await loadFile(selectedFile, fileContent);
 
         containerFixture.detectChanges();
-        await containerFixture.whenStable();
         expect(container.selectedFile).toBe(selectedFile);
-        expect(container.aceEditor.selectedFile).toBe(selectedFile);
-        expect(container.aceEditor.isLoading).toBeFalse();
-        expect(container.aceEditor.fileSession).toContainKey(selectedFile);
+        expect(container.monacoEditor.selectedFile).toBe(selectedFile);
+        expect(container.monacoEditor.isLoading).toBeFalse();
+        expect(container.monacoEditor.fileSession).toContainKey(selectedFile);
         expect(getFileStub).toHaveBeenCalledOnce();
         expect(getFileStub).toHaveBeenCalledWith(selectedFile);
 
         containerFixture.detectChanges();
-        expect(container.aceEditor.editor.getEditor().getSession().getValue()).toBe(fileContent);
-    }));
+        expect(container.getText()).toBe(fileContent);
+    });
 
-    it('should mark file to have unsaved changes in file tree if the file was changed in editor', waitForAsync(async () => {
+    it('should mark file to have unsaved changes in file tree if the file was changed in editor', async () => {
         cleanInitialize();
         const selectedFile = Object.keys(container.fileBrowser.repositoryFiles)[0];
         const fileContent = 'lorem ipsum';
         const newFileContent = 'new lorem ipsum';
-        loadFile(selectedFile, fileContent);
+        await loadFile(selectedFile, fileContent);
 
         containerFixture.detectChanges();
-        container.aceEditor.onFileTextChanged(newFileContent);
+        container.monacoEditor.onFileTextChanged(newFileContent);
         containerFixture.detectChanges();
-        await containerFixture.whenStable();
 
         expect(getFileStub).toHaveBeenCalledOnce();
         expect(getFileStub).toHaveBeenCalledWith(selectedFile);
@@ -375,9 +371,9 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.fileBrowser.unsavedFiles).toEqual([selectedFile]);
         expect(container.editorState).toBe(EditorState.UNSAVED_CHANGES);
         expect(container.actions.editorState).toBe(EditorState.UNSAVED_CHANGES);
-    }));
+    });
 
-    it('should save files and remove unsaved status of saved files afterwards', () => {
+    it('should save files and remove unsaved status of saved files afterwards', async () => {
         // setup
         cleanInitialize();
         const selectedFile = Object.keys(container.fileBrowser.repositoryFiles)[0];
@@ -387,7 +383,7 @@ describe('CodeEditorContainerIntegration', () => {
         const saveFilesSubject = new Subject();
         saveFilesStub.mockReturnValue(saveFilesSubject);
         container.unsavedFiles = { [otherFileWithUnsavedChanges]: 'lorem ipsum dolet', [selectedFile]: newFileContent };
-        loadFile(selectedFile, fileContent);
+        await loadFile(selectedFile, fileContent);
         containerFixture.detectChanges();
 
         // init saving

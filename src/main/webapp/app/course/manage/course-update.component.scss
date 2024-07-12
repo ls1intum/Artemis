@@ -9,23 +9,18 @@
     width: 100%;
 
     .no-image {
-        background: #dddddd url('../../../content/images/image-placeholder.png') no-repeat center;
-        background-size: 60%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        background-color: var(--gray-400);
         border-radius: 50%;
         height: 100px;
         width: 100px;
-        flex: 0 0 100px;
-        margin-right: 20px;
-
-        img {
-            height: 50px;
-            width: auto;
-        }
+        text-align: center;
+        color: var(--black);
     }
 
     jhi-secured-image {
-        padding-right: 20px;
-
         ::ng-deep img {
             border-radius: 50%;
             height: 100px;
@@ -34,10 +29,13 @@
     }
 }
 
-image-cropper {
-    padding: 0 0 10px 0 !important;
-}
-
-.delete-course-icon button {
-    width: 100%;
+.icon-button-wrapper {
+    position: absolute;
+    border-radius: 50%;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 30px;
+    height: 30px;
+    box-shadow: 2px 2px 4px 0 rgba(0, 0, 0, 0.1);
 }

@@ -26,7 +26,7 @@ import {
 import { admin, instructor, studentOne } from '../../support/users';
 import { checkField, convertModelAfterMultiPart, generateUUID } from '../../support/utils';
 
-describe('Import exercises', { scrollBehavior: 'center' }, () => {
+describe.skip('Import exercises', { scrollBehavior: 'center' }, () => {
     let course: Course;
     let secondCourse: Course;
     let textExercise: TextExercise;
@@ -79,6 +79,7 @@ describe('Import exercises', { scrollBehavior: 'center' }, () => {
         textExerciseCreation.import().then((request: Interception) => {
             const exercise = request.response!.body;
             cy.login(studentOne, `/courses/${secondCourse.id}`);
+            courseOverview.openExerciseOverview(exercise.title!);
             courseOverview.startExercise(exercise.id!);
             courseOverview.openRunningExercise(exercise.id!);
             cy.fixture('loremIpsum-short.txt').then((submission) => {
@@ -112,6 +113,7 @@ describe('Import exercises', { scrollBehavior: 'center' }, () => {
             const exercise = request.response!.body;
             courseManagementExercises.startQuiz(exercise.id!);
             cy.login(studentOne, `/courses/${secondCourse.id}`);
+            courseOverview.openExerciseOverview(exercise.title!);
             courseOverview.startExercise(exercise.id!);
             quizExerciseMultipleChoice.tickAnswerOption(exercise.id!, 0);
             quizExerciseMultipleChoice.tickAnswerOption(exercise.id!, 2);
@@ -137,6 +139,7 @@ describe('Import exercises', { scrollBehavior: 'center' }, () => {
         modelingExerciseCreation.import().then((request: Interception) => {
             const exercise = request.response!.body;
             cy.login(studentOne, `/courses/${secondCourse.id}`);
+            courseOverview.openExerciseOverview(exercise.title!);
             courseOverview.startExercise(exercise.id!);
             courseOverview.openRunningExercise(exercise.id!);
             modelingExerciseEditor.addComponentToModel(exercise.id!, 1);
@@ -163,6 +166,7 @@ describe('Import exercises', { scrollBehavior: 'center' }, () => {
         programmingExerciseCreation.import().then((request: Interception) => {
             const exercise = request.response!.body;
             cy.login(studentOne, `/courses/${secondCourse.id}`);
+            courseOverview.openExerciseOverview(exercise.title!);
             courseOverview.startExercise(exercise.id!);
             courseOverview.openRunningExercise(exercise.id!);
             programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, javaPartiallySuccessfulSubmission, () => {

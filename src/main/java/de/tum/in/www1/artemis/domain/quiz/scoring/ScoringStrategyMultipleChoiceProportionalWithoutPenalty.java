@@ -1,6 +1,10 @@
 package de.tum.in.www1.artemis.domain.quiz.scoring;
 
-import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.domain.quiz.AnswerOption;
+import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceQuestion;
+import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceSubmittedAnswer;
+import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
+import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
 
 /**
  * Proportional without penalty means that every correctly selected/unselected answer increases the score by maxScore / numberOfAnswerOptions

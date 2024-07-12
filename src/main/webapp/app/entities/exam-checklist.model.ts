@@ -16,4 +16,8 @@ export class ExamChecklist {
     public numberOfAllComplaintsDone?: number;
 
     public allExamExercisesAllStudentsPrepared?: boolean;
+
+    public existsUnassessedQuizzes: boolean;
+
+    public existsUnsubmittedExercises: boolean;
 }

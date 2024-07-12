@@ -1,71 +1,81 @@
 package de.tum.in.www1.artemis.service.connectors.localci.scaparser.strategy;
 
-import static de.tum.in.www1.artemis.service.connectors.localci.scaparser.utils.XmlUtils.getChildElements;
-
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
 
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
+import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisIssue;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
-import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue;
 
-/**
- * Parser strategy for PMD reports.
- */
+@JsonIgnoreProperties(ignoreUnknown = true)
+record PMDReport(@JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "file") List<FileViolation> files) {
+}
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+record FileViolation(@JacksonXmlProperty(isAttribute = true, localName = "name") String fileName,
+
+        @JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "violation") List<Violation> violations) {
+}
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+record Violation(@JacksonXmlProperty(isAttribute = true, localName = "rule") String rule,
+
+        @JacksonXmlProperty(isAttribute = true, localName = "ruleset") String ruleset,
+
+        @JacksonXmlProperty(isAttribute = true, localName = "priority") String priority,
+
+        @JacksonXmlProperty(isAttribute = true, localName = "beginline") int beginLine,
+
+        @JacksonXmlProperty(isAttribute = true, localName = "endline") int endLine,
+
+        @JacksonXmlProperty(isAttribute = true, localName = "begincolumn") int beginColumn,
+
+        @JacksonXmlProperty(isAttribute = true, localName = "endcolumn") int endColumn,
+
+        @JacksonXmlProperty(localName = "") @JacksonXmlText String message // inner text
+) {
+}
+
 class PMDParser implements ParserStrategy {
 
-    // XSD for PMD XML reports: https://github.com/pmd/pmd/blob/master/pmd-core/src/main/resources/report_2_0_0.xsd
-    private static final String FILE_TAG = "file";
-
-    private static final String FILE_ATT_NAME = "name";
-
-    private static final String VIOLATION_ATT_RULE = "rule";
-
-    private static final String VIOLATION_ATT_RULESET = "ruleset";
-
-    private static final String VIOLATION_ATT_PRIORITY = "priority";
-
-    private static final String VIOLATION_ATT_BEGINLINE = "beginline";
-
-    private static final String VIOLATION_ATT_ENDLINE = "endline";
-
-    private static final String VIOLATION_ATT_BEGINCOLUMN = "begincolumn";
-
-    private static final String VIOLATION_ATT_ENDCOLUMN = "endcolumn";
+    private final XmlMapper xmlMapper = new XmlMapper();
 
     @Override
-    public StaticCodeAnalysisReportDTO parse(Document doc) {
-        StaticCodeAnalysisReportDTO report = new StaticCodeAnalysisReportDTO();
-        report.setTool(StaticCodeAnalysisTool.PMD);
+    public StaticCodeAnalysisReportDTO parse(String xmlContent) {
+        try {
+            PMDReport pmdReport = xmlMapper.readValue(xmlContent, PMDReport.class);
+            return createReportFromPMDReport(pmdReport);
+        }
+        catch (IOException e) {
+            throw new RuntimeException("Failed to parse XML", e);
+        }
+    }
+
+    private StaticCodeAnalysisReportDTO createReportFromPMDReport(PMDReport pmdReport) {
         List<StaticCodeAnalysisIssue> issues = new ArrayList<>();
-        Element root = doc.getDocumentElement();
+        StaticCodeAnalysisReportDTO report = new StaticCodeAnalysisReportDTO(StaticCodeAnalysisTool.PMD, issues);
 
-        // Iterate over all <file> elements
-        for (Element fileElement : getChildElements(root, FILE_TAG)) {
-            // Extract the file path
-            String unixPath = ParserUtils.transformToUnixPath(fileElement.getAttribute(FILE_ATT_NAME));
+        if (pmdReport.files() == null) {
+            return report;
+        }
 
-            // Iterate over all <violation> elements
-            for (Element violationElement : getChildElements(fileElement)) {
-                StaticCodeAnalysisIssue issue = new StaticCodeAnalysisIssue();
-                issue.setFilePath(unixPath);
+        for (FileViolation fileViolation : pmdReport.files()) {
+            String unixPath = ParserStrategy.transformToUnixPath(fileViolation.fileName());
 
-                issue.setRule(violationElement.getAttribute(VIOLATION_ATT_RULE));
-                issue.setCategory(violationElement.getAttribute(VIOLATION_ATT_RULESET));
-                issue.setPriority(violationElement.getAttribute(VIOLATION_ATT_PRIORITY));
-                issue.setStartLine(ParserUtils.extractInt(violationElement, VIOLATION_ATT_BEGINLINE));
-                issue.setEndLine(ParserUtils.extractInt(violationElement, VIOLATION_ATT_ENDLINE));
-                issue.setStartColumn(ParserUtils.extractInt(violationElement, VIOLATION_ATT_BEGINCOLUMN));
-                issue.setEndColumn(ParserUtils.extractInt(violationElement, VIOLATION_ATT_ENDCOLUMN));
-                issue.setMessage(ParserUtils.stripNewLinesAndWhitespace(violationElement.getTextContent()));
-
+            for (Violation violation : fileViolation.violations()) {
+                // The penalty is decided by the course instructor, there is no penalty information in the xml
+                StaticCodeAnalysisIssue issue = new StaticCodeAnalysisIssue(unixPath, violation.beginLine(), violation.endLine(), violation.beginColumn(), violation.endColumn(),
+                        violation.rule(), violation.ruleset(), violation.message().strip(), violation.priority(), null);
                 issues.add(issue);
             }
         }
-        report.setIssues(issues);
         return report;
     }
 }

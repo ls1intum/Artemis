@@ -8,8 +8,8 @@ import { expect } from '@playwright/test';
  */
 export class ProgrammingExerciseFeedbackPage extends AbstractExerciseFeedback {
     async shouldShowAdditionalFeedback(points: number, feedbackText: string) {
-        await Commands.reloadUntilFound(this.page, this.additionalFeedbackSelector);
-        await expect(this.page.locator(this.additionalFeedbackSelector).getByText(`${points} Points: ${feedbackText}`)).toBeVisible();
+        await Commands.reloadUntilFound(this.page, this.page.locator(this.ADDITIONAL_FEEDBACK_SELECTOR));
+        await expect(this.page.locator(this.ADDITIONAL_FEEDBACK_SELECTOR).getByText(`${points} Points: ${feedbackText}`)).toBeVisible();
     }
 
     async shouldShowCodeFeedback(exerciseID: number, filename: string, feedback: string, points: string, editorPage: OnlineEditorPage) {
@@ -24,7 +24,7 @@ export class ProgrammingExerciseFeedbackPage extends AbstractExerciseFeedback {
         // Playwright handles visibility checks differently, so the check is incorporated into the expect statement.
         // Note: Playwright's visibility checks are more strict than Cypress's.
         // If the element's visibility varies dynamically, you may need to adjust the logic.
-        const feedbackElement = this.page.locator('jhi-ace-editor [id*="code-editor-inline-feedback-"]');
+        const feedbackElement = this.page.locator('[id*="code-editor-inline-feedback-"]');
         await expect(feedbackElement).toBeVisible();
         return feedbackElement;
     }

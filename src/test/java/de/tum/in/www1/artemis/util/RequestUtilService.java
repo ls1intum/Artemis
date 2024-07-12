@@ -9,11 +9,16 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 
 import jakarta.annotation.Nullable;
 import jakarta.servlet.ServletException;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -255,6 +260,23 @@ public class RequestUtilService {
         return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructCollectionType(List.class, listElementType));
     }
 
+    public <T, R> Set<R> postSetWithResponseBody(String path, T body, Class<R> setElementType, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
+            @Nullable Map<String, String> expectedResponseHeaders) throws Exception {
+        String jsonBody = mapper.writeValueAsString(body);
+        var request = MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody);
+        if (httpHeaders != null) {
+            request = request.headers(httpHeaders);
+        }
+        MvcResult res = performMvcRequest(request).andExpect(status().is(expectedStatus.value())).andReturn();
+        restoreSecurityContext();
+        if (!expectedStatus.is2xxSuccessful()) {
+            assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
+            return null;
+        }
+        verifyExpectedResponseHeaders(expectedResponseHeaders, res);
+        return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructCollectionType(Set.class, setElementType));
+    }
+
     public <T, R> R postWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
             @Nullable Map<String, String> expectedResponseHeaders, @Nullable LinkedMultiValueMap<String, String> params) throws Exception {
         return postWithResponseBody(path, body, false, responseType, expectedStatus, httpHeaders, expectedResponseHeaders, params);
@@ -355,12 +377,16 @@ public class RequestUtilService {
         return postWithResponseBody(path, body, true, responseType, expectedStatus, null, null);
     }
 
-    public <T, R> String postWithResponseBodyString(String path, T body, HttpStatus expectedStatus) throws Exception {
+    public <T> String postWithResponseBodyString(String path, T body, HttpStatus expectedStatus) throws Exception {
         return postWithResponseBodyString(path, body, expectedStatus, null, null, new LinkedMultiValueMap<>());
     }
 
     public <T, R> List<R> postListWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
         return postListWithResponseBody(path, body, responseType, expectedStatus, null, null);
+    }
+
+    public <T, R> Set<R> postSetWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
+        return postSetWithResponseBody(path, body, responseType, expectedStatus, null, null);
     }
 
     public <T, R> R postWithResponseBody(String path, T body, Class<R> responseType, @Nullable LinkedMultiValueMap<String, String> params, HttpStatus expectedStatus)
@@ -747,7 +773,7 @@ public class RequestUtilService {
     }
 
     /**
-     * The Security Context gets cleared by {@link org.springframework.security.web.context.SecurityContextPersistenceFilter} after a REST call.
+     * The Security Context gets cleared after a REST call.
      * To prevent issues with further queries and rest calls in a test we restore the security context from the test security context holder
      */
     public void restoreSecurityContext() {
@@ -780,8 +806,19 @@ public class RequestUtilService {
     private static void verifyExpectedResponseHeaders(Map<String, String> expectedResponseHeaders, MvcResult res) {
         if (expectedResponseHeaders != null) {
             for (Map.Entry<String, String> responseHeader : expectedResponseHeaders.entrySet()) {
-                assertThat(res.getResponse().getHeaderValues(responseHeader.getKey()).get(0)).isEqualTo(responseHeader.getValue());
+                assertThat(res.getResponse().getHeaderValues(responseHeader.getKey()).getFirst()).isEqualTo(responseHeader.getValue());
             }
         }
+    }
+
+    /**
+     * Creates the delete params with both deleteStudentReposBuildPlans and deleteBaseReposBuildPlans set to false.
+     */
+    @NotNull
+    public static LinkedMultiValueMap<String, String> deleteProgrammingExerciseParamsFalse() {
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("deleteStudentReposBuildPlans", "false");
+        params.add("deleteBaseReposBuildPlans", "false");
+        return params;
     }
 }

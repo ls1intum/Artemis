@@ -17,14 +17,21 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
@@ -34,7 +41,6 @@ import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.UserPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.errors.LoginAlreadyUsedException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
@@ -76,20 +82,17 @@ public class AdminUserResource {
 
     private final UserCreationService userCreationService;
 
-    private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
-
     private final UserRepository userRepository;
 
     private final AuthorityRepository authorityRepository;
 
     private final Optional<LdapUserService> ldapUserService;
 
-    public AdminUserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, AuthorityRepository authorityRepository, Optional<LdapUserService> ldapUserService) {
+    public AdminUserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, AuthorityRepository authorityRepository,
+            Optional<LdapUserService> ldapUserService) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.userCreationService = userCreationService;
-        this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.authorityRepository = authorityRepository;
         this.ldapUserService = ldapUserService;
     }
@@ -121,9 +124,6 @@ public class AdminUserResource {
         }
         else if (userRepository.findOneByEmailIgnoreCase(managedUserVM.getEmail()).isPresent()) {
             throw new EmailAlreadyUsedException();
-        }
-        else if (managedUserVM.getGroups().stream().anyMatch(group -> !artemisAuthenticationProvider.isGroupAvailable(group))) {
-            throw new EntityNotFoundException("Not all groups are available: " + managedUserVM.getGroups());
         }
         else {
             User newUser = userCreationService.createUser(managedUserVM);
@@ -157,10 +157,6 @@ public class AdminUserResource {
         var existingUserByLogin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(managedUserVM.getLogin().toLowerCase());
         if (existingUserByLogin.isPresent() && (!existingUserByLogin.get().getId().equals(managedUserVM.getId()))) {
             throw new LoginAlreadyUsedException();
-        }
-
-        if (managedUserVM.getGroups().stream().anyMatch(group -> !artemisAuthenticationProvider.isGroupAvailable(group))) {
-            throw new EntityNotFoundException("Not all groups are available: " + managedUserVM.getGroups());
         }
 
         var existingUser = userRepository.findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(managedUserVM.getId());
@@ -227,9 +223,9 @@ public class AdminUserResource {
         var user = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(userId);
 
         ldapUserService.ifPresent(service -> service.loadUserDetailsFromLdap(user));
-        userCreationService.saveUser(user);
+        var updatedUser = userCreationService.saveUser(user);
 
-        return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "userManagement.updated", userId.toString())).body(new UserDTO(user));
+        return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.updated", user.getLogin())).body(new UserDTO(updatedUser));
     }
 
     /**
@@ -247,12 +243,14 @@ public class AdminUserResource {
     }
 
     /**
-     * @return a string list of the all the roles
+     * GET /users/authorities : get all authorities of the requesting user.
+     *
+     * @return the ResponseEntity with status 200 (OK) and with body a string list of the all the roles
      */
     @GetMapping("users/authorities")
     @EnforceAdmin
-    public List<String> getAuthorities() {
-        return authorityRepository.getAuthorities();
+    public ResponseEntity<List<String>> getAuthorities() {
+        return ResponseEntity.ok(authorityRepository.getAuthorities());
     }
 
     /**

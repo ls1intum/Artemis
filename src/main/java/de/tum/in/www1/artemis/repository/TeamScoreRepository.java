@@ -9,7 +9,6 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,11 +19,12 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.scores.TeamScore;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.dto.score.TeamScoreSum;
 
 @Profile(PROFILE_CORE)
 @Repository
-public interface TeamScoreRepository extends JpaRepository<TeamScore, Long> {
+public interface TeamScoreRepository extends ArtemisJpaRepository<TeamScore, Long> {
 
     @Transactional // ok because of delete
     @Modifying

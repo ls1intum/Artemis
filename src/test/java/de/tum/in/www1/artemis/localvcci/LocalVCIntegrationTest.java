@@ -206,9 +206,10 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot force push.");
     }
 
+    // TODO add test for force push over ssh, which should work
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testInstructorTriesToForcePush() throws Exception {
+    void testInstructorTriesToForcePushOverHttp() throws Exception {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         String assignmentRepoUri = localVCLocalCITestService.constructLocalVCUrl(instructor1Login, projectKey1, assignmentRepositorySlug);
@@ -221,17 +222,17 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
         assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot force push.");
 
-        // Force push to template repository (should be possible)
+        // Force push to template repository (should not be possible)
         remoteRefUpdate = setupAndTryForcePush(templateRepository, templateRepoUri, instructor1Login, projectKey1, templateRepositorySlug);
-        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.OK);
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
 
-        // Force push to solution repository (should be possible)
+        // Force push to solution repository (should not be possible)
         remoteRefUpdate = setupAndTryForcePush(solutionRepository, solutionRepoUri, instructor1Login, projectKey1, solutionRepositorySlug);
-        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.OK);
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
 
-        // Force push to rests repository (should be possible)
+        // Force push to rests repository (should not be possible)
         remoteRefUpdate = setupAndTryForcePush(testsRepository, testsRepoUri, instructor1Login, projectKey1, testsRepositorySlug);
-        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.OK);
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
     }
 
     private RemoteRefUpdate setupAndTryForcePush(LocalRepository originalRepository, String repositoryUri, String login, String projectKey, String repositorySlug)

@@ -14,7 +14,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -209,7 +213,8 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      * @param password       the user's password
      * @param groupsToAdd    groups to add the user to
      * @param groupsToRemove groups to remove the user from
-     * @throws ContinuousIntegrationException
+     *
+     * @throws ContinuousIntegrationException if something went wrong updating the user
      */
     @Override
     public void updateUserAndGroups(String oldLogin, User user, String password, Set<String> groupsToAdd, Set<String> groupsToRemove) throws ContinuousIntegrationException {

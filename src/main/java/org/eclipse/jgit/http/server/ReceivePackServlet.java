@@ -9,6 +9,7 @@
 package org.eclipse.jgit.http.server;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.text.MessageFormat;
 import java.util.List;
 import org.eclipse.jgit.annotations.Nullable;
@@ -48,6 +49,7 @@ import static org.eclipse.jgit.util.HttpSupport.HDR_USER_AGENT;
 /** Server side implementation of smart push over HTTP. */
 class ReceivePackServlet extends HttpServlet {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     static class InfoRefs extends SmartServiceInfoRefs {
@@ -59,19 +61,21 @@ class ReceivePackServlet extends HttpServlet {
             this.receivePackFactory = receivePackFactory;
         }
 
-        @Override protected void begin(HttpServletRequest req, Repository db) throws IOException, ServiceNotEnabledException, ServiceNotAuthorizedException {
-            ReceivePack rp = receivePackFactory.create(req, db);
-            InternalHttpServerGlue.setPeerUserAgent(rp, req.getHeader(HDR_USER_AGENT));
-            req.setAttribute(ATTRIBUTE_HANDLER, rp);
+        @Override
+        protected void begin(HttpServletRequest request, Repository repository) throws IOException, ServiceNotEnabledException, ServiceNotAuthorizedException {
+            ReceivePack receivePack = receivePackFactory.create(request, repository);
+            InternalHttpServerGlue.setPeerUserAgent(receivePack, request.getHeader(HDR_USER_AGENT));
+            request.setAttribute(ATTRIBUTE_HANDLER, receivePack);
         }
 
-        @Override protected void advertise(HttpServletRequest req, PacketLineOutRefAdvertiser pck) throws IOException, ServiceNotEnabledException, ServiceNotAuthorizedException {
-            ReceivePack rp = (ReceivePack) req.getAttribute(ATTRIBUTE_HANDLER);
+        @Override
+        protected void advertise(HttpServletRequest request, PacketLineOutRefAdvertiser advertiser) throws IOException {
+            ReceivePack receivePack = (ReceivePack) request.getAttribute(ATTRIBUTE_HANDLER);
             try {
-                rp.sendAdvertisedRefs(pck);
+                receivePack.sendAdvertisedRefs(advertiser);
             }
             finally {
-                rp.getRevWalk().close();
+                receivePack.getRevWalk().close();
             }
         }
     }
@@ -84,99 +88,105 @@ class ReceivePackServlet extends HttpServlet {
             this.receivePackFactory = receivePackFactory;
         }
 
-        @Override public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-            HttpServletRequest req = (HttpServletRequest) request;
-            HttpServletResponse rsp = (HttpServletResponse) response;
-            ReceivePack rp;
+        @Override
+        public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+            HttpServletRequest httpServletRequest = (HttpServletRequest) request;
+            HttpServletResponse httpResponse = (HttpServletResponse) response;
+            ReceivePack receivePack;
             try {
-                rp = receivePackFactory.create(req, getRepository(req));
+                receivePack = receivePackFactory.create(httpServletRequest, getRepository(httpServletRequest));
             }
             catch (ServiceNotAuthorizedException e) {
-                rsp.sendError(SC_UNAUTHORIZED, e.getMessage());
+                httpResponse.sendError(SC_UNAUTHORIZED, e.getMessage());
                 return;
             }
             catch (ServiceNotEnabledException e) {
-                sendError(req, rsp, SC_FORBIDDEN, e.getMessage());
+                sendError(httpServletRequest, httpResponse, SC_FORBIDDEN, e.getMessage());
                 return;
             }
 
             try {
-                req.setAttribute(ATTRIBUTE_HANDLER, rp);
-                chain.doFilter(req, rsp);
+                httpServletRequest.setAttribute(ATTRIBUTE_HANDLER, receivePack);
+                chain.doFilter(httpServletRequest, httpResponse);
             }
             finally {
-                req.removeAttribute(ATTRIBUTE_HANDLER);
+                httpServletRequest.removeAttribute(ATTRIBUTE_HANDLER);
             }
         }
 
-        @Override public void init(FilterConfig filterConfig) throws ServletException {
+        @Override
+        public void init(FilterConfig filterConfig) throws ServletException {
             // Nothing.
         }
 
-        @Override public void destroy() {
+        @Override
+        public void destroy() {
             // Nothing.
         }
     }
 
-    @Nullable private final ReceivePackErrorHandler handler;
+    @Nullable
+    private final ReceivePackErrorHandler handler;
 
     ReceivePackServlet(@Nullable ReceivePackErrorHandler handler) {
         this.handler = handler;
     }
 
-    @Override public void doPost(final HttpServletRequest req, final HttpServletResponse rsp) throws IOException {
-        if (!RECEIVE_PACK_REQUEST_TYPE.equals(req.getContentType())) {
-            rsp.sendError(SC_UNSUPPORTED_MEDIA_TYPE);
+    @Override
+    public void doPost(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
+        if (!RECEIVE_PACK_REQUEST_TYPE.equals(request.getContentType())) {
+            response.sendError(SC_UNSUPPORTED_MEDIA_TYPE);
             return;
         }
 
-        SmartOutputStream out = new SmartOutputStream(req, rsp, false) {
+        SmartOutputStream out = new SmartOutputStream(request, response, false) {
 
-            @Override public void flush() throws IOException {
+            @Override
+            public void flush() throws IOException {
                 doFlush();
             }
         };
 
-        ReceivePack rp = (ReceivePack) req.getAttribute(ATTRIBUTE_HANDLER);
-        rp.setBiDirectionalPipe(false);
-        rsp.setContentType(RECEIVE_PACK_RESULT_TYPE);
+        ReceivePack receivePack = (ReceivePack) request.getAttribute(ATTRIBUTE_HANDLER);
+        receivePack.setBiDirectionalPipe(false);
+        response.setContentType(RECEIVE_PACK_RESULT_TYPE);
 
         if (handler != null) {
-            handler.receive(req, rsp, () -> {
-                rp.receiveWithExceptionPropagation(getInputStream(req), out, null);
+            handler.receive(request, response, () -> {
+                receivePack.receiveWithExceptionPropagation(getInputStream(request), out, null);
                 out.close();
             });
         }
         else {
             try {
-                rp.receive(getInputStream(req), out, null);
+                receivePack.receive(getInputStream(request), out, null);
                 out.close();
             }
             catch (CorruptObjectException e) {
                 // This should be already reported to the client.
-                getServletContext().log(MessageFormat.format(HttpServerText.get().receivedCorruptObject, e.getMessage(), ServletUtils.identify(rp.getRepository())));
-                consumeRequestBody(req);
+                getServletContext().log(MessageFormat.format(HttpServerText.get().receivedCorruptObject, e.getMessage(), ServletUtils.identify(receivePack.getRepository())));
+                consumeRequestBody(request);
                 out.close();
 
             }
             catch (UnpackException | PackProtocolException e) {
                 // This should be already reported to the client.
-                log(rp.getRepository(), e.getCause());
-                consumeRequestBody(req);
+                log(receivePack.getRepository(), e.getCause());
+                consumeRequestBody(request);
                 out.close();
 
             }
             catch (Throwable e) {
-                log(rp.getRepository(), e);
-                if (!rsp.isCommitted()) {
-                    rsp.reset();
-                    sendError(req, rsp, SC_INTERNAL_SERVER_ERROR);
+                log(receivePack.getRepository(), e);
+                if (!response.isCommitted()) {
+                    response.reset();
+                    sendError(request, response, SC_INTERNAL_SERVER_ERROR);
                 }
             }
         }
     }
 
-    private void log(Repository git, Throwable e) {
-        getServletContext().log(MessageFormat.format(HttpServerText.get().internalErrorDuringReceivePack, ServletUtils.identify(git)), e);
+    private void log(Repository repository, Throwable e) {
+        getServletContext().log(MessageFormat.format(HttpServerText.get().internalErrorDuringReceivePack, ServletUtils.identify(repository)), e);
     }
 }

@@ -1,12 +1,12 @@
 @if (!isExamReviewPage) {
     <div class="modal-header feedback-header">
-        <h3 class="modal-title">
-            @if (taskName) {
-                {{ 'artemisApp.result.detail.feedbackForTask' | artemisTranslate: { taskName } }}
-            } @else {
+        @if (taskName) {
+            <h3 class="modal-title" [innerHTML]="'artemisApp.result.detail.feedbackForTask' | artemisTranslate: { taskName }"></h3>
+        } @else {
+            <h3 class="modal-title">
                 {{ 'artemisApp.result.detail.feedback' | artemisTranslate }}
-            }
-        </h3>
+            </h3>
+        }
 
         @if (activeModal) {
             <button type="button" class="feedback-header__close" data-dismiss="modal" aria-hidden="true" (click)="activeModal.close()">
@@ -30,7 +30,7 @@
     <!-- Loading state -->
     @if (isLoading) {
         <div class="text-body-secondary d-flex justify-content-center" id="result-detail-spinner">
-            <fa-icon [spin]="true" size="lg" [icon]="faCircleNotch" />
+            <fa-icon animation="spin" size="lg" [icon]="faCircleNotch" />
         </div>
     } @else {
         @if (!loadingFailed && feedbackItemNodes?.length) {
@@ -39,22 +39,28 @@
                     <div>
                         <div class="d-flex justify-content-between align-items-start">
                             <h4>
-                                @if (!exercise?.maxPoints) {
+                                @if (result.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
                                     <span>
-                                        {{ 'artemisApp.result.score' | artemisTranslate: { score: roundValueSpecifiedByCourseSettings(result.score, course) } }}
+                                        {{ 'artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip' | artemisTranslate }}
                                     </span>
                                 } @else {
-                                    @if (exercise && exercise.maxPoints) {
+                                    @if (!exercise?.maxPoints) {
                                         <span>
-                                            {{
-                                                'artemisApp.result.scoreWithPoints'
-                                                    | artemisTranslate
-                                                        : {
-                                                              score: roundValueSpecifiedByCourseSettings(result.score ?? 0, course),
-                                                              points: roundValueSpecifiedByCourseSettings(((result.score ?? 0) * exercise.maxPoints) / 100, course)
-                                                          }
-                                            }}
+                                            {{ 'artemisApp.result.score' | artemisTranslate: { score: roundValueSpecifiedByCourseSettings(result.score, course) } }}
                                         </span>
+                                    } @else {
+                                        @if (exercise && exercise.maxPoints) {
+                                            <span>
+                                                {{
+                                                    'artemisApp.result.scoreWithPoints'
+                                                        | artemisTranslate
+                                                            : {
+                                                                  score: roundValueSpecifiedByCourseSettings(result.score ?? 0, course),
+                                                                  points: roundValueSpecifiedByCourseSettings(((result.score ?? 0) * exercise.maxPoints) / 100, course),
+                                                              }
+                                                }}
+                                            </span>
+                                        }
                                     }
                                 }
                             </h4>
@@ -84,7 +90,7 @@
                     </div>
                 }
 
-                @if (showScoreChart && result.participation?.exercise) {
+                @if (result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA && showScoreChart && result.participation?.exercise) {
                     <div class="result-score-chart">
                         <div id="feedback-chart" #containerRef class="chart-space">
                             <ngx-charts-bar-horizontal-stacked

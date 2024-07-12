@@ -2,12 +2,16 @@ package de.tum.in.www1.artemis.util;
 
 import static org.assertj.core.api.Fail.fail;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.HashSet;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
@@ -18,8 +22,16 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.course.CourseFactory;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseFactory;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 
 @Service
@@ -49,6 +61,22 @@ public class GitUtilService {
     private Repository localRepo;
 
     /**
+     * Initializes the repository with three dummy files as a participation to a
+     * Programming Exercise with the given user.
+     *
+     * @param user User who makes the participation of the repository
+     */
+    public void initParticipationRepo(User user) {
+        Course course = CourseFactory.generateCourse(42L, null, null, new HashSet<>());
+        ProgrammingExercise exercise = ProgrammingExerciseFactory.generateProgrammingExercise(null, null, course);
+        ProgrammingExerciseStudentParticipation participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.FINISHED, exercise, user);
+
+        initRepo(defaultBranch);
+        localRepo.setParticipation(participation);
+        remoteRepo.setParticipation(participation);
+    }
+
+    /**
      * Initializes the repository with three dummy files
      */
     public void initRepo() {
@@ -65,7 +93,7 @@ public class GitUtilService {
             deleteRepos();
 
             Files.createDirectories(remotePath);
-            Git remoteGit = LocalRepository.initialize(remotePath.toFile(), defaultBranch);
+            Git remoteGit = LocalRepository.initialize(remotePath.toFile(), defaultBranch, false);
             // create some files in the remote repository
             remotePath.resolve(FILES.FILE1.toString()).toFile().createNewFile();
             remotePath.resolve(FILES.FILE2.toString()).toFile().createNewFile();

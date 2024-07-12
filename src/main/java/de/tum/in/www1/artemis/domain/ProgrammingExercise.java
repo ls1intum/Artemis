@@ -4,22 +4,50 @@ import static de.tum.in.www1.artemis.domain.enumeration.ExerciseType.PROGRAMMING
 
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import jakarta.annotation.Nullable;
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.OrderColumn;
+import jakarta.persistence.SecondaryTable;
 import jakarta.validation.constraints.Size;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.annotation.*;
-import com.google.gson.JsonSyntaxException;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -42,7 +70,10 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ProgrammingExercise extends Exercise {
 
+    // TODO: delete publish_build_plan_url from exercise using liquibase
+
     // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
+    @Override
     public String getType() {
         return "programming";
     }
@@ -56,9 +87,6 @@ public class ProgrammingExercise extends Exercise {
     @JsonIgnoreProperties(value = "exercise", allowSetters = true)
     @OrderColumn(name = "programming_exercise_auxiliary_repositories_order")
     private List<AuxiliaryRepository> auxiliaryRepositories = new ArrayList<>();
-
-    @Column(name = "publish_build_plan_url")
-    private Boolean publishBuildPlanUrl;
 
     @Column(name = "allow_online_editor", table = "programming_exercise_details")
     private Boolean allowOnlineEditor;
@@ -153,7 +181,7 @@ public class ProgrammingExercise extends Exercise {
 
     /**
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
-     * This is currently only supported for HASKELL and OCAML on BAMBOO, thus the default value is false.
+     * This is currently only supported for HASKELL and OCAML, thus the default value is false.
      */
     @Column(name = "checkout_solution_repository", table = "programming_exercise_details", columnDefinition = "boolean default false")
     private boolean checkoutSolutionRepository;
@@ -254,14 +282,6 @@ public class ProgrammingExercise extends Exercise {
         }
     }
 
-    public Boolean isPublishBuildPlanUrl() {
-        return publishBuildPlanUrl;
-    }
-
-    public void setPublishBuildPlanUrl(Boolean publishBuildPlanUrl) {
-        this.publishBuildPlanUrl = publishBuildPlanUrl;
-    }
-
     public Boolean isAllowOnlineEditor() {
         return allowOnlineEditor;
     }
@@ -356,7 +376,7 @@ public class ProgrammingExercise extends Exercise {
     /**
      * Generates a unique project key based on the course short name and the exercise short name. This should only be used
      * for instantiating a new exercise
-     *
+     * <p>
      * The key concatenates the course short name and the exercise short name (in upper case letters), e.g.: <br>
      * Course: <code>crs</code> <br>
      * Exercise: <code>exc</code> <br>
@@ -705,7 +725,7 @@ public class ProgrammingExercise extends Exercise {
         if (getAssessmentType() == AssessmentType.SEMI_AUTOMATIC || getAllowComplaintsForAutomaticAssessments()) {
             // The relevantDueDate check below keeps us from assessing feedback requests,
             // as their relevantDueDate is before the due date
-            if (getAllowManualFeedbackRequests()) {
+            if (getAllowFeedbackRequests()) {
                 return true;
             }
 
@@ -733,15 +753,16 @@ public class ProgrammingExercise extends Exercise {
      * @return true if the result is manual and the assessment is over, or it is an automatic result, false otherwise
      */
     private boolean checkForAssessedResult(Result result) {
-        return result.getCompletionDate() != null && ((result.isManual() && ExerciseDateService.isAfterAssessmentDueDate(this)) || result.isAutomatic());
+        return result.getCompletionDate() != null
+                && ((result.isManual() && ExerciseDateService.isAfterAssessmentDueDate(this)) || result.isAutomatic() || result.isAthenaAutomatic());
     }
 
     @Override
     public String toString() {
         return "ProgrammingExercise{" + "id=" + getId() + ", templateRepositoryUri='" + getTemplateRepositoryUri() + "'" + ", solutionRepositoryUri='" + getSolutionRepositoryUri()
-                + "'" + ", templateBuildPlanId='" + getTemplateBuildPlanId() + "'" + ", solutionBuildPlanId='" + getSolutionBuildPlanId() + "'" + ", publishBuildPlanUrl='"
-                + isPublishBuildPlanUrl() + "'" + ", allowOnlineEditor='" + isAllowOnlineEditor() + "'" + ", programmingLanguage='" + getProgrammingLanguage() + "'"
-                + ", packageName='" + getPackageName() + "'" + ", testCasesChanged='" + testCasesChanged + "'" + "}";
+                + "'" + ", templateBuildPlanId='" + getTemplateBuildPlanId() + "'" + ", solutionBuildPlanId='" + getSolutionBuildPlanId() + "'" + ", allowOnlineEditor='"
+                + isAllowOnlineEditor() + "'" + ", programmingLanguage='" + getProgrammingLanguage() + "'" + ", packageName='" + getPackageName() + "'" + ", testCasesChanged='"
+                + testCasesChanged + "'" + "}";
     }
 
     public boolean getCheckoutSolutionRepository() {
@@ -818,10 +839,10 @@ public class ProgrammingExercise extends Exercise {
     }
 
     /**
-     * Validates settings for exercises, where allowManualFeedbackRequests is set
+     * Validates settings for exercises, where allowFeedbackRequests is set
      */
-    public void validateManualFeedbackSettings() {
-        if (!this.getAllowManualFeedbackRequests()) {
+    public void validateSettingsForFeedbackRequest() {
+        if (!this.getAllowFeedbackRequests()) {
             return;
         }
 
@@ -900,7 +921,7 @@ public class ProgrammingExercise extends Exercise {
         try {
             return Windfile.deserialize(buildPlanConfiguration);
         }
-        catch (JsonSyntaxException e) {
+        catch (JsonProcessingException e) {
             log.error("Could not parse build plan configuration for programming exercise {}", this.getId(), e);
         }
         return null;
@@ -922,5 +943,16 @@ public class ProgrammingExercise extends Exercise {
      */
     public void setBuildScript(String buildScript) {
         this.buildScript = buildScript;
+    }
+
+    /**
+     * In course exercises students shall receive immediate feedback. {@link Visibility#ALWAYS}
+     * In Exams misconfiguration and leaking test results to students during an exam shall be prevented by the default setting. {@link Visibility#AFTER_DUE_DATE}
+     *
+     * @return default visibility {@link Visibility} set after the first execution of a test case
+     *         or when resetting the test case settings
+     */
+    public Visibility getDefaultTestCaseVisibility() {
+        return this.isExamExercise() ? Visibility.AFTER_DUE_DATE : Visibility.ALWAYS;
     }
 }

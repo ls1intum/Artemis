@@ -21,6 +21,7 @@
             "visibility": {
                 "Always": "Always",
                 "AfterDueDate": "After Due Date",
+                "AfterReleaseDateOfResults": "After Release Date of Results",
                 "Never": "Never"
             },
             "type": {

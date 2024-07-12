@@ -2,6 +2,7 @@ import {
     Feedback,
     FeedbackSuggestionType,
     FeedbackType,
+    NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER,
     STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
     SUBMISSION_POLICY_FEEDBACK_IDENTIFIER,
     buildFeedbackTextForReview,
@@ -158,6 +159,11 @@ describe('Feedback', () => {
         it('should correctly detect test case feedback', () => {
             const feedback: Feedback = { type: FeedbackType.AUTOMATIC, detailText: 'content', testCase: { testName: 'test1' } };
             expect(Feedback.isTestCaseFeedback(feedback)).toBeTrue();
+        });
+
+        it('should correctly detect non graded automatically generated feedback', () => {
+            const feedback: Feedback = { type: FeedbackType.AUTOMATIC, text: NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER + 'content' };
+            expect(Feedback.isNonGradedFeedbackSuggestion(feedback)).toBeTrue();
         });
     });
 });

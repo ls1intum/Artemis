@@ -3,7 +3,10 @@ package de.tum.in.www1.artemis.domain.participation;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.ManyToOne;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -94,6 +97,7 @@ public class StudentParticipation extends Participation {
         return Optional.ofNullable(getParticipant()).map(Participant::getName).orElse(null);
     }
 
+    @Override
     public Exercise getExercise() {
         return exercise;
     }
@@ -103,6 +107,7 @@ public class StudentParticipation extends Participation {
         return this;
     }
 
+    @Override
     public void setExercise(Exercise exercise) {
         this.exercise = exercise;
     }

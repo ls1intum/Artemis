@@ -5,6 +5,7 @@
                 "de": "Deutsch",
                 "en": "Englisch"
             },
+            "privacy": "Datenschutz",
             "privacyStatement": {
                 "title": "Datenschutzerklärung",
                 "updatePrivacyStatement": "Datenschutzerklärung aktualisieren",

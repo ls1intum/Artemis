@@ -1,12 +1,12 @@
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import type { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { ProgrammingExerciseInstructorRepositoryType } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
-import { BuildLogStatisticsDTO } from 'app/exercises/programming/manage/build-log-statistics-dto';
+import { BuildLogStatisticsDTO } from 'app/entities/build-log-statistics-dto';
 import { DetailType } from 'app/detail-overview-list/detail-overview-list.component';
 import { SafeHtml } from '@angular/platform-browser';
 import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
@@ -16,9 +16,9 @@ import { Course } from 'app/entities/course.model';
 
 export type Detail = NotShownDetail | ShownDetail;
 
-type NotShownDetail = false | undefined;
+export type NotShownDetail = false | undefined;
 
-type ShownDetail =
+export type ShownDetail =
     | TextDetail
     | DateDetail
     | LinkDetail
@@ -33,16 +33,17 @@ type ShownDetail =
     | ProgrammingDiffReportDetail
     | ProgrammingProblemStatementDetail
     | ProgrammingTimelineDetail
-    | ProgrammingBuildStatisticsDetail;
+    | ProgrammingBuildStatisticsDetail
+    | ProgrammingCheckoutDirectoriesDetail;
 
-interface DetailBase {
+export interface DetailBase {
     type: DetailType;
     title?: string;
     titleTranslationProps?: Record<string, string>;
     titleHelpText?: string;
 }
 
-interface TextDetail extends DetailBase {
+export interface TextDetail extends DetailBase {
     type: DetailType.Text;
     data: { text?: string | number };
 }
@@ -127,5 +128,14 @@ interface ProgrammingBuildStatisticsDetail extends DetailBase {
     type: DetailType.ProgrammingBuildStatistics;
     data: {
         buildLogStatistics: BuildLogStatisticsDTO;
+    };
+}
+
+interface ProgrammingCheckoutDirectoriesDetail extends DetailBase {
+    type: DetailType.ProgrammingCheckoutDirectories;
+    data: {
+        exercise: ProgrammingExercise;
+        programmingLanguage?: ProgrammingLanguage;
+        isLocal: boolean;
     };
 }

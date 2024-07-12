@@ -45,8 +45,8 @@ export class TeamUpdateDialogComponent implements OnInit {
     ignoreTeamSizeRecommendation = false;
 
     private shortNameValidator = new Subject<string>();
-    readonly shortNameAlreadyTakenErrorCode = 'alreadyTaken';
-    readonly shortNamePattern = SHORT_NAME_PATTERN; // must start with a letter and cannot contain special characters
+    readonly SHORT_NAME_ALREADY_TAKEN_ERROR_CODE = 'alreadyTaken';
+    readonly SHORT_NAME_PATTERN = SHORT_NAME_PATTERN; // must start with a letter and cannot contain special characters
 
     // Icons
     faSave = faSave;
@@ -248,8 +248,8 @@ export class TeamUpdateDialogComponent implements OnInit {
             .subscribe((alreadyTakenResponse) => {
                 const alreadyTaken = alreadyTakenResponse.body;
                 const errors = alreadyTaken
-                    ? { ...this.shortNameControl.errors, [this.shortNameAlreadyTakenErrorCode]: alreadyTaken }
-                    : omit(this.shortNameControl.errors, this.shortNameAlreadyTakenErrorCode);
+                    ? { ...this.shortNameControl.errors, [this.SHORT_NAME_ALREADY_TAKEN_ERROR_CODE]: alreadyTaken }
+                    : omit(this.shortNameControl.errors, this.SHORT_NAME_ALREADY_TAKEN_ERROR_CODE);
                 this.shortNameControl.setErrors(isEmpty(errors) ? null : errors);
             });
     }

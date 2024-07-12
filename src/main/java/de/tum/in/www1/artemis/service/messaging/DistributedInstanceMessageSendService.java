@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -25,7 +26,7 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
 
     private final HazelcastInstance hazelcastInstance;
 
-    public DistributedInstanceMessageSendService(HazelcastInstance hazelcastInstance) {
+    public DistributedInstanceMessageSendService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         this.hazelcastInstance = hazelcastInstance;
     }
 
@@ -166,6 +167,18 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
     public void sendParticipantScoreSchedule(Long exerciseId, Long participantId, Long resultId) {
         log.info("Sending schedule participant score update for exercise {} and participant {}.", exerciseId, participantId);
         sendMessageDelayed(MessageTopic.PARTICIPANT_SCORE_SCHEDULE, exerciseId, participantId, resultId);
+    }
+
+    @Override
+    public void sendQuizExerciseStartSchedule(Long quizExerciseId) {
+        log.info("Sending schedule for quiz exercise {} to broker.", quizExerciseId);
+        sendMessageDelayed(MessageTopic.QUIZ_EXERCISE_START_SCHEDULE, quizExerciseId);
+    }
+
+    @Override
+    public void sendQuizExerciseStartCancel(Long quizExerciseId) {
+        log.info("Sending schedule cancel for quiz exercise {} to broker.", quizExerciseId);
+        sendMessageDelayed(MessageTopic.QUIZ_EXERCISE_START_CANCEL, quizExerciseId);
     }
 
     // NOTE: Don't remove any of the following methods despite the warning.

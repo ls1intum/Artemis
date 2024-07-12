@@ -5,6 +5,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import org.springframework.core.annotation.AliasFor;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import de.tum.in.www1.artemis.security.Role;
@@ -21,5 +22,6 @@ public @interface EnforceAtLeastTutorInCourse {
      *
      * @return the name of the field in the method parameters that contains the course id
      */
+    @AliasFor(annotation = EnforceRoleInCourse.class)
     String resourceIdFieldName() default "courseId";
 }

@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.security;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.config.Constants.PASSWORD_MAX_LENGTH;
+import static de.tum.in.www1.artemis.config.Constants.PASSWORD_MIN_LENGTH;
+import static de.tum.in.www1.artemis.config.Constants.USERNAME_MAX_LENGTH;
+import static de.tum.in.www1.artemis.config.Constants.USERNAME_MIN_LENGTH;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -104,7 +107,7 @@ public final class SecurityUtils {
      * This methods manually sets a dummy Authentication object that is always authenticated. When a request using a JpaRepository is made and the query associated with the method
      * is not automatically generated but manually specified, the Spring Data JPA expects the user performing the request to be authenticated. If the request to the JpaRepository
      * is made because of a REST-call from a server that is not authenticated within Spring, an InvalidDataAccessApiUsageException is raised. This method is a workaround for this
-     * behaviour. See https://jira.spring.io/browse/DATAJPA-1357 for more details.
+     * behaviour.
      */
     public static void setAuthorizationObject() {
         SecurityContext context = SecurityContextHolder.getContext();

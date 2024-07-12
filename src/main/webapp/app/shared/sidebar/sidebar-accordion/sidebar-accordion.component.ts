@@ -1,14 +1,7 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { AccordionGroups, ExerciseCollapseState, SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { faChevronRight, faFile } from '@fortawesome/free-solid-svg-icons';
+import { AccordionGroups, ChannelAccordionShowAdd, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
 import { Params } from '@angular/router';
-
-const DEFAULT_EXERCISE_COLLAPSE_STATE: ExerciseCollapseState = {
-    future: true,
-    current: false,
-    past: true,
-    noDate: true,
-};
 
 @Component({
     selector: 'jhi-sidebar-accordion',
@@ -18,16 +11,23 @@ const DEFAULT_EXERCISE_COLLAPSE_STATE: ExerciseCollapseState = {
 export class SidebarAccordionComponent implements OnChanges, OnInit {
     protected readonly Object = Object;
 
+    @Output() onUpdateSidebar = new EventEmitter<void>();
     @Input() searchValue: string;
     @Input() routeParams: Params;
     @Input() groupedData: AccordionGroups;
     @Input() sidebarType?: SidebarTypes;
     @Input() storageId?: string = '';
-
-    collapseState = DEFAULT_EXERCISE_COLLAPSE_STATE;
+    @Input() courseId?: number;
+    @Input() itemSelected?: boolean;
+    @Input() showLeadingIcon = false;
+    @Input() showAddOptions = false;
+    @Input() showAddOption?: ChannelAccordionShowAdd;
+    @Input() channelTypeIcon?: ChannelTypeIcons;
+    @Input() collapseState: CollapseState;
 
     //icon
     faChevronRight = faChevronRight;
+    faFile = faFile;
 
     ngOnInit() {
         this.expandGroupWithSelectedItem();
@@ -43,7 +43,7 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
     }
 
     setStoredCollapseState() {
-        const storedCollapseState: string | null = sessionStorage.getItem('sidebar.accordion.collapseState.' + this.storageId);
+        const storedCollapseState: string | null = sessionStorage.getItem('sidebar.accordion.collapseState.' + this.storageId + '.byCourse.' + this.courseId);
         if (storedCollapseState) this.collapseState = JSON.parse(storedCollapseState);
     }
 
@@ -70,6 +70,6 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
 
     toggleGroupCategoryCollapse(groupCategoryKey: string) {
         this.collapseState[groupCategoryKey] = !this.collapseState[groupCategoryKey];
-        sessionStorage.setItem('sidebar.accordion.collapseState.' + this.storageId, JSON.stringify(this.collapseState));
+        sessionStorage.setItem('sidebar.accordion.collapseState.' + this.storageId + '.byCourse.' + this.courseId, JSON.stringify(this.collapseState));
     }
 }

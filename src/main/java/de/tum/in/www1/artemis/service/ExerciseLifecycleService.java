@@ -16,6 +16,9 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
+import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
+import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.service.util.Tuple;
 
 @Profile(PROFILE_CORE)
@@ -36,16 +39,52 @@ public class ExerciseLifecycleService {
      * events from both your application logic (e.g. exercise modification) and on application startup. You can use the {@code PostConstruct} Annotation to call one service method
      * on startup.
      *
-     * @param exercise  Exercise
-     * @param lifecycle ExerciseLifecycle
-     * @param task      Runnable
+     * @param exercise      The exercise for which the task is scheduled
+     * @param lifecycleDate The date at which the task should be executed
+     * @param lifecycle     The lifecycle event that triggers the task
+     * @param task          The task to be executed
      * @return The {@code ScheduledFuture<?>} allows to later cancel the task or check whether it has been executed.
      */
-    public ScheduledFuture<?> scheduleTask(Exercise exercise, ExerciseLifecycle lifecycle, Runnable task) {
-        final ZonedDateTime lifecycleDate = lifecycle.getDateFromExercise(exercise);
+    public ScheduledFuture<?> scheduleTask(Exercise exercise, ZonedDateTime lifecycleDate, ExerciseLifecycle lifecycle, Runnable task) {
         final ScheduledFuture<?> future = scheduler.schedule(task, lifecycleDate.toInstant());
         log.debug("Scheduled Task for Exercise \"{}\" (#{}) to trigger on {}.", exercise.getTitle(), exercise.getId(), lifecycle);
         return future;
+    }
+
+    /**
+     * Allow to schedule a {@code Runnable} task in the lifecycle of an exercise. ({@code ExerciseLifecycle}) Tasks are performed in a background thread managed by a
+     * {@code TaskScheduler}. See {@code TaskSchedulingConfiguration}. <b>Important:</b> Scheduled tasks are not persisted across application restarts. Therefore, schedule your
+     * events from both your application logic (e.g. exercise modification) and on application startup. You can use the {@code PostConstruct} Annotation to call one service method
+     * on startup.
+     *
+     * @param exercise  The exercise for which the task is scheduled
+     * @param lifecycle The lifecycle event that triggers the task
+     * @param task      The task to be executed
+     * @return The {@code ScheduledFuture<?>} allows to later cancel the task or check whether it has been executed.
+     */
+    public ScheduledFuture<?> scheduleTask(Exercise exercise, ExerciseLifecycle lifecycle, Runnable task) {
+        return scheduleTask(exercise, lifecycle.getDateFromExercise(exercise), lifecycle, task);
+    }
+
+    /**
+     * Allow to schedule a {@code Runnable} task in the lifecycle of a quiz exercise. ({@code ExerciseLifecycle}) Tasks are performed in a background thread managed by a
+     * {@code TaskScheduler}. See {@code TaskSchedulingConfiguration}. <b>Important:</b> Scheduled tasks are not persisted across application restarts. Therefore, schedule your
+     * events from both your application logic (e.g. exercise modification) and on application startup. You can use the {@code PostConstruct} Annotation to call one service method
+     * on startup.
+     *
+     * @param exercise  The quiz exercise for which the task is scheduled
+     * @param batch     The quiz batch for which the task is scheduled
+     * @param lifecycle The lifecycle event that triggers the task
+     * @param task      The task to be executed
+     * @return The {@code ScheduledFuture<?>} allows to later cancel the task or check whether it has been executed.
+     */
+    public ScheduledFuture<?> scheduleTask(QuizExercise exercise, QuizBatch batch, ExerciseLifecycle lifecycle, Runnable task) {
+        if (exercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
+            return scheduleTask(exercise, lifecycle.getDateFromQuizBatch(batch, exercise), lifecycle, task);
+        }
+        else {
+            return scheduleTask(exercise, lifecycle.getDateFromExercise(exercise), lifecycle, task);
+        }
     }
 
     /**
@@ -54,9 +93,9 @@ public class ExerciseLifecycleService {
      * restarts. Therefore, schedule your events from both your application logic (e.g. exercise modification) and on application startup. You can use the {@code PostConstruct}
      * Annotation to call one service method on startup.
      *
-     * @param exercise  Exercise
-     * @param lifecycle ExerciseLifecycle
-     * @param tasks     Runnable with ZonedDateTime
+     * @param exercise  The exercise for which the tasks are scheduled
+     * @param lifecycle The lifecycle event that triggers the tasks
+     * @param tasks     The tasks to be executed at distinct points in time
      * @return The {@code ScheduledFuture<?>}s allow to later cancel the tasks or check whether they have been executed.
      */
     public Set<ScheduledFuture<?>> scheduleMultipleTasks(Exercise exercise, ExerciseLifecycle lifecycle, Set<Tuple<ZonedDateTime, Runnable>> tasks) {

@@ -1,26 +1,34 @@
 package de.tum.in.www1.artemis.service.connectors.aeolus;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonSyntaxException;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 
 /**
  * Represents a windfile, the definition file for an aeolus build plan that
- * can then be used to generate a Bamboo build plan or a Jenkinsfile.
+ * can then be used to generate a Jenkinsfile.
  */
+// TODO convert into Record
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Windfile {
+
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     private String api;
 
     private WindfileMetadata metadata;
 
-    private List<Action> actions;
+    private List<Action> actions = new ArrayList<>();
 
-    private Map<String, AeolusRepository> repositories;
+    private Map<String, AeolusRepository> repositories = new HashMap<>();
 
     public String getApi() {
         return api;
@@ -46,23 +54,6 @@ public class Windfile {
         this.actions = actions;
     }
 
-    private void checkMetadata() {
-        if (this.metadata == null) {
-            setMetadata(new WindfileMetadata());
-        }
-    }
-
-    /**
-     * Sets the id of the windfile. If no metadata is present, also sets the metadata.
-     *
-     * @param id the id of the windfile, which corresponds to the id of the build plan or Jenkinsfile
-     *               that is generated from this windfile
-     */
-    public void setId(String id) {
-        checkMetadata();
-        this.metadata.setId(id);
-    }
-
     /**
      * Gets the script actions of a windfile.
      *
@@ -76,46 +67,6 @@ public class Windfile {
             }
         }
         return scriptActions;
-    }
-
-    /**
-     * Sets the credentials for the git repository that is used within the CI system.
-     *
-     * @param credentials the credentials for the git repository that is used within the CI system.
-     */
-    public void setGitCredentials(String credentials) {
-        checkMetadata();
-        this.metadata.setGitCredentials(credentials);
-    }
-
-    /**
-     * Sets the name of the windfile.
-     *
-     * @param name the name of the windfile.
-     */
-    public void setName(String name) {
-        checkMetadata();
-        this.metadata.setName(name);
-    }
-
-    /**
-     * Sets the description of the windfile.
-     *
-     * @param description the description of the windfile.
-     */
-    public void setDescription(String description) {
-        checkMetadata();
-        this.metadata.setDescription(description);
-    }
-
-    /**
-     * Sets the result hook for the windfile.
-     *
-     * @param resultHook the result hook for the windfile.
-     */
-    public void setResultHook(String resultHook) {
-        checkMetadata();
-        this.metadata.setResultHook(resultHook);
     }
 
     public void setRepositories(Map<String, AeolusRepository> repositories) {
@@ -139,12 +90,7 @@ public class Windfile {
      */
     public void setPreProcessingMetadata(String id, String name, String gitCredentials, String resultHook, String description, Map<String, AeolusRepository> repositories,
             String resultHookCredentials) {
-        this.setId(id);
-        this.setName(name);
-        this.setGitCredentials(gitCredentials);
-        this.setResultHook(resultHook);
-        this.setResultHookCredentials(resultHookCredentials);
-        this.setDescription(description);
+        this.setMetadata(new WindfileMetadata(name, id, description, null, gitCredentials, null, resultHook, resultHookCredentials));
         this.setRepositories(repositories);
     }
 
@@ -153,13 +99,13 @@ public class Windfile {
      *
      * @param json the json string to deserialize.
      * @return the deserialized windfile.
-     * @throws JsonSyntaxException if the json string is not valid.
+     * @throws JsonProcessingException if the json string is not valid.
      */
-    public static Windfile deserialize(String json) throws JsonSyntaxException {
-        GsonBuilder builder = new GsonBuilder();
-        builder.registerTypeAdapter(Action.class, new ActionDeserializer());
-        Gson gson = builder.create();
-        return gson.fromJson(json, Windfile.class);
+    public static Windfile deserialize(String json) throws JsonProcessingException {
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(Action.class, new ActionDeserializer());
+        mapper.registerModule(module);
+        return mapper.readValue(json, Windfile.class);
     }
 
     /**
@@ -173,15 +119,5 @@ public class Windfile {
             results.addAll(action.getResults());
         }
         return results;
-    }
-
-    /**
-     * Sets the result hook credentials for the windfile.
-     *
-     * @param resultHookCredentials the result hook credentials for the windfile.
-     */
-    public void setResultHookCredentials(String resultHookCredentials) {
-        checkMetadata();
-        this.metadata.setResultHookCredentials(resultHookCredentials);
     }
 }

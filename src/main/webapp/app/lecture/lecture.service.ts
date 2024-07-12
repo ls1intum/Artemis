@@ -111,7 +111,23 @@ export class LectureService {
                 tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
             );
     }
+    /**
+     * triggers the ingestion of All the lectures inside the course specified or one lecture inside of the course
+     *
+     * @param courseId Course containing the lecture(s)
+     * @param lectureId The lecture to be ingested in pyris
+     */
+    ingestLecturesInPyris(courseId: number, lectureId?: number): Observable<HttpResponse<boolean>> {
+        let params = new HttpParams();
+        if (lectureId !== undefined) {
+            params = params.set('lectureId', lectureId.toString());
+        }
 
+        return this.http.post<boolean>(`api/courses/${courseId}/ingest`, null, {
+            params: params,
+            observe: 'response',
+        });
+    }
     /**
      * Clones and imports the lecture to the course
      *

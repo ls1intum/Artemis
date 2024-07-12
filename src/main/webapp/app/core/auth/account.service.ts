@@ -7,11 +7,12 @@ import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { setUser } from '@sentry/angular-ivy';
+import { setUser } from '@sentry/angular';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 export interface IAccountService {
     save: (account: any) => Observable<HttpResponse<any>>;
@@ -29,6 +30,7 @@ export interface IAccountService {
     isAuthenticated: () => boolean;
     getAuthenticationState: () => Observable<User | undefined>;
     getImageUrl: () => string | undefined;
+    addSshPublicKey: (sshPublicKey: string) => Observable<void>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -37,6 +39,7 @@ export class AccountService implements IAccountService {
     private authenticated = false;
     private authenticationState = new BehaviorSubject<User | undefined>(undefined);
     private prefilledUsernameValue?: string;
+    private versionControlAccessTokenRequired: boolean;
 
     constructor(
         private translateService: TranslateService,
@@ -44,6 +47,7 @@ export class AccountService implements IAccountService {
         private http: HttpClient,
         private websocketService: JhiWebsocketService,
         private featureToggleService: FeatureToggleService,
+        private profileService: ProfileService,
     ) {}
 
     get userIdentity() {
@@ -133,10 +137,19 @@ export class AccountService implements IAccountService {
             this.userIdentity = undefined;
         }
 
+        if (this.versionControlAccessTokenRequired === undefined) {
+            this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                this.versionControlAccessTokenRequired = profileInfo.versionControlAccessToken ?? false;
+            });
+        }
+
         // check and see if we have retrieved the userIdentity data from the server.
         // if we have, reuse it by immediately resolving
         if (this.userIdentity) {
-            return Promise.resolve(this.userIdentity);
+            // in case a token is required but not present in the user, we cannot simply return the cached object
+            if (!this.versionControlAccessTokenRequired || this.userIdentity.vcsAccessToken !== undefined) {
+                return Promise.resolve(this.userIdentity);
+            }
         }
 
         // retrieve the userIdentity data from the server, update the identity object, and then resolve.
@@ -312,5 +325,27 @@ export class AccountService implements IAccountService {
      */
     setPrefilledUsername(prefilledUsername: string) {
         this.prefilledUsernameValue = prefilledUsername;
+    }
+
+    /**
+     * Sends the added SSH key to the server
+     *
+     * @param sshPublicKey
+     */
+    addSshPublicKey(sshPublicKey: string): Observable<void> {
+        if (this.userIdentity) {
+            this.userIdentity.sshPublicKey = sshPublicKey;
+        }
+        return this.http.put<void>('api/users/sshpublickey', sshPublicKey);
+    }
+
+    /**
+     * Sends a request to the server to delete the user's current SSH key
+     */
+    deleteSshPublicKey(): Observable<void> {
+        if (this.userIdentity) {
+            this.userIdentity.sshPublicKey = undefined;
+        }
+        return this.http.delete<void>('api/users/sshpublickey');
     }
 }

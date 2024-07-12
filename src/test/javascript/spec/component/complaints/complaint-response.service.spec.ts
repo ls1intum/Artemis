@@ -10,11 +10,14 @@ import { MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
+import { ComplaintAction, ComplaintResponseUpdateDTO } from 'app/entities/complaint-response-dto.model';
 
 describe('ComplaintResponseService', () => {
     let complaintResponseService: ComplaintResponseService;
     let httpTestingController: HttpTestingController;
     let defaultComplaintResponse: ComplaintResponse;
+    let complaintResponseResolve: ComplaintResponseUpdateDTO;
+    let complaintResponseRefresh: ComplaintResponseUpdateDTO;
     let accountService: AccountService;
     let expectedComplaintResponse: any;
 
@@ -36,6 +39,13 @@ describe('ComplaintResponseService', () => {
                 defaultComplaintResponse.submittedTime = dayjs();
                 defaultComplaintResponse.complaint = new Complaint();
                 defaultComplaintResponse.complaint.id = 1;
+
+                complaintResponseResolve = new ComplaintResponseUpdateDTO();
+                complaintResponseResolve.action = ComplaintAction.RESOLVE_COMPLAINT;
+                complaintResponseResolve.responseText = 'response_text';
+                complaintResponseResolve.complaintIsAccepted = true;
+                complaintResponseRefresh = new ComplaintResponseUpdateDTO();
+                complaintResponseRefresh.action = ComplaintAction.REFRESH_LOCK;
             });
     });
 
@@ -76,14 +86,14 @@ describe('ComplaintResponseService', () => {
     });
 
     it('should call refreshLock', async () => {
-        const returnedFromService = { ...defaultComplaintResponse };
+        const returnedFromService = { ...complaintResponseResolve };
         complaintResponseService
-            .refreshLock(1)
+            .refreshLockOrResolveComplaint(complaintResponseResolve, 1)
             .pipe(take(1))
             .subscribe((resp) => (expectedComplaintResponse = resp));
-        const req = httpTestingController.expectOne({ method: 'POST' });
+        const req = httpTestingController.expectOne({ method: 'PATCH' });
         req.flush(returnedFromService);
-        expect(expectedComplaintResponse.body).toEqual(defaultComplaintResponse);
+        expect(expectedComplaintResponse.body).toEqual(complaintResponseResolve);
     });
 
     it('should call removeLock', async () => {
@@ -108,13 +118,13 @@ describe('ComplaintResponseService', () => {
     });
 
     it('should call resolveComplaint', async () => {
-        const returnedFromService = { ...defaultComplaintResponse };
+        const returnedFromService = { ...complaintResponseRefresh };
         complaintResponseService
-            .resolveComplaint(defaultComplaintResponse)
+            .refreshLockOrResolveComplaint(complaintResponseResolve, 1)
             .pipe(take(1))
             .subscribe((resp) => (expectedComplaintResponse = resp));
-        const req = httpTestingController.expectOne({ method: 'PUT' });
+        const req = httpTestingController.expectOne({ method: 'PATCH' });
         req.flush(returnedFromService);
-        expect(expectedComplaintResponse.body).toEqual(defaultComplaintResponse);
+        expect(expectedComplaintResponse.body).toEqual(complaintResponseRefresh);
     });
 });

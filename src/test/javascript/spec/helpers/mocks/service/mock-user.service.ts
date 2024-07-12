@@ -16,7 +16,7 @@ export class MockUserService {
                     false,
                     'en',
                     [Authority.USER, Authority.ADMIN],
-                    ['jira-users', 'tumuser', 'eist2019students'],
+                    ['tumuser', 'eist2019students'],
                     'anonymousUser',
                     new Date('2020-03-03T09:01:43Z'),
                     'ga59pel',

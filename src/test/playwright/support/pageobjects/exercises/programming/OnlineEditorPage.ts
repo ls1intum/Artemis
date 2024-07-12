@@ -1,25 +1,21 @@
 import { Page, expect } from '@playwright/test';
 import { BASE_API } from '../../../constants';
 import { getExercise } from '../../../utils';
-import { Commands } from '../../../commands';
-import { UserCredentials } from '../../../users';
-import { CoursesPage } from '../../course/CoursesPage';
-import { CourseOverviewPage } from '../../course/CourseOverviewPage';
 import { Fixtures } from '../../../../fixtures/fixtures';
 
 export class OnlineEditorPage {
     private readonly page: Page;
-    private readonly courseList: CoursesPage;
-    private readonly courseOverview: CourseOverviewPage;
 
-    constructor(page: Page, courseList: CoursesPage, courseOverview: CourseOverviewPage) {
+    constructor(page: Page) {
         this.page = page;
-        this.courseList = courseList;
-        this.courseOverview = courseOverview;
     }
 
     findFileBrowser(exerciseID: number) {
         return getExercise(this.page, exerciseID).locator('#cardFiles');
+    }
+
+    findEditorTextField(exerciseID: number) {
+        return getExercise(this.page, exerciseID).locator('.view-lines').first();
     }
 
     async typeSubmission(exerciseID: number, submission: ProgrammingExerciseSubmission) {
@@ -30,17 +26,19 @@ export class OnlineEditorPage {
                 await this.createFileInRootPackage(exerciseID, newFile.name, submission.packageName!);
             }
             const fileContent = await Fixtures.get(newFile.path);
-            await this.page.evaluate(
-                ({ editorSelector, fileContent }) => {
-                    const editorElement = document.querySelector(editorSelector);
-                    if (editorElement) {
-                        // @ts-expect-error ace does not exists on windows, but works without issue
-                        const editor = ace.edit(editorElement);
-                        editor.setValue(fileContent, 1); // Set the editor's content
-                    }
+            const editorElement = this.findEditorTextField(exerciseID);
+            await editorElement.click();
+            await editorElement.evaluate(
+                (element, { fileContent }) => {
+                    const clipboardData = new DataTransfer();
+                    const format = 'text/plain';
+                    clipboardData.setData(format, fileContent);
+                    const event = new ClipboardEvent('paste', { clipboardData });
+                    element.dispatchEvent(event);
                 },
-                { editorSelector: '#ace-code-editor', fileContent: fileContent! },
+                { fileContent: fileContent! },
             );
+            await this.page.waitForTimeout(500);
         }
         await this.page.waitForTimeout(500);
     }
@@ -106,8 +104,9 @@ export class OnlineEditorPage {
     }
 
     async getResultScore() {
-        await Commands.reloadUntilFound(this.page, '#result-score');
-        return this.page.locator('#result-score');
+        const resultScore = this.page.locator('#result-score');
+        await resultScore.waitFor({ state: 'visible' });
+        return resultScore;
     }
 
     getResultScoreFromExercise(exerciseID: number) {
@@ -132,15 +131,6 @@ export class OnlineEditorPage {
         await this.typeSubmission(exerciseID, submission);
         await this.submit(exerciseID);
         await verifyOutput();
-    }
-
-    async startParticipation(courseId: number, exerciseId: number, credentials: UserCredentials) {
-        await Commands.login(this.page, credentials, '/');
-        await this.page.waitForURL(/\/courses/);
-        await this.courseList.openCourse(courseId!);
-        await this.courseOverview.startExercise(exerciseId);
-        await Commands.reloadUntilFound(this.page, '#open-exercise-' + exerciseId);
-        await this.courseOverview.openRunningProgrammingExercise(exerciseId);
     }
 }
 

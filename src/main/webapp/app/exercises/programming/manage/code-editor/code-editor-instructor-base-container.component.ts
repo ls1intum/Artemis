@@ -102,7 +102,6 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                     tap((exercise) => {
                         this.exercise = exercise;
                         this.course = exercise.course! ?? exercise.exerciseGroup!.exam!.course!;
-                        this.onExerciseInitialized();
                     }),
                     // Set selected participation
                     tap(() => {
@@ -140,8 +139,6 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                 });
         });
     }
-
-    protected onExerciseInitialized() {}
 
     /**
      * Unsubscribe from paramSub and domainChangeSubscription if they are present, on component destruction
@@ -196,7 +193,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         if (domainType === DomainType.PARTICIPATION) {
             this.setSelectedParticipation(domainValue.id);
         } else {
-            this.selectedParticipation = undefined;
+            this.selectedParticipation = this.exercise.templateParticipation!;
             this.selectedRepository = REPOSITORY.TEST;
         }
     }

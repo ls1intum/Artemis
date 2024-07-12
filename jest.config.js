@@ -20,6 +20,7 @@ const esModules = [
     '@ng-bootstrap/ng-bootstrap',
     '@ngx-translate/core',
     '@ngx-translate/http-loader',
+    '@sentry/angular',
     '@swimlane/ngx-charts',
     '@swimlane/ngx-graph',
     'collapse-white-space',
@@ -42,6 +43,7 @@ const esModules = [
     'franc-min',
     'internmap',
     'lodash-es',
+    'monaco-editor',
     'n-gram',
     'ngx-device-detector',
     'ngx-infinite-scroll',
@@ -100,16 +102,15 @@ module.exports = {
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
-            statements: 87.2,
-            branches: 73.75,
-            functions: 81.6,
-            lines: 87.3,
+            statements: 87.13,
+            branches: 73.36,
+            functions: 81.39,
+            lines: 87.20,
         },
     },
     coverageReporters: ['clover', 'json', 'lcov', 'text-summary'],
     setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-extended/all'],
     moduleFileExtensions: ['ts', 'html', 'js', 'json', 'mjs'],
-    resolver: '<rootDir>/jest.resolver.js',
     transformIgnorePatterns: [`/node_modules/(?!${esModules})`],
     transform: {
         '^.+\\.(ts|js|mjs|html|svg)$': [
@@ -147,6 +148,7 @@ module.exports = {
         '@src/(.*)': '<rootDir>/src/src/$1',
         '@state/(.*)': '<rootDir>/src/app/state/$1',
         '^lodash-es$': 'lodash',
-        '@sentry/angular-ivy': '<rootDir>/node_modules/@sentry/angular-ivy/bundles/sentry-angular-ivy.umd.js',
+        '\\.css$': '<rootDir>/stub.js',
+        '^monaco-editor$': '<rootDir>/node_modules/monaco-editor/esm/vs/editor/editor.api.js',
     },
 };

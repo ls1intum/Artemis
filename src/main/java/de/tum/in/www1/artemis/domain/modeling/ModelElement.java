@@ -3,7 +3,11 @@ package de.tum.in.www1.artemis.domain.modeling;
 import java.io.Serial;
 import java.io.Serializable;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 
 import org.hibernate.annotations.CacheConcurrencyStrategy;

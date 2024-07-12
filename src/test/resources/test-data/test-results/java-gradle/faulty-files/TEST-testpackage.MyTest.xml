@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <wrongnodename name="testpackage.AttributeTest" tests="2" skipped="0" failures="2" errors="0" timestamp="2023-04-04T19:29:27" hostname="DE-ADN-4Q5Q8D3" time="0.066">
   <properties/>
-  <testcase name="testAttributes[Context]" classname="testpackage.AttributeTest" time="0.044">
+  <wrongname name="testAttributes[Context]" classname="testpackage.AttributeTest" time="0.044">
     <failure message="org.opentest4j.AssertionFailedError: The exercise expects a class with the name Context in the package testpackage. You did not implement the class in the exercise." type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: The exercise expects a class with the name Context in the package testpackage. You did not implement the class in the exercise.
 	at app//de.tum.in.test.api.structural.StructuralTestProvider.failure(StructuralTestProvider.java:423)
 	at app//de.tum.in.test.api.structural.StructuralTestProvider.findClassForTestType(StructuralTestProvider.java:105)
@@ -16,8 +16,8 @@
 	at java.base@17.0.3/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
 	at java.base@17.0.3/java.lang.Thread.run(Thread.java:833)
 </failure>
-  </testcase>
-  <testcase name="testAttributes[Policy]" classname="testpackage.AttributeTest" time="0.019">
+  </wrongname>
+  <anotherWrongName name="testAttributes[Policy]" classname="testpackage.AttributeTest" time="0.019">
     <failure message="org.opentest4j.AssertionFailedError: The exercise expects a class with the name Policy in the package testpackage. You did not implement the class in the exercise." type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: The exercise expects a class with the name Policy in the package testpackage. You did not implement the class in the exercise.
 	at app//de.tum.in.test.api.structural.StructuralTestProvider.failure(StructuralTestProvider.java:423)
 	at app//de.tum.in.test.api.structural.StructuralTestProvider.findClassForTestType(StructuralTestProvider.java:105)
@@ -32,7 +32,7 @@
 	at java.base@17.0.3/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
 	at java.base@17.0.3/java.lang.Thread.run(Thread.java:833)
 </failure>
-  </testcase>
+  </anotherWrongName>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[[DEBUG] [Test worker] Validated build configuration regarding trusted package rules, 0 are missing.
 NOTICE: The warning above is expected and the issue is already known.

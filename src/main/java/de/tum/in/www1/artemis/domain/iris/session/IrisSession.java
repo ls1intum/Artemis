@@ -4,7 +4,17 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.DiscriminatorType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderColumn;
+import jakarta.persistence.Table;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -18,7 +28,7 @@ import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 
 /**
  * An IrisSession represents a list of messages of Artemis, a user, and an LLM.
- * See {@link IrisChatSession} and {@link IrisHestiaSession} for concrete implementations.
+ * See {@link IrisExerciseChatSession} and {@link IrisHestiaSession} for concrete implementations.
  */
 @Entity
 @Table(name = "iris_session")
@@ -28,9 +38,9 @@ import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // @formatter:off
 @JsonSubTypes({
-    @JsonSubTypes.Type(value = IrisChatSession.class, name = "chat"),
+    @JsonSubTypes.Type(value = IrisExerciseChatSession.class, name = "chat"), // TODO: Legacy. Should ideally be "exercise_chat"
+    @JsonSubTypes.Type(value = IrisCourseChatSession.class, name = "course_chat"),
     @JsonSubTypes.Type(value = IrisHestiaSession.class, name = "hestia"),
-    @JsonSubTypes.Type(value = IrisCodeEditorSession.class, name = "codeEditor")
 })
 // @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -44,10 +54,17 @@ public abstract class IrisSession extends DomainObject {
     @Column(name = "creation_date")
     private ZonedDateTime creationDate = ZonedDateTime.now();
 
+    /**
+     * The latest suggestions that were sent to the user.
+     * This column holds the list of latest suggestions as a JSON array.
+     */
+    @Column(name = "latest_suggestions")
+    private String latestSuggestions;
+
+    // TODO: This is only used in the tests -> Remove
     public IrisMessage newMessage() {
         var message = new IrisMessage();
         message.setSession(this);
-        this.messages.add(message);
         return message;
     }
 
@@ -65,6 +82,14 @@ public abstract class IrisSession extends DomainObject {
 
     public void setMessages(List<IrisMessage> messages) {
         this.messages = messages;
+    }
+
+    public String getLatestSuggestions() {
+        return latestSuggestions;
+    }
+
+    public void setLatestSuggestions(String latestSuggestions) {
+        this.latestSuggestions = latestSuggestions;
     }
 
 }

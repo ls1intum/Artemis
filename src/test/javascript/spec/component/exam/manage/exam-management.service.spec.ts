@@ -700,4 +700,19 @@ describe('Exam Management Service Tests', () => {
         req.flush(exercises);
         tick();
     }));
+
+    it('should verify user attendance', fakeAsync(() => {
+        // GIVEN
+        const mockExam: Exam = { id: 1 };
+
+        // WHEN
+        service.isAttendanceChecked(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toBeTrue());
+
+        // THEN
+        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/attendance` });
+
+        // CLEANUP
+        req.flush(true);
+        tick();
+    }));
 });

@@ -15,6 +15,8 @@ import { Competency } from 'app/entities/competency.model';
 import { By } from '@angular/platform-browser';
 import { CompetencyFormStubComponent } from './competency-form-stub.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { Lecture } from 'app/entities/lecture.model';
+import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 
 describe('CreateCompetency', () => {
     let createCompetencyComponentFixture: ComponentFixture<CreateCompetencyComponent>;
@@ -65,6 +67,38 @@ describe('CreateCompetency', () => {
         expect(createCompetencyComponent).toBeDefined();
     });
 
+    it('should set lecture units', () => {
+        const lectureService = TestBed.inject(LectureService);
+        const lecture: Lecture = {
+            id: 1,
+            lectureUnits: [{ id: 1, type: LectureUnitType.TEXT }],
+        };
+        const lecturesResponse = new HttpResponse({
+            body: [lecture],
+            status: 200,
+        });
+        jest.spyOn(lectureService, 'findAllByCourseId').mockReturnValue(of(lecturesResponse));
+
+        createCompetencyComponentFixture.detectChanges();
+
+        expect(createCompetencyComponent.lecturesWithLectureUnits).toEqual([lecture]);
+    });
+
+    it('should set empty array of lecture units if lecture has none', () => {
+        const lectureService = TestBed.inject(LectureService);
+        const lecture: Lecture = { id: 1, lectureUnits: undefined };
+        const expectedLecture: Lecture = { id: 1, lectureUnits: [] };
+        const lecturesResponse = new HttpResponse({
+            body: [lecture],
+            status: 200,
+        });
+        jest.spyOn(lectureService, 'findAllByCourseId').mockReturnValue(of(lecturesResponse));
+
+        createCompetencyComponentFixture.detectChanges();
+
+        expect(createCompetencyComponent.lecturesWithLectureUnits).toEqual([expectedLecture]);
+    });
+
     it('should send POST request upon form submission and navigate', () => {
         const router: Router = TestBed.inject(Router);
         const competencyService = TestBed.inject(CompetencyService);
@@ -79,7 +113,7 @@ describe('CreateCompetency', () => {
         };
 
         const response: HttpResponse<Competency> = new HttpResponse({
-            body: new Competency(),
+            body: {},
             status: 201,
         });
 
@@ -92,7 +126,7 @@ describe('CreateCompetency', () => {
         competencyForm.formSubmitted.emit(formData);
 
         return createCompetencyComponentFixture.whenStable().then(() => {
-            const competency = new Competency();
+            const competency: Competency = {};
             competency.title = formData.title;
             competency.description = formData.description;
             competency.optional = formData.optional;
@@ -102,5 +136,21 @@ describe('CreateCompetency', () => {
             expect(createSpy).toHaveBeenCalledOnce();
             expect(navigateSpy).toHaveBeenCalledOnce();
         });
+    });
+
+    it('should not create competency if title is missing', () => {
+        const competencyService = TestBed.inject(CompetencyService);
+
+        const formData: CompetencyFormData = {
+            title: undefined,
+            description: 'Lorem Ipsum',
+            optional: true,
+        };
+
+        const createSpy = jest.spyOn(competencyService, 'create');
+
+        createCompetencyComponent.createCompetency(formData);
+
+        expect(createSpy).not.toHaveBeenCalled();
     });
 });

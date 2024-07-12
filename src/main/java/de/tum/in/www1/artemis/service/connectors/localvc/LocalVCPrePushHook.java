@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
@@ -14,6 +12,7 @@ import org.eclipse.jgit.transport.PreReceiveHook;
 import org.eclipse.jgit.transport.ReceiveCommand;
 import org.eclipse.jgit.transport.ReceivePack;
 
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 
 /**
@@ -24,11 +23,11 @@ public class LocalVCPrePushHook implements PreReceiveHook {
 
     private final LocalVCServletService localVCServletService;
 
-    private final HttpServletRequest request;
+    private final User user;
 
-    public LocalVCPrePushHook(LocalVCServletService localVCServletService, HttpServletRequest request) {
+    public LocalVCPrePushHook(LocalVCServletService localVCServletService, User user) {
         this.localVCServletService = localVCServletService;
-        this.request = request;
+        this.user = user;
     }
 
     /**
@@ -59,7 +58,7 @@ public class LocalVCPrePushHook implements PreReceiveHook {
 
         String defaultBranchName;
         try {
-            defaultBranchName = localVCServletService.getDefaultBranchOfRepository(repository);
+            defaultBranchName = LocalVCServletService.getDefaultBranchOfRepository(repository);
         }
         catch (LocalVCInternalException e) {
             command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "An error occurred while checking the branch.");
@@ -85,7 +84,7 @@ public class LocalVCPrePushHook implements PreReceiveHook {
             // Prevent force push.
             if (command.getType() == ReceiveCommand.Type.UPDATE_NONFASTFORWARD) {
                 try {
-                    if (!localVCServletService.isUserAllowedToForcePush(request)) {
+                    if (!localVCServletService.isUserAllowedToForcePush(user, repository)) {
                         command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "You cannot force push.");
                         return;
                     }

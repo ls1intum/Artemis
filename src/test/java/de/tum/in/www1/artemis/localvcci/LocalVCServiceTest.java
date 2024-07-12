@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 
 class LocalVCServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -33,7 +33,7 @@ class LocalVCServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     @Test
     void testHealth() {
         ConnectorHealth health = versionControlService.health();
-        assertThat(health.getAdditionalInfo().get("url")).isEqualTo(localVCBaseUrl);
+        assertThat(health.additionalInfo().get("url")).isEqualTo(localVCBaseUrl);
     }
 
     @Test

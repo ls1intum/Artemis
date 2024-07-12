@@ -36,8 +36,6 @@ spring:
                 prepStmtCacheSqlLimit: 2048
                 useServerPrepStmts: true
     jpa:
-        database-platform: org.hibernate.dialect.MySQLDialect
-        database: MYSQL
         show-sql: false
     mail:
         host: localhost

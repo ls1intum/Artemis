@@ -6,8 +6,8 @@ import { OnlineEditorPage } from './OnlineEditorPage';
  */
 export class ProgrammingExerciseFeedbackPage extends AbstractExerciseFeedback {
     shouldShowAdditionalFeedback(points: number, feedbackText: string) {
-        cy.reloadUntilFound(this.additionalFeedbackSelector);
-        cy.get(this.additionalFeedbackSelector).contains(`${points} Points: ${feedbackText}`).should('be.visible');
+        cy.reloadUntilFound(this.ADDITIONAL_FEEDBACK_SELECTOR);
+        cy.get(this.ADDITIONAL_FEEDBACK_SELECTOR).contains(`${points} Points: ${feedbackText}`).should('be.visible');
     }
 
     shouldShowCodeFeedback(exerciseID: number, filename: string, feedback: string, points: string, editorPage: OnlineEditorPage) {
@@ -17,10 +17,7 @@ export class ProgrammingExerciseFeedbackPage extends AbstractExerciseFeedback {
     }
 
     private findVisibleInlineFeedback() {
-        // The additional `jhi-ace-editor` selector is needed because sometimes, the ACE editor will
-        // copy the feedback to other temporary locations in the DOM.
-        // => The ID is not unique anymore!
-        return cy.get('jhi-ace-editor [id*="code-editor-inline-feedback-"]').should('be.visible');
+        return cy.get('[id*="code-editor-inline-feedback-"]').should('be.visible');
     }
 
     shouldShowRepositoryLockedWarning() {

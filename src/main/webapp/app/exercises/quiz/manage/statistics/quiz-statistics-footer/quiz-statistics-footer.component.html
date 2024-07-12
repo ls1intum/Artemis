@@ -134,7 +134,7 @@
                                 id="remaining-time-value"
                                 [ngClass]="{
                                     'time-critical': remainingTimeSeconds < 60 || remainingTimeSeconds < quizExercise.duration! / 4,
-                                    'time-warning': remainingTimeSeconds < 120 || remainingTimeSeconds < quizExercise.duration! / 2
+                                    'time-warning': remainingTimeSeconds < 120 || remainingTimeSeconds < quizExercise.duration! / 2,
                                 }"
                             >
                                 {{ remainingTimeText }}

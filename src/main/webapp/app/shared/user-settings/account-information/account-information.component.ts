@@ -10,7 +10,6 @@ import { Subscription, tap } from 'rxjs';
 })
 export class AccountInformationComponent implements OnInit {
     currentUser?: User;
-
     private authStateSubscription: Subscription;
 
     constructor(private accountService: AccountService) {}

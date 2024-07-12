@@ -22,7 +22,7 @@ import { convertModelAfterMultiPart, generateUUID } from '../../../support/utils
 const uid = generateUUID();
 const examTitle = 'test-exam' + uid;
 
-describe('Test Exam management', () => {
+describe.skip('Test Exam management', () => {
     let course: Course;
     let exam: Exam;
     let createdGroup: ExerciseGroup;

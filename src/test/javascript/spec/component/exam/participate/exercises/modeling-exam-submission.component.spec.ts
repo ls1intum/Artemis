@@ -80,7 +80,7 @@ describe('ModelingExamSubmissionComponent', () => {
             const maxScore = 30;
             comp.exercise.maxPoints = maxScore;
             fixture.detectChanges();
-            const el = fixture.debugElement.query((de) => de.nativeElement.textContent.includes(`[${maxScore} artemisApp.examParticipation.points]`));
+            const el = fixture.debugElement.query((de) => de.nativeElement.textContent.includes(`(${maxScore} artemisApp.examParticipation.points)`));
             expect(el).not.toBeNull();
         });
 
@@ -91,7 +91,7 @@ describe('ModelingExamSubmissionComponent', () => {
             comp.exercise.bonusPoints = bonusPoints;
             fixture.detectChanges();
             const el = fixture.debugElement.query((de) =>
-                de.nativeElement.textContent.includes(`[${maxScore} artemisApp.examParticipation.points, ${bonusPoints} artemisApp.examParticipation.bonus]`),
+                de.nativeElement.textContent.includes(`(${maxScore} artemisApp.examParticipation.points, ${bonusPoints} artemisApp.examParticipation.bonus)`),
             );
             expect(el).not.toBeNull();
         });
@@ -169,7 +169,7 @@ describe('ModelingExamSubmissionComponent', () => {
         it('should update problem statement', () => {
             const newProblemStatement = 'new problem statement';
             comp.updateProblemStatement(newProblemStatement);
-            expect(comp.exercise.problemStatement).toEqual(newProblemStatement);
+            expect(comp.problemStatementHtml).toEqual(newProblemStatement);
         });
     });
 

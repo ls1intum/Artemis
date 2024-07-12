@@ -2,7 +2,10 @@ package de.tum.in.www1.artemis.service.learningpath;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
@@ -16,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.LearningObject;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
@@ -92,8 +96,8 @@ public class LearningPathNgxService {
         });
         // generate nodes and edges for exercises
         competency.getExercises().forEach(exercise -> {
-            currentCluster.add(NgxLearningPathDTO.Node.of(getExerciseNodeId(competency.getId(), exercise.getId()), NgxLearningPathDTO.NodeType.EXERCISE, exercise.getId(),
-                    exercise.isCompletedFor(learningPath.getUser()), exercise.getTitle()));
+            currentCluster.add(NgxLearningPathDTO.Node.of(getExerciseNodeId(competency.getId(), exercise.getId()), NgxLearningPathDTO.NodeType.EXERCISE, exercise.getId(), false,
+                    exercise.getTitle()));
             edges.add(new NgxLearningPathDTO.Edge(getExerciseInEdgeId(competency.getId(), exercise.getId()), startNodeId, getExerciseNodeId(competency.getId(), exercise.getId())));
             edges.add(new NgxLearningPathDTO.Edge(getExerciseOutEdgeId(competency.getId(), exercise.getId()), getExerciseNodeId(competency.getId(), exercise.getId()), endNodeId));
         });
@@ -216,12 +220,12 @@ public class LearningPathNgxService {
         Set<NgxLearningPathDTO.Node> nodes = new HashSet<>();
         Set<NgxLearningPathDTO.Edge> edges = new HashSet<>();
 
-        var recommendationState = learningPathRecommendationService.getRecommendedOrderOfCompetencies(learningPath);
+        var recommendationState = learningPathRecommendationService.getRecommendedOrderOfNotMasteredCompetencies(learningPath);
         var recommendedOrderOfCompetencies = recommendationState.recommendedOrderOfCompetencies().stream()
                 .map(id -> learningPath.getCompetencies().stream().filter(competency -> competency.getId().equals(id)).findFirst().get()).toList();
 
         // generate ngx representation of recommended competencies
-        recommendedOrderOfCompetencies.forEach(competency -> generateNgxPathRepresentationForCompetency(learningPath, competency, nodes, edges, recommendationState));
+        recommendedOrderOfCompetencies.forEach(competency -> generateNgxPathRepresentationForCompetency(learningPath.getUser(), competency, nodes, edges, recommendationState));
         // generate edges between competencies
         for (int i = 0; i < recommendedOrderOfCompetencies.size() - 1; i++) {
             var sourceNodeId = getCompetencyEndNodeId(recommendationState.recommendedOrderOfCompetencies().get(i));
@@ -244,13 +248,13 @@ public class LearningPathNgxService {
      * <li>edges from each learning unit to end node</li>
      * </ul>
      *
-     * @param learningPath the learning path for which the representation should be created
-     * @param competency   the competency for which the representation will be created
-     * @param nodes        set of nodes to store the new nodes
-     * @param edges        set of edges to store the new edges
+     * @param user       the user for which the representation should be created
+     * @param competency the competency for which the representation will be created
+     * @param nodes      set of nodes to store the new nodes
+     * @param edges      set of edges to store the new edges
      */
-    private void generateNgxPathRepresentationForCompetency(LearningPath learningPath, Competency competency, Set<NgxLearningPathDTO.Node> nodes,
-            Set<NgxLearningPathDTO.Edge> edges, LearningPathRecommendationService.RecommendationState state) {
+    private void generateNgxPathRepresentationForCompetency(User user, Competency competency, Set<NgxLearningPathDTO.Node> nodes, Set<NgxLearningPathDTO.Edge> edges,
+            LearningPathRecommendationService.RecommendationState state) {
         Set<NgxLearningPathDTO.Node> currentCluster = new HashSet<>();
         // generates start and end node
         final var startNodeId = getCompetencyStartNodeId(competency.getId());
@@ -258,7 +262,7 @@ public class LearningPathNgxService {
         currentCluster.add(NgxLearningPathDTO.Node.of(startNodeId, NgxLearningPathDTO.NodeType.COMPETENCY_START, competency.getId()));
         currentCluster.add(NgxLearningPathDTO.Node.of(endNodeId, NgxLearningPathDTO.NodeType.COMPETENCY_END, competency.getId()));
 
-        final var recommendedLearningObjects = learningPathRecommendationService.getRecommendedOrderOfLearningObjects(learningPath, competency, state);
+        final var recommendedLearningObjects = learningPathRecommendationService.getRecommendedOrderOfLearningObjects(user, competency, state);
         for (int i = 0; i < recommendedLearningObjects.size(); i++) {
 
             // add node for learning object
@@ -276,10 +280,10 @@ public class LearningPathNgxService {
         }
         else {
             // add edge from competency start to first learning object
-            addEdgeFromCompetencyStartToLearningObject(competency, recommendedLearningObjects.get(0), edges);
+            addEdgeFromCompetencyStartToLearningObject(competency, recommendedLearningObjects.getFirst(), edges);
 
             // add edge from last learning object to competency end
-            addEdgeFromLearningObjectToCompetencyEnd(competency, recommendedLearningObjects.get(recommendedLearningObjects.size() - 1), edges);
+            addEdgeFromLearningObjectToCompetencyEnd(competency, recommendedLearningObjects.getLast(), edges);
         }
 
         nodes.addAll(currentCluster);

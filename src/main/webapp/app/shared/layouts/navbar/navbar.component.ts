@@ -31,6 +31,7 @@ import {
     faBell,
     faBook,
     faBookOpen,
+    faChevronRight,
     faCog,
     faEye,
     faFlag,
@@ -58,6 +59,8 @@ import { ThemeService } from 'app/core/theme/theme.service';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { onError } from 'app/shared/util/global.utils';
 import { StudentExam } from 'app/entities/student-exam.model';
+import { Title } from '@angular/platform-browser';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 @Component({
     selector: 'jhi-navbar',
@@ -73,6 +76,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     gitBranchName: string;
     gitTimestamp: string;
     gitUsername: string;
+    isBuildAgentDetails = false;
     languages = LANGUAGES;
     openApiEnabled?: boolean;
     modalRef: NgbModalRef;
@@ -90,6 +94,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
     irisEnabled: boolean;
     localCIActive: boolean = false;
     ltiEnabled: boolean;
+    standardizedCompetenciesEnabled = false;
+    agentName?: string;
+    isExamStarted = false;
+
+    courseTitle?: string;
+    exerciseTitle?: string;
+    lectureTitle?: string;
+    examTitle?: string;
 
     // Icons
     faBars = faBars;
@@ -116,9 +128,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
     faSignOutAlt = faSignOutAlt;
     faGears = faGears;
     faPuzzlePiece = faPuzzlePiece;
+    faChevronRight = faChevronRight;
 
+    private standardizedCompetencySubscription: Subscription;
     private authStateSubscription: Subscription;
     private routerEventSubscription: Subscription;
+    private queryParamsSubscription: Subscription;
+    private examStartedSubscription: Subscription;
     private studentExam?: StudentExam;
     private examId?: number;
     private routeExamId = 0;
@@ -148,6 +164,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private organisationService: OrganizationManagementService,
         public themeService: ThemeService,
         private entityTitleService: EntityTitleService,
+        private titleService: Title,
+        private featureToggleService: FeatureToggleService,
     ) {
         this.version = VERSION ? VERSION : '';
         this.isNavbarCollapsed = true;
@@ -203,6 +221,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
             }
         });
 
+        this.standardizedCompetencySubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies).subscribe((isActive) => {
+            this.standardizedCompetenciesEnabled = isActive;
+        });
+
         this.subscribeForGuidedTourAvailability();
 
         // The current user is needed to hide menu items for not logged-in users.
@@ -221,6 +243,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
             this.studentExam = studentExam;
             this.checkExamActive();
         });
+        this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted) => {
+            this.isExamStarted = isStarted;
+        });
 
         this.buildBreadcrumbs(this.router.url);
         this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe((event: NavigationEnd) => this.buildBreadcrumbs(event.url));
@@ -236,6 +261,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
         if (this.examActiveCheckFuture) {
             clearTimeout(this.examActiveCheckFuture);
         }
+        if (this.standardizedCompetencySubscription) {
+            this.standardizedCompetencySubscription.unsubscribe();
+        }
+        this.queryParamsSubscription?.unsubscribe();
+        this.examStartedSubscription?.unsubscribe();
     }
 
     breadcrumbTranslation = {
@@ -350,6 +380,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         commit_history: 'artemisApp.repository.commitHistory.title',
         commit_details: 'artemisApp.repository.commitHistory.commitDetails.title',
         repository: 'artemisApp.repository.title',
+        standardized_competencies: 'artemisApp.standardizedCompetency.manage.title',
+        prerequisites: 'artemisApp.prerequisite.title',
+        import_standardized: 'artemisApp.standardizedCompetency.courseImport.title',
     };
 
     studentPathBreadcrumbTranslations = {
@@ -357,6 +390,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         test_exam: 'artemisApp.courseOverview.menu.testExam',
         exercises: 'artemisApp.courseOverview.menu.exercises',
         lectures: 'artemisApp.courseOverview.menu.lectures',
+        dashboard: 'artemisApp.courseOverview.menu.dashboard',
         competencies: 'artemisApp.courseOverview.menu.competencies',
         learning_path: 'artemisApp.courseOverview.menu.learningPath',
         lecture_unit: 'artemisApp.learningPath.breadcrumbs.lectureUnit',
@@ -378,6 +412,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.breadcrumbs = [];
         this.breadcrumbSubscriptions?.forEach((subscription) => subscription.unsubscribe());
         this.breadcrumbSubscriptions = [];
+        this.initTabTitles();
 
         if (!fullURI) {
             return;
@@ -416,6 +451,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         } catch (e) {
             /* empty */
         }
+        this.buildTabTitles();
     }
 
     /**
@@ -440,7 +476,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 default:
                     const exercisesMatcher = this.lastRouteUrlSegment?.match(/.+-exercises/);
                     if (exercisesMatcher) {
-                        this.addResolvedTitleAsCrumb(EntityType.EXERCISE, [Number(segment)], currentPath.replace(exercisesMatcher[0], 'exercises'), 'exercises');
+                        this.addResolvedTitleAsCrumb(EntityType.EXERCISE, [Number(segment)], currentPath.replace(`exercises/${exercisesMatcher[0]}`, 'exercises'), 'exercises');
                         return;
                     }
                     break;
@@ -537,6 +573,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
      */
     private addBreadcrumbForUrlSegment(currentPath: string, segment: string): void {
         const isStudentPath = currentPath.startsWith('/courses');
+        this.isBuildAgentDetails = currentPath.startsWith('/admin/build-agents/') && segment == 'details';
 
         if (isStudentPath) {
             if (segment === 'repository') {
@@ -544,9 +581,17 @@ export class NavbarComponent implements OnInit, OnDestroy {
             }
             const exercisesMatcher = segment?.match(/.+-exercises/);
             if (exercisesMatcher) {
-                this.addTranslationAsCrumb(currentPath.replace(exercisesMatcher[0], 'exercises'), 'exercises');
                 return;
             }
+        }
+
+        if (this.isBuildAgentDetails) {
+            this.queryParamsSubscription = this.route.queryParams.subscribe((params) => {
+                this.agentName = params['agentName'];
+                if (this.agentName) {
+                    segment = decodeURIComponent(this.agentName);
+                }
+            });
         }
         // When we're not dealing with an ID we need to translate the current part
         // The translation might still depend on the previous parts
@@ -661,6 +706,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             this.entityTitleService.getTitle(type, ids).subscribe({
                 next: (title: string) => {
                     crumb = this.setBreadcrumb(uri, title, false, this.breadcrumbs.indexOf(crumb));
+                    this.setTabTitles(type, title);
                 },
             }),
         );
@@ -674,7 +720,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private addExerciseCrumb(exerciseId: number, currentPath: string): void {
         // Add dummy breadcrumb
         const crumb = this.addBreadcrumb('', '', false);
-
+        const isStudentPath = currentPath.startsWith('/courses');
         this.exerciseService.find(exerciseId).subscribe({
             next: (response: HttpResponse<Exercise>) => {
                 // If the response doesn't contain the needed data, remove the breadcrumb as we can not successfully link to it
@@ -682,7 +728,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
                     this.breadcrumbs.splice(this.breadcrumbs.indexOf(crumb), 1);
                 } else {
                     // If all data is there, overwrite the breadcrumb with the correct link
-                    this.setBreadcrumb(currentPath.replace('/exercises/', `/${response.body.type}-exercises/`), response.body.title, false, this.breadcrumbs.indexOf(crumb));
+                    const replaceValue = isStudentPath ? `/exercises/${response.body.type}-exercises/` : `/${response.body.type}-exercises/`;
+                    this.setBreadcrumb(currentPath.replace('/exercises/', replaceValue), response.body.title, false, this.breadcrumbs.indexOf(crumb));
                 }
             },
             // Same as if data isn't available
@@ -829,6 +876,59 @@ export class NavbarComponent implements OnInit, OnDestroy {
             }
         } else {
             this.isExamActive = false;
+        }
+    }
+
+    /**
+     * Method to build the tab titles based on the breadcrumbs.
+     * The tab titles are build from the most specific to the most general title.
+     * If the tab title is not defined, the titles in the Router Modules are used instead.
+     */
+    buildTabTitles() {
+        // Include the most specific title into the tab title, but only if the title is meant to be displayed to the user, i.e. should be translated.
+        const generalTitle = this.breadcrumbs[this.breadcrumbs.length - 1].translate
+            ? this.translateService.instant(this.breadcrumbs[this.breadcrumbs.length - 1].label)
+            : undefined;
+        const titles = [generalTitle, this.exerciseTitle, this.examTitle, this.lectureTitle, this.courseTitle].filter((title) => title !== undefined).join(' | ');
+        // No need have a dynamic title on the start page -> use the title defined in the Router modules.
+        if (titles && this.breadcrumbs.length > 1) {
+            this.titleService.setTitle(titles);
+        }
+    }
+
+    /**
+     * Initialize the attributes for the tab titles to undefined, as they are defined during the building of the breadcrumbs
+     */
+    initTabTitles() {
+        // The course title is not set to undefined, as there is a change detection in the setTabTitle Method
+        this.exerciseTitle = undefined;
+        this.lectureTitle = undefined;
+        this.examTitle = undefined;
+    }
+
+    /**
+     * Set the title of the respective attribute based on the response from the entityTitleService
+     * @param type the type of the entity
+     * @param title the title of the entity
+     */
+    setTabTitles(type: EntityType, title: string) {
+        switch (type) {
+            case EntityType.COURSE:
+                if (this.courseTitle != title) {
+                    this.courseTitle = title;
+                    // If the courseTitle changes, we need to rebuild the tab titles
+                    this.buildTabTitles();
+                }
+                break;
+            case EntityType.EXERCISE:
+                this.exerciseTitle = title;
+                break;
+            case EntityType.EXAM:
+                this.examTitle = title;
+                break;
+            case EntityType.LECTURE:
+                this.lectureTitle = title;
+                break;
         }
     }
 }

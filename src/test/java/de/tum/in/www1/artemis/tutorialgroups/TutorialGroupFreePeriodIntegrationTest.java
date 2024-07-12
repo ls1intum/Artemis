@@ -28,6 +28,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
     Long exampleTutorialGroupId;
 
     @BeforeEach
+    @Override
     void setupTestScenario() {
         super.setupTestScenario();
         userUtilService.addUsers(this.testPrefix, 1, 1, 1, 1);
@@ -270,7 +271,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         List<TutorialGroupSession> sessions = this.getTutorialGroupSessionsAscending(exampleTutorialGroupId);
         TutorialGroupSession firstMondayOfAugustSession = sessions.get(0);
         assertIndividualSessionIsCancelledOnDate(firstMondayOfAugustSession, FIRST_AUGUST_MONDAY_00_00, exampleTutorialGroupId, null);
-        assert (firstMondayOfAugustSession.getTutorialGroupFreePeriod().getId()).equals(createdPeriod.getId());
+        assertThat(firstMondayOfAugustSession.getTutorialGroupFreePeriod().getId()).isEqualTo(createdPeriod.getId());
         assertTutorialGroupFreePeriodCreatedCorrectlyFromDTO(firstMondayOfAugustSession.getTutorialGroupFreePeriod(), dto);
 
         // cleanup
@@ -301,7 +302,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         // then
         firstMondayOfAugustSession = tutorialGroupSessionRepository.findByIdElseThrow(firstMondayOfAugustSession.getId());
         assertIndividualSessionIsCancelledOnDate(firstMondayOfAugustSession, FIRST_AUGUST_MONDAY_00_00, exampleTutorialGroupId, null);
-        assert (firstMondayOfAugustSession.getTutorialGroupFreePeriod().getId()).equals(createdPeriod2.getId());
+        assertThat(firstMondayOfAugustSession.getTutorialGroupFreePeriod().getId()).isEqualTo(createdPeriod2.getId());
 
         // cleanup
         tutorialGroupSessionRepository.deleteById(firstMondayOfAugustSession.getId());

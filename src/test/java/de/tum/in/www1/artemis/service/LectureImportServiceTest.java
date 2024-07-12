@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
@@ -28,9 +27,6 @@ class LectureImportServiceTest extends AbstractSpringIntegrationIndependentTest 
 
     @Autowired
     private LectureImportService lectureImportService;
-
-    @Autowired
-    private CourseRepository courseRepository;
 
     @Autowired
     private LectureRepository lectureRepository;
@@ -52,7 +48,7 @@ class LectureImportServiceTest extends AbstractSpringIntegrationIndependentTest 
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
         List<Course> courses = lectureUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, false, true, 0);
-        Course course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
+        Course course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.get(0).getId());
         long lecture1Id = course1.getLectures().stream().findFirst().orElseThrow().getId();
         this.lecture1 = this.lectureRepository.findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lecture1Id);
         this.course2 = courseUtilService.createCourse();

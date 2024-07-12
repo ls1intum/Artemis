@@ -17,6 +17,7 @@ export enum ButtonType {
     INFO = 'btn-info',
 
     PRIMARY_OUTLINE = 'btn-outline-primary',
+    SUCCESS_OUTLINE = 'btn-outline-success',
 }
 
 /**
@@ -27,6 +28,13 @@ export enum ButtonSize {
     SMALL = 'btn-sm',
     MEDIUM = 'btn-md',
     LARGE = 'btn-lg',
+}
+
+export enum TooltipPlacement {
+    TOP = 'top',
+    BOTTOM = 'bottom',
+    LEFT = 'left',
+    RIGHT = 'right',
 }
 
 /**
@@ -47,15 +55,17 @@ export class ButtonComponent {
     // Translation placeholders, will be translated in the component.
     @Input() title: string;
     @Input() tooltip: string;
+    @Input() tooltipPlacement: TooltipPlacement = TooltipPlacement.TOP;
 
     @Input() disabled = false;
     @Input() isLoading = false;
     @Input() featureToggle: FeatureToggle | FeatureToggle[]; // Disable by feature toggle.
 
     @Input() shouldSubmit = true;
+    @Input() shouldToggle = false;
 
     @Output() onClick = new EventEmitter<MouseEvent>();
 
     // Icons
-    faCircleNotch = faCircleNotch;
+    readonly faCircleNotch = faCircleNotch;
 }

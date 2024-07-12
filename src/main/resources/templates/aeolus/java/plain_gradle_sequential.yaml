@@ -1,7 +1,7 @@
 api: v0.0.1
 actions:
   - name: structural_tests
-    script: |
+    script: |-
       chmod +x ./gradlew
       ./gradlew clean structuralTests
     runAlways: false

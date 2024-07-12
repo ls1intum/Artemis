@@ -10,6 +10,7 @@ package org.eclipse.jgit.http.server;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.Serial;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.transport.RefAdvertiser;
@@ -23,32 +24,36 @@ import static org.eclipse.jgit.http.server.ServletUtils.getRepository;
 /** Send a complete list of current refs, including peeled values for tags. */
 class InfoRefsServlet extends HttpServlet {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    @Override public void doGet(final HttpServletRequest req, final HttpServletResponse rsp) throws IOException {
+    @Override
+    public void doGet(final HttpServletRequest req, final HttpServletResponse rsp) throws IOException {
         // Assume a dumb client and send back the dumb client
         // version of the info/refs file.
         rsp.setContentType(HttpSupport.TEXT_PLAIN);
         rsp.setCharacterEncoding(UTF_8.name());
 
-        final Repository db = getRepository(req);
+        final Repository repository = getRepository(req);
         try (OutputStreamWriter out = new OutputStreamWriter(new SmartOutputStream(req, rsp, true), UTF_8)) {
-            final RefAdvertiser adv = new RefAdvertiser() {
+            final RefAdvertiser advertiser = new RefAdvertiser() {
 
-                @Override protected void writeOne(CharSequence line) throws IOException {
+                @Override
+                protected void writeOne(CharSequence line) throws IOException {
                     // Whoever decided that info/refs should use a different
                     // delimiter than the native git:// protocol shouldn't
                     // be allowed to design this sort of stuff. :-(
                     out.append(line.toString().replace(' ', '\t'));
                 }
 
-                @Override protected void end() {
+                @Override
+                protected void end() {
                     // No end marker required for info/refs format.
                 }
             };
-            adv.init(db);
-            adv.setDerefTags(true);
-            adv.send(db.getRefDatabase().getRefsByPrefix(Constants.R_REFS));
+            advertiser.init(repository);
+            advertiser.setDerefTags(true);
+            advertiser.send(repository.getRefDatabase().getRefsByPrefix(Constants.R_REFS));
         }
     }
 }

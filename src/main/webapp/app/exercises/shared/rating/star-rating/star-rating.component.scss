@@ -2,16 +2,15 @@
     --checkedcolor: gold;
     --uncheckedcolor: gray;
     --size: 24px;
-    --halfwidth: 10px;
-    --halfmargin: -20px;
+    --halfWidth: 12px;
 }
 
 .star {
-    cursor: pointer;
     color: var(--unCheckedColor);
     font-size: var(--size);
     width: var(--size);
     display: inline-block;
+    position: relative;
 
     &:last-child {
         margin-right: 0;
@@ -31,8 +30,10 @@
         content: '\2605';
         color: var(--checkedColor);
         position: absolute;
-        margin-left: var(--halfMargin);
-        width: var(--halfWidth);
+        left: 0;
+        top: 0;
+        bottom: 0;
+        right: var(--halfWidth);
         overflow: hidden;
     }
 }

@@ -12,7 +12,16 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PageType } from 'app/shared/metis/metis.util';
 import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
-import { metisChannel, metisCourse, metisPostExerciseUser1, metisPostLectureUser1, metisPostTechSupport, metisUser1 } from '../../../../helpers/sample/metis-sample-data';
+import {
+    metisChannel,
+    metisCourse,
+    metisPostExerciseUser1,
+    metisPostLectureUser1,
+    metisUser1,
+    post,
+    sortedAnswerArray,
+    unsortedAnswerArray,
+} from '../../../../helpers/sample/metis-sample-data';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';
 import { RouterTestingModule } from '@angular/router/testing';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -23,7 +32,8 @@ import { of } from 'rxjs';
 import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { HttpResponse } from '@angular/common/http';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
-import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
+import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -51,6 +61,8 @@ describe('PostComponent', () => {
                 MockComponent(PostHeaderComponent),
                 MockComponent(PostingContentComponent),
                 MockComponent(PostFooterComponent),
+                MockComponent(AnswerPostCreateEditModalComponent),
+                MockComponent(PostReactionsBarComponent),
                 MockRouterLinkDirective,
                 MockQueryParamsDirective,
                 TranslatePipeMock,
@@ -78,42 +90,24 @@ describe('PostComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should display resolved icon on resolved post header', () => {
-        component.posting = metisPostExerciseUser1;
-        component.posting.resolved = true;
-
-        component.ngOnInit();
-        fixture.detectChanges();
-
-        expect(getElement(debugElement, '.resolved')).not.toBeNull();
+    it('should sort answers', () => {
+        component.posting = post;
+        component.posting.answers = unsortedAnswerArray;
+        component.sortAnswerPosts();
+        expect(component.sortedAnswerPosts).toEqual(sortedAnswerArray);
     });
 
-    it('should not display resolved icon on unresolved post header', () => {
-        // per default not resolved
-        component.posting = metisPostExerciseUser1;
-        component.posting.resolved = false;
-
-        component.ngOnInit();
-        fixture.detectChanges();
-
-        expect(getElement(debugElement, '.resolved')).toBeNull();
+    it('should not sort empty array of answers', () => {
+        component.posting = post;
+        component.posting.answers = unsortedAnswerArray;
+        component.posting.answers = undefined;
+        component.sortAnswerPosts();
+        expect(component.sortedAnswerPosts).toEqual([]);
     });
 
     it('should contain a post header', () => {
         const header = getElement(debugElement, 'jhi-post-header');
         expect(header).not.toBeNull();
-    });
-
-    it('should contain a title with referencable id', () => {
-        component.isCommunicationPage = true;
-        component.posting = metisPostExerciseUser1;
-        component.ngOnInit();
-        fixture.detectChanges();
-        const title = getElement(debugElement, 'a.post-title');
-        expect(title).toBeDefined();
-        const idHash = getElement(debugElement, '.reference-hash');
-        expect(idHash).toBeDefined();
-        expect(idHash.innerHTML).toBe(`#${metisPostExerciseUser1.id}`);
     });
 
     it('should set router link and query params', () => {
@@ -141,29 +135,6 @@ describe('PostComponent', () => {
         fixture.detectChanges();
         const context = getElement(fixture.debugElement, 'span.context-information');
         expect(context).toBeNull();
-    });
-
-    it('should have a course-wide context information shown as title prefix in course discussion overview', () => {
-        metisServiceGetPageTypeStub.mockReturnValue(PageType.OVERVIEW);
-        component.posting = metisPostTechSupport;
-        component.ngOnInit();
-        fixture.detectChanges();
-        const context = getElement(fixture.debugElement, 'a.linked-context-information');
-        expect(context).not.toBeNull();
-        expect(component.contextInformation.routerLinkComponents).toEqual(expect.arrayContaining(['messages']));
-    });
-
-    it('should have a conversation context information shown as title prefix in course discussion overview', () => {
-        metisServiceGetPageTypeStub.mockReturnValue(PageType.OVERVIEW);
-        component.posting = metisPostLectureUser1;
-        component.ngOnInit();
-        fixture.detectChanges();
-        const contextLink = getElement(fixture.debugElement, 'a.linked-context-information');
-        expect(component.contextInformation.routerLinkComponents).toEqual(expect.arrayContaining(['messages']));
-        expect(component.contextInformation.routerLinkComponents).toEqual(expect.arrayContaining([component.posting?.conversation?.course?.id]));
-        expect(component.contextInformation.displayName).toBeDefined();
-        expect(component.contextInformation.displayName).toEqual(getAsChannelDTO(component.posting?.conversation)?.name);
-        expect(contextLink).not.toBeNull();
     });
 
     it('should contain the posting content', () => {
@@ -202,7 +173,7 @@ describe('PostComponent', () => {
 
         component.onUserReferenceClicked(metisUser1.login!);
 
-        expect(navigateSpy).toHaveBeenCalledWith(['courses', metisCourse.id, 'messages'], {
+        expect(navigateSpy).toHaveBeenCalledWith(['courses', metisCourse.id, 'communication'], {
             queryParams: {
                 conversationId: 1,
             },
@@ -214,7 +185,7 @@ describe('PostComponent', () => {
         const metisConversationService = TestBed.inject(MetisConversationService);
         const createOneToOneChatSpy = jest.fn().mockReturnValue(of({ body: { id: 1 } } as HttpResponse<OneToOneChatDTO>));
         Object.defineProperty(metisConversationService, 'createOneToOneChat', { value: createOneToOneChatSpy });
-        component.isCourseMessagesPage = true;
+        component.isCommunicationPage = true;
 
         component.onUserReferenceClicked(metisUser1.login!);
 
@@ -226,7 +197,7 @@ describe('PostComponent', () => {
 
         component.onChannelReferenceClicked(metisChannel.id!);
 
-        expect(navigateSpy).toHaveBeenCalledWith(['courses', metisCourse.id, 'messages'], {
+        expect(navigateSpy).toHaveBeenCalledWith(['courses', metisCourse.id, 'communication'], {
             queryParams: {
                 conversationId: metisChannel.id!,
             },
@@ -237,7 +208,7 @@ describe('PostComponent', () => {
         const metisConversationService = TestBed.inject(MetisConversationService);
         const setActiveConversationSpy = jest.fn();
         Object.defineProperty(metisConversationService, 'setActiveConversation', { value: setActiveConversationSpy });
-        component.isCourseMessagesPage = true;
+        component.isCommunicationPage = true;
 
         component.onChannelReferenceClicked(metisChannel.id!);
 

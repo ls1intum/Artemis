@@ -19,7 +19,7 @@ public final class Constants {
 
     public static final int PASSWORD_MIN_LENGTH = 8;
 
-    public static final int PASSWORD_MAX_LENGTH = 50;
+    public static final int PASSWORD_MAX_LENGTH = 100;
 
     public static int COMPLAINT_LOCK_DURATION_IN_MINUTES = 24 * 60; // 24h; Same as in artemisApp.locks.acquired
 
@@ -57,13 +57,9 @@ public final class Constants {
 
     public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/public/programming-exercises/new-result";
 
-    public static final String PROGRAMMING_SUBMISSION_RESOURCE_API_PATH = "/api/programming-submissions/";
-
     public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
 
     public static final String NEW_SUBMISSION_TOPIC = "/topic" + PROGRAMMING_SUBMISSION_TOPIC;
-
-    public static final String APOLLON_CONVERSION_API_PATH = "/api/apollon/convert-to-pdf";
 
     public static final String ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH = "/api/public/athena/programming-exercises/";
 
@@ -166,12 +162,6 @@ public final class Constants {
     // Also, the value on the client side must match this value.
     public static final int COMPLAINT_TEXT_LIMIT = 65535;
 
-    public static final String ASSIGNMENT_CHECKOUT_PATH = "assignment";
-
-    public static final String TESTS_CHECKOUT_PATH = "tests";
-
-    public static final String SOLUTION_CHECKOUT_PATH = "solution";
-
     public static final String SETUP_COMMIT_MESSAGE = "Setup";
 
     public static final String ENROLL_IN_COURSE = "ENROLL_IN_COURSE";
@@ -237,10 +227,6 @@ public final class Constants {
 
     public static final String INFO_VERSION_CONTROL_ACCESS_TOKEN_DETAIL = "versionControlAccessToken";
 
-    public static final String EXTERNAL_USER_MANAGEMENT_URL = "externalUserManagementURL";
-
-    public static final String EXTERNAL_USER_MANAGEMENT_NAME = "externalUserManagementName";
-
     public static final String REGISTRATION_ENABLED = "registrationEnabled";
 
     public static final String NEEDS_TO_ACCEPT_TERMS = "needsToAcceptTerms";
@@ -295,7 +281,7 @@ public final class Constants {
     public static final String PROFILE_LOCALVC = "localvc";
 
     /**
-     * The name of the Spring profile used to choose the local CI system instead of Bamboo, Jenkins, or GitLabCI.
+     * The name of the Spring profile used to choose the local CI system instead of Jenkins, or GitLabCI.
      */
     public static final String PROFILE_LOCALCI = "localci";
 
@@ -318,6 +304,19 @@ public final class Constants {
      * The name of the Spring profile used for activating LTI in Artemis, see {@link de.tum.in.www1.artemis.web.rest.LtiResource}.
      */
     public static final String PROFILE_LTI = "lti";
+
+    public static final String PROFILE_SCHEDULING = "scheduling";
+
+    /**
+     * The name of the Spring profile used for Theia as an external online IDE.
+     */
+    public static final String PROFILE_THEIA = "theia";
+
+    /**
+     * The InfoContributor's detail key for the Theia Portal URL
+     */
+
+    public static final String THEIA_PORTAL_URL = "theiaPortalURL";
 
     /**
      * Size of an unsigned tinyInt in SQL, that is used in the database
@@ -348,6 +347,16 @@ public final class Constants {
      * The directory to which repositories temporarely get cloned for the build job execution
      */
     public static final String CHECKED_OUT_REPOS_TEMP_DIR = "checked-out-repos";
+
+    /**
+     * Minimum score for a result to be considered successful and shown in green
+     */
+    public static final int MIN_SCORE_GREEN = 80;
+
+    /**
+     * Minimum score for a result to be considered partially successful and shown in orange
+     */
+    public static final int MIN_SCORE_ORANGE = 40;
 
     private Constants() {
     }

@@ -22,12 +22,14 @@ checkers () {
   else
     exit 1
   fi
-  sed -i "s#CLASSPATH#../target/classes#" testsuite/config/default.exp
+
+  JAVA_FLAGS="-Djdk.console=java.base"
+
+  sed -i "s#JAVA_FLAGS#${JAVA_FLAGS}#;s#CLASSPATH#../target/classes#" testsuite/config/default.exp
   sed -i "s#MAIN_CLASS#${MAIN_CLASS}#" testsuite/config/default.exp
   export testfiles_base_path="./testsuite/testfiles"
   export tool=$(find testsuite -name "*.tests" -type d -printf "%f" | sed 's#.tests$##')
   sed -i "s#TESTFILES_DIRECTORY#../${testfiles_base_path}#" testsuite/${tool}.tests/*.exp
-
 }
 
 secrettests () {
@@ -49,7 +51,6 @@ secrettests () {
   if [ -f "${testfiles_base_path}/secret" ]; then
     rm "${testfiles_base_path}/secret"
   fi
-
 }
 
 publictests () {
@@ -64,7 +65,6 @@ publictests () {
   timeout 60s runtest --tool ${tool} ${step}.exp || true
   cd ..
   pipeline-helper -o customFeedbacks dejagnu -n "dejagnu[${step}]" -l testsuite/${tool}.log
-
 }
 
 advancedtests () {
@@ -79,7 +79,6 @@ advancedtests () {
   timeout 60s runtest --tool ${tool} ${step}.exp || true
   cd ..
   pipeline-helper -o customFeedbacks dejagnu -n "dejagnu[${step}]" -l testsuite/${tool}.log
-
 }
 
 main () {

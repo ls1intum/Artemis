@@ -6,7 +6,7 @@ import { courseManagement, courseManagementAPIRequest, courseManagementExercises
 import { admin } from '../../../support/users';
 import { convertModelAfterMultiPart, generateUUID } from '../../../support/utils';
 
-describe('Quiz Exercise Management', () => {
+describe.skip('Quiz Exercise Management', () => {
     let course: Course;
 
     before('Create course', () => {

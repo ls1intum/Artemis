@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.dataexport;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -28,7 +31,6 @@ import de.tum.in.www1.artemis.domain.DataExport;
 import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
 import de.tum.in.www1.artemis.repository.DataExportRepository;
 import de.tum.in.www1.artemis.service.export.DataExportService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.DataExportDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RequestDataExportDTO;
 
@@ -41,9 +43,6 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @Autowired
     private DataExportRepository dataExportRepository;
-
-    @Autowired
-    private UserUtilService userUtilService;
 
     @Autowired
     private DataExportService dataExportService;

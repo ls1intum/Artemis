@@ -4,7 +4,6 @@ import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared
 import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-grid.component';
 import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
 import { CodeEditorFileBrowserFolderComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-folder.component';
-import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { CodeEditorFileBrowserDeleteComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-delete';
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { CodeEditorResolveConflictModalComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-resolve-conflict-modal.component';
@@ -23,6 +22,9 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TreeviewModule } from 'app/exercises/programming/shared/code-editor/treeview/treeview.module';
 import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
 import { CodeEditorFileBrowserBadgeComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-badge.component';
+import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
+import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @NgModule({
     imports: [
@@ -33,6 +35,8 @@ import { CodeEditorFileBrowserBadgeComponent } from 'app/exercises/programming/s
         TreeviewModule.forRoot(),
         ArtemisProgrammingExerciseInstructionsEditorModule,
         ArtemisProgrammingManualAssessmentModule,
+        MonacoEditorModule,
+        ArtemisSharedComponentModule,
     ],
     declarations: [
         CodeEditorGridComponent,
@@ -43,7 +47,6 @@ import { CodeEditorFileBrowserBadgeComponent } from 'app/exercises/programming/s
         CodeEditorFileBrowserFolderComponent,
         CodeEditorFileBrowserBadgeComponent,
         CodeEditorFileBrowserCreateNodeComponent,
-        CodeEditorAceComponent,
         CodeEditorBuildOutputComponent,
         CodeEditorInstructionsComponent,
         CodeEditorStatusComponent,
@@ -52,17 +55,18 @@ import { CodeEditorFileBrowserBadgeComponent } from 'app/exercises/programming/s
         CodeEditorConfirmRefreshModalComponent,
         CodeEditorContainerComponent,
         CodeEditorHeaderComponent,
+        CodeEditorMonacoComponent,
     ],
     exports: [
         CodeEditorGridComponent,
         CodeEditorRepositoryIsLockedComponent,
-        CodeEditorAceComponent,
         CodeEditorFileBrowserComponent,
         CodeEditorActionsComponent,
         CodeEditorInstructionsComponent,
         CodeEditorBuildOutputComponent,
         CodeEditorContainerComponent,
         CodeEditorHeaderComponent,
+        CodeEditorMonacoComponent,
     ],
     providers: [],
 })

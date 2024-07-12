@@ -102,6 +102,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
     });
 
     it('onInit success to call launch endpoint', () => {
+        jest.spyOn(comp, 'replaceWindowLocationWrapper').mockImplementation();
         const targetLink = window.location.host + '/targetLink';
         const httpStub = jest.spyOn(http, 'post').mockReturnValue(of({ targetLinkUri: targetLink, ltiIdToken: 'id-token', clientRegistrationId: 'client-id' }));
 
@@ -143,7 +144,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
     }));
 
     it('should redirect user to target link when user is already logged in', fakeAsync(() => {
-        window.location.replace = jest.fn();
+        jest.spyOn(comp, 'replaceWindowLocationWrapper').mockImplementation();
         jest.spyOn(comp, 'authenticateUserThenRedirect');
         jest.spyOn(comp, 'redirectUserToTargetLink');
         const loggedInUserUser: User = { id: 3, login: 'lti_user', firstName: 'TestUser', lastName: 'Moodle' } as User;
@@ -162,7 +163,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
     }));
 
     it('should redirect user to target link after user logged in', fakeAsync(() => {
-        window.location.replace = jest.fn();
+        jest.spyOn(comp, 'replaceWindowLocationWrapper').mockImplementation();
         jest.spyOn(comp, 'authenticateUserThenRedirect');
         jest.spyOn(comp, 'redirectUserToTargetLink');
         jest.spyOn(comp, 'redirectUserToLoginThenTargetLink');

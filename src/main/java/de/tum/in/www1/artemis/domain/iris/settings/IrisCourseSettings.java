@@ -1,6 +1,11 @@
 package de.tum.in.www1.artemis.domain.iris.settings;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -24,12 +29,12 @@ public class IrisCourseSettings extends IrisSettings {
     private IrisChatSubSettings irisChatSettings;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @JoinColumn(name = "iris_hestia_settings_id")
-    private IrisHestiaSubSettings irisHestiaSettings;
+    @JoinColumn(name = "iris_lecture_ingestion_settings_id")
+    private IrisLectureIngestionSubSettings irisLectureIngestionSettings;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @JoinColumn(name = "iris_code_editor_settings_id")
-    private IrisCodeEditorSubSettings irisCodeEditorSettings;
+    @JoinColumn(name = "iris_hestia_settings_id")
+    private IrisHestiaSubSettings irisHestiaSettings;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "iris_competency_generation_settings_id")
@@ -46,6 +51,16 @@ public class IrisCourseSettings extends IrisSettings {
 
     public void setCourse(Course course) {
         this.course = course;
+    }
+
+    @Override
+    public IrisLectureIngestionSubSettings getIrisLectureIngestionSettings() {
+        return irisLectureIngestionSettings;
+    }
+
+    @Override
+    public void setIrisLectureIngestionSettings(IrisLectureIngestionSubSettings irisLectureIngestionSettings) {
+        this.irisLectureIngestionSettings = irisLectureIngestionSettings;
     }
 
     @Override
@@ -66,16 +81,6 @@ public class IrisCourseSettings extends IrisSettings {
     @Override
     public void setIrisHestiaSettings(IrisHestiaSubSettings irisHestiaSettings) {
         this.irisHestiaSettings = irisHestiaSettings;
-    }
-
-    @Override
-    public IrisCodeEditorSubSettings getIrisCodeEditorSettings() {
-        return irisCodeEditorSettings;
-    }
-
-    @Override
-    public void setIrisCodeEditorSettings(IrisCodeEditorSubSettings irisCodeEditorSettings) {
-        this.irisCodeEditorSettings = irisCodeEditorSettings;
     }
 
     @Override

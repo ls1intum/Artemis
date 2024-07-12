@@ -275,7 +275,7 @@ e.g. it will look like this:
 Configure Artemis Resources
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 To run Artemis, you need to configure the Artemis' User Management, Version Control and Continuous Integration.
-You can either run it with Jira, Bitbucket, Bamboo or Jenkins, GitLab.
+You can either run it with our Integrated Code Lifecycle Setup or Jenkins, GitLab.
 Make sure to configure the ``src/main/resources/config/application-artemis.yml`` file with the proper configuration
 for User Management, Version Control and Continuous Integration.
 
@@ -283,8 +283,6 @@ You should skip setting the passwords and token since the Docker image that we a
 those secrets.
 You can refer to chapter ``Add/Edit Secrets`` for setting those values.
 
-If you want to configure Artemis with ``Bitbucket, Jira, Bamboo`` you can set a connection to existing staging or
-production deployments.
 If you want to configure Artemis with local user management and no programming exercises continue with
 ``Configure Local User Management``.
 
@@ -304,10 +302,6 @@ If you have created an additional ``application-local.yml`` file as it is descri
 
       data:
          artemis.user-management.use-external: "false"
-
-
-2. Remove the jira profile from the ``SPRING_PROFILES_ACTIVE`` field in the ConfigMap found at
-``src/main/kubernetes/artemis/configmap/artemis-configmap.yml``
 
 Now you can continue with the next step ``Build Artemis``
 
@@ -353,8 +347,8 @@ ConfigMaps are used to store configuration data in key-value pairs.
 
 You can change the current Spring profiles used for running Artemis in the
 ``src/main/kubernetes/artemis/configmap/artemis-configmap.yml`` file by changing ``SPRING_PROFILES_ACTIVE``.
-The current ones are set to use Bitbucket, Jira and Bamboo.
-If you want to use Jenkins and GitLab please replace ``bamboo,bitbucket,jira`` with ``jenkins,gitlab``.
+The current ones are set to use our Integrated Code Lifecycle Setup.
+If you want to use Jenkins and GitLab please replace ``localci,localvc`` with ``jenkins,gitlab``.
 You can also change ``prod`` to ``dev`` if you want to run in development profile.
 
 

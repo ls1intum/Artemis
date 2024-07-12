@@ -6,7 +6,11 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -18,10 +22,17 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.lecture.*;
+import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
+import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.domain.lecture.OnlineUnit;
+import de.tum.in.www1.artemis.domain.lecture.TextUnit;
+import de.tum.in.www1.artemis.domain.lecture.VideoUnit;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
+import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
+import de.tum.in.www1.artemis.service.connectors.pyris.PyrisWebhookService;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -35,10 +46,17 @@ public class LectureImportService {
 
     private final AttachmentRepository attachmentRepository;
 
-    public LectureImportService(LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository, AttachmentRepository attachmentRepository) {
+    private final Optional<PyrisWebhookService> pyrisWebhookService;
+
+    private final Optional<IrisSettingsRepository> irisSettingsRepository;
+
+    public LectureImportService(LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository, AttachmentRepository attachmentRepository,
+            Optional<PyrisWebhookService> pyrisWebhookService, Optional<IrisSettingsRepository> irisSettingsRepository) {
         this.lectureRepository = lectureRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.attachmentRepository = attachmentRepository;
+        this.pyrisWebhookService = pyrisWebhookService;
+        this.irisSettingsRepository = irisSettingsRepository;
     }
 
     /**
@@ -84,7 +102,11 @@ public class LectureImportService {
         }
         lecture.setAttachments(attachments);
         attachmentRepository.saveAll(attachments);
-
+        // Send lectures to pyris
+        if (pyrisWebhookService.isPresent() && irisSettingsRepository.isPresent()) {
+            pyrisWebhookService.get().autoUpdateAttachmentUnitsInPyris(lecture.getCourse().getId(),
+                    lectureUnits.stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit).map(lectureUnit -> (AttachmentUnit) lectureUnit).toList());
+        }
         // Save again to establish the ordered list relationship
         return lectureRepository.save(lecture);
     }
@@ -125,7 +147,6 @@ public class LectureImportService {
             attachment.setAttachmentUnit(attachmentUnit);
             attachmentRepository.save(attachment);
             attachmentUnit.setAttachment(attachment);
-
             return attachmentUnit;
         }
         else if (importedLectureUnit instanceof OnlineUnit importedOnlineUnit) {

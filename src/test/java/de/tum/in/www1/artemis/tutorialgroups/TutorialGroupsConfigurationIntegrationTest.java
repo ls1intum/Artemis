@@ -19,8 +19,8 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
-import de.tum.in.www1.artemis.domain.tutorialgroups.*;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
 import de.tum.in.www1.artemis.user.UserFactory;
 
 class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIntegrationTest {
@@ -32,6 +32,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
     private Long courseId;
 
     @BeforeEach
+    @Override
     void setupTestScenario() {
         super.setupTestScenario();
         userUtilService.addUsers(this.testPrefix, 1, 2, 1, 1);

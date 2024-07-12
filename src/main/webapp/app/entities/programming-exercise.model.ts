@@ -8,7 +8,7 @@ import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
-import { BuildLogStatisticsDTO } from 'app/exercises/programming/manage/build-log-statistics-dto';
+import { BuildLogStatisticsDTO } from 'app/entities/build-log-statistics-dto';
 
 export class BuildAction {
     name: string;
@@ -87,7 +87,6 @@ export class ProgrammingExercise extends Exercise {
     public templateParticipation?: TemplateProgrammingExerciseParticipation;
     public solutionParticipation?: SolutionProgrammingExerciseParticipation;
     public testRepositoryUri?: string;
-    public publishBuildPlanUrl?: boolean;
     public customizeBuildPlanWithAeolus?: boolean;
     public allowOnlineEditor?: boolean;
     public staticCodeAnalysisEnabled?: boolean;
@@ -135,7 +134,6 @@ export class ProgrammingExercise extends Exercise {
         this.exerciseGroup = exerciseGroup;
         this.templateParticipation = new TemplateProgrammingExerciseParticipation();
         this.solutionParticipation = new SolutionProgrammingExerciseParticipation();
-        this.publishBuildPlanUrl = false; // default value
         this.allowOnlineEditor = false; // default value
         this.staticCodeAnalysisEnabled = false; // default value
         this.allowOfflineIde = true; // default value

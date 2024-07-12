@@ -16,10 +16,16 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { isResultPreliminary } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { captureException } from '@sentry/angular-ivy';
+import { captureException } from '@sentry/angular';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
-import { isStudentParticipation } from 'app/exercises/shared/result/result.utils';
+import {
+    isAIResultAndFailed,
+    isAIResultAndIsBeingProcessed,
+    isAIResultAndProcessed,
+    isAIResultAndTimedOut,
+    isStudentParticipation,
+} from 'app/exercises/shared/result/result.utils';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
@@ -45,7 +51,7 @@ export class ResultService implements IResultService {
     private resultResourceUrl = 'api/results';
     private participationResourceUrl = 'api/participations';
 
-    private readonly maxValueProgrammingResultInts = 255; // Size of tinyInt in SQL, that is used to store these values
+    private readonly MAX_VALUE_PROGRAMMING_RESULT_INTS = 255; // Size of tinyInt in SQL, that is used to store these values
 
     constructor(
         private http: HttpClient,
@@ -124,12 +130,21 @@ export class ResultService implements IResultService {
         let buildAndTestMessage: string;
         if (result.submission && (result.submission as ProgrammingSubmission).buildFailed) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.buildFailed');
+        } else if (isAIResultAndFailed(result)) {
+            buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackFailed');
+        } else if (isAIResultAndIsBeingProcessed(result)) {
+            buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackInProgress');
+        } else if (isAIResultAndTimedOut(result)) {
+            buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackTimedOut');
+        } else if (isAIResultAndProcessed(result)) {
+            buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackSuccessful');
         } else if (!result.testCaseCount) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.buildSuccessfulNoTests');
         } else {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.buildSuccessfulTests', {
-                numberOfTestsPassed: result.passedTestCaseCount! >= this.maxValueProgrammingResultInts ? `${this.maxValueProgrammingResultInts}+` : result.passedTestCaseCount,
-                numberOfTestsTotal: result.testCaseCount! >= this.maxValueProgrammingResultInts ? `${this.maxValueProgrammingResultInts}+` : result.testCaseCount,
+                numberOfTestsPassed:
+                    result.passedTestCaseCount! >= this.MAX_VALUE_PROGRAMMING_RESULT_INTS ? `${this.MAX_VALUE_PROGRAMMING_RESULT_INTS}+` : result.passedTestCaseCount,
+                numberOfTestsTotal: result.testCaseCount! >= this.MAX_VALUE_PROGRAMMING_RESULT_INTS ? `${this.MAX_VALUE_PROGRAMMING_RESULT_INTS}+` : result.testCaseCount,
             });
         }
 
@@ -151,6 +166,9 @@ export class ResultService implements IResultService {
      * @param short flag that indicates if the resultString should use the short format
      */
     private getBaseResultStringProgrammingExercise(result: Result, relativeScore: number, points: number, buildAndTestMessage: string, short: boolean | undefined): string {
+        if (Result.isAthenaAIResult(result)) {
+            return buildAndTestMessage;
+        }
         if (short) {
             if (!result.testCaseCount) {
                 return this.translateService.instant('artemisApp.result.resultString.programmingShort', {
@@ -166,7 +184,7 @@ export class ResultService implements IResultService {
             return this.translateService.instant('artemisApp.result.resultString.programmingCodeIssues', {
                 relativeScore,
                 buildAndTestMessage,
-                numberOfIssues: result.codeIssueCount! >= this.maxValueProgrammingResultInts ? `${this.maxValueProgrammingResultInts}+` : result.codeIssueCount,
+                numberOfIssues: result.codeIssueCount! >= this.MAX_VALUE_PROGRAMMING_RESULT_INTS ? `${this.MAX_VALUE_PROGRAMMING_RESULT_INTS}+` : result.codeIssueCount,
                 points,
             });
         } else {
@@ -217,9 +235,11 @@ export class ResultService implements IResultService {
             res.body.forEach((resultWithPoints: ResultWithPointsPerGradingCriterion) => {
                 this.convertResultDatesFromServer(resultWithPoints.result);
                 const pointsMap = new Map<number, number>();
-                Object.keys(resultWithPoints.pointsPerCriterion).forEach((key) => {
-                    pointsMap.set(Number(key), resultWithPoints.pointsPerCriterion[key]);
-                });
+                if (resultWithPoints.pointsPerCriterion) {
+                    Object.keys(resultWithPoints.pointsPerCriterion).forEach((key) => {
+                        pointsMap.set(Number(key), resultWithPoints.pointsPerCriterion[key]);
+                    });
+                }
                 resultWithPoints.pointsPerCriterion = pointsMap;
             });
         }

@@ -11,7 +11,6 @@ import { SystemNotificationComponent } from 'app/shared/notification/system-noti
 import { ArtemisAppRoutingModule } from 'app/app-routing.module';
 import { JhiMainComponent } from 'app/shared/layouts/main/main.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisCoursesModule } from 'app/overview/courses.module';
 import { FooterComponent } from 'app/shared/layouts/footer/footer.component';
 import { ActiveMenuDirective } from 'app/shared/layouts/navbar/active-menu.directive';
 import { ErrorComponent } from 'app/shared/layouts/error/error.component';
@@ -27,6 +26,7 @@ import { ThemeModule } from 'app/core/theme/theme.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FaIconLibrary } from '@fortawesome/angular-fontawesome';
 import { artemisIconPack } from 'src/main/webapp/content/icons/icons';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 
 // NOTE: this module should only include the most important modules for normal users, all course management, admin and account functionality should be lazy loaded if possible
 @NgModule({
@@ -40,13 +40,13 @@ import { artemisIconPack } from 'src/main/webapp/content/icons/icons';
         ArtemisHomeModule,
         ArtemisAppRoutingModule,
         GuidedTourModule,
-        ArtemisCoursesModule,
         ArtemisSystemNotificationModule,
         ArtemisComplaintsModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         UserSettingsModule,
         ThemeModule,
         ArtemisSharedComponentModule,
+        ScrollingModule,
     ],
     declarations: [
         JhiMainComponent,

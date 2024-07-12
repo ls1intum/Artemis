@@ -35,7 +35,6 @@ import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.NotificationConstants;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
-import de.tum.in.www1.artemis.exception.ArtemisMailException;
 import de.tum.in.www1.artemis.service.TimeService;
 import tech.jhipster.config.JHipsterProperties;
 
@@ -133,7 +132,7 @@ public class MailService implements InstantNotificationService {
         }
         catch (MailException | MessagingException e) {
             log.error("Email could not be sent to user '{}'", recipient, e);
-            throw new ArtemisMailException("Email could not be sent to user", e);
+            // Note: we should not rethrow the exception here, as this would prevent sending out other emails in case multiple users are affected
         }
     }
 
@@ -246,7 +245,16 @@ public class MailService implements InstantNotificationService {
     @Override
     @Async
     public void sendNotification(Notification notification, Set<User> users, Object notificationSubject) {
-        users.forEach(user -> sendNotification(notification, user, notificationSubject));
+        // TODO: we should track how many emails could not be sent and notify the instructors in case of announcements or other important notifications
+        users.forEach(user -> {
+            try {
+                sendNotification(notification, user, notificationSubject);
+            }
+            catch (Exception ex) {
+                // Note: we should not rethrow the exception here, as this would prevent sending out other emails in case multiple users are affected
+                log.error("Error while sending notification email to user '{}'", user.getLogin(), ex);
+            }
+        });
     }
 
     /**
@@ -259,12 +267,14 @@ public class MailService implements InstantNotificationService {
     @Override
     public void sendNotification(Notification notification, User user, Object notificationSubject) {
         NotificationType notificationType = NotificationConstants.findCorrespondingNotificationType(notification.getTitle());
-        log.debug("Sending \"{}\" notification email to '{}'", notificationType.name(), user.getEmail());
+        log.debug("Sending '{}' notification email to '{}'", notificationType.name(), user.getEmail());
 
         String localeKey = user.getLangKey();
         if (localeKey == null) {
-            throw new IllegalArgumentException(
-                    "The user object has no language key defined. This can happen if you do not load the user object from the database but take it straight from the client");
+            log.error("The user '{}' object has no language key defined. This can happen if you do not load the user object from the database but take it straight from the client",
+                    user.getLogin());
+            // use the default locale
+            localeKey = "en";
         }
 
         Locale locale = Locale.forLanguageTag(localeKey);

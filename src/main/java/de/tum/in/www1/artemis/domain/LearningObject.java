@@ -11,7 +11,7 @@ public interface LearningObject {
     /**
      * Whether the participant has completed the object
      *
-     * @param user
+     * @param user the user to check
      * @return True if completed, else false
      */
     boolean isCompletedFor(User user);
@@ -19,7 +19,7 @@ public interface LearningObject {
     /**
      * Get the date when the object has been completed by the participant
      *
-     * @param user
+     * @param user the user to retrieve the date for
      * @return The datetime when the object was first completed or null
      */
     Optional<ZonedDateTime> getCompletionDate(User user);

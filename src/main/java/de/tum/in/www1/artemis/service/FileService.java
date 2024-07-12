@@ -1,18 +1,39 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -24,11 +45,11 @@ import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.disk.DiskFileItem;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
-import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -47,7 +68,7 @@ import de.tum.in.www1.artemis.service.util.CommonsMultipartFile;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
-@Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
+@Profile(PROFILE_CORE)
 @Service
 public class FileService implements DisposableBean {
 
@@ -88,24 +109,9 @@ public class FileService implements DisposableBean {
     public static final String PICTURE_FILE_SUBPATH = "/api/files/drag-and-drop/drag-items/";
 
     /**
-     * Filenames for which the template filename differs from the filename it should have in the repository.
-     */
-    // @formatter:off
-    private static final Map<String, String> FILENAME_REPLACEMENTS = Map.ofEntries(
-        Map.entry("git.ignore.file", ".gitignore"),
-        Map.entry("git.attributes.file", ".gitattributes"),
-        Map.entry("Makefile.file", "Makefile"),
-        Map.entry("dune.file", "dune"),
-        Map.entry("Fast.file", "Fastfile"),
-        Map.entry("App.file", "Appfile"),
-        Map.entry("Scan.file", "Scanfile"),
-        Map.entry("gradlew.file", "gradlew"));
-    // @formatter:on
-
-    /**
      * These directories get falsely marked as files and should be ignored during copying.
      */
-    private static final List<String> IGNORED_DIRECTORY_SUFFIXES = List.of(".xcassets", ".colorset", ".appiconset", ".xcworkspace", ".xcodeproj", ".swiftpm", ".tests");
+    private static final List<String> IGNORED_DIRECTORY_SUFFIXES = List.of(".xcassets", ".colorset", ".appiconset", ".xcworkspace", ".xcodeproj", ".swiftpm", ".tests", ".mvn");
 
     @Override
     public void destroy() {
@@ -204,6 +210,7 @@ public class FileService implements DisposableBean {
      * @param fullSanitizedPath the full path to save the file to
      * @return the path where the file was saved
      */
+    @NotNull
     public Path saveFile(MultipartFile file, Path fullSanitizedPath) {
         copyFile(file, fullSanitizedPath);
         return fullSanitizedPath;
@@ -399,8 +406,7 @@ public class FileService implements DisposableBean {
             filePath = Path.of(url);
         }
 
-        final Path targetPath = generateTargetPath(filePath, prefix, targetDirectory, keepParentDirectory);
-        return applyFilenameReplacements(targetPath);
+        return generateTargetPath(filePath, prefix, targetDirectory, keepParentDirectory);
     }
 
     /**
@@ -443,19 +449,6 @@ public class FileService implements DisposableBean {
         }
 
         return elements;
-    }
-
-    /**
-     * Replaces filenames where the template name differs from the name the file should have in the repository.
-     *
-     * @param originalTargetPath The path to a file.
-     * @return The path with replacements applied where necessary.
-     */
-    private Path applyFilenameReplacements(final Path originalTargetPath) {
-        final Path filename = originalTargetPath.getFileName();
-
-        final String newFilename = FILENAME_REPLACEMENTS.getOrDefault(filename.toString(), filename.toString());
-        return originalTargetPath.getParent().resolve(newFilename);
     }
 
     /**

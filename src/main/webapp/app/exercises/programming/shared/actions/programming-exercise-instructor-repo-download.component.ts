@@ -25,6 +25,9 @@ export class ProgrammingExerciseInstructorRepoDownloadComponent {
     auxiliaryRepositoryId: number;
 
     @Input()
+    buttonSize: ButtonSize = ButtonSize.SMALL;
+
+    @Input()
     title = 'artemisApp.programmingExercise.export.downloadRepo';
 
     // Icons
@@ -39,7 +42,7 @@ export class ProgrammingExerciseInstructorRepoDownloadComponent {
         if (this.exerciseId && this.repositoryType) {
             this.programmingExerciseService.exportInstructorRepository(this.exerciseId, this.repositoryType, this.auxiliaryRepositoryId).subscribe((response) => {
                 downloadZipFileFromResponse(response);
-                this.alertService.success('artemisApp.programmingExercise.export.successMessageRepos');
+                this.alertService.success('artemisApp.programmingExercise.export.successMessageRepo');
             });
         }
     }

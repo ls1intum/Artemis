@@ -2,7 +2,10 @@ package de.tum.in.www1.artemis.web.websocket.team;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import jakarta.annotation.Nullable;
 

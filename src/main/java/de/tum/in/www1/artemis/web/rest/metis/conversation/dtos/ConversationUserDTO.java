@@ -1,11 +1,14 @@
 package de.tum.in.www1.artemis.web.rest.metis.conversation.dtos;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 
 /**
  * Extension of the UserPublicInfoDTO with special flags for the conversation context
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ConversationUserDTO extends UserPublicInfoDTO {
 
     private Boolean isChannelModerator;

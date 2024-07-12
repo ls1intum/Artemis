@@ -10,14 +10,16 @@ process_windfile() {
   local _dirname=$(dirname "$file")
   local _tempfile=$(mktemp --tmpdir=".")
   cat "$file" > "$_tempfile"
-  echo "metadata:" >> "$_tempfile"
-  echo "  id: $_filename" >> "$_tempfile"
-  echo "  name: $_filename" >> "$_tempfile"
-  echo "  description: $_filename" >> "$_tempfile"
+  {
+    echo "metadata:"
+    echo "  id: $_filename"
+    echo "  name: $_filename"
+    echo "  description: $_filename"
+  } >> "$_tempfile"
   local _bashname="${_filename%.*}"
   local _newtempfile=$(mktemp --tmpdir=".")
   docker run --rm -v "./:/tmp" ghcr.io/ls1intum/aeolus/cli:nightly generate -t cli -i "/tmp/${_tempfile}" > "$_newtempfile"
-  diff "${_dirname}/${_bashname}.sh" "${_newtempfile}"
+  diff --ignore-blank-lines "${_dirname}/${_bashname}.sh" "${_newtempfile}"
   local _diff=$?
   if [[ $_diff -ne 0 ]]; then
     if [[ "${_regenerate}" -eq 0 ]]; then

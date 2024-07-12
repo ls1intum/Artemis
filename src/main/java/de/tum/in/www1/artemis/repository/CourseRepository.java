@@ -17,7 +17,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -32,6 +31,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -39,7 +39,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface CourseRepository extends JpaRepository<Course, Long> {
+public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
 
     @Query("""
             SELECT DISTINCT course.instructorGroupName
@@ -139,8 +139,14 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments" })
     Optional<Course> findWithEagerLecturesById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.attachments" })
-    Optional<Course> findWithEagerExercisesAndLecturesById(long courseId);
+    /**
+     * Returns an optional course by id with eagerly loaded exercises, plagiarism detection configuration, team assignment configuration, lectures and attachments.
+     *
+     * @param courseId The id of the course to find
+     * @return the populated course or an empty optional if no course was found
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.plagiarismDetectionConfig", "exercises.teamAssignmentConfig", "lectures", "lectures.attachments" })
+    Optional<Course> findWithEagerExercisesAndExerciseDetailsAndLecturesById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.lectureUnits", "lectures.attachments" })
     Optional<Course> findWithEagerLecturesAndLectureUnitsById(long courseId);
@@ -150,6 +156,9 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "lectures.attachments", "competencies", "prerequisites" })
     Optional<Course> findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(long courseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "lectures.attachments", "competencies", "prerequisites", "exams" })
+    Optional<Course> findWithEagerExercisesAndLecturesAndAttachmentsAndLectureUnitsAndCompetenciesAndExamsById(long courseId);
 
     @Query("""
             SELECT course
@@ -346,11 +355,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             """)
     Page<Course> findByTitleInCoursesWhereInstructorOrEditor(@Param("partialTitle") String partialTitle, @Param("groups") Set<String> groups, Pageable pageable);
 
-    @NotNull
-    default Course findByIdElseThrow(long courseId) throws EntityNotFoundException {
-        return findById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
-    }
-
     default Course findByIdWithEagerExercisesElseThrow(long courseId) throws EntityNotFoundException {
         return Optional.ofNullable(findWithEagerExercisesById(courseId)).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
@@ -438,9 +442,16 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
         }
     }
 
+    /**
+     * Returns a course by id with eagerly loaded exercises, plagiarism detection configuration, team assignment configuration, lectures and attachments.
+     *
+     * @param courseId The id of the course to find
+     * @return the populated course
+     * @throws EntityNotFoundException if no course was found
+     */
     @NotNull
-    default Course findByIdWithExercisesAndLecturesElseThrow(long courseId) {
-        return findWithEagerExercisesAndLecturesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    default Course findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(long courseId) {
+        return findWithEagerExercisesAndExerciseDetailsAndLecturesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     @NotNull
@@ -487,8 +498,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      * @return true if the messaging feature is enabled for the course, false otherwise
      */
     default boolean isMessagingEnabled(long courseId) {
-        return informationSharingConfigurationIsOneOf(courseId,
-                Set.of(CourseInformationSharingConfiguration.MESSAGING_ONLY, CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING));
+        return informationSharingConfigurationIsOneOf(courseId, Set.of(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING));
     }
 
     /**
@@ -497,9 +507,9 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      * @param courseId the id of the course
      * @return true if the communication feature is enabled for the course, false otherwise
      */
-    default boolean isMessagingOrCommunicationEnabled(long courseId) {
-        return informationSharingConfigurationIsOneOf(courseId, Set.of(CourseInformationSharingConfiguration.COMMUNICATION_ONLY,
-                CourseInformationSharingConfiguration.MESSAGING_ONLY, CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING));
+    default boolean isCommunicationEnabled(long courseId) {
+        return informationSharingConfigurationIsOneOf(courseId,
+                Set.of(CourseInformationSharingConfiguration.COMMUNICATION_ONLY, CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING));
     }
 
     /**

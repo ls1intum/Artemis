@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.service.connectors.aeolus;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.service.ProfileService;
@@ -39,7 +41,7 @@ public class AeolusBuildScriptGenerationService extends BuildScriptGenerationSer
     }
 
     @Override
-    public String getScript(ProgrammingExercise programmingExercise) {
+    public String getScript(ProgrammingExercise programmingExercise) throws JsonProcessingException {
         if (!profileService.isLocalCiActive()) {
             return null;
         }
@@ -48,11 +50,15 @@ public class AeolusBuildScriptGenerationService extends BuildScriptGenerationSer
             windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
         }
         if (windfile != null) {
-            windfile.setId("not-used");
-            windfile.setDescription("not-used");
-            windfile.setName("not-used");
+            WindfileMetadata oldMetadata = windfile.getMetadata();
+            // Creating a new instance of WindfileMetadata with placeholder values for id, name, and description,
+            // and copying the rest of the fields from oldMetadata
+            WindfileMetadata updatedMetadata = new WindfileMetadata("not-used", "not-used", "not-used", oldMetadata.author(), oldMetadata.gitCredentials(), oldMetadata.docker(),
+                    oldMetadata.resultHook(), oldMetadata.resultHookCredentials());
+            windfile.setMetadata(updatedMetadata);
             return aeolusBuildPlanService.generateBuildScript(windfile, AeolusTarget.CLI);
         }
         return null;
     }
+
 }

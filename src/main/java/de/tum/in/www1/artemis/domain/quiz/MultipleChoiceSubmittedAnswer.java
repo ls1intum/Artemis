@@ -5,7 +5,12 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.persistence.*;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -84,6 +89,7 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
      *
      * @param quizExercise the changed quizExercise-object
      */
+    @Override
     public void checkAndDeleteReferences(QuizExercise quizExercise) {
 
         if (!quizExercise.getQuizQuestions().contains(getQuizQuestion())) {

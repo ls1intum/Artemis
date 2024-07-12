@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -7,8 +7,9 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faEye, faFileExport, faListAlt, faSignal, faTable, faTrash, faUndo, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faClipboardCheck, faEye, faFileExport, faListAlt, faSignal, faTable, faTrash, faUndo, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { Subject } from 'rxjs';
+import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-quiz-exercise-manage-buttons',
@@ -24,6 +25,10 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
     readonly faTrash = faTrash;
     readonly faListAlt = faListAlt;
     readonly faUndo = faUndo;
+    readonly faClipboardCheck = faClipboardCheck;
+
+    readonly ButtonType = ButtonType;
+    readonly ButtonSize = ButtonSize;
 
     protected dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -33,6 +38,7 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
     isExamMode: boolean;
 
     baseUrl: string;
+    isEvaluatingQuizExercise: boolean;
 
     constructor(
         private quizExerciseService: QuizExerciseService,
@@ -72,7 +78,10 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
      * @param exportAll If true exports all questions, else exports only those whose export flag is true
      */
     exportQuizExercise(exportAll: boolean) {
-        this.quizExerciseService.exportQuiz(this.quizExercise.quizQuestions, exportAll, this.quizExercise.title);
+        this.quizExerciseService.find(this.quizExercise.id!).subscribe((response: HttpResponse<QuizExercise>) => {
+            const exercise = response.body!;
+            this.quizExerciseService.exportQuiz(exercise.quizQuestions, exportAll, exercise.title);
+        });
     }
 
     /**
@@ -109,6 +118,20 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
                 this.loadQuizExercises.emit();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
+    }
+
+    evaluateQuizExercise() {
+        this.isEvaluatingQuizExercise = true;
+        this.exerciseService.evaluateQuizExercise(this.quizExercise.id!).subscribe({
+            next: () => {
+                this.alertService.success('artemisApp.quizExercise.evaluateQuizExerciseSuccess');
+                this.isEvaluatingQuizExercise = false;
+            },
+            error: (error: HttpErrorResponse) => {
+                this.dialogErrorSource.next(error.message);
+                this.isEvaluatingQuizExercise = false;
+            },
         });
     }
 }

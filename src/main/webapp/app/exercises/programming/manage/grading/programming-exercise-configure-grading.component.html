@@ -125,7 +125,7 @@
                                         </span>
                                     </ng-template>
                                     <ng-template ngx-datatable-cell-template let-value="value">
-                                        <fa-icon [icon]="faSquare" [styles]="{ color: categoryColors[value] || 'white' }" class="me-2" />
+                                        <fa-icon [icon]="faSquare" [style.color]="categoryColors[value] || 'white'" class="me-2" />
                                         {{ value }}
                                     </ng-template>
                                 </ngx-datatable-column>

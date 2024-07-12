@@ -14,3 +14,20 @@ spring:
         loadbalancer:
             cache:
                 enabled: true
+
+management:
+    endpoint:
+        health:
+            show-details: when_authorized
+            roles: 'ROLE_ADMIN'
+            probes:
+                enabled: true
+        jhimetrics:
+            enabled: true
+    metrics:
+        enable:
+            http: true
+            jvm: true
+            logback: true
+            process: true
+            system: true

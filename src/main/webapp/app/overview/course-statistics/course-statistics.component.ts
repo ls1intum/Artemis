@@ -191,9 +191,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly barChartTitle = ChartBarTitle;
-    readonly chartHeight = 25;
-    readonly barPadding = 4;
-    readonly defaultSize = 50; // additional space for the x-axis and its labels
+    readonly CHART_HEIGHT = 25;
+    readonly BAR_PADDING = 4;
+    readonly DEFAULT_SIZE = 50; // additional space for the x-axis and its labels
 
     // array containing every non-empty exercise group
     ngxExerciseGroups = new Map<ExerciseType, NgxExercise[]>();
@@ -740,7 +740,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         Furthermore we have to take the bar padding between the bars into account
         Finally, we need to add space for the x-axis and its ticks
          */
-        return chartEntries * this.chartHeight + this.barPadding * (chartEntries - 1) + this.defaultSize;
+        return chartEntries * this.CHART_HEIGHT + this.BAR_PADDING * (chartEntries - 1) + this.DEFAULT_SIZE;
     }
 
     /**

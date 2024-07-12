@@ -91,7 +91,7 @@ export class CourseCommunicationPage {
      * @param search - The search term to use.
      */
     async searchForMessage(search: string) {
-        await this.page.locator('#search').fill(search);
+        await this.page.locator('input[name="searchText"]').fill(search);
         await this.page.locator('#search-submit').click();
     }
 
@@ -288,7 +288,7 @@ export class CourseCommunicationPage {
      */
     async checkResolved(postID: number) {
         const pageLocator = this.getSinglePost(postID);
-        const messageResolvedIcon = pageLocator.locator(`fa-icon[ng-reflect-ngb-tooltip='Message has been resolved']`);
+        const messageResolvedIcon = pageLocator.locator(`.svg-inline--fa.fa-square-check`);
         await expect(messageResolvedIcon).toBeVisible();
     }
 

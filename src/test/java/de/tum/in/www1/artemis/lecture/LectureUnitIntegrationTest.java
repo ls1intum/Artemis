@@ -3,7 +3,11 @@ package de.tum.in.www1.artemis.lecture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -14,24 +18,22 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.competency.CompetencyUtilService;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.lecture.*;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
+import de.tum.in.www1.artemis.domain.lecture.OnlineUnit;
+import de.tum.in.www1.artemis.domain.lecture.TextUnit;
+import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
+import de.tum.in.www1.artemis.repository.TextUnitRepository;
 import de.tum.in.www1.artemis.web.rest.dto.lectureunit.LectureUnitForLearningPathNodeDetailsDTO;
 
 class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "lectureunitintegration";
-
-    @Autowired
-    private CourseRepository courseRepository;
-
-    @Autowired
-    private UserRepository userRepo;
 
     @Autowired
     private TextUnitRepository textUnitRepository;
@@ -41,12 +43,6 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
     @Autowired
     private LectureUnitCompletionRepository lectureUnitCompletionRepository;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private LectureUtilService lectureUtilService;
@@ -66,7 +62,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 1);
-        Course course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
+        Course course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.get(0).getId());
         this.lecture1 = course1.getLectures().stream().findFirst().orElseThrow();
 
         // Add users that are not in the course
@@ -230,8 +226,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
         LectureUnit lectureUnit = this.lecture1.getLectureUnits().get(0);
 
         assertThat(lectureUnit.getCompletedUsers()).isNotEmpty();
-        assertThat(lectureUnit.isCompletedFor(userRepo.getUser())).isTrue();
-        assertThat(lectureUnit.getCompletionDate(userRepo.getUser())).isNotNull();
+        assertThat(lectureUnit.isCompletedFor(userRepository.getUser())).isTrue();
 
         // Set lecture unit as uncompleted for user
         request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().get(0).getId() + "/completion?completed=false", null,
@@ -241,8 +236,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
         lectureUnit = this.lecture1.getLectureUnits().get(0);
 
         assertThat(lectureUnit.getCompletedUsers()).isEmpty();
-        assertThat(lectureUnit.isCompletedFor(userRepo.getUser())).isFalse();
-        assertThat(lectureUnit.getCompletionDate(userRepo.getUser())).isEmpty();
+        assertThat(lectureUnit.isCompletedFor(userRepository.getUser())).isFalse();
     }
 
     @Test

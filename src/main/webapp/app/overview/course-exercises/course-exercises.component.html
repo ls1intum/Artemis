@@ -1,16 +1,16 @@
-<div class="d-flex justify-content-between gap-3">
+<div class="d-flex justify-content-between gap-3 horizontal-scroll">
     @if (course) {
         <div [ngClass]="{ 'sidebar-collapsed': isCollapsed }">
-            <jhi-sidebar [sidebarData]="sidebarData" />
+            <jhi-sidebar [itemSelected]="exerciseSelected" [courseId]="courseId" [sidebarData]="sidebarData" [collapseState]="DEFAULT_COLLAPSE_STATE" />
         </div>
 
         @if (exerciseSelected) {
-            <div class="vw-100 module-bg rounded-3 pb-3">
-                <router-outlet />
+            <div class="vw-100 module-bg rounded-3">
+                <router-outlet (deactivate)="onSubRouteDeactivate()" />
             </div>
         } @else {
-            <div class="vw-100 module-bg rounded-3 px-3 d-flex justify-content-between">
-                <div class="col-12 text-center my-auto">Please Select an Exercise.</div>
+            <div class="vw-100 module-bg rounded-3 p-3 d-flex justify-content-between">
+                <div class="col-12 text-center my-auto" jhiTranslate="artemisApp.courseOverview.exerciseDetails.selectExercise"></div>
             </div>
         }
     }

@@ -1,6 +1,12 @@
 package de.tum.in.www1.artemis.service.programming;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.config.Constants.BUILD_RUN_COMPLETE_FOR_PROGRAMMING_EXERCISE;
+import static de.tum.in.www1.artemis.config.Constants.BUILD_RUN_STARTED_FOR_PROGRAMMING_EXERCISE;
+import static de.tum.in.www1.artemis.config.Constants.EXERCISE_TOPIC_ROOT;
+import static de.tum.in.www1.artemis.config.Constants.NEW_SUBMISSION_TOPIC;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_TOPIC;
+import static de.tum.in.www1.artemis.config.Constants.TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION;
 
 import java.util.Optional;
 
@@ -9,8 +15,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.BuildRunState;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;

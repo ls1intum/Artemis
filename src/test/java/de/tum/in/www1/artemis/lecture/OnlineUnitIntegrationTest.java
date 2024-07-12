@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 
-import java.net.URL;
+import java.net.URI;
 import java.util.List;
 
 import org.jsoup.Connection;
@@ -26,7 +29,6 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.OnlineUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.OnlineUnitRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.OnlineResourceDTO;
 
 class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -38,9 +40,6 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest
 
     @Autowired
     private LectureRepository lectureRepository;
-
-    @Autowired
-    private UserUtilService userUtilService;
 
     @Autowired
     private LectureUtilService lectureUtilService;
@@ -205,14 +204,14 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest
         persistOnlineUnitWithLecture();
 
         this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
-        request.get("/api/lectures/" + "999" + "/online-units/" + this.onlineUnit.getId(), HttpStatus.BAD_REQUEST, OnlineUnit.class);
+        request.get("/api/lectures/999/online-units/" + this.onlineUnit.getId(), HttpStatus.BAD_REQUEST, OnlineUnit.class);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(strings = { "https://www.google.de", "HTTP://example.com:80?query=1" })
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void getOnlineResource(String link) throws Exception {
-        var url = new URL(link).toString();
+        var url = new URI(link).toURL().toString();
         var connectionMock = mock(Connection.class);
         jsoupMock.when(() -> Jsoup.connect(url)).thenReturn(connectionMock);
         when(connectionMock.timeout(anyInt())).thenReturn(connectionMock);

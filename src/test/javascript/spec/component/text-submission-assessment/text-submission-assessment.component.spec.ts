@@ -229,6 +229,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         fixture.detectChanges();
 
         const result = getLatestSubmissionResult(submission);
+        result!.assessmentNote = { id: 1, note: 'Note Text' };
         const textBlockRef = component.textBlockRefs[1];
         textBlockRef.initFeedback();
         textBlockRef.feedback!.detailText = 'my feedback';
@@ -244,29 +245,16 @@ describe('TextSubmissionAssessmentComponent', () => {
             result!.id!,
             [component.textBlockRefs[0].feedback!, textBlockRef.feedback!],
             [component.textBlockRefs[0].block!, textBlockRef.block!],
+            result?.assessmentNote!.note,
         );
         expect(handleFeedbackStub).toHaveBeenCalledOnce();
     });
 
-    it('should display error when saving but assessment invalid', async () => {
-        component.validateFeedback();
-        const alertService = TestBed.inject(AlertService);
-        const errorStub = jest.spyOn(alertService, 'error');
-
-        await component.ngOnInit();
-
-        component.save();
-        expect(errorStub).toHaveBeenCalledOnce();
-        expect(errorStub).toHaveBeenCalledWith('artemisApp.textAssessment.error.invalidAssessments');
-    });
-
     it('should display error when submitting but assessment invalid', async () => {
-        component.validateFeedback();
         const alertService = TestBed.inject(AlertService);
         const errorStub = jest.spyOn(alertService, 'error');
 
-        await component.ngOnInit();
-
+        component.assessmentsAreValid = false;
         component.submit();
 
         expect(errorStub).toHaveBeenCalledOnce();
@@ -329,6 +317,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         fixture.detectChanges();
 
         const result = getLatestSubmissionResult(submission);
+        result!.assessmentNote = { id: 1, note: 'Note Text' };
         const textBlockRef = component.textBlockRefs[1];
         textBlockRef.initFeedback();
         textBlockRef.feedback!.detailText = 'my feedback';
@@ -344,11 +333,13 @@ describe('TextSubmissionAssessmentComponent', () => {
             result!.id!,
             [component.textBlockRefs[0].feedback!, textBlockRef.feedback!],
             [component.textBlockRefs[0].block!, textBlockRef.block!],
+            result?.assessmentNote.note,
         );
     });
 
     it('should not submit if result was not saved', () => {
         const submitSpy = jest.spyOn(textAssessmentService, 'submit');
+        component.result!.id = undefined;
         component.submit();
         expect(submitSpy).not.toHaveBeenCalled();
     });
@@ -633,4 +624,21 @@ describe('TextSubmissionAssessmentComponent', () => {
         tick();
         expect(athenaServiceFeedbackSuggestionsSpy).not.toHaveBeenCalled();
     }));
+
+    it('should validate assessments on component init', async () => {
+        component.assessmentsAreValid = false;
+        await component.ngOnInit();
+        expect(component.assessmentsAreValid).toBeTrue();
+    });
+
+    it('should allow overriding directly after submitting', async () => {
+        component.isAssessor = true;
+        component.submit();
+        expect(component.canOverride).toBeTrue();
+    });
+
+    it('should not invalidate assessment after saving', async () => {
+        component.save();
+        expect(component.assessmentsAreValid).toBeTrue();
+    });
 });

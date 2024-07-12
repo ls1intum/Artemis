@@ -20,7 +20,7 @@ import { ExamDetailsPage } from './pageobjects/exam/ExamDetailsPage';
 import { ExamManagementPage } from './pageobjects/exam/ExamManagementPage';
 import { ExamExerciseGroupCreationPage } from './pageobjects/exam/ExamExerciseGroupCreationPage';
 import { ExamNavigationBar } from './pageobjects/exam/ExamNavigationBar';
-import { ExamParticipation } from './pageobjects/exam/ExamParticipation';
+import { ExamParticipationPage } from './pageobjects/exam/ExamParticipationPage';
 import { ExamStartEndPage } from './pageobjects/exam/ExamStartEndPage';
 import { CoursesPage } from './pageobjects/course/CoursesPage';
 import { ExamAssessmentPage } from './pageobjects/assessment/ExamAssessmentPage';
@@ -56,12 +56,24 @@ import { FileUploadExerciseCreationPage } from './pageobjects/exercises/file-upl
 import { FileUploadEditorPage } from './pageobjects/exercises/file-upload/FileUploadEditorPage';
 import { FileUploadExerciseAssessmentPage } from './pageobjects/assessment/FileUploadExerciseAssessmentPage';
 import { FileUploadExerciseFeedbackPage } from './pageobjects/exercises/file-upload/FileUploadExerciseFeedbackPage';
+import { ProgrammingExerciseOverviewPage } from './pageobjects/exercises/programming/ProgrammingExerciseOverviewPage';
+import { RepositoryPage } from './pageobjects/exercises/programming/RepositoryPage';
+import { ExamGradingPage } from './pageobjects/exam/ExamGradingPage';
+import { ExamScoresPage } from './pageobjects/exam/ExamScoresPage';
+import { ProgrammingExerciseParticipationsPage } from './pageobjects/exercises/programming/ProgrammingExerciseParticipationsPage';
+import { ExamResultsPage } from './pageobjects/exam/ExamResultsPage';
+import { ExerciseTeamsPage } from './pageobjects/exercises/ExerciseTeamsPage';
+import { QuizExerciseOverviewPage } from './pageobjects/exercises/quiz/QuizExerciseOverviewPage';
+import { QuizExerciseParticipationPage } from './pageobjects/exercises/quiz/QuizExerciseParticipationPage';
+import { ModalDialogBox } from './pageobjects/exam/ModalDialogBox';
+import { ExamParticipationActions } from './pageobjects/exam/ExamParticipationActions';
 
 /*
  * Define custom types for fixtures
  */
 export type ArtemisCommands = {
     login: (credentials: UserCredentials, url?: string) => Promise<void>;
+    waitForExerciseBuildToFinish: (exerciseId: number, interval?: number, timeout?: number) => Promise<void>;
 };
 
 export type ArtemisPageObjects = {
@@ -88,11 +100,16 @@ export type ArtemisPageObjects = {
     examDetails: ExamDetailsPage;
     examExerciseGroupCreation: ExamExerciseGroupCreationPage;
     examExerciseGroups: ExamExerciseGroupsPage;
+    examGrading: ExamGradingPage;
     examNavigation: ExamNavigationBar;
     examManagement: ExamManagementPage;
-    examParticipation: ExamParticipation;
+    examParticipation: ExamParticipationPage;
+    examParticipationActions: ExamParticipationActions;
+    examResultsPage: ExamResultsPage;
+    examScores: ExamScoresPage;
     examStartEnd: ExamStartEndPage;
     examTestRun: ExamTestRunPage;
+    modalDialog: ModalDialogBox;
     studentExamManagement: StudentExamManagementPage;
     fileUploadExerciseCreation: FileUploadExerciseCreationPage;
     fileUploadExerciseEditor: FileUploadEditorPage;
@@ -103,11 +120,16 @@ export type ArtemisPageObjects = {
     programmingExerciseCreation: ProgrammingExerciseCreationPage;
     programmingExerciseEditor: OnlineEditorPage;
     programmingExerciseFeedback: ProgrammingExerciseFeedbackPage;
+    programmingExerciseOverview: ProgrammingExerciseOverviewPage;
+    programmingExerciseParticipations: ProgrammingExerciseParticipationsPage;
+    programmingExerciseRepository: RepositoryPage;
     programmingExercisesScaConfig: CodeAnalysisGradingPage;
     programmingExerciseScaFeedback: ScaFeedbackModal;
     quizExerciseCreation: QuizExerciseCreationPage;
     quizExerciseDragAndDropQuiz: DragAndDropQuiz;
     quizExerciseMultipleChoice: MultipleChoiceQuiz;
+    quizExerciseOverview: QuizExerciseOverviewPage;
+    quizExerciseParticipation: QuizExerciseParticipationPage;
     quizExerciseShortAnswerQuiz: ShortAnswerQuiz;
     textExerciseCreation: TextExerciseCreationPage;
     textExerciseEditor: TextEditorPage;
@@ -115,6 +137,7 @@ export type ArtemisPageObjects = {
     textExerciseExampleSubmissionCreation: TextExerciseExampleSubmissionCreationPage;
     textExerciseFeedback: TextExerciseFeedbackPage;
     exerciseResult: ExerciseResultPage;
+    exerciseTeams: ExerciseTeamsPage;
 };
 
 export type ArtemisRequests = {
@@ -135,6 +158,11 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     login: async ({ page }, use) => {
         await use(async (credentials: UserCredentials, url?: string) => {
             await Commands.login(page, credentials, url);
+        });
+    },
+    waitForExerciseBuildToFinish: async ({ page, exerciseAPIRequests }, use) => {
+        await use(async (exerciseId: number, interval?, timeout?) => {
+            await Commands.waitForExerciseBuildToFinish(page, exerciseAPIRequests, exerciseId, interval, timeout);
         });
     },
     navigationBar: async ({ page }, use) => {
@@ -203,6 +231,9 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     examExerciseGroups: async ({ page }, use) => {
         await use(new ExamExerciseGroupsPage(page));
     },
+    examGrading: async ({ page }, use) => {
+        await use(new ExamGradingPage(page));
+    },
     examManagement: async ({ page }, use) => {
         await use(new ExamManagementPage(page));
     },
@@ -214,7 +245,7 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
         use,
     ) => {
         await use(
-            new ExamParticipation(
+            new ExamParticipationPage(
                 courseList,
                 courseOverview,
                 examNavigation,
@@ -227,11 +258,24 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
             ),
         );
     },
+    examParticipationActions: async ({ page }, use) => {
+        await use(new ExamParticipationActions(page));
+    },
+    examResultsPage: async ({ page }, use) => {
+        await use(new ExamResultsPage(page));
+    },
+    examScores: async ({ page }, use) => {
+        await use(new ExamScoresPage(page));
+    },
     examStartEnd: async ({ page }, use) => {
         await use(new ExamStartEndPage(page));
     },
+
     examTestRun: async ({ page, examStartEnd }, use) => {
         await use(new ExamTestRunPage(page, examStartEnd));
+    },
+    modalDialog: async ({ page }, use) => {
+        await use(new ModalDialogBox(page));
     },
     studentExamManagement: async ({ page }, use) => {
         await use(new StudentExamManagementPage(page));
@@ -257,11 +301,20 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     programmingExerciseCreation: async ({ page }, use) => {
         await use(new ProgrammingExerciseCreationPage(page));
     },
-    programmingExerciseEditor: async ({ page, courseList, courseOverview }, use) => {
-        await use(new OnlineEditorPage(page, courseList, courseOverview));
+    programmingExerciseEditor: async ({ page }, use) => {
+        await use(new OnlineEditorPage(page));
     },
     programmingExerciseFeedback: async ({ page }, use) => {
         await use(new ProgrammingExerciseFeedbackPage(page));
+    },
+    programmingExerciseOverview: async ({ page, courseList, courseOverview }, use) => {
+        await use(new ProgrammingExerciseOverviewPage(page, courseList, courseOverview));
+    },
+    programmingExerciseParticipations: async ({ page }, use) => {
+        await use(new ProgrammingExerciseParticipationsPage(page));
+    },
+    programmingExerciseRepository: async ({ page }, use) => {
+        await use(new RepositoryPage(page));
     },
     programmingExercisesScaConfig: async ({ page }, use) => {
         await use(new CodeAnalysisGradingPage(page));
@@ -277,6 +330,12 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     },
     quizExerciseMultipleChoice: async ({ page }, use) => {
         await use(new MultipleChoiceQuiz(page));
+    },
+    quizExerciseOverview: async ({ page }, use) => {
+        await use(new QuizExerciseOverviewPage(page));
+    },
+    quizExerciseParticipation: async ({ page }, use) => {
+        await use(new QuizExerciseParticipationPage(page));
     },
     quizExerciseShortAnswerQuiz: async ({ page }, use) => {
         await use(new ShortAnswerQuiz(page));
@@ -298,6 +357,9 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     },
     exerciseResult: async ({ page }, use) => {
         await use(new ExerciseResultPage(page));
+    },
+    exerciseTeams: async ({ page }, use) => {
+        await use(new ExerciseTeamsPage(page));
     },
     courseManagementAPIRequests: async ({ page }, use) => {
         await use(new CourseManagementAPIRequests(page));

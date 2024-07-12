@@ -49,9 +49,14 @@
         <div class="form-group">
             <div>
                 <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.preview.label"></label>
-                <jhi-help-icon text="artemisApp.programmingExercise.preview.tooltip" />
+                <jhi-help-icon [text]="isLocal ? 'artemisApp.programmingExercise.preview.tooltipLocalVC' : 'artemisApp.programmingExercise.preview.tooltip'" />
             </div>
-            <jhi-programming-exercise-plans-and-repositories-preview [programmingExercise]="programmingExercise" [isLocal]="isLocal" />
+            <jhi-programming-exercise-repository-and-build-plan-details
+                [programmingExercise]="programmingExercise"
+                [programmingLanguage]="programmingExerciseCreationConfig.selectedProgrammingLanguage"
+                [isLocal]="isLocal"
+                [checkoutSolutionRepository]="programmingExercise.checkoutSolutionRepository"
+            />
             @if (!programmingExerciseCreationConfig.isImportFromExistingExercise && programmingExerciseCreationConfig.auxiliaryRepositoriesSupported) {
                 <div class="form-group">
                     @if (programmingExercise.auxiliaryRepositories && programmingExercise.auxiliaryRepositories.length > 0) {
@@ -65,7 +70,7 @@
                             [rowHeight]="'auto'"
                             [rows]="programmingExercise.auxiliaryRepositories"
                         >
-                            <ngx-datatable-column name="Repository Name" prop="repositoryName">
+                            <ngx-datatable-column [name]="'artemisApp.programmingExercise.auxiliaryRepository.repositoryName' | artemisTranslate" prop="repositoryName">
                                 <ng-template ngx-datatable-cell-template let-row="row">
                                     <jhi-table-editable-field
                                         [id]="row.id + '-repositoryName'"
@@ -77,7 +82,7 @@
                                     />
                                 </ng-template>
                             </ngx-datatable-column>
-                            <ngx-datatable-column name="Checkout Directory" prop="checkoutDirectory">
+                            <ngx-datatable-column [name]="'artemisApp.programmingExercise.auxiliaryRepository.checkoutDirectory' | artemisTranslate" prop="checkoutDirectory">
                                 <ng-template ngx-datatable-cell-template let-row="row">
                                     <jhi-table-editable-field
                                         [id]="row.id + '-checkoutDirectory'"
@@ -88,7 +93,7 @@
                                     />
                                 </ng-template>
                             </ngx-datatable-column>
-                            <ngx-datatable-column name="Description" prop="description">
+                            <ngx-datatable-column [name]="'artemisApp.programmingExercise.auxiliaryRepository.description' | artemisTranslate" prop="description">
                                 <ng-template ngx-datatable-cell-template let-row="row">
                                     <textarea class="form-control table-editable-field__input me-2" [id]="row.id + '-description'" [(ngModel)]="row.description" name="description">
                                     </textarea>
@@ -110,16 +115,16 @@
                     @if (programmingExerciseCreationConfig.auxiliaryRepositoryDuplicateNames || programmingExerciseCreationConfig.auxiliaryRepositoryDuplicateDirectories) {
                         <ngb-alert [dismissible]="false" [type]="'danger'">
                             @if (programmingExerciseCreationConfig.auxiliaryRepositoryDuplicateNames) {
-                                <span>{{ 'artemisApp.programmingExercise.auxiliaryRepository.duplicateRepositoryNames' | artemisTranslate }}</span>
+                                <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.duplicateRepositoryNames"></span>
                             }
                             @if (programmingExerciseCreationConfig.auxiliaryRepositoryDuplicateDirectories) {
-                                <span>{{ 'artemisApp.programmingExercise.auxiliaryRepository.duplicateDirectoryNames' | artemisTranslate }}</span>
+                                <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.duplicateDirectoryNames"></span>
                             }
                         </ngb-alert>
                     }
                     @if (programmingExerciseCreationConfig && !isLocal) {
                         <ngb-alert [dismissible]="false" [type]="'info'">
-                            <span>{{ 'artemisApp.programmingExercise.auxiliaryRepository.warning' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.warning"></span>
                         </ngb-alert>
                     }
                     <jhi-add-auxiliary-repository-button
@@ -127,28 +132,12 @@
                         (onRefresh)="programmingExerciseCreationConfig.refreshAuxiliaryRepositoryChecks()"
                         class="ml-2"
                     />
+                    <jhi-help-icon text="artemisApp.programmingExercise.auxiliaryRepository.usageDescription" />
                 </div>
             }
         </div>
     }
     <div class="form-group">
-        <!-- Setting whether the solution repository should be checked out is only supported for Haskell exercises and is only available for new exercises -->
-        @if (!programmingExercise.id && programmingExercise.programmingLanguage && programmingExerciseCreationConfig.checkoutSolutionRepositoryAllowed) {
-            <div class="form-check">
-                <label class="form-check-label" for="field_checkoutSolutionRepository">
-                    <input
-                        #checkoutSolutionRepository="ngModel"
-                        class="form-check-input"
-                        type="checkbox"
-                        name="checkoutSolutionRepository"
-                        id="field_checkoutSolutionRepository"
-                        [(ngModel)]="programmingExercise.checkoutSolutionRepository"
-                    />
-                    <span jhiTranslate="artemisApp.programmingExercise.checkoutSolutionRepository.title"></span>
-                    <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.checkoutSolutionRepository.description" />
-                </label>
-            </div>
-        }
         @if (programmingExerciseCreationConfig.isImportFromExistingExercise) {
             <div class="form-check">
                 <label class="form-check-label" for="field_recreateBuildPlans">

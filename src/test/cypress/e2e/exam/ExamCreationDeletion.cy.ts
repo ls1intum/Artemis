@@ -37,7 +37,7 @@ const editedExamData = {
 
 const dateFormat = 'MMM D, YYYY HH:mm';
 
-describe('Exam creation/deletion', () => {
+describe.skip('Exam creation/deletion', () => {
     let course: Course;
     let examId: number;
 

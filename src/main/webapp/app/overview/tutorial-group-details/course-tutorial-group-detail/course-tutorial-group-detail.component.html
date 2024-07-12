@@ -1,7 +1,7 @@
-<jhi-loading-indicator-container [isLoading]="isLoading">
+<jhi-loading-indicator-container [isLoading]="(isLoading$ | async) ?? false">
     <div class="row justify-content-center">
         @if (tutorialGroup && course) {
-            <div class="col-12">
+            <div class="col-12 p-3 scrollable-content" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
                 <jhi-tutorial-group-detail [tutorialGroup]="tutorialGroup" [course]="course" />
             </div>
         }

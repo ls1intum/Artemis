@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.athena;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,12 +15,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.exception.NetworkingException;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -53,6 +56,7 @@ public class AthenaModuleService {
         this.exerciseRepository = exerciseRepository;
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private record AthenaModuleDTO(String name, String type) {
     }
 
@@ -78,35 +82,24 @@ public class AthenaModuleService {
     }
 
     /**
-     * Get all available Athena programming modules for a specific course.
+     * Get all available Athena modules for a specific course and exercise type
      *
-     * @param course The course for which the modules should be retrieved
+     * @param course       The course for which the modules should be retrieved
+     * @param exerciseType The exercise type for which the modules should be retrieved
      * @return The list of available Athena text modules for the course
      * @throws NetworkingException is thrown in case the modules can't be fetched from Athena
      */
-    public List<String> getAthenaProgrammingModulesForCourse(Course course) throws NetworkingException {
-        List<String> availableProgrammingModules = getAthenaModules().stream().filter(module -> "programming".equals(module.type)).map(module -> module.name).toList();
-        if (!course.getRestrictedAthenaModulesAccess()) {
-            // filter out restricted modules
-            availableProgrammingModules = availableProgrammingModules.stream().filter(moduleName -> !restrictedModules.contains(moduleName)).toList();
-        }
-        return availableProgrammingModules;
-    }
+    public List<String> getAthenaModulesForCourse(Course course, ExerciseType exerciseType) throws NetworkingException {
 
-    /**
-     * Get all available Athena text modules for a specific course.
-     *
-     * @param course The course for which the modules should be retrieved
-     * @return The list of available Athena text modules for the course
-     * @throws NetworkingException is thrown in case the modules can't be fetched from Athena
-     */
-    public List<String> getAthenaTextModulesForCourse(Course course) throws NetworkingException {
-        List<String> availableTextModules = getAthenaModules().stream().filter(module -> "text".equals(module.type)).map(module -> module.name).toList();
+        final String exerciseTypeName = exerciseType.getExerciseTypeAsReadableString();
+
+        Stream<String> availableModules = getAthenaModules().stream().filter(module -> exerciseTypeName.equals(module.type)).map(module -> module.name);
+
         if (!course.getRestrictedAthenaModulesAccess()) {
             // filter out restricted modules
-            availableTextModules = availableTextModules.stream().filter(moduleName -> !restrictedModules.contains(moduleName)).toList();
+            availableModules = availableModules.filter(moduleName -> !restrictedModules.contains(moduleName));
         }
-        return availableTextModules;
+        return availableModules.toList();
     }
 
     /**
@@ -122,6 +115,9 @@ public class AthenaModuleService {
             }
             case PROGRAMMING -> {
                 return athenaUrl + "/modules/programming/" + exercise.getFeedbackSuggestionModule();
+            }
+            case MODELING -> {
+                return athenaUrl + "/modules/modeling/" + exercise.getFeedbackSuggestionModule();
             }
             default -> throw new IllegalArgumentException("Exercise type not supported: " + exercise.getExerciseType());
         }

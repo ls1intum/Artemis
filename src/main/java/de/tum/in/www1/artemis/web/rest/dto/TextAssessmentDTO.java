@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -13,6 +16,8 @@ public class TextAssessmentDTO {
     private Set<TextBlock> textBlocks = new HashSet<>();
 
     private List<Feedback> feedbacks = new ArrayList<>();
+
+    private String assessmentNote;
 
     public TextAssessmentDTO() {
         // needed to make Jackson happy
@@ -36,5 +41,13 @@ public class TextAssessmentDTO {
 
     public void setFeedbacks(List<Feedback> feedbacks) {
         this.feedbacks = feedbacks;
+    }
+
+    public String getAssessmentNote() {
+        return assessmentNote;
+    }
+
+    public void setAssessmentNote(String assessmentNote) {
+        this.assessmentNote = assessmentNote;
     }
 }

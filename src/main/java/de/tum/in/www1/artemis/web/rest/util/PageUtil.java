@@ -64,6 +64,11 @@ public class PageUtil {
         STUDENT_PARTICIPATION(Map.of(
             "ID", "id",
             "STUDENT_NAME", "student.firstName"
+        )),
+        BUILD_JOB(Map.of(
+            "id", "id",
+            "name", "name",
+            "build_completion_date", "buildCompletionDate"
         ));
         // @formatter:on
 

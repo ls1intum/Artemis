@@ -1,0 +1,32 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group 'de.tum.in.www1.artemis'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+evaluationDependsOn(':')
+
+dependencies {
+    implementation rootProject.ext.qDoxVersionReusable
+    implementation rootProject.ext.springBootStarterWeb
+}
+
+test {
+    useJUnitPlatform()
+}
+
+application {
+    mainClassName = 'de.tum.cit.endpointanalysis.AnalysisOfEndpointConnections'
+}
+
+run {
+    if (project.hasProperty('appArgs')) {
+        args = project.appArgs.split(' ')
+    }
+}

@@ -10,14 +10,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -44,17 +44,25 @@ public class AeolusTemplateService {
 
     private final BuildScriptProviderService buildScriptProviderService;
 
+    private static final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
+
     public AeolusTemplateService(ProgrammingLanguageConfiguration programmingLanguageConfiguration, ResourceLoaderService resourceLoaderService,
             BuildScriptProviderService buildScriptProviderService) {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
         this.resourceLoaderService = resourceLoaderService;
         this.buildScriptProviderService = buildScriptProviderService;
-        // load all scripts into the cache
-        cacheOnBoot();
     }
 
-    private void cacheOnBoot() {
-        var resources = this.resourceLoaderService.getResources(Path.of("templates", "aeolus"));
+    /**
+     * Loads all YAML scripts from the "templates/aeolus" directory into the cache when the application is ready.
+     *
+     * <p>
+     * Scripts are read, processed, and stored in the {@code templateCache}. Errors during loading are logged.
+     */
+    @EventListener(ApplicationReadyEvent.class)
+    public void cacheOnBoot() {
+        // load all scripts into the cache
+        var resources = this.resourceLoaderService.getFileResources(Path.of("templates", "aeolus"));
         for (var resource : resources) {
             try {
                 String filename = resource.getFilename();
@@ -77,31 +85,30 @@ public class AeolusTemplateService {
     }
 
     /**
-     * Converts a YAML string to a JSON string for easier communication with the client and usage with Gson
+     * Reads a YAML representation of a Windfile from a string and deserializes it into a {@link Windfile} object.
+     * This method leverages the Jackson {@code ObjectMapper} configured with {@code YAMLFactory} to parse
+     * the YAML content directly. It registers a custom deserializer for handling instances of {@link Action}
+     * to accommodate polymorphic deserialization based on the specific fields present in the YAML content.
      *
-     * @param yaml YAML string
-     * @return JSON string
-     */
-    private static String convertYamlToJson(String yaml) throws JsonProcessingException {
-        ObjectMapper yamlReader = new ObjectMapper(new YAMLFactory());
-        Object obj = yamlReader.readValue(yaml, Object.class);
-
-        ObjectMapper jsonWriter = new ObjectMapper();
-        return jsonWriter.writeValueAsString(obj);
-    }
-
-    /**
-     * Reads the yaml file and returns a Windfile object
+     * <p>
+     * The method supports the dynamic instantiation of {@code Action} subclasses based on the content
+     * of the YAML, enabling the flexible representation of different types of actions within the serialized
+     * data. For instance, it can differentiate between {@code ScriptAction} and {@code PlatformAction}
+     * based on specific identifying fields in the YAML structure.
+     * </p>
      *
-     * @param yaml the yaml file
-     * @return the Windfile object
-     * @throws IOException if the yaml file is not valid
+     * @param yaml The YAML string that represents the content of a Windfile.
+     * @return A {@link Windfile} object deserialized from the provided YAML string.
+     * @throws IOException If there is an error reading the YAML content or if the YAML is not
+     *                         valid according to the Windfile structure or the custom action types expected.
+     *                         This includes scenarios where the YAML content cannot be parsed or
+     *                         does not match the expected schema.
      */
     private static Windfile readWindfile(String yaml) throws IOException {
-        GsonBuilder builder = new GsonBuilder();
-        builder.registerTypeAdapter(Action.class, new ActionDeserializer());
-        Gson gson = builder.create();
-        return gson.fromJson(convertYamlToJson(yaml), Windfile.class);
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(Action.class, new ActionDeserializer());
+        yamlMapper.registerModule(module);
+        return yamlMapper.readValue(yaml, Windfile.class);
     }
 
     /**
@@ -173,32 +180,32 @@ public class AeolusTemplateService {
     }
 
     /**
-     * We take the template and add the default docker image and flags for the programming language and project type
-     * of the artemis instance. This way, an Artemis admin can change the docker image and flags for the particular
-     * instance without having to change the template file.
+     * Enhances a given {@code Windfile} instance by configuring its Docker settings based on the specified programming
+     * language and project type. This method allows for dynamic configuration of Docker settings for Artemis instances,
+     * enabling administrators to specify custom Docker images and flags without altering the core template.
+     * <p>
+     * If the project type is Xcode, which does not support Docker, the Docker configuration is explicitly set to {@code null}.
      *
-     * @param windfile    the template file
-     * @param language    the programming language
-     * @param projectType the project type
+     * @param windfile    the Windfile template to be updated with Docker configuration
+     * @param language    the programming language used, which determines the Docker image and flags
+     * @param projectType an optional specifying the project type; influences the Docker configuration
      */
     private void addInstanceVariablesToWindfile(Windfile windfile, ProgrammingLanguage language, Optional<ProjectType> projectType) {
 
-        if (windfile.getMetadata() == null) {
-            windfile.setMetadata(new WindfileMetadata());
+        WindfileMetadata metadata = windfile.getMetadata();
+        if (metadata == null) {
+            metadata = new WindfileMetadata();
         }
         if (projectType.isPresent() && ProjectType.XCODE.equals(projectType.get())) {
             // xcode does not support docker
-            windfile.getMetadata().setDocker(null);
+            metadata = new WindfileMetadata();
+            windfile.setMetadata(metadata);
             return;
         }
-        if (windfile.getMetadata().getDocker() == null) {
-            windfile.getMetadata().setDocker(new DockerConfig());
-        }
-        WindfileMetadata metadata = windfile.getMetadata();
-        DockerConfig dockerConfig = windfile.getMetadata().getDocker();
-        dockerConfig.setImage(programmingLanguageConfiguration.getImage(language, projectType));
-        dockerConfig.setParameters(programmingLanguageConfiguration.getDefaultDockerFlags());
-        metadata.setDocker(dockerConfig);
+        String image = programmingLanguageConfiguration.getImage(language, projectType);
+        DockerConfig dockerConfig = new DockerConfig(image, null, null, programmingLanguageConfiguration.getDefaultDockerFlags());
+        metadata = new WindfileMetadata(metadata.name(), metadata.id(), metadata.description(), metadata.author(), metadata.gitCredentials(), dockerConfig, metadata.resultHook(),
+                metadata.resultHookCredentials());
         windfile.setMetadata(metadata);
     }
 }

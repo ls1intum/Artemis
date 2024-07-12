@@ -11,7 +11,7 @@ import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
-import { Course, isMessagingOrCommunicationEnabled } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
@@ -84,7 +84,11 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
 
                 this.course = data.course;
                 this.exam.course = data.course;
-                this.hideChannelNameInput = (!!exam.id && !exam.channelName) || !isMessagingOrCommunicationEnabled(this.course);
+
+                if (!this.exam.startText) {
+                    this.exam.startText = this.examDefaultStartText;
+                }
+                this.hideChannelNameInput = (!!exam.id && !exam.channelName) || !isCommunicationEnabled(this.course);
             });
     }
 
@@ -105,6 +109,14 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      */
     get workingTimeInMinutes(): number {
         return this.exam.workingTime ? this.exam.workingTime / 60 : 0;
+    }
+
+    /**
+     * Returns the exma working time in minutes, rounded to one decimal place.
+     * Used for display purposes.
+     */
+    get workingTimeInMinutesRounded(): number {
+        return Math.round(this.workingTimeInMinutes * 10) / 10;
     }
 
     get oldWorkingTime(): number | undefined {
@@ -133,6 +145,24 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
         this.exam.workingTime = examWorkingTime(this.exam) ?? 0;
     }
 
+    onExamModeChange() {
+        if (this.exam.testExam) {
+            // Preserve the rounded value
+            this.exam.examWithAttendanceCheck = false;
+            this.roundWorkingTime();
+        } else {
+            // Otherwise, the working time should depend on the dates as usual
+            this.updateExamWorkingTime();
+        }
+    }
+
+    /**
+     * Rounds the working time of the exam in minutes such that it only has one decimal place.
+     */
+    roundWorkingTime() {
+        this.workingTimeInMinutes = this.workingTimeInMinutesRounded;
+    }
+
     /**
      * Returns the maximum working time in minutes for test exams.
      */
@@ -140,7 +170,8 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
         if (!this.exam.testExam) return 0;
 
         if (this.exam.startDate && this.exam.endDate) {
-            return dayjs(this.exam.endDate).diff(this.exam.startDate, 'm');
+            // This considers decimal places as well.
+            return dayjs(this.exam.endDate).diff(this.exam.startDate, 'm', true);
         } else {
             // In case of an import, the exam.workingTime is imported, but the start / end date are deleted -> no error should be shown to the user in this case
             return this.isImport ? this.workingTimeInMinutes : 0;
@@ -250,7 +281,8 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     }
 
     get isValidConfiguration(): boolean {
-        const examConductionDatesValid = this.isValidVisibleDate && this.isValidStartDate && this.isValidEndDate;
+        const examConductionDatesValid =
+            this.isVisibleDateSet && this.isStartDateSet && this.isValidStartDate && this.isEndDateSet && this.isValidEndDate && this.isValidVisibleDateValue;
         const examReviewDatesValid = this.isValidPublishResultsDate && this.isValidExamStudentReviewStart && this.isValidExamStudentReviewEnd;
         const examNumberOfCorrectionsValid = this.isValidNumberOfCorrectionRounds;
         const examMaxPointsValid = this.isValidMaxPoints;
@@ -266,8 +298,22 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
         );
     }
 
-    get isValidVisibleDate(): boolean {
+    /**
+     * Returns a boolean indicating whether the exam's visible date is set.
+     *
+     * @returns {boolean} `true` if the exam's visible date is set, `false` otherwise.
+     */
+    get isVisibleDateSet(): boolean {
         return !!this.exam.visibleDate;
+    }
+
+    /**
+     * Checks if the visible date of the exam is valid.
+     *
+     * @returns {boolean} `true` if the visible date is valid, `false` otherwise.
+     */
+    get isValidVisibleDateValue(): boolean {
+        return dayjs(this.exam.visibleDate).isValid();
     }
 
     get isValidNumberOfCorrectionRounds(): boolean {
@@ -284,25 +330,65 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Returns a boolean indicating whether the exam's start date is set.
+     *
+     * @returns {boolean} `true` if the exam's start date is set, `false` otherwise.
+     */
+    get isStartDateSet(): boolean {
+        return !!this.exam.startDate;
+    }
+
+    /**
+     * Checks if the start date of the exam is valid.
+     *
+     * @returns {boolean} `true` if the start date is valid, `false` otherwise.
+     */
+    get isValidStartDateValue(): boolean {
+        return dayjs(this.exam.startDate).isValid();
+    }
+
+    /**
      * Validates the given StartDate.
      * For real exams, the visibleDate has to be strictly prior the startDate.
      * For test exams, the visibleDate has to be prior or equal to the startDate.
      */
     get isValidStartDate(): boolean {
-        if (!this.exam.startDate) return false;
-
-        if (this.exam.testExam) {
-            return dayjs(this.exam.startDate).isSameOrAfter(this.exam.visibleDate);
-        } else {
-            return dayjs(this.exam.startDate).isAfter(this.exam.visibleDate);
+        if (this.isVisibleDateSet && this.isValidVisibleDateValue) {
+            if (this.exam.testExam) {
+                return dayjs(this.exam.startDate).isSameOrAfter(this.exam.visibleDate);
+            } else {
+                return dayjs(this.exam.startDate).isAfter(this.exam.visibleDate);
+            }
         }
+        return true;
+    }
+
+    /**
+     * Returns a boolean indicating whether the exam's end date is set.
+     *
+     * @returns {boolean} `true` if the exam's end date is set, `false` otherwise.
+     */
+    get isEndDateSet(): boolean {
+        return !!this.exam.endDate;
+    }
+
+    /**
+     * Checks if the end date of the exam is valid.
+     *
+     * @returns {boolean} `true` if the end date is valid, `false` otherwise.
+     */
+    get isValidEndDateValue(): boolean {
+        return dayjs(this.exam.endDate).isValid();
     }
 
     /**
      * Validates the EndDate inputted by the user.
      */
     get isValidEndDate(): boolean {
-        return !!this.exam.endDate && dayjs(this.exam.endDate).isAfter(this.exam.startDate);
+        if (this.isStartDateSet && this.isValidStartDateValue) {
+            return dayjs(this.exam.endDate).isAfter(this.exam.startDate);
+        }
+        return true;
     }
 
     /**
@@ -362,6 +448,32 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
         return !(
             dayjs(this.exam.exampleSolutionPublicationDate).isBefore(this.exam.visibleDate || null) ||
             dayjs(this.exam.exampleSolutionPublicationDate).isBefore(this.exam.endDate || null)
+        );
+    }
+    /**
+     * Default exam start text, which can be edited by instructors in the text editor
+     */
+    get examDefaultStartText(): string {
+        const warningForInstructionsText = '<!-- Please adapt this text for your exam -->\n\n';
+        const readCarefullyText = "<span class='fw-bold'>Please read the following information carefully!</span>\n\n";
+        const workOnYourOwnText =
+            "You must work on the exam on your own. You <span class='fw-bold text-primary'>must not</span>, in any way, get support from someone else (in person, chat, forum, discussion group, artificial intelligence, etc.) Doing so is classified as <span class='fw-bold text-primary'>cheating</span> (\"Unterschleif\") and leads to consequences as mentioned in the APSO (\"Allgemeine Prüfungs- und Studienordnung\"). In particular, the corresponding module in TUMonline will be marked as <span class='fw-bold text-primary'>failed (w. cheating)</span>, and you will only be allowed to try to pass the module in one final attempt (cf. APSO §24).\n\n";
+        const checkForPlagiarismText =
+            "All your submissions will be checked for plagiarism. You are <span class='fw-bold text-primary'>not allowed</span> to copy code from any external sources, including books, websites, or other students. Any instance of copying will be classified as plagiarism.\n\n";
+        const programmingSubmissionText =
+            "Note that results in programming exercises only indicate whether your submission compiles or not. No actual tests will be run against your submission. All actual tests will be executed after the exam is over. You can only get points for programming exercises if your submission compiles. <span class='fw-bold text-primary'>Compile errors will result in 0 points</span>.\n\n";
+        const submissionPeriodText = `The submission period will close <span><!--Enter your grace period here--> seconds</span> following the official end of the exam to compensate for potential technical problems. We encourage you to upload your submissions regularly and early. <span class='fw-bold text-primary'>Only your final submission will be graded and late submission will not be accepted</span>.\n\n`;
+
+        const workingInstructionText =
+            `<div class="fw-bold">Working instructions:</div>\n` +
+            `<ul>\n` +
+            `  <li><span class='fw-bold text-primary'>Important</span>: Before you start solving an exercise, read the problem statement carefully.</li>\n` +
+            `  <li>The exam consists of <span class='fw-bold text-primary'><!--Enter your number of points here--> points</span> and is <span class='fw-bold text-primary'><!--Enter your working time here--> minutes</span> long. Use the amount of points to determine the appropriate working time for one exercise.</li>\n` +
+            `  <li>It is <span class='fw-bold text-primary'>not</span> allowed to use any artificial intelligence to solve exercises of the exam. In particular the use of OpenAI, ChatGPT, GitHub Copilot, or any similar systems is <span class='fw-bold text-primary'>forbidden</span>!</li>\n` +
+            `</ul>\n`;
+
+        return (
+            warningForInstructionsText + readCarefullyText + workOnYourOwnText + checkForPlagiarismText + programmingSubmissionText + submissionPeriodText + workingInstructionText
         );
     }
 }

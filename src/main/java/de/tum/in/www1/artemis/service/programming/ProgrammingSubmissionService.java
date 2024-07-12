@@ -371,7 +371,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * See <a href="https://github.com/ls1intum/Artemis/pull/712#discussion_r314944129">discussion</a>
      * <p>
      * Worst case scenario when using this method:
-     * 1) Student executes a submission, the build is created on Bamboo
+     * 1) Student executes a submission, the build is created on CI system
      * 2) The build takes longer than 2 minutes, this enables the student to trigger the submission again
      * 3) A new submission with the same commitHash is created on the server, there are now 2 submissions for the same commitHash and 2 running builds
      * 4) The first build returns a result to Artemis, this result is now attached to the second submission (that was just created)

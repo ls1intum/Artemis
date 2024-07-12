@@ -1,7 +1,16 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Competency, CompetencyProgress, CompetencyRelation, CompetencyRelationDTO, CompetencyWithTailRelationDTO, CourseCompetencyProgress } from 'app/entities/competency.model';
+import {
+    Competency,
+    CompetencyImportResponseDTO,
+    CompetencyJol,
+    CompetencyProgress,
+    CompetencyRelation,
+    CompetencyRelationDTO,
+    CompetencyWithTailRelationDTO,
+    CourseCompetencyProgress,
+} from 'app/entities/competency.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { map, tap } from 'rxjs/operators';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
@@ -12,6 +21,17 @@ import { CompetencyPageableSearch, SearchResult } from 'app/shared/table/pageabl
 
 type EntityResponseType = HttpResponse<Competency>;
 type EntityArrayResponseType = HttpResponse<Competency[]>;
+
+type CompetencyJolReponseType = HttpResponse<{
+    current: CompetencyJol;
+    prior?: CompetencyJol;
+}>;
+type CompetencyJolMapReponseType = HttpResponse<{
+    [key: number]: {
+        current: CompetencyJol;
+        prior?: CompetencyJol;
+    };
+}>;
 
 @Injectable({
     providedIn: 'root',
@@ -25,6 +45,7 @@ export class CompetencyService {
         private lectureUnitService: LectureUnitService,
         private accountService: AccountService,
     ) {}
+
     getForImport(pageable: CompetencyPageableSearch) {
         const params = this.createCompetencySearchHttpParams(pageable);
         return this.httpClient
@@ -37,6 +58,30 @@ export class CompetencyService {
             map((res: EntityArrayResponseType) => CompetencyService.convertArrayResponseDatesFromServer(res)),
             tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
         );
+    }
+
+    /**
+     * Sets the judgment of learning for a competency.
+     *
+     * @param courseId The ID of the course.
+     * @param competencyId The ID of the competency.
+     * @param jolValue The judgment of learning value.
+     * @returns An Observable of the HTTP response.
+     */
+    setJudgementOfLearning(courseId: number, competencyId: number, jolValue: number): Observable<HttpResponse<void>> {
+        return this.httpClient.put<void>(`${this.resourceURL}/courses/${courseId}/competencies/${competencyId}/jol/${jolValue}`, null, { observe: 'response' });
+    }
+
+    /**
+     * Retrieves the judgement of learning (JoL) values for all competencies of a specified course.
+     *
+     * @param courseId the id of the course for which the JoL values should be fetched
+     * @return an Observable of HttpResponse containing a map from competency id to current (and prior) JoL value
+     */
+    getJoLAllForCourse(courseId: number): Observable<CompetencyJolMapReponseType> {
+        return this.httpClient
+            .get<{ [key: number]: { current: CompetencyJol; prior?: CompetencyJol } }>(`${this.resourceURL}/courses/${courseId}/competencies/jol`, { observe: 'response' })
+            .pipe(map((res: CompetencyJolMapReponseType) => res));
     }
 
     getProgress(competencyId: number, courseId: number, refresh = false) {
@@ -62,6 +107,19 @@ export class CompetencyService {
                 return res;
             }),
         );
+    }
+
+    /**
+     * Retrieves the judgement of learning (JoL) value for a specific competency in a course.
+     *
+     * @param courseId the id of the course for which the competency belongs
+     * @param competencyId the id of the competency for which to get the JoL value
+     * @return an Observable of HttpResponse containing the current (and prior) JoL value or null if not set
+     */
+    getJoL(courseId: number, competencyId: number): Observable<CompetencyJolReponseType> {
+        return this.httpClient
+            .get<{ current: CompetencyJol; prior?: CompetencyJol }>(`${this.resourceURL}/courses/${courseId}/competencies/${competencyId}/jol`, { observe: 'response' })
+            .pipe(map((res: CompetencyJolReponseType) => res));
     }
 
     create(competency: Competency, courseId: number): Observable<EntityResponseType> {
@@ -104,24 +162,14 @@ export class CompetencyService {
         });
     }
 
+    importStandardizedCompetencies(competencyIdsToImport: number[], courseId: number) {
+        return this.httpClient.post<Array<CompetencyImportResponseDTO>>(`${this.resourceURL}/courses/${courseId}/competencies/import-standardized`, competencyIdsToImport, {
+            observe: 'response',
+        });
+    }
+
     generateCompetenciesFromCourseDescription(courseDescription: string, courseId: number): Observable<EntityArrayResponseType> {
         return this.httpClient.post<Competency[]>(`${this.resourceURL}/courses/${courseId}/competencies/generate-from-description`, courseDescription, { observe: 'response' });
-    }
-
-    //prerequisites
-
-    getAllPrerequisitesForCourse(courseId: number): Observable<EntityArrayResponseType> {
-        return this.httpClient
-            .get<Competency[]>(`${this.resourceURL}/courses/${courseId}/prerequisites`, { observe: 'response' })
-            .pipe(tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))));
-    }
-
-    addPrerequisite(competencyId: number, courseId: number): Observable<EntityResponseType> {
-        return this.httpClient.post(`${this.resourceURL}/courses/${courseId}/prerequisites/${competencyId}`, null, { observe: 'response' });
-    }
-
-    removePrerequisite(competencyId: number, courseId: number) {
-        return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/prerequisites/${competencyId}`, { observe: 'response' });
     }
 
     //relations
@@ -140,6 +188,12 @@ export class CompetencyService {
 
     removeCompetencyRelation(competencyRelationId: number, courseId: number) {
         return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/competencies/relations/${competencyRelationId}`, {
+            observe: 'response',
+        });
+    }
+
+    getCourseCompetencyTitles(courseId: number) {
+        return this.httpClient.get<string[]>(`${this.resourceURL}/courses/${courseId}/competencies/titles`, {
             observe: 'response',
         });
     }

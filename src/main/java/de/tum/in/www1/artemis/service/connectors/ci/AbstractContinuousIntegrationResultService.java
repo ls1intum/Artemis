@@ -4,12 +4,15 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.function.Predicate;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.BuildLogEntry;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.BuildLogEntryService;
+import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.BuildJobDTOInterface;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
@@ -17,13 +20,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseFeedbackCre
 
 public abstract class AbstractContinuousIntegrationResultService implements ContinuousIntegrationResultService {
 
-    protected final ProgrammingSubmissionRepository programmingSubmissionRepository;
-
-    protected final FeedbackRepository feedbackRepository;
-
     protected final ProgrammingExerciseTestCaseRepository testCaseRepository;
-
-    protected final BuildLogEntryService buildLogService;
 
     protected final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
@@ -31,13 +28,10 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
 
     protected final ProgrammingExerciseFeedbackCreationService feedbackCreationService;
 
-    protected AbstractContinuousIntegrationResultService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository,
-            ProgrammingExerciseTestCaseRepository testCaseRepository, BuildLogEntryService buildLogService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
-            TestwiseCoverageService testwiseCoverageService, ProgrammingExerciseFeedbackCreationService feedbackCreationService) {
-        this.programmingSubmissionRepository = programmingSubmissionRepository;
-        this.feedbackRepository = feedbackRepository;
+    protected AbstractContinuousIntegrationResultService(ProgrammingExerciseTestCaseRepository testCaseRepository,
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService,
+            ProgrammingExerciseFeedbackCreationService feedbackCreationService) {
         this.testCaseRepository = testCaseRepository;
-        this.buildLogService = buildLogService;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
         this.testwiseCoverageService = testwiseCoverageService;
         this.feedbackCreationService = feedbackCreationService;

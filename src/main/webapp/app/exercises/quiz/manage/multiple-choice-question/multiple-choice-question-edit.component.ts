@@ -62,7 +62,7 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
     faAngleDown = faAngleDown;
     faQuestionCircle = faQuestionCircle;
 
-    readonly maxPoints = MAX_QUIZ_QUESTION_POINTS;
+    readonly MAX_POINTS = MAX_QUIZ_QUESTION_POINTS;
 
     constructor(
         private artemisMarkdown: ArtemisMarkdownService,

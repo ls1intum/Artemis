@@ -8,6 +8,7 @@
 
 package org.eclipse.jgit.http.server;
 
+import java.io.Serial;
 import java.util.Enumeration;
 import org.eclipse.jgit.http.server.glue.MetaServlet;
 import org.eclipse.jgit.http.server.resolver.AsIsFileService;
@@ -57,6 +58,7 @@ import jakarta.servlet.http.HttpServletRequest;
  */
 public class GitServlet extends MetaServlet {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final GitFilter gitFilter;

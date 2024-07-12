@@ -5,7 +5,7 @@
     <div class="modal-body">
         <div class="form-group-narrow">
             <label class="form-control-label" jhiTranslate="artemisApp.apollonDiagram.title" for="field_diagram_title"></label>
-            <input #titleInput type="text" class="form-control" name="title" id="field_diagram_title" [(ngModel)]="apollonDiagram.title" />
+            <input #titleInput required type="text" class="form-control" name="title" id="field_diagram_title" [(ngModel)]="apollonDiagram.title" />
         </div>
         <div class="form-group-narrow">
             <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.diagramType" for="field_diagramType"></label>
@@ -25,13 +25,12 @@
         </div>
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="dismiss()">
-            <fa-icon [icon]="faBan" />&nbsp;
+        <button type="button" class="btn btn-outline-primary" data-dismiss="modal" (click)="dismiss()">
             <span jhiTranslate="entity.action.cancel"></span>
         </button>
         <button id="save-dnd-quiz" type="submit" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
             <fa-icon [icon]="faSave" />&nbsp;
-            <span jhiTranslate="entity.action.save"></span>
+            <span jhiTranslate="global.generic.create"></span>
         </button>
     </div>
 </form>

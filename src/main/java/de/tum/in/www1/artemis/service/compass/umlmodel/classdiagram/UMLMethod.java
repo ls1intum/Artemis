@@ -30,7 +30,7 @@ public class UMLMethod extends UMLElement implements Serializable {
      * empty constructor used to make mockito happy
      */
     public UMLMethod() {
-        super();
+        // default empty constructor
     }
 
     public UMLMethod(String completeName, String name, String returnType, List<String> parameters, String jsonElementID) {
@@ -48,6 +48,7 @@ public class UMLMethod extends UMLElement implements Serializable {
      * @return the UML class that contains this method
      */
     @NotNull
+    @Override
     public UMLElement getParentElement() {
         return parentElement;
     }
@@ -57,6 +58,7 @@ public class UMLMethod extends UMLElement implements Serializable {
      *
      * @param parentElement the UML class that contains this method
      */
+    @Override
     public void setParentElement(@NotNull UMLElement parentElement) {
         this.parentElement = parentElement;
     }

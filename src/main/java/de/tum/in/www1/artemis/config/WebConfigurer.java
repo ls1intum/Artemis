@@ -52,10 +52,10 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
     @Override
     public void onStartup(ServletContext servletContext) {
         if (env.getActiveProfiles().length != 0) {
-            log.info("Web application configuration, using profiles: {}", (Object[]) env.getActiveProfiles());
+            log.debug("Web application configuration, using profiles: {}", (Object[]) env.getActiveProfiles());
         }
         setCachingHttpHeaders(servletContext);
-        log.info("Web application fully configured");
+        log.debug("Web application fully configured");
     }
 
     /**

@@ -1,8 +1,11 @@
 package de.tum.in.www1.artemis.service.notifications;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.CONVERSATION_NEW_MESSAGE;
 import static de.tum.in.www1.artemis.domain.notification.ConversationNotificationFactory.createConversationMessageNotification;
-import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.NEW_MESSAGE_CHANNEL_TEXT;
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.NEW_MESSAGE_DIRECT_TEXT;
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.NEW_MESSAGE_GROUP_CHAT_TEXT;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -18,6 +21,7 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
 import de.tum.in.www1.artemis.domain.notification.ConversationNotification;
+import de.tum.in.www1.artemis.domain.notification.NotificationPlaceholderCreator;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory;
 import de.tum.in.www1.artemis.repository.SingleUserNotificationRepository;
@@ -55,29 +59,35 @@ public class ConversationNotificationService {
     public ConversationNotification createNotification(Post createdMessage, Conversation conversation, Course course, Set<User> mentionedUsers) {
         String notificationText;
         String[] placeholders;
-        NotificationType notificationType = NotificationType.CONVERSATION_NEW_MESSAGE;
+        NotificationType notificationType = CONVERSATION_NEW_MESSAGE;
         String conversationName = conversation.getHumanReadableNameForReceiver(createdMessage.getAuthor());
 
         // add channel/groupChat/oneToOneChat string to placeholders for notification to distinguish in mobile client
         if (conversation instanceof Channel channel) {
             notificationText = NEW_MESSAGE_CHANNEL_TEXT;
-            placeholders = new String[] { course.getTitle(), createdMessage.getContent(), createdMessage.getCreationDate().toString(), channel.getName(),
-                    createdMessage.getAuthor().getName(), "channel" };
+            placeholders = createPlaceholdersNewMessageChannelText(course.getTitle(), createdMessage.getContent(), createdMessage.getCreationDate().toString(),
+                    createdMessage.getAuthor().getName(), conversationName, "channel");
             notificationType = getNotificationTypeForChannel(channel);
         }
         else if (conversation instanceof GroupChat) {
             notificationText = NEW_MESSAGE_GROUP_CHAT_TEXT;
-            placeholders = new String[] { course.getTitle(), createdMessage.getContent(), createdMessage.getCreationDate().toString(), createdMessage.getAuthor().getName(),
-                    conversationName, "groupChat" };
+            placeholders = createPlaceholdersNewMessageChannelText(course.getTitle(), createdMessage.getContent(), createdMessage.getCreationDate().toString(),
+                    createdMessage.getAuthor().getName(), conversationName, "groupChat");
         }
         else {
             notificationText = NEW_MESSAGE_DIRECT_TEXT;
-            placeholders = new String[] { course.getTitle(), createdMessage.getContent(), createdMessage.getCreationDate().toString(), createdMessage.getAuthor().getName(),
-                    conversationName, "oneToOneChat" };
+            placeholders = createPlaceholdersNewMessageChannelText(course.getTitle(), createdMessage.getContent(), createdMessage.getCreationDate().toString(),
+                    createdMessage.getAuthor().getName(), conversationName, "oneToOneChat");
         }
         ConversationNotification notification = createConversationMessageNotification(course.getId(), createdMessage, notificationType, notificationText, true, placeholders);
         save(notification, mentionedUsers, placeholders);
         return notification;
+    }
+
+    @NotificationPlaceholderCreator(values = { CONVERSATION_NEW_MESSAGE })
+    public static String[] createPlaceholdersNewMessageChannelText(String courseTitle, String messageContent, String messageCreationDate, String channelName, String authorName,
+            String conversationType) {
+        return new String[] { courseTitle, messageContent, messageCreationDate, channelName, authorName, conversationType };
     }
 
     private void save(ConversationNotification notification, Set<User> mentionedUsers, String[] placeHolders) {
@@ -128,6 +138,6 @@ public class ConversationNotificationService {
         else if (channel.getIsCourseWide()) {
             return NotificationType.NEW_COURSE_POST;
         }
-        return NotificationType.CONVERSATION_NEW_MESSAGE;
+        return CONVERSATION_NEW_MESSAGE;
     }
 }

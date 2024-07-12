@@ -155,7 +155,7 @@ public class ExamSubmissionService {
 
         List<StudentParticipation> participations = participationService.findByExerciseAndStudentIdWithEagerSubmissions(exercise, user.getId());
         if (!participations.isEmpty()) {
-            Set<Submission> submissions = participations.get(0).getSubmissions();
+            Set<Submission> submissions = participations.getFirst().getSubmissions();
             if (!submissions.isEmpty()) {
                 Submission existingSubmission = submissions.iterator().next();
                 // Instead of creating a new submission, we want to overwrite the already existing submission. Therefore

@@ -1,15 +1,22 @@
 package de.tum.in.www1.artemis.assessment;
 
-import java.util.ArrayList;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Complaint;
+import de.tum.in.www1.artemis.domain.ComplaintResponse;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.web.rest.dto.AssessmentUpdateDTO;
 
 /**
  * Service responsible for initializing the database with specific testdata related to complaints for use in integration tests.
@@ -136,7 +143,7 @@ public class ComplaintUtilService {
      * @param tutorLogin login of the tutor responding to the complaint.
      * @return an assessment update with the complaint response.
      */
-    public AssessmentUpdate createComplaintAndResponse(Result textResult, String tutorLogin) {
+    public AssessmentUpdateDTO createComplaintAndResponse(Result textResult, String tutorLogin) {
         Complaint complaint = new Complaint().result(textResult).complaintText("This is not fair");
         complaintRepo.save(complaint);
         complaint.getResult().setParticipation(null); // Break infinite reference chain
@@ -144,6 +151,6 @@ public class ComplaintUtilService {
         ComplaintResponse complaintResponse = createInitialEmptyResponse(tutorLogin, complaint);
         complaintResponse.getComplaint().setAccepted(false);
         complaintResponse.setResponseText("rejected");
-        return new AssessmentUpdate().feedbacks(new ArrayList<>()).complaintResponse(complaintResponse);
+        return new AssessmentUpdateDTO(null, complaintResponse, null);
     }
 }

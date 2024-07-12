@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -48,6 +49,8 @@ import org.springframework.stereotype.Service;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CopyArchiveFromContainerCmd;
+import com.github.dockerjava.api.command.InspectImageCmd;
+import com.github.dockerjava.api.command.InspectImageResponse;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
@@ -90,6 +93,8 @@ public class LocalVCLocalCITestService {
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
+
+    private final int DEFAULT_AWAITILITY_TIMEOUT_IN_SECONDS = 10;
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCLocalCITestService.class);
 
@@ -142,6 +147,21 @@ public class LocalVCLocalCITestService {
      */
     public void mockTestResults(DockerClient dockerClient, List<Path> mockedTestResultsPaths, String testResultsPath) throws IOException {
         mockInputStreamReturnedFromContainer(dockerClient, testResultsPath, createMapFromMultipleTestResultFolders(mockedTestResultsPaths));
+    }
+
+    /**
+     * Mocks the inspection of the image returned by dockerClient.inspectImageCmd(String imageId).exec().
+     * The mocked image inspection will have the architecture "amd64" to pass the check in LocalCIBuildService.
+     *
+     * @param dockerClient the DockerClient to mock.
+     */
+    public void mockInspectImage(DockerClient dockerClient) {
+        InspectImageResponse inspectImageResponse = new InspectImageResponse();
+        inspectImageResponse.withArch("amd64");
+
+        InspectImageCmd inspectImageCmd = mock(InspectImageCmd.class);
+        doReturn(inspectImageCmd).when(dockerClient).inspectImageCmd(anyString());
+        doReturn(inspectImageResponse).when(inspectImageCmd).exec();
     }
 
     /**
@@ -527,11 +547,13 @@ public class LocalVCLocalCITestService {
      * @param buildFailed                     whether the build should have failed or not.
      * @param isStaticCodeAnalysisEnabled     whether static code analysis is enabled for the exercise.
      * @param expectedCodeIssueCount          the expected number of code issues (only relevant if static code analysis is enabled).
+     * @param timeoutInSeconds                the maximum time to wait for the result to be persisted. If null, the default timeout of 10s is used.
      */
     public void testLatestSubmission(Long participationId, String expectedCommitHash, int expectedSuccessfulTestCaseCount, boolean buildFailed, boolean isStaticCodeAnalysisEnabled,
-            int expectedCodeIssueCount) {
+            int expectedCodeIssueCount, Integer timeoutInSeconds) {
         // wait for result to be persisted
-        await().until(() -> resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participationId).isPresent());
+        Duration timeoutDuration = timeoutInSeconds != null ? Duration.ofSeconds(timeoutInSeconds) : Duration.ofSeconds(DEFAULT_AWAITILITY_TIMEOUT_IN_SECONDS);
+        await().atMost(timeoutDuration).until(() -> resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participationId).isPresent());
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId);
@@ -564,7 +586,7 @@ public class LocalVCLocalCITestService {
     }
 
     public void testLatestSubmission(Long participationId, String expectedCommitHash, int expectedSuccessfulTestCaseCount, boolean buildFailed) {
-        testLatestSubmission(participationId, expectedCommitHash, expectedSuccessfulTestCaseCount, buildFailed, false, 0);
+        testLatestSubmission(participationId, expectedCommitHash, expectedSuccessfulTestCaseCount, buildFailed, false, 0, null);
     }
 
     /**
@@ -611,11 +633,11 @@ public class LocalVCLocalCITestService {
      * @param localVCBasePath     the base path for the local repositories taken from the artemis.version-control.local-vcs-repo-path environment variable.
      */
     public void verifyRepositoryFoldersExist(ProgrammingExercise programmingExercise, String localVCBasePath) {
-        LocalVCRepositoryUri templateRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getTemplateRepositoryUri(), localVCBaseUrl);
+        LocalVCRepositoryUri templateRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getTemplateRepositoryUri());
         assertThat(templateRepositoryUri.getLocalRepositoryPath(localVCBasePath)).exists();
-        LocalVCRepositoryUri solutionRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getSolutionRepositoryUri(), localVCBaseUrl);
+        LocalVCRepositoryUri solutionRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getSolutionRepositoryUri());
         assertThat(solutionRepositoryUri.getLocalRepositoryPath(localVCBasePath)).exists();
-        LocalVCRepositoryUri testsRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getTestRepositoryUri(), localVCBaseUrl);
+        LocalVCRepositoryUri testsRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getTestRepositoryUri());
         assertThat(testsRepositoryUri.getLocalRepositoryPath(localVCBasePath)).exists();
     }
 }

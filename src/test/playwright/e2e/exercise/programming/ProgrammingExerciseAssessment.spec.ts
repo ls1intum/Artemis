@@ -8,6 +8,7 @@ import { admin, instructor, studentOne, tutor } from '../../../support/users';
 import { test } from '../../../support/fixtures';
 import { Participation } from 'app/entities/participation/participation.model';
 import { expect } from '@playwright/test';
+import javaPartiallySuccessfulSubmission from '../../../fixtures/exercise/programming/java/partially_successful/submission.json';
 
 // Common primitives
 const tutorFeedback = 'You are missing some classes! The classes, which you implemented look good though.';
@@ -28,8 +29,8 @@ test.describe('Programming exercise assessment', () => {
         await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
         await courseManagementAPIRequests.addTutorToCourse(course, tutor);
         await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
-        dueDate = dayjs().add(25, 'seconds');
-        assessmentDueDate = dueDate.add(30, 'seconds');
+        dueDate = dayjs().add(15, 'seconds');
+        assessmentDueDate = dueDate.add(20, 'seconds');
         exercise = await exerciseAPIRequests.createProgrammingExercise({
             course,
             recordTestwiseCoverage: false,
@@ -41,7 +42,7 @@ test.describe('Programming exercise assessment', () => {
         await login(studentOne);
         const response = await exerciseAPIRequests.startExerciseParticipation(exercise.id!);
         const participation: Participation = await response.json();
-        await exerciseAPIRequests.makeProgrammingExerciseSubmission(participation.id!);
+        await exerciseAPIRequests.makeProgrammingExerciseSubmission(participation.id!, javaPartiallySuccessfulSubmission);
         const now = dayjs();
         if (now.isBefore(dueDate)) {
             await page.waitForTimeout(dueDate.diff(now, 'ms'));
@@ -77,7 +78,7 @@ test.describe('Programming exercise assessment', () => {
         }
 
         // Verify assessment as student
-        await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
+        await login(studentOne, `/courses/${course.id!}/exercises/${exercise.id!}`);
         const totalPoints = tutorFeedbackPoints + tutorCodeFeedbackPoints;
         const percentage = totalPoints * 10;
         await exerciseResult.shouldShowExerciseTitle(exercise.title!);

@@ -12,7 +12,7 @@ public class UMLObjectMethod extends UMLMethod {
      * empty constructor used to make mockito happy
      */
     public UMLObjectMethod() {
-        super();
+        // default empty constructor
     }
 
     public UMLObjectMethod(String completeName, String name, String returnType, List<String> parameters, String jsonElementID) {

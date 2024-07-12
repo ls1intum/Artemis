@@ -96,7 +96,7 @@
             class="btn btn-warning"
             (click)="openModal(archiveWarningPopup)"
         >
-            <fa-icon [hidden]="!isBeingArchived" [spin]="true" [icon]="faCircleNotch" />
+            <fa-icon [hidden]="!isBeingArchived" animation="spin" [icon]="faCircleNotch" />
             <fa-icon [hidden]="isBeingArchived" [icon]="faArchive" />&nbsp;
             <span>{{ archiveButtonText }}</span>
         </button>

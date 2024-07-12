@@ -1,15 +1,26 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.parsers.v3;
 
-import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.*;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_ID;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_NAME;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_TYPE;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.STEREOTYPE_NAME;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentRelationship;
-import de.tum.in.www1.artemis.service.compass.umlmodel.deployment.*;
+import de.tum.in.www1.artemis.service.compass.umlmodel.deployment.UMLArtifact;
+import de.tum.in.www1.artemis.service.compass.umlmodel.deployment.UMLDeploymentComponent;
+import de.tum.in.www1.artemis.service.compass.umlmodel.deployment.UMLDeploymentDiagram;
+import de.tum.in.www1.artemis.service.compass.umlmodel.deployment.UMLDeploymentInterface;
+import de.tum.in.www1.artemis.service.compass.umlmodel.deployment.UMLNode;
 
 public class DeploymentDiagramParser {
 

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -19,7 +19,7 @@ import { faArrowLeft, faSpinner } from '@fortawesome/free-solid-svg-icons';
     templateUrl: './exam-participation-cover.component.html',
     styleUrls: ['./exam-participation-cover.scss'],
 })
-export class ExamParticipationCoverComponent implements OnChanges, OnDestroy {
+export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, OnInit {
     /**
      * if startView is set to true: startText and confirmationStartText will be displayed
      * if startView is set to false: endText and confirmationEndText will be displayed
@@ -30,7 +30,10 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy {
     @Input() handInEarly = false;
     @Input() handInPossible = true;
     @Input() submitInProgress = false;
+    @Input() attendanceChecked = false;
     @Input() testRunStartTime: dayjs.Dayjs | undefined;
+    @Input() isProduction = true;
+    @Input() isTestServer = false;
     @Output() onExamStarted: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
     @Output() onExamEnded: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
     @Output() onExamContinueAfterHandInEarly = new EventEmitter<void>();
@@ -38,6 +41,7 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy {
     startEnabled: boolean;
     endEnabled: boolean;
     confirmed: boolean;
+    isAttendanceChecked: boolean;
 
     testRun?: boolean;
     testExam?: boolean;
@@ -68,6 +72,10 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy {
         private serverDateService: ArtemisServerDateService,
     ) {}
 
+    ngOnInit(): void {
+        this.isAttendanceChecked = this.exam.testExam || !this.exam.examWithAttendanceCheck || this.attendanceChecked;
+    }
+
     /**
      * on changes uses the correct information to display in either start or final view
      * changes in the exam and subscription is handled in the exam-participation.component
@@ -80,9 +88,11 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy {
         this.testExam = this.exam.testExam;
 
         if (this.startView) {
+            this.examParticipationService.setEndView(false);
             this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.startText);
             this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationStartText);
         } else {
+            this.examParticipationService.setEndView(true);
             this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.endText);
             this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationEndText);
             // this should be the individual working end + the grace period

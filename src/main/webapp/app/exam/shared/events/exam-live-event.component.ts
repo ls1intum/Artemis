@@ -5,6 +5,7 @@ import {
     ExamLiveEvent,
     ExamLiveEventType,
     ExamWideAnnouncementEvent,
+    ProblemStatementUpdateEvent,
     WorkingTimeUpdateEvent,
 } from 'app/exam/participate/exam-participation-live-events.service';
 
@@ -22,6 +23,9 @@ export class ExamLiveEventComponent {
 
     @Output()
     onAcknowledge = new EventEmitter<ExamLiveEvent>();
+
+    @Output()
+    onNavigate = new EventEmitter<ExamLiveEvent>();
 
     protected readonly ExamLiveEventType = ExamLiveEventType;
 
@@ -42,7 +46,15 @@ export class ExamLiveEventComponent {
         return this.event as WorkingTimeUpdateEvent;
     }
 
+    get problemStatementUpdateEvent(): ProblemStatementUpdateEvent {
+        return this.event as ProblemStatementUpdateEvent;
+    }
+
     acknowledgeEvent() {
         this.onAcknowledge.emit(this.event);
+    }
+
+    navigateToExercise() {
+        this.onNavigate.emit(this.event);
     }
 }

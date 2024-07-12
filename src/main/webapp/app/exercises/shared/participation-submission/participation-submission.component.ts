@@ -53,10 +53,11 @@ export class ParticipationSubmissionComponent implements OnInit {
     eventSubscriber: Subscription;
     isLoading = true;
     commitHashURLTemplate?: string;
-    logsAvailable?: { [key: string]: boolean };
+    resultIdToBuildJobIdMap?: { [key: string]: string };
 
     // Icons
     faTrash = faTrash;
+
     constructor(
         private route: ActivatedRoute,
         private submissionService: SubmissionService,
@@ -92,8 +93,8 @@ export class ParticipationSubmissionComponent implements OnInit {
             if (queryParams?.['isTmpOrSolutionProgrParticipation'] != undefined) {
                 this.isTmpOrSolutionProgrParticipation = queryParams['isTmpOrSolutionProgrParticipation'] === 'true';
             }
-            this.participationService.getLogsAvailabilityForResultsOfParticipation(this.participationId).subscribe((logsAvailable) => {
-                this.logsAvailable = logsAvailable;
+            this.participationService.getBuildJobIdsForResultsOfParticipation(this.participationId).subscribe((resultIdToBuildJobIdMap) => {
+                this.resultIdToBuildJobIdMap = resultIdToBuildJobIdMap;
                 if (this.isTmpOrSolutionProgrParticipation) {
                     // Find programming exercise of template and solution programming participation
                     this.programmingExerciseService.findWithTemplateAndSolutionParticipation(params['exerciseId'], true).subscribe((exerciseResponse) => {
@@ -122,7 +123,7 @@ export class ParticipationSubmissionComponent implements OnInit {
                             this.submissions.forEach((submission: ProgrammingSubmission) => {
                                 if (submission.results) {
                                     submission.results.forEach((result: Result) => {
-                                        result.logsAvailable = this.logsAvailable?.[result.id!];
+                                        result.buildJobId = this.resultIdToBuildJobIdMap?.[result.id!];
                                     });
                                 }
                             });
@@ -142,7 +143,7 @@ export class ParticipationSubmissionComponent implements OnInit {
             });
         });
 
-        // Get active profiles, to distinguish between Bitbucket and GitLab
+        // Get active profiles, to distinguish between VC systems
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.commitHashURLTemplate = profileInfo.commitHashURLTemplate;
         });
@@ -178,7 +179,7 @@ export class ParticipationSubmissionComponent implements OnInit {
                         if (submission.results) {
                             submission.results.forEach((result: Result) => {
                                 result.submission = submission;
-                                result.logsAvailable = this.logsAvailable?.[result.id!];
+                                result.buildJobId = this.resultIdToBuildJobIdMap?.[result.id!];
                             });
                         }
                     });

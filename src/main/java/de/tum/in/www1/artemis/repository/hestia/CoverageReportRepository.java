@@ -2,11 +2,11 @@ package de.tum.in.www1.artemis.repository.hestia;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.hestia.CoverageReport;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -21,7 +22,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface CoverageReportRepository extends JpaRepository<CoverageReport, Long> {
+public interface CoverageReportRepository extends ArtemisJpaRepository<CoverageReport, Long> {
 
     Boolean existsBySubmissionId(Long submissionId);
 
@@ -38,6 +39,7 @@ public interface CoverageReportRepository extends JpaRepository<CoverageReport, 
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY s.submissionDate DESC
             """)
+    // TODO: rewrite this query, pageable does not work well with left join fetch
     List<CoverageReport> getLatestCoverageReportsForLegalSubmissionsForProgrammingExercise(@Param("programmingExerciseId") Long programmingExerciseId, Pageable pageable);
 
     @Query("""
@@ -51,6 +53,7 @@ public interface CoverageReportRepository extends JpaRepository<CoverageReport, 
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY s.submissionDate DESC
             """)
+    // TODO: rewrite this query, pageable does not work well with left join fetch, it needs to transfer all results and only page in java
     List<CoverageReport> getLatestCoverageReportsForLegalSubmissionsForProgrammingExerciseWithEagerFileReportsAndEntries(@Param("programmingExerciseId") Long programmingExerciseId,
             Pageable pageable);
 

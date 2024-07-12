@@ -28,11 +28,18 @@ Some general aspects:
 3. Use PascalCase for enum values.
 4. Use camelCase for function names.
 5. Use camelCase for property names and local variables.
-6. Do not use "_" as a prefix for private properties.
-7. Use whole words in names when possible.
+6. Use SCREAMING_SNAKE_CASE for constants, i.e. properties with the ``readonly`` keyword.
+7. Do not use "_" as a prefix for private properties.
+8. Use whole words in names when possible.
 
 2. Components
 =============
+
+In our project, we promote the creation of standalone components instead of using Angular modules. A standalone component is a self-contained unit that encapsulates its own logic, view, and styles. It doesn't directly depend on its parent or child components and can be reused in different parts of the application.
+For existing components that are not standalone, we should aim to migrate them step by step. This migration process should be done gradually and carefully, to avoid introducing bugs. It's recommended to thoroughly test the component after each change to ensure it still works as expected.
+Standalone components can be generated with the Angular CLI using ``ng g c <component-name> --standalone``.
+
+More info about standalone components: https://angular.dev/guide/components/importing#standalone-components
 
 1. 1 file per logical component (e.g. parser, scanner, emitter, checker).
 2. files with ".generated.*" suffix are auto-generated, do not hand-edit them.
@@ -470,3 +477,29 @@ Best Practices:
 1. Dynamic Subscription Handling: Subscribe to topics on an as-needed basis. Unsubscribe from topics that are no longer needed to keep the number of active subscriptions within the recommended limit.
 2. Efficient Topic Aggregation: Use topic aggregation techniques to consolidate related data streams into a single subscription wherever possible. Consequently, don't create a new topic if an existing one can be reused.
 3. Small Messages: Send small messages and use DTOs. See :ref:`server-guideline-dto-usage` for more information and examples.
+
+19. Styling
+===========
+
+We are using `Scss <https://sass-lang.com>`_ to write modular, reusable css. We have a couple of global scss files in ``webapp/content/scss``, but encourage component dependent css using `Angular styleUrls <https://angular.io/guide/component-styles>`_.
+
+From a methodology viewpoint we encourage the use of `BEM <http://getbem.com/introduction/>`_:
+
+.. code-block:: scss
+
+    .my-container {
+        // container styles
+        &__content {
+            // content styles
+            &--modifier {
+                // modifier styles
+            }
+        }
+    }
+
+Within the component html files, we encourage the use of `bootstrap css <https://getbootstrap.com/>`_:
+
+.. code-block:: html
+
+    <div class="d-flex ms-2">some content</div>
+

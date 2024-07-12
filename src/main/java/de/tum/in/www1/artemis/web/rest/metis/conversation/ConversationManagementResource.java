@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest.metis.conversation;
 
-import java.util.Set;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -36,8 +34,7 @@ public class ConversationManagementResource {
      * @param course the course to check
      */
     void checkMessagingEnabledElseThrow(Course course) {
-        if (!Set.of(CourseInformationSharingConfiguration.MESSAGING_ONLY, CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING)
-                .contains(course.getCourseInformationSharingConfiguration())) {
+        if (course.getCourseInformationSharingConfiguration() != CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Messaging is not enabled for this course");
         }
     }
@@ -47,7 +44,7 @@ public class ConversationManagementResource {
      *
      * @param course the course to check
      */
-    void checkMessagingOrCommunicationEnabledElseThrow(Course course) {
+    void checkCommunicationEnabledElseThrow(Course course) {
         if (course.getCourseInformationSharingConfiguration() == CourseInformationSharingConfiguration.DISABLED) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Messaging is not enabled for this course");
         }
@@ -58,8 +55,8 @@ public class ConversationManagementResource {
      *
      * @param courseId the course to check
      */
-    void checkMessagingOrCommunicationEnabledElseThrow(Long courseId) {
-        if (!courseRepository.isMessagingOrCommunicationEnabled(courseId)) {
+    void checkCommunicationEnabledElseThrow(Long courseId) {
+        if (!courseRepository.isCommunicationEnabled(courseId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Messaging is not enabled for this course");
         }
     }

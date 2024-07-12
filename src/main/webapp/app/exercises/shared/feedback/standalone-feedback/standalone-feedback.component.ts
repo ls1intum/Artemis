@@ -2,7 +2,7 @@ import { Component, OnInit, Optional } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ExerciseDetailsType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
@@ -35,8 +35,8 @@ export class StandaloneFeedbackComponent implements OnInit {
             const participationId = parseInt(params['participationId'], 10);
             const resultId = parseInt(params['resultId'], 10);
 
-            this.exerciseService.getExerciseDetails(exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
-                this.exercise = exerciseResponse.body!;
+            this.exerciseService.getExerciseDetails(exerciseId).subscribe((exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
+                this.exercise = exerciseResponse.body!.exercise;
                 const participation = this.exercise?.studentParticipations?.find((participation) => participation.id === participationId);
                 if (participation) {
                     participation.exercise = this.exercise;
@@ -50,7 +50,7 @@ export class StandaloneFeedbackComponent implements OnInit {
                 this.result = relevantResult;
 
                 // We set isBuilding here to false. It is the mobile applications responsibility to make the user aware if a participation is being built
-                const templateStatus = evaluateTemplateStatus(exerciseResponse.body!, participation, relevantResult, false);
+                const templateStatus = evaluateTemplateStatus(this.exercise, participation, relevantResult, false);
                 if (templateStatus == ResultTemplateStatus.MISSING) {
                     this.messageKey = 'artemisApp.result.notLatestSubmission';
                 } else {

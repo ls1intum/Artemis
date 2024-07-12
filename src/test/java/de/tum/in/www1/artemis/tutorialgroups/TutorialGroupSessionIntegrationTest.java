@@ -25,6 +25,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
     Long exampleTutorialGroupId;
 
     @BeforeEach
+    @Override
     void setupTestScenario() {
         super.setupTestScenario();
         userUtilService.addUsers(this.testPrefix, 1, 2, 1, 1);
@@ -180,7 +181,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
 
         // when
         request.patchWithResponseBody(getSessionsPathOfTutorialGroup(exampleTutorialGroupId, session.getId()) + "/attendance-count", null, TutorialGroupSession.class,
-                HttpStatus.OK).getId();
+                HttpStatus.OK);
         updatedSession = tutorialGroupSessionRepository.findByIdElseThrow(updatedSessionId);
         assertThat(updatedSession.getAttendanceCount()).isNull();
 

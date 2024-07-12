@@ -1,7 +1,6 @@
 $menu-width-closed: 64px;
 $menu-width-open: 220px;
-$footer-height-dev: 164px;
-$footer-height-prod: 142px;
+$breadcrumb-height: 45px; // needed to make the exam fullscreen
 
 .sidebar-container {
     width: $menu-width-open;
@@ -12,7 +11,7 @@ $footer-height-prod: 142px;
 
 // ng-deep needed to remove scrollbar from mat-sidebar
 ::ng-deep .mat-drawer-inner-container {
-    overflow-x: hidden !important;
+    overflow: hidden !important;
 }
 
 .sidebar-wrapper {
@@ -27,19 +26,40 @@ $footer-height-prod: 142px;
 }
 
 .mat-drawer-container {
-    height: calc(100vh - $footer-height-prod);
+    height: calc(100vh - var(--sidebar-footer-height-prod));
+
     &.sidenav-height-dev {
-        height: calc(100vh - $footer-height-dev);
+        height: calc(100vh - var(--sidebar-footer-height-dev));
+    }
+
+    @media (max-width: 768px) {
+        height: calc(100vh - var(--sidebar-footer-height-prod)) !important;
+    }
+
+    &.exam-wrapper {
+        height: calc(100vh - var(--sidebar-footer-height-prod) + $breadcrumb-height);
+
+        &.exam-height-dev {
+            height: calc(100vh - var(--sidebar-footer-height-dev) + $breadcrumb-height);
+        }
+
+        @media (max-width: 768px) {
+            height: calc(100vh - var(--sidebar-footer-height-prod) + $breadcrumb-height) !important;
+        }
     }
 
     .mat-drawer {
         box-sizing: content-box;
         width: $menu-width-open;
         transition: width 0.2s ease-in-out !important;
-        height: calc(100vh - $footer-height-prod);
+        height: calc(100vh - var(--sidebar-footer-height-prod));
 
         &.sidenav-height-dev {
-            height: calc(100vh - $footer-height-dev);
+            height: calc(100vh - var(--sidebar-footer-height-dev));
+        }
+
+        @media (max-width: 768px) {
+            height: calc(100vh - var(--sidebar-footer-height-prod)) !important;
         }
     }
 
@@ -47,16 +67,32 @@ $footer-height-prod: 142px;
         position: sticky;
         z-index: 1;
         display: block;
-        height: calc(100vh - $footer-height-prod);
+        height: calc(100vh - var(--sidebar-footer-height-prod));
         width: calc(100vw - $menu-width-open);
-        overflow: auto;
+        overflow: hidden;
         margin-left: $menu-width-open !important;
         transition:
             width 0.2s ease-in-out,
             margin-left 0.2s ease-in-out !important;
 
+        &.exam-wrapper {
+            height: calc(100vh - var(--sidebar-footer-height-prod) + $breadcrumb-height);
+
+            &.exam-height-dev {
+                height: calc(100vh - var(--sidebar-footer-height-dev) + $breadcrumb-height);
+            }
+
+            @media (max-width: 768px) {
+                height: calc(100vh - var(--sidebar-footer-height-prod) + $breadcrumb-height) !important;
+            }
+        }
+
         &.sidenav-height-dev {
-            height: calc(100vh - $footer-height-dev);
+            height: calc(100vh - var(--sidebar-footer-height-dev));
+        }
+
+        @media (max-width: 768px) {
+            height: calc(100vh - var(--sidebar-footer-height-prod)) !important;
         }
     }
 
@@ -70,6 +106,14 @@ $footer-height-prod: 142px;
             margin-left: $menu-width-closed !important;
         }
     }
+
+    &.exam-is-active {
+        .mat-drawer-content {
+            width: 100vw;
+            margin-left: 0px !important;
+        }
+    }
+
     @media screen and (max-width: 960px) {
         .mat-drawer {
             width: $menu-width-closed;
@@ -80,6 +124,10 @@ $footer-height-prod: 142px;
             margin-left: $menu-width-closed !important;
         }
     }
+}
+
+.exam-end-view {
+    overflow-y: auto !important;
 }
 
 a:not(.btn):not(.tab-link):hover {
@@ -155,7 +203,6 @@ jhi-secured-image {
         border-radius: 50%;
         height: 36px;
         width: auto;
-        margin-right: 0.75rem;
     }
 }
 
@@ -187,7 +234,11 @@ jhi-secured-image {
     background-color: var(--course-image-bg);
     border-radius: 50%;
     display: inline-block;
-    margin-right: 0.75rem;
+    color: var(--bs-body-color);
+}
+
+.course-title {
+    margin-left: 0.75rem;
 }
 
 .max-width-collapsed {
@@ -211,10 +262,62 @@ jhi-secured-image {
 .btn-sidebar-collapse {
     background-color: var(--link-item-bg);
     &:hover {
-        background-color: var(--gray-200);
+        background-color: var(--sidebar-card-selected-bg);
         color: var(--primary);
     }
     &:focus {
         border-color: transparent;
+    }
+}
+
+.three-dots {
+    cursor: pointer;
+    &:hover {
+        color: var(--link-item-color);
+    }
+}
+
+.dropdown-li {
+    display: block;
+    text-decoration: none;
+}
+
+.dropdown-content {
+    overflow-y: auto;
+    position: absolute;
+    background-color: var(--dropdown-bg);
+    border: 1px solid var(--border-color);
+    z-index: 1000000;
+    border-radius: 4px;
+    &.fixedContentSize {
+        bottom: 0px;
+        max-height: 91px; // To avoid cut offs in the dropdown menu content
+    }
+}
+
+.dropdown-menu {
+    min-width: 204px;
+    max-width: 294px;
+}
+
+.dropdown-courses.active {
+    display: block;
+}
+
+.dropdown-toggle::after {
+    display: none;
+}
+
+@media print {
+    mat-sidenav {
+        display: none; /* Hide the sidebar */
+    }
+
+    .mat-drawer-container,
+    .mat-drawer-container.container-closed {
+        .mat-drawer-content {
+            margin-left: 0 !important; /* Remove any left margin or padding if necessary */
+            width: 100% !important; /* Make the content full width */
+        }
     }
 }

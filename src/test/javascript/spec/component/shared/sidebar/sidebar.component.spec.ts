@@ -1,7 +1,8 @@
-import { ComponentFixture, TestBed, async } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
-import { SidebarCardComponent } from 'app/shared/sidebar/sidebar-card/sidebar-card.component';
+import { SidebarCardMediumComponent } from 'app/shared/sidebar/sidebar-card-medium/sidebar-card-medium.component';
 import { SidebarCardItemComponent } from 'app/shared/sidebar/sidebar-card-item/sidebar-card-item.component';
+import { SidebarCardDirective } from 'app/shared/sidebar/sidebar-card.directive';
 import { ArtemisTestModule } from '../../../test.module';
 import { DebugElement } from '@angular/core';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
@@ -19,20 +20,21 @@ describe('SidebarComponent', () => {
     let fixture: ComponentFixture<SidebarComponent>;
     let debugElement: DebugElement;
 
-    beforeEach(async(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(RouterModule)],
             declarations: [
                 SidebarComponent,
-                SidebarCardComponent,
+                SidebarCardMediumComponent,
                 SidebarCardItemComponent,
+                SidebarCardDirective,
                 SearchFilterPipe,
                 SearchFilterComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockRouterLinkDirective,
             ],
         }).compileComponents();
-    }));
+    });
 
     beforeEach(() => {
         fixture = TestBed.createComponent(SidebarComponent);
@@ -49,8 +51,8 @@ describe('SidebarComponent', () => {
         component.sidebarData = {
             groupByCategory: true,
             ungroupedData: [
-                { title: 'Item 1', type: 'Type A', id: 1 },
-                { title: 'Item 2', type: 'Type B', id: 2 },
+                { title: 'Item 1', type: 'Type A', id: 1, size: 'M' },
+                { title: 'Item 2', type: 'Type B', id: 2, size: 'M' },
             ],
         };
         component.searchValue = 'Item 1';
@@ -74,5 +76,37 @@ describe('SidebarComponent', () => {
         const noDataMessageElement = debugElement.query(By.css('[jhiTranslate$=noDataFound]'));
         expect(noDataMessageElement).toBeTruthy();
         expect(noDataMessageElement.nativeElement.getAttribute('jhiTranslate')).toBe('artemisApp.courseOverview.general.noDataFound');
+    });
+
+    it('should give the correct size for exercises', () => {
+        component.sidebarData = {
+            groupByCategory: true,
+            sidebarType: 'exercise',
+        };
+        fixture.detectChanges();
+
+        const size = component.getSize();
+        expect(size).toBe('M');
+    });
+
+    it('should give the correct size for exams', () => {
+        component.sidebarData = {
+            groupByCategory: true,
+            sidebarType: 'exam',
+        };
+        fixture.detectChanges();
+
+        const size = component.getSize();
+        expect(size).toBe('L');
+    });
+
+    it('should give the correct size for default', () => {
+        component.sidebarData = {
+            groupByCategory: true,
+        };
+        fixture.detectChanges();
+
+        const size = component.getSize();
+        expect(size).toBe('M');
     });
 });

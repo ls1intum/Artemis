@@ -11,7 +11,18 @@ import java.util.Locale;
 import java.util.Set;
 
 import jakarta.annotation.Nullable;
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -35,6 +46,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
  * A user.
@@ -141,6 +153,27 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "vcs_access_token_expiry_date")
     private ZonedDateTime vcsAccessTokenExpiryDate = null;
 
+    /**
+     * The actual full public ssh key of a user used to authenticate git clone and git push operations if available
+     */
+    @Nullable
+    @JsonIgnore
+    @Column(name = "ssh_public_key")
+    private final String sshPublicKey = null;
+
+    /**
+     * A hash of the public ssh key for fast comparison in the database (with an index)
+     */
+    @Nullable
+    @Size(max = 100)
+    @JsonIgnore
+    @Column(name = "ssh_public_key_hash")
+    private final String sshPublicKeyHash = null;
+
+    /**
+     * Word "GROUPS" is being added as a restricted word starting in MySQL 8.0.2
+     * Workaround: Annotation @Column(name = "`groups`") escapes this word using backticks.
+     */
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "user_groups", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "user_groups")
@@ -200,6 +233,12 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.setId(id);
     }
 
+    public User(Long id, String firstName, String lastName) {
+        this(id);
+        this.firstName = firstName;
+        this.lastName = lastName;
+    }
+
     public User(Long id, String login, String firstName, String lastName, String langKey, String email) {
         this(id);
         this.login = login;
@@ -218,6 +257,7 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.login = StringUtils.lowerCase(login, Locale.ENGLISH);
     }
 
+    @Override
     public String getParticipantIdentifier() {
         return login;
     }
@@ -249,6 +289,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     /**
      * @return name as a concatenation of first name and last name
      */
+    @Override
     public String getName() {
         if (lastName != null && !lastName.isEmpty()) {
             return firstName + " " + lastName;
@@ -502,5 +543,24 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Nullable
     public ZonedDateTime getIrisAcceptedTimestamp() {
         return irisAccepted;
+    }
+
+    public void setIrisAcceptedTimestamp(@Nullable ZonedDateTime irisAccepted) {
+        this.irisAccepted = irisAccepted;
+    }
+
+    /**
+     * Checks if the user has accepted the Iris privacy policy.
+     * If not, an {@link AccessForbiddenException} is thrown.
+     */
+    public void hasAcceptedIrisElseThrow() {
+        if (irisAccepted == null) {
+            throw new AccessForbiddenException("The user has not accepted the Iris privacy policy yet.");
+        }
+    }
+
+    @Nullable
+    public String getSshPublicKey() {
+        return sshPublicKey;
     }
 }

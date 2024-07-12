@@ -8,6 +8,7 @@
 
 package org.eclipse.jgit.http.server.resolver;
 
+import org.eclipse.jgit.util.StringUtils;
 import org.eclipse.jgit.lib.Config;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.Repository;
@@ -45,13 +46,14 @@ public class DefaultReceivePackFactory implements ReceivePackFactory<HttpServlet
         }
     }
 
-    @Override public ReceivePack create(HttpServletRequest req, Repository db) throws ServiceNotEnabledException, ServiceNotAuthorizedException {
+    @Override
+    public ReceivePack create(HttpServletRequest req, Repository db) throws ServiceNotEnabledException, ServiceNotAuthorizedException {
         final ServiceConfig cfg = db.getConfig().get(ServiceConfig::new);
         String user = req.getRemoteUser();
 
         if (cfg.set) {
             if (cfg.enabled) {
-                if (user == null || "".equals(user)) {
+                if (StringUtils.isEmptyOrNull(user)) {
                     user = "anonymous";
                 }
                 return createFor(req, db, user);
@@ -59,7 +61,7 @@ public class DefaultReceivePackFactory implements ReceivePackFactory<HttpServlet
             throw new ServiceNotEnabledException();
         }
 
-        if (user != null && !"".equals(user)) {
+        if (!StringUtils.isEmptyOrNull(user)) {
             return createFor(req, db, user);
         }
         throw new ServiceNotAuthorizedException();

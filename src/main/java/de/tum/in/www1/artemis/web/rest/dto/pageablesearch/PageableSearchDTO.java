@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.dto.pageablesearch;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
@@ -9,6 +11,8 @@ import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
  *
  * @see SearchResultPageDTO
  */
+// TODO: convert to Record
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class PageableSearchDTO<T> {
 
     /**

@@ -82,6 +82,7 @@ describe('AttachmentUnitFormComponent', () => {
         attachmentUnitFormComponent.releaseDateControl!.setValue(exampleReleaseDate);
         const exampleDescription = 'lorem ipsum';
         attachmentUnitFormComponent.descriptionControl!.setValue(exampleDescription);
+        attachmentUnitFormComponent.versionControl!.enable();
         const exampleVersion = 42;
         attachmentUnitFormComponent.versionControl!.setValue(exampleVersion);
         const exampleUpdateNotificationText = 'updated';

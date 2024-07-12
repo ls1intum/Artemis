@@ -40,7 +40,7 @@ public class AuxiliaryRepository extends DomainObject {
 
     /**
      * Name of the repository.
-     *
+     * <p>
      * Must NOT be one of the following: exercise, solution or tests
      * One programming exercise must not have multiple repositories
      * sharing one name.
@@ -55,7 +55,7 @@ public class AuxiliaryRepository extends DomainObject {
 
     /**
      * One programming exercise must not have multiple repositories
-     * sharing the same checkout directory. Bamboo does not allow that.
+     * sharing the same checkout directory.
      */
     @Size(max = MAX_CHECKOUT_DIRECTORY_LENGTH)
     @Column(name = "checkout_directory")
@@ -174,7 +174,7 @@ public class AuxiliaryRepository extends DomainObject {
     }
 
     /**
-     * Used in Bamboo Service to map the name of an auxiliary repository to its repository uri.
+     * Used to map the name of an auxiliary repository to its repository uri.
      */
     public record AuxRepoNameWithUri(String name, VcsRepositoryUri repositoryUri) {
     }

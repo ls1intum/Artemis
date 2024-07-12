@@ -45,17 +45,17 @@
                 "title": "Abgaben herunterladen",
                 "titleSingle": "Abgabe herunterladen",
                 "questions": {
-                    "individual": "Tragen sie hier alle Kennungen der Studierenden ein, die heruntergeladen werden sollen getrennt durch ein Komma (z.B. ga87fix,ga63dut)",
-                    "team": "Tragen sie hier alle Kurznamen der Teams ein, die heruntergeladen werden sollen getrennt durch ein Komma (z.B. team1,team2)"
+                    "individual": "Trag bitte hier alle Kennungen der Studierenden ein, die heruntergeladen werden sollen getrennt durch ein Komma (z.B. ga87fix,ga63dut)",
+                    "team": "Trag bitte hier alle Kurznamen der Teams ein, die heruntergeladen werden sollen getrennt durch ein Komma (z.B. team1,team2)"
                 },
                 "timeWarning": "<b>Achtung:</b> Diese Aktion kann abhängig von Größe und Anzahl der Repositories mehrere Minuten dauern.",
-                "currentlySelected": "Sie sind dabei die Abgaben <strong>aller Teams/Studierende</strong> von folgenden Aufgaben herunterzuladen:"
+                "currentlySelected": "Du bist dabei die Abgaben <strong>aller Teams/Studierende</strong> von folgenden Aufgaben herunterzuladen:"
             },
             "exportCSV": "Als CSV exportieren",
             "exportSubmissions": {
                 "title": "Abgaben exportieren",
                 "downloadAllStudents": "Oder lade die Abgaben aller Studierenden herunter",
-                "question": "Tragen sie hier alle Kennungen der Studierenden getrennt durch ein Komma ein, deren Abgaben heruntergeladen werden sollen (z.B. ga87fix,ga63dut)",
+                "question": "Trag bitte hier alle Kennungen der Studierenden getrennt durch ein Komma ein, deren Abgaben heruntergeladen werden sollen (z.B. ga87fix,ga63dut)",
                 "filterLateSubmissions": "Verspätete Abgaben herausfiltern",
                 "filterLateSubmissionsDate": {
                     "title": "Datum zum Filtern verspäteter Abgaben",

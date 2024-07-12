@@ -8,6 +8,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 
+/**
+ * BaseCompetency is an abstract class that contains basic information shared between all competency types.
+ * It is extended by {@link CourseCompetency} and {@link StandardizedCompetency}
+ */
 @MappedSuperclass
 public abstract class BaseCompetency extends DomainObject {
 

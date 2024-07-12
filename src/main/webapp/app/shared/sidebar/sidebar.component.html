@@ -1,8 +1,8 @@
-<div class="d-flex sidebar rounded-3 px-3 sidebar-width" [ngClass]="{ 'sidebar-height-dev': !isProduction || isTestServer, collapsed: isCollapsed }">
+<div class="d-flex sidebar rounded-3 px-3 sidebar-width hide-on_print" [ngClass]="{ 'sidebar-height-dev': !isProduction || isTestServer, collapsed: isCollapsed }">
     <div class="w-100 bg-module">
         <div class="sidebar-content" [ngClass]="{ collapsed: isCollapsed }">
             @if (searchFieldEnabled) {
-                <div class="mt-3 mb-2">
+                <div class="mt-2 mb-2">
                     <jhi-search-filter (newSearchEvent)="setSearchValue($event)" class="mb-2" />
                 </div>
             }
@@ -10,10 +10,17 @@
                 <div
                     [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }"
                     jhiTranslate="artemisApp.courseOverview.general.noDataFound"
-                    class="mt-2 text-center scrollable-content"
+                    class="mt-2 text-center scrollable-item-content"
                 ></div>
             } @else {
-                <div class="scrollable-content my-2" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
+                <div
+                    class="scrollable-item-content my-2"
+                    [ngClass]="{
+                        'content-height-dev': !isProduction || isTestServer,
+                        'search-height-conversations': sidebarData?.sidebarType === 'conversation',
+                        'search-height-normal': sidebarData?.sidebarType !== 'conversation',
+                    }"
+                >
                     @if (sidebarData?.groupByCategory && sidebarData.groupedData) {
                         <jhi-sidebar-accordion
                             [searchValue]="searchValue"
@@ -21,11 +28,25 @@
                             [sidebarType]="sidebarData.sidebarType"
                             [storageId]="sidebarData.storageId"
                             [routeParams]="routeParams"
+                            [courseId]="courseId"
+                            [itemSelected]="itemSelected"
+                            [showAddOptions]="sidebarData.showAccordionAddOption ?? false"
+                            [showLeadingIcon]="sidebarData.showAccordionLeadingIcon ?? false"
+                            [showAddOption]="showAddOption"
+                            [channelTypeIcon]="channelTypeIcon"
+                            [collapseState]="collapseState"
+                            (onUpdateSidebar)="onUpdateSidebar.emit()"
                         />
                     } @else {
                         @for (sidebarItem of sidebarData?.ungroupedData | searchFilter: ['title', 'type'] : searchValue; track sidebarItem; let last = $last) {
                             <div [ngClass]="{ 'mb-2': !last }">
-                                <jhi-sidebar-card [routeParams]="routeParams" [sidebarItem]="sidebarItem" />
+                                <div
+                                    jhiSidebarCard
+                                    [size]="sidebarItem.size"
+                                    [itemSelected]="itemSelected"
+                                    [sidebarType]="sidebarData.sidebarType"
+                                    [sidebarItem]="sidebarItem"
+                                ></div>
                             </div>
                         }
                     }

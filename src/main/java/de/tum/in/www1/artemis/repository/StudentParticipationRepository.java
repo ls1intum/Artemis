@@ -5,7 +5,14 @@ import static java.util.stream.Collectors.toMap;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -15,7 +22,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -30,6 +36,7 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmittedAnswerCount;
+import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -37,7 +44,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface StudentParticipationRepository extends JpaRepository<StudentParticipation, Long> {
+public interface StudentParticipationRepository extends ArtemisJpaRepository<StudentParticipation, Long> {
 
     Set<StudentParticipation> findByExerciseId(long exerciseId);
 
@@ -232,6 +239,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 LEFT JOIN FETCH p.results r
                 LEFT JOIN FETCH r.submission s
                 LEFT JOIN FETCH p.submissions
+                LEFT JOIN FETCH r.assessmentNote
             WHERE p.exercise.id = :exerciseId
                 AND (
                     r.id = (SELECT MAX(p_r.id) FROM p.results p_r)
@@ -239,7 +247,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                     OR r IS NULL
                 )
             """)
-    Set<StudentParticipation> findByExerciseIdWithLatestAndManualResults(@Param("exerciseId") long exerciseId);
+    Set<StudentParticipation> findByExerciseIdWithLatestAndManualResultsAndAssessmentNote(@Param("exerciseId") long exerciseId);
 
     /**
      * Get all participations for a team exercise with each manual and latest results (determined by id).
@@ -272,6 +280,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 LEFT JOIN FETCH p.results r
                 LEFT JOIN FETCH r.submission s
                 LEFT JOIN FETCH p.submissions
+                LEFT JOIN FETCH r.assessmentNote
             WHERE p.exercise.id = :exerciseId
                 AND (
                     r.id = (SELECT MAX(p_r.id) FROM p.results p_r WHERE p_r.rated = TRUE)
@@ -279,7 +288,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                     OR r IS NULL
                 )
             """)
-    Set<StudentParticipation> findByExerciseIdWithLatestAndManualRatedResults(@Param("exerciseId") long exerciseId);
+    Set<StudentParticipation> findByExerciseIdWithLatestAndManualRatedResultsAndAssessmentNote(@Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT DISTINCT p
@@ -655,6 +664,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                     OR p.student.lastName LIKE %:partialStudentName%
                 ) AND r.completionDate IS NOT NULL
             """)
+    // TODO: rewrite this query, pageable does not work well with left join fetch, it needs to transfer all results and only page in java
     Page<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsByExerciseId(@Param("exerciseId") long exerciseId, @Param("partialStudentName") String partialStudentName,
             Pageable pageable);
 
@@ -708,7 +718,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 AND p.exercise IN :exercises
             """)
     List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(@Param("studentId") long studentId,
-            @Param("exercises") List<Exercise> exercises);
+            @Param("exercises") Collection<Exercise> exercises);
 
     @Query("""
             SELECT DISTINCT p
@@ -837,11 +847,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             @Param("assessor") User assessor);
 
     @NotNull
-    default StudentParticipation findByIdElseThrow(long studentParticipationId) {
-        return findById(studentParticipationId).orElseThrow(() -> new EntityNotFoundException("Student Participation", studentParticipationId));
-    }
-
-    @NotNull
     default StudentParticipation findByIdWithResultsElseThrow(long participationId) {
         return findWithEagerResultsById(participationId).orElseThrow(() -> new EntityNotFoundException("StudentParticipation", participationId));
     }
@@ -939,7 +944,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                     if (!relevantResults.isEmpty()) {
                         // make sure to take the latest result
                         relevantResults.sort((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
-                        Result correctResult = relevantResults.get(0);
+                        Result correctResult = relevantResults.getFirst();
                         relevantResults.clear();
                         relevantResults.add(correctResult);
                     }
@@ -1140,7 +1145,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             WHERE p.exercise.course.id = :courseId
                 AND p.presentationScore IS NOT NULL
                 AND (p.student.id IN :studentIds OR ts.id IN :studentIds)
-            GROUP BY COALESCE(p.student.id, ts.id)
+            GROUP BY id
             """)
     Set<IdToPresentationScoreSum> sumPresentationScoreByStudentIdsAndCourseId(@Param("courseId") long courseId, @Param("studentIds") Set<Long> studentIds);
 

@@ -63,16 +63,16 @@ export class LoginPage {
      * Asserts that the "Request Change" link in the footer is visible and has a non-empty href attribute.
      */
     async shouldShowRequestChangeInFooter() {
-        expect(await this.page.isVisible('#request-change')).toBe(true);
-        expect(await this.page.getAttribute('#request-change', 'href')).toBeTruthy();
+        expect(await this.page.isVisible('#feedback')).toBe(true);
+        expect(await this.page.getAttribute('#feedback', 'href')).toBeTruthy();
     }
 
     /**
      * Asserts that the "Release Notes" link in the footer is visible and has a non-empty href attribute.
      */
     async shouldShowReleaseNotesInFooter() {
-        expect(await this.page.isVisible('#release-notes')).toBe(true);
-        expect(await this.page.getAttribute('#release-notes', 'href')).toBeTruthy();
+        expect(await this.page.isVisible('#releases')).toBe(true);
+        expect(await this.page.getAttribute('#releases', 'href')).toBeTruthy();
     }
 
     /**

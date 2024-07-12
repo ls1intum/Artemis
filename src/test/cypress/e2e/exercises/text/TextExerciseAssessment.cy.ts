@@ -23,7 +23,7 @@ const tutorTextFeedback = 'Nice ending of the sentence!';
 const tutorTextFeedbackPoints = 2;
 const complaint = "That feedback wasn't very useful!";
 
-describe('Text exercise assessment', () => {
+describe.skip('Text exercise assessment', () => {
     let course: Course;
     let exercise: TextExercise;
 

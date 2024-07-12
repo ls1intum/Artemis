@@ -16,7 +16,7 @@ test.describe('Modeling Exercise Participation', () => {
     });
 
     test('Student can start and submit their model', async ({ login, courseOverview, modelingExerciseEditor }) => {
-        await login(studentOne, `/courses/${course.id}`);
+        await login(studentOne, `/courses/${course.id}/exercises/${modelingExercise.id}`);
         await courseOverview.startExercise(modelingExercise.id!);
         await courseOverview.openRunningExercise(modelingExercise.id!);
         await modelingExerciseEditor.addComponentToModel(modelingExercise.id!, 1, 310, 320);

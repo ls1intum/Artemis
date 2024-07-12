@@ -4,14 +4,23 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { Lecture } from 'app/entities/lecture.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { AccordionGroups, SidebarCardElement, SidebarData } from 'app/types/sidebar';
+import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { CourseOverviewService } from '../course-overview.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
     current: { entityData: [] },
+    dueSoon: { entityData: [] },
     past: { entityData: [] },
     noDate: { entityData: [] },
+};
+
+const DEFAULT_COLLAPSE_STATE: CollapseState = {
+    future: true,
+    current: false,
+    dueSoon: true,
+    past: true,
+    noDate: true,
 };
 
 @Component({
@@ -20,11 +29,10 @@ const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     styleUrls: ['../course-overview.scss'],
 })
 export class CourseLecturesComponent implements OnInit, OnDestroy {
-    private courseId: number;
-    private paramSubscription: Subscription;
     private parentParamSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
     course?: Course;
+    courseId: number;
 
     lectureSelected: boolean = true;
     sidebarData: SidebarData;
@@ -32,6 +40,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     sortedLectures: Lecture[] = [];
     sidebarLectures: SidebarCardElement[] = [];
     isCollapsed: boolean = false;
+    readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
 
     constructor(
         private courseStorageService: CourseStorageService,
@@ -41,9 +50,9 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit() {
-        this.isCollapsed = this.courseOverviewService.getSidebarCollapseStateFromStorage('lectures');
+        this.isCollapsed = this.courseOverviewService.getSidebarCollapseStateFromStorage('lecture');
         this.parentParamSubscription = this.route.parent!.params.subscribe((params) => {
-            this.courseId = parseInt(params.courseId, 10);
+            this.courseId = Number(params.courseId);
         });
 
         this.course = this.courseStorageService.getCourse(this.courseId);
@@ -53,19 +62,21 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
             this.prepareSidebarData();
         });
 
+        // If no lecture is selected navigate to the lastSelected or upcoming lecture
+        this.navigateToLecture();
+    }
+
+    navigateToLecture() {
         const upcomingLecture = this.courseOverviewService.getUpcomingLecture(this.course?.lectures);
         const lastSelectedLecture = this.getLastSelectedLecture();
-        this.paramSubscription = this.route.params.subscribe((params) => {
-            const lectureId = parseInt(params.lectureId, 10);
-            // If no exercise is selected navigate to the upcoming exercise
-            if (!lectureId && lastSelectedLecture) {
-                this.router.navigate([lastSelectedLecture], { relativeTo: this.route, replaceUrl: true });
-            } else if (!lectureId && upcomingLecture) {
-                this.router.navigate([upcomingLecture.id], { relativeTo: this.route, replaceUrl: true });
-            } else {
-                this.lectureSelected = lectureId ? true : false;
-            }
-        });
+        const lectureId = this.route.firstChild?.snapshot.params.lectureId;
+        if (!lectureId && lastSelectedLecture) {
+            this.router.navigate([lastSelectedLecture], { relativeTo: this.route, replaceUrl: true });
+        } else if (!lectureId && upcomingLecture) {
+            this.router.navigate([upcomingLecture.id], { relativeTo: this.route, replaceUrl: true });
+        } else {
+            this.lectureSelected = lectureId ? true : false;
+        }
     }
 
     prepareSidebarData() {
@@ -93,12 +104,18 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     }
 
     getLastSelectedLecture(): string | null {
-        return sessionStorage.getItem('sidebar.lastSelectedItem.' + 'lecture');
+        return sessionStorage.getItem('sidebar.lastSelectedItem.lecture.byCourse.' + this.courseId);
+    }
+
+    onSubRouteDeactivate() {
+        if (this.route.firstChild) {
+            return;
+        }
+        this.navigateToLecture();
     }
 
     ngOnDestroy(): void {
         this.courseUpdatesSubscription?.unsubscribe();
-        this.paramSubscription?.unsubscribe();
         this.parentParamSubscription?.unsubscribe();
     }
 }

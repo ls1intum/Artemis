@@ -43,8 +43,6 @@ spring:
                 prepStmtCacheSqlLimit: 2048
                 useServerPrepStmts: true
     jpa:
-        database-platform: org.hibernate.dialect.MySQLDialect
-        database: MYSQL
         show-sql: false
     liquibase:
         contexts: dev
@@ -128,3 +126,7 @@ eureka:
         enabled: false # By default, the JHipster Registry is not used in the "dev" profile
         service-url:
             defaultZone: http://admin:${jhipster.registry.password}@localhost:8761/eureka/
+
+# Theia configuration
+theia:
+  portal-url: https://theia-test.k8s.ase.cit.tum.de

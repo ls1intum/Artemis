@@ -72,7 +72,7 @@
                     (onUpdateFeedback)="onUpdateFeedback($event)"
                     (onAcceptSuggestion)="removeSuggestion($event)"
                     (onDiscardSuggestion)="removeSuggestion($event)"
-                    (onFileLoad)="onFileLoad($event)"
+                    (onFileLoad)="highlightChangedLines($event)"
                 >
                     <div editorTitle *ngTemplateOutlet="editorTitle"></div>
                     <div editorToolbar *ngTemplateOutlet="editorToolbar"></div>

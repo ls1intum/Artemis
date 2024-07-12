@@ -10,7 +10,7 @@ import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { Submission } from 'app/entities/submission.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { faEye } from '@fortawesome/free-solid-svg-icons';
+import { faCodeCompare } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { Observable, Subject, Subscription, debounceTime, take } from 'rxjs';
@@ -39,7 +39,7 @@ export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent impl
 
     readonly FeatureToggle = FeatureToggle;
     readonly ButtonSize = ButtonSize;
-    readonly faEye = faEye;
+    readonly faCodeCompare = faCodeCompare;
     readonly IncludedInOverallScore = IncludedInOverallScore;
 
     constructor(

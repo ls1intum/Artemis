@@ -27,7 +27,7 @@ $ease-out: cubic-bezier(0.9, 0, 0.1, 1);
             transform: translateY(-0.5px);
 
             & > svg {
-                inline-size: 100%;
+                inline-size: 90%;
                 block-size: 100%;
                 stroke-linecap: round;
             }

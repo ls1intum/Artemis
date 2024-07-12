@@ -130,4 +130,24 @@ describe('ExamChecklistComponent', () => {
         expect(getExamStatisticsStub).toHaveBeenCalledWith(exam);
         expect(component.examChecklist).toEqual(examChecklist);
     });
+
+    it('should set existsUnassessedQuizzes correctly', () => {
+        const getExamStatisticsStub = jest.spyOn(examChecklistService, 'getExamStatistics').mockReturnValue(of(examChecklist));
+
+        component.ngOnChanges();
+
+        expect(getExamStatisticsStub).toHaveBeenCalledOnce();
+        expect(getExamStatisticsStub).toHaveBeenCalledWith(exam);
+        expect(component.examChecklist.existsUnassessedQuizzes).toEqual(examChecklist.existsUnassessedQuizzes);
+    });
+
+    it('should set existsUnsubmittedExercises correctly', () => {
+        const getExamStatisticsStub = jest.spyOn(examChecklistService, 'getExamStatistics').mockReturnValue(of(examChecklist));
+
+        component.ngOnChanges();
+
+        expect(getExamStatisticsStub).toHaveBeenCalledOnce();
+        expect(getExamStatisticsStub).toHaveBeenCalledWith(exam);
+        expect(component.examChecklist.existsUnsubmittedExercises).toEqual(examChecklist.existsUnsubmittedExercises);
+    });
 });

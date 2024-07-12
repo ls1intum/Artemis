@@ -35,10 +35,10 @@
               "is-mobile",
               "js-video-url-parser",
               "jszip",
+              "localforage",
               "mobile-drag-drop",
               "papaparse",
               "pepjs",
-              "process",
               "prop-types",
               "react",
               "react-dom",
@@ -60,10 +60,14 @@
                 "base": "build/resources/main/static/",
                 "browser": ""
             },
+            "loader": {
+                ".ttf": "file"
+            },
             "index": "src/main/webapp/index.html",
             "browser": "src/main/webapp/app/app.main.ts",
             "polyfills": [
-                "src/main/webapp/app/polyfills.ts"
+                "src/main/webapp/app/polyfills.ts",
+                "@angular/localize/init"
             ],
             "tsConfig": "tsconfig.json",
             "inlineStyleLanguage": "scss",
@@ -108,6 +112,11 @@
                 "glob": "**/*",
                 "input": "src/main/webapp/swagger-ui/",
                 "output": "swagger-ui"
+              },
+              {
+                "glob": "**/*",
+                "input": "./node_modules/monaco-editor/min/vs",
+                "output": "vs"
               }
             ],
             "styles": [
@@ -116,7 +125,8 @@
                 "bundleName": "theme-dark",
                 "input": "src/main/webapp/content/scss/themes/theme-dark.scss",
                 "inject": false
-              }
+              },
+              "node_modules/monaco-editor/min/vs/editor/editor.main.css"
             ],
             "scripts": []
           },

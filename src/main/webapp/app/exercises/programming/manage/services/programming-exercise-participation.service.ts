@@ -113,15 +113,22 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
      * @param exerciseId of the exercise to get the files for
      * @param participationId of the participation to get the files for
      * @param commitId of the commit to get the files for
-     * @param repositoryType of the participation to get the files for
+     * @param repositoryType of the participation to get the files for (optional)
      */
     getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(
         exerciseId: number,
-        participationId: number,
+        participationId: number | undefined,
         commitId: string,
-        repositoryType: string,
+        repositoryType?: string,
     ): Observable<Map<string, string> | undefined> {
-        return this.http.get(`${this.resourceUrl}${exerciseId}/participation/${participationId}/files-content-commit-details/${commitId}`, { params: { repositoryType } }).pipe(
+        const params = {};
+        if (repositoryType) {
+            params['repositoryType'] = repositoryType;
+        }
+        if (participationId) {
+            params['participationId'] = participationId;
+        }
+        return this.http.get(`${this.resourceUrl}${exerciseId}/files-content-commit-details/${commitId}`, { params: params }).pipe(
             map((res: HttpResponse<any>) => {
                 // this mapping is required because otherwise the HttpResponse object would be parsed
                 // to an arbitrary object (and not a map)

@@ -2,15 +2,15 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
 import { getSemesters } from 'app/utils/semester-utils';
-import { CompetencyFilter } from 'app/shared/table/pageable-table';
+import { CourseCompetencyFilter } from 'app/shared/table/pageable-table';
 
 @Component({
     selector: 'jhi-competency-search',
     templateUrl: './competency-search.component.html',
 })
 export class CompetencySearchComponent {
-    @Input() search: CompetencyFilter;
-    @Output() searchChange = new EventEmitter<CompetencyFilter>();
+    @Input() search: CourseCompetencyFilter;
+    @Output() searchChange = new EventEmitter<CourseCompetencyFilter>();
 
     advancedSearchEnabled = false;
 

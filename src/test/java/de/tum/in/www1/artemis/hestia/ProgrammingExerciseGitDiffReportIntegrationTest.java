@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.hestia;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.AfterEach;
@@ -9,14 +11,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseFactory;
 import de.tum.in.www1.artemis.localvcci.AbstractLocalCILocalVCIntegrationTest;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.HestiaUtilTestService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
@@ -26,12 +27,6 @@ import de.tum.in.www1.artemis.util.LocalRepository;
 class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     private static final String TEST_PREFIX = "progexgitdiffreport";
-
-    @Autowired
-    private CourseUtilService courseUtilService;
-
-    @Autowired
-    private UserUtilService userUtilService;
 
     private static final String FILE_NAME = "test.java";
 
@@ -130,8 +125,28 @@ class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractLocalCILoc
         var studentLogin = TEST_PREFIX + "student1";
         var submission = hestiaUtilTestService.setupSubmission(FILE_NAME, "TEST", exercise, participationRepo, studentLogin);
         var submission2 = hestiaUtilTestService.setupSubmission(FILE_NAME, "TEST2", exercise, participationRepo, studentLogin);
-        request.get("/api/programming-exercises/" + exercise.getId() + "/participation/" + submission.getParticipation().getId() + "/commits/" + submission.getCommitHash()
-                + "/diff-report/" + submission2.getCommitHash(), HttpStatus.OK, ProgrammingExerciseGitDiffReport.class);
+        request.get("/api/programming-exercises/" + exercise.getId() + "/commits/" + submission.getCommitHash() + "/diff-report/" + submission2.getCommitHash()
+                + "?participationId=" + submission.getParticipation().getId(), HttpStatus.OK, ProgrammingExerciseGitDiffReport.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getGitDiffReportForCommitsWithRenamedFile() throws Exception {
+        String fileContent = "content\ncontent\ncontent\ncontent";
+        exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, fileContent, exercise, templateRepo);
+        participationRepo.configureRepos("participationLocalRepo", "participationOriginRepo");
+        var studentLogin = TEST_PREFIX + "student1";
+        var submission = hestiaUtilTestService.setupSubmission(FILE_NAME, fileContent, exercise, participationRepo, studentLogin);
+        // Simulate a renaming by deleting the file and creating a new one with the same content. Git will track this as long as the content is similar enough.
+        var submission2 = hestiaUtilTestService.deleteFileAndSetupSubmission(FILE_NAME, FILE_NAME2, fileContent, exercise, participationRepo, studentLogin);
+        var report = request.get("/api/programming-exercises/" + exercise.getId() + "/commits/" + submission.getCommitHash() + "/diff-report/" + submission2.getCommitHash()
+                + "?participationId=" + submission.getParticipation().getId(), HttpStatus.OK, ProgrammingExerciseGitDiffReport.class);
+        var entries = report.getEntries();
+        assertThat(entries.size()).isEqualTo(1);
+        ProgrammingExerciseGitDiffEntry entry = entries.iterator().next();
+        assertThat(entry.getPreviousFilePath()).isEqualTo(FILE_NAME);
+        assertThat(entry.getFilePath()).isEqualTo(FILE_NAME2);
+        assertThat(entry.isEmpty()).isTrue();
     }
 
     @Test
@@ -143,8 +158,8 @@ class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractLocalCILoc
         var studentLogin = TEST_PREFIX + "student1";
         var submission = hestiaUtilTestService.setupSubmission(FILE_NAME, "TEST", exercise, participationRepo, studentLogin);
         var submission2 = hestiaUtilTestService.setupSubmission(FILE_NAME, "TEST2", exercise, participationRepo, studentLogin);
-        request.get("/api/programming-exercises/" + wrongExerciseId + "/participation/" + submission.getParticipation().getId() + "/commits/" + submission.getCommitHash()
-                + "/diff-report/" + submission2.getCommitHash(), HttpStatus.CONFLICT, ProgrammingExerciseGitDiffReport.class);
+        request.get("/api/programming-exercises/" + wrongExerciseId + "/commits/" + submission.getCommitHash() + "/diff-report/" + submission2.getCommitHash() + "?participationId="
+                + submission.getParticipation().getId(), HttpStatus.CONFLICT, ProgrammingExerciseGitDiffReport.class);
     }
 
     @Test
@@ -156,8 +171,8 @@ class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractLocalCILoc
         var studentLogin = TEST_PREFIX + "instructor1";
         var submission = hestiaUtilTestService.setupSubmission(FILE_NAME, "TEST", exercise, participationRepo, studentLogin);
         var submission2 = hestiaUtilTestService.setupSubmission(FILE_NAME, "TEST2", exercise, participationRepo, studentLogin);
-        request.get("/api/programming-exercises/" + exercise.getId() + "/participation/" + submission.getParticipation().getId() + "/commits/" + submission.getCommitHash()
-                + "/diff-report/" + submission2.getCommitHash(), HttpStatus.FORBIDDEN, ProgrammingExerciseGitDiffReport.class);
+        request.get("/api/programming-exercises/" + exercise.getId() + "/commits/" + submission.getCommitHash() + "/diff-report/" + submission2.getCommitHash()
+                + "?participationId=" + submission.getParticipation().getId(), HttpStatus.FORBIDDEN, ProgrammingExerciseGitDiffReport.class);
     }
 
     @Test

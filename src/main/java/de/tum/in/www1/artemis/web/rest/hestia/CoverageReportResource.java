@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.hestia.CoverageReport;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * REST controller for managing ProgrammingExerciseTestwiseCoverageReports and its entries.
@@ -28,11 +28,8 @@ public class CoverageReportResource {
 
     private final TestwiseCoverageService testwiseCoverageService;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
-    public CoverageReportResource(TestwiseCoverageService testwiseCoverageService, ProgrammingExerciseRepository programmingExerciseRepository) {
+    public CoverageReportResource(TestwiseCoverageService testwiseCoverageService) {
         this.testwiseCoverageService = testwiseCoverageService;
-        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     /**
@@ -47,11 +44,9 @@ public class CoverageReportResource {
     public ResponseEntity<CoverageReport> getLatestFullCoverageReport(@PathVariable Long exerciseId) {
         log.debug("REST request to get the latest Full Testwise CoverageReport for exercise {}", exerciseId);
 
-        var optionalReportWithFileReports = testwiseCoverageService.getFullCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(exerciseId);
-        if (optionalReportWithFileReports.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(optionalReportWithFileReports.get());
+        var optionalReportWithFileReports = testwiseCoverageService.getFullCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(exerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("Coverage report for exercise " + exerciseId + " not found."));
+        return ResponseEntity.ok(optionalReportWithFileReports);
     }
 
     /**
@@ -66,10 +61,8 @@ public class CoverageReportResource {
     public ResponseEntity<CoverageReport> getLatestCoverageReport(@PathVariable Long exerciseId) {
         log.debug("REST request to get the latest Testwise CoverageReport for exercise {}", exerciseId);
 
-        var optionalReportWithoutFileReports = testwiseCoverageService.getCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(exerciseId);
-        if (optionalReportWithoutFileReports.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(optionalReportWithoutFileReports.get());
+        var optionalReportWithoutFileReports = testwiseCoverageService.getCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(exerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("Coverage report for exercise " + exerciseId + " not found."));
+        return ResponseEntity.ok(optionalReportWithoutFileReports);
     }
 }

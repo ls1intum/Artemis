@@ -117,7 +117,7 @@ public final class ServletUtils {
         if (in == null) {
             return;
         }
-        try {
+        try (in) {
             while (0 < in.skip(2048) || 0 <= in.read()) {
                 // Discard until EOF.
             }
@@ -125,14 +125,7 @@ public final class ServletUtils {
         catch (IOException err) {
             // Discard IOException during read or skip.
         }
-        finally {
-            try {
-                in.close();
-            }
-            catch (IOException err) {
-                // Discard IOException during close of input stream.
-            }
-        }
+        // Discard IOException during close of input stream.
     }
 
     /**
@@ -240,8 +233,8 @@ public final class ServletUtils {
         return ObjectId.fromRaw(md.digest()).getName();
     }
 
-    static String identify(Repository git) {
-        String identifier = git.getIdentifier();
+    static String identify(Repository repository) {
+        String identifier = repository.getIdentifier();
         if (identifier == null) {
             return "unknown";
         }

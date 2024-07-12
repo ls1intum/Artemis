@@ -1,7 +1,7 @@
 api: v0.0.1
 actions:
   - name: provide_environment_information
-    script: |
+    script: |-
       #!/bin/bash
       echo "--------------------Python versions--------------------"
       python3 --version
@@ -21,7 +21,7 @@ actions:
       fi
     runAlways: false
   - name: prepare_makefile
-    script: |
+    script: |-
       #!/usr/bin/env bash
       rm -f assignment/{GNUmakefile, Makefile, makefile}
       rm -f assignment/io.inc
@@ -29,14 +29,14 @@ actions:
       cp -f tests/io.inc assignment/io.inc || exit 2
     runAlways: false
   - name: run_and_compile
-    script: |
+    script: |-
       cd tests
       python3 compileTest.py ../assignment/
       rm compileTest.py
       cp result.xml ../assignment/result.xml
     runAlways: false
   - name: junit
-    script: |
+    script: |-
       chmod -R 777 .
     runAlways: true
     results:

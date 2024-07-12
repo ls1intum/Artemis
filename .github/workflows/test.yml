@@ -42,7 +42,7 @@ concurrency:
 env:
   CI: true
   node: 20
-  java: 17
+  java: 21
 
 jobs:
 
@@ -55,7 +55,11 @@ jobs:
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
-        java-version: '${{ env.java }}'
+        # Install Java 17 to run programming templates
+        java-version: |
+          17
+          ${{ env.java }}
+        cache: 'gradle'
     - name: Java Tests
       run: set -o pipefail && ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
     - name: Print failed tests
@@ -84,6 +88,13 @@ jobs:
     - name: Number of Server Starts
       if: success() || failure()
       run: bash supporting_scripts/extract_number_of_server_starts.sh
+    - name: Upload Server Test Coverage Report
+      if: success() || failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: Coverage Report Server Tests
+        path: build/reports/jacoco/test/html/
+
 
   server-tests-mysql:
       needs: [ server-tests ]
@@ -98,7 +109,10 @@ jobs:
             uses: actions/setup-java@v4
             with:
                 distribution: 'temurin'
-                java-version: '${{ env.java }}'
+                # Install Java 17 to run programming templates
+                java-version: |
+                  17
+                  ${{ env.java }}
                 cache: 'gradle'
           - name: Install apt dependencies
             run: sudo apt-get install -y fontconfig maven
@@ -154,7 +168,10 @@ jobs:
             uses: actions/setup-java@v4
             with:
                 distribution: 'temurin'
-                java-version: '${{ env.java }}'
+                # Install Java 17 to run programming templates
+                java-version: |
+                    17
+                    ${{ env.java }}
                 cache: 'gradle'
           - name: Install apt dependencies
             run: sudo apt-get install -y fontconfig maven
@@ -244,6 +261,12 @@ jobs:
           run: npm run compile:ts:tests
         - name: TypeScript Test Without Typechecking
           run: npm run test:ci
+        - name: Upload Client Test Coverage Report
+          if: success() || failure()
+          uses: actions/upload-artifact@v4
+          with:
+              name: Coverage Report Client Tests
+              path: build/test-results/lcov-report/
 
   client-tests-selected:
       runs-on: ubuntu-latest

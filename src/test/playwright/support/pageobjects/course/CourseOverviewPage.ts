@@ -16,8 +16,8 @@ export class CourseOverviewPage {
      * @param term The search term to use.
      */
     async search(term: string) {
-        await this.page.locator('#exercise-search-input').fill(term);
-        await this.page.locator('#exercise-search-button').click();
+        const searchInput = this.page.locator('input[formcontrolname="searchFilter"]');
+        await searchInput.pressSequentially(term, { delay: 20 });
     }
 
     /**
@@ -25,7 +25,7 @@ export class CourseOverviewPage {
      * @param exerciseId The ID of the exercise to start.
      */
     async startExercise(exerciseId: number) {
-        await this.page.locator('#start-exercise-' + exerciseId).click();
+        await this.getStartExerciseButton(exerciseId).click();
     }
 
     /**
@@ -33,16 +33,57 @@ export class CourseOverviewPage {
      * @param exerciseId The ID of the exercise to open.
      */
     async openRunningExercise(exerciseId: number) {
-        await this.page.locator('#open-exercise-' + exerciseId).click();
+        await this.getOpenRunningExerciseButton(exerciseId).click();
+    }
+
+    /**
+     * Initiates the practice of an exercise.
+     */
+    async practiceExercise() {
+        await this.page.locator('button', { hasText: 'Practice' }).click();
     }
 
     /**
      * Retrieves the Locator for an exercise card by its ID.
-     * @param exerciseID The ID of the exercise.
+     * @param exerciseName title of the exercise.
      * @returns The Locator for the exercise card.
      */
-    getExercise(exerciseID: number): Locator {
-        return this.page.locator(`#exercise-card-${exerciseID}`);
+    getExercise(exerciseName: string): Locator {
+        return this.page.locator('#test-sidebar-card-medium').getByText(exerciseName);
+    }
+
+    /**
+     * Retrieves the Locator for all exercises.
+     * @returns The Locator for all exercises.
+     */
+    getExercises(): Locator {
+        return this.page.locator('#test-sidebar-card-medium');
+    }
+
+    /**
+     * Retrieves the Locator for the button opening running exercise with the given ID.
+     * @param exerciseId The ID of the exercise.
+     * @returns The Locator for the button opening running exercise.
+     */
+    getOpenRunningExerciseButton(exerciseId: number) {
+        return this.page.locator(`#open-exercise-${exerciseId}`);
+    }
+    /**
+     * Retrieves the Locator for the start exercise button by its ID.
+     * @param exerciseId The ID of the exercise.
+     * @returns The Locator for the start exercise button.
+     */
+    getStartExerciseButton(exerciseId: number) {
+        return this.page.locator(`#start-exercise-${exerciseId}`);
+    }
+
+    /**
+     * Opens an exercise given its name.
+     * @param exerciseName The title of the exercise to open.
+     */
+    async openExercise(exerciseName: string) {
+        await this.page.locator('jhi-course-exercise-details').waitFor({ state: 'visible' });
+        await this.getExercise(exerciseName).click();
     }
 
     /**
@@ -63,10 +104,16 @@ export class CourseOverviewPage {
     }
 
     /**
-     * Opens an exam given its ID.
-     * @param examId The ID of the exam to open.
+     * Opens an exam given its title.
      */
-    async openExam(examId: number): Promise<void> {
-        await this.page.locator(`#exam-${examId} .clickable`).click();
+    async openExam(examTitle: string): Promise<void> {
+        await this.page.locator('span').filter({ hasText: examTitle }).click();
+    }
+
+    /**
+     * Opens the team info for the exercise.
+     */
+    async openTeam() {
+        await this.page.locator('.view-team').click();
     }
 }

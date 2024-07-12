@@ -1,13 +1,22 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.GradingInstruction;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismDetectionConfig;
+import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 
 public abstract class ExerciseImportService {
 
@@ -29,7 +38,7 @@ public abstract class ExerciseImportService {
         this.feedbackService = feedbackService;
     }
 
-    void copyExerciseBasis(final Exercise newExercise, final Exercise importedExercise, final Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+    protected void copyExerciseBasis(final Exercise newExercise, final Exercise importedExercise, final Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         if (importedExercise.isCourseExercise()) {
             newExercise.setCourse(importedExercise.getCourseViaExerciseGroupOrCourseMember());
             newExercise.setPresentationScoreEnabled(importedExercise.getPresentationScoreEnabled());
@@ -53,6 +62,11 @@ public abstract class ExerciseImportService {
         newExercise.setDifficulty(importedExercise.getDifficulty());
         newExercise.setGradingInstructions(importedExercise.getGradingInstructions());
         newExercise.setGradingCriteria(importedExercise.copyGradingCriteria(gradingInstructionCopyTracker));
+
+        if (importedExercise.getPlagiarismDetectionConfig() != null) {
+            newExercise.setPlagiarismDetectionConfig(new PlagiarismDetectionConfig(importedExercise.getPlagiarismDetectionConfig()));
+        }
+
         if (newExercise.getExerciseGroup() != null) {
             newExercise.setMode(ExerciseMode.INDIVIDUAL);
         }

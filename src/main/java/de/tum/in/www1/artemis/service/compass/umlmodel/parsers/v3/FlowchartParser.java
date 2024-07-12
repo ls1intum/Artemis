@@ -1,14 +1,28 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.parsers.v3;
 
-import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.*;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_ID;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_NAME;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_TYPE;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.RELATIONSHIP_SOURCE;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.RELATIONSHIP_TARGET;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.in.www1.artemis.service.compass.umlmodel.flowchart.*;
+import de.tum.in.www1.artemis.service.compass.umlmodel.flowchart.Flowchart;
+import de.tum.in.www1.artemis.service.compass.umlmodel.flowchart.FlowchartDecision;
+import de.tum.in.www1.artemis.service.compass.umlmodel.flowchart.FlowchartFlowline;
+import de.tum.in.www1.artemis.service.compass.umlmodel.flowchart.FlowchartFunctionCall;
+import de.tum.in.www1.artemis.service.compass.umlmodel.flowchart.FlowchartInputOutput;
+import de.tum.in.www1.artemis.service.compass.umlmodel.flowchart.FlowchartProcess;
+import de.tum.in.www1.artemis.service.compass.umlmodel.flowchart.FlowchartTerminal;
 import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.UMLModelParser;
 
 public class FlowchartParser {

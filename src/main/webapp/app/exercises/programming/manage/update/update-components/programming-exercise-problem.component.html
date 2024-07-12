@@ -24,6 +24,7 @@
             <jhi-programming-exercise-editable-instructions
                 [participation]="programmingExercise.templateParticipation!"
                 [(exercise)]="exercise"
+                [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
                 [showStatus]="!!programmingExercise?.id"
                 [editMode]="!!programmingExercise?.id"
                 (hasUnsavedChanges)="programmingExerciseCreationConfig.hasUnsavedChanges = $event"

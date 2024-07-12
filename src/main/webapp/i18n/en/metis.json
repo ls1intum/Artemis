@@ -9,7 +9,9 @@
             "collapseNewMessage": "Hide",
             "reply": "Reply",
             "showMultipleAnswers": "Show {{ number }} replies",
+            "multipleAnswers": "{{ number }} Replies",
             "showSingleAnswer": "Show 1 reply",
+            "singleAnswer": "1 Reply",
             "collapseAnswers": "Hide replies",
             "savePosting": "Save",
             "cancel": "Cancel",
@@ -62,7 +64,8 @@
             },
             "overview": {
                 "title": "Posts",
-                "searchBarDefault": "Search for a message, use # to find a specific message (e.g. #1)",
+                "searchBarDefault": "Search for a message across all channels",
+                "sortedByDate": "Sorted by Date",
                 "postContextFilter": "Show messages for:",
                 "one_extra_context": "other",
                 "multiple_extra_contexts": "others",
@@ -122,9 +125,14 @@
                 "created": "New reply successfully created",
                 "deleted": "Reply successfully deleted"
             },
+            "userRoles": {
+                "instructor": "Instructor",
+                "tutor": "Tutor",
+                "student": "Student"
+            },
             "userAuthorityTooltips": {
                 "instructor": "Instructor: Responsible for course conduction.",
-                "ta": "Tutor: Responsible for helping users with their questions about the course and exercises.",
+                "tutor": "Tutor: Responsible for helping users with their questions about the course and exercises.",
                 "student": "Student: Takes courses, participates in exercises, and asks questions."
             }
         }

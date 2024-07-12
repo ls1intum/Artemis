@@ -2,7 +2,7 @@ import * as ace from 'brace';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { DebugElement } from '@angular/core';
-import { of, throwError } from 'rxjs';
+import { BehaviorSubject, firstValueFrom, of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -36,7 +36,6 @@ import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
-import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -61,7 +60,6 @@ import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code
 import { CodeEditorFileBrowserFolderComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-folder.component';
 import { CodeEditorFileBrowserFileComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-file.component';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
-import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
 import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
@@ -72,6 +70,10 @@ import { MockAthenaService } from '../../helpers/mocks/service/mock-athena.servi
 import { AthenaService } from 'app/assessment/athena.service';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { EntityResponseType } from 'app/exercises/shared/result/result.service';
+import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import dayjs from 'dayjs/esm';
+import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
 
 function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerComponent, pointsAwarded: number, scoreExpected: number) {
     comp.unreferencedFeedback.push({
@@ -136,7 +138,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     participation.exercise = exercise;
     participation.id = 1;
     participation.student = { login: 'student1' } as User;
-    participation.repositoryUri = 'http://student1@bitbucket.ase.in.tum.de/scm/TEST/test-repo-student1.git';
+    participation.repositoryUri = 'http://student1@gitlab.ase.in.tum.de/scm/TEST/test-repo-student1.git';
     result.submission!.participation = participation;
 
     const submission: ProgrammingSubmission = new ProgrammingSubmission();
@@ -152,12 +154,23 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     afterComplaintResult.score = 100;
 
     const afterOverrideResult: Result = new Result();
-    afterOverrideResult.feedbacks = [{ type: FeedbackType.AUTOMATIC, testCase: { testName: 'testCase1' }, detailText: 'testCase1 failed', credits: 0 }];
+    afterOverrideResult.feedbacks = [
+        {
+            type: FeedbackType.AUTOMATIC,
+            testCase: { testName: 'testCase1' },
+            detailText: 'testCase1 failed',
+            credits: 0,
+        },
+    ];
     afterOverrideResult.assessor = user;
 
     const overrideEntityResponse: EntityResponseType = new HttpResponse({ body: afterOverrideResult });
 
-    const route = (): ActivatedRoute => ({ params: of({ submissionId: 123 }), queryParamMap: of(convertToParamMap({ testRun: false })) }) as any as ActivatedRoute;
+    const route = (): ActivatedRoute =>
+        ({
+            params: of({ submissionId: 123 }),
+            queryParamMap: of(convertToParamMap({ testRun: false })),
+        }) as any as ActivatedRoute;
     const fileContent = 'This is the content of a file';
     const templateFileSessionReturn: { [fileName: string]: string } = { 'folder/file1': fileContent };
 
@@ -182,9 +195,9 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 MockComponent(CodeEditorBuildOutputComponent),
                 MockComponent(CodeEditorGridComponent),
                 MockComponent(CodeEditorActionsComponent),
-                CodeEditorAceComponent,
                 MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent),
-                AceEditorComponent,
+                CodeEditorMonacoComponent,
+                MonacoEditorComponent,
                 MockComponent(CodeEditorInstructionsComponent),
                 MockComponent(ResultComponent),
                 MockComponent(IncludedInScoreBadgeComponent),
@@ -250,6 +263,59 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         result.hasComplaint = true;
     });
 
+    it('should highlight lines that were changed', async () => {
+        // Stub
+        const getFilesWithContentStub = jest.spyOn(repositoryFileService, 'getFilesWithContent');
+        getFilesWithContentStub.mockReturnValue(of(templateFileSessionReturn));
+        // Stub for ace editor
+        const getFileStub = jest.spyOn(repositoryFileService, 'getFile');
+        const fileSubject = new BehaviorSubject({ fileContent: 'new file text' });
+        getFileStub.mockReturnValue(fileSubject);
+
+        // Data for file browser
+        const treeItems = [
+            new TreeviewItem({
+                internalDisabled: false,
+                internalChecked: false,
+                internalCollapsed: false,
+                text: 'folder/file1',
+                value: 'file1',
+            } as any),
+        ];
+
+        const repositoryFiles = {
+            folder: FileType.FOLDER,
+            'folder/file1': FileType.FILE,
+        };
+
+        // Initialize component and children
+        fixture.detectChanges();
+        // wait until data is loaded from CodeEditorTutorAssessmentContainer
+        await firstValueFrom(comp.onFeedbackLoaded);
+        fixture.detectChanges();
+
+        // Setup tree for file browser
+        const codeEditorFileBrowserComp = fixture.debugElement.query(By.directive(CodeEditorFileBrowserComponent)).componentInstance;
+        codeEditorFileBrowserComp.filesTreeViewItem = treeItems;
+        codeEditorFileBrowserComp.repositoryFiles = repositoryFiles;
+        codeEditorFileBrowserComp.selectedFile = 'folder/file1';
+        fixture.detectChanges();
+        codeEditorFileBrowserComp.isLoadingFiles = false;
+        fixture.detectChanges();
+        const browserComponent = fixture.debugElement.query(By.directive(CodeEditorFileBrowserComponent)).componentInstance;
+        expect(browserComponent).toBeDefined();
+        expect(browserComponent.filesTreeViewItem).toHaveLength(1);
+
+        const codeEditorMonacoComp: CodeEditorMonacoComponent = fixture.debugElement.query(By.directive(CodeEditorMonacoComponent)).componentInstance;
+        codeEditorMonacoComp.isLoading = false;
+        const highlightedLines: MonacoEditorLineHighlight[] = await firstValueFrom(codeEditorMonacoComp.onHighlightLines);
+        expect(highlightedLines).toHaveLength(1);
+
+        getFilesWithContentStub.mockRestore();
+        getFileStub.mockRestore();
+        fixture.destroy();
+    });
+
     it('should use jhi-assessment-layout', () => {
         const assessmentLayout = fixture.debugElement.query(By.directive(AssessmentLayoutComponent));
         expect(assessmentLayout).toBeDefined();
@@ -285,6 +351,20 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         flush();
     }));
 
+    it('should be able to override directly after submitting', () => {
+        jest.spyOn(programmingAssessmentManualResultService, 'saveAssessment');
+
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.isAtLeastInstructor = true;
+        exercise.dueDate = dayjs();
+        comp.exercise = exercise;
+        comp.isAssessor = true;
+        comp.participation = participation;
+        comp.manualResult = result;
+        comp.submit();
+        expect(comp.canOverride).toBeTrue();
+    });
+
     it('should show unreferenced feedback suggestions', () => {
         comp.feedbackSuggestions = [{ reference: 'file:src/Test.java_line:1' }, { reference: 'file:src/Test.java_line:2' }, { reference: undefined }];
         expect(comp.unreferencedFeedbackSuggestions).toHaveLength(1);
@@ -292,18 +372,38 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
     it('should not show feedback suggestions where there are already existing manual feedbacks', async () => {
         comp.unreferencedFeedback = [{ text: 'unreferenced test', detailText: 'some detail', reference: undefined }];
-        comp.referencedFeedback = [{ text: 'referenced test', detailText: 'some detail', reference: 'file:src/Test.java_line:1' }];
+        comp.referencedFeedback = [
+            {
+                text: 'referenced test',
+                detailText: 'some detail',
+                reference: 'file:src/Test.java_line:1',
+            },
+        ];
         const feedbackSuggestionsStub = jest.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions');
         feedbackSuggestionsStub.mockReturnValue(
             of([
                 { text: 'FeedbackSuggestion:unreferenced test', detailText: 'some detail' },
-                { text: 'FeedbackSuggestion:referenced test', detailText: 'some detail', reference: 'file:src/Test.java_line:1' },
-                { text: 'FeedbackSuggestion:suggestion to pass', detailText: 'some detail', reference: 'file:src/Test.java_line:2' },
+                {
+                    text: 'FeedbackSuggestion:referenced test',
+                    detailText: 'some detail',
+                    reference: 'file:src/Test.java_line:1',
+                },
+                {
+                    text: 'FeedbackSuggestion:suggestion to pass',
+                    detailText: 'some detail',
+                    reference: 'file:src/Test.java_line:2',
+                },
             ] as Feedback[]),
         );
         comp['submission'] = { id: undefined }; // Needed for loadFeedbackSuggestions
         await comp['loadFeedbackSuggestions']();
-        expect(comp.feedbackSuggestions).toStrictEqual([{ text: 'FeedbackSuggestion:suggestion to pass', detailText: 'some detail', reference: 'file:src/Test.java_line:2' }]);
+        expect(comp.feedbackSuggestions).toStrictEqual([
+            {
+                text: 'FeedbackSuggestion:suggestion to pass',
+                detailText: 'some detail',
+                reference: 'file:src/Test.java_line:2',
+            },
+        ]);
     });
 
     it('should show complaint for result with complaint and check assessor', fakeAsync(() => {
@@ -445,9 +545,30 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     it('should save and submit manual result', fakeAsync(() => {
         comp.ngOnInit();
         tick(100);
-        comp.automaticFeedback = [{ type: FeedbackType.AUTOMATIC, testCase: { testName: 'testCase1' }, detailText: 'testCase1 failed', credits: 0 }];
-        comp.referencedFeedback = [{ type: FeedbackType.MANUAL, text: 'manual feedback', detailText: 'manual feedback for a file:1', credits: 2, reference: 'file:1_line:1' }];
-        comp.unreferencedFeedback = [{ type: FeedbackType.MANUAL_UNREFERENCED, detailText: 'unreferenced feedback', credits: 1 }];
+        comp.automaticFeedback = [
+            {
+                type: FeedbackType.AUTOMATIC,
+                testCase: { testName: 'testCase1' },
+                detailText: 'testCase1 failed',
+                credits: 0,
+            },
+        ];
+        comp.referencedFeedback = [
+            {
+                type: FeedbackType.MANUAL,
+                text: 'manual feedback',
+                detailText: 'manual feedback for a file:1',
+                credits: 2,
+                reference: 'file:1_line:1',
+            },
+        ];
+        comp.unreferencedFeedback = [
+            {
+                type: FeedbackType.MANUAL_UNREFERENCED,
+                detailText: 'unreferenced feedback',
+                credits: 1,
+            },
+        ];
         comp.validateFeedback();
         comp.save();
         const alertElement = debugElement.queryAll(By.css('jhi-alert'));
@@ -525,61 +646,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(comp.submission).toBeUndefined();
     });
 
-    it('should highlight lines that were changed', fakeAsync(() => {
-        // Stub
-        const getFilesWithContentStub = jest.spyOn(repositoryFileService, 'getFilesWithContent');
-        getFilesWithContentStub.mockReturnValue(of(templateFileSessionReturn));
-        // Stub for ace editor
-        const getFileStub = jest.spyOn(repositoryFileService, 'getFile');
-        getFileStub.mockReturnValue(of({ fileContent: 'new file text' }));
-
-        // Data for file browser
-        const treeItems = [
-            new TreeviewItem({
-                internalDisabled: false,
-                internalChecked: false,
-                internalCollapsed: false,
-                text: 'folder/file1',
-                value: 'file1',
-            } as any),
-        ];
-
-        const repositoryFiles = {
-            folder: FileType.FOLDER,
-            'folder/file1': FileType.FILE,
-        };
-
-        // Initialize component and children
-        fixture.detectChanges();
-        // wait until data is loaded from CodeEditorTutorAssessmentContainer
-        tick(100);
-        fixture.detectChanges();
-
-        // Setup tree for file browser
-        const codeEditorFileBrowserComp = fixture.debugElement.query(By.directive(CodeEditorFileBrowserComponent)).componentInstance;
-        codeEditorFileBrowserComp.filesTreeViewItem = treeItems;
-        codeEditorFileBrowserComp.repositoryFiles = repositoryFiles;
-        codeEditorFileBrowserComp.selectedFile = 'folder/file1';
-        fixture.detectChanges();
-        codeEditorFileBrowserComp.isLoadingFiles = false;
-        fixture.detectChanges();
-        const browserComponent = fixture.debugElement.query(By.directive(CodeEditorFileBrowserComponent)).componentInstance;
-        expect(browserComponent).toBeDefined();
-        expect(browserComponent.filesTreeViewItem).toHaveLength(1);
-
-        const codeEditorAceComp = fixture.debugElement.query(By.directive(CodeEditorAceComponent)).componentInstance;
-        codeEditorAceComp.isLoading = false;
-        fixture.whenStable().then(() => {
-            fixture.detectChanges();
-            expect(codeEditorAceComp.markerIds).toHaveLength(1);
-        });
-
-        getFilesWithContentStub.mockRestore();
-        getFileStub.mockRestore();
-        fixture.destroy();
-        flush();
-    }));
-
     it.each([undefined, 'genericErrorKey', 'complaintLock'])(
         'should update assessment after complaint, errorKeyFromServer=%s',
         fakeAsync((errorKeyFromServer: string | undefined) => {
@@ -633,6 +699,35 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         }),
     );
 
+    it('should validate assessments after submission is received during component init', async () => {
+        // make assessment valid
+        submission.results![0].feedbacks = [
+            {
+                detailText: 'text',
+                credits: 1,
+                type: FeedbackType.MANUAL_UNREFERENCED,
+            },
+        ];
+
+        await comp['onSubmissionReceived']('123', submission);
+        expect(comp.assessmentsAreValid).toBeTrue();
+    });
+
+    it('should not invalidate assessment after saving', async () => {
+        jest.spyOn(programmingAssessmentManualResultService, 'saveAssessment');
+
+        submission.results![0].feedbacks = [
+            {
+                detailText: 'text',
+                credits: 1,
+                type: FeedbackType.MANUAL_UNREFERENCED,
+            },
+        ];
+        await comp['onSubmissionReceived']('123', submission);
+        comp.save();
+        expect(comp.assessmentsAreValid).toBeTrue();
+    });
+
     it('should display error when complaint resolved but assessment invalid', () => {
         let onSuccessCalled = false;
         let onErrorCalled = false;
@@ -655,14 +750,86 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     });
 
     it.each([
-        [0, { complaintResponse: { complaint: { accepted: false } }, onSuccess: () => {}, onError: () => {} }, [], false],
-        [0, { complaintResponse: { complaint: { accepted: false } }, onSuccess: () => {}, onError: () => {} }, [{ credits: 1 }], false],
-        [1, { complaintResponse: { complaint: { accepted: false } }, onSuccess: () => {}, onError: () => {} }, [], false],
-        [1, { complaintResponse: { complaint: { accepted: false } }, onSuccess: () => {}, onError: () => {} }, [{ credits: 1 }], false],
-        [0, { complaintResponse: { complaint: { accepted: true } }, onSuccess: () => {}, onError: () => {} }, [], true],
-        [0, { complaintResponse: { complaint: { accepted: true } }, onSuccess: () => {}, onError: () => {} }, [{ credits: 1 }], false],
-        [1, { complaintResponse: { complaint: { accepted: true } }, onSuccess: () => {}, onError: () => {} }, [], true],
-        [1, { complaintResponse: { complaint: { accepted: true } }, onSuccess: () => {}, onError: () => {} }, [{ credits: 1 }], true],
+        [
+            0,
+            {
+                complaintResponse: { complaint: { accepted: false } },
+                onSuccess: () => {},
+                onError: () => {},
+            },
+            [],
+            false,
+        ],
+        [
+            0,
+            {
+                complaintResponse: { complaint: { accepted: false } },
+                onSuccess: () => {},
+                onError: () => {},
+            },
+            [{ credits: 1 }],
+            false,
+        ],
+        [
+            1,
+            {
+                complaintResponse: { complaint: { accepted: false } },
+                onSuccess: () => {},
+                onError: () => {},
+            },
+            [],
+            false,
+        ],
+        [
+            1,
+            {
+                complaintResponse: { complaint: { accepted: false } },
+                onSuccess: () => {},
+                onError: () => {},
+            },
+            [{ credits: 1 }],
+            false,
+        ],
+        [
+            0,
+            {
+                complaintResponse: { complaint: { accepted: true } },
+                onSuccess: () => {},
+                onError: () => {},
+            },
+            [],
+            true,
+        ],
+        [
+            0,
+            {
+                complaintResponse: { complaint: { accepted: true } },
+                onSuccess: () => {},
+                onError: () => {},
+            },
+            [{ credits: 1 }],
+            false,
+        ],
+        [
+            1,
+            {
+                complaintResponse: { complaint: { accepted: true } },
+                onSuccess: () => {},
+                onError: () => {},
+            },
+            [],
+            true,
+        ],
+        [
+            1,
+            {
+                complaintResponse: { complaint: { accepted: true } },
+                onSuccess: () => {},
+                onError: () => {},
+            },
+            [{ credits: 1 }],
+            true,
+        ],
     ])(
         'should get confirmation if complaint is accepted without higher score',
         (totalScoreBeforeAssessment: number, assessmentAfterComplaint: AssessmentAfterComplaint, newFeedback: Feedback[], needsConfirmation: boolean) => {

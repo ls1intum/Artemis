@@ -49,10 +49,8 @@ public class UriService {
 
     /**
      * Gets the repository slug from the given URI
-     * Example 1: https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git --> RMEXERCISE-ga42xab
-     * Example 2: https://ga63fup@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga63fup.git --> RMEXERCISE-ga63fup
-     * Example 3: https://artemistest2gitlab.ase.in.tum.de/TESTADAPTER/testadapter-exercise.git --> testadapter-exercise
-     * Example 4: https://turdiu@artemistest2gitlab.ase.in.tum.de/FTCSCAGRADING1/ftcscagrading1-turdiu.git --> ftcscagrading1-turdiu
+     * Example 1: https://artemistest2gitlab.ase.in.tum.de/TESTADAPTER/testadapter-exercise.git --> testadapter-exercise
+     * Example 2: https://turdiu@artemistest2gitlab.ase.in.tum.de/FTCSCAGRADING1/ftcscagrading1-turdiu.git --> ftcscagrading1-turdiu
      *
      * @param uri The complete repository uri (including protocol, host and the complete path)
      * @return The repository slug, i.e. the part of the uri that identifies the repository (not the project) without .git in the end
@@ -121,7 +119,7 @@ public class UriService {
      * Gets the project key from the given URI
      * <p>
      * Examples:
-     * https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git --> EIST2016RME
+     * https://ga42xab@https://artemistest2gitlab.ase.in.tum.de/TESTADAPTER/testadapter-exercise.git --> TESTADAPTER
      * http://localhost:8080/git/TESTCOURSE1TESTEX1/testcourse1testex1-student1.git --> TESTCOURSE1TESTEX1
      *
      * @param uri The complete repository uri (including protocol, host and the complete path)
@@ -145,7 +143,7 @@ public class UriService {
 
     /**
      * Gets the plain URI from the given repository URI,
-     * https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git --> https://bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
+     * https://username@artemistest2gitlab.ase.in.tum.de/FTCSCAGRADING1/ftcscagrading1-username --> https://artemistest2gitlab.ase.in.tum.de/FTCSCAGRADING1/ftcscagrading1-username
      *
      * @param repositoryUri The repository uri object
      * @return The plain URI

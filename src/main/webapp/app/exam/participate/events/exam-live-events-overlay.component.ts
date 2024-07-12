@@ -1,9 +1,10 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { Subscription } from 'rxjs';
-import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService } from 'app/exam/participate/exam-participation-live-events.service';
+import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService, ProblemStatementUpdateEvent } from 'app/exam/participate/exam-participation-live-events.service';
 import { USER_DISPLAY_RELEVANT_EVENTS, USER_DISPLAY_RELEVANT_EVENTS_REOPEN } from 'app/exam/participate/events/exam-live-events-button.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 
 @Component({
     selector: 'jhi-exam-live-events-overlay',
@@ -26,6 +27,7 @@ export class ExamLiveEventsOverlayComponent implements OnInit, OnDestroy {
     constructor(
         private liveEventsService: ExamParticipationLiveEventsService,
         private activeModal: NgbActiveModal,
+        private examExerciseUpdateService: ExamExerciseUpdateService,
     ) {}
 
     ngOnDestroy(): void {
@@ -56,6 +58,13 @@ export class ExamLiveEventsOverlayComponent implements OnInit, OnDestroy {
         } else {
             this.updateEventsToDisplay();
         }
+    }
+
+    navigateToExercise(event: ExamLiveEvent) {
+        this.acknowledgeEvent(event);
+        const problemStatementUpdateEvent = event as ProblemStatementUpdateEvent;
+        const exerciseId = problemStatementUpdateEvent.exerciseId;
+        this.examExerciseUpdateService.navigateToExamExercise(exerciseId);
     }
 
     acknowledgeAllUnacknowledgedEvents() {

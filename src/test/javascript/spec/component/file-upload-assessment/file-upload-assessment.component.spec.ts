@@ -32,7 +32,7 @@ import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instr
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
@@ -165,6 +165,21 @@ describe('FileUploadAssessmentComponent', () => {
             expect(getFirstResult(comp.submission)).toEqual(comp.result);
             expect(comp.correctionRound).toBe(1);
         }));
+
+        it('should validate assessments on component init', () => {
+            const submission = createSubmission(exercise);
+            const result = createResult(comp.submission!);
+            result.feedbacks = [{ id: 23, credits: 1, reference: 'reference', detailText: 'text' }];
+            setLatestSubmissionResult(submission, result);
+
+            const returnedMock = new HttpResponse<FileUploadSubmission>({ body: submission });
+            jest.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(returnedMock));
+
+            comp.assessmentsAreValid = false;
+            comp.ngOnInit();
+
+            expect(comp.assessmentsAreValid).toBeTrue();
+        });
     });
 
     describe('loadSubmission', () => {
@@ -180,6 +195,7 @@ describe('FileUploadAssessmentComponent', () => {
             comp.submission = submission;
             setLatestSubmissionResult(comp.submission, result);
             const handleFeedbackStub = jest.spyOn(submissionService, 'handleFeedbackCorrectionRoundTag');
+            const validateAssessmentStub = jest.spyOn(comp, 'validateAssessment');
 
             fixture.detectChanges();
             expect(comp.result).toEqual(result);
@@ -187,7 +203,9 @@ describe('FileUploadAssessmentComponent', () => {
             expect(comp.complaint).toEqual(complaint);
             expect(comp.result!.feedbacks?.length === 0).toBeTrue();
             expect(comp.busy).toBeFalse();
-            expect(handleFeedbackStub).toHaveBeenCalledOnce();
+            // now called twice, since assessments are now also validated when they are loaded
+            expect(handleFeedbackStub).toHaveBeenCalledTimes(2);
+            expect(validateAssessmentStub).toHaveBeenCalledOnce();
         });
 
         it('should load optimal submission', () => {
@@ -346,6 +364,21 @@ describe('FileUploadAssessmentComponent', () => {
             comp.onSaveAssessment();
             expect(alertServiceErrorSpy).toHaveBeenCalledWith('artemisApp.assessment.messages.saveFailed');
             expect(comp.isLoading).toBeFalse();
+        });
+
+        it('should not invalidate assessment after saving', () => {
+            const submission = createSubmission(exercise);
+            const result = createResult(comp.submission!);
+            result.feedbacks = [{ id: 23, credits: 1, reference: 'reference', detailText: 'text' }];
+            setLatestSubmissionResult(submission, result);
+            comp.submission = submission;
+
+            const returnedMock = new HttpResponse<FileUploadSubmission>({ body: submission });
+            jest.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(returnedMock));
+
+            comp.ngOnInit();
+            comp.onSaveAssessment();
+            expect(comp.assessmentsAreValid).toBeTrue();
         });
     });
 
@@ -612,6 +645,14 @@ describe('FileUploadAssessmentComponent', () => {
         it('should not be able to override if exercise is undefined', () => {
             comp.exercise = undefined;
             expect(comp.canOverride).toBeFalse();
+        });
+
+        it('should be able to override directly after submitting', () => {
+            comp.isAssessor = true;
+            // set due date in the future, so that overriding is not disallowed because of the date
+            comp.exercise!.assessmentDueDate = dayjs().add(42);
+            comp.onSubmitAssessment();
+            expect(comp.canOverride).toBeTrue();
         });
     });
 

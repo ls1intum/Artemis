@@ -11,6 +11,7 @@ package org.eclipse.jgit.http.server;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.Serial;
 import org.eclipse.jgit.util.HttpSupport;
 import org.eclipse.jgit.util.IO;
 import jakarta.servlet.http.HttpServlet;
@@ -23,6 +24,7 @@ import static org.eclipse.jgit.http.server.ServletUtils.send;
 /** Sends a small text meta file from the repository. */
 class TextFileServlet extends HttpServlet {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final String fileName;
@@ -31,18 +33,19 @@ class TextFileServlet extends HttpServlet {
         this.fileName = name;
     }
 
-    @Override public void doGet(final HttpServletRequest req, final HttpServletResponse rsp) throws IOException {
+    @Override
+    public void doGet(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
         try {
-            rsp.setContentType(HttpSupport.TEXT_PLAIN);
-            send(read(req), req, rsp);
+            response.setContentType(HttpSupport.TEXT_PLAIN);
+            send(read(request), request, response);
         }
         catch (FileNotFoundException noFile) {
-            rsp.sendError(SC_NOT_FOUND);
+            response.sendError(SC_NOT_FOUND);
         }
     }
 
-    private byte[] read(HttpServletRequest req) throws IOException {
-        final File gitdir = getRepository(req).getDirectory();
+    private byte[] read(HttpServletRequest request) throws IOException {
+        final File gitdir = getRepository(request).getDirectory();
         if (gitdir == null) {
             throw new FileNotFoundException(fileName);
         }

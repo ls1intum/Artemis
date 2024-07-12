@@ -31,7 +31,7 @@ public class ParticipationLifecycleService {
 
     /**
      * Sets up a scheduled {@link Runnable} task in the lifecycle of a {@link Participation}.
-     *
+     * <p>
      * Tasks are performed in a background thread managed by a {@code TaskScheduler}.
      * See {@code TaskSchedulingConfiguration}.
      * <p>
@@ -71,7 +71,7 @@ public class ParticipationLifecycleService {
 
     /**
      * Finds the time when the build and test after due date task should be run.
-     *
+     * <p>
      * If the participation has an individual due date, this date may be after the regular build and test date for the exercise.
      * Therefore, always the latest possible of the two options has to be chosen.
      *

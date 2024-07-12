@@ -3,14 +3,26 @@ package de.tum.in.www1.artemis.service.hestia;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHintActivation;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
@@ -145,20 +157,23 @@ public class ExerciseHintService {
      * @return All available exercise hints
      */
     public Set<ExerciseHint> getAvailableExerciseHints(ProgrammingExercise exercise, User user) {
+        var exerciseHints = exerciseHintRepository.findByExerciseId(exercise.getId());
+        if (exerciseHints.isEmpty()) {
+            return new HashSet<>();
+        }
+
         var submissions = getSubmissionsForStudent(exercise, user);
 
         if (submissions.isEmpty()) {
             return new HashSet<>();
         }
 
-        var latestResult = submissions.get(0).getLatestResult();
+        var latestResult = submissions.getFirst().getLatestResult();
 
         // latest submissions has no result or latest result has no feedback (most commonly due to a build error)
         if (latestResult == null || latestResult.getFeedbacks().isEmpty()) {
             return new HashSet<>();
         }
-
-        var exerciseHints = exerciseHintRepository.findByExerciseId(exercise.getId());
         var tasks = programmingExerciseTaskService.getSortedTasks(exercise);
 
         var subsequentNumberOfUnsuccessfulSubmissionsByTask = tasks.stream()

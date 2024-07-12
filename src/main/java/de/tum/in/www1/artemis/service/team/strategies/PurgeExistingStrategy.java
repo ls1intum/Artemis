@@ -19,7 +19,7 @@ public class PurgeExistingStrategy extends TeamImportStrategy {
 
     /**
      * Imports all teams of the source exercise into the destination exercise
-     *
+     * <p>
      * Conflicts are prevented trivially by first deleting all teams of the destination exercise.
      *
      * @param sourceExercise      Exercise from which to take the teams for the import
@@ -35,7 +35,7 @@ public class PurgeExistingStrategy extends TeamImportStrategy {
 
     /**
      * Imports all given teams into the destination exercise
-     *
+     * <p>
      * Conflicts are prevented trivially by first deleting all teams of the destination exercise.
      *
      * @param exercise Exercise from which to take the teams for the import
@@ -49,7 +49,7 @@ public class PurgeExistingStrategy extends TeamImportStrategy {
 
     /**
      * Deletes all existing teams and add given teams into the exercise
-     *
+     * <p>
      * Conflicts are prevented trivially by first deleting all teams of the destination exercise.
      *
      * @param exercise Exercise from which to take the teams for the import

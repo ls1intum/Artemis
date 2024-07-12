@@ -13,7 +13,7 @@
     }
     @if (isBuilding) {
         <div class="card-body">
-            <p class="text-center is-building"><fa-icon [icon]="faCircleNotch" [spin]="true" /> <span jhiTranslate="artemisApp.editor.building"></span></p>
+            <p class="text-center is-building"><fa-icon [icon]="faCircleNotch" animation="spin" /> <span jhiTranslate="artemisApp.editor.building"></span></p>
         </div>
     }
     @if (!isBuilding && rawBuildLogs.length) {

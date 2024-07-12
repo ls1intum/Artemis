@@ -2,6 +2,7 @@ import { Page } from 'playwright';
 import { Exercise } from 'app/entities/exercise.model';
 import { MODELING_EXERCISE_BASE, PROGRAMMING_EXERCISE_BASE, QUIZ_EXERCISE_BASE, TEXT_EXERCISE_BASE, UPLOAD_EXERCISE_BASE } from '../../constants';
 import { expect } from '@playwright/test';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 /**
  * A class which encapsulates UI selectors and actions for the course management exercises page.
@@ -60,8 +61,6 @@ export class CourseManagementExercisesPage {
     async deleteProgrammingExercise(exercise: Exercise) {
         const exerciseElement = this.getExercise(exercise.id!);
         await exerciseElement.locator('#delete-exercise').click();
-        await this.page.locator('#additional-check-0').check();
-        await this.page.locator('#additional-check-1').check();
         await this.page.locator('#confirm-entity-name').fill(exercise.title!);
         const responsePromise = this.page.waitForResponse(`${PROGRAMMING_EXERCISE_BASE}/*`);
         await this.page.locator('#delete').click();
@@ -113,6 +112,10 @@ export class CourseManagementExercisesPage {
         await this.page.locator('#import-quiz-exercise').click();
     }
 
+    async exportQuizExercise(exerciseID: number) {
+        await this.getExercise(exerciseID).locator('button', { hasText: 'Export' }).click();
+    }
+
     async clickImportExercise(exerciseID: number) {
         await this.page.locator(`.exercise-${exerciseID}`).locator('.import').click();
     }
@@ -121,10 +124,20 @@ export class CourseManagementExercisesPage {
         await this.page.locator(`#instructor-quiz-start-${quizID}`).click();
     }
 
+    async endQuiz(quizExercise: QuizExercise) {
+        await this.page.locator(`#quiz-set-end-${quizExercise.id}`).click();
+        await this.page.locator('#confirm-entity-name').fill(quizExercise.title!);
+        await this.page.locator('#delete').click();
+    }
+
     async shouldContainExerciseWithName(exerciseID: number) {
         const exerciseElement = this.getExercise(exerciseID);
         await exerciseElement.scrollIntoViewIfNeeded();
         await expect(exerciseElement).toBeVisible();
+    }
+
+    async openExerciseParticipations(exerciseId: number) {
+        await this.getExercise(exerciseId).locator('.btn', { hasText: 'Participations' }).click();
     }
 
     getModelingExerciseTitle(exerciseID: number) {
@@ -133,5 +146,11 @@ export class CourseManagementExercisesPage {
 
     getModelingExerciseMaxPoints(exerciseID: number) {
         return this.page.locator(`#exercise-card-${exerciseID}`).locator(`#modeling-exercise-${exerciseID}-maxPoints`);
+    }
+
+    async openExerciseTeams(exerciseId: number) {
+        const exerciseElement = this.getExercise(exerciseId);
+        const teamsButton = exerciseElement.locator('.btn', { hasText: 'Teams' });
+        await teamsButton.click();
     }
 }

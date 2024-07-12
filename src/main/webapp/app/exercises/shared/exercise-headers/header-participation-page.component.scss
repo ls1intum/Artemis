@@ -1,7 +1,7 @@
 @import 'src/main/webapp/content/scss/artemis-variables';
 
 .course-info-bar--participation {
-    $margin: calc(-1rem - 1px);
+    $margin: -1rem;
     $top-border-radius: 3px;
 
     min-height: unset;

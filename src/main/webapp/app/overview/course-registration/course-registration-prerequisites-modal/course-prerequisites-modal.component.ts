@@ -1,9 +1,9 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { finalize } from 'rxjs/operators';
-import { Competency } from 'app/entities/competency.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
+import { Prerequisite } from 'app/entities/prerequisite.model';
 
 @Component({
     selector: 'jhi-course-prerequisites-modal',
@@ -15,12 +15,12 @@ export class CoursePrerequisitesModalComponent implements OnInit {
     courseId: number;
 
     isLoading = false;
-    prerequisites: Competency[] = [];
+    prerequisites: Prerequisite[] = [];
 
     constructor(
         private alertService: AlertService,
         private activeModal: NgbActiveModal,
-        private competencyService: CompetencyService,
+        private prerequisiteService: PrerequisiteService,
     ) {}
 
     ngOnInit(): void {
@@ -35,7 +35,7 @@ export class CoursePrerequisitesModalComponent implements OnInit {
      */
     loadData() {
         this.isLoading = true;
-        this.competencyService
+        this.prerequisiteService
             .getAllPrerequisitesForCourse(this.courseId)
             .pipe(
                 finalize(() => {
@@ -44,21 +44,12 @@ export class CoursePrerequisitesModalComponent implements OnInit {
             )
             .subscribe({
                 next: (prerequisites) => {
-                    this.prerequisites = prerequisites.body!;
+                    this.prerequisites = prerequisites;
                 },
                 error: (error: string) => {
                     this.alertService.error(error);
                 },
             });
-    }
-
-    /**
-     * Calculates a unique identity for each competency card shown in the component
-     * @param index The index in the list
-     * @param competency The competency of the current iteration
-     */
-    identify(index: number, competency: Competency) {
-        return `${index}-${competency.id}`;
     }
 
     /**

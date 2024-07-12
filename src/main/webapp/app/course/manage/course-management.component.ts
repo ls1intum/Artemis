@@ -145,7 +145,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
         this.coursesBySemester = {};
 
         // Get last accessed courses
-        const lastAccessedCourseIds = this.courseAccessStorageService.getLastAccessedCourses();
+        const lastAccessedCourseIds = this.courseAccessStorageService.getLastAccessedCourses(CourseAccessStorageService.STORAGE_KEY);
         const recentlyAccessedCourses = this.courses.filter((course) => lastAccessedCourseIds.includes(course.id!));
 
         let firstExpanded = false;

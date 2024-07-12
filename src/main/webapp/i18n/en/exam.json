@@ -115,12 +115,13 @@
                 "resultTable": "Result Table"
             },
             "title": "Exam",
-            "startExam": "Start",
+            "startExam": "Start Exam",
             "endExam": "Finish",
             "date": "Date",
             "time": "Time",
             "workingTime": "Working Time",
-            "examinedStudent": "Examined student",
+            "examinedStudent": "Examined Student",
+            "moduleNumber": "Module Number",
             "resultInformation": "Your result will be published here as soon as the correction is finished. You can get to this page by clicking on this exam in the exam overview of this course.",
             "course": "Course",
             "exercises": "Exercises",
@@ -141,6 +142,7 @@
             "updated": "Exam updated",
             "imported": "Exam imported",
             "deleted": "Deleted exam \"{{ param }}\"",
+            "startCheckBoxText": "I confirm that I have read the rules above and that I will comply with these rules during the exam.",
             "startConsentText": "I hereby confirm with my full name, representing my signature, that I have read the conditions of participation and will adhere to them for the duration of the exam.",
             "endConsentText": "I hereby confirm with my full name, representing my signature, that this exam is my own work and I have only used the indicated aids.",
             "notConfirmed": "Please tick the checkbox to continue.",
@@ -182,11 +184,13 @@
                 "type": {
                     "examWideAnnouncement": "Exam-Wide Announcement",
                     "workingTimeUpdate": "Working Time Update",
-                    "examAttendanceCheck": "Attendance Check"
+                    "examAttendanceCheck": "Attendance Check",
+                    "problemStatementUpdate": "Problem Statement Update"
                 },
                 "from": "from",
                 "acknowledge": "Acknowledge",
                 "acknowledgeAll": "Acknowledge all",
+                "navigateToExercise": "Navigate to exercise",
                 "messages": {
                     "workingTimeUpdate": {
                         "titleEveryone": "The working time of the exam has been changed.",
@@ -196,6 +200,10 @@
                     },
                     "examAttendanceCheck": {
                         "description": "An exam supervisor has triggered the attendance check for you. Please follow the instructions of the supervisor."
+                    },
+                    "problemStatementUpdate": {
+                        "description": "The problem statement of the exercise '{{ exerciseName }}' was updated. Please open the exercise to see the changes.",
+                        "instructorMessage": "Instructor's message:"
                     }
                 }
             }
@@ -269,6 +277,7 @@
         "examParticipation": {
             "timer": "Time left: ",
             "timerEndView": "Time left to submit: ",
+            "exerciseOverview": "This is the exercise overview",
             "connected": "Your answers will be saved every 30s.",
             "ideConnected": "Your answers have to be submitted manually.",
             "disconnected": "You are disconnected. Please check your internet connection. You can continue working, but you need to be connected in order to save changes!",
@@ -290,6 +299,7 @@
             "noFurtherAttempts": "Currently no further attempts for the Test Exam are possible. To review your submission, navigate back to the Exam page",
             "atLeastTutorStudentExam": "Since you are not a student, you cannot participate in this exam:",
             "goToExamManagement": "Go to exam management page",
+            "goToExamBack": "Go back to continue the exam",
             "submitProgrammingExercise": "Continue",
             "submitOtherExercise": "Save & continue",
             "submitLastExercise": "Save",
@@ -305,19 +315,24 @@
             "bonus": "Bonus Points",
             "synced": "Exercise saved",
             "notSynced": "Exercise not saved",
+            "notStarted": "Exercise not started",
             "submitted": "You have submitted a solution for this exercise. You can still work on it and submit again.",
             "submittedSubmissionLimitReached": "You have submitted a solution for this exercise. You cannot submit again as you have reached the submission limit.",
             "notSubmitted": "Exercise not submitted",
             "notSavedOrSubmitted": "You have unsubmitted changes",
             "saveSubmissionError": "Your changes could not be saved! Please make sure that you are online and try saving again.",
             "pendingChanges": "All unsaved changes will be lost when leaving the exam! Are you sure that you want to continue?",
-            "handInEarly": "Hand in early",
+            "handInEarly": "Hand in Early",
             "continueAfterHandInEarly": "Continue",
+            "attendanceCheck": "Attendance check",
             "continueAfterHandInEarlyDescription": "You don't want to hand in yet?",
             "handInEarlyNotice": "You are about to hand in your submission before the end of the exam.\nAfter finishing the exam you cannot participate any longer.",
             "handInEarlyNoticeFirstSentence": "You are about to hand in your submission before the end of the exam.",
             "handInEarlyNoticeSecondSentence": "After finishing the exam you cannot participate any longer.",
+            "attendanceNotVerifiedWarningFirstSentence": "Your attendance has not been checked yet.",
+            "attendanceNotVerifiedWarningSecondSentence": "Please wait for your attendance to be checked or contact your instructors if you believe this is a mistake.",
             "namePlaceholder": "Enter your full name here",
+            "numberOfSavedExercises": "Number of saved exercises",
             "submissionSuccessful": {
                 "title": "Your exam has been submitted successfully!",
                 "noActionRequired": "Artemis does not require any further action and this window can be closed.",
@@ -388,6 +403,7 @@
             "evaluateQuizExerciseFailure": "There was an error during the evaluation of the quiz exercises:\n {{message}}",
             "assessUnsubmittedStudentExamsSuccess": "Reviewed all student exams and assessed the unsubmitted or empty modeling and text exercises with 0 points.",
             "assessUnsubmittedStudentExamsFailure": "The exam is not over yet for all students",
+            "assessUnsubmittedStudentExamsIdFailure": "Unsubmitted exams could not be evaluated due to a missing course ID or exam ID",
             "unlockAllRepositoriesSuccess": "Repositories of {{number}} programming exercises were unlocked.",
             "unlockAllRepositoriesFailure": "There was an error during the unlocking of the programming exercises:\n {{message}}",
             "lockAllRepositoriesSuccess": "Repositories of {{number}} programming exercises were locked.",
@@ -464,6 +480,7 @@
             "numberOfExercisesInExam": "Number of exercises in exam",
             "numberOfCorrectionRoundsInExam": "Number of correction rounds in exam",
             "randomizeQuestionOrder": "Randomize order of exercise groups",
+            "examWithAttendanceCheck": "Exam with attendance check",
             "startText": "Exam start text",
             "endText": "Exam end text",
             "confirmationStartText": "Exam start confirmation text",
@@ -561,6 +578,7 @@
                 "titleInfo": "The title of the exercise group is shown to the students as the name of the exercise.",
                 "delete": {
                     "question": "Are you sure you want to delete the exercise group <strong>{{ title }}</strong>? All associated exercises will also be deleted.",
+                    "questionLocalVC": "Are you sure you want to delete the exercise group <strong>{{ title }}</strong>? All associated exercises will be deleted.<br>All student, template, solution, test, and auxiliary repositories and build plans will also be deleted.<br>Be careful: this can <strong class='text-danger'>NOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first! ",
                     "typeNameToConfirm": "Please type in the name of the exercise group to confirm."
                 },
                 "orderCouldNotBeSaved": "The order could not be saved",
@@ -670,7 +688,13 @@
                     "exerciseTableSingular": "Exercise",
                     "points": "Points",
                     "numberParticipants": "Participants",
-                    "variants": "Variants"
+                    "variants": "Variants",
+                    "assessmentCheckType": "Check Type",
+                    "assessmentStatus": "Status",
+                    "assessmentAction": "Action",
+                    "checkUnfinishedAssessments": "Unfinished Assessments",
+                    "checkUnassessedQuizzes": "Unassessed Quiz Exercises",
+                    "checkUnsubmittedExercises": "Unsubmitted Exercises"
                 }
             },
             "editWorkingTime": {
@@ -733,6 +757,7 @@
             "studentExam": "Student exam ({{ examTitle }})",
             "testRun": "Test Run ({{ examTitle }})",
             "exercises": "Exercises",
+            "overview": "Overview",
             "downloadPDF": " Download PDF",
             "student": "Student",
             "name": "Name: ",

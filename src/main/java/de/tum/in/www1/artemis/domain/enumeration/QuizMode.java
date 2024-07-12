@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.domain.enumeration;
 
 /**
- * The QuitMode enumeration.
+ * The QuizMode enumeration. Describe the different (participation) modes of a quiz.
  */
 public enum QuizMode {
     /**
@@ -13,7 +13,7 @@ public enum QuizMode {
      */
     BATCHED,
     /**
-     * students can participate in the quit at any time between the release and due date
+     * students can participate in the quiz at any time between the release and due date
      */
     INDIVIDUAL
 }

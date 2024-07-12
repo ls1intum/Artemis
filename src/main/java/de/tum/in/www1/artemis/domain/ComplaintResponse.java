@@ -6,7 +6,12 @@ import static de.tum.in.www1.artemis.config.Constants.COMPLAINT_RESPONSE_TEXT_LI
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
@@ -18,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * A ComplaintResponse.
- *
+ * <p>
  * The createdDate in {@link AbstractAuditingEntity#createdDate} has a special meaning in this entity as it is used to calculate the lock status. See also
  * {@link ComplaintResponse#isCurrentlyLocked()}
  */

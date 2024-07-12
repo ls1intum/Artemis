@@ -49,7 +49,7 @@ describe('ProblemStatementComponent', () => {
                 getExerciseDetailsMock = jest.spyOn(exerciseService, 'getExerciseDetails');
                 exercise.problemStatement = 'Test problem statement';
                 course.exercises = [exercise];
-                getExerciseDetailsMock.mockReturnValue(of({ body: exercise }));
+                getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: exercise } }));
 
                 // mock participationService
                 participationService = fixture.debugElement.injector.get(ParticipationService);

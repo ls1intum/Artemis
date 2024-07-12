@@ -3,7 +3,11 @@ package de.tum.in.www1.artemis.service.metis;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -29,12 +33,21 @@ import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.CreatedConversationMessage;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.metis.conversation.*;
-import de.tum.in.www1.artemis.domain.notification.*;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
+import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
+import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
+import de.tum.in.www1.artemis.domain.notification.ConversationNotification;
+import de.tum.in.www1.artemis.domain.notification.NotificationConstants;
+import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
+import de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.SingleUserNotificationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
-import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -44,7 +57,7 @@ import de.tum.in.www1.artemis.service.metis.conversation.auth.ChannelAuthorizati
 import de.tum.in.www1.artemis.service.metis.similarity.PostSimilarityComparisonStrategy;
 import de.tum.in.www1.artemis.service.notifications.ConversationNotificationService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
-import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
+import de.tum.in.www1.artemis.web.rest.dto.PostContextFilterDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
@@ -66,8 +79,6 @@ public class ConversationMessagingService extends PostingService {
 
     private final ChannelAuthorizationService channelAuthorizationService;
 
-    private final ConversationRepository conversationRepository;
-
     private final GroupNotificationService groupNotificationService;
 
     private final SingleUserNotificationRepository singleUserNotificationRepository;
@@ -77,7 +88,7 @@ public class ConversationMessagingService extends PostingService {
     protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
             ConversationMessageRepository conversationMessageRepository, AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
             UserRepository userRepository, ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository,
-            ConversationNotificationService conversationNotificationService, ChannelAuthorizationService channelAuthorizationService, ConversationRepository conversationRepository,
+            ConversationNotificationService conversationNotificationService, ChannelAuthorizationService channelAuthorizationService,
             GroupNotificationService groupNotificationService, SingleUserNotificationRepository singleUserNotificationRepository,
             PostSimilarityComparisonStrategy postContentCompareStrategy) {
         super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository);
@@ -85,7 +96,6 @@ public class ConversationMessagingService extends PostingService {
         this.conversationMessageRepository = conversationMessageRepository;
         this.conversationNotificationService = conversationNotificationService;
         this.channelAuthorizationService = channelAuthorizationService;
-        this.conversationRepository = conversationRepository;
         this.groupNotificationService = groupNotificationService;
         this.singleUserNotificationRepository = singleUserNotificationRepository;
         this.postContentCompareStrategy = postContentCompareStrategy;
@@ -280,18 +290,18 @@ public class ConversationMessagingService extends PostingService {
      * @param pageable          requested page and page size
      * @param postContextFilter request object to fetch posts
      * @param requestingUser    the user requesting messages in course-wide channels
+     * @param courseId          the id of the course the post belongs to
      * @return page of posts that match the given context
      */
-    public Page<Post> getMessages(Pageable pageable, @Valid PostContextFilter postContextFilter, User requestingUser) {
-        conversationService.isMemberOrCreateForCourseWideElseThrow(postContextFilter.getConversationId(), requestingUser, Optional.of(ZonedDateTime.now()));
+    public Page<Post> getMessages(Pageable pageable, @Valid PostContextFilterDTO postContextFilter, User requestingUser, Long courseId) {
+        conversationService.isMemberOrCreateForCourseWideElseThrow(postContextFilter.conversationId(), requestingUser, Optional.of(ZonedDateTime.now()));
 
         // The following query loads posts, answerPosts and reactions to avoid too many database calls (due to eager references)
         Page<Post> conversationPosts = conversationMessageRepository.findMessages(postContextFilter, pageable, requestingUser.getId());
-
-        setAuthorRoleOfPostings(conversationPosts.getContent());
+        setAuthorRoleOfPostings(conversationPosts.getContent(), courseId);
 
         // invoke async due to db write access to avoid that the client has to wait
-        conversationParticipantRepository.updateLastReadAsync(requestingUser.getId(), postContextFilter.getConversationId(), ZonedDateTime.now());
+        conversationParticipantRepository.updateLastReadAsync(requestingUser.getId(), postContextFilter.conversationId(), ZonedDateTime.now());
 
         return conversationPosts;
     }
@@ -302,14 +312,13 @@ public class ConversationMessagingService extends PostingService {
      * @param pageable          requested page and page size
      * @param postContextFilter request object to fetch messages
      * @param requestingUser    the user requesting messages in course-wide channels
+     * @param courseId          the id of the course the post belongs to
      * @return page of posts that match the given context
      */
-    public Page<Post> getCourseWideMessages(Pageable pageable, @Valid PostContextFilter postContextFilter, User requestingUser) {
+    public Page<Post> getCourseWideMessages(Pageable pageable, @Valid PostContextFilterDTO postContextFilter, User requestingUser, Long courseId) {
         // The following query loads posts, answerPosts and reactions to avoid too many database calls (due to eager references)
         Page<Post> conversationPosts = conversationMessageRepository.findCourseWideMessages(postContextFilter, pageable, requestingUser.getId());
-
-        setAuthorRoleOfPostings(conversationPosts.getContent());
-
+        setAuthorRoleOfPostings(conversationPosts.getContent(), courseId);
         return conversationPosts;
     }
 
@@ -432,13 +441,14 @@ public class ConversationMessagingService extends PostingService {
      * @param post     post that is to be created and check for similar posts beforehand
      * @return list of similar posts
      */
+    // TODO: unused, remove
     public List<Post> getSimilarPosts(Long courseId, Post post) {
-        PostContextFilter postContextFilter = new PostContextFilter(courseId);
-        List<Post> coursePosts = this.getCourseWideMessages(Pageable.unpaged(), postContextFilter, userRepository.getUser()).stream()
+        PostContextFilterDTO postContextFilter = new PostContextFilterDTO(courseId, null, null, null, null, false, false, false, null, null);
+        List<Post> coursePosts = this.getCourseWideMessages(Pageable.unpaged(), postContextFilter, userRepository.getUser(), courseId).stream()
                 .sorted(Comparator.comparing(coursePost -> postContentCompareStrategy.performSimilarityCheck(post, coursePost))).toList();
 
         // sort course posts by calculated similarity scores
-        setAuthorRoleOfPostings(coursePosts);
+        setAuthorRoleOfPostings(coursePosts, courseId);
         return Lists.reverse(coursePosts).stream().limit(TOP_K_SIMILARITY_RESULTS).toList();
     }
 
@@ -449,6 +459,7 @@ public class ConversationMessagingService extends PostingService {
      * @param courseId id of the course the tags belongs to
      * @return tags of all posts that belong to the course
      */
+    // TODO: unused, delete
     public List<String> getAllCourseTags(Long courseId) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         final Course course = courseRepository.findByIdElseThrow(courseId);

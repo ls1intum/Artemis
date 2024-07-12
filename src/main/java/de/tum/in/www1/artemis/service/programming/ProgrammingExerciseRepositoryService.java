@@ -9,7 +9,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -20,7 +25,11 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
@@ -127,7 +136,7 @@ public class ProgrammingExerciseRepositoryService {
         // Get path, files and prefix for the programming-language dependent files. They are copied first.
         final Path generalTemplatePath = ProgrammingExerciseService.getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage())
                 .resolve(projectTypeTemplateDir);
-        Resource[] resources = resourceLoaderService.getResources(generalTemplatePath);
+        Resource[] resources = resourceLoaderService.getFileResources(generalTemplatePath);
 
         Path prefix = Path.of(programmingLanguage).resolve(projectTypeTemplateDir);
 
@@ -143,7 +152,7 @@ public class ProgrammingExerciseRepositoryService {
             final Path projectTypeSpecificPrefix = generalProjectTypePrefix.resolve(projectTypeTemplateDir);
             final Path projectTypeTemplatePath = programmingLanguageProjectTypePath.resolve(projectTypeTemplateDir);
 
-            final Resource[] projectTypeSpecificResources = resourceLoaderService.getResources(projectTypeTemplatePath);
+            final Resource[] projectTypeSpecificResources = resourceLoaderService.getFileResources(projectTypeTemplatePath);
 
             if (ProjectType.XCODE.equals(projectType)) {
                 // For Xcode, we don't share source code, so we only copy files once
@@ -303,7 +312,7 @@ public class ProgrammingExerciseRepositoryService {
         // Java supports multiple variants as test template
         final Path projectTemplatePath = getJavaProjectTemplatePath(templatePath, projectType);
 
-        final Resource[] projectTemplate = resourceLoaderService.getResources(projectTemplatePath);
+        final Resource[] projectTemplate = resourceLoaderService.getFileResources(projectTemplatePath);
         // keep the folder structure
         fileService.copyResources(projectTemplate, Path.of("projectTemplate"), repoLocalPath, true);
 
@@ -366,7 +375,7 @@ public class ProgrammingExerciseRepositoryService {
         final Path projectTypeProjectTemplatePath = projectTypeTemplatePath.resolve("projectTemplate");
 
         try {
-            final Resource[] projectTypeProjectTemplate = resourceLoaderService.getResources(projectTypeProjectTemplatePath);
+            final Resource[] projectTypeProjectTemplate = resourceLoaderService.getFileResources(projectTypeProjectTemplatePath);
             fileService.copyResources(projectTypeProjectTemplate, resources.projectTypePrefix, repoLocalPath, false);
         }
         catch (FileNotFoundException fileNotFoundException) {
@@ -388,7 +397,7 @@ public class ProgrammingExerciseRepositoryService {
         final ProjectType projectType = programmingExercise.getProjectType();
         final Path repoLocalPath = getRepoAbsoluteLocalPath(resources.repository);
         final Path testFilePath = templatePath.resolve(TEST_FILES_PATH);
-        final Resource[] testFileResources = resourceLoaderService.getResources(testFilePath);
+        final Resource[] testFileResources = resourceLoaderService.getFileResources(testFilePath);
         final Path packagePath = repoLocalPath.resolve(TEST_DIR).resolve(PACKAGE_NAME_FOLDER_PLACEHOLDER).toAbsolutePath();
 
         sectionsMap.put("non-sequential", true);
@@ -431,7 +440,7 @@ public class ProgrammingExerciseRepositoryService {
 
     private void setupStaticCodeAnalysisConfigFiles(final RepositoryResources resources, final Path templatePath, final Path repoLocalPath) throws IOException {
         final Path staticCodeAnalysisConfigPath = templatePath.resolve("staticCodeAnalysisConfig");
-        final Resource[] staticCodeAnalysisResources = resourceLoaderService.getResources(staticCodeAnalysisConfigPath);
+        final Resource[] staticCodeAnalysisResources = resourceLoaderService.getFileResources(staticCodeAnalysisConfigPath);
         fileService.copyResources(staticCodeAnalysisResources, resources.prefix, repoLocalPath, true);
     }
 
@@ -441,7 +450,7 @@ public class ProgrammingExerciseRepositoryService {
                 .resolve(TEST_DIR);
 
         try {
-            final Resource[] projectTypeTestFileResources = resourceLoaderService.getResources(projectTypeTemplatePath);
+            final Resource[] projectTypeTestFileResources = resourceLoaderService.getFileResources(projectTypeTemplatePath);
             // filter non-existing resources to avoid exceptions
             final List<Resource> existingProjectTypeTestFileResources = new ArrayList<>();
             for (final Resource resource : projectTypeTestFileResources) {
@@ -553,7 +562,7 @@ public class ProgrammingExerciseRepositoryService {
         }
 
         final Path buildStageResourcesPath = templatePath.resolve(TEST_FILES_PATH).resolve(buildStageTemplateSubDirectory);
-        final Resource[] buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath);
+        final Resource[] buildStageResources = resourceLoaderService.getFileResources(buildStageResourcesPath);
         fileService.copyResources(buildStageResources, resourcePrefix, packagePath, false);
 
         if (projectType != null) {
@@ -565,7 +574,7 @@ public class ProgrammingExerciseRepositoryService {
             throws IOException {
         final Path buildStageResourcesPath = projectTemplatePath.resolve(TEST_FILES_PATH).resolve(buildStageTemplateSubDirectory);
         try {
-            final Resource[] buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath);
+            final Resource[] buildStageResources = resourceLoaderService.getFileResources(buildStageResourcesPath);
             fileService.copyResources(buildStageResources, resourcePrefix, packagePath, false);
         }
         catch (FileNotFoundException fileNotFoundException) {

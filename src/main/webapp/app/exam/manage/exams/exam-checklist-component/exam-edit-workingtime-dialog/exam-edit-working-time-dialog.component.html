@@ -44,7 +44,7 @@
             [disabled]="editForm.invalid || isLoading || !isWorkingTimeChangeValid"
         >
             @if (isLoading) {
-                <span><fa-icon [icon]="faSpinner" [spin]="true" />&nbsp;</span>
+                <span><fa-icon [icon]="faSpinner" animation="spin" />&nbsp;</span>
             }
             @if (!isLoading) {
                 <fa-icon [icon]="faCheck" />

@@ -2,11 +2,14 @@ package de.tum.in.www1.artemis.service.dto;
 
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 
 /**
  * A DTO representing a consistency error
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ConsistencyErrorDTO {
 
     private ProgrammingExercise programmingExercise;
@@ -36,13 +39,7 @@ public class ConsistencyErrorDTO {
 
     public enum ErrorType {
 
-        VCS_PROJECT_MISSING("VCS_PROJECT_MISSING"), TEMPLATE_REPO_MISSING("TEMPLATE_REPO_MISSING"), SOLUTION_REPO_MISSING("SOLUTION_REPO_MISSING"),
-        AUXILIARY_REPO_MISSING("AUXILIARY_REPO_MISSING"), TEST_REPO_MISSING("TEST_REPO_MISSING"), TEMPLATE_BUILD_PLAN_MISSING("TEMPLATE_BUILD_PLAN_MISSING"),
-        SOLUTION_BUILD_PLAN_MISSING("SOLUTION_BUILD_PLAN_MISSING");
-
-        ErrorType(final String value) {
-            // This empty constructor is added to avoid Codacy issues
-        }
+        VCS_PROJECT_MISSING, TEMPLATE_REPO_MISSING, SOLUTION_REPO_MISSING, AUXILIARY_REPO_MISSING, TEST_REPO_MISSING, TEMPLATE_BUILD_PLAN_MISSING, SOLUTION_BUILD_PLAN_MISSING;
 
         @Override
         public String toString() {

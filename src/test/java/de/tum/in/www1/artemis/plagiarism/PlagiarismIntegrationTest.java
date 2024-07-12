@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.plagiarism;
 
-import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus.*;
+import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus.CONFIRMED;
+import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus.DENIED;
+import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus.NONE;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Optional;
@@ -12,7 +14,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
@@ -22,14 +23,13 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.plagiarism.PlagiarismComparisonStatusDTO;
 
 class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -49,13 +49,7 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
     private PlagiarismResultRepository plagiarismResultRepository;
 
     @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
     private TextExerciseUtilService textExerciseUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private ParticipationUtilService participationUtilService;

@@ -1,6 +1,20 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
-    @if (course && !isCodeOfConductAccepted) {
-        <div>
+    <div class="input-group mb-1 rounded-2 p-2 me-2 module-bg" [hidden]="!isCodeOfConductAccepted">
+        <!-- search bar -->
+        <input
+            name="searchText"
+            id="search"
+            [(ngModel)]="courseWideSearchTerm"
+            class="form-control"
+            (keyup.enter)="onSearch()"
+            placeholder="{{ 'artemisApp.metis.overview.searchBarDefault' | artemisTranslate }}"
+        />
+        <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="courseWideSearchTerm = ''" />
+        <jhi-button id="search-submit" class="ms-1" [icon]="faSearch" (onClick)="onSearch()" />
+    </div>
+    <!-- only display after isCodeOfConductAccepted is loaded and set to false -->
+    @if (course && isCodeOfConductAccepted === false) {
+        <div class="module-bg px-3 py-3 code-of-conduct">
             <jhi-course-conversations-code-of-conduct [course]="course!" />
             <button id="acceptCodeOfConductButton" class="btn btn-primary" type="button" (click)="acceptCodeOfConduct()">
                 {{ 'artemisApp.codeOfConduct.accept' | artemisTranslate }}
@@ -8,33 +22,43 @@
         </div>
     }
     @if (isCodeOfConductAccepted && isServiceSetUp && course) {
-        <div class="row mt-2">
-            <div class="col d-flex flex-grow-1 justify-end px-0 me-1" style="max-width: min-content">
-                <jhi-conversation-selection-sidebar />
+        <div class="d-flex justify-content-between">
+            <div class="me-3" [ngClass]="{ 'sidebar-collapsed': isCollapsed }">
+                <jhi-sidebar
+                    (onSelectConversation)="onConversationSelected($event)"
+                    (onUpdateSidebar)="prepareSidebarData()"
+                    [itemSelected]="conversationSelected"
+                    [courseId]="course.id"
+                    [sidebarData]="sidebarData"
+                    (onPlusPressed)="onAccordionPlusButtonPressed($event)"
+                    [showAddOption]="CHANNEL_TYPE_SHOW_ADD_OPTION"
+                    [channelTypeIcon]="CHANNEL_TYPE_ICON"
+                    [collapseState]="DEFAULT_COLLAPSE_STATE"
+                />
             </div>
             @if (course && !activeConversation && isCodeOfConductPresented) {
                 <div class="col pe-0 flex-grow-1">
                     <jhi-course-conversations-code-of-conduct [course]="course!" />
                 </div>
             }
-            <div class="col pe-0 flex-grow-1" [ngClass]="{ 'card-border': activeConversation }" style="min-width: 200px">
+            <div class="col pe-0 flex-grow-1 module-bg" [ngClass]="{ 'card-border': true }" style="min-width: 200px">
                 @if (activeConversation) {
-                    <jhi-conversation-header />
-                    <jhi-conversation-messages (openThread)="postInThread = $event" [course]="course" />
+                    <jhi-conversation-header (collapseSearch)="toggleChannelSearch()" />
+                    <jhi-conversation-messages (openThread)="postInThread = $event" [course]="course" [searchbarCollapsed]="channelSearchCollapsed" />
+                } @else {
+                    <jhi-course-wide-search (openThread)="postInThread = $event" [courseWideSearchConfig]="courseWideSearchConfig" />
                 }
             </div>
-            @if (activeConversation) {
-                <div class="col d-flex flex-grow-1 justify-end px-0" style="max-width: min-content">
-                    @if (!!postInThread) {
-                        <jhi-conversation-thread-sidebar
-                            [activeConversation]="activeConversation"
-                            [readOnlyMode]="!!getAsChannel(activeConversation)?.isArchived"
-                            [activePost]="postInThread"
-                            (closePostThread)="postInThread = undefined"
-                        />
-                    }
-                </div>
-            }
+            <div class="col d-flex flex-grow-1 justify-end px-0 card-border" style="max-width: min-content">
+                @if (!!postInThread) {
+                    <jhi-conversation-thread-sidebar
+                        [activeConversation]="activeConversation ?? postInThread.conversation!"
+                        [readOnlyMode]="!!getAsChannel(postInThread.conversation)?.isArchived"
+                        [activePost]="postInThread"
+                        (closePostThread)="postInThread = undefined"
+                    />
+                }
+            </div>
         </div>
     }
 </jhi-loading-indicator-container>
