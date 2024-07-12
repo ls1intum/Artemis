@@ -548,7 +548,6 @@ export class MetisService implements OnDestroy {
     }
 
     private handleNewOrUpdatedMessage = (postDTO: MetisPostDTO): void => {
-        postDTO.post = this.cachedPosts.find((post) => post.id === postDTO.post.id) ?? postDTO.post;
         const postConvId = postDTO.post.conversation?.id;
         const postIsNotFromCurrentConversation = this.currentPostContextFilter.conversationId && postConvId !== this.currentPostContextFilter.conversationId;
         const postIsNotFromCurrentPlagiarismCase =
@@ -562,6 +561,7 @@ export class MetisService implements OnDestroy {
             return;
         }
 
+        postDTO.post.answers = this.cachedPosts.find((post) => post.id === postDTO.post.id)?.answers ?? postDTO.post.answers;
         postDTO.post.creationDate = dayjs(postDTO.post.creationDate);
         postDTO.post.answers?.forEach((answer: AnswerPost) => {
             answer.creationDate = dayjs(answer.creationDate);
@@ -661,14 +661,5 @@ export class MetisService implements OnDestroy {
         other.courseWideChannelIds?.sort((a, b) => a - b);
 
         return this.currentPostContextFilter.courseWideChannelIds?.toString() !== other.courseWideChannelIds?.toString();
-    }
-
-    changeResolvedStatus(postId: number | undefined, status: boolean | undefined) {
-        const indexOfCachedPost = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === postId);
-        if (indexOfCachedPost > -1) {
-            if (this.cachedPosts[indexOfCachedPost]) {
-                this.cachedPosts[indexOfCachedPost].resolved = status;
-            }
-        }
     }
 }
