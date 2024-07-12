@@ -4,17 +4,9 @@ import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 
-import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 
 public interface LearningObject {
-
-    /**
-     * Whether the participant has completed the object
-     *
-     * @param user the user to check
-     * @return True if completed, else false
-     */
-    boolean isCompletedFor(User user);
 
     /**
      * Get the date when the object has been completed by the participant
@@ -26,5 +18,5 @@ public interface LearningObject {
 
     Long getId();
 
-    Set<Competency> getCompetencies();
+    Set<CourseCompetency> getCompetencies();
 }
