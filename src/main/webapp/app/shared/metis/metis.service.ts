@@ -560,7 +560,6 @@ export class MetisService implements OnDestroy {
             return;
         }
 
-        postDTO.post.answers = this.cachedPosts.find((post) => post.id === postDTO.post.id)?.answers ?? postDTO.post.answers;
         postDTO.post.creationDate = dayjs(postDTO.post.creationDate);
         postDTO.post.answers?.forEach((answer: AnswerPost) => {
             answer.creationDate = dayjs(answer.creationDate);
@@ -597,6 +596,9 @@ export class MetisService implements OnDestroy {
             case MetisPostAction.UPDATE:
                 const indexToUpdate = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
                 if (indexToUpdate > -1) {
+                    postDTO.post.author = this.cachedPosts[indexToUpdate].author;
+                    postDTO.post.authorRole = this.cachedPosts[indexToUpdate].authorRole;
+                    postDTO.post.answers = this.cachedPosts[indexToUpdate].answers;
                     this.cachedPosts[indexToUpdate] = postDTO.post;
                 }
                 this.addTags(postDTO.post.tags);
