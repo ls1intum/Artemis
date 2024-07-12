@@ -94,7 +94,7 @@ export class CompetencyAccordionComponent implements OnChanges {
         const courseExercises = this.course?.exercises ?? [];
         const exerciseIdToExercise = Object.fromEntries(courseExercises.map((exercise) => [exercise.id, exercise] as [number, Exercise]));
         const activeCompetencyExercises = (this.metrics.competencyMetrics?.exercises?.[this.competency.id] ?? [])
-            .flatMap((exerciseId) => [exerciseIdToExercise[exerciseId]] ?? [])
+            .flatMap((exerciseId) => [exerciseIdToExercise[exerciseId]])
             .filter((exercise) => exercise.releaseDate?.isBefore(dayjs()))
             .filter((exercise) => exercise.dueDate?.isAfter(dayjs()) || isStartPracticeAvailable(exercise));
 

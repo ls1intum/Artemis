@@ -13,14 +13,14 @@ import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagi
 import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { roundScorePercentSpecifiedByCourseSettings, scrollToTopOfPage } from 'app/shared/util/utils';
+import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/participation/participation.utils';
 import { evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
 import { Submission } from 'app/entities/submission.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { faArrowUp, faEye, faEyeSlash, faFolderOpen, faInfoCircle, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { cloneDeep } from 'lodash-es';
-import { captureException } from '@sentry/angular-ivy';
+import { captureException } from '@sentry/angular';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { isExamResultPublished } from 'app/exam/participate/exam.utils';
@@ -150,7 +150,7 @@ export class ExamResultSummaryComponent implements OnInit {
         this.isTestExam = this.studentExam.exam!.testExam!;
         this.testRunConduction = this.isTestRun && this.route.snapshot.url[3]?.toString() === 'conduction';
         this.testExamConduction = this.isTestExam && !this.studentExam.submitted;
-        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        this.courseId = Number(this.route.parent?.parent?.snapshot.paramMap.get('courseId'));
         if (!this.studentExam?.exam?.id) {
             throw new Error('studentExam.exam.id should be present to fetch grade info');
         }
@@ -231,7 +231,8 @@ export class ExamResultSummaryComponent implements OnInit {
 
     scrollToOverviewOrTop() {
         const searchedId = 'exam-summary-result-overview';
-        const targetElement = document.getElementById(searchedId);
+        // go to result overview if it exists, otherwise go to top
+        const targetElement = document.getElementById(searchedId) || document.getElementById('exam-results-title');
 
         if (targetElement) {
             targetElement.scrollIntoView({
@@ -239,8 +240,6 @@ export class ExamResultSummaryComponent implements OnInit {
                 block: 'start',
                 inline: 'nearest',
             });
-        } else {
-            scrollToTopOfPage();
         }
     }
 

@@ -17,7 +17,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Complaint;
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
 import de.tum.in.www1.artemis.domain.Course;
@@ -38,7 +37,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exam.ExamFactory;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.fileupload.FileUploadExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.modeling.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
@@ -47,14 +45,11 @@ import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.dto.ComplaintAction;
 import de.tum.in.www1.artemis.service.dto.ComplaintRequestDTO;
 import de.tum.in.www1.artemis.service.dto.ComplaintResponseUpdateDTO;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.TestResourceUtils;
 import de.tum.in.www1.artemis.web.rest.dto.AssessmentUpdateDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionWithComplaintDTO;
@@ -67,28 +62,13 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     private SubmissionRepository submissionRepo;
 
     @Autowired
-    private ResultRepository resultRepo;
-
-    @Autowired
     private ComplaintRepository complaintRepo;
 
     @Autowired
     private ComplaintResponseRepository complaintResponseRepo;
 
     @Autowired
-    private CourseRepository courseRepository;
-
-    @Autowired
     private ExamRepository examRepository;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -138,7 +118,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         exerciseUtilService.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(2));
         exerciseUtilService.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
         modelingAssessment.setCompletionDate(modelingExercise.getDueDate().minusDays(1));
-        resultRepo.save(modelingAssessment);
+        resultRepository.save(modelingAssessment);
 
         verifySuccessfulComplaint();
     }
@@ -149,7 +129,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         exerciseUtilService.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(3));
         exerciseUtilService.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
         modelingAssessment.setCompletionDate(modelingExercise.getAssessmentDueDate().minusDays(1));
-        resultRepo.save(modelingAssessment);
+        resultRepository.save(modelingAssessment);
 
         verifySuccessfulComplaint();
     }
@@ -160,7 +140,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         exerciseUtilService.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(3));
         exerciseUtilService.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(2));
         modelingAssessment.setCompletionDate(modelingExercise.getAssessmentDueDate().plusDays(1));
-        resultRepo.save(modelingAssessment);
+        resultRepository.save(modelingAssessment);
 
         verifySuccessfulComplaint();
     }
@@ -172,7 +152,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         assertThat(storedComplaint).as("complaint is saved").isPresent();
         assertThat(storedComplaint.orElseThrow().getComplaintText()).as("complaint text got correctly saved").isEqualTo(complaint.getComplaintText());
         assertThat(storedComplaint.orElseThrow().isAccepted()).as("accepted flag of complaint is not set").isNull();
-        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
+        Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
         Result result = storedComplaint.orElseThrow().getResult();
         assertThat(result.getId()).isEqualTo(storedResult.getId());
@@ -193,7 +173,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         request.post("/api/complaints", complaintRequest, HttpStatus.CREATED);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is saved").isPresent();
-        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
+        Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
     }
 
@@ -205,7 +185,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         request.post("/api/complaints", complaintRequest, HttpStatus.BAD_REQUEST);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is not saved").isNotPresent();
-        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
+        Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is false").isFalse();
     }
 
@@ -220,7 +200,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         request.post("/api/complaints", complaintRequest, HttpStatus.CREATED);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is saved").isPresent();
-        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
+        Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
 
         // Only one complaint is possible for exercise regardless of its type
@@ -243,7 +223,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         request.post("/api/complaints", complaintRequest, HttpStatus.CREATED);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is saved").isPresent();
-        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
+        Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
     }
 
@@ -258,7 +238,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         request.post("/api/complaints", complaintRequest, HttpStatus.BAD_REQUEST);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is not saved").isNotPresent();
-        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
+        Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is false").isFalse();
     }
 
@@ -274,7 +254,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
 
         Complaint storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId()).orElseThrow();
         assertThat(storedComplaint.isAccepted()).as("complaint is not accepted").isFalse();
-        Result storedResult = resultRepo.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(modelingAssessment.getId());
+        Result storedResult = resultRepository.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(modelingAssessment.getId());
         Result updatedResult = storedResult.getSubmission().getLatestResult();
         participationUtilService.checkFeedbackCorrectlyStored(modelingAssessment.getFeedbacks(), updatedResult.getFeedbacks(), FeedbackType.MANUAL);
         final String[] ignoringFields = { "feedbacks", "submission", "participation", "assessor" };
@@ -303,8 +283,8 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         // set dates to UTC and round to milliseconds for comparison
         result.setCompletionDate(ZonedDateTime.ofInstant(result.getCompletionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         modelingAssessment.setCompletionDate(ZonedDateTime.ofInstant(modelingAssessment.getCompletionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
-        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
-        Result resultAfterComplaintResponse = resultRepo.findByIdWithEagerFeedbacksAndAssessor(receivedResult.getId()).orElseThrow();
+        Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
+        Result resultAfterComplaintResponse = resultRepository.findByIdWithEagerFeedbacksAndAssessor(receivedResult.getId()).orElseThrow();
         participationUtilService.checkFeedbackCorrectlyStored(feedbacks, resultAfterComplaintResponse.getFeedbacks(), FeedbackType.MANUAL);
         assertThat(storedResult.getAssessor()).as("assessor is still the original one").isEqualTo(modelingAssessment.getAssessor());
     }
@@ -486,7 +466,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getComplaintsByCourseId_tutor_allComplaintsForTutor() throws Exception {
         complaint.getResult().setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
-        resultRepo.save(complaint.getResult());
+        resultRepository.save(complaint.getResult());
         complaintRepo.save(complaint);
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("complaintType", ComplaintType.COMPLAINT.name());
@@ -524,7 +504,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         complaint.setParticipant(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         complaintRepo.save(complaint);
         complaint.getResult().setHasComplaint(true);
-        resultRepo.save(complaint.getResult());
+        resultRepository.save(complaint.getResult());
 
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("complaintType", ComplaintType.COMPLAINT.name());
@@ -548,7 +528,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         complaint.setParticipant(instructor);
         complaint.getResult().setAssessor(instructor);
-        resultRepo.save(complaint.getResult());
+        resultRepository.save(complaint.getResult());
         complaint = complaintRepo.save(complaint);
         course.setInstructorGroupName("test");
         course.setTeachingAssistantGroupName("test");
@@ -566,7 +546,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         complaint.setParticipant(instructor);
         complaint.getResult().setAssessor(instructor);
-        resultRepo.save(complaint.getResult());
+        resultRepository.save(complaint.getResult());
         complaint = complaintRepo.save(complaint);
 
         final var params = new LinkedMultiValueMap<String, String>();
@@ -812,7 +792,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         assertThat(storedComplaint).as("complaint is saved").isPresent();
         assertThat(storedComplaint.orElseThrow().getComplaintText()).as("complaint text got correctly saved").isEqualTo(examExerciseComplaint.complaintText());
         assertThat(storedComplaint.get().isAccepted()).as("accepted flag of complaint is not set").isNull();
-        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(textSubmission.getLatestResult().getId()).orElseThrow();
+        Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(textSubmission.getLatestResult().getId()).orElseThrow();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
         // set date to UTC for comparison
         storedResult.setCompletionDate(ZonedDateTime.ofInstant(storedResult.getCompletionDate().toInstant(), ZoneId.of("UTC")));

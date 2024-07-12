@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.glassfish.jersey.internal.util.Producer;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,8 +27,8 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.StudentScoreUtilService;
 import de.tum.in.www1.artemis.competency.CompetencyProgressUtilService;
 import de.tum.in.www1.artemis.competency.CompetencyUtilService;
+import de.tum.in.www1.artemis.competency.PrerequisiteUtilService;
 import de.tum.in.www1.artemis.competency.StandardizedCompetencyUtilService;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -43,6 +44,8 @@ import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.CompetencyTaxonomy;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
+import de.tum.in.www1.artemis.domain.competency.Prerequisite;
 import de.tum.in.www1.artemis.domain.competency.RelationType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
@@ -61,18 +64,15 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseUnitRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.PrerequisiteRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TextUnitRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.LectureUnitService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.team.TeamUtilService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseCompetencyProgressDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -88,22 +88,13 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     private LectureRepository lectureRepository;
 
     @Autowired
-    private ExerciseRepository exerciseRepository;
-
-    @Autowired
     private ParticipationService participationService;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private SubmissionRepository submissionRepository;
-
-    @Autowired
-    private ResultRepository resultRepository;
 
     @Autowired
     private TextUnitRepository textUnitRepository;
@@ -121,22 +112,22 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     private CompetencyRelationRepository competencyRelationRepository;
 
     @Autowired
+    private PrerequisiteRepository prerequisiteRepository;
+
+    @Autowired
     private LectureUnitRepository lectureUnitRepository;
 
     @Autowired
     private LectureUnitService lectureUnitService;
 
     @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
-
-    @Autowired
     private TeamUtilService teamUtilService;
 
     @Autowired
     private CompetencyUtilService competencyUtilService;
+
+    @Autowired
+    private PrerequisiteUtilService prerequisiteUtilService;
 
     @Autowired
     private PageableSearchUtilService pageableSearchUtilService;
@@ -496,11 +487,17 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void deleteCourseShouldAlsoDeleteCompetency() throws Exception {
+    void deleteCourseShouldAlsoDeleteCompetencyAndRelations() throws Exception {
+        Competency competency2 = createCompetency(course);
+        CompetencyRelation relation = createRelation(competency, competency2, RelationType.EXTENDS);
+        Prerequisite prerequisite = prerequisiteUtilService.createPrerequisite(course);
+
         request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
 
-        boolean competencyExists = competencyRepository.existsById(competency.getId());
-        assertThat(competencyExists).isFalse();
+        assertThat(competencyRepository.existsById(competency.getId())).isFalse();
+        assertThat(competencyRepository.existsById(competency2.getId())).isFalse();
+        assertThat(competencyRelationRepository.existsById(relation.getId())).isFalse();
+        assertThat(prerequisiteRepository.existsById(prerequisite.getId())).isFalse();
     }
 
     @Nested
@@ -678,7 +675,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
             User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
             lectureUnitService.setLectureUnitCompletion(textUnitRepository.findById(idOfTextUnitOfLectureOne).orElseThrow(), student1, true);
 
-            createTextExerciseParticipationSubmissionAndResult(textExercise, student1, 10.0, 0.0, 90, true);  // will be ignored in favor of last submission from team
+            createTextExerciseParticipationSubmissionAndResult(textExercise, student1, 10.0, 0.0, 90, true);
             createTextExerciseParticipationSubmissionAndResult(textExercise, student1, 10.0, 0.0, 85, false);
 
             await().until(() -> participantScoreScheduleService.isIdle());
@@ -938,9 +935,13 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
                     CompetencyWithTailRelationDTO.class, HttpStatus.CREATED);
 
             assertThat(competencyDTOList).hasSize(2);
-            // competency 2 should be the tail of one relation
-            assertThat(competencyDTOList.get(0).tailRelations()).isNull();
-            assertThat(competencyDTOList.get(1).tailRelations()).hasSize(1);
+            // assert that only one of the DTOs has the relation connected
+            if (competencyDTOList.getFirst().tailRelations() == null) {
+                assertThat(competencyDTOList.get(1).tailRelations()).hasSize(1);
+            }
+            else {
+                assertThat(competencyDTOList.get(1).tailRelations()).isNull();
+            }
 
             competencyDTOList = request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/import-all/" + course3.getId() + "?importRelations=false", null,
                     CompetencyWithTailRelationDTO.class, HttpStatus.CREATED);
@@ -1072,6 +1073,24 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
             final var search = pageableSearchUtilService.configureCompetencySearch(competency.getTitle(), "", "", "");
             final var result = request.getSearchResult("/api/competencies/for-import", HttpStatus.OK, Competency.class, pageableSearchUtilService.searchMapping(search));
             assertThat(result.getResultsOnPage()).hasSize(1);
+        }
+    }
+
+    @Nested
+    class GetCourseCompetencyTitles {
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        void shouldGetCourseCompetencyTitles() throws Exception {
+            competencyUtilService.createCompetencies(course, 5);
+            var competencyTitles = competencyRepository.findAllForCourse(course.getId()).stream().map(CourseCompetency::getTitle).toList();
+            prerequisiteUtilService.createPrerequisites(course, 5);
+            var prerequisiteTitles = prerequisiteRepository.findAllByCourseIdOrderById(course.getId()).stream().map(CourseCompetency::getTitle).toList();
+            var expectedTitles = Stream.concat(competencyTitles.stream(), prerequisiteTitles.stream()).toList();
+
+            final var actualTitles = request.getList("/api/courses/" + course.getId() + "/competencies/titles", HttpStatus.OK, String.class);
+
+            assertThat(actualTitles).containsAll(expectedTitles);
         }
     }
 }

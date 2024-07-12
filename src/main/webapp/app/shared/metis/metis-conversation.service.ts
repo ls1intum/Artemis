@@ -123,7 +123,7 @@ export class MetisConversationService implements OnDestroy {
                 (conversationInCache) => conversationInCache.id === (parameterJustId ? conversationIdentifier : conversationIdentifier.id),
             );
         }
-        if (!cachedConversation) {
+        if (!cachedConversation && conversationIdentifier) {
             this.alertService.addAlert({
                 type: AlertType.WARNING,
                 message: 'artemisApp.metis.channel.notAMember',
@@ -468,6 +468,6 @@ export class MetisConversationService implements OnDestroy {
     }
 
     static getLinkForConversation(courseId: number): RouteComponents {
-        return ['/courses', courseId, 'messages'];
+        return ['/courses', courseId, 'communication'];
     }
 }

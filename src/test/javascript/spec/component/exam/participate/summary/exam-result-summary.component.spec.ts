@@ -54,7 +54,6 @@ import { ExamResultSummaryExerciseCardHeaderComponent } from 'app/exam/participa
 import { Course } from 'app/entities/course.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
-import * as Utils from 'app/shared/util/utils';
 import * as ExamUtils from 'app/exam/participate/exam.utils';
 import { CollapsibleCardComponent } from 'app/exam/participate/summary/collapsible-card.component';
 
@@ -203,9 +202,15 @@ function sharedSetup(url: string[]) {
                     useValue: {
                         snapshot: {
                             url,
-                            paramMap: convertToParamMap({
-                                courseId: '1',
-                            }),
+                        },
+                        parent: {
+                            parent: {
+                                snapshot: {
+                                    paramMap: convertToParamMap({
+                                        courseId: '1',
+                                    }),
+                                },
+                            },
                         },
                     },
                 },
@@ -521,18 +526,31 @@ describe('ExamResultSummaryComponent', () => {
     describe('scrollToOverviewOrTop', () => {
         const BACK_TO_OVERVIEW_BUTTON_ID = 'back-to-overview-button';
         const EXAM_SUMMARY_RESULT_OVERVIEW_ID = 'exam-summary-result-overview';
+        const EXAM_RESULTS_TITLE_ID = 'exam-results-title';
 
-        it('should scroll to top when overview is not displayed', () => {
-            const scrollToSpy = jest.spyOn(Utils, 'scrollToTopOfPage');
+        it('should scroll to exam title when overview is not displayed', () => {
+            const scrollIntoViewSpy = jest.fn();
 
+            // To ensure there is no exam summary overview
+            const getElementByIdMock = jest.spyOn(document, 'getElementById').mockImplementation((id) => {
+                if (id === EXAM_SUMMARY_RESULT_OVERVIEW_ID) {
+                    return null;
+                }
+                if (id === EXAM_RESULTS_TITLE_ID) {
+                    return {
+                        scrollIntoView: scrollIntoViewSpy,
+                    } as unknown as HTMLElement;
+                }
+                return null;
+            });
             const button = fixture.debugElement.nativeElement.querySelector('#' + BACK_TO_OVERVIEW_BUTTON_ID);
             button.click();
 
-            expect(scrollToSpy).toHaveBeenCalledOnce();
+            expect(getElementByIdMock).toHaveBeenCalledWith(EXAM_RESULTS_TITLE_ID);
+            expect(scrollIntoViewSpy).toHaveBeenCalled();
         });
 
         it('should scroll to overview when it is displayed', () => {
-            const scrollToSpy = jest.spyOn(Utils, 'scrollToTopOfPage');
             const scrollIntoViewSpy = jest.fn();
 
             const getElementByIdMock = jest.spyOn(document, 'getElementById').mockReturnValue({
@@ -549,7 +567,6 @@ describe('ExamResultSummaryComponent', () => {
 
             expect(getElementByIdMock).toHaveBeenCalledWith(EXAM_SUMMARY_RESULT_OVERVIEW_ID);
             expect(scrollIntoViewSpy).toHaveBeenCalled();
-            expect(scrollToSpy).not.toHaveBeenCalled();
         });
     });
 

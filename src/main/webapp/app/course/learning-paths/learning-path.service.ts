@@ -2,7 +2,12 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { LearningPathHealthDTO } from 'app/entities/competency/learning-path-health.model';
-import { CompetencyProgressForLearningPathDTO, LearningPathInformationDTO, NgxLearningPathDTO } from 'app/entities/competency/learning-path.model';
+import {
+    CompetencyProgressForLearningPathDTO,
+    LearningPathInformationDTO,
+    LearningPathNavigationOverviewDTO,
+    NgxLearningPathDTO,
+} from 'app/entities/competency/learning-path.model';
 import { map, tap } from 'rxjs/operators';
 import { LearningPathStorageService } from 'app/course/learning-paths/participate/learning-path-storage.service';
 
@@ -29,6 +34,10 @@ export class LearningPathService {
 
     getLearningPath(learningPathId: number): Observable<HttpResponse<LearningPathInformationDTO>> {
         return this.httpClient.get<LearningPathInformationDTO>(`${this.resourceURL}/learning-path/${learningPathId}`, { observe: 'response' });
+    }
+
+    getLearningPathNavigationOverview(learningPathId: number): Observable<HttpResponse<LearningPathNavigationOverviewDTO>> {
+        return this.httpClient.get<LearningPathNavigationOverviewDTO>(`${this.resourceURL}/learning-path/${learningPathId}/navigation-overview`, { observe: 'response' });
     }
 
     getLearningPathNgxGraph(learningPathId: number): Observable<HttpResponse<NgxLearningPathDTO>> {

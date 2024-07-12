@@ -1,0 +1,8 @@
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/scss/variables';
+@import 'bootstrap/scss/mixins';
+
+.selected-learning-object {
+    background: var(--overview-light-background-color);
+    color: $blue-300;
+}

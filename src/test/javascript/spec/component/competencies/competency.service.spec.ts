@@ -340,7 +340,24 @@ describe('CompetencyService', () => {
         expect(resultGetForImport).toEqual(expected);
     }));
 
-    it('convert response from server', () => {
+    it('should get courseCompetency titles', fakeAsync(() => {
+        let result: HttpResponse<string[]> = new HttpResponse();
+        const returnedFromService = ['title1', 'title2'];
+        const expected = [...returnedFromService];
+
+        competencyService
+            .getCourseCompetencyTitles(1)
+            .pipe(take(1))
+            .subscribe((resp) => (result = resp));
+
+        const req = httpTestingController.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+        tick();
+
+        expect(result.body).toEqual(expected);
+    }));
+
+    it('should convert response from server', () => {
         const lectureUnitService = TestBed.inject(LectureUnitService);
         const accountService = TestBed.inject(AccountService);
 

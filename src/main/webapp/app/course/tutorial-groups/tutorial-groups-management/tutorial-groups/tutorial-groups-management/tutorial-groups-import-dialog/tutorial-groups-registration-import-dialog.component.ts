@@ -259,6 +259,30 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
         });
     }
 
+    generateCSV(example: number) {
+        let csvContent: string;
+        switch (example) {
+            case 1:
+                csvContent = 'data:text/csv;charset=utf-8,Title\n';
+                break;
+            case 2:
+                csvContent = 'data:text/csv;charset=utf-8,Title,Matriculation Number,First Name,Last Name\n';
+                break;
+            case 3:
+                csvContent = 'data:text/csv;charset=utf-8,Title,Login,First Name,Last Name\n';
+                break;
+            default:
+                csvContent = '';
+        }
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement('a');
+        link.setAttribute('href', encodedUri);
+        link.setAttribute('download', `example${example}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
     /**
      * Performs validations on the parsed csv rows
      * - checks if values for the required column 'tutorial group title' are present

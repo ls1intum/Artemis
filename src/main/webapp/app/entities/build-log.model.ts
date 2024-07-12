@@ -1,5 +1,5 @@
 import { safeUnescape } from 'app/shared/util/security.util';
-import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
+import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 
 export enum BuildLogType {
