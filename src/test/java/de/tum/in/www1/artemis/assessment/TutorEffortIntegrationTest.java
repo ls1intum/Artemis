@@ -79,7 +79,7 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentTes
         TutorEffort effortExpected = createTutorEffortObject(0);
 
         assertThat(tutorEfforts).isNotNull().hasSize(1);
-        assertThat(tutorEfforts.get(0)).usingRecursiveComparison().isEqualTo(effortExpected);
+        assertThat(tutorEfforts.getFirst()).usingRecursiveComparison().isEqualTo(effortExpected);
     }
 
     /**
@@ -98,7 +98,7 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentTes
         TutorEffort effortExpected = createTutorEffortObject(25);
 
         assertThat(tutorEfforts).isNotNull().hasSize(1);
-        assertThat(tutorEfforts.get(0)).usingRecursiveComparison().isEqualTo(effortExpected);
+        assertThat(tutorEfforts.getFirst()).usingRecursiveComparison().isEqualTo(effortExpected);
     }
 
     /**
@@ -117,7 +117,7 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentTes
         TutorEffort effortExpected = createTutorEffortObject(0);
 
         assertThat(tutorEfforts).isNotNull().hasSize(1);
-        assertThat(tutorEfforts.get(0)).usingRecursiveComparison().isEqualTo(effortExpected);
+        assertThat(tutorEfforts.getFirst()).usingRecursiveComparison().isEqualTo(effortExpected);
     }
 
     TutorEffort createTutorEffortObject(int minutes) {

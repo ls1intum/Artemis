@@ -322,7 +322,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         Exam exam = examUtilService.addExam(course1, visibleDate, startDate, endDate);
         exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
-        var exercise = exam.getExerciseGroups().get(0).getExercises().iterator().next();
+        var exercise = exam.getExerciseGroups().getFirst().getExercises().iterator().next();
 
         boolean isAllowed = assessmentService.isAllowedToCreateOrOverrideResult(null, exercise, null, null, false);
         assertThat(isAllowed).isFalse();
@@ -338,7 +338,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         Exam exam = examUtilService.addExam(course1, visibleDate, startDate, endDate, publishResultDate);
         exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
-        var exercise = exam.getExerciseGroups().get(0).getExercises().iterator().next();
+        var exercise = exam.getExerciseGroups().getFirst().getExercises().iterator().next();
 
         boolean isAllowed = assessmentService.isAllowedToCreateOrOverrideResult(null, exercise, null, null, false);
         assertThat(isAllowed).isFalse();

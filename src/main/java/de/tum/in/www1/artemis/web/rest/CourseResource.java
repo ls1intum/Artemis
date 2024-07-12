@@ -873,6 +873,7 @@ public class CourseResource {
     @GetMapping("courses/stats-for-management-overview")
     @EnforceAtLeastTutor
     public ResponseEntity<List<CourseManagementOverviewStatisticsDTO>> getExerciseStatsForCourseOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
+        log.debug("REST request to get statistics for the courses of the user");
         final List<CourseManagementOverviewStatisticsDTO> courseDTOs = new ArrayList<>();
         for (final var course : courseService.getAllCoursesForManagementOverview(onlyActive)) {
             final var courseId = course.getId();

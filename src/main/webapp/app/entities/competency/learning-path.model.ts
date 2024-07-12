@@ -36,6 +36,7 @@ export interface LearningPathNavigationObjectDTO {
     id: number;
     completed: boolean;
     name: string;
+    competencyId: number;
     type: LearningObjectType;
 }
 
