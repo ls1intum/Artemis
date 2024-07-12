@@ -16,7 +16,6 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AccountService;
 import de.tum.in.www1.artemis.service.dto.PasswordChangeDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
@@ -42,13 +41,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     private AccountService accountService;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private PasswordService passwordService;
-
-    @Autowired
-    private UserUtilService userUtilService;
 
     private void testWithRegistrationDisabled(Executable test) throws Throwable {
         ConfigUtil.testWithChangedConfig(accountService, "registrationEnabled", Optional.of(Boolean.FALSE), test);

@@ -16,7 +16,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Team;
@@ -30,13 +29,10 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.plagiarism.PlagiarismCaseInfoDTO;
 import de.tum.in.www1.artemis.web.rest.dto.plagiarism.PlagiarismVerdictDTO;
 
@@ -51,22 +47,10 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
     private PostRepository postRepository;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private PlagiarismComparisonRepository plagiarismComparisonRepository;
 
     @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
     private TextExerciseUtilService textExerciseUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     private Course course;
 
