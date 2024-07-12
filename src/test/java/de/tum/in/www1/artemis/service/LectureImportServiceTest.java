@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
@@ -28,9 +27,6 @@ class LectureImportServiceTest extends AbstractSpringIntegrationIndependentTest 
 
     @Autowired
     private LectureImportService lectureImportService;
-
-    @Autowired
-    private CourseRepository courseRepository;
 
     @Autowired
     private LectureRepository lectureRepository;
