@@ -666,7 +666,9 @@ export class MetisService implements OnDestroy {
     changeResolvedStatus(postId: number, status: boolean | undefined) {
         const indexOfCachedPost = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === postId);
         if (indexOfCachedPost > -1) {
-            this.cachedPosts[indexOfCachedPost].resolved = status;
+            if (this.cachedPosts[indexOfCachedPost]) {
+                this.cachedPosts[indexOfCachedPost].resolved = status;
+            }
         }
     }
 }
