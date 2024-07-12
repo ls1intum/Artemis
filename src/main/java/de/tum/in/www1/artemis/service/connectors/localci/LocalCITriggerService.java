@@ -6,6 +6,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import jakarta.annotation.PostConstruct;
@@ -135,7 +136,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         }
         else if (triggeredByPushTo.equals(RepositoryType.TESTS)) {
             assignmentCommitHash = gitService.getLastCommitHash(participation.getVcsRepositoryUri()).getName();
-            testCommitHash = commitHashToBuild;
+            testCommitHash = Objects.requireNonNullElseGet(commitHashToBuild,
+                    () -> gitService.getLastCommitHash(participation.getProgrammingExercise().getVcsTestRepositoryUri()).getName());
         }
         else {
             assignmentCommitHash = commitHashToBuild;
