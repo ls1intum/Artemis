@@ -263,10 +263,6 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     }
 
     getAllStudentExamsForRealExams(): StudentExam[] {
-        const allStudentExams: StudentExam[] = [];
-        this.studentExamsForRealExams.forEach((studentExam) => {
-            allStudentExams.push(studentExam);
-        });
-        return allStudentExams;
+        return Array.from(this.studentExamsForRealExams.values());
     }
 }

@@ -240,7 +240,7 @@ export class CourseOverviewService {
         return exercises.map((exercise) => this.mapExerciseToSidebarCardElement(exercise));
     }
     mapExamsToSidebarCardElements(exams: Exam[], studentExams?: StudentExam[]) {
-        return exams.map((exam, index) => this.mapExamToSidebarCardElement(exam, studentExams ? studentExams[index] : undefined));
+        return exams.map((exam, index) => this.mapExamToSidebarCardElement(exam, studentExams?.[index]));
     }
 
     mapConversationsToSidebarCardElements(conversations: ConversationDTO[]) {
