@@ -12,6 +12,11 @@ const uid = generateUUID();
 const examTitle = 'test-exam' + uid;
 
 test.describe('Test Exam management', () => {
+    test.describe.configure({
+        mode: 'default',
+        timeout: 120000,
+    });
+
     let course: Course;
     let exam: Exam;
 

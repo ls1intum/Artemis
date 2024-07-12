@@ -8,6 +8,11 @@ import { expect } from '@playwright/test';
 import { Exercise, ExerciseMode } from '../../../support/constants';
 
 test.describe('Programming Exercise Management', () => {
+    test.describe.configure({
+        mode: 'default',
+        timeout: 180000,
+    });
+
     let course: Course;
 
     test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {

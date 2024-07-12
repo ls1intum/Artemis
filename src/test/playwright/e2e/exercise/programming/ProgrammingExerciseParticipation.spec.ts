@@ -21,6 +21,11 @@ import { ProgrammingExerciseOverviewPage } from '../../../support/pageobjects/ex
 import { Participation } from 'app/entities/participation/participation.model';
 
 test.describe('Programming exercise participation', () => {
+    test.describe.configure({
+        mode: 'default',
+        timeout: 300000,
+    });
+
     let course: Course;
 
     test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {

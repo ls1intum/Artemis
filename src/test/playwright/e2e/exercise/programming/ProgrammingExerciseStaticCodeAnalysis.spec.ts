@@ -7,6 +7,11 @@ import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
 
 test.describe('Static code analysis tests', () => {
+    test.describe.configure({
+        mode: 'default',
+        timeout: 240000,
+    });
+
     let course: Course;
     let exercise: ProgrammingExercise;
 

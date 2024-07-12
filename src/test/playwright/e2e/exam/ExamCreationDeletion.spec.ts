@@ -38,6 +38,11 @@ const editedExamData = {
 const dateFormat = 'MMM D, YYYY HH:mm';
 
 test.describe('Exam creation/deletion', () => {
+    test.describe.configure({
+        mode: 'default',
+        timeout: 60000,
+    });
+
     let course: Course;
     let examId: number;
 

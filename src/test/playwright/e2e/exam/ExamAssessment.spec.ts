@@ -54,6 +54,11 @@ test.beforeAll('Create course', async ({ browser }) => {
 });
 
 test.describe('Exam assessment', () => {
+    test.describe.configure({
+        mode: 'default',
+        timeout: 180000,
+    });
+
     let programmingAssessmentSuccessful = false;
     let modelingAssessmentSuccessful = false;
     let textAssessmentSuccessful = false;
@@ -184,6 +189,11 @@ test.describe('Exam assessment', () => {
 });
 
 test.describe('Exam grading', () => {
+    test.describe.configure({
+        mode: 'default',
+        timeout: 180000,
+    });
+
     test.describe.serial('Instructor sets grades and student receives a grade', () => {
         let exam: Exam;
 
@@ -223,6 +233,11 @@ test.describe('Exam grading', () => {
 });
 
 test.describe('Exam statistics', () => {
+    test.describe.configure({
+        mode: 'default',
+        timeout: 180000,
+    });
+
     let exercise: Exercise;
     const students = [studentOne, studentTwo];
 

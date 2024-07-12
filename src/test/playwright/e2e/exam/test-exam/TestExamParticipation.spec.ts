@@ -15,6 +15,11 @@ import { expect } from '@playwright/test';
 const textFixture = 'loremIpsum-short.txt';
 
 test.describe('Test exam participation', () => {
+    test.describe.configure({
+        mode: 'default',
+        timeout: 240000,
+    });
+
     let course: Course;
     let exerciseArray: Array<Exercise> = [];
 

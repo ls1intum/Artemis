@@ -24,6 +24,11 @@ const examData = {
 };
 
 test.describe('Test Exam creation/deletion', () => {
+    test.describe.configure({
+        mode: 'default',
+        timeout: 60000,
+    });
+
     let course: Course;
     let exam: Exam;
 

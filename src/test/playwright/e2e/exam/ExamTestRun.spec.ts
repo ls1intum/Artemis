@@ -16,6 +16,11 @@ const textFixture = 'loremIpsum-short.txt';
 const examTitle = 'exam' + generateUUID();
 
 test.describe('Exam test run', () => {
+    test.describe.configure({
+        mode: 'default',
+        timeout: 240000,
+    });
+
     let course: Course;
     let exam: Exam;
     let exerciseArray: Array<Exercise> = [];

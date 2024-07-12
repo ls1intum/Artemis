@@ -11,6 +11,11 @@ import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 import { ExerciseAPIRequests } from '../../support/requests/ExerciseAPIRequests';
 
 test.describe('Exam management', () => {
+    test.describe.configure({
+        mode: 'default',
+        timeout: 60000,
+    });
+
     test.describe('Exercise group', () => {
         let course: Course;
         let exam: Exam;

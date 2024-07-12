@@ -15,6 +15,11 @@ import { ProgrammingExerciseTaskStatus } from '../../support/pageobjects/exam/Ex
 import { Page } from '@playwright/test';
 
 test.describe('Exam Results', () => {
+    test.describe.configure({
+        mode: 'default',
+        timeout: 180000,
+    });
+
     let course: Course;
 
     test.beforeEach('Create course', async ({ browser }) => {

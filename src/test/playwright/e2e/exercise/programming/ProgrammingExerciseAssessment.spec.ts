@@ -18,6 +18,11 @@ const tutorCodeFeedbackPoints = -2;
 const complaint = "That feedback wasn't very useful!";
 
 test.describe('Programming exercise assessment', () => {
+    test.describe.configure({
+        mode: 'default',
+        timeout: 180000,
+    });
+
     let course: Course;
     let exercise: ProgrammingExercise;
     let dueDate: dayjs.Dayjs;

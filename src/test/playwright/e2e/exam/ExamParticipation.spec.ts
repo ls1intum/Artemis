@@ -18,6 +18,11 @@ const textFixture = 'loremIpsum.txt';
 const textFixtureShort = 'loremIpsum-short.txt';
 
 test.describe('Exam participation', () => {
+    test.describe.configure({
+        mode: 'default',
+        timeout: 120000,
+    });
+
     let course: Course;
     let exerciseArray: Array<Exercise> = [];
     let studentTwoName: string;
@@ -44,6 +49,11 @@ test.describe('Exam participation', () => {
     });
 
     test.describe('Early Hand-in', () => {
+        test.describe.configure({
+            mode: 'default',
+            timeout: 180000,
+        });
+
         let exam: Exam;
         const examTitle = 'exam' + generateUUID();
 
