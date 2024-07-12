@@ -239,11 +239,8 @@ export class CourseOverviewService {
     mapExercisesToSidebarCardElements(exercises: Exercise[]) {
         return exercises.map((exercise) => this.mapExerciseToSidebarCardElement(exercise));
     }
-    mapExamsToSidebarCardElements(exams: Exam[], studentExams?: StudentExam[], percentDifferences?: number[]) {
-        console.log('HALLOO');
-        return exams.map((exam, index) =>
-            this.mapExamToSidebarCardElement(exam, studentExams ? studentExams[index] : undefined, percentDifferences ? percentDifferences[index] : undefined),
-        );
+    mapExamsToSidebarCardElements(exams: Exam[], studentExams?: StudentExam[]) {
+        return exams.map((exam, index) => this.mapExamToSidebarCardElement(exam, studentExams ? studentExams[index] : undefined));
     }
 
     mapConversationsToSidebarCardElements(conversations: ConversationDTO[]) {
@@ -296,7 +293,7 @@ export class CourseOverviewService {
         return exerciseCardItem;
     }
 
-    mapExamToSidebarCardElement(exam: Exam, studentExam?: StudentExam, percentDifference?: number): SidebarCardElement {
+    mapExamToSidebarCardElement(exam: Exam, studentExam?: StudentExam): SidebarCardElement {
         console.log('exam.workingTime: ' + exam.workingTime);
         console.log('studentExamWorkingtime: ' + studentExam?.workingTime);
         const examCardItem: SidebarCardElement = {
@@ -305,8 +302,7 @@ export class CourseOverviewService {
             icon: faGraduationCap,
             subtitleLeft: exam.moduleNumber ?? '',
             startDateWithTime: exam.startDate,
-            workingTime: exam.testExam ? exam.workingTime : studentExam?.workingTime,
-            percentDifference: percentDifference,
+            workingTime: exam.workingTime,
             studentExam: studentExam,
             attainablePoints: exam.examMaxPoints ?? 0,
             size: 'L',

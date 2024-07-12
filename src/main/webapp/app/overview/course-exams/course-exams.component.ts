@@ -12,7 +12,6 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { CourseOverviewService } from '../course-overview.service';
 import { cloneDeep } from 'lodash-es';
-import { getRelativeWorkingTimeExtension } from 'app/exam/participate/exam.utils';
 import { lastValueFrom } from 'rxjs';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
@@ -209,8 +208,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         const groupedExamGroups = cloneDeep(DEFAULT_UNIT_GROUPS) as AccordionGroups;
 
         for (const realExam of realExams) {
-            const percentDifference = getRelativeWorkingTimeExtension(realExam, this.studentExamsForRealExams.get(realExam.id!)?.workingTime!);
-            const examCardItem = this.courseOverviewService.mapExamToSidebarCardElement(realExam, this.studentExamsForRealExams.get(realExam.id!), percentDifference);
+            const examCardItem = this.courseOverviewService.mapExamToSidebarCardElement(realExam, this.studentExamsForRealExams.get(realExam.id!));
             groupedExamGroups['real'].entityData.push(examCardItem);
         }
         for (const testExam of testExams) {
@@ -248,11 +246,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         this.sortedRealExams = this.realExamsOfCourse.sort((a, b) => this.sortExamsByStartDate(a, b));
         this.sortedTestExams = this.testExamsOfCourse.sort((a, b) => this.sortExamsByStartDate(a, b));
 
-        const sidebarRealExams = this.courseOverviewService.mapExamsToSidebarCardElements(
-            this.sortedRealExams,
-            this.getAllStudentExamsForRealExams(),
-            this.getAllStudentExamPercentagesForRealExams(),
-        );
+        const sidebarRealExams = this.courseOverviewService.mapExamsToSidebarCardElements(this.sortedRealExams, this.getAllStudentExamsForRealExams());
         const sidebarTestExams = this.courseOverviewService.mapExamsToSidebarCardElements(this.sortedTestExams);
 
         this.sidebarExams = [...sidebarRealExams, ...sidebarTestExams];
@@ -270,20 +264,9 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
 
     getAllStudentExamsForRealExams(): StudentExam[] {
         const allStudentExams: StudentExam[] = [];
-        console.log('HEY');
         this.studentExamsForRealExams.forEach((studentExam) => {
             allStudentExams.push(studentExam);
-            console.log('for loop studentExam: ' + studentExam);
         });
         return allStudentExams;
-    }
-
-    getAllStudentExamPercentagesForRealExams(): number[] {
-        const allStudentExamsPercentages: number[] = [];
-        this.studentExamsForRealExams.forEach((studentExam) => {
-            const percentDifference = getRelativeWorkingTimeExtension(studentExam.exam!, studentExam.workingTime!);
-            allStudentExamsPercentages.push(percentDifference);
-        });
-        return allStudentExamsPercentages;
     }
 }
