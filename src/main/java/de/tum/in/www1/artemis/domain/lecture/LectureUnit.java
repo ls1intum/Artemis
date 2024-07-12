@@ -143,7 +143,6 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
         return releaseDate.isBefore(ZonedDateTime.now());
     }
 
-    @Override
     public boolean isCompletedFor(User user) {
         return getCompletedUsers().stream().map(LectureUnitCompletion::getUser).anyMatch(user1 -> user1.getId().equals(user.getId()));
     }
