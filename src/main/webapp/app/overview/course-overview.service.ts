@@ -294,8 +294,6 @@ export class CourseOverviewService {
     }
 
     mapExamToSidebarCardElement(exam: Exam, studentExam?: StudentExam): SidebarCardElement {
-        console.log('exam.workingTime: ' + exam.workingTime);
-        console.log('studentExamWorkingtime: ' + studentExam?.workingTime);
         const examCardItem: SidebarCardElement = {
             title: exam.title ?? '',
             id: exam.id ?? '',
