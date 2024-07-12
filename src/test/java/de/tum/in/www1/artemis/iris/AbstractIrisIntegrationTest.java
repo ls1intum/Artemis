@@ -23,19 +23,13 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
 import de.tum.in.www1.artemis.domain.iris.session.IrisExerciseChatSession;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettings;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisTemplateRepository;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
-
-    @Autowired
-    protected CourseRepository courseRepository;
 
     @Autowired
     protected IrisSettingsService irisSettingsService;
@@ -49,12 +43,6 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
 
     @Autowired
     protected ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
-    protected UserUtilService userUtilService;
-
-    @Autowired
-    protected ExerciseUtilService exerciseUtilService;
 
     @Autowired
     private IrisSettingsRepository irisSettingsRepository;
