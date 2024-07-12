@@ -46,10 +46,8 @@ import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCAuthException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCForbiddenException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -102,10 +100,6 @@ public class LocalVCServletService {
 
     private final ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
 
-    private final ParticipationRepository participationRepository;
-
-    private final StudentParticipationRepository studentParticipationRepository;
-
     @Value("${artemis.version-control.url}")
     public void setLocalVCBaseUrl(URL localVCBaseUrl) {
         LocalVCServletService.localVCBaseUrl = localVCBaseUrl;
@@ -134,8 +128,7 @@ public class LocalVCServletService {
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             ContinuousIntegrationTriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService,
             ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService,
-            ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, ParticipationRepository participationRepository,
-            StudentParticipationRepository studentParticipationRepository) {
+            ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -148,8 +141,6 @@ public class LocalVCServletService {
         this.programmingMessagingService = programmingMessagingService;
         this.programmingTriggerService = programmingTriggerService;
         this.participationVCSAccessTokenRepository = participationVCSAccessTokenRepository;
-        this.participationRepository = participationRepository;
-        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**

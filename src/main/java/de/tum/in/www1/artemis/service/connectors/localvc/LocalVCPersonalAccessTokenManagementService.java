@@ -17,7 +17,7 @@ public class LocalVCPersonalAccessTokenManagementService {
     private static final Logger log = LoggerFactory.getLogger(LocalVCPersonalAccessTokenManagementService.class);
 
     @Value("${artemis.version-control.use-localvc-version-control-access-token:false}")
-    private boolean versionControlAccessToken;
+    private boolean useVersionControlAccessToken;
 
     @Value("${artemis.version-control.vc-access-token-max-lifetime-in-days:365}")
     private int vcMaxLifetimeInDays;
@@ -31,6 +31,7 @@ public class LocalVCPersonalAccessTokenManagementService {
     private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
     public static String generateSecureVCSAccessToken() {
+        log.debug("Generate secure vcs access token");
         SecureRandom secureRandom = new SecureRandom();
         StringBuilder randomString = new StringBuilder(RANDOM_STRING_LENGTH);
 

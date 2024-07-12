@@ -104,8 +104,6 @@ public class ParticipationService {
 
     private final ProfileService profileService;
 
-    private final UserRepository userRepository;
-
     private final ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
 
     public ParticipationService(GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
@@ -135,7 +133,6 @@ public class ParticipationService {
         this.teamScoreRepository = teamScoreRepository;
         this.localCISharedBuildJobQueueService = localCISharedBuildJobQueueService;
         this.profileService = profileService;
-        this.userRepository = userRepository;
         this.participationVCSAccessTokenRepository = participationVCSAccessTokenRepository;
     }
 
