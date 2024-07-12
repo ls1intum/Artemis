@@ -136,8 +136,9 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         }
         else if (triggeredByPushTo.equals(RepositoryType.TESTS)) {
             assignmentCommitHash = gitService.getLastCommitHash(participation.getVcsRepositoryUri()).getName();
-            testCommitHash = Objects.requireNonNullElseGet(commitHashToBuild,
+            commitHashToBuild = Objects.requireNonNullElseGet(commitHashToBuild,
                     () -> gitService.getLastCommitHash(participation.getProgrammingExercise().getVcsTestRepositoryUri()).getName());
+            testCommitHash = commitHashToBuild;
         }
         else {
             assignmentCommitHash = commitHashToBuild;
