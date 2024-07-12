@@ -663,7 +663,7 @@ export class MetisService implements OnDestroy {
         return this.currentPostContextFilter.courseWideChannelIds?.toString() !== other.courseWideChannelIds?.toString();
     }
 
-    changeResolvedStatus(postId: number, status: boolean | undefined) {
+    changeResolvedStatus(postId: number | undefined, status: boolean | undefined) {
         const indexOfCachedPost = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === postId);
         if (indexOfCachedPost > -1) {
             if (this.cachedPosts[indexOfCachedPost]) {
