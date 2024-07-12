@@ -36,10 +36,12 @@ import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildResult;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.ResultQueueItem;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
@@ -69,6 +71,8 @@ public class LocalCIResultProcessingService {
 
     private final BuildLogEntryService buildLogEntryService;
 
+    private final GitService gitService;
+
     private IQueue<ResultQueueItem> resultQueue;
 
     private IMap<String, BuildAgentInformation> buildAgentInformation;
@@ -79,7 +83,8 @@ public class LocalCIResultProcessingService {
 
     public LocalCIResultProcessingService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ProgrammingExerciseGradingService programmingExerciseGradingService,
             ProgrammingMessagingService programmingMessagingService, BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ParticipationRepository participationRepository, ProgrammingTriggerService programmingTriggerService, BuildLogEntryService buildLogEntryService) {
+            ParticipationRepository participationRepository, ProgrammingTriggerService programmingTriggerService, BuildLogEntryService buildLogEntryService,
+            GitService gitService) {
         this.hazelcastInstance = hazelcastInstance;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
@@ -88,6 +93,7 @@ public class LocalCIResultProcessingService {
         this.buildJobRepository = buildJobRepository;
         this.programmingTriggerService = programmingTriggerService;
         this.buildLogEntryService = buildLogEntryService;
+        this.gitService = gitService;
     }
 
     /**
@@ -190,7 +196,15 @@ public class LocalCIResultProcessingService {
             if (isSolutionBuildOfTestOrAuxPush(buildJob)) {
                 log.debug("Triggering build of template repository for solution build with id {}", buildJob.id());
                 try {
-                    programmingTriggerService.triggerTemplateBuildAndNotifyUser(buildJob.exerciseId(), buildJob.buildConfig().testCommitHash(), SubmissionType.TEST,
+                    // we use commit hash of the test repository to mark the submission
+                    String testCommitHash = buildJob.buildConfig().testCommitHash();
+                    if (testCommitHash == null) {
+                        var commitObjectId = gitService.getLastCommitHash(new LocalVCRepositoryUri(buildJob.repositoryInfo().testRepositoryUri()));
+                        if (commitObjectId != null) {
+                            testCommitHash = commitObjectId.getName();
+                        }
+                    }
+                    programmingTriggerService.triggerTemplateBuildAndNotifyUser(buildJob.exerciseId(), testCommitHash, SubmissionType.TEST,
                             buildJob.repositoryInfo().triggeredByPushTo());
                 }
                 catch (EntityNotFoundException e) {
