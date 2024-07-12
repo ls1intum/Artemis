@@ -495,7 +495,7 @@ public class Result extends DomainObject implements Comparable<Result> {
             return null;
         }
         else {
-            return assessmentNote.get(0);
+            return assessmentNote.getFirst();
         }
     }
 

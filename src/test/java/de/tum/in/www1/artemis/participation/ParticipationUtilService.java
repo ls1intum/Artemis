@@ -225,7 +225,7 @@ public class ParticipationUtilService {
         result.completionDate(ZonedDateTime.now());
         submission.addResult(result);
         submission = submissionRepository.saveAndFlush(submission);
-        return submission.getResults().get(0);
+        return submission.getResults().getFirst();
     }
 
     /**
@@ -589,7 +589,7 @@ public class ParticipationUtilService {
         var participations = studentParticipationRepo.findByExerciseId(exercise.getId());
         var allSubmissions = new ArrayList<Submission>();
         participations.forEach(participation -> {
-            Submission submission = submissionRepository.findAllByParticipationId(participation.getId()).get(0);
+            Submission submission = submissionRepository.findAllByParticipationId(participation.getId()).getFirst();
             allSubmissions.add(submissionRepository.findWithEagerResultAndFeedbackAndAssessmentNoteById(submission.getId()).orElseThrow());
         });
         return allSubmissions;

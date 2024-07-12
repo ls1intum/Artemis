@@ -40,3 +40,37 @@
         border-color: #ffffff;
     }
 }
+
+/* Additional styles to ensure the quiz content fills the space */
+.quiz-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+}
+
+.quiz-content {
+    flex: 1; /* Allow the content to grow and fill available space */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.quiz-question {
+    flex: 1; /* Allow the question to take up available space */
+    margin-bottom: 20px;
+}
+
+.quiz-options {
+    flex: 1; /* Allow the options to take up available space */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+}
+
+@media print {
+    .quiz-container {
+        height: auto;
+        page-break-inside: avoid;
+    }
+}

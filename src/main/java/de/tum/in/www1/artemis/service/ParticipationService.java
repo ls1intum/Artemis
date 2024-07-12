@@ -702,6 +702,7 @@ public class ParticipationService {
      * @return the list of programming exercise participations belonging to exercise and student
      */
     public List<StudentParticipation> findByExerciseAndStudentIdWithEagerResultsAndSubmissions(Exercise exercise, Long studentId) {
+        // TODO: do we really need to fetch all this information here?
         if (exercise.isTeamMode()) {
             Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), studentId);
             return optionalTeam

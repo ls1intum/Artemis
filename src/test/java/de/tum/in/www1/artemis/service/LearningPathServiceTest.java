@@ -38,7 +38,6 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathNgxService;
@@ -64,9 +63,6 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private UserUtilService userUtilService;
-
-    @Autowired
-    private CourseRepository courseRepository;
 
     @Autowired
     private CompetencyUtilService competencyUtilService;

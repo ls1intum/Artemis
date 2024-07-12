@@ -39,28 +39,45 @@ export enum CourseCompetencyValidators {
     MASTERY_THRESHOLD_MAX = 100,
 }
 
+// IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in CourseCompetency.java
+export enum CourseCompetencyType {
+    COMPETENCY = 'competency',
+    PREREQUISITE = 'prerequisite',
+}
+
 export const DEFAULT_MASTERY_THRESHOLD = 100;
 
-export interface BaseCompetency extends BaseEntity {
+export abstract class BaseCompetency implements BaseEntity {
+    id?: number;
     title?: string;
     description?: string;
     taxonomy?: CompetencyTaxonomy;
 }
 
-export interface CourseCompetency extends BaseCompetency {
+export abstract class CourseCompetency extends BaseCompetency {
     softDueDate?: dayjs.Dayjs;
     masteryThreshold?: number;
     optional?: boolean;
-    course?: Course;
-    linkedCourseCompetency?: CourseCompetency;
-}
-
-export interface Competency extends CourseCompetency {
+    linkedStandardizedCompetency?: StandardizedCompetency;
     exercises?: Exercise[];
     lectureUnits?: LectureUnit[];
     userProgress?: CompetencyProgress[];
     courseProgress?: CourseCompetencyProgress;
-    linkedStandardizedCompetency?: StandardizedCompetency;
+    course?: Course;
+    linkedCourseCompetency?: CourseCompetency;
+
+    public type?: CourseCompetencyType;
+
+    protected constructor(type: CourseCompetencyType) {
+        super();
+        this.type = type;
+    }
+}
+
+export class Competency extends CourseCompetency {
+    constructor() {
+        super(CourseCompetencyType.COMPETENCY);
+    }
 }
 
 export class CompetencyJol {
@@ -146,8 +163,8 @@ export class CourseCompetencyProgress {
 
 export class CompetencyRelation implements BaseEntity {
     public id?: number;
-    public tailCompetency?: Competency;
-    public headCompetency?: Competency;
+    public tailCompetency?: CourseCompetency;
+    public headCompetency?: CourseCompetency;
     public type?: CompetencyRelationType;
 }
 

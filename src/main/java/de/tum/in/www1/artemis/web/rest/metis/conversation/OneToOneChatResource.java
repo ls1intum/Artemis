@@ -85,7 +85,7 @@ public class OneToOneChatResource extends ConversationManagementResource {
             throw new BadRequestAlertException("A one-to-one chat can only be started with two users", "OneToOneChat", "invalidUserCount");
         }
 
-        var userA = chatMembers.get(0);
+        var userA = chatMembers.getFirst();
         var userB = chatMembers.get(1);
 
         var oneToOneChat = oneToOneChatService.startOneToOneChat(course, userA, userB);

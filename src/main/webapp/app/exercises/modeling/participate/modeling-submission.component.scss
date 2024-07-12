@@ -18,3 +18,12 @@ jhi-modeling-assessment {
     align-self: center;
     cursor: row-resize;
 }
+
+@media print {
+    /* Ensure the parent container adjusts its height during printing */
+    .submission-container {
+        min-height: auto !important;
+        height: auto !important;
+        page-break-inside: avoid !important;
+    }
+}
