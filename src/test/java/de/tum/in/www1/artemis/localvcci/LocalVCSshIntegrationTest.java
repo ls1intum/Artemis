@@ -30,7 +30,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.config.icl.ssh.HashUtils;
 import de.tum.in.www1.artemis.config.icl.ssh.SshGitCommand;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.icl.SshGitCommandFactoryService;
 
 @Profile(PROFILE_LOCALVC)
@@ -39,9 +38,6 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
     private final String hostname = "localhost";
 
     private final int port = 7921;
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private SshServer sshServer;

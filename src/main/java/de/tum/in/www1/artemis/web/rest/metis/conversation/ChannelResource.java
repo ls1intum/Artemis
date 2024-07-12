@@ -107,7 +107,7 @@ public class ChannelResource extends ConversationManagementResource {
     @EnforceAtLeastStudent
     public ResponseEntity<List<ChannelDTO>> getCourseChannelsOverview(@PathVariable Long courseId) {
         log.debug("REST request to all channels of course: {}", courseId);
-        checkMessagingOrCommunicationEnabledElseThrow(courseId);
+        checkCommunicationEnabledElseThrow(courseId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
@@ -136,7 +136,7 @@ public class ChannelResource extends ConversationManagementResource {
     @EnforceAtLeastStudent
     public ResponseEntity<List<ChannelIdAndNameDTO>> getCoursePublicChannelsOverview(@PathVariable Long courseId) {
         log.debug("REST request to get all public channels of course: {}", courseId);
-        checkMessagingOrCommunicationEnabledElseThrow(courseId);
+        checkCommunicationEnabledElseThrow(courseId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
@@ -164,7 +164,7 @@ public class ChannelResource extends ConversationManagementResource {
         log.debug("REST request to get channel of exercise: {}", exerciseId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
-        checkMessagingOrCommunicationEnabledElseThrow(course);
+        checkCommunicationEnabledElseThrow(course);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
         var channel = channelRepository.findChannelByExerciseId(exerciseId);
 
@@ -189,7 +189,7 @@ public class ChannelResource extends ConversationManagementResource {
         log.debug("REST request to get channel of lecture: {}", lectureId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
-        checkMessagingOrCommunicationEnabledElseThrow(course);
+        checkCommunicationEnabledElseThrow(course);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
         var channel = channelRepository.findChannelByLectureId(lectureId);
 
@@ -215,7 +215,7 @@ public class ChannelResource extends ConversationManagementResource {
         log.debug("REST request to create channel in course {} with properties : {}", courseId, channelDTO);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
-        checkMessagingOrCommunicationEnabledElseThrow(course);
+        checkCommunicationEnabledElseThrow(course);
         channelAuthorizationService.isAllowedToCreateChannel(course, requestingUser);
 
         var channelToCreate = new Channel();
@@ -245,7 +245,7 @@ public class ChannelResource extends ConversationManagementResource {
     @EnforceAtLeastStudent
     public ResponseEntity<ChannelDTO> updateChannel(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody ChannelDTO channelDTO) {
         log.debug("REST request to update channel {} with properties : {}", channelId, channelDTO);
-        checkMessagingOrCommunicationEnabledElseThrow(courseId);
+        checkCommunicationEnabledElseThrow(courseId);
 
         var originalChannel = channelRepository.findByIdElseThrow(channelId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
@@ -273,7 +273,7 @@ public class ChannelResource extends ConversationManagementResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteChannel(@PathVariable Long courseId, @PathVariable Long channelId) {
         log.debug("REST request to delete channel {}", channelId);
-        checkMessagingOrCommunicationEnabledElseThrow(courseId);
+        checkCommunicationEnabledElseThrow(courseId);
         var channel = channelRepository.findByIdElseThrow(channelId);
         if (!channel.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("The channel does not belong to the course", CHANNEL_ENTITY_NAME, "channel.course.mismatch");
@@ -304,7 +304,7 @@ public class ChannelResource extends ConversationManagementResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Void> archiveChannel(@PathVariable Long courseId, @PathVariable Long channelId) {
         log.debug("REST request to archive channel : {}", channelId);
-        checkMessagingOrCommunicationEnabledElseThrow(courseId);
+        checkCommunicationEnabledElseThrow(courseId);
         var channelFromDatabase = channelRepository.findByIdElseThrow(channelId);
         checkEntityIdMatchesPathIds(channelFromDatabase, Optional.of(courseId), Optional.of(channelId));
         channelAuthorizationService.isAllowedToArchiveChannel(channelFromDatabase, userRepository.getUserWithGroupsAndAuthorities());
@@ -323,7 +323,7 @@ public class ChannelResource extends ConversationManagementResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Void> unArchiveChannel(@PathVariable Long courseId, @PathVariable Long channelId) {
         log.debug("REST request to unarchive channel : {}", channelId);
-        checkMessagingOrCommunicationEnabledElseThrow(courseId);
+        checkCommunicationEnabledElseThrow(courseId);
         var channelFromDatabase = channelRepository.findByIdElseThrow(channelId);
         checkEntityIdMatchesPathIds(channelFromDatabase, Optional.of(courseId), Optional.of(channelId));
         channelAuthorizationService.isAllowedToUnArchiveChannel(channelFromDatabase, userRepository.getUserWithGroupsAndAuthorities());
@@ -343,7 +343,7 @@ public class ChannelResource extends ConversationManagementResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Void> grantChannelModeratorRole(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
         log.debug("REST request to grant channel moderator role to users {} in channel {}", userLogins.toString(), channelId);
-        checkMessagingOrCommunicationEnabledElseThrow(courseId);
+        checkCommunicationEnabledElseThrow(courseId);
         var channel = channelRepository.findByIdElseThrow(channelId);
         if (!channel.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("The channel does not belong to the course", CHANNEL_ENTITY_NAME, "channel.course.mismatch");
@@ -366,7 +366,7 @@ public class ChannelResource extends ConversationManagementResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Void> revokeChannelModeratorRole(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
         log.debug("REST request to revoke channel moderator role from users {} in channel {}", userLogins.toString(), channelId);
-        checkMessagingOrCommunicationEnabledElseThrow(courseId);
+        checkCommunicationEnabledElseThrow(courseId);
         var channel = channelRepository.findByIdElseThrow(channelId);
         if (!channel.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("The channel does not belong to the course", CHANNEL_ENTITY_NAME, "channel.course.mismatch");
@@ -397,7 +397,7 @@ public class ChannelResource extends ConversationManagementResource {
     public ResponseEntity<Void> registerUsersToChannel(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody(required = false) List<String> userLogins,
             @RequestParam(defaultValue = "false") Boolean addAllStudents, @RequestParam(defaultValue = "false") Boolean addAllTutors,
             @RequestParam(defaultValue = "false") Boolean addAllInstructors) {
-        checkMessagingOrCommunicationEnabledElseThrow(courseId);
+        checkCommunicationEnabledElseThrow(courseId);
         List<String> usersLoginsToRegister = new ArrayList<>();
         if (userLogins != null) {
             usersLoginsToRegister.addAll(userLogins);
@@ -433,7 +433,7 @@ public class ChannelResource extends ConversationManagementResource {
     @PostMapping("{courseId}/channels/{channelId}/deregister")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deregisterUsers(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
-        checkMessagingOrCommunicationEnabledElseThrow(courseId);
+        checkCommunicationEnabledElseThrow(courseId);
         if (userLogins == null || userLogins.isEmpty()) {
             throw new BadRequestAlertException("No user logins provided", CHANNEL_ENTITY_NAME, "userLoginsEmpty");
         }

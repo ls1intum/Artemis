@@ -33,7 +33,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ExampleSubmission;
 import de.tum.in.www1.artemis.domain.Feedback;
@@ -58,14 +57,12 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.GradingCriterionUtil;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.plagiarism.PlagiarismUtilService;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
@@ -75,7 +72,6 @@ import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ExerciseIntegrationTestService;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
@@ -107,9 +103,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private PlagiarismComparisonRepository plagiarismComparisonRepository;
 
     @Autowired
-    private CourseRepository courseRepository;
-
-    @Autowired
     private FeedbackRepository feedbackRepository;
 
     @Autowired
@@ -125,19 +118,10 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private ChannelRepository channelRepository;
 
     @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
     private ExamUtilService examUtilService;
 
     @Autowired
-    private CourseUtilService courseUtilService;
-
-    @Autowired
     private ParticipationUtilService participationUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     @Autowired
     private PageableSearchUtilService pageableSearchUtilService;
@@ -156,7 +140,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void submitEnglishTextExercise() throws Exception {
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This Submission is written in English", Language.ENGLISH, false);
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         request.postWithResponseBody("/api/exercises/" + textExercise.getId() + "/participations", null, Participation.class);
         textSubmission = request.postWithResponseBody("/api/exercises/" + textExercise.getId() + "/text-submissions", textSubmission, TextSubmission.class);
 
@@ -169,7 +153,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteTextExerciseWithSubmissionWithTextBlocks() throws Exception {
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Lorem Ipsum Foo Bar", Language.ENGLISH, true);
         textSubmission = textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
         int submissionCount = 5;
@@ -217,7 +201,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteTextExercise_isNotAtLeastInstructorInCourse_forbidden() throws Exception {
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         course.setInstructorGroupName("test");
         courseRepository.save(course);
 
@@ -231,7 +215,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void createTextExercise(String channelName) throws Exception {
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         courseUtilService.enableMessagingForCourse(course);
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
 
         String title = "New Text Exercise";
         DifficultyLevel difficulty = DifficultyLevel.HARD;
@@ -265,7 +249,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createTextExercise_setAssessmentDueDateWithoutExerciseDueDate_badRequest() throws Exception {
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         textExercise.setId(null);
         textExercise.setDueDate(null);
 
@@ -276,7 +260,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createTextExercise_isNotAtLeastInstructorInCourse_forbidden() throws Exception {
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         course.setInstructorGroupName("test");
         courseRepository.save(course);
         textExercise.setId(null);
@@ -351,7 +335,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateTextExercise_InvalidMaxScore() throws Exception {
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         textExercise.setMaxPoints(0.0);
         request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
@@ -360,7 +344,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateTextExercise_IncludedAsBonusInvalidBonusPoints() throws Exception {
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(1.0);
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
@@ -371,7 +355,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateTextExercise_NotIncludedInvalidBonusPoints() throws Exception {
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(1.0);
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
@@ -382,7 +366,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateTextExercise_WithStructuredGradingInstructions() throws Exception {
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
 
         GradingCriterion criterion = new GradingCriterion();
         criterion.setTitle("Test");
@@ -410,7 +394,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateTextExercise() throws Exception {
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         textExercise = textExerciseRepository.findByIdWithExampleSubmissionsAndResultsElseThrow(textExercise.getId());
 
         // update certain attributes of text exercise
@@ -446,7 +430,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateTextExerciseDueDate() throws Exception {
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        final TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        final TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
 
         final ZonedDateTime individualDueDate = ZonedDateTime.now().plusHours(20);
 
@@ -458,7 +442,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
             final var participations = new ArrayList<>(studentParticipationRepository.findByExerciseId(textExercise.getId()));
             assertThat(participations).hasSize(2);
-            participations.get(0).setIndividualDueDate(ZonedDateTime.now().plusHours(2));
+            participations.getFirst().setIndividualDueDate(ZonedDateTime.now().plusHours(2));
             participations.get(1).setIndividualDueDate(individualDueDate);
             studentParticipationRepository.saveAll(participations);
         }
@@ -473,7 +457,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
             final var withIndividualDueDate = participations.stream().filter(participation -> participation.getIndividualDueDate() != null).toList();
             assertThat(withIndividualDueDate).hasSize(1);
-            assertThat(withIndividualDueDate.get(0).getIndividualDueDate()).isCloseTo(individualDueDate, HalfSecond());
+            assertThat(withIndividualDueDate.getFirst().getIndividualDueDate()).isCloseTo(individualDueDate, HalfSecond());
         }
     }
 
@@ -481,7 +465,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateTextExercise_setExerciseIdNull_created() throws Exception {
         Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         textExercise.setId(null);
         textExercise.setChannelName("test" + UUID.randomUUID().toString().substring(0, 8));
         request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
@@ -492,7 +476,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void updateTextExercise_updatingCourseId_asInstructor() throws Exception {
         // Create a text exercise.
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise existingTextExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise existingTextExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
 
         // Create a new course with different id.
         Long oldCourseId = course.getId();
@@ -511,7 +495,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateTextExercise_isNotAtLeastInstructorInCourse_forbidden() throws Exception {
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         course.setInstructorGroupName("test");
         courseRepository.save(course);
 
@@ -561,7 +545,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void updateTextExercise_setCourseAndExerciseGroup_badRequest() throws Exception {
         Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         textExercise.setExerciseGroup(exerciseGroup);
 
         request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
@@ -571,7 +555,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateTextExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
         Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         textExercise.setCourse(null);
 
         request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
@@ -581,7 +565,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateTextExercise_convertFromCourseToExamExercise_badRequest() throws Exception {
         Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
 
         textExercise.setExerciseGroup(exerciseGroup);
@@ -798,7 +782,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getTextExerciseAsTutor() throws Exception {
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         Channel channel = new Channel();
         channel.setIsPublic(true);
         channel.setIsAnnouncementChannel(false);
@@ -837,7 +821,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getTextExercise_isNotAtleastTeachingAssistantInCourse_forbidden() throws Exception {
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         course.setTeachingAssistantGroupName("test");
         courseRepository.save(course);
         request.get("/api/text-exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN, TextExercise.class);
@@ -847,7 +831,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetTextExercise_setGradingInstructionFeedbackUsed() throws Exception {
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
 
         Channel channel = new Channel();
         channel.setName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
@@ -1070,7 +1054,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCheckPlagiarismIdenticalLongTexts() throws Exception {
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
 
         var longText = """
                 Lorem ipsum dolor sit amet, consectetur adipiscing elit.
@@ -1138,7 +1122,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCheckPlagiarismIdenticalShortTexts() throws Exception {
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
 
         var shortText = "Lorem Ipsum Foo Bar";
         textExerciseUtilService.createSubmissionForTextExercise(textExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"), shortText);
@@ -1152,7 +1136,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCheckPlagiarismNoSubmissions() throws Exception {
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
 
         var path = "/api/text-exercises/" + textExercise.getId() + "/check-plagiarism";
         request.get(path, HttpStatus.BAD_REQUEST, TextPlagiarismResult.class, plagiarismUtilService.getDefaultPlagiarismOptions());
@@ -1162,7 +1146,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCheckPlagiarism_isNotAtLeastInstructorInCourse_forbidden() throws Exception {
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         course.setInstructorGroupName("test");
         courseRepository.save(course);
         request.get("/api/text-exercises/" + textExercise.getId() + "/check-plagiarism", HttpStatus.FORBIDDEN, TextPlagiarismResult.class,
@@ -1173,7 +1157,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetPlagiarismResult() throws Exception {
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
 
         TextPlagiarismResult expectedResult = textExerciseUtilService.createTextPlagiarismResultForExercise(textExercise);
 
@@ -1185,7 +1169,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetPlagiarismResultWithoutResult() throws Exception {
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         var result = request.get("/api/text-exercises/" + textExercise.getId() + "/plagiarism-result", HttpStatus.OK, String.class);
         assertThat(result).isNullOrEmpty();
     }
@@ -1201,7 +1185,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetPlagiarismResult_isNotAtLeastInstructorInCourse_forbidden() throws Exception {
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         course.setInstructorGroupName("test");
         courseRepository.save(course);
         request.get("/api/text-exercises/" + textExercise.getId() + "/plagiarism-result", HttpStatus.FORBIDDEN, String.class);
@@ -1211,7 +1195,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateAndUpdateTextExercise() throws Exception {
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         Set<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(textExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
 
@@ -1227,15 +1211,15 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 TextExercise.class, HttpStatus.OK);
         List<Result> updatedResults = participationUtilService.getResultsForExercise(updatedTextExercise);
         assertThat(GradingCriterionUtil.findAnyInstructionWhere(updatedTextExercise.getGradingCriteria(), instruction -> instruction.getCredits() == 3)).isPresent();
-        assertThat(updatedResults.get(0).getScore()).isEqualTo(60);
-        assertThat(updatedResults.get(0).getFeedbacks().get(0).getCredits()).isEqualTo(3);
+        assertThat(updatedResults.getFirst().getScore()).isEqualTo(60);
+        assertThat(updatedResults.getFirst().getFeedbacks().getFirst().getCredits()).isEqualTo(3);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateAndUpdateTextExerciseWithExampleSubmission() throws Exception {
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         Set<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(textExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
         gradingCriteria.remove(1);
@@ -1261,7 +1245,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateAndUpdateTextExercise_shouldDeleteFeedbacks() throws Exception {
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         Set<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(textExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
 
@@ -1275,15 +1259,15 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 TextExercise.class, HttpStatus.OK);
         List<Result> updatedResults = participationUtilService.getResultsForExercise(updatedTextExercise);
         assertThat(updatedTextExercise.getGradingCriteria()).hasSize(2);
-        assertThat(updatedResults.get(0).getScore()).isZero();
-        assertThat(updatedResults.get(0).getFeedbacks()).isEmpty();
+        assertThat(updatedResults.getFirst().getScore()).isZero();
+        assertThat(updatedResults.getFirst().getFeedbacks()).isEmpty();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateAndUpdateTextExercise_isNotAtLeastInstructorInCourse_forbidden() throws Exception {
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         course.setInstructorGroupName("test");
         courseRepository.save(course);
 
@@ -1294,8 +1278,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateAndUpdateTextExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-        TextExercise textExerciseToBeConflicted = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
+        TextExercise textExerciseToBeConflicted = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         textExerciseToBeConflicted.setId(123456789L);
         textExerciseRepository.save(textExerciseToBeConflicted);
 
@@ -1306,7 +1290,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateAndUpdateTextExercise_notFound() throws Exception {
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
 
         request.putWithResponseBody("/api/text-exercises/" + 123456789 + "/re-evaluate", textExercise, TextExercise.class, HttpStatus.NOT_FOUND);
     }
@@ -1316,7 +1300,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void createTextExercise_setInvalidExampleSolutionPublicationDate_badRequest() throws Exception {
         final var baseTime = ZonedDateTime.now();
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         textExercise.setId(null);
         textExercise.setAssessmentDueDate(null);
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
@@ -1339,7 +1323,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void createTextExercise_setValidExampleSolutionPublicationDate() throws Exception {
         final var baseTime = ZonedDateTime.now();
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         textExercise.setId(null);
         textExercise.setAssessmentDueDate(null);
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
@@ -1394,7 +1378,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL);
         var submission = textSubmissionRepository.findByIdWithEagerResultsAndFeedbackAndTextBlocksElseThrow(exampleSubmission.getSubmission().getId());
 
-        Feedback feedback = ParticipationFactory.generateFeedback().get(0);
+        Feedback feedback = ParticipationFactory.generateFeedback().getFirst();
         feedback.setGradingInstruction(gradingInstruction);
         participationUtilService.addFeedbackToResult(feedback, Objects.requireNonNull(submission.getLatestResult()));
 
@@ -1405,7 +1389,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(textExerciseRepository.findById(importedTextExercise.getId())).isPresent();
 
         var importedExampleSubmission = importedTextExercise.getExampleSubmissions().stream().findFirst().orElseThrow();
-        GradingInstruction importedFeedbackGradingInstruction = importedExampleSubmission.getSubmission().getLatestResult().getFeedbacks().get(0).getGradingInstruction();
+        GradingInstruction importedFeedbackGradingInstruction = importedExampleSubmission.getSubmission().getLatestResult().getFeedbacks().getFirst().getGradingInstruction();
         assertThat(importedFeedbackGradingInstruction).isNotNull();
 
         // Copy and original should have the same data but not the same ids.
@@ -1419,7 +1403,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         var importedTextExerciseFromDB = textExerciseRepository.findWithExampleSubmissionsAndResultsById(importedTextExercise.getId()).orElseThrow();
         var importedFeedbackGradingInstructionFromDb = importedTextExerciseFromDB.getExampleSubmissions().stream().findFirst().orElseThrow().getSubmission().getLatestResult()
-                .getFeedbacks().get(0).getGradingInstruction();
+                .getFeedbacks().getFirst().getGradingInstruction();
 
         assertThat(importedFeedbackGradingInstructionFromDb.getGradingCriterion().getId()).isNotEqualTo(gradingInstruction.getGradingCriterion().getId());
 
@@ -1427,7 +1411,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     private void testGetTextExercise_exampleSolutionVisibility(boolean isStudent, String username) throws Exception {
         Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        final TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        final TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
 
         // Utility function to avoid duplication
         Function<Course, TextExercise> textExerciseGetter = c -> (TextExercise) c.getExercises().stream().filter(e -> e.getId().equals(textExercise.getId())).findAny()

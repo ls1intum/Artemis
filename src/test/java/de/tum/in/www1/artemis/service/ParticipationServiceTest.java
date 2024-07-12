@@ -256,16 +256,16 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         programmingSubmissionRepository.save(studentSubmission);
 
         // Delete and assert removal
-        assertThat(buildLogEntryRepository.findById(templateSavedBuildLogs.get(0).getId())).isPresent();
+        assertThat(buildLogEntryRepository.findById(templateSavedBuildLogs.getFirst().getId())).isPresent();
         participationService.deleteResultsAndSubmissionsOfParticipation(templateParticipation.getId(), true);
-        assertThat(buildLogEntryRepository.findById(templateSavedBuildLogs.get(0).getId())).isEmpty();
+        assertThat(buildLogEntryRepository.findById(templateSavedBuildLogs.getFirst().getId())).isEmpty();
 
-        assertThat(buildLogEntryRepository.findById(solutionSavedBuildLogs.get(0).getId())).isPresent();
+        assertThat(buildLogEntryRepository.findById(solutionSavedBuildLogs.getFirst().getId())).isPresent();
         participationService.deleteResultsAndSubmissionsOfParticipation(solutionParticipation.getId(), true);
-        assertThat(buildLogEntryRepository.findById(solutionSavedBuildLogs.get(0).getId())).isEmpty();
+        assertThat(buildLogEntryRepository.findById(solutionSavedBuildLogs.getFirst().getId())).isEmpty();
 
-        assertThat(buildLogEntryRepository.findById(studentSavedBuildLogs.get(0).getId())).isPresent();
+        assertThat(buildLogEntryRepository.findById(studentSavedBuildLogs.getFirst().getId())).isPresent();
         participationService.deleteResultsAndSubmissionsOfParticipation(studentParticipation.getId(), true);
-        assertThat(buildLogEntryRepository.findById(studentSavedBuildLogs.get(0).getId())).isEmpty();
+        assertThat(buildLogEntryRepository.findById(studentSavedBuildLogs.getFirst().getId())).isEmpty();
     }
 }

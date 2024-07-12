@@ -29,7 +29,6 @@ import de.tum.in.www1.artemis.competency.CompetencyProgressUtilService;
 import de.tum.in.www1.artemis.competency.CompetencyUtilService;
 import de.tum.in.www1.artemis.competency.PrerequisiteUtilService;
 import de.tum.in.www1.artemis.competency.StandardizedCompetencyUtilService;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -65,19 +64,15 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseUnitRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.repository.PrerequisiteRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TextUnitRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.LectureUnitService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.team.TeamUtilService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseCompetencyProgressDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -93,22 +88,13 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     private LectureRepository lectureRepository;
 
     @Autowired
-    private ExerciseRepository exerciseRepository;
-
-    @Autowired
     private ParticipationService participationService;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private SubmissionRepository submissionRepository;
-
-    @Autowired
-    private ResultRepository resultRepository;
 
     @Autowired
     private TextUnitRepository textUnitRepository;
@@ -133,12 +119,6 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
     @Autowired
     private LectureUnitService lectureUnitService;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private TeamUtilService teamUtilService;
@@ -644,8 +624,8 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
             User tutor = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
             var teams = teamUtilService.addTeamsForExerciseFixedTeamSize(TEST_PREFIX, "lgi", teamTextExercise, 2, tutor, 1);
 
-            createTextExerciseParticipationSubmissionAndResult(teamTextExercise, teams.get(0), 10.0, 0.0, 100, true);  // will be ignored in favor of last submission from team
-            createTextExerciseParticipationSubmissionAndResult(teamTextExercise, teams.get(0), 10.0, 0.0, 50, false);
+            createTextExerciseParticipationSubmissionAndResult(teamTextExercise, teams.getFirst(), 10.0, 0.0, 100, true);  // will be ignored in favor of last submission from team
+            createTextExerciseParticipationSubmissionAndResult(teamTextExercise, teams.getFirst(), 10.0, 0.0, 50, false);
 
             createTextExerciseParticipationSubmissionAndResult(teamTextExercise, teams.get(1), 10.0, 0.0, 10, false);
 
@@ -967,7 +947,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
                     CompetencyWithTailRelationDTO.class, HttpStatus.CREATED);
             assertThat(competencyDTOList).hasSize(2);
             // relations should be empty when not importing them
-            assertThat(competencyDTOList.get(0).tailRelations()).isNull();
+            assertThat(competencyDTOList.getFirst().tailRelations()).isNull();
             assertThat(competencyDTOList.get(1).tailRelations()).isNull();
         }
 
@@ -1049,12 +1029,12 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
             assertThat(competencyDTOList).hasSize(2);
             // competency 2 should be the tail of one relation
-            if (competencyDTOList.get(0).tailRelations() != null) {
-                assertThat(competencyDTOList.get(0).tailRelations()).hasSize(1);
+            if (competencyDTOList.getFirst().tailRelations() != null) {
+                assertThat(competencyDTOList.getFirst().tailRelations()).hasSize(1);
                 assertThat(competencyDTOList.get(1).tailRelations()).isNull();
             }
             else {
-                assertThat(competencyDTOList.get(0).tailRelations()).isNull();
+                assertThat(competencyDTOList.getFirst().tailRelations()).isNull();
                 assertThat(competencyDTOList.get(1).tailRelations()).hasSize(1);
             }
 
@@ -1062,7 +1042,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
                     CompetencyWithTailRelationDTO.class, HttpStatus.CREATED);
             assertThat(competencyDTOList).hasSize(2);
             // relations should be empty when not importing them
-            assertThat(competencyDTOList.get(0).tailRelations()).isNull();
+            assertThat(competencyDTOList.getFirst().tailRelations()).isNull();
             assertThat(competencyDTOList.get(1).tailRelations()).isNull();
         }
     }

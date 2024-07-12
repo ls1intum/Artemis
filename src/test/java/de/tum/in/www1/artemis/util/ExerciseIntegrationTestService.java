@@ -54,7 +54,7 @@ public class ExerciseIntegrationTestService {
         courseFilterParams.add("isExamFilter", "false");
         final var resultWithOnlyCoursesFilterActive = request.getSearchResult(apiPath, HttpStatus.OK, Exercise.class, courseFilterParams);
         assertThat(resultWithOnlyCoursesFilterActive.getResultsOnPage()).hasSize(1);
-        String courseFilterExerciseTitle = resultWithOnlyCoursesFilterActive.getResultsOnPage().get(0).getTitle();
+        String courseFilterExerciseTitle = resultWithOnlyCoursesFilterActive.getResultsOnPage().getFirst().getTitle();
         assertThat(courseFilterExerciseTitle).isEqualTo(searchTerm);
 
         // only exam filter set -> should show only the exercise course
@@ -63,7 +63,7 @@ public class ExerciseIntegrationTestService {
         examFilterParams.add("isExamFilter", "true");
         final var resultWithOnlyExamFilterActive = request.getSearchResult(apiPath, HttpStatus.OK, Exercise.class, examFilterParams);
         assertThat(resultWithOnlyExamFilterActive.getResultsOnPage()).hasSize(1);
-        String examFilterExerciseTitle = resultWithOnlyExamFilterActive.getResultsOnPage().get(0).getTitle();
+        String examFilterExerciseTitle = resultWithOnlyExamFilterActive.getResultsOnPage().getFirst().getTitle();
         assertThat(examFilterExerciseTitle).isEqualTo(searchTerm + "-Morpork");
 
         var columnNameMap = PageUtil.ColumnMapping.EXERCISE.getColumnNameMap();

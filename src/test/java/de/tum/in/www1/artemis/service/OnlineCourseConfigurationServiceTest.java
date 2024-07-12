@@ -18,7 +18,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 
-import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.domain.LtiPlatformConfiguration;
 import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
 import de.tum.in.www1.artemis.repository.LtiPlatformConfigurationRepository;
@@ -69,7 +68,7 @@ class OnlineCourseConfigurationServiceTest {
         assertThat(clientRegistration.getAuthorizationGrantType()).isEqualTo(AuthorizationGrantType.AUTHORIZATION_CODE);
         assertThat(clientRegistration.getScopes()).hasSize(1).contains("openid");
         assertThat(clientRegistration.getRegistrationId()).isEqualTo("reg");
-        assertThat(clientRegistration.getRedirectUri()).isEqualTo(artemisServerUrl + CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH);
+        assertThat(clientRegistration.getRedirectUri()).isEqualTo(artemisServerUrl + "/api/public/lti13/auth-callback");
     }
 
     @Test
