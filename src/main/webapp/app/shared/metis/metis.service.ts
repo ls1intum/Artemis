@@ -236,7 +236,6 @@ export class MetisService implements OnDestroy {
                         this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
                     }
                 }
-                this.getFilteredPosts(this.currentPostContextFilter, true);
             }),
         );
     }
