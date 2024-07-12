@@ -37,9 +37,6 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private static final String TEST_PREFIX = "metricsintegration";
 
     @Autowired
-    private ParticipantScoreScheduleService participantScoreScheduleService;
-
-    @Autowired
     private ExerciseMetricsRepository exerciseMetricsRepository;
 
     private Course course;
