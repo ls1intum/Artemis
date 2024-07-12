@@ -62,7 +62,7 @@ export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost
         if (this.isAtLeastTutorInCourse || this.isAuthorOfOriginalPost) {
             this.posting.resolvesPost = !this.posting.resolvesPost;
             this.metisService.updateAnswerPost(this.posting).subscribe();
-            this.metisService.changeResolvedStatus(this.posting.post!.id!, this.posting.resolvesPost);
+            this.metisService.changeResolvedStatus(this.posting.post?.id, this.posting.resolvesPost);
         }
     }
 }
