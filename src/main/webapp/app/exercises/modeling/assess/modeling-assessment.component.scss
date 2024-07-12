@@ -37,3 +37,12 @@ $draggable-width: 15px;
     display: flex;
     height: 100%;
 }
+
+/* Target the modeling-assessment class for print media */
+@media print {
+    .modeling-assessment {
+        /* Adjust the size of the container to fit the print area */
+        height: auto !important;
+        max-height: 100vh !important;
+    }
+}
