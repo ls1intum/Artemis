@@ -175,7 +175,7 @@ class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegrationIn
 
         // No tasks available -> all tests in one "unassigned" group
         assertThat(response).hasSize(1);
-        var unassigned = response.get(0);
+        var unassigned = response.getFirst();
         assertThat(unassigned.getTaskName()).isEqualTo("Not assigned to task");
         assertThat(unassigned.getTestCases()).hasSize(3);
     }

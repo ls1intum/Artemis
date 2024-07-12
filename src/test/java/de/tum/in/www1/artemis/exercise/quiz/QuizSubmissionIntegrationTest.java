@@ -204,12 +204,12 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     void testQuizSubmit_partial_points() {
         QuizExercise quizExercise = setupQuizExerciseParameters();
         // force getting partial points
-        quizExercise.getQuizQuestions().get(0).setScoringType(ScoringType.PROPORTIONAL_WITHOUT_PENALTY);
+        quizExercise.getQuizQuestions().getFirst().setScoringType(ScoringType.PROPORTIONAL_WITHOUT_PENALTY);
         quizExercise.getQuizQuestions().get(1).score(1);
         quizExercise.getQuizQuestions().get(2).score(1);
         quizExercise = quizExerciseService.save(quizExercise);
 
-        MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
         DragAndDropQuestion dndQuestion = (DragAndDropQuestion) quizExercise.getQuizQuestions().get(1);
         ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(2);
 
@@ -618,7 +618,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
         List<Result> results = resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
         assertThat(results).hasSize(1);
-        var result = results.get(0);
+        var result = results.getFirst();
 
         assertThat(result.getScore()).isEqualTo(11.1);
 
@@ -659,7 +659,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
         List<Result> results = resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
         assertThat(results).hasSize(1);
-        var result = results.get(0);
+        var result = results.getFirst();
 
         double expectedScore = switch (scoringType) {
             case ALL_OR_NOTHING, PROPORTIONAL_WITH_PENALTY -> 0;
@@ -692,13 +692,13 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         quizExercise.setDuration(10);
         quizExercise = quizExerciseService.save(quizExercise);
 
-        ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(0);
+        ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().getFirst();
         ShortAnswerSubmittedAnswer submittedAnswer = new ShortAnswerSubmittedAnswer();
         submittedAnswer.setQuizQuestion(saQuestion);
         List<ShortAnswerSpot> spots = saQuestion.getSpots();
 
         ShortAnswerSubmittedText text = new ShortAnswerSubmittedText();
-        text.setSpot(spots.get(0));
+        text.setSpot(spots.getFirst());
         char[] chars = new char[(int) (Constants.MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH + (tooLarge ? 1 : 0))];
         Arrays.fill(chars, 'a');
         text.setText(new String(chars));

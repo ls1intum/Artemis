@@ -1,4 +1,4 @@
-<div class="row module-bg mb-1 pb-1 rounded-2" [ngClass]="{ 'mx-0': !isThreadSidebar }">
+<div class="row module-bg mb-1 pb-1 rounded-2" [ngClass]="{ 'mx-0': !isThreadSidebar, 'highlight-pinned': posting.displayPriority === DisplayPriority.PINNED }">
     <div class="align-items-center">
         <jhi-post-header
             [previewMode]="previewMode"
