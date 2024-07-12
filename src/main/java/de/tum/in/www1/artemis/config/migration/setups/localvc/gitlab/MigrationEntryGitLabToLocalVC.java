@@ -250,9 +250,7 @@ public class MigrationEntryGitLabToLocalVC extends LocalVCMigrationEntry {
             return uri.toString();
         }
         catch (LocalVCInternalException e) {
-            /*
-             * By returning null here, we indicate that the repository does not exist anymore
-             */
+            // By returning null here, we indicate that the repository does not exist anymore
             log.error("Failed to clone repository from the source VCS: {}, the repository is unavailable.", repositoryUri, e);
             return null;
         }
