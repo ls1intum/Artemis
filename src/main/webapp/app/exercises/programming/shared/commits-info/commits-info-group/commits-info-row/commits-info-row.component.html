@@ -1,7 +1,11 @@
-<tr class="{{ isExpanded ? 'bg-light' : '' }}">
+<tr class="{{ isExpanded ? (groupCommitIndex === groupCommitCount - 1 ? 'bg-light border-bottom' : 'bg-light') : '' }}">
     <th scope="row" class="p-2">
         @if (groupCommitIndex === 0) {
             {{ pushNumber }}
+        } @else {
+            <span class="text-body-secondary">
+                {{ pushNumber + '.' + (groupCommitIndex + 1) }}
+            </span>
         }
     </th>
     <td class="p-2">
@@ -52,15 +56,16 @@
         }
     </td>
     <td class="flex-container p-2">
-        @if (groupCommitIndex === 0 && groupCommitCount > 1) {
+        @if (groupCommitIndex === 0) {
             {{ groupCommitCount }}
+        }
+        @if (groupCommitIndex === 0 && groupCommitCount > 1) {
             <button class="btn btn-link" (click)="onToggleExpand()">
                 <span class="text-body-secondary">
                     @if (isExpanded) {
                         <fa-icon [icon]="faAngleDown" size="lg" />
-                    }
-                    @if (!isExpanded) {
-                        <fa-icon [icon]="faAngleDown" size="lg" />
+                    } @else {
+                        <fa-icon [icon]="faAngleLeft" size="lg" />
                     }
                 </span>
             </button>

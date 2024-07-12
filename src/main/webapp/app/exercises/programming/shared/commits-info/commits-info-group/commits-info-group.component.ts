@@ -16,6 +16,12 @@ export class CommitsInfoGroupComponent {
     @Input() groupIndex: number;
     @Input() groupCount: number;
     @Input() pushNumber: number;
+    @Input()
+    set isGroupExpanded(value: boolean) {
+        if (this.isExpanded !== value) {
+            this.isExpanded = value;
+        }
+    }
 
     protected isExpanded = false;
 

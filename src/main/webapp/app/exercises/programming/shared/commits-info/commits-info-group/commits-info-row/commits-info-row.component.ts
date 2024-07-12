@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import type { CommitInfo } from 'app/entities/programming-submission.model';
 import type { User } from 'app/core/user/user.model';
 import { faCircle } from '@fortawesome/free-regular-svg-icons';
-import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faAngleLeft } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-commits-info-row',
@@ -29,6 +29,6 @@ export class CommitsInfoRowComponent {
 
     localVC = false;
     faCircle = faCircle;
-    faAngleRight = faAngleRight;
+    faAngleLeft = faAngleLeft;
     faAngleDown = faAngleDown;
 }

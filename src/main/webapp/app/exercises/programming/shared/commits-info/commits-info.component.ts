@@ -26,6 +26,7 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
     private profileInfoSubscription: Subscription;
     private userInfoSubscription: Subscription;
     protected user?: User;
+    protected isGroupsExpanded = true;
     protected groupedCommits: { key: string; commits: CommitInfo[]; date: string }[] = [];
 
     localVC = false;
@@ -121,5 +122,9 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
         }
 
         this.groupedCommits = commitGroups.reverse();
+    }
+
+    protected toggleAllExpanded() {
+        this.isGroupsExpanded = !this.isGroupsExpanded;
     }
 }

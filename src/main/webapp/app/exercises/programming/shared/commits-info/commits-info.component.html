@@ -1,8 +1,17 @@
-@if (isRepositoryView) {
-    <h3 jhiTranslate="artemisApp.programmingExercise.commitInfo.history"></h3>
-} @else {
-    <h5 jhiTranslate="artemisApp.programmingExercise.commitInfo.title"></h5>
-}
+<div class="d-flex justify-content-between">
+    @if (isRepositoryView) {
+        <h3 jhiTranslate="artemisApp.programmingExercise.commitInfo.history"></h3>
+    } @else {
+        <h5 jhiTranslate="artemisApp.programmingExercise.commitInfo.title"></h5>
+    }
+    <button class="btn btn-secondary me-2" (click)="toggleAllExpanded()">
+        @if (isGroupsExpanded) {
+            <span jhiTranslate="artemisApp.programmingExercise.configureGrading.collapseAll"></span>
+        } @else {
+            <span jhiTranslate="artemisApp.programmingExercise.configureGrading.expandAll"></span>
+        }
+    </button>
+</div>
 
 <div style="overflow-x: auto">
     <table class="table table-responsive">
@@ -30,6 +39,7 @@
                     [groupCount]="groupedCommits.length"
                     [groupIndex]="i"
                     [pushNumber]="i + 1"
+                    [isGroupExpanded]="isGroupsExpanded"
                 />
             }
         </tbody>
