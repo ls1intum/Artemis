@@ -167,8 +167,7 @@ public abstract class ProgrammingExerciseMigrationEntry {
     }
 
     /**
-     * Migrate the solution participations. Also Migrates the test and aux repository of the programming exercise since we have it
-     * in the solution participation already loaded from the database.
+     * Migrate the solution participations.
      *
      * @param solutionParticipations the solution participations to migrate
      */
