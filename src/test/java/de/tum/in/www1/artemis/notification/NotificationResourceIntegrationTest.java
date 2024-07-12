@@ -23,28 +23,16 @@ import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.NotificationConstants;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 class NotificationResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
-
-    @Autowired
-    private CourseRepository courseRepository;
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private NotificationRepository notificationRepository;
 
     @Autowired
     private NotificationSettingRepository notificationSettingRepository;
-
-    @Autowired
-    private UserUtilService userUtilService;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;

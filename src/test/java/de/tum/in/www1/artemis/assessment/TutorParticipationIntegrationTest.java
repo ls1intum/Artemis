@@ -17,7 +17,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ExampleSubmission;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -32,16 +31,13 @@ import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.exercise.ExerciseFactory;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
 import de.tum.in.www1.artemis.repository.GradingInstructionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.ExampleSubmissionService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.TutorParticipationService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.TestResourceUtils;
 
 class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -49,13 +45,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
     private static final String TEST_PREFIX = "tutorparticipationintegration";
 
     @Autowired
-    private ExerciseRepository exerciseRepo;
-
-    @Autowired
     private SubmissionService submissionService;
-
-    @Autowired
-    private ResultRepository resultRepository;
 
     @Autowired
     private ExampleSubmissionService exampleSubmissionService;
@@ -68,12 +58,6 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @Autowired
     private GradingCriterionRepository gradingCriterionRepository;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -107,7 +91,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
 
         for (Exercise exercise : new Exercise[] { textExercise, modelingExercise }) {
             exercise.setTitle("exercise name");
-            exerciseRepo.save(exercise);
+            exerciseRepository.save(exercise);
             path = "/api/exercises/" + exercise.getId() + "/assess-example-submission";
         }
 

@@ -39,7 +39,6 @@ import de.tum.in.www1.artemis.exercise.fileupload.FileUploadExerciseFactory;
 import de.tum.in.www1.artemis.exercise.modeling.ModelingExerciseFactory;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -51,9 +50,6 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ExerciseRepository exerciseRepository;
-
-    @Autowired
-    private CourseRepository courseRepository;
 
     @Autowired
     private ResultRepository resultRepository;
