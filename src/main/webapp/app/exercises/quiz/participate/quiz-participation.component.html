@@ -38,7 +38,7 @@
     <div class="row m-0 pb-5">
         @if (quizExercise) {
             <div class="col-md-auto">
-                <div class="p-0 col-md-auto quiz-navigation stepwizardquiz sticky-top">
+                <div class="p-0 col-md-auto quiz-navigation stepwizardquiz sticky-top-quiz">
                     @for (question of quizExercise.quizQuestions; track question; let i = $index) {
                         <div class="stepwizardquiz__step mb-3" [class.mb-3]="!$last">
                             @if (question.type === DRAG_AND_DROP) {

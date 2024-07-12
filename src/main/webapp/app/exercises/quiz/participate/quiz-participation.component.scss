@@ -265,3 +265,9 @@
         }
     }
 }
+
+.sticky-top-quiz {
+    position: sticky;
+    top: 85px;
+    z-index: 1020;
+}
