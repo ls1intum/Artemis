@@ -31,18 +31,15 @@ export class PostHeaderComponent extends PostingHeaderDirective<Post> implements
 
     ngOnInit() {
         super.ngOnInit();
-        this.isAtLeastInstructorInCourse = this.metisService.metisUserIsAtLeastInstructorInCourse();
-        const isCourseWideChannel = getAsChannelDTO(this.posting.conversation)?.isCourseWide ?? false;
-        const isAtLeastInstructorInCourse = this.metisService.metisUserIsAtLeastInstructorInCourse();
-        const mayEditOrDeleteOtherUsersAnswer =
-            (isCourseWideChannel && isAtLeastInstructorInCourse) || (getAsChannelDTO(this.metisService.getCurrentConversation())?.hasChannelModerationRights ?? false);
-        this.mayEditOrDelete = !this.readOnlyMode && !this.previewMode && (this.isAuthorOfPosting || mayEditOrDeleteOtherUsersAnswer);
+        this.setMayEditOrDelete();
     }
 
     /**
      * on changes: re-evaluates authority roles
      */
     ngOnChanges() {
+        this.setUserProperties();
+        this.setMayEditOrDelete();
         this.setUserAuthorityIconAndTooltip();
     }
 
@@ -58,5 +55,13 @@ export class PostHeaderComponent extends PostingHeaderDirective<Post> implements
      */
     deletePosting(): void {
         this.metisService.deletePost(this.posting);
+    }
+
+    setMayEditOrDelete(): void {
+        this.isAtLeastInstructorInCourse = this.metisService.metisUserIsAtLeastInstructorInCourse();
+        const isCourseWideChannel = getAsChannelDTO(this.posting.conversation)?.isCourseWide ?? false;
+        const mayEditOrDeleteOtherUsersAnswer =
+            (isCourseWideChannel && this.isAtLeastInstructorInCourse) || (getAsChannelDTO(this.metisService.getCurrentConversation())?.hasChannelModerationRights ?? false);
+        this.mayEditOrDelete = !this.readOnlyMode && !this.previewMode && (this.isAuthorOfPosting || mayEditOrDeleteOtherUsersAnswer);
     }
 }

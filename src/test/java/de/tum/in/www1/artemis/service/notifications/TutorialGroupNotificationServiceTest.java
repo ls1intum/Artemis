@@ -36,7 +36,6 @@ import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.TutorialGroupNotification;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupNotificationRepository;
@@ -54,9 +53,6 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationInde
 
     @Autowired
     private TutorialGroupNotificationRepository tutorialGroupNotificationRepository;
-
-    @Autowired
-    private CourseRepository courseRepository;
 
     @Autowired
     private TutorialGroupRepository tutorialGroupRepository;
@@ -103,7 +99,7 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationInde
 
     private void verifyRepositoryCallWithCorrectNotification(int numberOfGroupsAndCalls, String expectedNotificationTitle) {
         List<TutorialGroupNotification> capturedNotifications = tutorialGroupNotificationRepository.findAll();
-        Notification capturedNotification = capturedNotifications.get(0);
+        Notification capturedNotification = capturedNotifications.getFirst();
         assertThat(capturedNotification.getTitle()).isEqualTo(expectedNotificationTitle);
         assertThat(capturedNotifications).hasSize(numberOfGroupsAndCalls);
     }

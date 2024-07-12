@@ -548,12 +548,13 @@ public class ExerciseService {
                 exercise -> exercise.getAssessmentDueDate() != null ? exercise.getAssessmentDueDate() : exercise.getDueDate(), Comparator.nullsLast(Comparator.naturalOrder()));
 
         List<Exercise> lastFivePastExercises = pastExercises.stream().sorted(exerciseDateComparator.reversed()).limit(5).toList();
-
-        // Calculate the average score for all five exercises at once
-        var averageScore = participantScoreRepository.findAverageScoreForExercises(lastFivePastExercises);
         Map<Long, Double> averageScoreById = new HashMap<>();
-        for (var element : averageScore) {
-            averageScoreById.put((Long) element.get("exerciseId"), (Double) element.get("averageScore"));
+        if (!lastFivePastExercises.isEmpty()) {
+            // Calculate the average score for all five exercises at once
+            var averageScore = participantScoreRepository.findAverageScoreForExercises(lastFivePastExercises);
+            for (var element : averageScore) {
+                averageScoreById.put((Long) element.get("exerciseId"), (Double) element.get("averageScore"));
+            }
         }
 
         // Fill statistics for all exercises potentially displayed on the client
