@@ -236,6 +236,7 @@ export class MetisService implements OnDestroy {
                         this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
                     }
                 }
+                this.getFilteredPosts(this.currentPostContextFilter, true);
             }),
         );
     }
@@ -660,5 +661,12 @@ export class MetisService implements OnDestroy {
         other.courseWideChannelIds?.sort((a, b) => a - b);
 
         return this.currentPostContextFilter.courseWideChannelIds?.toString() !== other.courseWideChannelIds?.toString();
+    }
+
+    changeResolvedStatus(postId: number, status: boolean | undefined) {
+        const indexOfCachedPost = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === postId);
+        if (indexOfCachedPost > -1) {
+            this.cachedPosts[indexOfCachedPost].resolved = status;
+        }
     }
 }

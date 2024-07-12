@@ -17,6 +17,7 @@ export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost
 
     @Input() lastReadDate?: dayjs.Dayjs;
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
+    @Output() resolvedStatusChanged = new EventEmitter<boolean>();
 
     isAuthorOfOriginalPost: boolean;
     isAnswerOfAnnouncement: boolean;
@@ -61,6 +62,7 @@ export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost
         if (this.isAtLeastTutorInCourse || this.isAuthorOfOriginalPost) {
             this.posting.resolvesPost = !this.posting.resolvesPost;
             this.metisService.updateAnswerPost(this.posting).subscribe();
+            this.metisService.changeResolvedStatus(this.posting.post!.id!, this.posting.resolvesPost);
         }
     }
 }
