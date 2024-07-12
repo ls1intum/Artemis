@@ -117,7 +117,7 @@ public class FileUploadExerciseUtilService {
         var fileUploadExercises = createFileUploadExercisesWithCourse();
         assertThat(fileUploadExercises).as("created three exercises").hasSize(3);
         exerciseRepo.saveAll(fileUploadExercises);
-        long courseId = fileUploadExercises.get(0).getCourseViaExerciseGroupOrCourseMember().getId();
+        long courseId = fileUploadExercises.getFirst().getCourseViaExerciseGroupOrCourseMember().getId();
         Course course = courseRepo.findByIdWithEagerExercisesElseThrow(courseId);
         List<Exercise> exercises = exerciseRepo.findAllExercisesByCourseId(courseId).stream().toList();
         assertThat(exercises).as("three exercises got stored").hasSize(3);

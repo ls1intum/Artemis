@@ -45,7 +45,7 @@ export class MetisService implements OnDestroy {
     private course: Course;
     private courseId: number;
     private cachedPosts: Post[] = [];
-    private cachedTotalNumberOfPots: number;
+    private cachedTotalNumberOfPosts: number;
     private subscriptionChannel?: string;
 
     private courseWideTopicSubscription: Subscription;
@@ -180,16 +180,16 @@ export class MetisService implements OnDestroy {
                     // if the context changed, we need to fetch posts and dismiss cached posts
                     this.cachedPosts = res.body!;
                 }
-                this.cachedTotalNumberOfPots = Number(res.headers.get('X-Total-Count'));
+                this.cachedTotalNumberOfPosts = Number(res.headers.get('X-Total-Count') ?? '0');
                 this.posts$.next(this.cachedPosts);
-                this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                 this.createSubscriptionFromPostContextFilter();
             });
         } else {
             // if we do not require force update, e.g. because only the post title, tag or content changed,
             // we can emit the previously cached posts
             this.posts$.next(this.cachedPosts);
-            this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+            this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
         }
     }
 
@@ -207,7 +207,7 @@ export class MetisService implements OnDestroy {
                 if (indexToUpdate === -1) {
                     this.cachedPosts = [createdPost, ...this.cachedPosts];
                     this.posts$.next(this.cachedPosts);
-                    this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                    this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                 }
             }),
         );
@@ -233,7 +233,7 @@ export class MetisService implements OnDestroy {
                         }
                         this.cachedPosts[indexOfCachedPost].answers!.push(createdAnswerPost);
                         this.posts$.next(this.cachedPosts);
-                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                     }
                 }
             }),
@@ -254,7 +254,7 @@ export class MetisService implements OnDestroy {
                     updatedPost.answers = [...(this.cachedPosts[indexToUpdate].answers ?? [])];
                     this.cachedPosts[indexToUpdate] = updatedPost;
                     this.posts$.next(this.cachedPosts);
-                    this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                    this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                 }
             }),
         );
@@ -276,7 +276,7 @@ export class MetisService implements OnDestroy {
                         updatedAnswerPost.post = { ...this.cachedPosts[indexOfCachedPost], answers: [], reactions: [] };
                         this.cachedPosts[indexOfCachedPost].answers![indexOfAnswer] = updatedAnswerPost;
                         this.posts$.next(this.cachedPosts);
-                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                     }
                 }
             }),
@@ -307,7 +307,7 @@ export class MetisService implements OnDestroy {
                     if (indexToUpdate > -1) {
                         this.cachedPosts.splice(indexToUpdate, 1);
                         this.posts$.next(this.cachedPosts);
-                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                     }
                 }),
             )
@@ -328,9 +328,9 @@ export class MetisService implements OnDestroy {
                         // Delete the answer if it still exists (might already be deleted due to WebSocket message)
                         const indexOfAnswer = this.cachedPosts[indexOfCachedPost].answers?.findIndex((answer) => answer.id === answerPost.id) ?? -1;
                         if (indexOfAnswer > -1) {
-                            this.cachedPosts[indexOfCachedPost].answers!.splice(indexOfAnswer, 1);
+                            this.cachedPosts[indexOfCachedPost].answers?.splice(indexOfAnswer, 1);
                             this.posts$.next(this.cachedPosts);
-                            this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                            this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                         }
                     }
                 }),
@@ -358,7 +358,7 @@ export class MetisService implements OnDestroy {
                         // Need to create a new message object since Angular doesn't detect changes otherwise
                         this.cachedPosts[indexToUpdate] = { ...cachedPost };
                         this.posts$.next(this.cachedPosts);
-                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                     }
                 }
             }),
@@ -383,7 +383,7 @@ export class MetisService implements OnDestroy {
                         // Need to create a new message object since Angular doesn't detect changes otherwise
                         this.cachedPosts[indexToUpdate] = { ...cachedPost };
                         this.posts$.next(this.cachedPosts);
-                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                     }
                 }
             }),
@@ -547,7 +547,6 @@ export class MetisService implements OnDestroy {
     }
 
     private handleNewOrUpdatedMessage = (postDTO: MetisPostDTO): void => {
-        postDTO.post = this.cachedPosts.find((post) => post.id === postDTO.post.id) ?? postDTO.post;
         const postConvId = postDTO.post.conversation?.id;
         const postIsNotFromCurrentConversation = this.currentPostContextFilter.conversationId && postConvId !== this.currentPostContextFilter.conversationId;
         const postIsNotFromCurrentPlagiarismCase =
@@ -561,6 +560,7 @@ export class MetisService implements OnDestroy {
             return;
         }
 
+        postDTO.post.answers = this.cachedPosts.find((post) => post.id === postDTO.post.id)?.answers ?? postDTO.post.answers;
         postDTO.post.creationDate = dayjs(postDTO.post.creationDate);
         postDTO.post.answers?.forEach((answer: AnswerPost) => {
             answer.creationDate = dayjs(answer.creationDate);

@@ -317,12 +317,12 @@ public class QuizExerciseUtilService {
         quizSubmission.setType(SubmissionType.MANUAL);
         quizSubmission.setScoreInPoints(2.0);
         var submittedAnswerMC = new MultipleChoiceSubmittedAnswer();
-        MultipleChoiceQuestion multipleChoiceQuestion = (MultipleChoiceQuestion) (quizExercise.getQuizQuestions().get(0));
-        submittedAnswerMC.setSelectedOptions(Set.of(multipleChoiceQuestion.getAnswerOptions().get(0), multipleChoiceQuestion.getAnswerOptions().get(1)));
+        MultipleChoiceQuestion multipleChoiceQuestion = (MultipleChoiceQuestion) (quizExercise.getQuizQuestions().getFirst());
+        submittedAnswerMC.setSelectedOptions(Set.of(multipleChoiceQuestion.getAnswerOptions().getFirst(), multipleChoiceQuestion.getAnswerOptions().get(1)));
         submittedAnswerMC.setQuizQuestion(multipleChoiceQuestion);
         var submittedAnswerSC = new MultipleChoiceSubmittedAnswer();
         MultipleChoiceQuestion singleChoiceQuestion = (MultipleChoiceQuestion) (quizExercise.getQuizQuestions().get(3));
-        submittedAnswerSC.setSelectedOptions(Set.of(multipleChoiceQuestion.getAnswerOptions().get(0)));
+        submittedAnswerSC.setSelectedOptions(Set.of(multipleChoiceQuestion.getAnswerOptions().getFirst()));
         submittedAnswerSC.setQuizQuestion(singleChoiceQuestion);
         var submittedShortAnswer = new ShortAnswerSubmittedAnswer();
         ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) (quizExercise.getQuizQuestions().get(2));
@@ -339,7 +339,7 @@ public class QuizExerciseUtilService {
         submittedShortAnswer.addSubmittedTexts(shortAnswerSubmittedText1);
         submittedShortAnswer.addSubmittedTexts(shortAnswerSubmittedText2);
         shortAnswerSubmittedText1.setSpot(shortAnswerQuestion.getSpots().get(1));
-        shortAnswerSubmittedText2.setSpot(shortAnswerQuestion.getSpots().get(0));
+        shortAnswerSubmittedText2.setSpot(shortAnswerQuestion.getSpots().getFirst());
 
         var submittedDragAndDropAnswer = new DragAndDropSubmittedAnswer();
         DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) (quizExercise.getQuizQuestions().get(1));
@@ -357,8 +357,8 @@ public class QuizExerciseUtilService {
         submittedDragAndDropAnswer.setQuizQuestion(dragAndDropQuestion);
         dragAndDropQuestion.setExercise(quizExercise);
         DragAndDropMapping dragAndDropMapping = new DragAndDropMapping();
-        dragAndDropMapping.setDragItem(dragAndDropQuestion.getDragItems().get(0));
-        dragAndDropMapping.setDropLocation(dragAndDropQuestion.getDropLocations().get(0));
+        dragAndDropMapping.setDragItem(dragAndDropQuestion.getDragItems().getFirst());
+        dragAndDropMapping.setDropLocation(dragAndDropQuestion.getDropLocations().getFirst());
         DragAndDropMapping incorrectDragAndDropMapping = new DragAndDropMapping();
         incorrectDragAndDropMapping.setDragItem(dragAndDropQuestion.getDragItems().get(3));
         incorrectDragAndDropMapping.setDropLocation(dragAndDropQuestion.getDropLocations().get(1));

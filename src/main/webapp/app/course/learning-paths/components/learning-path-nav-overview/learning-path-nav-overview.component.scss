@@ -12,6 +12,13 @@
             &:not(.collapsed)::after {
                 background-image: var(--bs-accordion-btn-icon);
             }
+
+            .current-competency-container {
+                color: var(--bs-white);
+                padding: 2px 8px;
+                border-radius: var(--bs-border-radius-lg);
+                background-color: var(--bs-yellow);
+            }
         }
 
         .accordion-body {

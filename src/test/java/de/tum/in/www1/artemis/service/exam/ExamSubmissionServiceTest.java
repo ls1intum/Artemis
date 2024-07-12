@@ -77,7 +77,7 @@ class ExamSubmissionServiceTest extends AbstractSpringIntegrationIndependentTest
         student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         exercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        exam = examRepository.findByCourseId(course.getId()).get(0);
+        exam = examRepository.findByCourseId(course.getId()).getFirst();
         studentExam = examUtilService.addStudentExam(exam);
         studentExam.setWorkingTime(7200); // 2 hours
         studentExam.setUser(student1);
