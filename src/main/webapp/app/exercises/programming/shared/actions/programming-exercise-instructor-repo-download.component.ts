@@ -5,7 +5,6 @@ import { ProgrammingExerciseInstructorRepositoryType, ProgrammingExerciseService
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { AlertService } from 'app/core/util/alert.service';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
-
 import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 

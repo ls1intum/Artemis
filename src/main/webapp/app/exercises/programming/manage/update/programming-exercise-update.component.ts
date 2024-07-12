@@ -488,13 +488,23 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     calculateFormStatusSections() {
         this.formStatusSections = [
-            { title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle', valid: this.exerciseInfoComponent?.formValid ?? false },
+            {
+                title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle',
+                valid: this.exerciseInfoComponent?.formValid ?? false,
+            },
             {
                 title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepTitle',
                 valid: (this.exerciseDifficultyComponent?.teamConfigComponent.formValid && this.validIdeSelection()) ?? false,
             },
-            { title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle', valid: this.exerciseLanguageComponent?.formValid ?? false },
-            { title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle', valid: true, empty: !this.programmingExercise.problemStatement },
+            {
+                title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle',
+                valid: this.exerciseLanguageComponent?.formValid ?? false,
+            },
+            {
+                title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle',
+                valid: true,
+                empty: !this.programmingExercise.problemStatement,
+            },
             {
                 title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle',
                 valid: Boolean(this.exerciseGradingComponent?.formValid && (this.isExamMode || this.exercisePlagiarismComponent?.formValid)),
@@ -627,14 +637,51 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             });
         }
 
-        // If the auxiliary repositories were edited after the creation of the exercise, the changes have to be done manually in the VCS and CIS
+        /*
+         If properties for an auxiliary repository were edited, the changes have to be done manually in the VCS and CIS.
+         Creating or deleting new auxiliary repositories works automatically and does not throw a warning.
+         We check that by verifying all "current" repositories with an ID (meaning they are not new) with their backup.
+         */
+        //
+
+        const changedAuxiliaryRepositoryProperties = this.programmingExercise.auxiliaryRepositories?.some((auxRepo) => {
+            // Ignore new auxiliary repositories
+            if (!auxRepo.id) return false;
+
+            // Verify unchanged properties for all existing auxiliary repositories
+            return this.backupExercise?.auxiliaryRepositories?.some((backupAuxRepo) => {
+                console.log(
+                    'Comparing auxRepo-ID ' +
+                        auxRepo.id +
+                        ' with backupAuxRepo-ID ' +
+                        backupAuxRepo.id +
+                        ' and name ' +
+                        auxRepo.name +
+                        ' with ' +
+                        backupAuxRepo.name +
+                        ' and checkoutDirectory ' +
+                        auxRepo.checkoutDirectory +
+                        ' with ' +
+                        backupAuxRepo.checkoutDirectory,
+                );
+
+                console.log(
+                    'Result: ' + (backupAuxRepo.id === auxRepo.id && (backupAuxRepo.name !== auxRepo.name || backupAuxRepo.checkoutDirectory !== auxRepo.checkoutDirectory)),
+                );
+
+                return backupAuxRepo.id === auxRepo.id && (backupAuxRepo.name !== auxRepo.name || backupAuxRepo.checkoutDirectory !== auxRepo.checkoutDirectory);
+            });
+        });
+
+        /*
         const changedAuxiliaryRepository =
             (this.programmingExercise.auxiliaryRepositories?.length ?? 0) < (this.backupExercise?.auxiliaryRepositories?.length ?? 0) ||
             this.programmingExercise.auxiliaryRepositories?.some((auxRepo, index) => {
                 const otherAuxRepo = this.backupExercise?.auxiliaryRepositories?.[index];
                 return !otherAuxRepo || auxRepo.name !== otherAuxRepo.name || auxRepo.checkoutDirectory !== otherAuxRepo.checkoutDirectory;
             });
-        if (changedAuxiliaryRepository && this.programmingExercise.id) {
+         */
+        if (changedAuxiliaryRepositoryProperties && this.programmingExercise.id) {
             this.alertService.addAlert({
                 type: AlertType.WARNING,
                 message: 'artemisApp.programmingExercise.auxiliaryRepository.editedWarning',
