@@ -26,6 +26,8 @@ public class LocalVCPersonalAccessTokenManagementService {
 
     private static final int RANDOM_STRING_LENGTH = 40;
 
+    public static final int VCS_ACCESS_TOKEN_LENGTH = TOKEN_PREFIX.length() + RANDOM_STRING_LENGTH;
+
     private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
     public static String generateSecureVCSAccessToken() {

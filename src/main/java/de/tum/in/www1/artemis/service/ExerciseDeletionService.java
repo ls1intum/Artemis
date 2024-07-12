@@ -162,7 +162,7 @@ public class ExerciseDeletionService {
         // delete all plagiarism results belonging to this exercise
         plagiarismResultRepository.deletePlagiarismResultsByExerciseId(exerciseId);
 
-        // delete all participations belonging to this exercise, this will also delete submissions, results, feedback, complaints, etc.
+        // delete all participation's belonging to this exercise, this will also delete submissions, results, feedback, complaints, etc.
         participationService.deleteAllByExerciseId(exercise.getId(), deleteStudentReposBuildPlans, deleteStudentReposBuildPlans);
 
         // clean up the many-to-many relationship to avoid problems when deleting the entities but not the relationship table

@@ -176,18 +176,18 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     @WithMockUser(username = "admin", roles = "ADMIN")
     void createInternalUser_asAdmin_with_vcsAccessToken_isSuccessful() throws Exception {
         gitlabRequestMockProvider.mockCreationOfUser("batman");
-        ReflectionTestUtils.setField(gitLabPersonalAccessTokenManagementService, "versionControlAccessToken", true);
+        ReflectionTestUtils.setField(gitLabPersonalAccessTokenManagementService, "useVersionControlAccessToken", true);
         userTestService.createInternalUser_asAdmin_isSuccessful();
-        ReflectionTestUtils.setField(gitLabPersonalAccessTokenManagementService, "versionControlAccessToken", false);
+        ReflectionTestUtils.setField(gitLabPersonalAccessTokenManagementService, "useVersionControlAccessToken", false);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void createInternalUserWithoutRoles_isSuccessful() throws Exception {
         gitlabRequestMockProvider.mockCreationOfUser("batman");
-        ReflectionTestUtils.setField(gitLabPersonalAccessTokenManagementService, "versionControlAccessToken", true);
+        ReflectionTestUtils.setField(gitLabPersonalAccessTokenManagementService, "useVersionControlAccessToken", true);
         userTestService.createInternalUserWithoutRoles_asAdmin_isSuccessful();
-        ReflectionTestUtils.setField(gitLabPersonalAccessTokenManagementService, "versionControlAccessToken", false);
+        ReflectionTestUtils.setField(gitLabPersonalAccessTokenManagementService, "useVersionControlAccessToken", false);
     }
 
     @Test

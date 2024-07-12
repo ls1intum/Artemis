@@ -64,6 +64,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
@@ -108,6 +109,8 @@ public class ParticipationResource {
     private static final Logger log = LoggerFactory.getLogger(ParticipationResource.class);
 
     private static final String ENTITY_NAME = "participation";
+
+    private final ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -171,7 +174,8 @@ public class ParticipationResource {
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository,
             ResultRepository resultRepository, ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService,
             SubmittedAnswerRepository submittedAnswerRepository, QuizSubmissionService quizSubmissionService, GradingScaleService gradingScaleService,
-            ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService) {
+            ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService,
+            ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -197,6 +201,7 @@ public class ParticipationResource {
         this.quizSubmissionService = quizSubmissionService;
         this.gradingScaleService = gradingScaleService;
         this.programmingExerciseCodeReviewFeedbackService = programmingExerciseCodeReviewFeedbackService;
+        this.participationVCSAccessTokenRepository = participationVCSAccessTokenRepository;
     }
 
     /**
@@ -900,6 +905,7 @@ public class ParticipationResource {
         checkAccessPermissionAtLeastInstructor(participation, user);
         log.info("Clean up participation with build plan {} by {}", participation.getBuildPlanId(), principal.getName());
         participationService.cleanupBuildPlan(participation);
+        participationVCSAccessTokenRepository.deleteByParticipation_id(participationId);
         return ResponseEntity.ok().body(participation);
     }
 

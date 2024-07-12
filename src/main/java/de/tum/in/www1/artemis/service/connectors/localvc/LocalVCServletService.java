@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.localvc;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
+import static de.tum.in.www1.artemis.service.connectors.localvc.LocalVCPersonalAccessTokenManagementService.VCS_ACCESS_TOKEN_LENGTH;
 
 import java.io.IOException;
 import java.net.URL;
@@ -256,36 +257,36 @@ public class LocalVCServletService {
 
         String username = usernameAndPassword.username();
         String password = usernameAndPassword.password();
+        User user = userRepository.findOneByLogin(username).orElseThrow(LocalVCAuthException::new);
 
-        var userOptional = userRepository.findOneByLogin(username);
-        if (userOptional.isEmpty()) {
-            throw new LocalVCAuthException(new AccessForbiddenException());
-        }
-
-        var user = userOptional.get();
-
-        SecurityUtils.checkUsernameAndPasswordValidity(username, password);
         try {
-
-            // Note: we first check if the user has used a vcs access token instead of a password
-            var studentParticipation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(exercise, user.getLogin());
-            var token = participationVCSAccessTokenRepository.findByUserIdAndParticipationId(user.getId(), studentParticipation.getId());
-
-            // check participation VCS access token
-            if (token.isPresent() && !StringUtils.isEmpty(token.get().getVcsAccessToken()) && Objects.equals(token.get().getVcsAccessToken(), password)) {
-                user.setVcsAccessToken(token.get().getVcsAccessToken());
-                return user;
-            }
-
-            // check user VCS access token
-            if (user.getVcsAccessToken() != null && !StringUtils.isEmpty(user.getVcsAccessToken()) && Objects.equals(user.getVcsAccessToken(), password)
-                    && user.getVcsAccessTokenExpiryDate() != null && user.getVcsAccessTokenExpiryDate().isAfter(ZonedDateTime.now())) {
-                return user;
-            }
-
+            SecurityUtils.checkUsernameAndPasswordValidity(username, password);
         }
         catch (AccessForbiddenException | AuthenticationException e) {
-            throw new LocalVCAuthException(e);
+            throw new LocalVCAuthException();
+        }
+
+        // Note: we first check if the user has used a vcs access token instead of a password
+        if (password.startsWith("vcpat-") && password.length() == VCS_ACCESS_TOKEN_LENGTH) {
+            try {
+                // check user VCS access token
+                if (user.getVcsAccessToken() != null && !StringUtils.isEmpty(user.getVcsAccessToken()) && Objects.equals(user.getVcsAccessToken(), password)
+                        && user.getVcsAccessTokenExpiryDate() != null && user.getVcsAccessTokenExpiryDate().isAfter(ZonedDateTime.now())) {
+                    return user;
+                }
+
+                var studentParticipation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(exercise, user.getLogin());
+                var token = participationVCSAccessTokenRepository.findByUserIdAndParticipationId(user.getId(), studentParticipation.getId());
+
+                // check participation VCS access token
+                if (token.isPresent() && !StringUtils.isEmpty(token.get().getVcsAccessToken()) && Objects.equals(token.get().getVcsAccessToken(), password)) {
+                    user.setVcsAccessToken(token.get().getVcsAccessToken());
+                    return user;
+                }
+            }
+            catch (EntityNotFoundException e) {
+                throw new LocalVCAuthException();
+            }
         }
 
         // if the user does not have an access token or has used a password, we try to authenticate the user with it

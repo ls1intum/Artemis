@@ -6,9 +6,11 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.participation.ParticipationVCSAccessToken;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
@@ -26,30 +28,39 @@ public interface ParticipationVCSAccessTokenRepository extends ArtemisJpaReposit
             """)
     Optional<ParticipationVCSAccessToken> findByIdWithParticipationAndUser(@Param("participationVCSAccessTokenId") long participationVCSAccessTokenId);
 
+    /**
+     * Delete all participation vcs access token that belong to the given participation
+     *
+     * @param participationId the id of the participation where the tokens should be deleted
+     */
+    @Transactional // ok because of delete
+    @Modifying
+    void deleteByParticipation_id(long participationId);
+
     @Query("""
             SELECT DISTINCT p
             FROM ParticipationVCSAccessToken p
                 LEFT JOIN FETCH p.participation
-                Left JOIN FETCH p.user
+                LEFT JOIN FETCH p.user
             WHERE p.user.id = :userId
             """)
-    List<ParticipationVCSAccessToken> findByUserIdWithEagerParticipation(@Param("userId") Long userId);
+    List<ParticipationVCSAccessToken> findByUserIdWithEagerParticipation(@Param("userId") long userId);
 
     @Query("""
             SELECT DISTINCT p
             FROM ParticipationVCSAccessToken p
                  LEFT JOIN FETCH p.participation
-                 Left JOIN FETCH p.user
+                 LEFT JOIN FETCH p.user
             WHERE p.user.id = :userId AND p.participation.id = :participationId
             """)
-    Optional<ParticipationVCSAccessToken> findByUserIdAndParticipationId(@Param("userId") Long userId, @Param("participationId") Long participationId);
+    Optional<ParticipationVCSAccessToken> findByUserIdAndParticipationId(@Param("userId") long userId, @Param("participationId") long participationId);
 
     @Query("""
             SELECT DISTINCT p
             FROM ParticipationVCSAccessToken p
                 LEFT JOIN FETCH p.participation
-                Left JOIN FETCH p.user
+                LEFT JOIN FETCH p.user
             WHERE p.user.id = :userId
             """)
-    List<ParticipationVCSAccessToken> findByUserId(@Param("userId") Long userId);
+    List<ParticipationVCSAccessToken> findByUserId(@Param("userId") long userId);
 }
