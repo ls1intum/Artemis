@@ -642,45 +642,15 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
          Creating or deleting new auxiliary repositories works automatically and does not throw a warning.
          We check that by verifying all "current" repositories with an ID (meaning they are not new) with their backup.
          */
-        //
-
         const changedAuxiliaryRepositoryProperties = this.programmingExercise.auxiliaryRepositories?.some((auxRepo) => {
             // Ignore new auxiliary repositories
             if (!auxRepo.id) return false;
 
             // Verify unchanged properties for all existing auxiliary repositories
             return this.backupExercise?.auxiliaryRepositories?.some((backupAuxRepo) => {
-                console.log(
-                    'Comparing auxRepo-ID ' +
-                        auxRepo.id +
-                        ' with backupAuxRepo-ID ' +
-                        backupAuxRepo.id +
-                        ' and name ' +
-                        auxRepo.name +
-                        ' with ' +
-                        backupAuxRepo.name +
-                        ' and checkoutDirectory ' +
-                        auxRepo.checkoutDirectory +
-                        ' with ' +
-                        backupAuxRepo.checkoutDirectory,
-                );
-
-                console.log(
-                    'Result: ' + (backupAuxRepo.id === auxRepo.id && (backupAuxRepo.name !== auxRepo.name || backupAuxRepo.checkoutDirectory !== auxRepo.checkoutDirectory)),
-                );
-
                 return backupAuxRepo.id === auxRepo.id && (backupAuxRepo.name !== auxRepo.name || backupAuxRepo.checkoutDirectory !== auxRepo.checkoutDirectory);
             });
         });
-
-        /*
-        const changedAuxiliaryRepository =
-            (this.programmingExercise.auxiliaryRepositories?.length ?? 0) < (this.backupExercise?.auxiliaryRepositories?.length ?? 0) ||
-            this.programmingExercise.auxiliaryRepositories?.some((auxRepo, index) => {
-                const otherAuxRepo = this.backupExercise?.auxiliaryRepositories?.[index];
-                return !otherAuxRepo || auxRepo.name !== otherAuxRepo.name || auxRepo.checkoutDirectory !== otherAuxRepo.checkoutDirectory;
-            });
-         */
         if (changedAuxiliaryRepositoryProperties && this.programmingExercise.id) {
             this.alertService.addAlert({
                 type: AlertType.WARNING,
