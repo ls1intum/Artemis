@@ -18,7 +18,7 @@
                     [ngClass]="{
                         'content-height-dev': !isProduction || isTestServer,
                         'search-height-conversations': sidebarData?.sidebarType === 'conversation',
-                        'search-height-normal': sidebarData?.sidebarType !== 'conversation'
+                        'search-height-normal': sidebarData?.sidebarType !== 'conversation',
                     }"
                 >
                     @if (sidebarData?.groupByCategory && sidebarData.groupedData) {
