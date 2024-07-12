@@ -26,7 +26,7 @@ download the repository as a ZIP file by pressing the '*Download Repository*' bu
    :alt: Current Repository Content
    :align: center
 
-   Current Repository C ontent
+   Current Repository Content
 
 The *Commit History* page shows all the commits that you uploaded to the repository. The commits are ordered from the latest to the oldest.
 You can see the commit message, the author of the commit, the date of the commit, the commit hash and the result of the commit.
