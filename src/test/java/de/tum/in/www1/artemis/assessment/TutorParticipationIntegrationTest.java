@@ -218,7 +218,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
             var result = submissionService.saveNewEmptyResult(exampleSubmission.getSubmission());
             result.setExampleResult(true);
 
-            var feedback = ParticipationFactory.createManualTextFeedback(1D, textBlockIds.get(0));
+            var feedback = ParticipationFactory.createManualTextFeedback(1D, textBlockIds.getFirst());
             var gradingCriterion = ExerciseFactory.generateGradingCriterion("criterion");
             gradingCriterion = gradingCriterionRepository.save(gradingCriterion);
 

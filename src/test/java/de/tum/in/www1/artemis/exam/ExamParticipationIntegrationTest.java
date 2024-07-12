@@ -768,7 +768,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         Set<User> registeredStudents = getRegisteredStudentsForExam();
 
         var studentExams = programmingExerciseTestService.prepareStudentExamsForConduction(TEST_PREFIX, visibleDate, startDate, endDate, registeredStudents, studentRepos);
-        Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(studentExams.get(0).getExam().getId());
+        Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(studentExams.getFirst().getExam().getId());
         Course course = exam.getCourse();
 
         Integer noGeneratedParticipations = registeredStudents.size() * exam.getExerciseGroups().size();
@@ -875,7 +875,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         }
         // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
-        final var exerciseWithNoUsers = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(0));
+        final var exerciseWithNoUsers = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().getFirst());
         exerciseRepository.save(exerciseWithNoUsers);
 
         GradingScale gradingScale = gradingScaleUtilService.generateGradingScaleWithStickyStep(new double[] { 60, 25, 15, 50 },

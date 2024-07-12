@@ -122,8 +122,8 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
         examUser1.setUser(student1);
         examUser1 = examUserRepository.save(examUser1);
         testExam2.setExamUsers(Set.of(examUser1));
-        exerciseGroup1 = exam1.getExerciseGroups().get(0);
-        exerciseGroup2 = exam2.getExerciseGroups().get(0);
+        exerciseGroup1 = exam1.getExerciseGroups().getFirst();
+        exerciseGroup2 = exam2.getExerciseGroups().getFirst();
         studentExam1 = examUtilService.addStudentExam(exam1);
         studentExam2 = examUtilService.addStudentExam(exam2);
         studentExamForTestExam1 = examUtilService.addStudentExamForTestExam(testExam1, student1);
