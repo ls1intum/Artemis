@@ -445,7 +445,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
             final var participations = new ArrayList<>(studentParticipationRepository.findByExerciseId(textExercise.getId()));
             assertThat(participations).hasSize(2);
-            participations.get(0).setIndividualDueDate(ZonedDateTime.now().plusHours(2));
+            participations.getFirst().setIndividualDueDate(ZonedDateTime.now().plusHours(2));
             participations.get(1).setIndividualDueDate(individualDueDate);
             studentParticipationRepository.saveAll(participations);
         }
@@ -460,7 +460,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
             final var withIndividualDueDate = participations.stream().filter(participation -> participation.getIndividualDueDate() != null).toList();
             assertThat(withIndividualDueDate).hasSize(1);
-            assertThat(withIndividualDueDate.get(0).getIndividualDueDate()).isCloseTo(individualDueDate, HalfSecond());
+            assertThat(withIndividualDueDate.getFirst().getIndividualDueDate()).isCloseTo(individualDueDate, HalfSecond());
         }
     }
 
@@ -476,7 +476,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateTextExercise_updatingCourseId_asInstructor() throws Exception {
         // Create a text exercise.
-        TextExercise existingTextExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise existingTextExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
 
         // Create a new course with different id.
         Long oldCourseId = course.getId();
@@ -1174,8 +1174,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 TextExercise.class, HttpStatus.OK);
         List<Result> updatedResults = participationUtilService.getResultsForExercise(updatedTextExercise);
         assertThat(GradingCriterionUtil.findAnyInstructionWhere(updatedTextExercise.getGradingCriteria(), instruction -> instruction.getCredits() == 3)).isPresent();
-        assertThat(updatedResults.get(0).getScore()).isEqualTo(60);
-        assertThat(updatedResults.get(0).getFeedbacks().get(0).getCredits()).isEqualTo(3);
+        assertThat(updatedResults.getFirst().getScore()).isEqualTo(60);
+        assertThat(updatedResults.getFirst().getFeedbacks().getFirst().getCredits()).isEqualTo(3);
     }
 
     @Test
@@ -1218,8 +1218,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 TextExercise.class, HttpStatus.OK);
         List<Result> updatedResults = participationUtilService.getResultsForExercise(updatedTextExercise);
         assertThat(updatedTextExercise.getGradingCriteria()).hasSize(2);
-        assertThat(updatedResults.get(0).getScore()).isZero();
-        assertThat(updatedResults.get(0).getFeedbacks()).isEmpty();
+        assertThat(updatedResults.getFirst().getScore()).isZero();
+        assertThat(updatedResults.getFirst().getFeedbacks()).isEmpty();
     }
 
     @Test
@@ -1326,7 +1326,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL);
         var submission = textSubmissionRepository.findByIdWithEagerResultsAndFeedbackAndTextBlocksElseThrow(exampleSubmission.getSubmission().getId());
 
-        Feedback feedback = ParticipationFactory.generateFeedback().get(0);
+        Feedback feedback = ParticipationFactory.generateFeedback().getFirst();
         feedback.setGradingInstruction(gradingInstruction);
         participationUtilService.addFeedbackToResult(feedback, Objects.requireNonNull(submission.getLatestResult()));
 
@@ -1337,7 +1337,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(textExerciseRepository.findById(importedTextExercise.getId())).isPresent();
 
         var importedExampleSubmission = importedTextExercise.getExampleSubmissions().stream().findFirst().orElseThrow();
-        GradingInstruction importedFeedbackGradingInstruction = importedExampleSubmission.getSubmission().getLatestResult().getFeedbacks().get(0).getGradingInstruction();
+        GradingInstruction importedFeedbackGradingInstruction = importedExampleSubmission.getSubmission().getLatestResult().getFeedbacks().getFirst().getGradingInstruction();
         assertThat(importedFeedbackGradingInstruction).isNotNull();
 
         // Copy and original should have the same data but not the same ids.
@@ -1351,7 +1351,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         var importedTextExerciseFromDB = textExerciseRepository.findWithExampleSubmissionsAndResultsById(importedTextExercise.getId()).orElseThrow();
         var importedFeedbackGradingInstructionFromDb = importedTextExerciseFromDB.getExampleSubmissions().stream().findFirst().orElseThrow().getSubmission().getLatestResult()
-                .getFeedbacks().get(0).getGradingInstruction();
+                .getFeedbacks().getFirst().getGradingInstruction();
 
         assertThat(importedFeedbackGradingInstructionFromDb.getGradingCriterion().getId()).isNotEqualTo(gradingInstruction.getGradingCriterion().getId());
 

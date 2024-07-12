@@ -95,8 +95,8 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationIndependentTe
         List<ProgrammingExerciseTask> sortedTasks = programmingExerciseTaskService.getSortedTasks(exercise);
 
         hints = new ArrayList<>(exerciseHintRepository.findByExerciseId(exerciseLite.getId()));
-        exerciseHint = hints.get(0);
-        exerciseHint.setProgrammingExerciseTask(sortedTasks.get(0));
+        exerciseHint = hints.getFirst();
+        exerciseHint.setProgrammingExerciseTask(sortedTasks.getFirst());
         hints.get(1).setProgrammingExerciseTask(sortedTasks.get(1));
         hints.get(2).setProgrammingExerciseTask(sortedTasks.get(2));
         exerciseHintRepository.saveAll(hints);
@@ -113,7 +113,7 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         var availableHints = request.getList("/api/programming-exercises/" + exercise.getId() + "/exercise-hints/available", HttpStatus.OK, ExerciseHint.class);
         assertThat(availableHints).hasSize(1);
-        assertThat(availableHints.get(0).getContent()).isNullOrEmpty();
+        assertThat(availableHints.getFirst().getContent()).isNullOrEmpty();
     }
 
     @Test
@@ -129,9 +129,9 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         var availableHints = request.getList("/api/programming-exercises/" + exercise.getId() + "/exercise-hints/activated", HttpStatus.OK, ExerciseHint.class);
         assertThat(availableHints).hasSize(1);
-        assertThat(availableHints.get(0).getId()).isEqualTo(exerciseHint.getId());
-        assertThat(availableHints.get(0).getContent()).isEqualTo(exerciseHint.getContent());
-        assertThat(availableHints.get(0).getCurrentUserRating()).isEqualTo(4);
+        assertThat(availableHints.getFirst().getId()).isEqualTo(exerciseHint.getId());
+        assertThat(availableHints.getFirst().getContent()).isEqualTo(exerciseHint.getContent());
+        assertThat(availableHints.getFirst().getCurrentUserRating()).isEqualTo(4);
     }
 
     @Test
@@ -344,7 +344,7 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationIndependentTe
         CodeHint codeHint = new CodeHint();
         codeHint.setTitle("Hint 1");
         codeHint.setExercise(exerciseLite);
-        codeHint.setProgrammingExerciseTask(programmingExerciseTaskService.getSortedTasks(exercise).get(0));
+        codeHint.setProgrammingExerciseTask(programmingExerciseTaskService.getSortedTasks(exercise).getFirst());
 
         exerciseHintRepository.save(codeHint);
 

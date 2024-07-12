@@ -53,7 +53,7 @@ public class CustomLti13Configurer extends Lti13Configurer {
     public static final String LTI13_DEEPLINK_MESSAGE_REQUEST = "LtiDeepLinkingRequest";
 
     public CustomLti13Configurer() {
-        super.ltiPath(LTI13_BASE_PATH);
+        super.ltiPath("/" + LTI13_BASE_PATH);
         super.loginInitiationPath(LOGIN_INITIATION_PATH);
         super.loginPath(LOGIN_PATH);
     }
