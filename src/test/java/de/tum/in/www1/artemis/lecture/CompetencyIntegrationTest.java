@@ -624,8 +624,8 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
             User tutor = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
             var teams = teamUtilService.addTeamsForExerciseFixedTeamSize(TEST_PREFIX, "lgi", teamTextExercise, 2, tutor, 1);
 
-            createTextExerciseParticipationSubmissionAndResult(teamTextExercise, teams.get(0), 10.0, 0.0, 100, true);  // will be ignored in favor of last submission from team
-            createTextExerciseParticipationSubmissionAndResult(teamTextExercise, teams.get(0), 10.0, 0.0, 50, false);
+            createTextExerciseParticipationSubmissionAndResult(teamTextExercise, teams.getFirst(), 10.0, 0.0, 100, true);  // will be ignored in favor of last submission from team
+            createTextExerciseParticipationSubmissionAndResult(teamTextExercise, teams.getFirst(), 10.0, 0.0, 50, false);
 
             createTextExerciseParticipationSubmissionAndResult(teamTextExercise, teams.get(1), 10.0, 0.0, 10, false);
 
@@ -947,7 +947,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
                     CompetencyWithTailRelationDTO.class, HttpStatus.CREATED);
             assertThat(competencyDTOList).hasSize(2);
             // relations should be empty when not importing them
-            assertThat(competencyDTOList.get(0).tailRelations()).isNull();
+            assertThat(competencyDTOList.getFirst().tailRelations()).isNull();
             assertThat(competencyDTOList.get(1).tailRelations()).isNull();
         }
 
@@ -1029,12 +1029,12 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
             assertThat(competencyDTOList).hasSize(2);
             // competency 2 should be the tail of one relation
-            if (competencyDTOList.get(0).tailRelations() != null) {
-                assertThat(competencyDTOList.get(0).tailRelations()).hasSize(1);
+            if (competencyDTOList.getFirst().tailRelations() != null) {
+                assertThat(competencyDTOList.getFirst().tailRelations()).hasSize(1);
                 assertThat(competencyDTOList.get(1).tailRelations()).isNull();
             }
             else {
-                assertThat(competencyDTOList.get(0).tailRelations()).isNull();
+                assertThat(competencyDTOList.getFirst().tailRelations()).isNull();
                 assertThat(competencyDTOList.get(1).tailRelations()).hasSize(1);
             }
 
@@ -1042,7 +1042,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
                     CompetencyWithTailRelationDTO.class, HttpStatus.CREATED);
             assertThat(competencyDTOList).hasSize(2);
             // relations should be empty when not importing them
-            assertThat(competencyDTOList.get(0).tailRelations()).isNull();
+            assertThat(competencyDTOList.getFirst().tailRelations()).isNull();
             assertThat(competencyDTOList.get(1).tailRelations()).isNull();
         }
     }

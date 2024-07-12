@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.domain;
 
-import static de.tum.in.www1.artemis.config.Constants.MIN_SCORE_GREEN;
-
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -238,13 +236,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      */
     @Transient
     private String channelNameTransient;
-
-    @Override
-    public boolean isCompletedFor(User user) {
-        var latestResult = this.getStudentParticipations().stream().filter(participation -> participation.getStudents().contains(user))
-                .flatMap(participation -> participation.getResults().stream()).max(Comparator.comparing(Result::getCompletionDate));
-        return latestResult.map(result -> result.getScore() >= MIN_SCORE_GREEN).orElse(false);
-    }
 
     @Override
     public Optional<ZonedDateTime> getCompletionDate(User user) {

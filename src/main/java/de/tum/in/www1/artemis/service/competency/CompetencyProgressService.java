@@ -428,7 +428,7 @@ public class CompetencyProgressService {
      */
     public static double getMasteryProgress(@NotNull CompetencyProgress competencyProgress) {
         final double mastery = getMastery(competencyProgress);
-        return mastery / competencyProgress.getCompetency().getMasteryThreshold();
+        return Math.clamp(mastery / competencyProgress.getCompetency().getMasteryThreshold(), 0, 1);
     }
 
     /**
