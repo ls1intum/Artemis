@@ -114,10 +114,9 @@ export interface SidebarCardElement {
      */
     workingTime?: number;
     /**
-     * Set for Exam, shows the maximum attainable Points
+     * Set for Exam, represents the student exam of a real exam to obtain individual working time
      */
     studentExam?: StudentExam;
-    percentDifference?: number;
     /**
      * Set for Exam, shows the maximum attainable Points
      */
