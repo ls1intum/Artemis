@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.competency.RelationType;
 import de.tum.in.www1.artemis.domain.competency.StandardizedCompetency;
 import de.tum.in.www1.artemis.repository.CompetencyProgressRepository;
@@ -30,7 +31,6 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
 import de.tum.in.www1.artemis.repository.competency.StandardizedCompetencyRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.LectureUnitService;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -64,8 +64,6 @@ public class CompetencyService {
 
     private final LectureUnitService lectureUnitService;
 
-    private final ExerciseService exerciseService;
-
     private final CompetencyProgressRepository competencyProgressRepository;
 
     private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
@@ -75,7 +73,7 @@ public class CompetencyService {
     private final CourseRepository courseRepository;
 
     public CompetencyService(CompetencyRepository competencyRepository, AuthorizationCheckService authCheckService, CompetencyRelationRepository competencyRelationRepository,
-            LearningPathService learningPathService, CompetencyProgressService competencyProgressService, LectureUnitService lectureUnitService, ExerciseService exerciseService,
+            LearningPathService learningPathService, CompetencyProgressService competencyProgressService, LectureUnitService lectureUnitService,
             CompetencyProgressRepository competencyProgressRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
             StandardizedCompetencyRepository standardizedCompetencyRepository, CourseRepository courseRepository) {
         this.competencyRepository = competencyRepository;
@@ -84,7 +82,6 @@ public class CompetencyService {
         this.learningPathService = learningPathService;
         this.competencyProgressService = competencyProgressService;
         this.lectureUnitService = lectureUnitService;
-        this.exerciseService = exerciseService;
         this.competencyProgressRepository = competencyProgressRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
         this.standardizedCompetencyRepository = standardizedCompetencyRepository;
@@ -300,26 +297,6 @@ public class CompetencyService {
     }
 
     /**
-     * Deletes a competency and all its relations.
-     *
-     * @param competency the competency to delete
-     * @param course     the course the competency belongs to
-     */
-    public void deleteCompetency(Competency competency, Course course) {
-        competencyRelationRepository.deleteAllByCompetencyId(competency.getId());
-        competencyProgressService.deleteProgressForCompetency(competency.getId());
-
-        exerciseService.removeCompetency(competency.getExercises(), competency);
-        lectureUnitService.removeCompetency(competency.getLectureUnits(), competency);
-
-        if (course.getLearningPathsEnabled()) {
-            learningPathService.removeLinkedCompetencyFromLearningPathsOfCourse(competency, course.getId());
-        }
-
-        competencyRepository.deleteById(competency.getId());
-    }
-
-    /**
      * Finds a competency by its id and fetches its lecture units, exercises and progress for the provided user. It also fetches the lecture unit progress for the same user.
      * <p>
      * As Spring Boot 3 doesn't support conditional JOIN FETCH statements, we have to retrieve the data manually.
@@ -402,7 +379,7 @@ public class CompetencyService {
      * @param relations    The set of relations that get checked for cycles
      * @return A boolean that states whether the provided competencies and relations contain a cycle
      */
-    public boolean doesCreateCircularRelation(Set<Competency> competencies, Set<CompetencyRelation> relations) {
+    public boolean doesCreateCircularRelation(Set<CourseCompetency> competencies, Set<CompetencyRelation> relations) {
         // Inner class Vertex is only used in this method for cycle detection
         class Vertex {
 
@@ -487,7 +464,7 @@ public class CompetencyService {
         }
 
         var graph = new Graph();
-        for (Competency competency : competencies) {
+        for (CourseCompetency competency : competencies) {
             graph.addVertex(new Vertex(competency.getTitle()));
         }
         for (CompetencyRelation relation : relations) {

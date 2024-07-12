@@ -1784,8 +1784,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         // users tries to access exam summary after results are published
         userUtilService.changeUser(studentExam.getUser().getLogin());
 
-        var studentExamGradeInfoFromServer = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/grade-summary", HttpStatus.OK,
-                StudentExamWithGradeDTO.class);
+        var studentExamGradeInfoFromServer = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/grade-summary",
+                HttpStatus.OK, StudentExamWithGradeDTO.class);
 
         assertThat(studentExamGradeInfoFromServer.maxPoints()).isEqualTo(29.0);
         assertThat(studentExamGradeInfoFromServer.maxBonusPoints()).isEqualTo(5.0);
@@ -1881,8 +1881,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         // users tries to access exam summary after results are published
         userUtilService.changeUser(studentExam.getUser().getLogin());
 
-        var studentExamGradeInfoFromServer = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/grade-summary", HttpStatus.OK,
-                StudentExamWithGradeDTO.class);
+        var studentExamGradeInfoFromServer = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/grade-summary",
+                HttpStatus.OK, StudentExamWithGradeDTO.class);
 
         assertThat(studentExamGradeInfoFromServer.maxPoints()).isEqualTo(29.0);
         assertThat(studentExamGradeInfoFromServer.maxBonusPoints()).isEqualTo(5.0);
@@ -1966,7 +1966,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         // users tries to access exam summary after results are published
         userUtilService.changeUser(studentExam.getUser().getLogin());
 
-        request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/grade-summary", HttpStatus.FORBIDDEN, StudentExamWithGradeDTO.class);
+        request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/grade-summary", HttpStatus.FORBIDDEN,
+                StudentExamWithGradeDTO.class);
     }
 
     @Test
@@ -1982,11 +1983,11 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         userUtilService.changeUser(studentExam.getUser().getLogin());
 
         var studentExamGradeInfoFromServerForUserId = request.get(
-                "/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/grade-summary?userId=" + studentExam.getUser().getId(), HttpStatus.OK,
-                StudentExamWithGradeDTO.class);
+                "/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/grade-summary?userId=" + studentExam.getUser().getId(),
+                HttpStatus.OK, StudentExamWithGradeDTO.class);
 
-        var studentExamGradeInfoFromServer = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/grade-summary", HttpStatus.OK,
-                StudentExamWithGradeDTO.class);
+        var studentExamGradeInfoFromServer = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/grade-summary",
+                HttpStatus.OK, StudentExamWithGradeDTO.class);
 
         assertThat(studentExamGradeInfoFromServerForUserId.gradeType()).isEqualTo(studentExamGradeInfoFromServer.gradeType());
         assertThat(studentExamGradeInfoFromServerForUserId.studentResult().overallGrade()).isEqualTo(studentExamGradeInfoFromServer.studentResult().overallGrade());
@@ -2010,8 +2011,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         userUtilService.changeUser(student1.getLogin());
         User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
         // Note: student1 cannot see the grade summary for student2
-        request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/grade-summary?userId=" + student2.getId(), HttpStatus.FORBIDDEN,
-                StudentExamWithGradeDTO.class);
+        request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam1.getId() + "/grade-summary?userId=" + student2.getId(),
+                HttpStatus.FORBIDDEN, StudentExamWithGradeDTO.class);
     }
 
     @Test
@@ -2025,8 +2026,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         gradingScaleRepository.save(gradingScale);
 
         var studentExamGradeInfoFromServer = request.get(
-                "/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/grade-summary?userId=" + studentExam.getUser().getId(), HttpStatus.OK,
-                StudentExamWithGradeDTO.class);
+                "/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/grade-summary?userId=" + studentExam.getUser().getId(),
+                HttpStatus.OK, StudentExamWithGradeDTO.class);
 
         assertThat(studentExamGradeInfoFromServer.maxPoints()).isEqualTo(29.0);
         assertThat(studentExamGradeInfoFromServer.maxBonusPoints()).isEqualTo(5.0);
@@ -2078,8 +2079,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
 
         // Assert actual computed result.
         userUtilService.changeUser(studentExam.getUser().getLogin());
-        var studentExamGradeInfoFromServer = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/grade-summary", HttpStatus.OK,
-                StudentExamWithGradeDTO.class);
+        var studentExamGradeInfoFromServer = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/grade-summary",
+                HttpStatus.OK, StudentExamWithGradeDTO.class);
 
         assertThat(studentExamGradeInfoFromServer.studentResult().overallPointsAchieved()).isEqualTo(expectedOverallPoints);
     }
@@ -2106,8 +2107,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         }
 
         var studentExamGradeInfoFromServer = request.get(
-                "/api/courses/" + finalExam.getCourse().getId() + "/exams/" + finalExam.getId() + "/student-exams/grade-summary" + queryParam, HttpStatus.OK,
-                StudentExamWithGradeDTO.class);
+                "/api/courses/" + finalExam.getCourse().getId() + "/exams/" + finalExam.getId() + "/student-exams/" + finalStudentExam.getId() + "/grade-summary" + queryParam,
+                HttpStatus.OK, StudentExamWithGradeDTO.class);
 
         assertThat(studentExamGradeInfoFromServer.maxPoints()).isEqualTo(29.0);
         assertThat(studentExamGradeInfoFromServer.maxBonusPoints()).isEqualTo(5.0);
@@ -2182,8 +2183,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         // users tries to access exam summary after results are published
         userUtilService.changeUser(student.getLogin());
 
-        var studentExamGradeInfoFromServer = request.get("/api/courses/" + finalExam.getCourse().getId() + "/exams/" + finalExam.getId() + "/student-exams/grade-summary",
-                HttpStatus.OK, StudentExamWithGradeDTO.class);
+        var studentExamGradeInfoFromServer = request.get(
+                "/api/courses/" + finalExam.getCourse().getId() + "/exams/" + finalExam.getId() + "/student-exams/" + finalStudentExam.getId() + "/grade-summary", HttpStatus.OK,
+                StudentExamWithGradeDTO.class);
 
         assertThat(studentExamGradeInfoFromServer.maxPoints()).isEqualTo(29.0);
         assertThat(studentExamGradeInfoFromServer.maxBonusPoints()).isEqualTo(5.0);
@@ -2238,8 +2240,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         log.debug("Found {} student exams for student {} {} and exam {}", studentExams.size(), student.getId(), student.getLogin(), finalExam.getId());
         assertThat(studentExams).as("Found too many student exams" + studentExams).hasSize(1);
 
-        var studentExamGradeInfoFromServer = request.get("/api/courses/" + finalExam.getCourse().getId() + "/exams/" + finalExam.getId() + "/student-exams/grade-summary",
-                HttpStatus.OK, StudentExamWithGradeDTO.class);
+        var studentExamGradeInfoFromServer = request.get(
+                "/api/courses/" + finalExam.getCourse().getId() + "/exams/" + finalExam.getId() + "/student-exams/" + finalStudentExam.getId() + "/grade-summary", HttpStatus.OK,
+                StudentExamWithGradeDTO.class);
 
         assertThat(studentExamGradeInfoFromServer.studentResult().overallPointsAchieved()).isEqualTo(24.0);
         assertThat(studentExamGradeInfoFromServer.studentResult().overallGrade()).isEqualTo("3.0");
@@ -2474,9 +2477,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         User instructor1 = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
 
-        StudentExamWithGradeDTO studentExamGradeInfoFromServer = request.get(
-                "/api/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/student-exams/grade-summary?userId=" + instructor1.getId() + "&isTestRun=true",
-                HttpStatus.OK, StudentExamWithGradeDTO.class);
+        StudentExamWithGradeDTO studentExamGradeInfoFromServer = request.get("/api/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/student-exams/"
+                + testRun.getId() + "/grade-summary?userId=" + instructor1.getId() + "&isTestRun=true", HttpStatus.OK, StudentExamWithGradeDTO.class);
 
         assertThat(studentExamGradeInfoFromServer.achievedPointsPerExercise().size()).isEqualTo(testRunExam.getExerciseGroups().size());
     }

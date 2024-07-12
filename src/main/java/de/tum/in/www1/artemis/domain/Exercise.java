@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.domain;
 
-import static de.tum.in.www1.artemis.config.Constants.MIN_SCORE_GREEN;
-
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -50,7 +48,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonView;
 
-import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
@@ -113,7 +111,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @JoinTable(name = "competency_exercise", joinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "competency_id", referencedColumnName = "id"))
     @JsonIgnoreProperties({ "exercises", "course" })
     @JsonView(QuizView.Before.class)
-    private Set<Competency> competencies = new HashSet<>();
+    private Set<CourseCompetency> competencies = new HashSet<>();
 
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "exercise_categories", joinColumns = @JoinColumn(name = "exercise_id"))
@@ -238,13 +236,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      */
     @Transient
     private String channelNameTransient;
-
-    @Override
-    public boolean isCompletedFor(User user) {
-        var latestResult = this.getStudentParticipations().stream().filter(participation -> participation.getStudents().contains(user))
-                .flatMap(participation -> participation.getResults().stream()).max(Comparator.comparing(Result::getCompletionDate));
-        return latestResult.map(result -> result.getScore() >= MIN_SCORE_GREEN).orElse(false);
-    }
 
     @Override
     public Optional<ZonedDateTime> getCompletionDate(User user) {
@@ -461,11 +452,11 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     @Override
-    public Set<Competency> getCompetencies() {
+    public Set<CourseCompetency> getCompetencies() {
         return competencies;
     }
 
-    public void setCompetencies(Set<Competency> competencies) {
+    public void setCompetencies(Set<CourseCompetency> competencies) {
         this.competencies = competencies;
     }
 
