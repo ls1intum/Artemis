@@ -129,7 +129,7 @@ class CodeHintIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Map<String, ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(exercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, test -> test));
 
-        var changedEntry = solutionEntries.get(0);
+        var changedEntry = solutionEntries.getFirst();
         changedEntry.setLine(100);
         changedEntry.setPreviousLine(200);
         changedEntry.setCode("Changed code");
