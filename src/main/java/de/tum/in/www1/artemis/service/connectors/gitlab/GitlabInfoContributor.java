@@ -24,7 +24,7 @@ public class GitlabInfoContributor implements InfoContributor {
     @Value("${artemis.version-control.ssh-keys-url-path:#{null}}")
     private Optional<String> gitlabSshKeysUrlPath;
 
-    @Value("${artemis.version-control.use-gitlab-version-control-access-token:#{false}}")
+    @Value("${artemis.version-control.use-version-control-access-token:#{false}}")
     private Boolean useVersionControlAccessToken;
 
     @Override
