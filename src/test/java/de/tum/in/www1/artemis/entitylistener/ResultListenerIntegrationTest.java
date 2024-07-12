@@ -20,7 +20,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
@@ -33,18 +32,14 @@ import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.domain.scores.TeamScore;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.StudentScoreRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.team.TeamUtilService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -59,12 +54,6 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     private Long idOfStudent1;
 
     @Autowired
-    private ExerciseRepository exerciseRepository;
-
-    @Autowired
-    private ResultRepository resultRepository;
-
-    @Autowired
     private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
@@ -77,16 +66,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     private TeamRepository teamRepository;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private ResultService resultService;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;

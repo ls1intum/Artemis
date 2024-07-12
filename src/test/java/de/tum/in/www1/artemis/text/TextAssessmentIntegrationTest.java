@@ -60,7 +60,6 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.fileupload.FileUploadExerciseFactory;
 import de.tum.in.www1.artemis.exercise.fileupload.FileUploadExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
@@ -71,15 +70,12 @@ import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.TextAssessmentService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.AssessmentUpdateDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
@@ -88,9 +84,6 @@ import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentUpdateDTO;
 class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "textassessment";
-
-    @Autowired
-    private ExerciseRepository exerciseRepo;
 
     @Autowired
     private ComplaintRepository complaintRepo;
@@ -108,16 +101,10 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     private TextSubmissionRepository textSubmissionRepository;
 
     @Autowired
-    private ExerciseRepository exerciseRepository;
-
-    @Autowired
     private SubmissionRepository submissionRepository;
 
     @Autowired
     private ExampleSubmissionRepository exampleSubmissionRepository;
-
-    @Autowired
-    private ResultRepository resultRepo;
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
@@ -130,12 +117,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Autowired
     private TextAssessmentService textAssessmentService;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -162,7 +143,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         textExercise = exerciseUtilService.findTextExerciseWithTitle(course.getExercises(), "Text");
         textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-        exerciseRepo.save(textExercise);
+        exerciseRepository.save(textExercise);
         // every test indirectly uses the submission selection in Athena, so we mock it here
         athenaRequestMockProvider.enableMockingOfRequests();
         athenaRequestMockProvider.mockSelectSubmissionsAndExpect("text", 0); // always select the first submission
@@ -179,7 +160,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, false);
         textSubmission = textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
         textAssessmentService.prepareSubmissionForAssessment(textSubmission, null);
-        var result = resultRepo.findDistinctBySubmissionId(textSubmission.getId());
+        var result = resultRepository.findDistinctBySubmissionId(textSubmission.getId());
         assertThat(result).isPresent();
     }
 
@@ -205,7 +186,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor2");
         Result result = textSubmission.getLatestResult();
         result.setCompletionDate(null); // assessment is still in progress for this test
-        resultRepo.save(result);
+        resultRepository.save(result);
         StudentParticipation participation = request.get("/api/text-submissions/" + textSubmission.getId() + "/for-assessment", HttpStatus.LOCKED, StudentParticipation.class);
         assertThat(participation).as("participation is locked and should not be returned").isNull();
     }
@@ -401,7 +382,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     void getParticipationForNonTextExercise() throws Exception {
         FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(now().minusDays(1), now().plusDays(1), now().plusDays(2), "png,pdf",
                 textExercise.getCourseViaExerciseGroupOrCourseMember());
-        exerciseRepo.save(fileUploadExercise);
+        exerciseRepository.save(fileUploadExercise);
 
         FileUploadSubmission fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
         fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1",
@@ -432,7 +413,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     void getDataForTextEditorForNonTextExercise_badRequest() throws Exception {
         FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(now().minusDays(1), now().plusDays(1), now().plusDays(2), "png,pdf",
                 textExercise.getCourseViaExerciseGroupOrCourseMember());
-        exerciseRepo.save(fileUploadExercise);
+        exerciseRepository.save(fileUploadExercise);
 
         FileUploadSubmission fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
         fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1",
@@ -481,7 +462,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
         exerciseGroup.addExercise(textExercise);
         exerciseGroupRepository.save(exerciseGroup);
-        textExercise = exerciseRepo.save(textExercise);
+        textExercise = exerciseRepository.save(textExercise);
 
         examRepository.save(exam);
 
@@ -504,7 +485,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
         exerciseGroup.addExercise(textExercise);
         exerciseGroupRepository.save(exerciseGroup);
-        textExercise = exerciseRepo.save(textExercise);
+        textExercise = exerciseRepository.save(textExercise);
 
         examRepository.save(exam);
 
@@ -536,7 +517,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
         exerciseGroup.addExercise(textExercise);
         exerciseGroupRepository.save(exerciseGroup);
-        textExercise = exerciseRepo.save(textExercise);
+        textExercise = exerciseRepository.save(textExercise);
 
         examRepository.save(exam);
 
@@ -783,7 +764,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(10.0);
-        exerciseRepo.save(textExercise);
+        exerciseRepository.save(textExercise);
 
         // setting up student submission
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
@@ -821,7 +802,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
-        exerciseRepo.save(textExercise);
+        exerciseRepository.save(textExercise);
 
         // setting up student submission
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
@@ -852,7 +833,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
-        exerciseRepo.save(textExercise);
+        exerciseRepository.save(textExercise);
 
         // setting up student submission
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
@@ -883,7 +864,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
-        exerciseRepo.save(textExercise);
+        exerciseRepository.save(textExercise);
 
         // setting up student submission
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
@@ -958,7 +939,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Test123", Language.ENGLISH, true);
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, student, originalAssessor);
         textSubmission.getLatestResult().setCompletionDate(originalAssessmentSubmitted ? now() : null);
-        resultRepo.save(textSubmission.getLatestResult());
+        resultRepository.save(textSubmission.getLatestResult());
         var params = new LinkedMultiValueMap<String, String>();
         params.add("submit", submit);
         List<Feedback> feedbacks = ParticipationFactory.generateFeedback();
@@ -1056,7 +1037,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().getFirst();
         TextExercise exercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup1);
         exercise.setAssessmentType(assessmentType);
-        exercise = exerciseRepo.save(exercise);
+        exercise = exerciseRepository.save(exercise);
         exerciseGroup1.addExercise(exercise);
 
         // add student submission
@@ -1071,7 +1052,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         // verify setup
         assertThat(exam.getNumberOfCorrectionRoundsInExam()).isEqualTo(2);
         assertThat(exam.getEndDate()).isBefore(now());
-        var optionalFetchedExercise = exerciseRepo.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId());
+        var optionalFetchedExercise = exerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId());
         assertThat(optionalFetchedExercise).isPresent();
         final var exerciseWithParticipation = optionalFetchedExercise.get();
         studentParticipation = exerciseWithParticipation.getStudentParticipations().stream().iterator().next();
