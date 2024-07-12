@@ -11,6 +11,9 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipation
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 
+/**
+ * Abstract super class for entries to migrate towards LocalVC bundling common code for them.
+ */
 public abstract class LocalVCMigrationEntry extends ProgrammingExerciseMigrationEntry {
 
     @Value("${server.url}")
