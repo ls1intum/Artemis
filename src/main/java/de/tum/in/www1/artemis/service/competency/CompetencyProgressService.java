@@ -20,7 +20,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.LearningObject;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
@@ -32,9 +31,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.repository.CompetencyProgressRepository;
 import de.tum.in.www1.artemis.repository.CourseCompetencyRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
-import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipantScoreService;
@@ -53,10 +50,6 @@ public class CompetencyProgressService {
     private static final Logger log = LoggerFactory.getLogger(CompetencyProgressService.class);
 
     private final CompetencyProgressRepository competencyProgressRepository;
-
-    private final ExerciseRepository exerciseRepository;
-
-    private final LectureUnitRepository lectureUnitRepository;
 
     private final LearningPathService learningPathService;
 
@@ -78,12 +71,10 @@ public class CompetencyProgressService {
 
     private static final double CONFIDENCE_REASON_DEADZONE = 0.05;
 
-    public CompetencyProgressService(CompetencyProgressRepository competencyProgressRepository, ExerciseRepository exerciseRepository, LectureUnitRepository lectureUnitRepository,
-            UserRepository userRepository, LearningPathService learningPathService, ParticipantScoreService participantScoreService,
-            LectureUnitCompletionRepository lectureUnitCompletionRepository, CourseCompetencyRepository courseCompetencyRepository) {
+    public CompetencyProgressService(CompetencyProgressRepository competencyProgressRepository, UserRepository userRepository, LearningPathService learningPathService,
+            ParticipantScoreService participantScoreService, LectureUnitCompletionRepository lectureUnitCompletionRepository,
+            CourseCompetencyRepository courseCompetencyRepository) {
         this.competencyProgressRepository = competencyProgressRepository;
-        this.exerciseRepository = exerciseRepository;
-        this.lectureUnitRepository = lectureUnitRepository;
         this.learningPathService = learningPathService;
         this.participantScoreService = participantScoreService;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
@@ -202,14 +193,6 @@ public class CompetencyProgressService {
 
             users.forEach(user -> updateCompetencyProgress(competencyId, user));
         }
-    }
-
-    private Set<CourseCompetency> getCompetenciesForLearningObject(LearningObject learningObject) {
-        return switch (learningObject) {
-            case Exercise exercise -> exerciseRepository.findWithCompetenciesById(exercise.getId()).map(LearningObject::getCompetencies).orElse(Set.of());
-            case LectureUnit lectureUnit -> lectureUnitRepository.findWithCompetenciesAndSlidesById(lectureUnit.getId()).map(LearningObject::getCompetencies).orElse(Set.of());
-            default -> throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
-        };
     }
 
     /**
