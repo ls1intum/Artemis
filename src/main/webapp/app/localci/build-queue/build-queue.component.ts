@@ -131,7 +131,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     totalItems = 0;
     itemsPerPage = ITEMS_PER_PAGE;
     page = 1;
-    predicate = 'build_completion_date';
+    predicate = 'buildCompletionDate';
     ascending = false;
     buildDurationInterval: ReturnType<typeof setInterval>;
     isCollapsed = false;
@@ -390,9 +390,11 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      * View the build logs of a specific build job
      * @param resultId The id of the build job
      */
-    viewBuildLogs(resultId: number): void {
-        const url = `/api/build-log/${resultId}`;
-        window.open(url, '_blank');
+    viewBuildLogs(resultId: string | undefined): void {
+        if (resultId) {
+            const url = `/api/build-log/${resultId}`;
+            window.open(url, '_blank');
+        }
     }
 
     /**
@@ -404,7 +406,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
                 if (buildJob.buildStartDate && buildJob.buildCompletionDate) {
                     const start = dayjs(buildJob.buildStartDate);
                     const end = dayjs(buildJob.buildCompletionDate);
-                    buildJob.buildDuration = end.diff(start, 'milliseconds') / 1000;
+                    buildJob.buildDuration = (end.diff(start, 'milliseconds') / 1000).toFixed(3) + 's';
                 }
             }
         }
@@ -639,5 +641,14 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
             this.currentSpan = span;
             this.getBuildJobStatistics(span);
         }
+    }
+
+    /**
+     * Returns the unique identifier for items in the collection
+     * @param index of a finished buildjob in the collection
+     * @param item current buildjob
+     */
+    trackIdentity(index: number, item: FinishedBuildJob) {
+        return item.id ?? -1;
     }
 }
