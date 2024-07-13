@@ -43,6 +43,8 @@ class MailServiceTest {
 
     private MailService mailService;
 
+    private MailSendingService mailSendingService;
+
     @Mock
     private JavaMailSender javaMailSender;
 
@@ -109,7 +111,9 @@ class MailServiceTest {
         templateEngine = mock(SpringTemplateEngine.class);
         when(templateEngine.process(any(String.class), any())).thenReturn("test");
 
-        mailService = new MailService(jHipsterProperties, javaMailSender, messageSource, templateEngine, timeService);
+        mailSendingService = new MailSendingService(jHipsterProperties, javaMailSender);
+
+        mailService = new MailService(messageSource, templateEngine, timeService, mailSendingService);
         ReflectionTestUtils.setField(mailService, "artemisServerUrl", new URI("http://localhost:8080").toURL());
     }
 
@@ -118,7 +122,7 @@ class MailServiceTest {
      */
     @Test
     void testSendEmail() {
-        mailService.sendEmail(student1, subject, content, false, true);
+        mailSendingService.sendEmail(student1, subject, content, false, true);
         verify(javaMailSender).send(any(MimeMessage.class));
     }
 
@@ -128,7 +132,7 @@ class MailServiceTest {
     @Test
     void testNoMailSendExceptionThrown() {
         doThrow(new MailSendException("Some error occurred during mail send")).when(javaMailSender).send(any(MimeMessage.class));
-        assertThatNoException().isThrownBy(() -> mailService.sendEmail(student1, subject, content, false, true));
+        assertThatNoException().isThrownBy(() -> mailSendingService.sendEmail(student1, subject, content, false, true));
     }
 
     /**

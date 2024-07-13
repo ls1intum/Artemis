@@ -110,7 +110,7 @@ public class LearningPathResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> enableLearningPathsForCourse(@PathVariable long courseId) {
         log.debug("REST request to enable learning paths for course with id: {}", courseId);
-        Course course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
+        Course course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
         if (course.getLearningPathsEnabled()) {
             throw new BadRequestException("Learning paths are already enabled for this course.");
         }
@@ -131,7 +131,7 @@ public class LearningPathResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> generateMissingLearningPathsForCourse(@PathVariable long courseId) {
         log.debug("REST request to generate missing learning paths for course with id: {}", courseId);
-        Course course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
+        Course course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
         courseService.checkLearningPathsEnabledElseThrow(course);
         learningPathService.generateLearningPaths(course);
         return ResponseEntity.ok().build();
@@ -335,7 +335,7 @@ public class LearningPathResource {
             throw new BadRequestException("Learning path already exists.");
         }
 
-        final var course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
+        final var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
         final var learningPath = learningPathService.generateLearningPathForUser(course, user);
         return ResponseEntity.created(new URI("api/learning-path/" + learningPath.getId())).body(learningPath.getId());
     }
