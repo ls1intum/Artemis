@@ -20,6 +20,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.LearningObject;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
@@ -158,8 +159,7 @@ public class CompetencyProgressService {
 
         updateProgressByCompetencyIds(removedCompetencyIds);
         if (!addedCompetencyIds.isEmpty()) {
-            Course course = updatedCompetencies.stream().findAny().map(CourseCompetency::getCourse).orElseThrow();
-            updateProgressByCompetencyIdsAndUsersInCourse(addedCompetencyIds, course);
+            updateProgressByCompetencyIdsAndLearningObject(addedCompetencyIds, originalLearningObject);
         }
     }
 
@@ -171,11 +171,18 @@ public class CompetencyProgressService {
         }
     }
 
-    private void updateProgressByCompetencyIdsAndUsersInCourse(Set<Long> competencyIds, Course course) {
+    private void updateProgressByCompetencyIdsAndLearningObject(Set<Long> competencyIds, LearningObject learningObject) {
         for (long competencyId : competencyIds) {
-            Set<User> users = userRepository.getUsersInCourse(course);
-            log.debug("Updating competency progress for {} users.", users.size());
-            users.forEach(user -> updateCompetencyProgress(competencyId, user));
+            Set<User> existingCompetencyUsers = competencyProgressRepository.findAllByCompetencyId(competencyId).stream().map(CompetencyProgress::getUser)
+                    .collect(Collectors.toSet());
+            Set<User> existingLearningObjectUsers = switch (learningObject) {
+                case Exercise exercise -> participantScoreService.getAllParticipatedUsersInExercise(exercise);
+                case LectureUnit lectureUnit -> lectureUnitCompletionRepository.findCompletedUsersForLectureUnit(lectureUnit);
+                default -> throw new IllegalStateException("Unexpected value: " + learningObject);
+            };
+            existingCompetencyUsers.addAll(existingLearningObjectUsers);
+            log.debug("Updating competency progress for {} users.", existingCompetencyUsers.size());
+            existingCompetencyUsers.forEach(user -> updateCompetencyProgress(competencyId, user));
         }
     }
 

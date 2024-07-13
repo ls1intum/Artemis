@@ -104,7 +104,7 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
             SELECT c.id
             FROM CourseCompetency c
                 LEFT JOIN c.exercises ex
-            WHERE :learningObject = ex
+            WHERE :exercise = ex
             """)
     Set<Long> findAllIdsByExercise(@Param("exercise") Exercise exercise);
 
@@ -112,7 +112,7 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
             SELECT c.id
             FROM CourseCompetency c
                 LEFT JOIN c.lectureUnits lu
-            WHERE :learningObject = lu
+            WHERE :lectureUnit = lu
             """)
     Set<Long> findAllIdsByLectureUnit(@Param("lectureUnit") LectureUnit lectureUnit);
 

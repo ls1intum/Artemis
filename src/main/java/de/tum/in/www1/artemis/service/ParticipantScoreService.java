@@ -216,4 +216,13 @@ public class ParticipantScoreService {
         return participantScoreRepository.findAverageScoreForExercises(exercises).stream().mapToDouble(exerciseInfo -> (double) exerciseInfo.get("averageScore")).average()
                 .orElse(0.0);
     }
+
+    public Set<User> getAllParticipatedUsersInExercise(Exercise exercise) {
+        if (exercise.isTeamMode()) {
+            return teamScoreRepository.findAllUsersWithScoresByExercise(exercise);
+        }
+        else {
+            return studentScoreRepository.findAllUsersWithScoresByExercise(exercise);
+        }
+    }
 }
