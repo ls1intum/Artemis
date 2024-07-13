@@ -109,9 +109,12 @@ test.describe('Programming Exercise Management', () => {
             await exerciseTeams.checkTeamOnList(teamShortName);
 
             await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
-            await expect(programmingExerciseOverview.getExerciseDetails().locator('.view-team')).toBeVisible();
+            const exerciseDetails = programmingExerciseOverview.getExerciseDetails();
+            await exerciseDetails.waitFor({ state: 'visible' });
+            await expect(exerciseDetails.locator('.view-team')).toBeVisible();
             await login(studentFour, `/courses/${course.id}/exercises/${exercise.id}`);
-            await expect(programmingExerciseOverview.getExerciseDetails()).toHaveText(/No team yet/);
+            await exerciseDetails.waitFor({ state: 'visible' });
+            await expect(exerciseDetails).toHaveText(/No team yet/);
         });
     });
 

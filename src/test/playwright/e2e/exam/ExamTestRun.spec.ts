@@ -105,7 +105,6 @@ test.describe('Exam test run', () => {
         });
 
         test('Conducts a test run', async ({ login, courseManagementAPIRequests, examTestRun, examParticipation, examNavigation }) => {
-            test.slow();
             await login(instructor);
             const testRun = await courseManagementAPIRequests.createExamTestRun(exam, exerciseArray);
 

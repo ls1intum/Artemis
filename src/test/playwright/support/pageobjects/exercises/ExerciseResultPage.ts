@@ -20,8 +20,9 @@ export class ExerciseResultPage {
     }
 
     async shouldShowExerciseTitle(title: string) {
-        await expect(this.page.locator('#exercise-header')).toContainText(title, { timeout: 10000 });
-        await expect(this.page.locator('#exercise-header')).toBeVisible();
+        const exerciseHeader = this.page.locator('#exercise-header');
+        await exerciseHeader.waitFor({ state: 'visible' });
+        await expect(exerciseHeader).toContainText(title, { timeout: 10000 });
     }
 
     async shouldShowScore(percentage: number) {

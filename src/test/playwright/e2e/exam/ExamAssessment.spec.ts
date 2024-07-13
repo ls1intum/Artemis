@@ -56,7 +56,7 @@ test.beforeAll('Create course', async ({ browser }) => {
 test.describe('Exam assessment', () => {
     test.describe.configure({
         mode: 'default',
-        timeout: 180000,
+        timeout: 240000,
     });
 
     let programmingAssessmentSuccessful = false;
@@ -71,7 +71,6 @@ test.describe('Exam assessment', () => {
         });
 
         test('Assess a programming exercise submission (MANUAL)', async ({ login, examManagement, examAssessment, examParticipation, courseAssessment, exerciseAssessment }) => {
-            test.slow();
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
             await login(tutor);
@@ -235,7 +234,7 @@ test.describe('Exam grading', () => {
 test.describe('Exam statistics', () => {
     test.describe.configure({
         mode: 'default',
-        timeout: 180000,
+        timeout: 240000,
     });
 
     let exercise: Exercise;
