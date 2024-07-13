@@ -51,7 +51,7 @@ test.describe('Modeling Exercise Management', () => {
             await modelingExerciseAssessment.clickNextAssessment();
             await modelingExerciseAssessment.assessComponent(0, 'Unnecessary');
             await modelingExerciseAssessment.submitExample();
-            page.goto(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}`);
+            await page.goto(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}`);
             await expect(modelingExerciseEditor.getModelingCanvas()).toBeAttached();
         });
 
