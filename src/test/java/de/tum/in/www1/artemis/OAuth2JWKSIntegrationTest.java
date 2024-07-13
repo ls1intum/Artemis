@@ -14,15 +14,11 @@ import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.LtiPlatformConfiguration;
 import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.OnlineCourseConfigurationRepository;
 
 class OAuth2JWKSIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "oauth2jwksintegrationtest";
-
-    @Autowired
-    private CourseRepository courseRepository;
 
     @Autowired
     private OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;

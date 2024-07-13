@@ -124,7 +124,7 @@ class ResultTest extends AbstractSpringIntegrationIndependentTest {
     void testRemoveTestCaseNames() {
         ProgrammingExercise exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         var tests = programmingExerciseUtilService.addTestCasesToProgrammingExercise(exercise);
-        Feedback tst1 = new Feedback().positive(true).type(FeedbackType.AUTOMATIC).testCase(tests.get(0));
+        Feedback tst1 = new Feedback().positive(true).type(FeedbackType.AUTOMATIC).testCase(tests.getFirst());
         Feedback tst2 = new Feedback().positive(false).type(FeedbackType.AUTOMATIC).testCase(tests.get(2)).detailText("This is wrong.");
 
         ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
@@ -147,7 +147,7 @@ class ResultTest extends AbstractSpringIntegrationIndependentTest {
         participation.setExercise(exercise);
         result.setParticipation(participation);
 
-        Feedback tst1 = new Feedback().positive(true).type(FeedbackType.AUTOMATIC).testCase(tests.get(0));
+        Feedback tst1 = new Feedback().positive(true).type(FeedbackType.AUTOMATIC).testCase(tests.getFirst());
         Feedback tst2 = new Feedback().positive(false).type(FeedbackType.AUTOMATIC).testCase(tests.get(1)).detailText("This is wrong.");
 
         result.setFeedbacks(new ArrayList<>(List.of(tst1, tst2)));

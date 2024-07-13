@@ -75,7 +75,7 @@ public class ProgrammingSubmissionAndResultIntegrationTestService {
 
         // Ensure correct submission and result count
         assertThat(submissions).hasSize(2);
-        assertThat(submissions.get(0).getResults()).hasSize(1);
+        assertThat(submissions.getFirst().getResults()).hasSize(1);
         assertThat(submissions.get(1).getResults()).hasSize(1);
 
         Submission submissionOfFirstCommit = submissions.stream().filter(submission -> submission.getCommitHash().equals(firstCommitHash)).findFirst().orElseThrow();
@@ -106,6 +106,6 @@ public class ProgrammingSubmissionAndResultIntegrationTestService {
         // Submission should have been created for the participation.
         assertThat(submissions).hasSize(1);
         // Make sure that both the submission and participation are correctly linked with each other.
-        return submissions.get(0);
+        return submissions.getFirst();
     }
 }

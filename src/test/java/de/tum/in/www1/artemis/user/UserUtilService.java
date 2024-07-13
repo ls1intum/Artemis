@@ -386,7 +386,7 @@ public class UserUtilService {
         if (!userExistsWithLogin(instructorName)) {
             var newUsers = generateAndSaveActivatedUsers(instructorName, new String[] { instructorGroup, "testgroup" }, instructorAuthorities, 1);
             if (!newUsers.isEmpty()) {
-                var instructor = userRepo.save(newUsers.get(0));
+                var instructor = userRepo.save(newUsers.getFirst());
                 assertThat(instructor.getId()).as("Instructor has been created").isNotNull();
             }
         }
@@ -402,7 +402,7 @@ public class UserUtilService {
         if (!userExistsWithLogin(editorName)) {
             var newUsers = generateAndSaveActivatedUsers(editorName, new String[] { editorGroup, "testgroup" }, editorAuthorities, 1);
             if (!newUsers.isEmpty()) {
-                var editor = userRepo.save(newUsers.get(0));
+                var editor = userRepo.save(newUsers.getFirst());
                 assertThat(editor.getId()).as("Editor has been created").isNotNull();
             }
         }
@@ -418,7 +418,7 @@ public class UserUtilService {
         if (!userExistsWithLogin(taName)) {
             var newUsers = generateAndSaveActivatedUsers(taName, new String[] { taGroup, "testgroup" }, tutorAuthorities, 1);
             if (!newUsers.isEmpty()) {
-                var ta = userRepo.save(newUsers.get(0));
+                var ta = userRepo.save(newUsers.getFirst());
                 assertThat(ta.getId()).as("Teaching assistant has been created").isNotNull();
             }
         }
@@ -434,7 +434,7 @@ public class UserUtilService {
         if (!userExistsWithLogin(studentName)) {
             var newUsers = generateAndSaveActivatedUsers(studentName, new String[] { studentGroup, "testgroup" }, studentAuthorities, 1);
             if (!newUsers.isEmpty()) {
-                var student = userRepo.save(newUsers.get(0));
+                var student = userRepo.save(newUsers.getFirst());
                 assertThat(student.getId()).as("Student has been created").isNotNull();
             }
         }

@@ -589,4 +589,18 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
                 AND s.submissionDate IS NULL
             """)
     boolean existsUnsubmittedExercisesByExamId(@Param("examId") long examId);
+
+    @Query("""
+            SELECT COUNT(s) > 0
+            FROM Submission s
+                LEFT JOIN s.participation p
+                LEFT JOIN p.exercise e
+                LEFT JOIN p.student st
+                LEFT JOIN p.team t
+                LEFT JOIN t.students ts
+            WHERE e.id = :exerciseId
+                AND (st.id = :userId OR ts.id = :userId)
+                AND s.submitted = TRUE
+            """)
+    boolean existsByExerciseIdAndParticipantIdAndSubmitted(@Param("exerciseId") long exerciseId, @Param("userId") long userId);
 }

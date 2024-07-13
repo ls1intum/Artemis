@@ -13,6 +13,7 @@ describe('LearningPathStudentNavComponent', () => {
     let fixture: ComponentFixture<LearningPathNavComponent>;
     let learningPathApiService: LearningPathApiService;
     let getLearningPathNavigationSpy: jest.SpyInstance;
+    let getRelativeLearningPathNavigationSpy: jest.SpyInstance;
 
     const navigationDto: LearningPathNavigationDTO = {
         predecessorLearningObject: {
@@ -20,18 +21,21 @@ describe('LearningPathStudentNavComponent', () => {
             name: 'Exercise 1',
             type: LearningObjectType.EXERCISE,
             completed: true,
+            competencyId: 1,
         },
         currentLearningObject: {
             id: 2,
             name: 'Lecture 2',
             type: LearningObjectType.LECTURE,
             completed: false,
+            competencyId: 2,
         },
         successorLearningObject: {
             id: 3,
             name: 'Exercise 3',
             type: LearningObjectType.EXERCISE,
             completed: false,
+            competencyId: 2,
         },
         progress: 50,
     };
@@ -58,6 +62,7 @@ describe('LearningPathStudentNavComponent', () => {
 
         learningPathApiService = TestBed.inject(LearningPathApiService);
         getLearningPathNavigationSpy = jest.spyOn(learningPathApiService, 'getLearningPathNavigation').mockResolvedValue(navigationDto);
+        getRelativeLearningPathNavigationSpy = jest.spyOn(learningPathApiService, 'getRelativeLearningPathNavigation');
 
         fixture = TestBed.createComponent(LearningPathNavComponent);
         component = fixture.componentInstance;
@@ -165,9 +170,7 @@ describe('LearningPathStudentNavComponent', () => {
     });
 
     it('should show navigation overview on click', async () => {
-        const setShowNavigationOverviewSpy = jest.spyOn(component, 'setShowNavigationOverview');
-        const loadCompetenciesSpy = jest.spyOn(component.navOverview(), 'loadCompetencies');
-
+        const setIsDropdownOpen = jest.spyOn(component, 'setIsDropdownOpen');
         fixture.detectChanges();
         await fixture.whenStable();
         fixture.detectChanges();
@@ -177,8 +180,7 @@ describe('LearningPathStudentNavComponent', () => {
         fixture.detectChanges();
         const navOverview = fixture.debugElement.query(By.directive(LearningPathNavOverviewComponent));
         expect(navOverview).toBeTruthy();
-        expect(setShowNavigationOverviewSpy).toHaveBeenCalledWith(true);
-        expect(loadCompetenciesSpy).toHaveBeenCalledExactlyOnceWith(learningPathId);
+        expect(setIsDropdownOpen).toHaveBeenCalledWith(true);
     });
 
     it('should call select learning object on previous click', async () => {
@@ -193,7 +195,8 @@ describe('LearningPathStudentNavComponent', () => {
 
         fixture.detectChanges();
 
-        expect(getLearningPathNavigationSpy).toHaveBeenCalledTimes(2);
+        expect(getLearningPathNavigationSpy).toHaveBeenCalledOnce();
+        expect(getRelativeLearningPathNavigationSpy).toHaveBeenCalledOnce();
         expect(selectLearningObjectSpy).toHaveBeenCalledWith(navigationDto.predecessorLearningObject);
     });
 });

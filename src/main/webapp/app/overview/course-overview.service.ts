@@ -17,6 +17,7 @@ import { faBullhorn, faHashtag } from '@fortawesome/free-solid-svg-icons';
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
+import { StudentExam } from 'app/entities/student-exam.model';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -238,8 +239,8 @@ export class CourseOverviewService {
     mapExercisesToSidebarCardElements(exercises: Exercise[]) {
         return exercises.map((exercise) => this.mapExerciseToSidebarCardElement(exercise));
     }
-    mapExamsToSidebarCardElements(exams: Exam[]) {
-        return exams.map((exam) => this.mapExamToSidebarCardElement(exam));
+    mapExamsToSidebarCardElements(exams: Exam[], studentExams?: StudentExam[]) {
+        return exams.map((exam, index) => this.mapExamToSidebarCardElement(exam, studentExams?.[index]));
     }
 
     mapConversationsToSidebarCardElements(conversations: ConversationDTO[]) {
@@ -292,14 +293,15 @@ export class CourseOverviewService {
         return exerciseCardItem;
     }
 
-    mapExamToSidebarCardElement(exam: Exam): SidebarCardElement {
+    mapExamToSidebarCardElement(exam: Exam, studentExam?: StudentExam): SidebarCardElement {
         const examCardItem: SidebarCardElement = {
             title: exam.title ?? '',
             id: exam.id ?? '',
             icon: faGraduationCap,
             subtitleLeft: exam.moduleNumber ?? '',
             startDateWithTime: exam.startDate,
-            workingTime: exam.workingTime ?? 0,
+            workingTime: exam.workingTime,
+            studentExam: studentExam,
             attainablePoints: exam.examMaxPoints ?? 0,
             size: 'L',
         };

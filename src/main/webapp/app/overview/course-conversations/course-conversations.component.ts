@@ -80,6 +80,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     postInThread?: Post;
     activeConversation?: ConversationDTO = undefined;
     conversationsOfUser: ConversationDTO[] = [];
+    channelSearchCollapsed = false;
 
     conversationSelected = true;
     sidebarData: SidebarData;
@@ -240,7 +241,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     onSearch() {
-        this.activeConversation = undefined;
+        this.metisConversationService.setActiveConversation(undefined);
         this.updateQueryParameters();
         this.courseWideSearchConfig.searchTerm = this.courseWideSearchTerm;
         this.courseWideSearch?.onSearch();
@@ -372,5 +373,9 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             return ChannelSubType.EXAM;
         }
         return ChannelSubType.GENERAL;
+    }
+
+    toggleChannelSearch() {
+        this.channelSearchCollapsed = !this.channelSearchCollapsed;
     }
 }
